@@ -1,0 +1,223 @@
+package com.alera.controller;
+
+import com.alera.model.FacturaItem;
+import com.alera.model.InsumoInventario;
+import com.alera.model.enums.TipoInsumo;
+import com.alera.repository.FacturaItemRepository;
+import com.alera.service.InsumoInventarioService;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@Controller
+@RequestMapping("/inventario")
+public class InsumoInventarioController {
+
+    private final InsumoInventarioService service;
+    private final FacturaItemRepository facturaItemRepo;
+
+    public InsumoInventarioController(InsumoInventarioService service,
+                                       FacturaItemRepository facturaItemRepo) {
+        this.service         = service;
+        this.facturaItemRepo = facturaItemRepo;
+    }
+
+    @GetMapping
+    public String lista(
+            @RequestParam(defaultValue = "") String nombre,
+            @RequestParam(required = false) TipoInsumo tipo,
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+        var pagina = service.listarPaginado(nombre, tipo, page);
+        model.addAttribute("insumos",      pagina.getContent());
+        model.addAttribute("paginaActual", page);
+        model.addAttribute("totalPaginas", pagina.getTotalPages());
+        model.addAttribute("totalInsumos", pagina.getTotalElements());
+        model.addAttribute("nombreFiltro", nombre);
+        model.addAttribute("tipoFiltro",   tipo);
+        model.addAttribute("tiposInsumo",  TipoInsumo.values());
+        model.addAttribute("bajoStock",    service.listarBajoStock());
+        model.addAttribute("proximosVencer", service.listarProximosAVencer(30));
+        return "inventario/lista";
+    }
+
+    @GetMapping("/nuevo")
+    public String nuevo(Model model) {
+        model.addAttribute("insumo", new InsumoInventario());
+        model.addAttribute("tiposInsumo", TipoInsumo.values());
+        return "inventario/formulario";
+    }
+
+    @PostMapping("/guardar")
+    public String guardar(@ModelAttribute InsumoInventario insumo, RedirectAttributes ra) {
+        try {
+            service.guardar(insumo);
+            ra.addFlashAttribute("mensaje", "Insumo guardado");
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
+        return "redirect:/inventario";
+    }
+
+    @GetMapping("/editar/{id}")
+    public String editar(@PathVariable Long id, Model model) {
+        model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
+        model.addAttribute("tiposInsumo", TipoInsumo.values());
+        return "inventario/formulario";
+    }
+
+    @PostMapping("/actualizar/{id}")
+    public String actualizar(@PathVariable Long id, @ModelAttribute InsumoInventario insumo, RedirectAttributes ra) {
+        insumo.setId(id);
+        try {
+            service.guardar(insumo);
+            ra.addFlashAttribute("mensaje", "Insumo actualizado");
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
+        return "redirect:/inventario";
+    }
+
+    @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> suggest(
+            @RequestParam(defaultValue = "") String nombre,
+            @RequestParam(required = false) TipoInsumo tipo) {
+        if (nombre.isBlank() || nombre.trim().length() < 2) return List.of();
+        return service.listarPaginado(nombre.trim(), tipo, 0)
+            .getContent().stream()
+            .limit(6)
+            .map(i -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",        i.getId());
+                m.put("nombre",    i.getNombre());
+                m.put("tipoNombre",i.getTipo() != null ? i.getTipo().getDisplayName() : "");
+                m.put("colorTipo", i.getColorTipo());
+                m.put("bajoStock", i.isBajoStock());
+                m.put("url",       "/inventario/editar/" + i.getId());
+                return m;
+            }).toList();
+    }
+
+    @PostMapping("/guardar-rapido")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> guardarRapido(
+            @RequestParam String nombre,
+            @RequestParam TipoInsumo tipo,
+            @RequestParam(defaultValue = "gr") String unidad) {
+        Map<String, Object> resp = new LinkedHashMap<>();
+        try {
+            if (service.buscarPorNombreExacto(nombre.trim()).isPresent()) {
+                resp.put("success", false);
+                resp.put("error", "Ya existe un insumo con ese nombre");
+                return ResponseEntity.badRequest().body(resp);
+            }
+            InsumoInventario ins = new InsumoInventario();
+            ins.setNombre(nombre.trim());
+            ins.setTipo(tipo);
+            ins.setUnidad(unidad);
+            ins.setCantidad(BigDecimal.ZERO);
+            ins.setStockMinimo(BigDecimal.ZERO);
+            InsumoInventario saved = service.guardar(ins);
+            resp.put("success", true);
+            resp.put("id", saved.getId());
+            resp.put("nombre", saved.getNombre());
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            resp.put("success", false);
+            resp.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    @PostMapping("/eliminar/{id}")
+    public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
+        service.eliminar(id);
+        ra.addFlashAttribute("mensaje", "Insumo eliminado");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/inventario";
+    }
+
+    // ── Historial de precios ──────────────────────────────────────────────
+
+    @GetMapping("/precios")
+    public String historialPrecios(@RequestParam(required = false) String nombre,
+                                    Model model) {
+        // Datalist con todos los nombres de ítems de facturas
+        model.addAttribute("nombresFactura", facturaItemRepo.findNombresDistintos());
+        // Insumos del inventario para el selector rápido
+        model.addAttribute("insumosInventario", service.listarBajoStock().isEmpty()
+                ? Collections.emptyList() : service.listarBajoStock()); // placeholder — se llena abajo
+
+        if (nombre != null && !nombre.isBlank()) {
+            String nombreTrimmed = nombre.trim();
+            List<FacturaItem> historial = facturaItemRepo.findHistorialPreciosPorNombre(nombreTrimmed);
+            model.addAttribute("nombre",   nombreTrimmed);
+            model.addAttribute("historial", historial);
+
+            if (!historial.isEmpty()) {
+                // Estadísticas sobre valorUnitario
+                List<BigDecimal> precios = historial.stream()
+                        .filter(fi -> fi.getValorUnitario() != null
+                                      && fi.getValorUnitario().compareTo(BigDecimal.ZERO) > 0)
+                        .map(FacturaItem::getValorUnitario)
+                        .collect(Collectors.toList());
+
+                if (!precios.isEmpty()) {
+                    BigDecimal suma  = precios.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+                    BigDecimal prom  = suma.divide(BigDecimal.valueOf(precios.size()), 2, RoundingMode.HALF_UP);
+                    BigDecimal min   = precios.stream().min(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                    BigDecimal max   = precios.stream().max(BigDecimal::compareTo).orElse(BigDecimal.ZERO);
+                    BigDecimal ultimo = precios.get(0); // historial está ordenado DESC (más reciente primero)
+
+                    model.addAttribute("precioUltimo",  ultimo);
+                    model.addAttribute("precioPromedio",prom);
+                    model.addAttribute("precioMinimo",  min);
+                    model.addAttribute("precioMaximo",  max);
+
+                    BigDecimal variacion = precios.size() > 1
+                            ? ultimo.subtract(precios.get(precios.size() - 1)) : BigDecimal.ZERO;
+                    model.addAttribute("variacion", variacion);
+                }
+
+                long nProveedores = historial.stream()
+                        .map(fi -> fi.getFactura().getProveedor())
+                        .filter(Objects::nonNull)
+                        .distinct().count();
+                model.addAttribute("nProveedores",  nProveedores);
+                model.addAttribute("nCompras",       historial.size());
+
+                // Datos para Chart.js — orden cronológico (más antiguo primero)
+                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yy");
+                List<FacturaItem> cronologico = new ArrayList<>(historial);
+                Collections.reverse(cronologico);
+
+                model.addAttribute("chartFechas", cronologico.stream()
+                        .filter(fi -> fi.getFactura().getFechaFactura() != null)
+                        .map(fi -> fi.getFactura().getFechaFactura().format(fmt))
+                        .collect(Collectors.toList()));
+                model.addAttribute("chartPrecios", cronologico.stream()
+                        .filter(fi -> fi.getValorUnitario() != null)
+                        .map(fi -> fi.getValorUnitario().doubleValue())
+                        .collect(Collectors.toList()));
+                model.addAttribute("chartProveedores", cronologico.stream()
+                        .map(fi -> fi.getFactura().getProveedor() != null
+                                   ? fi.getFactura().getProveedor() : "—")
+                        .collect(Collectors.toList()));
+            }
+        }
+        return "inventario/precios";
+    }
+}

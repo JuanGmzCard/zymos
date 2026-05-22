@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+    Fragment reutilizable de paginación.
+    Parámetros requeridos en el modelo:
+      - paginaActual  : int
+      - totalPaginas  : int
+      - baseUrl       : String  (ej: "/", "/inventario")
+      - extraParams   : String  (ej: "&estilo=IPA&fase=FERM")  — puede ser vacío ""
+-->
+<nav th:fragment="paginacion" th:if="${totalPaginas > 1}" aria-label="Paginación">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+
+        <!-- Anterior -->
+        <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled' : ''">
+            <a class="page-link"
+               th:href="@{__${baseUrl}__(__page__=${paginaActual - 1}__${extraParams}__)}">
+                <i class="bi bi-chevron-left"></i>
+            </a>
+        </li>
+
+        <!-- Números de página (máx 7 visibles) -->
+        <th:block th:with="
+            inicio=${paginaActual > 3 ? paginaActual - 3 : 0},
+            fin=${paginaActual + 3 < totalPaginas ? paginaActual + 3 : totalPaginas - 1}">
+
+            <!-- Primero si inicio > 0 -->
+            <li th:if="${inicio > 0}" class="page-item">
+                <a class="page-link" th:href="@{__${baseUrl}__(__page__=0__${extraParams}__)}">1</a>
+            </li>
+            <li th:if="${inicio > 1}" class="page-item disabled">
+                <span class="page-link">…</span>
+            </li>
+
+            <li th:each="num : ${#numbers.sequence(inicio, fin)}"
+                class="page-item" th:classappend="${num == paginaActual} ? 'active' : ''">
+                <a class="page-link"
+                   th:href="@{__${baseUrl}__(__page__=${num}__${extraParams}__)}"
+                   th:text="${num + 1}">1</a>
+            </li>
+
+            <!-- Último si fin < totalPaginas-1 -->
+            <li th:if="${fin < totalPaginas - 2}" class="page-item disabled">
+                <span class="page-link">…</span>
+            </li>
+            <li th:if="${fin < totalPaginas - 1}" class="page-item">
+                <a class="page-link"
+                   th:href="@{__${baseUrl}__(__page__=${totalPaginas - 1}__${extraParams}__)}"
+                   th:text="${totalPaginas}">N</a>
+            </li>
+        </th:block>
+
+        <!-- Siguiente -->
+        <li class="page-item" th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
+            <a class="page-link"
+               th:href="@{__${baseUrl}__(__page__=${paginaActual + 1}__${extraParams}__)}">
+                <i class="bi bi-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+</body>
+</html>

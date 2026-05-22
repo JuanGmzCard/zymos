@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${tenant.name} + ' — Alertas del día'">Alertas del día</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F0EDE2;font-family:'Segoe UI',Arial,sans-serif;color:#333;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0EDE2;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- ENCABEZADO -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:28px 32px;'"
+              style="background-color:#242E0D;padding:28px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <div th:style="'font-family:Georgia,serif;font-size:22px;font-weight:700;color:' + ${tenant.colorAccent} + ';'"
+                       style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#C9A028;"
+                       th:text="${tenant.name}">Alera</div>
+                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;">Sistema de Trazabilidad Cervecera</div>
+                </td>
+                <td align="right">
+                  <div style="font-size:12px;color:#c0c0a0;" th:text="${fecha}">01/01/2025</div>
+                  <div style="font-size:11px;color:#909080;margin-top:2px;">Resumen diario de alertas</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- RESUMEN DE ALERTAS -->
+        <tr>
+          <td style="padding:24px 32px 8px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td align="center" style="padding:4px 8px;"
+                    th:if="${!#lists.isEmpty(bajoStock)}">
+                  <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
+                    <div style="font-size:28px;font-weight:700;color:#856404;" th:text="${#lists.size(bajoStock)}">0</div>
+                    <div style="font-size:12px;color:#856404;margin-top:2px;">Bajo stock</div>
+                  </div>
+                </td>
+                <td align="center" style="padding:4px 8px;"
+                    th:if="${!#lists.isEmpty(proximosAVencer)}">
+                  <div style="background:#f8d7da;border:1px solid #f5c6cb;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
+                    <div style="font-size:28px;font-weight:700;color:#721c24;" th:text="${#lists.size(proximosAVencer)}">0</div>
+                    <div style="font-size:12px;color:#721c24;margin-top:2px;">Próx. a vencer</div>
+                  </div>
+                </td>
+                <td align="center" style="padding:4px 8px;"
+                    th:if="${!#lists.isEmpty(mantenimientoPendiente)}">
+                  <div style="background:#d1ecf1;border:1px solid #bee5eb;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
+                    <div style="font-size:28px;font-weight:700;color:#0c5460;" th:text="${#lists.size(mantenimientoPendiente)}">0</div>
+                    <div style="font-size:12px;color:#0c5460;margin-top:2px;">Mantenimiento</div>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- SECCIÓN: INVENTARIO BAJO STOCK -->
+        <tr th:if="${!#lists.isEmpty(bajoStock)}">
+          <td style="padding:20px 32px 0;">
+            <div style="border-left:4px solid #ffc107;padding-left:12px;margin-bottom:12px;">
+              <div style="font-size:14px;font-weight:700;color:#856404;">⚠ Inventario bajo stock mínimo</div>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:#f8f9fa;">
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Insumo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Stock actual</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Stock mínimo</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="ins, stat : ${bajoStock}"
+                    th:style="${stat.odd} ? 'background:#fffdf0;' : ''">
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;"
+                      th:text="${ins.nombre}">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
+                      th:text="${ins.tipo != null} ? ${ins.tipo.name()} : '—'">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#cc0000;font-weight:600;"
+                      th:text="${ins.cantidad} + ' ' + (${ins.unidad} ?: '')">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#666;"
+                      th:text="${ins.stockMinimo} + ' ' + (${ins.unidad} ?: '')">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- SECCIÓN: PRÓXIMOS A VENCER -->
+        <tr th:if="${!#lists.isEmpty(proximosAVencer)}">
+          <td style="padding:20px 32px 0;">
+            <div style="border-left:4px solid #dc3545;padding-left:12px;margin-bottom:12px;">
+              <div style="font-size:14px;font-weight:700;color:#721c24;">🗓 Vencimientos próximos (30 días)</div>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:#f8f9fa;">
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Insumo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Vence</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Días</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="ins, stat : ${proximosAVencer}"
+                    th:style="${stat.odd} ? 'background:#fff8f8;' : ''">
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;"
+                      th:text="${ins.nombre}">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
+                      th:text="${ins.tipo != null} ? ${ins.tipo.name()} : '—'">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;"
+                      th:text="${ins.fechaVencimiento != null} ? ${#temporals.format(ins.fechaVencimiento,'dd/MM/yyyy')} : '—'">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;"
+                      th:with="dias=${T(com.alera.service.EmailService).diasHasta(ins.fechaVencimiento)}"
+                      th:style="${dias <= 7} ? 'color:#cc0000;font-weight:700;' : 'color:#856404;'"
+                      th:text="${dias} + 'd'">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- SECCIÓN: MANTENIMIENTO PENDIENTE -->
+        <tr th:if="${!#lists.isEmpty(mantenimientoPendiente)}">
+          <td style="padding:20px 32px 0;">
+            <div style="border-left:4px solid #17a2b8;padding-left:12px;margin-bottom:12px;">
+              <div style="font-size:14px;font-weight:700;color:#0c5460;">🔧 Mantenimiento próximo (7 días)</div>
+            </div>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:#f8f9fa;">
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Equipo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Próximo mantenimiento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="eq, stat : ${mantenimientoPendiente}"
+                    th:style="${stat.odd} ? 'background:#f0fafc;' : ''">
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;"
+                      th:text="${eq.nombre}">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
+                      th:text="${eq.tipo != null} ? ${eq.tipo.name()} : '—'">—</td>
+                  <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#0c5460;font-weight:600;"
+                      th:text="${eq.proximoMantenimiento != null} ? ${#temporals.format(eq.proximoMantenimiento,'dd/MM/yyyy')} : 'Sin fecha'">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- BOTÓN CTA -->
+        <tr>
+          <td style="padding:28px 32px;" align="center">
+            <a th:href="${baseUrl}" th:style="'background-color:' + ${tenant.colorAccent} + ';color:' + ${tenant.colorNavbar} + ';padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;'"
+               style="background-color:#C9A028;color:#242E0D;padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;">
+              Ver en la aplicación →
+            </a>
+          </td>
+        </tr>
+
+        <!-- PIE DE PÁGINA -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:18px 32px;'"
+              style="background-color:#242E0D;padding:18px 32px;">
+            <div style="font-size:11px;color:#909080;text-align:center;">
+              Este email fue generado automáticamente por
+              <span th:text="${tenant.name}" style="color:#c0c0a0;">Alera</span>.
+              Para dejar de recibirlo, eliminá el email en la configuración del tenant.
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

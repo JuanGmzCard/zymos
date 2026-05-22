@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Detalle Receta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
+                    <h1 class="mb-0" th:text="${receta.nombre}">Nombre</h1>
+                    <span th:if="${!receta.activa}" class="phase-badge inicio">Inactiva</span>
+                </div>
+                <p class="mb-0" th:text="${receta.estilo}">Estilo</p>
+            </div>
+            <div class="d-flex gap-2 align-self-center">
+                <a th:href="@{/recetas/editar/{id}(id=${receta.id})}" class="btn btn-alera">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                </a>
+                <a th:href="@{/recetas}" class="btn btn-outline-crema">
+                    <i class="bi bi-arrow-left me-1"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Parámetros objetivo -->
+    <div class="row g-3 mb-4" th:if="${receta.ogObjetivo != null or receta.fgObjetivo != null or receta.tiempoHervorMinutos != null}">
+        <div class="col-md-4" th:if="${receta.ogObjetivo != null}">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">OG Objetivo</div>
+                        <div class="stat-number mt-1" th:text="${receta.ogObjetivo}">—</div>
+                    </div>
+                    <i class="bi bi-droplet-fill stat-icon"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" th:if="${receta.fgObjetivo != null}">
+            <div class="stat-card info">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">FG Objetivo</div>
+                        <div class="stat-number mt-1" th:text="${receta.fgObjetivo}">—</div>
+                    </div>
+                    <i class="bi bi-droplet-half stat-icon"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4" th:if="${receta.ogObjetivo != null and receta.fgObjetivo != null}">
+            <div class="stat-card success">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">ABV Estimado</div>
+                        <div class="stat-number mt-1"
+                             th:text="${#numbers.formatDecimal((receta.ogObjetivo - receta.fgObjetivo) * 0.13125, 1, 2)} + ' %'">—</div>
+                    </div>
+                    <i class="bi bi-graph-up stat-icon"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+
+        <!-- Información + agua -->
+        <div class="col-lg-5">
+            <div class="card-alera mb-4">
+                <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Información</h5></div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="detail-label">Nombre</div>
+                            <div class="detail-value highlight" th:text="${receta.nombre}">—</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="detail-label">Estilo</div>
+                            <div class="detail-value" th:text="${receta.estilo}">—</div>
+                        </div>
+                        <div class="col-12" th:if="${receta.tiempoHervorMinutos != null}">
+                            <div class="detail-label">Tiempo de Hervor</div>
+                            <div class="detail-value" th:text="${receta.tiempoHervorMinutos} + ' minutos'">—</div>
+                        </div>
+                        <div class="col-6" th:if="${receta.aguaMacerado != null}">
+                            <div class="detail-label">Agua Macerado</div>
+                            <div class="detail-value"
+                                 th:text="${receta.aguaMacerado} + ' ' + (${receta.unidadAguaMacerado} ?: 'L')">—</div>
+                        </div>
+                        <div class="col-6" th:if="${receta.aguaSparge != null}">
+                            <div class="detail-label">Agua Sparge</div>
+                            <div class="detail-value"
+                                 th:text="${receta.aguaSparge} + ' ' + (${receta.unidadAguaSparge} ?: 'L')">—</div>
+                        </div>
+                    </div>
+                    <div class="mt-3" th:if="${receta.descripcion != null and !receta.descripcion.isBlank()}">
+                        <div class="detail-label">Descripción</div>
+                        <div class="detail-value" style="font-size:0.9rem;" th:text="${receta.descripcion}">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escalones de macerado -->
+            <div class="card-alera mb-4" th:if="${!#lists.isEmpty(receta.escalones)}">
+                <div class="card-header"><h5><i class="bi bi-thermometer-sun me-2"></i>Escalones de Macerado</h5></div>
+                <div class="card-body p-0">
+                    <table class="table table-alera mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Escalón</th>
+                                <th>Duración</th>
+                                <th>Temp.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="esc, escStat : ${receta.escalones}">
+                                <td class="text-muted" th:text="${escStat.index + 1}">1</td>
+                                <td class="fw-600" th:text="${esc.nombre}">—</td>
+                                <td th:text="${esc.duracionMinutos != null} ? ${esc.duracionMinutos} + ' min' : '—'">—</td>
+                                <td th:text="${esc.temperaturaC != null} ? ${esc.temperaturaC} + ' °C' : '—'">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Hervor y Lúpulo -->
+            <div class="card-alera" th:if="${!#lists.isEmpty(receta.adicionesHervor)}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-fire me-2"></i>Hervor y Lúpulo</h5>
+                    <span class="text-muted small" th:if="${receta.tiempoHervorMinutos != null}"
+                          th:text="'Total: ' + ${receta.tiempoHervorMinutos} + ' min'"></span>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-alera mb-0">
+                        <thead>
+                            <tr>
+                                <th>Insumo</th>
+                                <th>Min. restantes</th>
+                                <th>Cantidad</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="adic : ${receta.adicionesHervor}">
+                                <td class="fw-600" th:text="${adic.nombre}">—</td>
+                                <td>
+                                    <span th:if="${adic.minutosRestantes != null and adic.minutosRestantes == 0}"
+                                          class="phase-badge inicio">Flameout</span>
+                                    <span th:if="${adic.minutosRestantes != null and adic.minutosRestantes > 0}"
+                                          th:text="${adic.minutosRestantes} + ' min'">—</span>
+                                    <span th:if="${adic.minutosRestantes == null}" class="text-muted">—</span>
+                                </td>
+                                <td th:text="${adic.cantidad != null} ? ${adic.cantidad} + ' ' + (${adic.unidad} ?: '') : '—'">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredientes -->
+        <div class="col-lg-7">
+            <div class="card-alera h-100">
+                <div class="card-header"><h5><i class="bi bi-basket me-2"></i>Ingredientes</h5></div>
+                <div class="card-body">
+                    <div class="mb-4" th:if="${!#lists.isEmpty(receta.maltas)}">
+                        <div class="ingrediente-grupo-label">
+                            <i class="bi bi-circle-fill me-1 text-malta"></i>Maltas
+                        </div>
+                        <div class="mt-2">
+                            <span th:each="m : ${receta.maltas}"
+                                  class="ingrediente-chip malta"
+                                  th:text="${m.nombre} + ' · ' + ${m.cantidad}"></span>
+                        </div>
+                    </div>
+                    <div class="mb-4" th:if="${!#lists.isEmpty(receta.lupulos)}">
+                        <div class="ingrediente-grupo-label">
+                            <i class="bi bi-circle-fill me-1 text-lupulo"></i>Lúpulos
+                        </div>
+                        <div class="mt-2">
+                            <span th:each="lup : ${receta.lupulos}"
+                                  class="ingrediente-chip lupulo"
+                                  th:text="${lup.nombre} + ' · ' + ${lup.cantidad}"></span>
+                        </div>
+                    </div>
+                    <div class="mb-4" th:if="${!#lists.isEmpty(receta.levaduras)}">
+                        <div class="ingrediente-grupo-label">
+                            <i class="bi bi-circle-fill me-1 text-levadura"></i>Levaduras
+                        </div>
+                        <div class="mt-2">
+                            <span th:each="lev : ${receta.levaduras}"
+                                  class="ingrediente-chip levadura"
+                                  th:text="${lev.nombre} + ' · ' + ${lev.cantidad}"></span>
+                        </div>
+                    </div>
+                    <div th:if="${!#lists.isEmpty(receta.clarificantes)}">
+                        <div class="ingrediente-grupo-label">
+                            <i class="bi bi-circle-fill me-1 text-clarificante"></i>Clarificantes
+                        </div>
+                        <div class="mt-2">
+                            <span th:each="clar : ${receta.clarificantes}"
+                                  class="ingrediente-chip clarificante"
+                                  th:text="${clar.nombre} + ' · ' + ${clar.cantidad}"></span>
+                        </div>
+                    </div>
+                    <div th:if="${#lists.isEmpty(receta.ingredientes)}" class="empty-state py-4">
+                        <i class="bi bi-basket3"></i>
+                        <p class="mb-0 small">Sin ingredientes registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notas -->
+    <div class="card-alera mb-4" th:if="${receta.notas != null and !receta.notas.isBlank()}">
+        <div class="card-header"><h5><i class="bi bi-chat-left-text me-2"></i>Notas Técnicas</h5></div>
+        <div class="card-body">
+            <p class="observaciones-texto mb-0" th:text="${receta.notas}"></p>
+        </div>
+    </div>
+
+    <!-- Metadatos de auditoría -->
+    <div class="audit-meta mb-3 text-muted small d-flex flex-wrap gap-3">
+        <span th:if="${receta.createdAt != null}">
+            <i class="bi bi-person-plus me-1"></i>
+            Creado por <strong th:text="${receta.createdBy ?: 'sistema'}"></strong>
+            el <span th:text="${#temporals.format(receta.createdAt,'dd/MM/yyyy HH:mm')}"></span>
+        </span>
+        <span th:if="${receta.lastModifiedAt != null}">
+            <i class="bi bi-pencil me-1"></i>
+            Últ. mod. por <strong th:text="${receta.lastModifiedBy ?: 'sistema'}"></strong>
+            el <span th:text="${#temporals.format(receta.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
+        </span>
+    </div>
+
+    <!-- Lotes elaborados con esta receta -->
+    <div class="card-alera mb-4" th:if="${!#lists.isEmpty(lotesDeReceta)}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-droplet-fill me-2"></i>Lotes Elaborados con esta Receta</h5>
+            <span class="badge" style="background:var(--verde-alera);"
+                  th:text="${#lists.size(lotesDeReceta)} + ' lote' + (${#lists.size(lotesDeReceta)} != 1 ? 's' : '')"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-alera mb-0" style="font-size:0.82rem;">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Fecha</th>
+                        <th>OG Objetivo</th>
+                        <th>OG Real</th>
+                        <th>FG Real</th>
+                        <th>ABV Real</th>
+                        <th>Litros</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="lote : ${lotesDeReceta}">
+                        <td>
+                            <a th:href="@{/ver/{id}(id=${lote.id})}"
+                               style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-alera);"
+                               th:text="${lote.codigoLote}">—</a>
+                        </td>
+                        <td class="text-muted"
+                            th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
+                        <td class="text-muted"
+                            th:text="${receta.ogObjetivo != null} ? ${receta.ogObjetivo} : '—'">—</td>
+                        <td>
+                            <span th:if="${lote.densidadInicial != null}"
+                                  th:classappend="${receta.ogObjetivo != null and (lote.densidadInicial - receta.ogObjetivo <= 5) and (receta.ogObjetivo - lote.densidadInicial <= 5)} ? 'text-success fw-bold' : 'fw-bold'"
+                                  th:text="${lote.densidadInicial}">—</span>
+                            <span th:unless="${lote.densidadInicial != null}" class="text-muted">—</span>
+                        </td>
+                        <td th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'"
+                            th:classappend="${lote.densidadFinal == null} ? 'text-muted' : ''">—</td>
+                        <td>
+                            <span th:if="${lote.abv != null}"
+                                  style="font-weight:700;color:var(--verde-alera);"
+                                  th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'">—</span>
+                            <span th:unless="${lote.abv != null}" class="text-muted">—</span>
+                        </td>
+                        <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'"
+                            th:classappend="${lote.litrosFinales == null} ? 'text-muted' : ''">—</td>
+                        <td>
+                            <span class="phase-badge"
+                                  th:classappend="${lote.completado} ? 'completado' : 'fermentacion'"
+                                  th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}">—</span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Calculadora de escala -->
+    <div class="card-alera" th:if="${receta.volumenBase != null and !#lists.isEmpty(receta.maltas)}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-calculator me-2"></i>Calculadora de Escala</h5>
+            <span class="text-muted small">Base: <span th:text="${receta.volumenBase} + ' L'"></span></span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3 align-items-end mb-4">
+                <div class="col-md-4">
+                    <label class="form-label">Volumen objetivo (L)</label>
+                    <input type="number" step="any" id="volObjetivo" class="form-control"
+                           th:placeholder="${receta.volumenBase}" oninput="calcularEscala()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted">Factor de escala</label>
+                    <div class="form-control-plaintext fw-bold text-verde" id="factorEscala">—</div>
+                </div>
+                <div class="col-md-4">
+                    <button type="button" class="btn btn-alera-outline"
+                            onclick="document.getElementById('volObjetivo').value='';calcularEscala()">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer
+                    </button>
+                </div>
+            </div>
+            <div id="escalaResultado" class="d-none">
+                <!-- Agua -->
+                <div class="row g-2 mb-3"
+                     th:if="${receta.aguaMacerado != null or receta.aguaSparge != null}">
+                    <div class="col-12">
+                        <div class="detail-label text-muted mb-1">
+                            <i class="bi bi-droplet me-1"></i>Agua
+                        </div>
+                    </div>
+                    <div class="col-md-3" th:if="${receta.aguaMacerado != null}">
+                        <div class="ingrediente-row">
+                            <div class="detail-label">Macerado</div>
+                            <div class="text-muted small" id="aguaMaceradoOriginal"
+                                 th:text="${receta.aguaMacerado} + ' ' + (${receta.unidadAguaMacerado} ?: 'L')">—</div>
+                            <div class="fw-bold text-verde d-none" id="aguaMaceradoCalculado"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3" th:if="${receta.aguaSparge != null}">
+                        <div class="ingrediente-row">
+                            <div class="detail-label">Sparge</div>
+                            <div class="text-muted small" id="aguaSpargeOriginal"
+                                 th:text="${receta.aguaSparge} + ' ' + (${receta.unidadAguaSparge} ?: 'L')">—</div>
+                            <div class="fw-bold text-verde d-none" id="aguaSpargeCalculado"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Ingredientes -->
+                <div class="row g-2">
+                    <div th:each="ing : ${receta.maltas}" class="col-md-4">
+                        <div class="ingrediente-row">
+                            <div class="detail-label text-malta">Malta</div>
+                            <div class="fw-600" th:text="${ing.nombre}">—</div>
+                            <div class="text-muted small escala-original" th:attr="data-cantidad=${ing.cantidad}">
+                                <span th:text="${ing.cantidad}">—</span>
+                            </div>
+                            <div class="fw-bold text-verde escala-calculada d-none"></div>
+                        </div>
+                    </div>
+                    <div th:each="ing : ${receta.lupulos}" class="col-md-4">
+                        <div class="ingrediente-row">
+                            <div class="detail-label text-lupulo">Lúpulo</div>
+                            <div class="fw-600" th:text="${ing.nombre}">—</div>
+                            <div class="text-muted small escala-original" th:attr="data-cantidad=${ing.cantidad}">
+                                <span th:text="${ing.cantidad}">—</span>
+                            </div>
+                            <div class="fw-bold text-verde escala-calculada d-none"></div>
+                        </div>
+                    </div>
+                    <div th:each="ing : ${receta.levaduras}" class="col-md-4">
+                        <div class="ingrediente-row">
+                            <div class="detail-label text-levadura">Levadura</div>
+                            <div class="fw-600" th:text="${ing.nombre}">—</div>
+                            <div class="text-muted small escala-original" th:attr="data-cantidad=${ing.cantidad}">
+                                <span th:text="${ing.cantidad}">—</span>
+                            </div>
+                            <div class="fw-bold text-verde escala-calculada d-none"></div>
+                        </div>
+                    </div>
+                </div><!-- /row ingredientes -->
+            </div><!-- /escalaResultado -->
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+const VOLUMEN_BASE      = /*[[${receta.volumenBase}]]*/ null;
+const AGUA_MACERADO     = /*[[${receta.aguaMacerado}]]*/ null;
+const UNIDAD_MACERADO   = /*[[${receta.unidadAguaMacerado}]]*/ 'L';
+const AGUA_SPARGE       = /*[[${receta.aguaSparge}]]*/ null;
+const UNIDAD_SPARGE     = /*[[${receta.unidadAguaSparge}]]*/ 'L';
+
+function calcularEscala() {
+    const volObj    = parseFloat(document.getElementById('volObjetivo').value);
+    const factorEl  = document.getElementById('factorEscala');
+    const resultado = document.getElementById('escalaResultado');
+
+    if (!VOLUMEN_BASE || isNaN(volObj) || volObj <= 0) {
+        factorEl.textContent = '—';
+        resultado.classList.add('d-none');
+        // reset ingredientes
+        document.querySelectorAll('.escala-calculada').forEach(el => el.classList.add('d-none'));
+        document.querySelectorAll('.escala-original').forEach(el => el.classList.remove('d-none'));
+        // reset agua
+        resetAgua();
+        return;
+    }
+
+    const factor = volObj / VOLUMEN_BASE;
+    factorEl.textContent = '×' + factor.toFixed(3);
+    resultado.classList.remove('d-none');
+
+    // Ingredientes
+    document.querySelectorAll('.escala-original').forEach(el => {
+        const cantidadStr = el.getAttribute('data-cantidad');
+        if (!cantidadStr) return;
+        const parts = cantidadStr.trim().split(/\s+/);
+        const valor = parseFloat(parts[0]);
+        const unidad = parts[1] || '';
+        const calcEl = el.nextElementSibling;
+        if (calcEl) {
+            calcEl.textContent = (valor * factor).toFixed(1) + ' ' + unidad;
+            calcEl.classList.remove('d-none');
+            el.classList.add('d-none');
+        }
+    });
+
+    // Agua macerado
+    escalarAgua('aguaMaceradoOriginal', 'aguaMaceradoCalculado', AGUA_MACERADO, UNIDAD_MACERADO, factor);
+    // Agua sparge
+    escalarAgua('aguaSpargeOriginal', 'aguaSpargeCalculado', AGUA_SPARGE, UNIDAD_SPARGE, factor);
+}
+
+function escalarAgua(idOrig, idCalc, valorBase, unidad, factor) {
+    const orig = document.getElementById(idOrig);
+    const calc = document.getElementById(idCalc);
+    if (!orig || !calc || !valorBase) return;
+    calc.textContent = (valorBase * factor).toFixed(2) + ' ' + (unidad || 'L');
+    calc.classList.remove('d-none');
+    orig.classList.add('d-none');
+}
+
+function resetAgua() {
+    ['aguaMaceradoOriginal', 'aguaSpargeOriginal'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('d-none');
+    });
+    ['aguaMaceradoCalculado', 'aguaSpargeCalculado'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('d-none');
+    });
+}
+</script>
+</body>
+</html>

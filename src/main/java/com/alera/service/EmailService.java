@@ -1,0 +1,90 @@
+package com.alera.service;
+
+import com.alera.model.Equipo;
+import com.alera.model.InsumoInventario;
+import com.alera.model.Tenant;
+import jakarta.mail.internet.MimeMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring6.SpringTemplateEngine;
+
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+
+@Service
+public class EmailService {
+
+    private static final Logger log = LoggerFactory.getLogger(EmailService.class);
+    private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // null si SMTP_HOST no está configurado — Spring no crea el bean
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
+
+    @Autowired
+    private SpringTemplateEngine templateEngine;
+
+    @Value("${app.alert.from:noreply@alera.app}")
+    private String fromAddress;
+
+    @Value("${app.alert.base-url:http://localhost:8080}")
+    private String baseUrl;
+
+    public boolean mailConfigurado() {
+        return mailSender != null;
+    }
+
+    /**
+     * Envía el resumen diario de alertas al email del tenant.
+     * @return true si el email fue enviado, false si no hay alertas o no hay configuración.
+     */
+    public boolean enviarAlertasDiarias(Tenant tenant,
+                                         List<InsumoInventario> bajoStock,
+                                         List<InsumoInventario> proximosAVencer,
+                                         List<Equipo> mantenimientoPendiente) {
+        if (mailSender == null) return false;
+        if (tenant.getEmailAdmin() == null || tenant.getEmailAdmin().isBlank()) return false;
+        if (bajoStock.isEmpty() && proximosAVencer.isEmpty() && mantenimientoPendiente.isEmpty()) return false;
+
+        try {
+            Context ctx = new Context();
+            ctx.setVariable("tenant",                tenant);
+            ctx.setVariable("bajoStock",             bajoStock);
+            ctx.setVariable("proximosAVencer",       proximosAVencer);
+            ctx.setVariable("mantenimientoPendiente",mantenimientoPendiente);
+            ctx.setVariable("baseUrl",               baseUrl);
+            ctx.setVariable("fecha",                 LocalDate.now().format(FMT));
+            ctx.setVariable("hoy",                   LocalDate.now());
+
+            String html = templateEngine.process("emails/alertas", ctx);
+
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(tenant.getEmailAdmin());
+            helper.setSubject("[" + tenant.getName() + "] Alertas del día — " + LocalDate.now().format(FMT));
+            helper.setText(html, true);
+            mailSender.send(msg);
+
+            log.info("Alertas enviadas a {} para tenant '{}'", tenant.getEmailAdmin(), tenant.getSubdomain());
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error al enviar alertas al tenant '{}': {}", tenant.getSubdomain(), e.getMessage());
+            throw new RuntimeException("Fallo SMTP para tenant " + tenant.getSubdomain(), e);
+        }
+    }
+
+    /** Formatea días restantes hasta una fecha de vencimiento. */
+    public static long diasHasta(LocalDate fecha) {
+        return ChronoUnit.DAYS.between(LocalDate.now(), fecha);
+    }
+}

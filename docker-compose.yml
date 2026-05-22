@@ -1,0 +1,62 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       trazabilidad_cervezas
+      POSTGRES_USER:     ${DB_USERNAME:-alera}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-alera2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-alera} -d trazabilidad_cervezas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"   # expuesto solo para desarrollo local; eliminar en producción
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL:             jdbc:postgresql://db:5432/trazabilidad_cervezas
+      DB_USERNAME:        ${DB_USERNAME:-alera}
+      DB_PASSWORD:        ${DB_PASSWORD:-alera2024}
+      ADMIN_USERNAME:     ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD:     ${ADMIN_PASSWORD:-alera2024}
+      # Usuarios adicionales por rol (opcional)
+      INVENTARIO_USERNAME: ${INVENTARIO_USERNAME:-}
+      INVENTARIO_PASSWORD: ${INVENTARIO_PASSWORD:-}
+      FACTURACION_USERNAME: ${FACTURACION_USERNAME:-}
+      FACTURACION_PASSWORD: ${FACTURACION_PASSWORD:-}
+      EQUIPOS_USERNAME:    ${EQUIPOS_USERNAME:-}
+      EQUIPOS_PASSWORD:    ${EQUIPOS_PASSWORD:-}
+      # ── Multi-tenant ─────────────────────────────────────────────
+      DEFAULT_SUBDOMAIN:       ${DEFAULT_SUBDOMAIN:-default}
+      # ── Branding del cliente ─────────────────────────────────────
+      APP_BRAND_NAME:          ${APP_BRAND_NAME:-Alera}
+      APP_BRAND_TAGLINE:       ${APP_BRAND_TAGLINE:-Sistema de Trazabilidad Cervecera}
+      APP_BRAND_LOGO_URL:      ${APP_BRAND_LOGO_URL:-}
+      APP_BRAND_COLOR_NAVBAR:  ${APP_BRAND_COLOR_NAVBAR:-#242E0D}
+      APP_BRAND_COLOR_PRIMARY: ${APP_BRAND_COLOR_PRIMARY:-#364318}
+      APP_BRAND_COLOR_ACCENT:  ${APP_BRAND_COLOR_ACCENT:-#C9A028}
+      APP_BRAND_COLOR_ACCENT_HOVER: ${APP_BRAND_COLOR_ACCENT_HOVER:-#E0B840}
+      APP_BRAND_COLOR_CREAM:   ${APP_BRAND_COLOR_CREAM:-#F5EDD0}
+      APP_BRAND_COLOR_BODY_BG: ${APP_BRAND_COLOR_BODY_BG:-#F0EDE2}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

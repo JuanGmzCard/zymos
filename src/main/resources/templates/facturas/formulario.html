@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Alera - Factura</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .subtipo-placeholder {
+            height: 31px;
+            background: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 6px;
+            display: flex; align-items: center;
+            padding: 0 8px;
+            font-size: 0.72rem;
+            color: #adb5bd;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- Datalist compartido — se actualiza dinámicamente según tipo+categoría -->
+<datalist id="datalist-item-nombres"></datalist>
+
+<div class="hero-section">
+    <div class="container-fluid px-4">
+        <h1 th:text="${facturaId != null} ? 'Editar Factura' : 'Nueva Factura'">Factura</h1>
+        <p>Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+    <form th:action="${facturaId != null} ? @{/facturas/actualizar/{id}(id=${facturaId})} : @{/facturas/guardar}"
+          th:object="${facturaForm}" method="post">
+
+        <!-- DATOS GENERALES -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-receipt me-2"></i>Datos de la Factura</div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">N° Factura</label>
+                    <input type="text" th:field="*{numeroFactura}" class="form-control" placeholder="FAC-001">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Proveedor *</label>
+                    <div class="input-group" th:if="${!#lists.isEmpty(proveedoresActivos)}">
+                        <select id="proveedorSelect" class="form-select" style="max-width:160px;"
+                                onchange="seleccionarProveedor(this)">
+                            <option value="">Existente…</option>
+                            <option th:each="prov : ${proveedoresActivos}"
+                                    th:value="${prov.id}"
+                                    th:attr="data-nombre=${prov.nombre}"
+                                    th:selected="${facturaForm.proveedorId == prov.id}"
+                                    th:text="${prov.nombre}">—</option>
+                        </select>
+                        <input type="hidden" th:field="*{proveedorId}" id="proveedorIdHidden">
+                        <input type="text" th:field="*{proveedor}" class="form-control" required placeholder="Nombre del proveedor">
+                    </div>
+                    <input th:unless="${!#lists.isEmpty(proveedoresActivos)}"
+                           type="text" th:field="*{proveedor}" class="form-control" required placeholder="Nombre del proveedor">
+                    <div th:if="${#fields.hasErrors('proveedor')}" class="text-danger small" th:errors="*{proveedor}"></div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" th:field="*{fechaFactura}" class="form-control">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Costo Envío</label>
+                    <input type="number" step="0.01" th:field="*{costoEnvio}" class="form-control" placeholder="0.00">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Descripción</label>
+                    <input type="text" th:field="*{descripcion}" class="form-control" placeholder="Descripción opcional">
+                </div>
+            </div>
+        </div>
+
+        <!-- ITEMS -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-list-ul me-2"></i>Items</div>
+
+            <!-- Cabecera de columnas -->
+            <div class="row g-2 mb-1 d-none d-md-flex">
+                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">TIPO ITEM</span></div>
+                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">CATEGORÍA</span></div>
+                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">NOMBRE</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">CANTIDAD</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">UNIDAD</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">V. UNITARIO</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">DESC %</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IVA %</span></div>
+                <div class="col-md-1 text-end"><span class="text-muted" style="font-size:0.7rem;">TOTAL</span></div>
+            </div>
+
+            <div id="items-container">
+                <div th:each="itemF, itemStat : ${facturaForm.items}" class="ingrediente-row mb-2">
+                    <div class="row g-2 align-items-center">
+
+                        <!-- TIPO ITEM -->
+                        <div class="col-md-2">
+                            <select th:name="'items[' + ${itemStat.index} + '].tipoItem'"
+                                    class="form-select form-select-sm tipo-select"
+                                    onchange="onTipoChange(this)">
+                                <option value="">-- Tipo --</option>
+                                <option th:each="ti : ${tiposItem}"
+                                        th:value="${ti}"
+                                        th:selected="${itemF.tipoItem == ti}"
+                                        th:text="${ti.displayName}">-</option>
+                            </select>
+                        </div>
+
+                        <!-- CATEGORÍA -->
+                        <div class="col-md-2 subtipo-col">
+                            <div th:if="${itemF.tipoItem == null}" class="subtipo-placeholder">
+                                <i class="bi bi-arrow-left-short"></i> Elige tipo
+                            </div>
+                            <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'INSUMO'}"
+                                    th:name="'items[' + ${itemStat.index} + '].tipoInsumo'"
+                                    class="form-select form-select-sm categoria-select"
+                                    onchange="onCategoryChange(this)">
+                                <option value="">-- Categoría --</option>
+                                <option th:each="tins : ${tiposInsumo}"
+                                        th:value="${tins}"
+                                        th:selected="${itemF.tipoInsumo == tins}"
+                                        th:text="${tins.displayName}">-</option>
+                            </select>
+                            <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'EQUIPO'}"
+                                    th:name="'items[' + ${itemStat.index} + '].tipoEquipo'"
+                                    class="form-select form-select-sm categoria-select"
+                                    onchange="onCategoryChange(this)">
+                                <option value="">-- Categoría --</option>
+                                <option th:each="teq : ${tiposEquipo}"
+                                        th:value="${teq}"
+                                        th:selected="${itemF.tipoEquipo == teq}"
+                                        th:text="${teq.displayName}">-</option>
+                            </select>
+                        </div>
+
+                        <!-- NOMBRE con datalist + botón crear -->
+                        <div class="col-md-2">
+                            <div class="input-group input-group-sm">
+                                <input type="text"
+                                       th:name="'items[' + ${itemStat.index} + '].nombre'"
+                                       th:value="${itemF.nombre}"
+                                       class="form-control form-control-sm nombre-item"
+                                       placeholder="Nombre"
+                                       list="datalist-item-nombres"
+                                       autocomplete="off"
+                                       onfocus="syncDatalist(this)">
+                                <button type="button"
+                                        class="btn btn-outline-secondary btn-sm px-1"
+                                        onclick="abrirModalCrearItem(this)"
+                                        title="Crear si no existe">
+                                    <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- CANTIDAD -->
+                        <div class="col-md-1">
+                            <input type="number" step="0.001"
+                                   th:name="'items[' + ${itemStat.index} + '].cantidad'"
+                                   th:value="${itemF.cantidad}"
+                                   class="form-control form-control-sm" placeholder="1"
+                                   oninput="calcularTotalFila(this)">
+                        </div>
+
+                        <!-- UNIDAD -->
+                        <div class="col-md-1">
+                            <select th:name="'items[' + ${itemStat.index} + '].unidad'"
+                                    class="form-select form-select-sm">
+                                <option th:selected="${itemF.unidad == 'gr'}"    value="gr">gr</option>
+                                <option th:selected="${itemF.unidad == 'kg'}"    value="kg">kg</option>
+                                <option th:selected="${itemF.unidad == 'mL'}"    value="mL">mL</option>
+                                <option th:selected="${itemF.unidad == 'L'}"     value="L">L</option>
+                                <option th:selected="${itemF.unidad == 'gal'}"   value="gal">gal</option>
+                                <option th:selected="${itemF.unidad == 'und'}"   value="und">und</option>
+                                <option th:selected="${itemF.unidad == 'caja'}"  value="caja">caja</option>
+                                <option th:selected="${itemF.unidad == 'bolsa'}" value="bolsa">bolsa</option>
+                            </select>
+                        </div>
+
+                        <!-- VALOR UNITARIO -->
+                        <div class="col-md-1">
+                            <input type="number" step="0.01"
+                                   th:name="'items[' + ${itemStat.index} + '].valorUnitario'"
+                                   th:value="${itemF.valorUnitario}"
+                                   class="form-control form-control-sm" placeholder="0.00"
+                                   oninput="calcularTotalFila(this)">
+                        </div>
+
+                        <!-- DESCUENTO -->
+                        <div class="col-md-1">
+                            <input type="number" step="0.01"
+                                   th:name="'items[' + ${itemStat.index} + '].porcentajeDescuento'"
+                                   th:value="${itemF.porcentajeDescuento}"
+                                   class="form-control form-control-sm" placeholder="0"
+                                   oninput="calcularTotalFila(this)">
+                        </div>
+
+                        <!-- IVA -->
+                        <div class="col-md-1">
+                            <input type="number" step="0.01"
+                                   th:name="'items[' + ${itemStat.index} + '].porcentajeIvaItem'"
+                                   th:value="${itemF.porcentajeIvaItem}"
+                                   class="form-control form-control-sm" placeholder="0"
+                                   oninput="calcularTotalFila(this)">
+                        </div>
+
+                        <!-- TOTAL + ELIMINAR -->
+                        <div class="col-md-1 d-flex flex-column align-items-end gap-1">
+                            <span class="item-total fw-bold text-verde" style="font-size:0.82rem;">—</span>
+                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="btn btn-sm btn-alera-outline mt-2" onclick="addItem()">
+                <i class="bi bi-plus me-1"></i>Agregar Item
+            </button>
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-alera px-4">
+                <i class="bi bi-save me-2"></i>
+                <span th:text="${facturaId != null} ? 'Actualizar' : 'Guardar y Sincronizar Inventario'">Guardar</span>
+            </button>
+            <a th:href="@{/facturas}" class="btn btn-alera-outline px-4">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Modal: Crear insumo desde factura -->
+<div class="modal fade" id="modalCrearInsumo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Crear Insumo en Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Se crea con stock en cero. La factura actualizará el stock al guardar.</p>
+                <div class="mb-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" id="nuevoInsumoNombreF" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Categoría</label>
+                    <select id="nuevoInsumoTipoF" class="form-select">
+                        <option value="MALTA">Malta</option>
+                        <option value="LUPULO">Lúpulo</option>
+                        <option value="LEVADURA">Levadura</option>
+                        <option value="CLARIFICANTE">Clarificante</option>
+                        <option value="AGUA">Agua</option>
+                        <option value="QUIMICO">Químico</option>
+                        <option value="ENVASE">Envase</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Unidad</label>
+                    <select id="nuevoInsumoUnidadF" class="form-select">
+                        <option value="gr">gr — gramos</option>
+                        <option value="kg">kg — kilogramos</option>
+                        <option value="mL">mL — mililitros</option>
+                        <option value="L">L — litros</option>
+                        <option value="gal">gal — galones</option>
+                        <option value="und">und — unidades</option>
+                    </select>
+                </div>
+                <div id="errorInsumoF" class="alert alert-danger py-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-alera" id="btnCrearInsumoF">
+                    <i class="bi bi-save me-1"></i>Crear Insumo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Crear equipo desde factura -->
+<div class="modal fade" id="modalCrearEquipo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-tools me-2"></i>Crear Equipo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" id="nuevoEquipoNombreF" class="form-control">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo</label>
+                    <select id="nuevoEquipoTipoF" class="form-select">
+                        <option value="FERMENTADOR">Fermentador</option>
+                        <option value="OLLA_MACERADO">Olla de Macerado</option>
+                        <option value="OLLA_HERVOR">Olla de Hervor</option>
+                        <option value="ENFRIADOR">Enfriador</option>
+                        <option value="BOMBA">Bomba</option>
+                        <option value="FILTRO">Filtro</option>
+                        <option value="MEDIDOR_PH">Medidor de pH</option>
+                        <option value="DENSIMETRO">Densímetro</option>
+                        <option value="BASCULA">Báscula</option>
+                        <option value="COMPRESOR">Compresor</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </div>
+                <div id="errorEquipoF" class="alert alert-danger py-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-alera" id="btnCrearEquipoF">
+                    <i class="bi bi-save me-1"></i>Crear Equipo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Datos de inventario agrupados por tipo -->
+<script th:inline="javascript">
+const INSUMOS_POR_TIPO = /*[[${insumosPorTipo}]]*/ {};
+const EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// Mapas de displayName para los selects generados por JS
+const INSUMO_NAMES = {
+    MALTA:'Malta', LUPULO:'Lúpulo', LEVADURA:'Levadura',
+    CLARIFICANTE:'Clarificante', AGUA:'Agua', QUIMICO:'Químico',
+    ENVASE:'Envase', OTRO:'Otro'
+};
+const EQUIPO_NAMES = {
+    FERMENTADOR:'Fermentador', OLLA_MACERADO:'Olla de Macerado',
+    OLLA_HERVOR:'Olla de Hervor', ENFRIADOR:'Enfriador',
+    BOMBA:'Bomba', FILTRO:'Filtro', MEDIDOR_PH:'Medidor de pH',
+    DENSIMETRO:'Densímetro', BASCULA:'Báscula',
+    COMPRESOR:'Compresor', OTRO:'Otro'
+};
+
+// ── Datalist dinámico ─────────────────────────────────────────────────────
+
+function syncDatalist(nombreInput) {
+    const row       = nombreInput.closest('.ingrediente-row');
+    const tipoSel   = row.querySelector('.tipo-select');
+    const categSel  = row.querySelector('.categoria-select');
+    const tipo      = tipoSel?.value || '';
+    const categoria = categSel?.value || '';
+    actualizarDatalist(tipo, categoria);
+}
+
+function onCategoryChange(categSel) {
+    const row     = categSel.closest('.ingrediente-row');
+    const tipoSel = row.querySelector('.tipo-select');
+    const tipo    = tipoSel?.value || '';
+    actualizarDatalist(tipo, categSel.value);
+}
+
+function actualizarDatalist(tipo, categoria) {
+    const dl = document.getElementById('datalist-item-nombres');
+    dl.innerHTML = '';
+    let nombres = [];
+    if (tipo === 'INSUMO' && categoria) {
+        nombres = INSUMOS_POR_TIPO[categoria] || [];
+    } else if (tipo === 'EQUIPO' && categoria) {
+        nombres = EQUIPOS_POR_TIPO[categoria] || [];
+    } else if (tipo === 'INSUMO') {
+        nombres = Object.values(INSUMOS_POR_TIPO).flat();
+    } else if (tipo === 'EQUIPO') {
+        nombres = Object.values(EQUIPOS_POR_TIPO).flat();
+    }
+    nombres.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        dl.appendChild(opt);
+    });
+}
+
+// ── Cambio de Tipo Item → regenera columna categoría ─────────────────────
+
+function onTipoChange(tipoSelect) {
+    const row       = tipoSelect.closest('.ingrediente-row');
+    const tipo      = tipoSelect.value;
+    const subtipoCol = row.querySelector('.subtipo-col');
+    const idx       = getRowIndex(row);
+    renderSubtipoField(subtipoCol, tipo, idx);
+    actualizarDatalist(tipo, '');
+}
+
+function renderSubtipoField(container, tipo, idx) {
+    if (tipo === 'INSUMO') {
+        let opts = '<option value="">-- Categoría --</option>';
+        Object.entries(INSUMO_NAMES).forEach(([val, label]) => {
+            opts += `<option value="${val}">${label}</option>`;
+        });
+        container.innerHTML =
+            `<select name="items[${idx}].tipoInsumo"
+                     class="form-select form-select-sm categoria-select"
+                     onchange="onCategoryChange(this)">${opts}</select>`;
+    } else if (tipo === 'EQUIPO') {
+        let opts = '<option value="">-- Categoría --</option>';
+        Object.entries(EQUIPO_NAMES).forEach(([val, label]) => {
+            opts += `<option value="${val}">${label}</option>`;
+        });
+        container.innerHTML =
+            `<select name="items[${idx}].tipoEquipo"
+                     class="form-select form-select-sm categoria-select"
+                     onchange="onCategoryChange(this)">${opts}</select>`;
+    } else {
+        container.innerHTML =
+            `<div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> Elige tipo</div>`;
+    }
+}
+
+function getRowIndex(row) {
+    return Array.from(document.querySelectorAll('#items-container .ingrediente-row')).indexOf(row);
+}
+
+// ── Eliminar y renumerar ──────────────────────────────────────────────────
+
+function removeRow(btn) {
+    btn.closest('.ingrediente-row').remove();
+    renumberItems();
+}
+
+function renumberItems() {
+    document.querySelectorAll('#items-container .ingrediente-row').forEach((row, idx) => {
+        row.querySelectorAll('input[name], select[name]').forEach(el => {
+            el.name = el.name.replace(/\[\d+\]/, '[' + idx + ']');
+        });
+    });
+}
+
+// ── Total por línea ───────────────────────────────────────────────────────
+
+function calcularTotalFila(input) {
+    const row      = input.closest('.ingrediente-row');
+    const cantidad  = parseFloat(row.querySelector('input[name*=".cantidad"]')?.value)            || 0;
+    const unitario  = parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)       || 0;
+    const descuento = parseFloat(row.querySelector('input[name*=".porcentajeDescuento"]')?.value) || 0;
+    const iva       = parseFloat(row.querySelector('input[name*=".porcentajeIvaItem"]')?.value)   || 0;
+    const base      = cantidad * unitario * (1 - descuento / 100);
+    const total     = base * (1 + iva / 100);
+    const span      = row.querySelector('.item-total');
+    if (span) span.textContent = total > 0 ? formatCurrency(total) : '—';
+}
+
+function formatCurrency(v) {
+    return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('#items-container .ingrediente-row').forEach(row => {
+        const ref = row.querySelector('input[name*=".cantidad"]');
+        if (ref) calcularTotalFila(ref);
+    });
+});
+
+// ── Selección de proveedor ────────────────────────────────────────────────
+
+function seleccionarProveedor(sel) {
+    const opt    = sel.options[sel.selectedIndex];
+    const nombre = opt.getAttribute('data-nombre') || '';
+    const id     = sel.value;
+    const input  = document.getElementById('proveedor');
+    const hidden = document.getElementById('proveedorIdHidden');
+    if (nombre && input) input.value = nombre;
+    if (hidden) hidden.value = id;
+}
+
+// ── Agregar nueva fila ────────────────────────────────────────────────────
+
+function addItem() {
+    const container = document.getElementById('items-container');
+    const idx = container.querySelectorAll('.ingrediente-row').length;
+    const row = document.createElement('div');
+    row.className = 'ingrediente-row mb-2';
+    row.innerHTML = `
+        <div class="row g-2 align-items-center">
+            <div class="col-md-2">
+                <select name="items[${idx}].tipoItem" class="form-select form-select-sm tipo-select" onchange="onTipoChange(this)">
+                    <option value="">-- Tipo --</option>
+                    <option value="INSUMO">Insumo</option>
+                    <option value="EQUIPO">Equipo</option>
+                </select>
+            </div>
+            <div class="col-md-2 subtipo-col">
+                <div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> Elige tipo</div>
+            </div>
+            <div class="col-md-2">
+                <div class="input-group input-group-sm">
+                    <input type="text" name="items[${idx}].nombre"
+                           class="form-control form-control-sm nombre-item"
+                           placeholder="Nombre"
+                           list="datalist-item-nombres"
+                           autocomplete="off"
+                           onfocus="syncDatalist(this)">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-1"
+                            onclick="abrirModalCrearItem(this)" title="Crear si no existe">
+                        <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-1">
+                <input type="number" step="0.001" name="items[${idx}].cantidad"
+                       class="form-control form-control-sm" placeholder="1" value="1"
+                       oninput="calcularTotalFila(this)">
+            </div>
+            <div class="col-md-1">
+                <select name="items[${idx}].unidad" class="form-select form-select-sm">
+                    <option value="gr">gr</option>
+                    <option value="kg">kg</option>
+                    <option value="mL">mL</option>
+                    <option value="L">L</option>
+                    <option value="gal">gal</option>
+                    <option value="und">und</option>
+                    <option value="caja">caja</option>
+                    <option value="bolsa">bolsa</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <input type="number" step="0.01" name="items[${idx}].valorUnitario"
+                       class="form-control form-control-sm" placeholder="0.00" value="0"
+                       oninput="calcularTotalFila(this)">
+            </div>
+            <div class="col-md-1">
+                <input type="number" step="0.01" name="items[${idx}].porcentajeDescuento"
+                       class="form-control form-control-sm" placeholder="0" value="0"
+                       oninput="calcularTotalFila(this)">
+            </div>
+            <div class="col-md-1">
+                <input type="number" step="0.01" name="items[${idx}].porcentajeIvaItem"
+                       class="form-control form-control-sm" placeholder="0" value="0"
+                       oninput="calcularTotalFila(this)">
+            </div>
+            <div class="col-md-1 d-flex flex-column align-items-end gap-1">
+                <span class="item-total fw-bold text-verde" style="font-size:0.82rem;">—</span>
+                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>`;
+    container.appendChild(row);
+}
+
+// ── Modales de creación rápida ────────────────────────────────────────────
+
+let _modalNombreInputRef = null;
+let _modalTipoActual     = null; // 'INSUMO' | 'EQUIPO'
+
+function abrirModalCrearItem(btn) {
+    const row     = btn.closest('.ingrediente-row');
+    const tipoSel = row.querySelector('.tipo-select');
+    const categSel = row.querySelector('.categoria-select');
+    const tipo    = tipoSel?.value || '';
+    const categ   = categSel?.value || '';
+    _modalNombreInputRef = row.querySelector('.nombre-item');
+    const nombreActual   = _modalNombreInputRef?.value?.trim() || '';
+    _modalTipoActual     = tipo;
+
+    if (tipo === 'INSUMO') {
+        document.getElementById('nuevoInsumoNombreF').value = nombreActual;
+        if (categ) document.getElementById('nuevoInsumoTipoF').value = categ;
+        document.getElementById('errorInsumoF').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('modalCrearInsumo')).show();
+        setTimeout(() => document.getElementById('nuevoInsumoNombreF').focus(), 300);
+    } else if (tipo === 'EQUIPO') {
+        document.getElementById('nuevoEquipoNombreF').value = nombreActual;
+        if (categ) document.getElementById('nuevoEquipoTipoF').value = categ;
+        document.getElementById('errorEquipoF').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('modalCrearEquipo')).show();
+        setTimeout(() => document.getElementById('nuevoEquipoNombreF').focus(), 300);
+    } else {
+        alert('Selecciona primero el Tipo de Item (Insumo o Equipo)');
+    }
+}
+
+const csrf       = () => document.querySelector('meta[name="_csrf"]')?.content;
+const csrfHeader = () => document.querySelector('meta[name="_csrf_header"]')?.content;
+
+async function postRapido(url, params) {
+    const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader()]: csrf() },
+        body: new URLSearchParams(params)
+    });
+    return r.json();
+}
+
+function agregarAlDatalist(nombre, tipo) {
+    const dl = document.getElementById('datalist-item-nombres');
+    const opt = document.createElement('option');
+    opt.value = nombre;
+    dl.appendChild(opt);
+    // Actualizar mapa en memoria
+    if (_modalTipoActual === 'INSUMO') {
+        if (!INSUMOS_POR_TIPO[tipo]) INSUMOS_POR_TIPO[tipo] = [];
+        INSUMOS_POR_TIPO[tipo].push(nombre);
+    } else {
+        if (!EQUIPOS_POR_TIPO[tipo]) EQUIPOS_POR_TIPO[tipo] = [];
+        EQUIPOS_POR_TIPO[tipo].push(nombre);
+    }
+    if (_modalNombreInputRef) _modalNombreInputRef.value = nombre;
+}
+
+// Guardar insumo
+document.getElementById('btnCrearInsumoF').addEventListener('click', async () => {
+    const nombre  = document.getElementById('nuevoInsumoNombreF').value.trim();
+    const tipo    = document.getElementById('nuevoInsumoTipoF').value;
+    const unidad  = document.getElementById('nuevoInsumoUnidadF').value;
+    const errorEl = document.getElementById('errorInsumoF');
+    errorEl.classList.add('d-none');
+    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+    try {
+        const data = await postRapido('/facturas/guardar-insumo-rapido', { nombre, tipo, unidad });
+        if (data.success) {
+            agregarAlDatalist(data.nombre, data.tipo);
+            bootstrap.Modal.getInstance(document.getElementById('modalCrearInsumo')).hide();
+        } else {
+            errorEl.textContent = data.error || 'Error al crear';
+            errorEl.classList.remove('d-none');
+        }
+    } catch { errorEl.textContent = 'Error de conexión'; errorEl.classList.remove('d-none'); }
+});
+
+// Guardar equipo
+document.getElementById('btnCrearEquipoF').addEventListener('click', async () => {
+    const nombre  = document.getElementById('nuevoEquipoNombreF').value.trim();
+    const tipo    = document.getElementById('nuevoEquipoTipoF').value;
+    const errorEl = document.getElementById('errorEquipoF');
+    errorEl.classList.add('d-none');
+    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+    try {
+        const data = await postRapido('/facturas/guardar-equipo-rapido', { nombre, tipo });
+        if (data.success) {
+            agregarAlDatalist(data.nombre, data.tipo);
+            bootstrap.Modal.getInstance(document.getElementById('modalCrearEquipo')).hide();
+        } else {
+            errorEl.textContent = data.error || 'Error al crear';
+            errorEl.classList.remove('d-none');
+        }
+    } catch { errorEl.textContent = 'Error de conexión'; errorEl.classList.remove('d-none'); }
+});
+</script>
+</body>
+</html>

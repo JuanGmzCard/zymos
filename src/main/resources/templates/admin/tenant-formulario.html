@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + (${esNuevo} ? ' - Nuevo Tenant' : ' - Editar Tenant')">Alera - Tenant</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4">
+        <h1>
+            <i class="bi" th:classappend="${esNuevo} ? 'bi-building-add' : 'bi-pencil-square'"></i>
+            <span th:text="${esNuevo} ? ' Nuevo Tenant' : ' Editar Tenant'"></span>
+        </h1>
+        <p th:text="${esNuevo} ? 'Registrar nuevo cliente en la plataforma' : 'Modificar configuración del cliente'"></p>
+    </div>
+</div>
+
+<div class="container py-4" style="max-width:860px;">
+    <form th:action="@{/admin/tenants/guardar}" method="post" th:object="${tenant}">
+        <input type="hidden" name="esNuevo" th:value="${esNuevo}">
+
+        <!-- En edición, el subdomain va como hidden (es la PK, no se puede cambiar) -->
+        <input th:if="${!esNuevo}" type="hidden" th:field="*{subdomain}">
+
+        <!-- SECCIÓN: Información básica -->
+        <div class="card-alera p-4 mb-3">
+            <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i>Información básica</h6>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label detail-label">Subdomain *</label>
+                    <input th:if="${esNuevo}" type="text" th:field="*{subdomain}"
+                           class="form-control" placeholder="ej: cerveceria1"
+                           pattern="[a-z0-9-]+" title="Solo letras minúsculas, números y guiones"
+                           required autocomplete="off">
+                    <div th:unless="${esNuevo}" class="form-control-plaintext fw-bold font-monospace"
+                         th:text="*{subdomain}">default</div>
+                    <div class="form-text" th:if="${esNuevo}">Solo minúsculas, números y guiones. No se puede cambiar.</div>
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label detail-label" for="name">Nombre *</label>
+                    <input type="text" th:field="*{name}"
+                           class="form-control" placeholder="Nombre de la cervecería" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label detail-label" for="tagline">Tagline</label>
+                    <input type="text" th:field="*{tagline}"
+                           class="form-control" placeholder="Eslogan o descripción breve">
+                </div>
+                <div class="col-12">
+                    <label class="form-label detail-label" for="logoUrl">URL del Logo</label>
+                    <input type="url" th:field="*{logoUrl}"
+                           class="form-control" placeholder="https://...">
+                    <div class="form-text">Dejar vacío para mostrar el ícono de gota por defecto.</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label detail-label" for="emailAdmin">Email de alertas</label>
+                    <input type="email" th:field="*{emailAdmin}"
+                           class="form-control" placeholder="admin@cerveceria.com">
+                    <div class="form-text">
+                        Si está configurado, recibirá un resumen diario (lunes a viernes a las 8 AM) con alertas de
+                        bajo stock, vencimientos próximos y mantenimientos. Requiere SMTP configurado en el servidor.
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" th:field="*{active}">
+                        <label class="form-check-label detail-label" for="active">Tenant activo</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN: Paleta de colores -->
+        <div class="card-alera p-4 mb-3">
+            <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i>Paleta de colores</h6>
+
+            <!-- Preview en vivo -->
+            <div class="mb-3">
+                <div class="small text-muted mb-1">Vista previa del navbar</div>
+                <div class="rounded overflow-hidden" id="previewWrap"
+                     style="height:52px; display:flex; align-items:center; padding:0 14px; gap:10px;">
+                    <i class="bi bi-droplet-fill" id="previewIcon" style="font-size:.95rem;"></i>
+                    <span id="previewName"
+                          style="font-family:Cinzel; font-weight:700; font-size:.85rem; flex:1;"></span>
+                    <span id="previewBtn" class="rounded px-3"
+                          style="font-size:.72rem; font-weight:600; padding-top:3px; padding-bottom:3px;">
+                        Acción
+                    </span>
+                </div>
+                <div class="d-flex gap-1 mt-1" title="Navbar · Primary · Acento · Acento hover · Crema · Fondo">
+                    <div class="flex-fill rounded" id="sw1" style="height:6px;" title="Navbar"></div>
+                    <div class="flex-fill rounded" id="sw2" style="height:6px;" title="Primary"></div>
+                    <div class="flex-fill rounded" id="sw3" style="height:6px;" title="Acento"></div>
+                    <div class="flex-fill rounded" id="sw4" style="height:6px;" title="Acento hover"></div>
+                    <div class="flex-fill rounded" id="sw5" style="height:6px;" title="Crema"></div>
+                    <div class="flex-fill rounded" id="sw6" style="height:6px;" title="Fondo"></div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Navbar</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorNavbar}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexNavbar"></code>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Primary (hero)</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorPrimary}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexPrimary"></code>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Acento</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorAccent}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexAccent"></code>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Acento hover</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorAccentHover}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexAccentHover"></code>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Crema (texto)</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorCream}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexCream"></code>
+                    </div>
+                </div>
+                <div class="col-xl-4 col-md-6 col-6">
+                    <label class="form-label detail-label">Fondo body</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <input type="color" th:field="*{colorBodyBg}"
+                               class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
+                        <code class="small text-muted" id="hexBodyBg"></code>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-alera">
+                <i class="bi bi-check-lg me-1"></i>
+                <span th:text="${esNuevo} ? 'Crear Tenant' : 'Guardar Cambios'">Guardar</span>
+            </button>
+            <a th:href="@{/admin/tenants}" class="btn btn-alera-outline">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function () {
+    function val(id) { return document.getElementById(id)?.value || ''; }
+
+    function updatePreview() {
+        const navbar      = val('colorNavbar');
+        const primary     = val('colorPrimary');
+        const accent      = val('colorAccent');
+        const accentHover = val('colorAccentHover');
+        const cream       = val('colorCream');
+        const bodyBg      = val('colorBodyBg');
+        const name        = val('name') || 'Mi Tenant';
+
+        const wrap = document.getElementById('previewWrap');
+        if (wrap) wrap.style.background = navbar;
+
+        const pName = document.getElementById('previewName');
+        if (pName) { pName.style.color = cream; pName.textContent = name; }
+
+        const pIcon = document.getElementById('previewIcon');
+        if (pIcon) pIcon.style.color = accent;
+
+        const btn = document.getElementById('previewBtn');
+        if (btn) { btn.style.background = accent; btn.style.color = navbar; }
+
+        const ids = ['sw1','sw2','sw3','sw4','sw5','sw6'];
+        const colors = [navbar, primary, accent, accentHover, cream, bodyBg];
+        ids.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) el.style.background = colors[i];
+        });
+
+        const hexIds = ['hexNavbar','hexPrimary','hexAccent','hexAccentHover','hexCream','hexBodyBg'];
+        hexIds.forEach((id, i) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = colors[i];
+        });
+    }
+
+    ['colorNavbar','colorPrimary','colorAccent','colorAccentHover','colorCream','colorBodyBg','name']
+        .forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', updatePreview);
+        });
+
+    updatePreview();
+})();
+</script>
+</body>
+</html>

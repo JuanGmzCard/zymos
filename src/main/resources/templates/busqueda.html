@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Búsqueda</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4">
+        <h1><i class="bi bi-search me-2"></i>Resultados de búsqueda</h1>
+        <p>
+            <span th:text="${total}">0</span> resultado<span th:if="${total != 1}">s</span>
+            para "<strong th:text="${q}"></strong>"
+        </p>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Nueva búsqueda -->
+    <form th:action="@{/buscar}" method="get" class="mb-4 d-flex gap-2" style="max-width:500px;">
+        <input type="search" name="q" class="form-control" th:value="${q}" placeholder="Buscar lotes, recetas, insumos...">
+        <button type="submit" class="btn btn-alera px-3"><i class="bi bi-search"></i></button>
+    </form>
+
+    <!-- Sin resultados -->
+    <div th:if="${total == 0}" class="empty-state">
+        <i class="bi bi-search"></i>
+        <h5>Sin resultados</h5>
+        <p class="text-muted">No se encontraron lotes, recetas ni insumos que coincidan con "<span th:text="${q}"></span>"</p>
+    </div>
+
+    <div class="row g-4" th:unless="${total == 0}">
+
+        <!-- Lotes -->
+        <div class="col-lg-4" th:if="${!#lists.isEmpty(lotes)}">
+            <div class="card-alera h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-droplet-fill me-2"></i>Lotes</h5>
+                    <span class="badge" style="background:var(--verde-alera);"
+                          th:text="${#lists.size(lotes)}"></span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a th:each="lote : ${lotes}"
+                       th:href="@{/ver/{id}(id=${lote.id})}"
+                       class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-alera);font-size:0.88rem;"
+                                     th:text="${lote.codigoLote}">—</div>
+                                <div class="text-muted small" th:text="${lote.estilo}">—</div>
+                            </div>
+                            <span class="phase-badge"
+                                  th:classappend="${lote.completado} ? 'completado' : 'fermentacion'"
+                                  th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}"
+                                  style="font-size:0.65rem;">—</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a th:href="@{/(estilo=${q})}" class="btn btn-sm btn-alera-outline w-100">
+                        Ver todos los lotes con "<span th:text="${q}"></span>"
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recetas -->
+        <div class="col-lg-4" th:if="${!#lists.isEmpty(recetas)}">
+            <div class="card-alera h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-journal-bookmark me-2"></i>Recetas</h5>
+                    <span class="badge" style="background:var(--verde-alera);"
+                          th:text="${#lists.size(recetas)}"></span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a th:each="rec : ${recetas}"
+                       th:href="@{/recetas/ver/{id}(id=${rec.id})}"
+                       class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="fw-600" th:text="${rec.nombre}">—</div>
+                        <div class="text-muted small">
+                            <span th:text="${rec.estilo}">—</span>
+                            <span th:if="${rec.ogObjetivo != null}" class="ms-2 text-dorado">
+                                OG <span th:text="${rec.ogObjetivo}"></span>
+                            </span>
+                        </div>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a th:href="@{/recetas}" class="btn btn-sm btn-alera-outline w-100">
+                        Ver todas las recetas
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Insumos -->
+        <div class="col-lg-4" th:if="${!#lists.isEmpty(insumos)}">
+            <div class="card-alera h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-box-seam me-2"></i>Inventario</h5>
+                    <span class="badge" style="background:var(--verde-alera);"
+                          th:text="${#lists.size(insumos)}"></span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a th:each="ins : ${insumos}"
+                       th:href="@{/inventario}"
+                       class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="fw-600" th:text="${ins.nombre}">—</div>
+                        <div class="d-flex justify-content-between">
+                            <span class="badge equipo-tipo-badge" th:text="${ins.tipo.displayName}">—</span>
+                            <span class="small fw-bold"
+                                  th:classappend="${ins.bajoStock} ? 'text-danger' : 'text-muted'"
+                                  th:text="${ins.cantidad} + ' ' + ${ins.unidad}">—</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a th:href="@{/inventario(nombre=${q})}" class="btn btn-sm btn-alera-outline w-100">
+                        Buscar en inventario
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

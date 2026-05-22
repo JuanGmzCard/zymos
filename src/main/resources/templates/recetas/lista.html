@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Recetas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-journal-bookmark me-2"></i>Recetas</h1>
+            <p>Plantillas reutilizables para crear lotes de cerveza</p>
+        </div>
+        <a th:href="@{/recetas/nueva}" sec:authorize="hasRole('ADMIN')" class="btn btn-alera">
+            <i class="bi bi-plus-lg me-1"></i>Nueva Receta
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensaje}" class="alert"
+         th:classappend="'alert-' + ${tipoMensaje}" role="alert" th:text="${mensaje}"></div>
+
+    <!-- Filtros por estado -->
+    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+        <span class="text-muted small me-1">Filtrar:</span>
+        <a th:href="@{/recetas}" class="btn btn-sm"
+           th:classappend="${activaFiltro == null} ? 'btn-alera' : 'btn-alera-outline'">
+            <i class="bi bi-grid-3x3-gap me-1"></i>Todas
+        </a>
+        <a th:href="@{/recetas(activa=true)}" class="btn btn-sm"
+           th:classappend="${activaFiltro != null and activaFiltro} ? 'btn-alera' : 'btn-alera-outline'">
+            <i class="bi bi-check-circle me-1"></i>Activas
+        </a>
+        <a th:href="@{/recetas(activa=false)}" class="btn btn-sm"
+           th:classappend="${activaFiltro != null and !activaFiltro} ? 'btn-alera' : 'btn-alera-outline'">
+            <i class="bi bi-pause-circle me-1"></i>Inactivas
+        </a>
+        <div class="position-relative ms-auto">
+            <input type="text" id="recetaNombreInput" class="form-control form-control-sm"
+                   style="width:220px;" placeholder="Buscar receta..." autocomplete="off"
+                   th:attr="data-activa=${activaFiltro != null ? activaFiltro : ''}">
+            <div id="recetaSuggest" class="search-suggest" style="display:none;"></div>
+        </div>
+    </div>
+
+    <!-- Estado vacío -->
+    <div th:if="${#lists.isEmpty(recetas)}" class="empty-state">
+        <i class="bi bi-journal-bookmark"></i>
+        <h5>Sin recetas todavía</h5>
+        <p class="text-muted">Crea tu primera receta para reutilizarla al crear lotes.</p>
+        <a th:href="@{/recetas/nueva}" sec:authorize="hasRole('ADMIN')" class="btn btn-alera mt-2">
+            <i class="bi bi-plus-lg me-1"></i>Crear Receta
+        </a>
+    </div>
+
+    <!-- Tabla de recetas -->
+    <div th:unless="${#lists.isEmpty(recetas)}" class="card-alera">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Listado de Recetas</h5>
+            <span class="text-muted small"
+                  th:text="${totalRecetas} + ' receta' + (${totalRecetas} != 1 ? 's' : '')"></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-alera mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Estilo</th>
+                        <th class="text-center">OG / FG</th>
+                        <th class="text-center">Hervor</th>
+                        <th class="text-center">Ingredientes</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="rec : ${recetas}">
+                        <td>
+                            <span class="fw-600" th:text="${rec.nombre}">—</span>
+                            <div th:if="${rec.descripcion != null and !rec.descripcion.isBlank()}"
+                                 class="text-muted small"
+                                 th:text="${#strings.abbreviate(rec.descripcion, 60)}"></div>
+                        </td>
+                        <td>
+                            <span class="badge receta-estilo-badge" th:text="${rec.estilo}">—</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${rec.ogObjetivo != null}"
+                                  class="detail-value highlight" style="font-size:0.85rem;"
+                                  th:text="${rec.ogObjetivo}">—</span>
+                            <span th:if="${rec.ogObjetivo != null and rec.fgObjetivo != null}"
+                                  class="text-muted mx-1">/</span>
+                            <span th:if="${rec.fgObjetivo != null}"
+                                  class="text-muted" style="font-size:0.85rem;"
+                                  th:text="${rec.fgObjetivo}">—</span>
+                            <span th:if="${rec.ogObjetivo == null and rec.fgObjetivo == null}"
+                                  class="text-muted">—</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${rec.tiempoHervorMinutos != null}"
+                                  th:text="${rec.tiempoHervorMinutos} + ' min'">—</span>
+                            <span th:if="${rec.tiempoHervorMinutos == null}" class="text-muted">—</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="me-1" th:if="${!#lists.isEmpty(rec.maltas)}">
+                                <span class="badge ingrediente-chip malta"
+                                      th:text="${#lists.size(rec.maltas)} + ' Malta' + (${#lists.size(rec.maltas)} != 1 ? 's' : '')"></span>
+                            </span>
+                            <span th:if="${!#lists.isEmpty(rec.lupulos)}">
+                                <span class="badge ingrediente-chip lupulo"
+                                      th:text="${#lists.size(rec.lupulos)} + ' Lúpulo' + (${#lists.size(rec.lupulos)} != 1 ? 's' : '')"></span>
+                            </span>
+                            <span th:if="${#lists.isEmpty(rec.maltas) and #lists.isEmpty(rec.lupulos)}"
+                                  class="text-muted small">Sin ingredientes</span>
+                        </td>
+                        <td class="text-center">
+                            <span th:if="${rec.activa}" class="badge bg-success">Activa</span>
+                            <span th:unless="${rec.activa}" class="badge bg-secondary">Inactiva</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a th:href="@{/recetas/ver/{id}(id=${rec.id})}"
+                                   class="btn btn-sm btn-outline-secondary" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a th:href="@{/recetas/editar/{id}(id=${rec.id})}"
+                                   sec:authorize="hasAnyRole('ADMIN','INVENTARIO')"
+                                   class="btn btn-sm btn-alera-outline" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
+                                      sec:authorize="hasAnyRole('ADMIN','INVENTARIO')"
+                                      onsubmit="return confirm('¿Eliminar la receta «' + /*[[${rec.nombre}]]*/ '' + '»?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-transparent py-2">
+            <div th:replace="~{fragments/paginacion :: paginacion}"></div>
+            <p class="text-center text-muted small mt-1" th:if="${totalPaginas > 1}">
+                Página <span th:text="${paginaActual + 1}"></span> de <span th:text="${totalPaginas}"></span>
+                — <span th:text="${totalRecetas}"></span> recetas en total
+            </p>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+    var debTimer, activeIdx = -1;
+    var input   = document.getElementById('recetaNombreInput');
+    var suggest = document.getElementById('recetaSuggest');
+    if (!input || !suggest) return;
+
+    var activa = input.dataset.activa; // '' | 'true' | 'false'
+
+    input.addEventListener('input', function() {
+        clearTimeout(debTimer);
+        activeIdx = -1;
+        var q = this.value.trim();
+        if (q.length < 2) { hide(); return; }
+        debTimer = setTimeout(function() { doFetch(q); }, 260);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        var items = suggest.querySelectorAll('a.ss-item');
+        if (e.key === 'Escape') { hide(); return; }
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActive(items, Math.min(activeIdx + 1, items.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActive(items, Math.max(activeIdx - 1, 0));
+        } else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault();
+            items[activeIdx].click();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.closest('.position-relative').contains(e.target)) hide();
+    });
+
+    function setActive(items, idx) {
+        items.forEach(function(a) { a.classList.remove('ss-active'); });
+        activeIdx = idx;
+        if (items[idx]) items[idx].classList.add('ss-active');
+    }
+
+    function hide() {
+        suggest.style.display = 'none';
+        suggest.innerHTML = '';
+        activeIdx = -1;
+    }
+
+    function doFetch(q) {
+        var url = '/recetas/suggest?q=' + encodeURIComponent(q)
+                + (activa !== '' ? '&activa=' + encodeURIComponent(activa) : '');
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) { if (data) render(data, q); })
+            .catch(function() {});
+    }
+
+    function render(items, q) {
+        if (!items.length) {
+            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.style.display = 'block';
+            return;
+        }
+        var html = '';
+        items.forEach(function(item) {
+            var badge = item.activa
+                ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">Activa</span>'
+                : '<span class="badge bg-secondary ms-auto" style="font-size:.65rem;">Inactiva</span>';
+            html += '<a href="' + esc(item.url) + '" class="ss-item">' +
+                '<i class="bi bi-journal-bookmark ss-icon"></i>' +
+                '<span class="ss-title">' + esc(item.nombre) + '</span>' +
+                (item.estilo ? '<span class="ss-sub">' + esc(item.estilo) + '</span>' : '') +
+                badge +
+                '</a>';
+        });
+        suggest.innerHTML = html;
+        suggest.style.display = 'block';
+        activeIdx = -1;
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+})();
+</script>
+</body>
+</html>

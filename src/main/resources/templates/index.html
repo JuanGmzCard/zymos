@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Trazabilidad</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* ══ FILTER BAR ═══════════════════════════════════ */
+        .filter-bar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .filter-bar label { font-size: 0.75rem; font-weight: 600; color: #6c757d; text-transform: uppercase; margin-bottom: 3px; }
+        .filter-bar .form-control,
+        .filter-bar .form-select { font-size: 0.82rem; border-radius: 6px; }
+        .filter-bar .form-control:focus,
+        .filter-bar .form-select:focus { border-color: #C9A028; box-shadow: 0 0 0 0.15rem rgba(201,160,40,0.2); }
+
+        /* ══ TABS ══════════════════════════════════════════ */
+        .nav-tabs-alera {
+            border-bottom: none;
+            gap: 4px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+        .nav-tabs-alera .nav-link {
+            border: none;
+            border-radius: 8px 8px 0 0;
+            padding: 9px 18px;
+            font-family: 'Cinzel', serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: #6c757d;
+            background: #e9ecef;
+            white-space: nowrap;
+            transition: all 0.18s;
+        }
+        .nav-tabs-alera .nav-link:hover { background: #dee2e6; color: #364318; }
+        .nav-tabs-alera .nav-link.active { color: #F5EDD0; }
+        .nav-tabs-alera .nav-link.tab-general.active  { background: #1a3a5c; }
+        .nav-tabs-alera .nav-link.tab-ferm.active     { background: #1a5e20; }
+        .nav-tabs-alera .nav-link.tab-acond.active    { background: #0c5460; }
+        .nav-tabs-alera .nav-link.tab-madur.active    { background: #856404; }
+        .nav-tabs-alera .nav-link.tab-carbon.active   { background: #004085; }
+        .nav-tabs-alera .nav-link.tab-density.active  { background: #4a148c; }
+
+        /* ══ PANEL ═════════════════════════════════════════ */
+        .tab-panel-wrapper {
+            background: white;
+            border-radius: 0 8px 8px 8px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.09);
+            overflow: hidden;
+        }
+
+        /* ══ TABLA ═════════════════════════════════════════ */
+        .traza-table { font-size: 0.79rem; font-family: 'Raleway', sans-serif; margin: 0; }
+        .traza-table thead th {
+            padding: 8px 10px; font-size: 0.71rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.4px;
+            white-space: nowrap; color: #F5EDD0; border: none;
+        }
+        .traza-table tbody td { padding: 7px 10px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
+        .traza-table tbody tr:hover td { background: rgba(201,160,40,0.06); }
+        .traza-table tbody tr:last-child td { border-bottom: none; }
+
+        .th-general { background: #1e4976; }
+        .th-ferm    { background: #2e7d32; }
+        .th-acond   { background: #0e6b7a; }
+        .th-madur   { background: #a07800; }
+        .th-carbon  { background: #0d5ea8; }
+        .th-density { background: #6a1b9a; }
+
+        .col-lote { position: sticky; left: 0; z-index: 2; background: white; min-width: 130px; }
+        thead .col-lote { z-index: 3; }
+        tr:hover .col-lote { background: #fffbf0; }
+
+        .lote-code { font-family: 'Cinzel', serif; font-weight: 700; color: #364318; font-size: 0.85rem; }
+        .lote-actions { display: flex; gap: 3px; margin-top: 3px; }
+
+        .ing-chip { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; margin: 1px; white-space: nowrap; }
+        .ing-chip.malta    { background:rgba(201,160,40,0.15); color:#7a5c00; border:1px solid rgba(201,160,40,0.4); }
+        .ing-chip.lupulo   { background:rgba(39,174,96,0.12);  color:#1a6e3e; border:1px solid rgba(39,174,96,0.4); }
+        .ing-chip.levadura { background:rgba(52,152,219,0.12); color:#1a5276; border:1px solid rgba(52,152,219,0.4); }
+        .ing-chip.clar     { background:rgba(142,68,173,0.1);  color:#6c3483; border:1px solid rgba(142,68,173,0.35); }
+
+        .fase-pill { display: inline-block; padding:2px 10px; border-radius:12px; font-size:0.68rem; font-weight:700; }
+        .fase-pill.ferm   { background:#d4edda; color:#155724; }
+        .fase-pill.acond  { background:#d1ecf1; color:#0c5460; }
+        .fase-pill.madur  { background:#fff3cd; color:#856404; }
+        .fase-pill.carbon { background:#cce5ff; color:#004085; }
+        .fase-pill.done   { background:#e8d5f5; color:#6f2da8; }
+        .fase-pill.inicio { background:#f8f9fa; color:#6c757d; border:1px solid #dee2e6; }
+
+        .f-date { color:#495057; white-space:nowrap; }
+        .f-none { color:#ccc; font-style:italic; }
+        .f-temp { font-weight:600; color:#364318; }
+
+        .fase-progress { display:flex; gap:3px; align-items:center; }
+        .fase-dot { width:9px; height:9px; border-radius:50%; background:#dee2e6; flex-shrink:0; }
+        .fase-dot.done   { background:#27ae60; }
+        .fase-dot.active { background:#C9A028; box-shadow:0 0 0 2px rgba(201,160,40,0.35); }
+
+        .empty-state { text-align:center; padding:3rem; color:#6c757d; }
+        .empty-state i { font-size:3rem; opacity:.25; color:#364318; display:block; margin-bottom:.8rem; }
+
+        /* ══ PAGINACIÓN ════════════════════════════════════ */
+        .pagination .page-link {
+            color: #364318;
+            border-color: #dee2e6;
+            font-size: 0.82rem;
+        }
+        .pagination .page-item.active .page-link {
+            background-color: #364318;
+            border-color: #364318;
+            color: #F5EDD0;
+        }
+        .pagination .page-link:hover { background: rgba(201,160,40,0.12); color: #364318; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-clipboard-data me-2"></i>Trazabilidad de Lotes</h1>
+            <p>Seguimiento completo del proceso cervecero</p>
+        </div>
+        <a th:href="@{/nuevo}" class="btn btn-alera">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo Lote
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-3">
+
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert mb-3"
+         th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : (${tipoMensaje == 'warning'} ? 'alert-warning' : 'alert-danger')">
+        <i class="bi" th:classappend="${tipoMensaje == 'success'} ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
+        <span th:text="${mensaje}" class="ms-2"></span>
+    </div>
+
+    <!-- Barra de filtros -->
+    <form th:action="@{/}" method="get" class="filter-bar">
+        <div class="position-relative">
+            <label>Estilo / Código</label>
+            <input type="text" name="estilo" id="loteEstiloInput" class="form-control" style="width:200px;"
+                   placeholder="Ej: IPA, IPA-001..." th:value="${estiloFiltro}" autocomplete="off">
+            <div id="loteSuggest" class="search-suggest" style="display:none;"></div>
+        </div>
+        <div>
+            <label>Fase Actual</label>
+            <select name="fase" class="form-select" style="width:180px;">
+                <option value="">Todas las fases</option>
+                <option value="INICIO"            th:selected="${faseFiltro == 'INICIO'}">Sin iniciar</option>
+                <option value="FERMENTACION"      th:selected="${faseFiltro == 'FERMENTACION'}">Fermentación</option>
+                <option value="ACONDICIONAMIENTO" th:selected="${faseFiltro == 'ACONDICIONAMIENTO'}">Acondicionamiento</option>
+                <option value="MADURACION"        th:selected="${faseFiltro == 'MADURACION'}">Maduración</option>
+                <option value="CARBONATACION"     th:selected="${faseFiltro == 'CARBONATACION'}">Carbonatación</option>
+                <option value="COMPLETADO"        th:selected="${faseFiltro == 'COMPLETADO'}">Completados</option>
+            </select>
+        </div>
+        <div>
+            <label>Desde</label>
+            <input type="date" name="desde" class="form-control"
+                   style="width:145px;"
+                   th:value="${desdeFiltro != null} ? ${#temporals.format(desdeFiltro,'yyyy-MM-dd')} : ''">
+        </div>
+        <div>
+            <label>Hasta</label>
+            <input type="date" name="hasta" class="form-control"
+                   style="width:145px;"
+                   th:value="${hastaFiltro != null} ? ${#temporals.format(hastaFiltro,'yyyy-MM-dd')} : ''">
+        </div>
+        <div class="d-flex gap-2 align-items-end">
+            <button type="submit" class="btn btn-alera btn-sm px-3">
+                <i class="bi bi-search me-1"></i>Filtrar
+            </button>
+            <a th:href="@{/}" class="btn btn-alera-outline btn-sm px-3">
+                <i class="bi bi-x-lg me-1"></i>Limpiar
+            </a>
+        </div>
+        <div class="ms-auto align-self-center">
+            <span class="badge" style="background:#364318;font-size:0.75rem;">
+                <span th:text="${totalLotes}">0</span> lotes
+                <span th:if="${estiloFiltro != null and !estiloFiltro.isBlank()} or ${faseFiltro != null and !faseFiltro.isBlank()}"
+                      class="ms-1 opacity-75">(filtrados)</span>
+            </span>
+        </div>
+    </form>
+
+    <!-- Empty -->
+    <div th:if="${#lists.isEmpty(lotes)}" class="empty-state bg-white rounded shadow-sm">
+        <i class="bi bi-droplet"></i>
+        <h5 th:text="${(estiloFiltro != null and !estiloFiltro.isBlank()) or (faseFiltro != null and !faseFiltro.isBlank())} ? 'No hay lotes con esos filtros' : 'No hay lotes registrados'">Sin lotes</h5>
+        <p class="small">
+            <span th:if="${(estiloFiltro != null and !estiloFiltro.isBlank()) or (faseFiltro != null and !faseFiltro.isBlank())}">
+                Intenta con otros criterios de búsqueda.
+            </span>
+            <span th:unless="${(estiloFiltro != null and !estiloFiltro.isBlank()) or (faseFiltro != null and !faseFiltro.isBlank())}">
+                Comienza registrando tu primer lote de cerveza artesanal.
+            </span>
+        </p>
+        <a th:if="${#lists.isEmpty(lotes) and (estiloFiltro == null or estiloFiltro.isBlank()) and (faseFiltro == null or faseFiltro.isBlank())}"
+           th:href="@{/nuevo}" class="btn btn-alera btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Crear Primer Lote
+        </a>
+    </div>
+
+    <div th:unless="${#lists.isEmpty(lotes)}">
+
+        <!-- ══ TABS ══ -->
+        <ul class="nav nav-tabs-alera mb-0" id="trazaTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link tab-general active" data-bs-toggle="tab" data-bs-target="#tab-general" type="button">
+                    <i class="bi bi-info-circle me-1"></i>General e Insumos
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link tab-ferm" data-bs-toggle="tab" data-bs-target="#tab-ferm" type="button">
+                    <i class="bi bi-thermometer me-1"></i>Fermentación
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link tab-acond" data-bs-toggle="tab" data-bs-target="#tab-acond" type="button">
+                    <i class="bi bi-droplet-half me-1"></i>Acondicionamiento
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link tab-madur" data-bs-toggle="tab" data-bs-target="#tab-madur" type="button">
+                    <i class="bi bi-hourglass-split me-1"></i>Maduración
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link tab-carbon" data-bs-toggle="tab" data-bs-target="#tab-carbon" type="button">
+                    <i class="bi bi-wind me-1"></i>Carbonatación
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link tab-density" data-bs-toggle="tab" data-bs-target="#tab-density" type="button">
+                    <i class="bi bi-activity me-1"></i>Densidad / Obs.
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content tab-panel-wrapper">
+
+            <!-- TAB 1 — GENERAL E INSUMOS -->
+            <div class="tab-pane fade show active" id="tab-general">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-general col-lote">Lote</th>
+                            <th class="th-general">Estilo</th>
+                            <th class="th-general">Elaboración</th>
+                            <th class="th-general">Fermentador</th>
+                            <th class="th-general">Fase Actual</th>
+                            <th class="th-general">Progreso</th>
+                            <th class="th-general" style="min-width:160px;">Maltas</th>
+                            <th class="th-general" style="min-width:160px;">Lúpulos</th>
+                            <th class="th-general" style="min-width:120px;">Levadura</th>
+                            <th class="th-general" style="min-width:100px;">Clarificante</th>
+                            <th class="th-general">Agua (L)</th>
+                            <th class="th-general">pH</th>
+                            <th class="th-general">L. Finales</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-alera btn-sm py-0 px-2" style="font-size:0.65rem;" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Duplicar lote"><i class="bi bi-copy"></i></a>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar lote y restaurar inventario?')">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:0.65rem;" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td class="fw-semibold" th:text="${lote.estilo}">-</td>
+                            <td class="f-date" th:classappend="${lote.fechaElaboracion == null} ? 'f-none' : ''"
+                                th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">-</td>
+                            <td th:text="${lote.equipoFermentador != null} ? ${lote.equipoFermentador.nombre} : '—'"
+                                th:classappend="${lote.equipoFermentador == null} ? 'f-none' : ''">-</td>
+                            <td>
+                                <span class="fase-pill"
+                                      th:classappend="${lote.completado} ? 'done' :
+                                                      (${lote.faseActual == 'Carbonatación'} ? 'carbon' :
+                                                      (${lote.faseActual == 'Maduración'} ? 'madur' :
+                                                      (${lote.faseActual == 'Acondicionamiento'} ? 'acond' :
+                                                      (${lote.faseActual == 'Fermentación'} ? 'ferm' : 'inicio'))))"
+                                      th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}">-</span>
+                            </td>
+                            <td>
+                                <div class="fase-progress">
+                                    <div class="fase-dot" th:classappend="${lote.fermFechaFinal != null} ? 'done' : (${lote.fermFechaInicial != null} ? 'active' : '')"></div>
+                                    <div class="fase-dot" th:classappend="${lote.acondFechaFinal != null} ? 'done' : (${lote.acondFechaInicial != null} ? 'active' : '')"></div>
+                                    <div class="fase-dot" th:classappend="${lote.madurFechaFinal != null} ? 'done' : (${lote.madurFechaInicial != null} ? 'active' : '')"></div>
+                                    <div class="fase-dot" th:classappend="${lote.carbFechaFinal != null} ? 'done' : (${lote.carbFechaInicial != null} ? 'active' : '')"></div>
+                                </div>
+                            </td>
+                            <td style="white-space:normal;">
+                                <span th:each="m : ${lote.maltas}" class="ing-chip malta" th:text="${m.nombre} + (${m.cantidad != null} ? ' · ' + ${m.cantidad} : '')">-</span>
+                                <span th:if="${#lists.isEmpty(lote.maltas)}" class="f-none">—</span>
+                            </td>
+                            <td style="white-space:normal;">
+                                <span th:each="lup : ${lote.lupulos}" class="ing-chip lupulo" th:text="${lup.nombre} + (${lup.cantidad != null} ? ' · ' + ${lup.cantidad} : '')">-</span>
+                                <span th:if="${#lists.isEmpty(lote.lupulos)}" class="f-none">—</span>
+                            </td>
+                            <td style="white-space:normal;">
+                                <span th:each="lev : ${lote.levaduras}" class="ing-chip levadura" th:text="${lev.nombre} + (${lev.cantidad != null} ? ' · ' + ${lev.cantidad} : '')">-</span>
+                                <span th:if="${#lists.isEmpty(lote.levaduras)}" class="f-none">—</span>
+                            </td>
+                            <td style="white-space:normal;">
+                                <span th:each="clar : ${lote.clarificantes}" class="ing-chip clar" th:text="${clar.nombre} + (${clar.cantidad != null} ? ' · ' + ${clar.cantidad} : '')">-</span>
+                                <span th:if="${lote.clarificante != null and !lote.clarificante.isBlank()}" class="ing-chip clar" th:text="${lote.clarificante}">-</span>
+                                <span th:if="${#lists.isEmpty(lote.clarificantes) and (lote.clarificante == null or lote.clarificante.isBlank())}" class="f-none">—</span>
+                            </td>
+                            <td th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada} : '—'" th:classappend="${lote.aguaUtilizada == null} ? 'f-none' : ''">-</td>
+                            <td th:text="${lote.phAgua != null} ? ${lote.phAgua} : '—'" th:classappend="${lote.phAgua == null} ? 'f-none' : ''">-</td>
+                            <td class="fw-semibold" th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'" th:classappend="${lote.litrosFinales == null} ? 'f-none' : ''">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 2 — FERMENTACIÓN -->
+            <div class="tab-pane fade" id="tab-ferm">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-ferm col-lote">Lote</th>
+                            <th class="th-ferm">Estilo</th>
+                            <th class="th-ferm">Estado</th>
+                            <th class="th-ferm">Fecha Inicio</th>
+                            <th class="th-ferm">Fin Ideal</th>
+                            <th class="th-ferm">Temperatura</th>
+                            <th class="th-ferm">Fin Real</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td>
+                                <span th:if="${lote.fermFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
+                                <span th:if="${lote.fermFechaInicial != null and lote.fermFechaFinal == null}" class="fase-pill ferm"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
+                                <span th:if="${lote.fermFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                            </td>
+                            <td class="f-date" th:classappend="${lote.fermFechaInicial == null} ? 'f-none' : ''" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.fermFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.fermFechaFinalIdeal != null} ? ${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
+                            <td th:classappend="${lote.fermTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura} + ' °C' : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.fermFechaFinal == null} ? 'f-none' : ''" th:text="${lote.fermFechaFinal != null} ? ${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 3 — ACONDICIONAMIENTO -->
+            <div class="tab-pane fade" id="tab-acond">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-acond col-lote">Lote</th>
+                            <th class="th-acond">Estilo</th>
+                            <th class="th-acond">Estado</th>
+                            <th class="th-acond">Fecha Inicio</th>
+                            <th class="th-acond">Fin Ideal</th>
+                            <th class="th-acond">Temperatura</th>
+                            <th class="th-acond">Fin Real</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td>
+                                <span th:if="${lote.acondFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
+                                <span th:if="${lote.acondFechaInicial != null and lote.acondFechaFinal == null}" class="fase-pill acond"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
+                                <span th:if="${lote.acondFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                            </td>
+                            <td class="f-date" th:classappend="${lote.acondFechaInicial == null} ? 'f-none' : ''" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.acondFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.acondFechaFinalIdeal != null} ? ${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
+                            <td th:classappend="${lote.acondTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.acondTemperatura != null} ? ${lote.acondTemperatura} + ' °C' : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.acondFechaFinal == null} ? 'f-none' : ''" th:text="${lote.acondFechaFinal != null} ? ${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 4 — MADURACIÓN -->
+            <div class="tab-pane fade" id="tab-madur">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-madur col-lote">Lote</th>
+                            <th class="th-madur">Estilo</th>
+                            <th class="th-madur">Estado</th>
+                            <th class="th-madur">Fecha Inicio</th>
+                            <th class="th-madur">Fin Ideal</th>
+                            <th class="th-madur">Temperatura</th>
+                            <th class="th-madur">Fin Real</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td>
+                                <span th:if="${lote.madurFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
+                                <span th:if="${lote.madurFechaInicial != null and lote.madurFechaFinal == null}" class="fase-pill madur"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
+                                <span th:if="${lote.madurFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                            </td>
+                            <td class="f-date" th:classappend="${lote.madurFechaInicial == null} ? 'f-none' : ''" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.madurFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.madurFechaFinalIdeal != null} ? ${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
+                            <td th:classappend="${lote.madurTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.madurTemperatura != null} ? ${lote.madurTemperatura} + ' °C' : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.madurFechaFinal == null} ? 'f-none' : ''" th:text="${lote.madurFechaFinal != null} ? ${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 5 — CARBONATACIÓN -->
+            <div class="tab-pane fade" id="tab-carbon">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-carbon col-lote">Lote</th>
+                            <th class="th-carbon">Estilo</th>
+                            <th class="th-carbon">Estado</th>
+                            <th class="th-carbon">Fecha Inicio</th>
+                            <th class="th-carbon">Fin Ideal</th>
+                            <th class="th-carbon">Temperatura</th>
+                            <th class="th-carbon">Fin Real</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td>
+                                <span th:if="${lote.carbFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
+                                <span th:if="${lote.carbFechaInicial != null and lote.carbFechaFinal == null}" class="fase-pill carbon"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
+                                <span th:if="${lote.carbFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                            </td>
+                            <td class="f-date" th:classappend="${lote.carbFechaInicial == null} ? 'f-none' : ''" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.carbFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinalIdeal != null} ? ${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
+                            <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura} + ' °C' : '—'">-</td>
+                            <td class="f-date" th:classappend="${lote.carbFechaFinal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinal != null} ? ${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TAB 6 — DENSIDAD / OBSERVACIONES -->
+            <div class="tab-pane fade" id="tab-density">
+                <div class="table-responsive">
+                    <table class="traza-table table table-hover">
+                        <thead><tr>
+                            <th class="th-density col-lote">Lote</th>
+                            <th class="th-density">Estilo</th>
+                            <th class="th-density">D. Inicial</th>
+                            <th class="th-density">D. Final</th>
+                            <th class="th-density">Fecha D. Final</th>
+                            <th class="th-density">% Alcohol Est.</th>
+                            <th class="th-density" style="min-width:280px;">Observaciones</th>
+                        </tr></thead>
+                        <tbody>
+                        <tr th:each="lote : ${lotes}">
+                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td class="fw-semibold" th:text="${lote.densidadInicial != null} ? ${lote.densidadInicial} : '—'" th:classappend="${lote.densidadInicial == null} ? 'f-none' : ''">-</td>
+                            <td class="fw-semibold" th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'" th:classappend="${lote.densidadFinal == null} ? 'f-none' : ''">-</td>
+                            <td class="f-date" th:classappend="${lote.densidadFinalFecha == null} ? 'f-none' : ''" th:text="${lote.densidadFinalFecha != null} ? ${#temporals.format(lote.densidadFinalFecha,'dd/MM/yyyy')} : '—'">-</td>
+                            <td>
+                                <span th:if="${lote.densidadInicial != null and lote.densidadFinal != null}"
+                                      style="font-family:'Cinzel',serif;font-size:0.82rem;color:#364318;font-weight:700;"
+                                      th:text="${#numbers.formatDecimal((lote.densidadInicial - lote.densidadFinal) * 0.13125, 1, 2)} + '%'">-</span>
+                                <span th:unless="${lote.densidadInicial != null and lote.densidadFinal != null}" class="f-none">—</span>
+                            </td>
+                            <td style="white-space:normal;font-size:0.73rem;color:#555;line-height:1.4;"
+                                th:text="${lote.observaciones != null and !lote.observaciones.isBlank()} ? ${lote.observaciones} : '—'"
+                                th:classappend="${lote.observaciones == null or lote.observaciones.isBlank()} ? 'f-none' : ''">-</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /tab-content -->
+
+        <!-- Paginación -->
+        <div class="mt-3" th:if="${totalPaginas > 1}">
+            <nav aria-label="Paginación">
+                <ul class="pagination pagination-sm justify-content-center mb-0">
+                    <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/(page=${paginaActual - 1},estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}">
+                            <i class="bi bi-chevron-left"></i>
+                        </a>
+                    </li>
+                    <li th:each="num : ${#numbers.sequence(0, totalPaginas - 1)}"
+                        class="page-item" th:classappend="${num == paginaActual} ? 'active' : ''">
+                        <a class="page-link"
+                           th:href="@{/(page=${num},estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
+                           th:text="${num + 1}">1</a>
+                    </li>
+                    <li class="page-item" th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
+                        <a class="page-link" th:href="@{/(page=${paginaActual + 1},estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}">
+                            <i class="bi bi-chevron-right"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <p class="text-center text-muted small mt-1">
+                Página <span th:text="${paginaActual + 1}">1</span> de <span th:text="${totalPaginas}">1</span>
+                — <span th:text="${totalLotes}">0</span> lotes en total
+            </p>
+        </div>
+
+    </div><!-- /th:unless -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+    var debTimer, activeIdx = -1;
+    var input   = document.getElementById('loteEstiloInput');
+    var suggest = document.getElementById('loteSuggest');
+    if (!input || !suggest) return;
+
+    input.addEventListener('input', function() {
+        clearTimeout(debTimer);
+        activeIdx = -1;
+        var q = this.value.trim();
+        if (q.length < 2) { hide(); return; }
+        debTimer = setTimeout(function() { doFetch(q); }, 260);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        var items = suggest.querySelectorAll('a.ss-item');
+        if (e.key === 'Escape') { hide(); return; }
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActive(items, Math.min(activeIdx + 1, items.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActive(items, Math.max(activeIdx - 1, 0));
+        } else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault();
+            items[activeIdx].click();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.closest('.position-relative').contains(e.target)) hide();
+    });
+
+    function setActive(items, idx) {
+        items.forEach(function(a) { a.classList.remove('ss-active'); });
+        activeIdx = idx;
+        if (items[idx]) items[idx].classList.add('ss-active');
+    }
+
+    function hide() {
+        suggest.style.display = 'none';
+        suggest.innerHTML = '';
+        activeIdx = -1;
+    }
+
+    function doFetch(q) {
+        fetch('/suggest?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) { if (data) render(data, q); })
+            .catch(function() {});
+    }
+
+    var FASE_COLORS = {
+        'Fermentación':      '#1a5e20',
+        'Acondicionamiento': '#0e6b7a',
+        'Maduración':        '#a07800',
+        'Carbonatación':     '#0d5ea8',
+        'Completado':        '#6f2da8',
+        'Sin iniciar':       '#6c757d'
+    };
+
+    function render(items, q) {
+        if (!items.length) {
+            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.style.display = 'block';
+            return;
+        }
+        var html = '';
+        items.forEach(function(item) {
+            var color = FASE_COLORS[item.fase] || '#6c757d';
+            html += '<a href="' + esc(item.url) + '" class="ss-item">' +
+                '<i class="bi bi-clipboard-data ss-icon"></i>' +
+                '<span class="ss-title" style="font-family:\'Cinzel\',serif;">' + esc(item.codigoLote) + '</span>' +
+                (item.estilo ? '<span class="ss-sub">' + esc(item.estilo) + '</span>' : '') +
+                '<span class="badge ms-auto" style="font-size:.65rem;background:' + color + ';color:#F5EDD0;">' + esc(item.fase) + '</span>' +
+                '</a>';
+        });
+        suggest.innerHTML = html;
+        suggest.style.display = 'block';
+        activeIdx = -1;
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+})();
+
+    const tabs = document.querySelectorAll('#trazaTabs [data-bs-toggle="tab"]');
+    const savedTab = localStorage.getItem('trazaTab');
+    if (savedTab) {
+        const t = document.querySelector('#trazaTabs [data-bs-target="' + savedTab + '"]');
+        if (t) { const tab = new bootstrap.Tab(t); tab.show(); }
+    }
+    tabs.forEach(t => t.addEventListener('shown.bs.tab', e => {
+        localStorage.setItem('trazaTab', e.target.dataset.bsTarget);
+    }));
+</script>
+</body>
+</html>

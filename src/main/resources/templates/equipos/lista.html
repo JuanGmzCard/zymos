@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Equipos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-tools me-2"></i>Equipos</h1>
+            <p>Gestión del parque de equipos de la cervecería</p>
+        </div>
+        <a th:href="@{/equipos/nuevo}" class="btn btn-alera">
+            <i class="bi bi-plus-lg me-1"></i>Nuevo Equipo
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+    <!-- Mensajes flash -->
+    <div th:if="${mensaje}" class="alert"
+         th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : 'alert-danger'" th:text="${mensaje}"></div>
+
+    <!-- Filtros por estado -->
+    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+        <span class="text-muted small me-1">Filtrar:</span>
+        <a th:href="@{/equipos}" class="btn btn-sm"
+           th:classappend="${estadoFiltro == null} ? 'btn-alera' : 'btn-alera-outline'">
+            <i class="bi bi-grid-3x3-gap me-1"></i>Todos
+        </a>
+        <a th:each="est : ${estadosEquipo}"
+           th:href="@{/equipos(estado=${est})}"
+           class="btn btn-sm"
+           th:classappend="${estadoFiltro == est} ? 'btn-alera' : 'btn-alera-outline'"
+           th:text="${est.displayName}">Estado</a>
+    </div>
+
+    <!-- Estado vacío -->
+    <div th:if="${#lists.isEmpty(equipos)}" class="empty-state">
+        <i class="bi bi-tools"></i>
+        <h5>No hay equipos registrados</h5>
+        <a th:href="@{/equipos/nuevo}" class="btn btn-alera mt-2">
+            <i class="bi bi-plus-lg me-1"></i>Agregar Equipo
+        </a>
+    </div>
+
+    <!-- Tabla de equipos -->
+    <div th:unless="${#lists.isEmpty(equipos)}" class="card-alera">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-list-ul me-2"></i>Listado de Equipos</h5>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small"
+                      th:text="${#lists.size(equipos)} + ' equipo' + (${#lists.size(equipos)} != 1 ? 's' : '')"></span>
+                <div class="position-relative">
+                    <input type="text" id="equipoInput" class="form-control form-control-sm"
+                           style="width:210px;" placeholder="Buscar equipo..." autocomplete="off"
+                           th:attr="data-estado=${estadoFiltro != null ? estadoFiltro.name() : ''}">
+                    <div id="equipoSuggest" class="search-suggest" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-alera mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Tipo</th>
+                        <th>Estado</th>
+                        <th>Capacidad</th>
+                        <th>Últ. Mantenimiento</th>
+                        <th>Próx. Mantenimiento</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="equipo : ${equipos}">
+                        <td>
+                            <span class="fw-600" th:text="${equipo.nombre}">—</span>
+                        </td>
+                        <td>
+                            <span class="badge equipo-tipo-badge" th:text="${equipo.tipo.displayName}">—</span>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="'bg-' + ${equipo.colorEstado}"
+                                  th:text="${equipo.estado.displayName}">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${equipo.capacidad != null}"
+                                  th:text="${equipo.capacidad} + ' ' + (${equipo.unidadCapacidad} ?: '')">—</span>
+                            <span th:if="${equipo.capacidad == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${equipo.fechaUltimoMantenimiento != null}"
+                                  th:text="${#temporals.format(equipo.fechaUltimoMantenimiento,'dd/MM/yyyy')}">—</span>
+                            <span th:if="${equipo.fechaUltimoMantenimiento == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${equipo.proximoMantenimiento != null}"
+                                  th:classappend="${equipo.mantenimientoPendiente} ? 'text-danger fw-bold' : ''"
+                                  th:text="${#temporals.format(equipo.proximoMantenimiento,'dd/MM/yyyy')}">—</span>
+                            <span th:if="${equipo.proximoMantenimiento != null and equipo.mantenimientoPendiente}"
+                                  class="ms-1"><i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:0.75rem;"></i></span>
+                            <span th:if="${equipo.proximoMantenimiento == null}" class="text-muted">—</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}"
+                                   class="btn btn-sm btn-alera-outline" title="Mantenimientos">
+                                    <i class="bi bi-wrench"></i>
+                                </a>
+                                <a th:href="@{/equipos/editar/{id}(id=${equipo.id})}"
+                                   class="btn btn-sm btn-outline-secondary" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/equipos/eliminar/{id}(id=${equipo.id})}" method="post"
+                                      onsubmit="return confirm('¿Eliminar ' + /*[[${equipo.nombre}]]*/ '' + '?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        <div class="card-footer bg-transparent py-2">
+            <div th:replace="~{fragments/paginacion :: paginacion}"></div>
+            <p class="text-center text-muted small mt-1" th:if="${totalPaginas > 1}">
+                Página <span th:text="${paginaActual + 1}"></span> de <span th:text="${totalPaginas}"></span>
+                — <span th:text="${totalEquipos}"></span> equipos en total
+            </p>
+        </div>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+(function() {
+    var debTimer, activeIdx = -1;
+    var input   = document.getElementById('equipoInput');
+    var suggest = document.getElementById('equipoSuggest');
+    if (!input || !suggest) return;
+
+    var estado = input.dataset.estado; // '' | 'OPERATIVO' | 'EN_REPARACION' | ...
+
+    input.addEventListener('input', function() {
+        clearTimeout(debTimer);
+        activeIdx = -1;
+        var q = this.value.trim();
+        if (q.length < 2) { hide(); return; }
+        debTimer = setTimeout(function() { doFetch(q); }, 260);
+    });
+
+    input.addEventListener('keydown', function(e) {
+        var items = suggest.querySelectorAll('a.ss-item');
+        if (e.key === 'Escape') { hide(); return; }
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActive(items, Math.min(activeIdx + 1, items.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActive(items, Math.max(activeIdx - 1, 0));
+        } else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault();
+            items[activeIdx].click();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.closest('.position-relative').contains(e.target)) hide();
+    });
+
+    function setActive(items, idx) {
+        items.forEach(function(a) { a.classList.remove('ss-active'); });
+        activeIdx = idx;
+        if (items[idx]) items[idx].classList.add('ss-active');
+    }
+
+    function hide() {
+        suggest.style.display = 'none';
+        suggest.innerHTML = '';
+        activeIdx = -1;
+    }
+
+    function doFetch(q) {
+        var url = '/equipos/suggest?q=' + encodeURIComponent(q)
+                + (estado !== '' ? '&estado=' + encodeURIComponent(estado) : '');
+        fetch(url, { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) { if (data) render(data, q); })
+            .catch(function() {});
+    }
+
+    function render(items, q) {
+        if (!items.length) {
+            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.style.display = 'block';
+            return;
+        }
+        var html = '';
+        items.forEach(function(item) {
+            var estadoBadge = '<span class="badge bg-' + esc(item.colorEstado) + ' ms-auto" style="font-size:.65rem;">'
+                            + esc(item.estado) + '</span>';
+            var pendiente   = item.pendiente
+                ? '<i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Mantenimiento pendiente" style="font-size:.75rem;"></i>'
+                : '';
+            html += '<a href="' + esc(item.url) + '" class="ss-item">' +
+                '<i class="bi bi-tools ss-icon"></i>' +
+                '<span class="ss-title">' + esc(item.nombre) + '</span>' +
+                (item.tipo ? '<span class="ss-sub">' + esc(item.tipo) + '</span>' : '') +
+                pendiente +
+                estadoBadge +
+                '</a>';
+        });
+        suggest.innerHTML = html;
+        suggest.style.display = 'block';
+        activeIdx = -1;
+    }
+
+    function esc(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+})();
+</script>
+</body>
+</html>

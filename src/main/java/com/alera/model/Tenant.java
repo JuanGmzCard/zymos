@@ -1,0 +1,85 @@
+package com.alera.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "tenants")
+public class Tenant {
+
+    @Id
+    @Column(length = 100)
+    private String subdomain;
+
+    @Column(nullable = false, length = 200)
+    private String name;
+
+    @Column(length = 300)
+    private String tagline;
+
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
+    @Column(name = "color_navbar", length = 20)
+    private String colorNavbar   = "#242E0D";
+
+    @Column(name = "color_primary", length = 20)
+    private String colorPrimary  = "#364318";
+
+    @Column(name = "color_accent", length = 20)
+    private String colorAccent   = "#C9A028";
+
+    @Column(name = "color_accent_hover", length = 20)
+    private String colorAccentHover = "#E0B840";
+
+    @Column(name = "color_cream", length = 20)
+    private String colorCream    = "#F5EDD0";
+
+    @Column(name = "color_body_bg", length = 20)
+    private String colorBodyBg   = "#F0EDE2";
+
+    @Column(name = "email_admin", length = 200)
+    private String emailAdmin;
+
+    private boolean active = true;
+
+    @Column(name = "alertas_intentos_fallidos", nullable = false)
+    private int alertasIntentosFallidos = 0;
+
+    @Column(name = "alertas_ultimo_intento")
+    private LocalDateTime alertasUltimoIntento;
+
+    @Column(name = "alertas_ultimo_exito")
+    private LocalDateTime alertasUltimoExito;
+
+    public String getSubdomain()            { return subdomain; }
+    public void   setSubdomain(String v)    { this.subdomain = v; }
+    public String getName()                 { return name; }
+    public void   setName(String v)         { this.name = v; }
+    public String getTagline()              { return tagline; }
+    public void   setTagline(String v)      { this.tagline = v; }
+    public String getLogoUrl()              { return logoUrl; }
+    public void   setLogoUrl(String v)      { this.logoUrl = v; }
+    public String getColorNavbar()          { return colorNavbar; }
+    public void   setColorNavbar(String v)  { this.colorNavbar = v; }
+    public String getColorPrimary()         { return colorPrimary; }
+    public void   setColorPrimary(String v) { this.colorPrimary = v; }
+    public String getColorAccent()          { return colorAccent; }
+    public void   setColorAccent(String v)  { this.colorAccent = v; }
+    public String getColorAccentHover()     { return colorAccentHover; }
+    public void   setColorAccentHover(String v) { this.colorAccentHover = v; }
+    public String getColorCream()           { return colorCream; }
+    public void   setColorCream(String v)   { this.colorCream = v; }
+    public String getColorBodyBg()          { return colorBodyBg; }
+    public void   setColorBodyBg(String v)  { this.colorBodyBg = v; }
+    public String getEmailAdmin()             { return emailAdmin; }
+    public void   setEmailAdmin(String v)   { this.emailAdmin = v; }
+    public boolean isActive()               { return active; }
+    public void    setActive(boolean v)     { this.active = v; }
+    public int getAlertasIntentosFallidos()             { return alertasIntentosFallidos; }
+    public void setAlertasIntentosFallidos(int v)       { this.alertasIntentosFallidos = v; }
+    public LocalDateTime getAlertasUltimoIntento()      { return alertasUltimoIntento; }
+    public void setAlertasUltimoIntento(LocalDateTime v){ this.alertasUltimoIntento = v; }
+    public LocalDateTime getAlertasUltimoExito()        { return alertasUltimoExito; }
+    public void setAlertasUltimoExito(LocalDateTime v)  { this.alertasUltimoExito = v; }
+}

@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alera - Lote</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        /* ══ WIZARD TABS ═══════════════════════════════ */
+        .wizard-nav {
+            display: flex;
+            gap: 0;
+            border-bottom: 3px solid #dee2e6;
+            overflow-x: auto;
+            padding-bottom: 0;
+        }
+        .wizard-nav .wz-tab {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            font-family: 'Raleway', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            white-space: nowrap;
+            position: relative;
+            transition: all 0.18s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+        }
+        .wizard-nav .wz-tab:hover { color: #364318; }
+        .wizard-nav .wz-tab .wz-num {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.72rem; font-weight: 700;
+            background: #e9ecef; color: #6c757d;
+            flex-shrink: 0;
+            transition: all 0.18s;
+        }
+        /* Estados activo por tab */
+        .wz-tab.tab-general.active  { color: #1a3a5c; border-bottom-color: #1a3a5c; }
+        .wz-tab.tab-recipe.active   { color: #7a5c00; border-bottom-color: #C9A028; }
+        .wz-tab.tab-ferm.active     { color: #1a5e20; border-bottom-color: #2e7d32; }
+        .wz-tab.tab-acond.active    { color: #0c5460; border-bottom-color: #0e6b7a; }
+        .wz-tab.tab-madur.active    { color: #856404; border-bottom-color: #a07800; }
+        .wz-tab.tab-carbon.active   { color: #004085; border-bottom-color: #0d5ea8; }
+
+        .wz-tab.tab-general.active .wz-num  { background:#1a3a5c; color:#F5EDD0; }
+        .wz-tab.tab-recipe.active .wz-num   { background:#C9A028; color:#fff; }
+        .wz-tab.tab-ferm.active .wz-num     { background:#2e7d32; color:#fff; }
+        .wz-tab.tab-acond.active .wz-num    { background:#0e6b7a; color:#fff; }
+        .wz-tab.tab-madur.active .wz-num    { background:#a07800; color:#fff; }
+        .wz-tab.tab-carbon.active .wz-num   { background:#0d5ea8; color:#fff; }
+
+        /* Estado completado */
+        .wz-tab.done .wz-num { background:#27ae60; color:#fff; }
+        .wz-tab.done { color:#27ae60; }
+
+        /* ══ PANEL ═══════════════════════════════════ */
+        .wizard-panel {
+            background: white;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+            padding: 1.8rem;
+            min-height: 340px;
+        }
+
+        /* ══ SECTION TITLE ═══════════════════════════ */
+        .wz-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            margin-bottom: 1.4rem;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .wz-title.general { color:#1a3a5c; border-color:#1a3a5c; }
+        .wz-title.recipe  { color:#7a5c00; border-color:#C9A028; }
+        .wz-title.ferm    { color:#1a5e20; border-color:#2e7d32; }
+        .wz-title.acond   { color:#0c5460; border-color:#0e6b7a; }
+        .wz-title.madur   { color:#856404; border-color:#a07800; }
+        .wz-title.carbon  { color:#004085; border-color:#0d5ea8; }
+
+        /* ══ INGREDIENT ROWS ══════════════════════════ */
+        .ingrediente-row {
+            background: #fafafa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 0.7rem 0.9rem;
+            margin-bottom: 0.5rem;
+            transition: border-color 0.18s;
+        }
+        .ingrediente-row:hover { border-color: #C9A028; }
+        .btn-remove-ingrediente {
+            background: transparent; border: 1px solid #dc3545; color: #dc3545;
+            border-radius: 50%; width: 26px; height: 26px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.78rem; cursor: pointer; padding: 0; transition: all 0.18s;
+        }
+        .btn-remove-ingrediente:hover { background:#dc3545; color:white; }
+
+        /* ══ PHASE CARD ═══════════════════════════════ */
+        .phase-card {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .phase-card-header {
+            padding: 0.6rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.82rem;
+        }
+
+        /* ══ NAV BUTTONS ══════════════════════════════ */
+        .wizard-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1.2rem;
+            margin-top: 1.2rem;
+            border-top: 1px solid #e9ecef;
+        }
+        .wz-progress {
+            display: flex;
+            gap: 6px;
+        }
+        .wz-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #dee2e6;
+            transition: background 0.2s;
+        }
+        .wz-dot.active { background: #C9A028; transform: scale(1.3); }
+        .wz-dot.done   { background: #27ae60; }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 th:text="${loteId != null} ? 'Editar Lote ' + ${codigoLote} : 'Nuevo Lote de Cerveza'">Lote</h1>
+            <p>Complete la información en cada pestaña del proceso</p>
+        </div>
+        <a th:href="@{/}" class="btn btn-alera-outline btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+    <form th:action="${loteId != null} ? @{/actualizar/{id}(id=${loteId})} : @{/guardar}"
+          th:object="${loteForm}" method="post" id="loteForm">
+        <input type="hidden" th:field="*{recetaId}" id="recetaIdHidden">
+
+        <!-- Banner duplicado -->
+        <div class="alert alert-info d-flex align-items-center gap-2 mb-3" th:if="${duplicadoDe != null}">
+            <i class="bi bi-copy fs-5"></i>
+            <span>Duplicando desde <strong th:text="${duplicadoDe}"></strong> — los ingredientes se copiaron. Ajusta estilo, fechas y densidades antes de guardar.</span>
+        </div>
+
+        <!-- ══ WIZARD NAV ═══════════════════════════ -->
+        <div class="wizard-nav" id="wizardNav">
+            <button type="button" class="wz-tab tab-general active" data-tab="0" onclick="goTab(0)">
+                <span class="wz-num">1</span>
+                <span><i class="bi bi-info-circle me-1"></i>Datos Generales</span>
+            </button>
+            <button type="button" class="wz-tab tab-recipe" data-tab="1" onclick="goTab(1)">
+                <span class="wz-num">2</span>
+                <span><i class="bi bi-basket me-1"></i>Receta / Insumos</span>
+            </button>
+            <button type="button" class="wz-tab tab-ferm" data-tab="2" onclick="goTab(2)">
+                <span class="wz-num">3</span>
+                <span><i class="bi bi-thermometer me-1"></i>Fermentación</span>
+            </button>
+            <button type="button" class="wz-tab tab-acond" data-tab="3" onclick="goTab(3)">
+                <span class="wz-num">4</span>
+                <span><i class="bi bi-droplet-half me-1"></i>Acondicionamiento</span>
+            </button>
+            <button type="button" class="wz-tab tab-madur" data-tab="4" onclick="goTab(4)">
+                <span class="wz-num">5</span>
+                <span><i class="bi bi-hourglass-split me-1"></i>Maduración</span>
+            </button>
+            <button type="button" class="wz-tab tab-carbon" data-tab="5" onclick="goTab(5)">
+                <span class="wz-num">6</span>
+                <span><i class="bi bi-wind me-1"></i>Carbonatación</span>
+            </button>
+        </div>
+
+        <div class="wizard-panel">
+
+            <!-- ══════════════════════════════════════
+                 PANEL 0 — DATOS GENERALES
+            ══════════════════════════════════════ -->
+            <div class="wz-panel" id="panel-0">
+                <div class="wz-title general"><i class="bi bi-info-circle-fill"></i>Datos Generales del Lote</div>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Estilo de Cerveza *</label>
+                        <input type="text" th:field="*{estilo}" class="form-control"
+                               list="listaTipos" placeholder="Ej: India Pale Ale" required>
+                        <datalist id="listaTipos">
+                            <option th:each="tc : ${tiposCerveza}" th:value="${tc.nombre}"></option>
+                        </datalist>
+                        <div th:if="${#fields.hasErrors('estilo')}" class="text-danger small mt-1" th:errors="*{estilo}"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha de Elaboración</label>
+                        <input type="date" th:field="*{fechaElaboracion}" class="form-control">
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Agua Utilizada</label>
+                        <div class="input-group">
+                            <input type="number" step="0.001" id="agua-display" class="form-control"
+                                   placeholder="0.00" th:value="${loteForm.aguaUtilizada}"
+                                   oninput="volUpdate('agua')">
+                            <select id="agua-unit" class="form-select" style="max-width:130px;"
+                                    onchange="volUnitChange('agua')">
+                                <option value="L">Litros (L)</option>
+                                <option value="mL">Mililitros (mL)</option>
+                                <option value="gal">Galones (gal)</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="aguaUtilizada" id="agua-value"
+                               th:value="${loteForm.aguaUtilizada}">
+                        <small class="text-muted" id="agua-equiv"></small>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">pH del Agua</label>
+                        <input type="number" step="0.01" th:field="*{phAgua}" class="form-control" placeholder="5.2">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Volumen Final</label>
+                        <div class="input-group">
+                            <input type="number" step="0.001" id="litros-display" class="form-control"
+                                   placeholder="0.00" th:value="${loteForm.litrosFinales}"
+                                   oninput="volUpdate('litros')">
+                            <select id="litros-unit" class="form-select" style="max-width:130px;"
+                                    onchange="volUnitChange('litros')">
+                                <option value="L">Litros (L)</option>
+                                <option value="mL">Mililitros (mL)</option>
+                                <option value="gal">Galones (gal)</option>
+                            </select>
+                        </div>
+                        <input type="hidden" name="litrosFinales" id="litros-value"
+                               th:value="${loteForm.litrosFinales}">
+                        <small class="text-muted" id="litros-equiv"></small>
+                    </div>
+                    <div class="col-12"><hr class="my-1"></div>
+
+                    <!-- Costos de Producción — buscador de ítems de factura -->
+                    <div class="col-12 mt-2" th:if="${!#lists.isEmpty(todosItemsFactura)}">
+                        <div class="card border-0" style="background:#faf7f0;border:1px solid #e0d9c8!important;">
+                            <div class="card-header py-2 d-flex align-items-center justify-content-between"
+                                 style="cursor:pointer;background:#f1ece0;border-bottom:1px solid #e0d9c8;"
+                                 data-bs-toggle="collapse" data-bs-target="#costos-collapse" aria-expanded="false">
+                                <span>
+                                    <i class="bi bi-receipt me-2 text-dorado"></i>
+                                    <span class="fw-600 small">Costos de Producción</span>
+                                    <span id="costo-count-badge" class="badge ms-2"
+                                          style="display:none;background:#C9A028;color:#fff;"></span>
+                                </span>
+                                <i class="bi bi-chevron-down small text-muted"></i>
+                            </div>
+                            <div class="collapse" id="costos-collapse"
+                                 th:classappend="${!#lists.isEmpty(loteForm.itemsIds)} ? 'show' : ''">
+                                <div class="p-3">
+
+                                    <!-- Buscador -->
+                                    <div class="row g-2 mb-3">
+                                        <div class="col">
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                                                <input type="text" id="costo-search" class="form-control"
+                                                       placeholder="Buscar ítem por nombre o proveedor…" oninput="filtrarItemsCosto()">
+                                            </div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <select id="costo-tipo-filter" class="form-select form-select-sm" onchange="filtrarItemsCosto()">
+                                                <option value="">Todos los tipos</option>
+                                                <option value="MALTA">Malta</option>
+                                                <option value="LUPULO">Lúpulo</option>
+                                                <option value="LEVADURA">Levadura</option>
+                                                <option value="CLARIFICANTE">Clarificante</option>
+                                                <option value="AGUA">Agua</option>
+                                                <option value="QUIMICO">Químico</option>
+                                                <option value="ENVASE">Envase</option>
+                                                <option value="OTRO">Otro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <!-- Resultados del buscador -->
+                                    <div id="costo-resultados" class="mb-3 border rounded"
+                                         style="max-height:240px;overflow-y:auto;display:none;">
+                                        <table class="table table-sm table-hover mb-0 align-middle" style="font-size:0.8rem;">
+                                            <thead class="sticky-top" style="background:#e8e2d4;">
+                                                <tr>
+                                                    <th class="ps-2">Ítem</th>
+                                                    <th>Tipo</th>
+                                                    <th>Factura</th>
+                                                    <th>Proveedor</th>
+                                                    <th>Disponible</th>
+                                                    <th class="text-end">Valor línea</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="costo-resultados-body"></tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Ítems asignados -->
+                                    <p id="costo-asignados-empty" class="text-muted small mb-2">
+                                        <i class="bi bi-info-circle me-1"></i>Use el buscador para agregar ítems a este lote.
+                                    </p>
+                                    <div id="costo-asignados-wrap" style="display:none;" class="mb-2">
+                                        <p class="small fw-600 mb-1">
+                                            <i class="bi bi-check2-circle me-1 text-dorado"></i>Ítems asignados a este lote
+                                        </p>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm mb-0 align-middle" style="font-size:0.82rem;">
+                                                <thead style="background:#e8e2d4;">
+                                                    <tr>
+                                                        <th class="ps-2">Ítem</th>
+                                                        <th>Factura / Proveedor</th>
+                                                        <th style="width:175px;">Cantidad asignada</th>
+                                                        <th class="text-end pe-2">Valor asignado</th>
+                                                        <th></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="costo-asignados-body"></tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                onclick="sincronizarIngredientesDesdeItems()">
+                                            <i class="bi bi-basket me-1"></i>Aplicar a Receta e Insumos
+                                        </button>
+                                    </div>
+                                    <div id="items-asignados-container"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12"><hr class="my-1"></div>
+                    <div class="col-12">
+                        <p class="text-muted small mb-2"><i class="bi bi-activity me-1"></i><strong>Densidades</strong> — pueden completarse al avanzar el proceso</p>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Densidad Inicial (OG)</label>
+                        <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
+                               placeholder="1060" inputmode="numeric">
+                        <small class="text-muted">Rango: 1000–1150</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Densidad Final (FG)</label>
+                        <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
+                               placeholder="1014" inputmode="numeric">
+                        <small class="text-muted">Rango: 990–1060</small>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha Densidad Final</label>
+                        <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════
+                 PANEL 1 — RECETA / INSUMOS
+            ══════════════════════════════════════ -->
+            <div class="wz-panel d-none" id="panel-1">
+                <div class="wz-title recipe"><i class="bi bi-basket-fill"></i>Receta e Insumos</div>
+
+                <!-- CARGAR RECETA -->
+                <div class="receta-loader-box mb-4" th:if="${!#lists.isEmpty(recetasActivas)}">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <i class="bi bi-journal-bookmark text-dorado"></i>
+                        <span class="fw-600 small">Cargar desde receta:</span>
+                        <select id="recetaSelectLote" class="form-select form-select-sm" style="max-width:280px;">
+                            <option value="">— Seleccionar receta —</option>
+                            <option th:each="rec : ${recetasActivas}"
+                                    th:value="${rec.id}"
+                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"></option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-alera" onclick="cargarRecetaEnLote()">
+                            <i class="bi bi-arrow-down-circle me-1"></i>Cargar
+                        </button>
+                    </div>
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-info-circle me-1"></i>Reemplaza los ingredientes actuales con los de la receta seleccionada
+                    </div>
+                </div>
+
+                <!-- MALTAS -->
+                <div class="phase-card mb-3">
+                    <div class="phase-card-header" style="background:rgba(201,160,40,0.12);color:#7a5c00;">
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Maltas
+                    </div>
+                    <div class="p-3">
+                        <div id="maltas-container">
+                            <div th:each="malta, mStat : ${loteForm.maltas}" class="ingrediente-row">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" th:name="'maltas[' + ${mStat.index} + '].nombre'"
+                                               th:value="${malta.nombre}" class="form-control form-control-sm"
+                                               placeholder="Nombre de la malta" list="lista-maltas">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" th:name="'maltas[' + ${mStat.index} + '].cantidad'"
+                                               th:value="${malta.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select th:name="'maltas[' + ${mStat.index} + '].unidad'" class="form-select form-select-sm">
+                                            <option th:selected="${malta.unidad == 'gr'}"  value="gr">gr</option>
+                                            <option th:selected="${malta.unidad == 'kg'}"  value="kg">kg</option>
+                                            <option th:selected="${malta.unidad == 'mL'}"  value="mL">mL</option>
+                                            <option th:selected="${malta.unidad == 'L'}"   value="L">L</option>
+                                            <option th:selected="${malta.unidad == 'gal'}" value="gal">gal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="lista-maltas"><option th:each="inv : ${maltasInventario}" th:value="${inv.nombre}"></option></datalist>
+                        <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                                onclick="addRow('maltas-container','maltas','lista-maltas','Malta')">
+                            <i class="bi bi-plus me-1"></i>Agregar Malta
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LÚPULOS -->
+                <div class="phase-card mb-3">
+                    <div class="phase-card-header" style="background:rgba(39,174,96,0.1);color:#1a6e3e;">
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Lúpulos
+                    </div>
+                    <div class="p-3">
+                        <div id="lupulos-container">
+                            <div th:each="lupulo, lupStat : ${loteForm.lupulos}" class="ingrediente-row">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].nombre'"
+                                               th:value="${lupulo.nombre}" class="form-control form-control-sm"
+                                               placeholder="Nombre del lúpulo" list="lista-lupulos">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].cantidad'"
+                                               th:value="${lupulo.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select th:name="'lupulos[' + ${lupStat.index} + '].unidad'" class="form-select form-select-sm">
+                                            <option th:selected="${lupulo.unidad == 'gr'}"  value="gr">gr</option>
+                                            <option th:selected="${lupulo.unidad == 'kg'}"  value="kg">kg</option>
+                                            <option th:selected="${lupulo.unidad == 'mL'}"  value="mL">mL</option>
+                                            <option th:selected="${lupulo.unidad == 'L'}"   value="L">L</option>
+                                            <option th:selected="${lupulo.unidad == 'gal'}" value="gal">gal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="lista-lupulos"><option th:each="inv : ${lupulosInventario}" th:value="${inv.nombre}"></option></datalist>
+                        <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                                onclick="addRow('lupulos-container','lupulos','lista-lupulos','Lúpulo')">
+                            <i class="bi bi-plus me-1"></i>Agregar Lúpulo
+                        </button>
+                    </div>
+                </div>
+
+                <!-- LEVADURAS -->
+                <div class="phase-card mb-3">
+                    <div class="phase-card-header" style="background:rgba(52,152,219,0.1);color:#1a5276;">
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Levaduras
+                    </div>
+                    <div class="p-3">
+                        <div id="levaduras-container">
+                            <div th:each="levadura, levStat : ${loteForm.levaduras}" class="ingrediente-row">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" th:name="'levaduras[' + ${levStat.index} + '].nombre'"
+                                               th:value="${levadura.nombre}" class="form-control form-control-sm"
+                                               placeholder="Nombre de la levadura" list="lista-levaduras">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" th:name="'levaduras[' + ${levStat.index} + '].cantidad'"
+                                               th:value="${levadura.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select th:name="'levaduras[' + ${levStat.index} + '].unidad'" class="form-select form-select-sm">
+                                            <option th:selected="${levadura.unidad == 'gr'}"  value="gr">gr</option>
+                                            <option th:selected="${levadura.unidad == 'kg'}"  value="kg">kg</option>
+                                            <option th:selected="${levadura.unidad == 'mL'}"  value="mL">mL</option>
+                                            <option th:selected="${levadura.unidad == 'L'}"   value="L">L</option>
+                                            <option th:selected="${levadura.unidad == 'gal'}" value="gal">gal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="lista-levaduras"><option th:each="inv : ${levaduraInventario}" th:value="${inv.nombre}"></option></datalist>
+                        <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                                onclick="addRow('levaduras-container','levaduras','lista-levaduras','Levadura')">
+                            <i class="bi bi-plus me-1"></i>Agregar Levadura
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CLARIFICANTES -->
+                <div class="phase-card">
+                    <div class="phase-card-header" style="background:rgba(142,68,173,0.1);color:#6c3483;">
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Clarificantes
+                    </div>
+                    <div class="p-3">
+                        <div id="clarificantes-container">
+                            <div th:each="clar, clarStat : ${loteForm.clarificantes}" class="ingrediente-row">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col-md-5">
+                                        <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].nombre'"
+                                               th:value="${clar.nombre}" class="form-control form-control-sm"
+                                               placeholder="Nombre clarificante" list="lista-clarificantes">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].cantidad'"
+                                               th:value="${clar.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <select th:name="'clarificantes[' + ${clarStat.index} + '].unidad'" class="form-select form-select-sm">
+                                            <option th:selected="${clar.unidad == 'gr'}"  value="gr">gr</option>
+                                            <option th:selected="${clar.unidad == 'kg'}"  value="kg">kg</option>
+                                            <option th:selected="${clar.unidad == 'mL'}"  value="mL">mL</option>
+                                            <option th:selected="${clar.unidad == 'L'}"   value="L">L</option>
+                                            <option th:selected="${clar.unidad == 'gal'}" value="gal">gal</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-1 text-end">
+                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <datalist id="lista-clarificantes"><option th:each="inv : ${clarificantesInventario}" th:value="${inv.nombre}"></option></datalist>
+                        <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                                onclick="addRow('clarificantes-container','clarificantes','lista-clarificantes','Clarificante')">
+                            <i class="bi bi-plus me-1"></i>Agregar Clarificante
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════
+                 PANEL 2 — FERMENTACIÓN
+            ══════════════════════════════════════ -->
+            <div class="wz-panel d-none" id="panel-2">
+                <div class="wz-title ferm"><i class="bi bi-thermometer-half"></i>Fase de Fermentación</div>
+                <p class="text-muted small mb-3">Primera etapa: los azúcares se convierten en alcohol y CO₂ por acción de la levadura.</p>
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Fermentador Asignado</label>
+                        <select th:field="*{equipoFermentadorId}" class="form-select">
+                            <option value="">-- Sin asignar --</option>
+                            <option th:each="f : ${fermentadores}" th:value="${f.id}" th:text="${f.nombre}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Fecha de Inicio</label>
+                        <input type="date" th:field="*{fermFechaInicial}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Ideal</label>
+                        <input type="date" th:field="*{fermFechaFinalIdeal}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Temperatura (°C)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" th:field="*{fermTemperatura}" class="form-control" placeholder="18">
+                            <span class="input-group-text">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Real</label>
+                        <input type="date" th:field="*{fermFechaFinal}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════
+                 PANEL 3 — ACONDICIONAMIENTO
+            ══════════════════════════════════════ -->
+            <div class="wz-panel d-none" id="panel-3">
+                <div class="wz-title acond"><i class="bi bi-droplet-half"></i>Fase de Acondicionamiento</div>
+                <p class="text-muted small mb-3">Segunda etapa: estabilización de sabores, clarificación y acondicionamiento del producto.</p>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Inicio</label>
+                        <input type="date" th:field="*{acondFechaInicial}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Ideal</label>
+                        <input type="date" th:field="*{acondFechaFinalIdeal}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Temperatura (°C)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" th:field="*{acondTemperatura}" class="form-control" placeholder="12">
+                            <span class="input-group-text">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Real</label>
+                        <input type="date" th:field="*{acondFechaFinal}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════
+                 PANEL 4 — MADURACIÓN
+            ══════════════════════════════════════ -->
+            <div class="wz-panel d-none" id="panel-4">
+                <div class="wz-title madur"><i class="bi bi-hourglass-split"></i>Fase de Maduración</div>
+                <p class="text-muted small mb-3">Tercera etapa: la cerveza reposa a baja temperatura para desarrollar y refinar su perfil de sabor.</p>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Inicio</label>
+                        <input type="date" th:field="*{madurFechaInicial}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Ideal</label>
+                        <input type="date" th:field="*{madurFechaFinalIdeal}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Temperatura (°C)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" th:field="*{madurTemperatura}" class="form-control" placeholder="2">
+                            <span class="input-group-text">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Real</label>
+                        <input type="date" th:field="*{madurFechaFinal}" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════════════════════════════════════
+                 PANEL 5 — CARBONATACIÓN + OBS
+            ══════════════════════════════════════ -->
+            <div class="wz-panel d-none" id="panel-5">
+                <div class="wz-title carbon"><i class="bi bi-wind"></i>Fase de Carbonatación</div>
+                <p class="text-muted small mb-3">Etapa final: la cerveza adquiere el gas carbónico necesario para su presentación.</p>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha de Inicio</label>
+                        <input type="date" th:field="*{carbFechaInicial}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Ideal</label>
+                        <input type="date" th:field="*{carbFechaFinalIdeal}" class="form-control">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Temperatura (°C)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4">
+                            <span class="input-group-text">°C</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Fecha Fin Real</label>
+                        <input type="date" th:field="*{carbFechaFinal}" class="form-control">
+                    </div>
+                </div>
+
+                <hr class="my-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="wz-title carbon" style="font-size:0.9rem;"><i class="bi bi-chat-text me-1"></i>Observaciones del Proceso</div>
+                        <textarea th:field="*{observaciones}" class="form-control" rows="4"
+                                  placeholder="Notas generales: densidades tomadas, ajustes realizados, incidencias..."></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="wz-title carbon" style="font-size:0.9rem;color:#856404;border-color:#a07800;">
+                            <i class="bi bi-cup-hot me-1"></i>Notas de Cata
+                        </div>
+                        <textarea th:field="*{notasCata}" class="form-control" rows="4"
+                                  placeholder="Evaluación sensorial: aroma, sabor, color, espuma, carbonatación, retrogusto..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══ FOOTER: navegación + guardar ══ -->
+            <div class="wizard-footer">
+                <div class="d-flex align-items-center gap-3">
+                    <button type="button" class="btn btn-alera-outline btn-sm" id="btnPrev" onclick="prevTab()" style="display:none!important;">
+                        <i class="bi bi-arrow-left me-1"></i>Anterior
+                    </button>
+                    <div class="wz-progress">
+                        <div class="wz-dot active" id="dot-0"></div>
+                        <div class="wz-dot" id="dot-1"></div>
+                        <div class="wz-dot" id="dot-2"></div>
+                        <div class="wz-dot" id="dot-3"></div>
+                        <div class="wz-dot" id="dot-4"></div>
+                        <div class="wz-dot" id="dot-5"></div>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- Guardar siempre visible -->
+                    <button type="submit" class="btn btn-alera px-4">
+                        <i class="bi bi-save me-2"></i>
+                        <span th:text="${loteId != null} ? 'Actualizar Lote' : 'Guardar Lote'">Guardar</span>
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-4" id="btnNext" onclick="nextTab()">
+                        Siguiente <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </div>
+            </div>
+        </div><!-- /wizard-panel -->
+    </form>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+/*<![CDATA[*/
+var ITEMS_FACTURA = /*[[${todosItemsFactura}]]*/ [];
+var INIT_IDS = /*[[${loteForm.itemsIds}]]*/ [];
+var INIT_CANTIDADES = /*[[${loteForm.itemsCantidades}]]*/ [];
+/*]]>*/
+</script>
+<script th:src="@{/js/trazabilidad-ingredientes.js}"></script>
+<script th:src="@{/js/trazabilidad-costos.js}"></script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+target/
+${project.build.directory}/
+*.jar
+*.war
+.idea/
+*.iml
+.vscode/
+*.class
+.env
+application-prod.properties
+application-local.properties
+logs/
+*.log
+.DS_Store
+Thumbs.db
+.claude/
+
+# Node.js (asistente TypeScript)
+node_modules/
+dist/
+*.js.map

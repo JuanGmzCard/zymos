@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <title>Alera - Receta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- Datalist de estilos/tipos de cerveza -->
+<datalist id="datalist-estilos">
+    <option th:each="tc : ${tiposCerveza}" th:value="${tc.nombre}"></option>
+</datalist>
+
+<!-- Datalists de inventario (ocultos, usados por los inputs de ingredientes) -->
+<datalist id="datalist-maltas">
+    <option th:each="ins : ${insumosInventario}"
+            th:if="${ins.tipo.name() == 'MALTA'}"
+            th:value="${ins.nombre}"></option>
+</datalist>
+<datalist id="datalist-lupulos">
+    <option th:each="ins : ${insumosInventario}"
+            th:if="${ins.tipo.name() == 'LUPULO'}"
+            th:value="${ins.nombre}"></option>
+</datalist>
+<datalist id="datalist-levaduras">
+    <option th:each="ins : ${insumosInventario}"
+            th:if="${ins.tipo.name() == 'LEVADURA'}"
+            th:value="${ins.nombre}"></option>
+</datalist>
+<datalist id="datalist-clarificantes">
+    <option th:each="ins : ${insumosInventario}"
+            th:if="${ins.tipo.name() == 'CLARIFICANTE'}"
+            th:value="${ins.nombre}"></option>
+</datalist>
+<datalist id="datalist-hervor">
+    <option th:each="ins : ${insumosInventario}"
+            th:if="${ins.tipo.name() == 'LUPULO' or ins.tipo.name() == 'CLARIFICANTE'}"
+            th:value="${ins.nombre}"></option>
+</datalist>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 th:text="${recetaId != null} ? 'Editar Receta' : 'Nueva Receta'">Receta</h1>
+            <p>Define los ingredientes y parámetros base de la receta</p>
+        </div>
+        <a th:href="@{/recetas}" class="btn btn-outline-crema">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+    <form th:action="${recetaId != null} ? @{/recetas/actualizar/{id}(id=${recetaId})} : @{/recetas/guardar}"
+          th:object="${recetaForm}" method="post">
+
+        <!-- Información básica -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-info-circle me-2"></i>Información de la Receta</div>
+            <div class="row g-3">
+                <div class="col-md-5">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" th:field="*{nombre}" class="form-control"
+                           placeholder="Ej: Stout Robusta Invierno" required>
+                    <div th:if="${#fields.hasErrors('nombre')}" class="text-danger small mt-1" th:errors="*{nombre}"></div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Estilo *</label>
+                    <div class="input-group">
+                        <input type="text" th:field="*{estilo}" class="form-control"
+                               placeholder="Ej: Stout" required
+                               list="datalist-estilos" autocomplete="off">
+                        <button type="button" class="btn btn-outline-secondary"
+                                sec:authorize="hasRole('ADMIN')"
+                                onclick="abrirModalTipoCerveza()" title="Crear tipo de cerveza">
+                            <i class="bi bi-plus-square"></i>
+                        </button>
+                    </div>
+                    <div th:if="${#fields.hasErrors('estilo')}" class="text-danger small mt-1" th:errors="*{estilo}"></div>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check form-switch pb-2">
+                        <input class="form-check-input" type="checkbox" th:field="*{activa}" id="activaCheck">
+                        <label class="form-check-label" for="activaCheck">Receta activa</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Descripción</label>
+                    <textarea th:field="*{descripcion}" class="form-control" rows="2"
+                              placeholder="Descripción breve de la cerveza..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parámetros de proceso -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-sliders me-2"></i>Parámetros de Proceso</div>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">OG Objetivo</label>
+                    <input type="number" step="1" min="900" max="1200" th:field="*{ogObjetivo}" class="form-control"
+                           placeholder="1060" inputmode="numeric">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">FG Objetivo</label>
+                    <input type="number" step="1" min="900" max="1200" th:field="*{fgObjetivo}" class="form-control"
+                           placeholder="1014" inputmode="numeric">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Tiempo de Hervor (min)</label>
+                    <input type="number" th:field="*{tiempoHervorMinutos}" class="form-control" placeholder="60">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Volumen Base (L)</label>
+                    <input type="number" step="any" th:field="*{volumenBase}" class="form-control"
+                           placeholder="20" inputmode="decimal">
+                    <small class="text-muted">Base para la calculadora de escala</small>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">ABV Estimado</label>
+                    <div class="form-control-plaintext fw-bold text-verde" id="abvEstimado">—</div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Agua de Macerado</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" th:field="*{aguaMacerado}" class="form-control" placeholder="0.0">
+                        <select th:field="*{unidadAguaMacerado}" class="form-select" style="max-width:90px;">
+                            <option value="L">L</option>
+                            <option value="gal">gal</option>
+                            <option value="mL">mL</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Agua Sparge</label>
+                    <div class="input-group">
+                        <input type="number" step="0.01" th:field="*{aguaSparge}" class="form-control" placeholder="0.0">
+                        <select th:field="*{unidadAguaSparge}" class="form-select" style="max-width:90px;">
+                            <option value="L">L</option>
+                            <option value="gal">gal</option>
+                            <option value="mL">mL</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ingredientes -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-basket me-2"></i>Ingredientes</div>
+            <p class="text-muted small mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Los nombres se sugieren desde el inventario. Si un insumo no existe, usa
+                <i class="bi bi-plus-square"></i> para crearlo sin descontar stock.
+            </p>
+
+            <!-- Maltas -->
+            <div class="mb-4">
+                <div class="ingrediente-grupo-label mb-2">
+                    <i class="bi bi-circle-fill me-1 text-malta"></i>Maltas
+                </div>
+                <div id="receta-maltas-container">
+                    <div th:each="malta, mStat : *{maltas}" class="ingrediente-row">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <input type="text" th:name="'maltas[' + ${mStat.index} + '].nombre'"
+                                       th:value="${malta.nombre}" class="form-control form-control-sm"
+                                       placeholder="Nombre malta" list="datalist-maltas" autocomplete="off">
+                            </div>
+                            <div class="col-md-1 ps-0">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                                        onclick="abrirModalInsumo('MALTA', this)" title="Crear en inventario">
+                                    <i class="bi bi-plus-square"></i>
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" th:name="'maltas[' + ${mStat.index} + '].cantidad'"
+                                       th:value="${malta.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                            </div>
+                            <div class="col-md-3">
+                                <select th:name="'maltas[' + ${mStat.index} + '].unidad'" class="form-select form-select-sm">
+                                    <option th:selected="${malta.unidad == 'gr'}"  value="gr">gr</option>
+                                    <option th:selected="${malta.unidad == 'kg'}"  value="kg">kg</option>
+                                    <option th:selected="${malta.unidad == 'mL'}"  value="mL">mL</option>
+                                    <option th:selected="${malta.unidad == 'L'}"   value="L">L</option>
+                                    <option th:selected="${malta.unidad == 'gal'}" value="gal">gal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                        onclick="addRecetaRow('receta-maltas-container','maltas','Malta')">
+                    <i class="bi bi-plus me-1"></i>Agregar Malta
+                </button>
+            </div>
+
+            <!-- Lúpulos -->
+            <div class="mb-4">
+                <div class="ingrediente-grupo-label mb-2">
+                    <i class="bi bi-circle-fill me-1 text-lupulo"></i>Lúpulos
+                </div>
+                <div id="receta-lupulos-container">
+                    <div th:each="lup, lupStat : *{lupulos}" class="ingrediente-row">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].nombre'"
+                                       th:value="${lup.nombre}" class="form-control form-control-sm"
+                                       placeholder="Nombre lúpulo" list="datalist-lupulos" autocomplete="off">
+                            </div>
+                            <div class="col-md-1 ps-0">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                                        onclick="abrirModalInsumo('LUPULO', this)" title="Crear en inventario">
+                                    <i class="bi bi-plus-square"></i>
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].cantidad'"
+                                       th:value="${lup.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                            </div>
+                            <div class="col-md-3">
+                                <select th:name="'lupulos[' + ${lupStat.index} + '].unidad'" class="form-select form-select-sm">
+                                    <option th:selected="${lup.unidad == 'gr'}"  value="gr">gr</option>
+                                    <option th:selected="${lup.unidad == 'kg'}"  value="kg">kg</option>
+                                    <option th:selected="${lup.unidad == 'mL'}"  value="mL">mL</option>
+                                    <option th:selected="${lup.unidad == 'L'}"   value="L">L</option>
+                                    <option th:selected="${lup.unidad == 'gal'}" value="gal">gal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                        onclick="addRecetaRow('receta-lupulos-container','lupulos','Lúpulo')">
+                    <i class="bi bi-plus me-1"></i>Agregar Lúpulo
+                </button>
+            </div>
+
+            <!-- Levaduras -->
+            <div class="mb-4">
+                <div class="ingrediente-grupo-label mb-2">
+                    <i class="bi bi-circle-fill me-1 text-levadura"></i>Levaduras
+                </div>
+                <div id="receta-levaduras-container">
+                    <div th:each="lev, levStat : *{levaduras}" class="ingrediente-row">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <input type="text" th:name="'levaduras[' + ${levStat.index} + '].nombre'"
+                                       th:value="${lev.nombre}" class="form-control form-control-sm"
+                                       placeholder="Nombre levadura" list="datalist-levaduras" autocomplete="off">
+                            </div>
+                            <div class="col-md-1 ps-0">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                                        onclick="abrirModalInsumo('LEVADURA', this)" title="Crear en inventario">
+                                    <i class="bi bi-plus-square"></i>
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" th:name="'levaduras[' + ${levStat.index} + '].cantidad'"
+                                       th:value="${lev.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                            </div>
+                            <div class="col-md-3">
+                                <select th:name="'levaduras[' + ${levStat.index} + '].unidad'" class="form-select form-select-sm">
+                                    <option th:selected="${lev.unidad == 'gr'}"  value="gr">gr</option>
+                                    <option th:selected="${lev.unidad == 'kg'}"  value="kg">kg</option>
+                                    <option th:selected="${lev.unidad == 'mL'}"  value="mL">mL</option>
+                                    <option th:selected="${lev.unidad == 'L'}"   value="L">L</option>
+                                    <option th:selected="${lev.unidad == 'gal'}" value="gal">gal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                        onclick="addRecetaRow('receta-levaduras-container','levaduras','Levadura')">
+                    <i class="bi bi-plus me-1"></i>Agregar Levadura
+                </button>
+            </div>
+
+            <!-- Clarificantes -->
+            <div>
+                <div class="ingrediente-grupo-label mb-2">
+                    <i class="bi bi-circle-fill me-1 text-clarificante"></i>Clarificantes
+                </div>
+                <div id="receta-clarificantes-container">
+                    <div th:each="clar, clarStat : *{clarificantes}" class="ingrediente-row">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-md-4">
+                                <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].nombre'"
+                                       th:value="${clar.nombre}" class="form-control form-control-sm"
+                                       placeholder="Nombre clarificante" list="datalist-clarificantes" autocomplete="off">
+                            </div>
+                            <div class="col-md-1 ps-0">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                                        onclick="abrirModalInsumo('CLARIFICANTE', this)" title="Crear en inventario">
+                                    <i class="bi bi-plus-square"></i>
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].cantidad'"
+                                       th:value="${clar.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                            </div>
+                            <div class="col-md-3">
+                                <select th:name="'clarificantes[' + ${clarStat.index} + '].unidad'" class="form-select form-select-sm">
+                                    <option th:selected="${clar.unidad == 'gr'}"  value="gr">gr</option>
+                                    <option th:selected="${clar.unidad == 'kg'}"  value="kg">kg</option>
+                                    <option th:selected="${clar.unidad == 'mL'}"  value="mL">mL</option>
+                                    <option th:selected="${clar.unidad == 'L'}"   value="L">L</option>
+                                    <option th:selected="${clar.unidad == 'gal'}" value="gal">gal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 text-end">
+                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-alera-outline mt-2"
+                        onclick="addRecetaRow('receta-clarificantes-container','clarificantes','Clarificante')">
+                    <i class="bi bi-plus me-1"></i>Agregar Clarificante
+                </button>
+            </div>
+        </div>
+
+        <!-- Escalones de macerado -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-thermometer-sun me-2"></i>Escalones de Macerado</div>
+            <p class="text-muted small mb-3">Define los pasos del mash (temperatura y duración por escalón).</p>
+            <div id="escalones-container">
+                <div th:each="esc, escStat : *{escalones}" class="ingrediente-row">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <input type="text" th:name="'escalones[' + ${escStat.index} + '].nombre'"
+                                   th:value="${esc.nombre}" class="form-control form-control-sm"
+                                   placeholder="Ej: Sacarificación">
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-sm">
+                                <input type="number" th:name="'escalones[' + ${escStat.index} + '].duracionMinutos'"
+                                       th:value="${esc.duracionMinutos}" class="form-control form-control-sm" placeholder="Min">
+                                <span class="input-group-text">min</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.1" th:name="'escalones[' + ${escStat.index} + '].temperaturaC'"
+                                       th:value="${esc.temperaturaC}" class="form-control form-control-sm" placeholder="Temp">
+                                <span class="input-group-text">°C</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2 text-end">
+                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-alera-outline mt-2" onclick="addEscalon()">
+                <i class="bi bi-plus me-1"></i>Agregar Escalón
+            </button>
+        </div>
+
+        <!-- Hervor y Lúpulo -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-fire me-2"></i>Hervor y Lúpulo</div>
+            <p class="text-muted small mb-3">
+                Programa las adiciones de lúpulos y clarificantes durante el hervor.
+                <strong>Minutos restantes</strong> = tiempo que falta para terminar el hervor cuando se agrega
+                (60 = al inicio, 0 = apagado/flameout).
+            </p>
+            <div id="adiciones-hervor-container">
+                <div th:if="${!#lists.isEmpty(recetaForm.adicionesHervor)}"
+                     th:each="adic, adicStat : *{adicionesHervor}" class="ingrediente-row">
+                    <div class="row g-2 align-items-center">
+                        <div class="col-md-4">
+                            <input type="text"
+                                   th:name="'adicionesHervor[' + ${adicStat.index} + '].nombre'"
+                                   th:value="${adic.nombre}"
+                                   class="form-control form-control-sm"
+                                   placeholder="Lúpulo o clarificante"
+                                   list="datalist-hervor" autocomplete="off">
+                        </div>
+                        <div class="col-md-2">
+                            <div class="input-group input-group-sm">
+                                <input type="number" min="0"
+                                       th:name="'adicionesHervor[' + ${adicStat.index} + '].minutosRestantes'"
+                                       th:value="${adic.minutosRestantes}"
+                                       class="form-control form-control-sm" placeholder="Min">
+                                <span class="input-group-text">min</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="number" step="0.001" min="0"
+                                   th:name="'adicionesHervor[' + ${adicStat.index} + '].cantidad'"
+                                   th:value="${adic.cantidad}"
+                                   class="form-control form-control-sm" placeholder="Cantidad">
+                        </div>
+                        <div class="col-md-3">
+                            <select th:name="'adicionesHervor[' + ${adicStat.index} + '].unidad'"
+                                    class="form-select form-select-sm">
+                                <option th:selected="${adic.unidad == 'gr'}"  value="gr">gr</option>
+                                <option th:selected="${adic.unidad == 'kg'}"  value="kg">kg</option>
+                                <option th:selected="${adic.unidad == 'mL'}"  value="mL">mL</option>
+                                <option th:selected="${adic.unidad == 'L'}"   value="L">L</option>
+                                <option th:selected="${adic.unidad == 'gal'}" value="gal">gal</option>
+                                <option th:selected="${adic.unidad == 'und'}" value="und">und</option>
+                            </select>
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                                <i class="bi bi-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row g-2 mt-2 align-items-center">
+                <div class="col-auto">
+                    <button type="button" class="btn btn-sm btn-alera-outline" onclick="addAdicionHervor()">
+                        <i class="bi bi-plus me-1"></i>Agregar Adición
+                    </button>
+                </div>
+                <div class="col-auto text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Tiempo total de hervor: <strong th:text="${recetaForm.tiempoHervorMinutos != null} ? ${recetaForm.tiempoHervorMinutos} + ' min' : '—'">—</strong>
+                    (configurado en Parámetros de Proceso)
+                </div>
+            </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-chat-left-text me-2"></i>Notas Técnicas</div>
+            <textarea th:field="*{notas}" class="form-control" rows="3"
+                      placeholder="Notas de proceso, observaciones, ajustes recomendados..."></textarea>
+        </div>
+
+        <div class="d-flex gap-2 mb-4">
+            <button type="submit" class="btn btn-alera px-4">
+                <i class="bi bi-save me-2"></i>
+                <span th:text="${recetaId != null} ? 'Actualizar Receta' : 'Guardar Receta'">Guardar</span>
+            </button>
+            <a th:href="@{/recetas}" class="btn btn-alera-outline px-4">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Modal: Crear tipo de cerveza rápido -->
+<div class="modal fade" id="modalNuevoTipo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-cup-hot me-2"></i>Nuevo Tipo de Cerveza</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" id="nuevoTipoNombre" class="form-control" placeholder="Ej: Imperial Stout">
+                </div>
+                <div id="nuevoTipoError" class="alert alert-danger py-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-alera" id="btnGuardarTipoRapido">
+                    <i class="bi bi-save me-1"></i>Crear Tipo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Crear insumo rápido en inventario -->
+<div class="modal fade" id="modalNuevoInsumo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Crear Insumo en Inventario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">El insumo se crea con stock en cero. No descuenta inventario.</p>
+                <div class="mb-3">
+                    <label class="form-label">Nombre *</label>
+                    <input type="text" id="nuevoInsumoNombre" class="form-control" placeholder="Nombre del insumo">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tipo</label>
+                    <input type="text" id="nuevoInsumoTipoDisplay" class="form-control" readonly>
+                    <input type="hidden" id="nuevoInsumoTipo">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Unidad</label>
+                    <select id="nuevoInsumoUnidad" class="form-select">
+                        <option value="gr">gr — gramos</option>
+                        <option value="kg">kg — kilogramos</option>
+                        <option value="mL">mL — mililitros</option>
+                        <option value="L">L — litros</option>
+                        <option value="gal">gal — galones</option>
+                        <option value="und">und — unidades</option>
+                    </select>
+                </div>
+                <div id="nuevoInsumoError" class="alert alert-danger py-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-alera" id="btnGuardarInsumoRapido">
+                    <i class="bi bi-save me-1"></i>Crear Insumo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const UNIT_OPTIONS = `
+    <option value="gr">gr</option>
+    <option value="kg">kg</option>
+    <option value="mL">mL</option>
+    <option value="L">L</option>
+    <option value="gal">gal</option>`;
+
+const DATALIST_MAP = {
+    maltas: 'datalist-maltas',
+    lupulos: 'datalist-lupulos',
+    levaduras: 'datalist-levaduras',
+    clarificantes: 'datalist-clarificantes'
+};
+
+const TIPO_ENUM_MAP = {
+    maltas: 'MALTA',
+    lupulos: 'LUPULO',
+    levaduras: 'LEVADURA',
+    clarificantes: 'CLARIFICANTE'
+};
+
+const TIPO_LABEL_MAP = {
+    MALTA: 'Malta',
+    LUPULO: 'Lúpulo',
+    LEVADURA: 'Levadura',
+    CLARIFICANTE: 'Clarificante'
+};
+
+function removeRow(btn) {
+    btn.closest('.ingrediente-row').remove();
+    renumberRecetaRows();
+}
+
+function renumberRecetaRows() {
+    ['maltas','lupulos','levaduras','clarificantes','escalones'].forEach(tipo => {
+        const c = document.getElementById('receta-' + tipo + '-container') || document.getElementById('escalones-container');
+        if (!c) return;
+        c.querySelectorAll('.ingrediente-row').forEach((row, idx) => {
+            row.querySelectorAll('input, select').forEach(el => {
+                if (el.name) el.name = el.name.replace(/\[\d+\]/, '[' + idx + ']');
+            });
+        });
+    });
+    // Renumerar adiciones hervor
+    const ah = document.getElementById('adiciones-hervor-container');
+    if (ah) {
+        ah.querySelectorAll('.ingrediente-row').forEach((row, idx) => {
+            row.querySelectorAll('input, select').forEach(el => {
+                if (el.name) el.name = el.name.replace(/\[\d+\]/, '[' + idx + ']');
+            });
+        });
+    }
+}
+
+function addAdicionHervor() {
+    const container = document.getElementById('adiciones-hervor-container');
+    const idx = container.querySelectorAll('.ingrediente-row').length;
+    container.insertAdjacentHTML('beforeend', `
+        <div class="ingrediente-row">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="adicionesHervor[${idx}].nombre"
+                           class="form-control form-control-sm"
+                           placeholder="Lúpulo o clarificante"
+                           list="datalist-hervor" autocomplete="off">
+                </div>
+                <div class="col-md-2">
+                    <div class="input-group input-group-sm">
+                        <input type="number" min="0" name="adicionesHervor[${idx}].minutosRestantes"
+                               class="form-control form-control-sm" placeholder="Min">
+                        <span class="input-group-text">min</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" step="0.001" min="0" name="adicionesHervor[${idx}].cantidad"
+                           class="form-control form-control-sm" placeholder="Cantidad">
+                </div>
+                <div class="col-md-3">
+                    <select name="adicionesHervor[${idx}].unidad" class="form-select form-select-sm">
+                        <option value="gr">gr</option>
+                        <option value="kg">kg</option>
+                        <option value="mL">mL</option>
+                        <option value="L">L</option>
+                        <option value="gal">gal</option>
+                        <option value="und">und</option>
+                    </select>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`);
+}
+
+function addRecetaRow(containerId, tipo, placeholder) {
+    const container = document.getElementById(containerId);
+    const idx = container.querySelectorAll('.ingrediente-row').length;
+    const datalistId = DATALIST_MAP[tipo] || '';
+    const tipoEnum   = TIPO_ENUM_MAP[tipo] || '';
+    container.insertAdjacentHTML('beforeend', `
+        <div class="ingrediente-row">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="${tipo}[${idx}].nombre" class="form-control form-control-sm"
+                           placeholder="${placeholder}" list="${datalistId}" autocomplete="off">
+                </div>
+                <div class="col-md-1 ps-0">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100"
+                            onclick="abrirModalInsumo('${tipoEnum}', this)" title="Crear en inventario">
+                        <i class="bi bi-plus-square"></i>
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="${tipo}[${idx}].cantidad" class="form-control form-control-sm" placeholder="Cantidad">
+                </div>
+                <div class="col-md-3">
+                    <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">${UNIT_OPTIONS}</select>
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                </div>
+            </div>
+        </div>`);
+}
+
+function addEscalon() {
+    const container = document.getElementById('escalones-container');
+    const idx = container.querySelectorAll('.ingrediente-row').length;
+    container.insertAdjacentHTML('beforeend', `
+        <div class="ingrediente-row">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-4">
+                    <input type="text" name="escalones[${idx}].nombre" class="form-control form-control-sm" placeholder="Ej: Sacarificación">
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <input type="number" name="escalones[${idx}].duracionMinutos" class="form-control form-control-sm" placeholder="Min">
+                        <span class="input-group-text">min</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group input-group-sm">
+                        <input type="number" step="0.1" name="escalones[${idx}].temperaturaC" class="form-control form-control-sm" placeholder="Temp">
+                        <span class="input-group-text">°C</span>
+                    </div>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                </div>
+            </div>
+        </div>`);
+}
+
+// ABV en vivo
+function calcAbv() {
+    const og = parseFloat(document.querySelector('[name="ogObjetivo"]')?.value);
+    const fg = parseFloat(document.querySelector('[name="fgObjetivo"]')?.value);
+    const el = document.getElementById('abvEstimado');
+    if (!isNaN(og) && !isNaN(fg) && og > fg) {
+        el.textContent = ((og - fg) * 0.13125).toFixed(2) + ' %';
+    } else {
+        el.textContent = '—';
+    }
+}
+document.querySelector('[name="ogObjetivo"]')?.addEventListener('input', calcAbv);
+document.querySelector('[name="fgObjetivo"]')?.addEventListener('input', calcAbv);
+window.addEventListener('DOMContentLoaded', calcAbv);
+
+// Modal: tipo de cerveza
+function abrirModalTipoCerveza() {
+    const val = document.querySelector('input[list="datalist-estilos"]')?.value?.trim() || '';
+    document.getElementById('nuevoTipoNombre').value = val;
+    document.getElementById('nuevoTipoError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalNuevoTipo')).show();
+    setTimeout(() => document.getElementById('nuevoTipoNombre').focus(), 300);
+}
+
+document.getElementById('btnGuardarTipoRapido').addEventListener('click', async () => {
+    const nombre  = document.getElementById('nuevoTipoNombre').value.trim();
+    const errorEl = document.getElementById('nuevoTipoError');
+    errorEl.classList.add('d-none');
+    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+
+    const csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    try {
+        const resp = await fetch('/tipos-cerveza/guardar-rapido', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrf },
+            body: new URLSearchParams({ nombre })
+        });
+        const data = await resp.json();
+        if (data.success) {
+            const dl  = document.getElementById('datalist-estilos');
+            const opt = document.createElement('option');
+            opt.value = data.nombre;
+            dl.appendChild(opt);
+            document.querySelector('input[list="datalist-estilos"]').value = data.nombre;
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoTipo')).hide();
+        } else {
+            errorEl.textContent = data.error || 'Error al crear el tipo';
+            errorEl.classList.remove('d-none');
+        }
+    } catch (e) {
+        errorEl.textContent = 'Error de conexión';
+        errorEl.classList.remove('d-none');
+    }
+});
+
+// Modal de creación rápida de insumo
+let modalInsumoInputRef = null;
+
+function abrirModalInsumo(tipoEnum, btn) {
+    const row = btn.closest('.ingrediente-row');
+    modalInsumoInputRef = row.querySelector('input[list]');
+    document.getElementById('nuevoInsumoNombre').value = modalInsumoInputRef?.value?.trim() || '';
+    document.getElementById('nuevoInsumoTipo').value = tipoEnum;
+    document.getElementById('nuevoInsumoTipoDisplay').value = TIPO_LABEL_MAP[tipoEnum] || tipoEnum;
+    document.getElementById('nuevoInsumoError').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalNuevoInsumo')).show();
+    setTimeout(() => document.getElementById('nuevoInsumoNombre').focus(), 300);
+}
+
+document.getElementById('btnGuardarInsumoRapido').addEventListener('click', async () => {
+    const nombre  = document.getElementById('nuevoInsumoNombre').value.trim();
+    const tipo    = document.getElementById('nuevoInsumoTipo').value;
+    const unidad  = document.getElementById('nuevoInsumoUnidad').value;
+    const errorEl = document.getElementById('nuevoInsumoError');
+    errorEl.classList.add('d-none');
+
+    if (!nombre) {
+        errorEl.textContent = 'El nombre es obligatorio';
+        errorEl.classList.remove('d-none');
+        return;
+    }
+
+    const csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    try {
+        const resp = await fetch('/inventario/guardar-rapido', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                [csrfHeader]: csrf
+            },
+            body: new URLSearchParams({ nombre, tipo, unidad })
+        });
+        const data = await resp.json();
+
+        if (data.success) {
+            // Agregar opción al datalist correspondiente
+            const datalistId = Object.keys(TIPO_ENUM_MAP).find(k => TIPO_ENUM_MAP[k] === tipo);
+            const dl = document.getElementById(DATALIST_MAP[datalistId]);
+            if (dl) {
+                const opt = document.createElement('option');
+                opt.value = data.nombre;
+                dl.appendChild(opt);
+            }
+            // Rellenar el input que disparó el modal
+            if (modalInsumoInputRef) modalInsumoInputRef.value = data.nombre;
+            bootstrap.Modal.getInstance(document.getElementById('modalNuevoInsumo')).hide();
+        } else {
+            errorEl.textContent = data.error || 'Error al crear el insumo';
+            errorEl.classList.remove('d-none');
+        }
+    } catch (e) {
+        errorEl.textContent = 'Error de conexión';
+        errorEl.classList.remove('d-none');
+    }
+});
+</script>
+</body>
+</html>
