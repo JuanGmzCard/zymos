@@ -88,7 +88,7 @@ class TrazabilidadControllerTest {
 
         mockMvc.perform(get("/"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("index"))
+                .andExpect(view().name("trazabilidad/index"))
                 .andExpect(model().attributeExists("lotes", "paginaActual", "totalPaginas"));
     }
 
@@ -111,7 +111,7 @@ class TrazabilidadControllerTest {
 
         mockMvc.perform(get("/kanban"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("kanban"))
+                .andExpect(view().name("trazabilidad/kanban"))
                 .andExpect(model().attributeExists(
                         "sinIniciar", "fermentacion", "acondicionamiento",
                         "maduracion", "carbonatacion", "completados"));
@@ -130,7 +130,7 @@ class TrazabilidadControllerTest {
 
         mockMvc.perform(get("/nuevo"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("formulario"))
+                .andExpect(view().name("trazabilidad/formulario"))
                 .andExpect(model().attributeExists("loteForm"));
     }
 
@@ -174,7 +174,7 @@ class TrazabilidadControllerTest {
                         .with(csrf())
                         .param("estilo", ""))
                 .andExpect(status().isOk())
-                .andExpect(view().name("formulario"))
+                .andExpect(view().name("trazabilidad/formulario"))
                 .andExpect(model().hasErrors())
                 .andExpect(model().attributeHasFieldErrors("loteForm", "estilo"));
     }
@@ -206,7 +206,7 @@ class TrazabilidadControllerTest {
 
         mockMvc.perform(get("/ver/1"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("detalle"))
+                .andExpect(view().name("trazabilidad/detalle"))
                 .andExpect(model().attributeExists("lote", "historial"));
     }
 

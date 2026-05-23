@@ -87,7 +87,7 @@ public class TrazabilidadController {
         model.addAttribute("faseFiltro",   fase);
         model.addAttribute("desdeFiltro",  desde);
         model.addAttribute("hastaFiltro",  hasta);
-        return "index";
+        return "trazabilidad/index";
     }
 
     @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -105,7 +105,7 @@ public class TrazabilidadController {
         model.addAttribute("maduracion",       lotes.stream().filter(l -> l.getMadurFechaInicial() != null && l.getCarbFechaInicial() == null && !l.isCompletado()).toList());
         model.addAttribute("carbonatacion",    lotes.stream().filter(l -> l.getCarbFechaInicial() != null && !l.isCompletado()).toList());
         model.addAttribute("completados",      lotes.stream().filter(l -> l.isCompletado()).toList());
-        return "kanban";
+        return "trazabilidad/kanban";
     }
 
     @GetMapping("/nuevo")
@@ -137,7 +137,7 @@ public class TrazabilidadController {
         }
         model.addAttribute("loteForm", dto);
         agregarInventarioAlModelo(model);
-        return "formulario";
+        return "trazabilidad/formulario";
     }
 
     private List<InsumoDto> toInsumoDtoList(List<RecetaIngrediente> ingredientes) {
@@ -155,7 +155,7 @@ public class TrazabilidadController {
                           BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
             agregarInventarioAlModelo(model);
-            return "formulario";
+            return "trazabilidad/formulario";
         }
         try {
             var resultado = service.guardar(dto);
@@ -191,7 +191,7 @@ public class TrazabilidadController {
                 fermentadores.add(0, lote.getEquipoFermentador());
             }
         }
-        return "formulario";
+        return "trazabilidad/formulario";
     }
 
     @PostMapping("/actualizar/{id}")
@@ -201,7 +201,7 @@ public class TrazabilidadController {
         if (result.hasErrors()) {
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
-            return "formulario";
+            return "trazabilidad/formulario";
         }
         try {
             var resultado = service.actualizar(id, dto);
@@ -235,7 +235,7 @@ public class TrazabilidadController {
         model.addAttribute("lote",     lote);
         model.addAttribute("historial", service.obtenerHistorial(id));
         model.addAttribute("lecturas",  lecturas);
-        return "detalle";
+        return "trazabilidad/detalle";
     }
 
     @PostMapping("/ver/{id}/lecturas/agregar")
@@ -298,7 +298,7 @@ public class TrazabilidadController {
         model.addAttribute("loteForm", dto);
         model.addAttribute("duplicadoDe", lote.getCodigoLote());
         agregarInventarioAlModelo(model);
-        return "formulario";
+        return "trazabilidad/formulario";
     }
 
     @PostMapping("/actualizar/{id}/fase")
