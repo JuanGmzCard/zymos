@@ -141,9 +141,9 @@
                                 </a>
                                 <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
                                       sec:authorize="hasAnyRole('ADMIN','INVENTARIO')"
-                                      onsubmit="return confirm('¿Eliminar la receta «' + /*[[${rec.nombre}]]*/ '' + '»?')">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                        <i class="bi bi-trash"></i>
+                                      onsubmit="return confirm('¿Archivar la receta «' + /*[[${rec.nombre}]]*/ '' + '»? Los datos se conservan.')">
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Archivar">
+                                        <i class="bi bi-archive"></i>
                                     </button>
                                 </form>
                             </div>

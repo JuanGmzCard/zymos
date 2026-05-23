@@ -241,11 +241,16 @@ class RecetaServiceTest {
     // ── eliminar ──────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("eliminar delega al repositorio por id")
-    void eliminar_delegaDeleteById() {
+    @DisplayName("eliminar hace soft delete (setDeletedAt + save)")
+    void eliminar_softDelete() {
+        Receta receta = new Receta();
+        receta.setNombre("IPA Clásica");
+        when(repo.findById(5L)).thenReturn(Optional.of(receta));
+
         service.eliminar(5L);
 
-        verify(repo).deleteById(5L);
+        verify(repo, never()).deleteById(any());
+        verify(repo).save(argThat(r -> r.getDeletedAt() != null));
     }
 
     // ── toFormDto ─────────────────────────────────────────────────────

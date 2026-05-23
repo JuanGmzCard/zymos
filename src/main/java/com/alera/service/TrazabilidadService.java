@@ -200,9 +200,10 @@ public class TrazabilidadService {
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
         restaurarInventario(lote.getIngredientes());
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
-                "ELIMINADO", currentUser(), null));
-        loteRepo.delete(lote);
-        log.info("Lote eliminado: {} | inventario restaurado", lote.getCodigoLote());
+                "ARCHIVADO", currentUser(), null));
+        lote.setDeletedAt(java.time.LocalDateTime.now());
+        loteRepo.save(lote);
+        log.info("Lote archivado: {} | inventario restaurado", lote.getCodigoLote());
     }
 
     private void mapearDto(LoteCerveza lote, LoteFormDto dto) {

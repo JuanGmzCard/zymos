@@ -79,8 +79,11 @@ public class RecetaService {
     }
 
     public void eliminar(Long id) {
-        repo.deleteById(id);
-        log.info("Receta eliminada: {}", id);
+        repo.findById(id).ifPresent(r -> {
+            r.setDeletedAt(java.time.LocalDateTime.now());
+            repo.save(r);
+            log.info("Receta archivada: {} ({})", r.getNombre(), id);
+        });
     }
 
     public RecetaFormDto toFormDto(Receta r) {

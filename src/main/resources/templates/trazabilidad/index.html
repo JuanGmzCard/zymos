@@ -286,8 +286,8 @@
                                     <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-alera btn-sm py-0 px-2" style="font-size:0.65rem;" title="Ver detalle"><i class="bi bi-eye"></i></a>
                                     <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Editar"><i class="bi bi-pencil"></i></a>
                                     <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Duplicar lote"><i class="bi bi-copy"></i></a>
-                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Eliminar lote y restaurar inventario?')">
-                                        <button type="submit" class="btn btn-outline-danger btn-sm py-0 px-2" style="font-size:0.65rem;" title="Eliminar"><i class="bi bi-trash"></i></button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto (los datos se conservan).')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Archivar"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>

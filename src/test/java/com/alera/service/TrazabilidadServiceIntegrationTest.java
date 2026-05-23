@@ -94,6 +94,6 @@ class TrazabilidadServiceIntegrationTest extends AbstractIntegrationTest {
         // El historial persiste incluso después de eliminar el lote (sin FK)
         var historialTotal = service.obtenerHistorial(lote.getId());
         assertThat(historialTotal).hasSize(2);
-        assertThat(historialTotal.get(0).getAccion()).isEqualTo("ELIMINADO");
+        assertThat(historialTotal.get(0).getAccion()).isEqualTo("ARCHIVADO");
     }
 }

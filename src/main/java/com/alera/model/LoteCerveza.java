@@ -2,9 +2,11 @@ package com.alera.model;
 
 import com.alera.model.enums.TipoIngrediente;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "lotes_cerveza")
+@SQLRestriction("deleted_at IS NULL")
 public class LoteCerveza extends AuditableEntity {
 
     @Id
@@ -74,6 +77,9 @@ public class LoteCerveza extends AuditableEntity {
 
     @Column(columnDefinition = "TEXT", name = "notas_cata")
     private String notasCata;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta_id")
@@ -248,6 +254,8 @@ public class LoteCerveza extends AuditableEntity {
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
     public String getNotasCata() { return notasCata; }
     public void setNotasCata(String notasCata) { this.notasCata = notasCata; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public Receta getReceta() { return receta; }
     public void setReceta(Receta receta) { this.receta = receta; }
     public List<LoteItemFactura> getItemsFactura() { return itemsFactura; }

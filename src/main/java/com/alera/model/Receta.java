@@ -2,13 +2,16 @@ package com.alera.model;
 
 import com.alera.model.enums.TipoIngrediente;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "recetas")
+@SQLRestriction("deleted_at IS NULL")
 public class Receta extends AuditableEntity {
 
     @Id
@@ -38,6 +41,9 @@ public class Receta extends AuditableEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notas;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
 
     @OneToMany(mappedBy = "receta", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -93,6 +99,8 @@ public class Receta extends AuditableEntity {
     public void setVolumenBase(BigDecimal volumenBase) { this.volumenBase = volumenBase; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public List<RecetaIngrediente> getIngredientes() { return ingredientes; }
     public void setIngredientes(List<RecetaIngrediente> ingredientes) { this.ingredientes = ingredientes; }
     public List<EscalonMacerado> getEscalones() { return escalones; }

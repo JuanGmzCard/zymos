@@ -169,7 +169,10 @@ class TrazabilidadServiceTest {
         service.eliminar(1L);
 
         verify(insumoService).restaurarIngrediente(eq("Swaen Ale"), any());
-        verify(loteRepo).delete(res.getLote());
+        // soft delete: save con deletedAt seteado, no loteRepo.delete()
+        verify(loteRepo, never()).delete(any());
+        verify(loteRepo, atLeast(2)).save(argThat(l ->
+                l == res.getLote() && l.getDeletedAt() != null));
     }
 
     @Test
