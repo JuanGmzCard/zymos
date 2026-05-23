@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.dto.MantenimientoDto;
+import com.alera.mapper.MantenimientoMapper;
 import com.alera.model.Equipo;
 import com.alera.model.MantenimientoEquipo;
 import com.alera.repository.EquipoRepository;
@@ -15,10 +16,14 @@ public class MantenimientoEquipoService {
 
     private final MantenimientoEquipoRepository repo;
     private final EquipoRepository equipoRepo;
+    private final MantenimientoMapper mapper;
 
-    public MantenimientoEquipoService(MantenimientoEquipoRepository repo, EquipoRepository equipoRepo) {
+    public MantenimientoEquipoService(MantenimientoEquipoRepository repo,
+                                       EquipoRepository equipoRepo,
+                                       MantenimientoMapper mapper) {
         this.repo = repo;
         this.equipoRepo = equipoRepo;
+        this.mapper = mapper;
     }
 
     public List<MantenimientoEquipo> listarPorEquipo(Long equipoId) {
@@ -29,14 +34,8 @@ public class MantenimientoEquipoService {
         Equipo equipo = equipoRepo.findById(equipoId)
                 .orElseThrow(() -> new RuntimeException("Equipo no encontrado: " + equipoId));
 
-        MantenimientoEquipo m = new MantenimientoEquipo();
+        MantenimientoEquipo m = mapper.toEntity(dto);
         m.setEquipo(equipo);
-        m.setFecha(dto.getFecha());
-        m.setTipo(dto.getTipo());
-        m.setDescripcion(dto.getDescripcion());
-        m.setTecnico(dto.getTecnico());
-        m.setCosto(dto.getCosto());
-        m.setProximoMantenimiento(dto.getProximoMantenimiento());
 
         MantenimientoEquipo saved = repo.save(m);
 
