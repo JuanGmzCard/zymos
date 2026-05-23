@@ -31,7 +31,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V23)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V25)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -70,6 +70,7 @@ com.alera/
 │               AleraAuthSuccessHandler, AleraAuthFailureHandler, AleraAccessDeniedHandler,
 │               LoginAttemptService (protección fuerza bruta — cache Caffeine por IP),
 │               LoginAttemptFilter (OncePerRequestFilter — creado como @Bean en SecurityConfig, no @Component),
+│               PasswordPolicy (utilidad estática — MIN_LENGTH=8, requiere letra + número; `validar(pwd)` retorna null si OK o mensaje de error),
 │               BrandingProperties (@ConfigurationProperties prefix=app.brand),
 │               TenantContext (ThreadLocal), TenantFilter (OncePerRequestFilter),
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
@@ -105,7 +106,8 @@ com.alera/
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
 │               AlertaContadores (bajoStock, vencimientos, mantenimiento + getTotal() — devuelto por AlertaController)
-└── mapper/     LoteMapper (MapStruct — LoteCerveza → LoteFormDto)
+└── mapper/     LoteMapper (MapStruct — LoteCerveza → LoteFormDto),
+                MantenimientoMapper (MapStruct — MantenimientoDto → MantenimientoEquipo, ignora `id` y `equipo`)
 
 templates/
 ├── fragments/  navbar.html (dropdowns Producción/Almacén/Comercial/Admin + botón `+` acciones rápidas + campana dropdown + búsqueda global con typeahead + dropdown usuario con rol badge + perfil), paginacion.html
@@ -161,6 +163,7 @@ templates/
 - `V22__fix_usuarios_unique_constraint.sql` — elimina constraint única simple de `username` en `usuarios` (nombre generado por JPA/Hibernate) y garantiza índice compuesto `ux_usuarios_username_tenant (username, tenant_id)` — corrige lo que V16 intentó hacer pero con nombre de constraint distinto
 - `V23__fix_jpa_unique_constraints.sql` — DO block dinámico que elimina constraints únicas simples de columna (nombre generado por JPA) en `tipos_cerveza`, `recetas`, `proveedores`, `lotes_cerveza`; garantiza índices compuestos `ux_*_nombre_tenant` y `ux_lotes_codigo_tenant`
 - `V24__historial_tenants.sql` — tabla `historial_tenants(id BIGSERIAL, subdomain VARCHAR(100), accion VARCHAR(50), usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW(), detalles VARCHAR(500))` + índices en `subdomain` y `fecha DESC`. Sin FK a `tenants` (preserva historial si se elimina el tenant). Sin `@TenantId` — es auditoría de super-admin, no filtrada por tenant.
+- `V25__soft_delete_lotes_recetas.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN deleted_at TIMESTAMP` y `ALTER TABLE recetas ADD COLUMN deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en ambas entidades. `eliminar()` en los servicios setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente).
 
 ---
 
@@ -219,6 +222,7 @@ Entidad central. Extiende `AuditableEntity`. Campos propios:
   - `getEficienciaMacerado()` → `ogPuntos = OG - 1000` (ya en puntos, NO multiplicar por 1000)
 - **Costo**: `getCostoTotal()` — suma `LoteItemFactura.getValorAsignado()` de cada ítem asignado; `getCostoPorLitro()` divide por litrosFinales
 - **Kanban**: `getDiasEnFaseActual()` — días desde el inicio de la fase actual
+- **Soft delete**: `@SQLRestriction("deleted_at IS NULL")` — Hibernate filtra automáticamente lotes eliminados. Campo `deletedAt` (`LocalDateTime`, nullable). `TrazabilidadService.eliminar()` setea `deletedAt` y guarda (no borra físicamente). El historial registra "ARCHIVADO" (no "ELIMINADO").
 
 ### Tenant
 Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es la tabla maestra, no filtrada).
@@ -253,6 +257,7 @@ Extiende `AuditableEntity`. Campos propios:
 - `@OneToMany ingredientes → RecetaIngrediente` + `@OneToMany escalones → EscalonMacerado`
 - `@OneToMany adicionesHervor → AdicionHervor` (CASCADE ALL, orphanRemoval) — ordenadas por `minutosRestantes DESC, orden ASC`
 - **CRÍTICO**: el campo se llama `activa` (no `activo`) — los métodos derivados de Spring Data son `findAllByActivaTrue*`, `findByActiva*`
+- **Soft delete**: `@SQLRestriction("deleted_at IS NULL")` — campo `deletedAt` (`LocalDateTime`, nullable). `RecetaService.eliminar()` setea `deletedAt` y guarda (no borra físicamente).
 
 ### EscalonMacerado
 - `@Column(name="temperatura_c")` y `@Column(name="duracion_minutos")` — **obligatorios** por naming strategy
@@ -685,7 +690,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **Multi-tenant — TenantFilter** (`OncePerRequestFilter`):
   - Extrae subdomain del header `Host` (ej: `cerveceria1.app.com` → `cerveceria1`)
   - En localhost/127.0.0.1 usa `app.default-subdomain` (normalmente `"default"`). Para probar múltiples tenants en local, agregar entradas en `hosts` (`127.0.0.1 mosto.localhost`) y acceder via `http://mosto.localhost:8080`.
-  - Busca `Tenant` en BD usando `findBySubdomainAndActiveTrue` — **si `active=false` devuelve 503** aunque el tenant exista en BD. Cache en memoria `ConcurrentHashMap` (sin TTL — se invalida explícitamente con `evictCache(subdomain)` o `evictAll()`).
+  - Busca `Tenant` en BD usando `findBySubdomainAndActiveTrue` — **si `active=false` devuelve 503** aunque el tenant exista en BD. Cache en memoria Caffeine (`Cache<String, Tenant>`) con TTL configurable (`app.tenant-cache-ttl-minutes`, def: 5 min), `maximumSize(200)`. Se invalida explícitamente con `evictCache(subdomain)` o `evictAll()`.
   - Llama `TenantContext.setCurrentTenant(subdomain)` + guarda en `request.setAttribute("currentTenant", tenant)`
   - `finally` llama `TenantContext.clear()` — nunca hay fuga de contexto entre requests
   - Registrado con `addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)` para que corra antes de cualquier autenticación de Spring Security
@@ -881,6 +886,23 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `ApiControllerTest` — 9 tests: seguridad (401), lotes (lista, por id, 404, historial), recetas, alertas inventario, dashboard
 - `AlertaControllerTest` — 5 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento
 - `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `AleraAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
+- `LoginControllerTest` — 3 tests: GET /login público (200), con ?error, con ?bloqueado. **Nota**: en `@WebMvcTest`, Spring Security puede interceptar GET /login con su propio filtro antes del DispatcherServlet — no verificar `view().name("login")`, solo `status().isOk()`.
+- `DashboardControllerTest` — 3 tests: 401 sin auth, 200 con cualquier rol, modelo tiene `stats` attribute
+- `CalendarioControllerTest` — 3 tests: 401 sin auth, 200 autenticado, eventos JSON
+- `AdminControllerTest` — 3 tests: 401, 200 ADMIN con lista vacía de logs, filtro por tipo
+- `PerfilControllerTest` — 3 tests: 401, 200 con cualquier rol, POST cambio de contraseña redirige
+- `BusquedaControllerTest` — 3 tests: 401, 200 con query, suggest retorna JSON. **Nota**: `loteRepo.search()` y `recetaRepo.search()` retornan `List<>` (no `Page`) — usar `when(...).thenReturn(List.of())`
+- `TipoCervezaControllerTest` — 3 tests: 401, 200 ADMIN, `guardarRapido` → JSON 200. **Nota**: stub `service.guardar(any())` para devolver un `TipoCerveza` con id/nombre, si no el NPE cae al catch → 400
+- `UsuarioControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, guardar con contraseña inválida redirige. **Nota**: el parámetro del controller se llama `confirmPassword` (no `confirmarPassword`)
+- `RecetaControllerTest` — 4 tests: 401, 200 con filtro activas, suggest JSON, GET /editar retorna formulario
+- `EquipoControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`
+- `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
+- `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
+- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository` y `EquipoRepository` adicionales
+- `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
+- `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check
+- `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
+- `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context
 
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
@@ -889,13 +911,15 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `AleraAuthSuccessHandler`, `AleraAuthFailureHandler`, `AleraAccessDeniedHandler` — SecurityConfig.filterChain() los recibe como parámetros; sin mock → Spring usa la seguridad por defecto (sin URL-based restrictions)
 - `LoginAttemptService` — requerido por `LoginAttemptFilter` (bean en SecurityConfig); sin mock → contexto no carga. **CRÍTICO**: NO mockear `LoginAttemptFilter` directamente (es creado por SecurityConfig vía `@Bean`, no auto-detectado). Mockear `LoginAttemptService` para que el filtro real pueda ser creado con la dependencia satisfecha.
 - `UsuarioService`, `LogAccesoService` — requeridos por los auth handlers y DaoAuthenticationProvider
+- `PasswordEncoder` — si el controller lo inyecta directamente (ej: `TenantAdminController`), agregar `@MockBean PasswordEncoder`
+- **NO mockear `ObjectMapper`**: Spring Boot lo autoconfigura en `@WebMvcTest`. Mockearlo hace que `routerFunctionMapping` falle al crear (`objectMapper.reader()` retorna null). Si el controller usa `ObjectMapper`, usa el bean autoconfigurdo directamente.
 - **Comportamiento de seguridad en @WebMvcTest**: con `httpBasic()` configurado, requests sin autenticar devuelven `401` (no `302`). Los handlers mockeados (void, no-op) no comiten la respuesta → URL-based security no se enforce plenamente → las pruebas de seguridad URL-based verifican que el controller SE EJECUTA (no que SE BLOQUEA). La seguridad URL-based real se verifica en tests de integración.
 
 **@WebMvcTest — Java 26 + Byte Buddy**: el proyecto corre en JVM 26 y Byte Buddy (bundled con Mockito) solo soporta oficialmente hasta Java 24. El `maven-surefire-plugin` tiene configurado `<argLine>-Dnet.bytebuddy.experimental=true</argLine>` y `<systemPropertyVariables><net.bytebuddy.experimental>true</net.bytebuddy.experimental></systemPropertyVariables>` para habilitar instrumentación experimental en JVM 26.
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V24 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V25 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
