@@ -34,11 +34,21 @@ public class SecurityConfig {
         return new TenantFilter(tenantRepo, defaultSubdomain, ttlMinutes);
     }
 
-    // Evitar que Spring Boot registre TenantFilter como servlet filter standalone
-    // (ya está en la security chain; el doble registro causaría ejecución duplicada)
     @Bean
     public FilterRegistrationBean<TenantFilter> tenantFilterRegistration(TenantFilter filter) {
         FilterRegistrationBean<TenantFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
+    public LoginAttemptFilter loginAttemptFilter(LoginAttemptService loginAttemptService) {
+        return new LoginAttemptFilter(loginAttemptService);
+    }
+
+    @Bean
+    public FilterRegistrationBean<LoginAttemptFilter> loginAttemptFilterRegistration(LoginAttemptFilter filter) {
+        FilterRegistrationBean<LoginAttemptFilter> reg = new FilterRegistrationBean<>(filter);
         reg.setEnabled(false);
         return reg;
     }
@@ -55,12 +65,13 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http,
                                             DaoAuthenticationProvider authProvider,
                                             TenantFilter tenantFilter,
+                                            LoginAttemptFilter loginAttemptFilter,
                                             AleraAuthSuccessHandler successHandler,
                                             AleraAuthFailureHandler failureHandler,
                                             AleraAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
-            // TenantFilter debe correr ANTES de que Spring Security evalúe la sesión/autenticación
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
+            .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
             .sessionManagement(session -> session

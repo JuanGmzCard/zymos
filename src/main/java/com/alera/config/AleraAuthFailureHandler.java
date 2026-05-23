@@ -12,19 +12,30 @@ import java.io.IOException;
 public class AleraAuthFailureHandler implements AuthenticationFailureHandler {
 
     private final LogAccesoService logService;
+    private final LoginAttemptService loginAttemptService;
 
-    public AleraAuthFailureHandler(LogAccesoService logService) {
-        this.logService = logService;
+    public AleraAuthFailureHandler(LogAccesoService logService,
+                                    LoginAttemptService loginAttemptService) {
+        this.logService          = logService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp,
                                         AuthenticationException ex) throws IOException {
+        String ip = clientIp(req);
+        loginAttemptService.registrarFallo(ip);
+
         String usuario = req.getParameter("username");
         logService.registrar(usuario, "LOGIN_FALLIDO",
-                clientIp(req), "/login", req.getHeader("User-Agent"),
+                ip, "/login", req.getHeader("User-Agent"),
                 ex.getMessage());
-        resp.sendRedirect("/login?error");
+
+        if (loginAttemptService.estaBloqueado(ip)) {
+            resp.sendRedirect("/login?bloqueado=true");
+        } else {
+            resp.sendRedirect("/login?error");
+        }
     }
 
     private String clientIp(HttpServletRequest req) {

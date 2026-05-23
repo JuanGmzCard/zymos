@@ -4,6 +4,7 @@ import com.alera.config.AleraAccessDeniedHandler;
 import com.alera.config.AleraAuthFailureHandler;
 import com.alera.config.AleraAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
+import com.alera.config.LoginAttemptService;
 import com.alera.model.ElaboracionPlanificada;
 import com.alera.repository.TenantRepository;
 import com.alera.service.LogAccesoService;
@@ -43,6 +44,7 @@ class PlanificacionControllerTest {
     @MockBean AleraAuthSuccessHandler  successHandler;
     @MockBean AleraAuthFailureHandler  failureHandler;
     @MockBean AleraAccessDeniedHandler accessDeniedHandler;
+    @MockBean LoginAttemptService      loginAttemptService;
 
     @BeforeEach
     void setUp() {

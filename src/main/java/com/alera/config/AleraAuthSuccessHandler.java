@@ -12,14 +12,18 @@ import java.io.IOException;
 public class AleraAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     private final LogAccesoService logService;
+    private final LoginAttemptService loginAttemptService;
 
-    public AleraAuthSuccessHandler(LogAccesoService logService) {
-        this.logService = logService;
+    public AleraAuthSuccessHandler(LogAccesoService logService,
+                                    LoginAttemptService loginAttemptService) {
+        this.logService          = logService;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp,
                                         Authentication auth) throws IOException {
+        loginAttemptService.resetear(clientIp(req));
         logService.registrar(auth.getName(), "LOGIN_OK",
                 clientIp(req), "/login", req.getHeader("User-Agent"), null);
         resp.sendRedirect("/dashboard");

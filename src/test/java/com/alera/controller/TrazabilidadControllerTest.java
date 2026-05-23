@@ -4,6 +4,7 @@ import com.alera.config.AleraAccessDeniedHandler;
 import com.alera.config.AleraAuthFailureHandler;
 import com.alera.config.AleraAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
+import com.alera.config.LoginAttemptService;
 import com.alera.exception.LoteNoEncontradoException;
 import com.alera.dto.LoteGuardadoResult;
 import com.alera.model.LoteCerveza;
@@ -50,6 +51,7 @@ class TrazabilidadControllerTest {
     @MockBean TenantRepository             tenantRepo;
     @MockBean BrandingProperties           brandingProperties;
     @MockBean AleraAuthSuccessHandler      successHandler;
+    @MockBean LoginAttemptService          loginAttemptService;
     @MockBean AleraAuthFailureHandler      failureHandler;
     @MockBean AleraAccessDeniedHandler     accessDeniedHandler;
     @MockBean PdfExportService             pdfExportService;

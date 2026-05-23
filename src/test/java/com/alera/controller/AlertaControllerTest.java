@@ -4,6 +4,7 @@ import com.alera.config.AleraAccessDeniedHandler;
 import com.alera.config.AleraAuthFailureHandler;
 import com.alera.config.AleraAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
+import com.alera.config.LoginAttemptService;
 import com.alera.model.Equipo;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
@@ -40,6 +41,7 @@ class AlertaControllerTest {
     @MockBean AleraAuthSuccessHandler    successHandler;
     @MockBean AleraAuthFailureHandler    failureHandler;
     @MockBean AleraAccessDeniedHandler   accessDeniedHandler;
+    @MockBean LoginAttemptService        loginAttemptService;
 
     @BeforeEach
     void setUp() {

@@ -39,6 +39,10 @@
         </div>
 
         <div class="login-body-content">
+            <div th:if="${param.bloqueado}" class="alert alert-danger">
+                <i class="bi bi-shield-lock me-2"></i>
+                Demasiados intentos fallidos. Tu acceso está bloqueado temporalmente. Intenta de nuevo en unos minutos.
+            </div>
             <div th:if="${param.error}" class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>Usuario o contraseña incorrectos
             </div>
