@@ -1,0 +1,156 @@
+package com.alera.service;
+
+import com.alera.model.LecturaFermentacion;
+import com.alera.model.LoteCerveza;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.*;
+
+/**
+ * Smoke tests para PdfExportService.
+ * Verifican que el output es un PDF válido (%PDF magic bytes), no vacío,
+ * y que el servicio no lanza excepciones ante distintas combinaciones de entrada.
+ * No verifican el contenido visual del PDF — eso pertenece a pruebas manuales.
+ */
+@DisplayName("PdfExportService")
+class PdfExportServiceTest {
+
+    private final PdfExportService service = new PdfExportService();
+
+    // ── Helpers ───────────────────────────────────────────────────────
+
+    private LoteCerveza loteMinimo() {
+        LoteCerveza lote = new LoteCerveza();
+        lote.setCodigoLote("IPA-001");
+        lote.setEstilo("India Pale Ale");
+        lote.setFechaElaboracion(LocalDate.of(2025, 3, 1));
+        return lote;
+    }
+
+    private LoteCerveza loteCompleto() {
+        LoteCerveza lote = loteMinimo();
+        lote.setDensidadInicial(1058);
+        lote.setDensidadFinal(1012);
+        lote.setLitrosFinales(new BigDecimal("20"));
+        lote.setFermFechaInicial(LocalDate.of(2025, 3, 1));
+        lote.setAcondFechaInicial(LocalDate.of(2025, 3, 10));
+        lote.setObservaciones("Sin observaciones relevantes");
+        lote.setNotasCata("Amargor equilibrado, aroma cítrico");
+        return lote;
+    }
+
+    private LecturaFermentacion lectura(LocalDate fecha, Integer densidad, BigDecimal temp) {
+        LecturaFermentacion l = new LecturaFermentacion();
+        l.setFecha(fecha);
+        l.setDensidad(densidad);
+        l.setTemperatura(temp);
+        return l;
+    }
+
+    private void assertEsPdf(byte[] bytes) {
+        assertThat(bytes).isNotNull().isNotEmpty();
+        // PDF magic bytes: %PDF
+        assertThat((char) bytes[0]).isEqualTo('%');
+        assertThat((char) bytes[1]).isEqualTo('P');
+        assertThat((char) bytes[2]).isEqualTo('D');
+        assertThat((char) bytes[3]).isEqualTo('F');
+    }
+
+    // ── generarPdfLote ────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("genera PDF válido con lote mínimo y sin lecturas")
+    void generarPdfLote_loteMinimo_sinLecturas_producePdf() {
+        byte[] resultado = service.generarPdfLote(loteMinimo(), "Alera", List.of());
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("genera PDF válido con lote completo (densidades, fases, observaciones)")
+    void generarPdfLote_loteCompleto_producePdf() {
+        byte[] resultado = service.generarPdfLote(loteCompleto(), "Mosto Cervecería", List.of());
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("genera PDF válido con lecturas de fermentación (curva densidad + temperatura)")
+    void generarPdfLote_conLecturas_producePdf() {
+        LoteCerveza lote = loteCompleto();
+        List<LecturaFermentacion> lecturas = List.of(
+                lectura(LocalDate.of(2025, 3, 1), 1058, new BigDecimal("20.5")),
+                lectura(LocalDate.of(2025, 3, 3), 1042, new BigDecimal("19.8")),
+                lectura(LocalDate.of(2025, 3, 7), 1015, new BigDecimal("19.2")),
+                lectura(LocalDate.of(2025, 3, 10), 1012, new BigDecimal("18.9"))
+        );
+
+        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("genera PDF válido con lecturas que tienen solo densidad (sin temperatura)")
+    void generarPdfLote_lecturasSinTemperatura_producePdf() {
+        LoteCerveza lote = loteCompleto();
+        List<LecturaFermentacion> lecturas = List.of(
+                lectura(LocalDate.of(2025, 3, 1), 1058, null),
+                lectura(LocalDate.of(2025, 3, 5), 1035, null),
+                lectura(LocalDate.of(2025, 3, 10), 1012, null)
+        );
+
+        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("genera PDF válido con lecturas que tienen solo temperatura (sin densidad)")
+    void generarPdfLote_lecturasSinDensidad_producePdf() {
+        LoteCerveza lote = loteCompleto();
+        List<LecturaFermentacion> lecturas = List.of(
+                lectura(LocalDate.of(2025, 3, 1), null, new BigDecimal("20.5")),
+                lectura(LocalDate.of(2025, 3, 5), null, new BigDecimal("19.5"))
+        );
+
+        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("genera PDF válido con lecturas null (trata igual que lista vacía)")
+    void generarPdfLote_lecturasNull_producePdf() {
+        byte[] resultado = service.generarPdfLote(loteMinimo(), "Alera", null);
+
+        assertEsPdf(resultado);
+    }
+
+    @Test
+    @DisplayName("el PDF generado tiene un tamaño razonable (mayor a 1KB)")
+    void generarPdfLote_tamanioRazonable() {
+        byte[] resultado = service.generarPdfLote(loteCompleto(), "Alera", List.of());
+
+        assertThat(resultado.length).isGreaterThan(1024);
+    }
+
+    @Test
+    @DisplayName("lotes distintos generan PDFs de distinto contenido")
+    void generarPdfLote_lotesDistintos_generanPdfsDistintos() {
+        LoteCerveza lote1 = loteMinimo();
+        LoteCerveza lote2 = loteMinimo();
+        lote2.setCodigoLote("STOUT-001");
+        lote2.setEstilo("Stout");
+
+        byte[] pdf1 = service.generarPdfLote(lote1, "Alera", List.of());
+        byte[] pdf2 = service.generarPdfLote(lote2, "Alera", List.of());
+
+        assertThat(pdf1).isNotEqualTo(pdf2);
+    }
+}
