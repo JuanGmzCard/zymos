@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.PasswordPolicy;
 import com.alera.model.enums.RolUsuario;
 import com.alera.service.UsuarioService;
 import org.springframework.http.MediaType;
@@ -15,7 +16,6 @@ import java.util.Map;
 @RequestMapping("/usuarios")
 public class UsuarioController {
 
-    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final UsuarioService service;
 
@@ -42,8 +42,9 @@ public class UsuarioController {
                           @RequestParam String confirmPassword,
                           @RequestParam(defaultValue = "ADMIN") RolUsuario rol,
                           RedirectAttributes ra) {
-        if (password.length() < MIN_PASSWORD_LENGTH) {
-            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+        String errorPassword = PasswordPolicy.validar(password);
+        if (errorPassword != null) {
+            ra.addFlashAttribute("mensaje", errorPassword);
             ra.addFlashAttribute("tipoMensaje", "danger");
             return "redirect:/usuarios";
         }
@@ -94,8 +95,9 @@ public class UsuarioController {
                                   @RequestParam String newPassword,
                                   @RequestParam String confirmPassword,
                                   RedirectAttributes ra) {
-        if (newPassword.length() < MIN_PASSWORD_LENGTH) {
-            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+        String errorNueva = PasswordPolicy.validar(newPassword);
+        if (errorNueva != null) {
+            ra.addFlashAttribute("mensaje", errorNueva);
             ra.addFlashAttribute("tipoMensaje", "danger");
             return "redirect:/usuarios";
         }

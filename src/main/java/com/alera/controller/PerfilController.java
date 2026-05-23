@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.PasswordPolicy;
 import com.alera.service.UsuarioService;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -13,7 +14,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @RequestMapping("/perfil")
 public class PerfilController {
 
-    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final UsuarioService usuarioService;
 
@@ -31,8 +31,9 @@ public class PerfilController {
                                    @RequestParam String confirmarPassword,
                                    Authentication auth,
                                    RedirectAttributes ra) {
-        if (nuevaPassword.length() < MIN_PASSWORD_LENGTH) {
-            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres.");
+        String errorPassword = PasswordPolicy.validar(nuevaPassword);
+        if (errorPassword != null) {
+            ra.addFlashAttribute("mensaje", errorPassword);
             ra.addFlashAttribute("tipoMensaje", "danger");
             return "redirect:/perfil/password";
         }

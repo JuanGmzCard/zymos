@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.PasswordPolicy;
 import com.alera.model.Tenant;
 import com.alera.model.enums.RolUsuario;
 import com.alera.repository.UsuarioRepository;
@@ -25,7 +26,6 @@ import java.util.Map;
 @RequestMapping("/admin/tenants")
 public class TenantAdminController {
 
-    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private final TenantService tenantService;
     private final UsuarioRepository usuarioRepo;
@@ -216,8 +216,9 @@ public class TenantAdminController {
                                   @RequestParam RolUsuario rol,
                                   RedirectAttributes ra) {
         String redirect = "redirect:/admin/tenants/" + subdomain + "/usuarios";
-        if (password.length() < MIN_PASSWORD_LENGTH) {
-            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+        String errorPassword = PasswordPolicy.validar(password);
+        if (errorPassword != null) {
+            ra.addFlashAttribute("mensaje", errorPassword);
             ra.addFlashAttribute("tipoMensaje", "danger");
             return redirect;
         }
@@ -254,8 +255,9 @@ public class TenantAdminController {
                                    @RequestParam String confirmarPassword,
                                    RedirectAttributes ra) {
         String redirect = "redirect:/admin/tenants/" + subdomain + "/usuarios";
-        if (nuevaPassword.length() < MIN_PASSWORD_LENGTH) {
-            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+        String errorNueva = PasswordPolicy.validar(nuevaPassword);
+        if (errorNueva != null) {
+            ra.addFlashAttribute("mensaje", errorNueva);
             ra.addFlashAttribute("tipoMensaje", "danger");
             return redirect;
         }
