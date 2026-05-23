@@ -5,6 +5,9 @@ import com.alera.model.HistorialTenant;
 import com.alera.model.Tenant;
 import com.alera.repository.HistorialTenantRepository;
 import com.alera.repository.TenantRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +21,9 @@ import java.util.Optional;
 @Service
 @Transactional
 public class TenantService {
+
+    @Value("${app.page-size:15}")
+    private int pageSize;
 
     private final TenantRepository repo;
     private final TenantFilter tenantFilter;
@@ -66,6 +72,12 @@ public class TenantService {
     @Transactional(readOnly = true)
     public List<HistorialTenant> listarHistorial(String subdomain) {
         return historialRepo.findBySubdomainOrderByFechaDesc(subdomain);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<HistorialTenant> listarHistorialPaginado(String subdomain, int page) {
+        return historialRepo.findBySubdomainOrderByFechaDesc(
+                subdomain, PageRequest.of(page, pageSize));
     }
 
     public void registrarAccion(String subdomain, String accion, String detalles) {

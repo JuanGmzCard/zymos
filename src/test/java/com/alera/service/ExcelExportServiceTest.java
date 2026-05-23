@@ -105,14 +105,12 @@ class ExcelExportServiceTest {
     }
 
     @Test
-    @DisplayName("lanza RuntimeException cuando las fechas desde/hasta son nulas")
-    void generarExcel_fechasNulas_lanzaExcepcion() {
-        // El servicio formatea las fechas directamente — null causa NPE interno
-        assertThatThrownBy(() ->
-                service.generarExcelReporteProduccion(
-                        List.of(lote("APA-001", "APA")), List.of(), null, null, "Alera"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Error generando Excel");
+    @DisplayName("genera Excel válido cuando las fechas desde/hasta son nulas (muestra '—')")
+    void generarExcel_fechasNulas_produceExcelValido() {
+        byte[] resultado = service.generarExcelReporteProduccion(
+                List.of(lote("APA-001", "APA")), List.of(), null, null, "Alera");
+
+        assertEsExcel(resultado);
     }
 
     @Test

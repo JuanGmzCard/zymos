@@ -70,7 +70,9 @@ public class ExcelExportService {
 
         Row fPeriodo = sheet.createRow(r++);
         Cell cPeriodo = fPeriodo.createCell(0);
-        cPeriodo.setCellValue("Período: " + desde.format(FMT_FECHA) + " — " + hasta.format(FMT_FECHA));
+        String desdeStr = desde != null ? desde.format(FMT_FECHA) : "—";
+        String hastaStr = hasta != null ? hasta.format(FMT_FECHA) : "—";
+        cPeriodo.setCellValue("Período: " + desdeStr + " — " + hastaStr);
         cPeriodo.setCellStyle(estiloPeriodo(wb));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 13));
 

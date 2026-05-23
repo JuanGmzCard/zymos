@@ -87,11 +87,18 @@ public class TenantAdminController {
     }
 
     @GetMapping("/{subdomain}/historial")
-    public String historial(@PathVariable String subdomain, Model model) {
+    public String historial(@PathVariable String subdomain,
+                             @RequestParam(defaultValue = "0") int page,
+                             Model model) {
         Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
                 .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        var pagina = tenantService.listarHistorialPaginado(subdomain, page);
         model.addAttribute("tenant", tenant);
-        model.addAttribute("historial", tenantService.listarHistorial(subdomain));
+        model.addAttribute("historial", pagina.getContent());
+        model.addAttribute("paginaActual", page);
+        model.addAttribute("totalPaginas", pagina.getTotalPages());
+        model.addAttribute("baseUrl", "/admin/tenants/" + subdomain + "/historial");
+        model.addAttribute("extraParams", "");
         return "admin/tenant-historial";
     }
 
@@ -170,14 +177,22 @@ public class TenantAdminController {
         if (c.containsKey("name"))             t.setName(c.get("name"));
         if (c.containsKey("tagline"))          t.setTagline(c.get("tagline"));
         if (c.containsKey("logoUrl"))          t.setLogoUrl(c.get("logoUrl"));
-        if (c.containsKey("colorNavbar"))      t.setColorNavbar(c.get("colorNavbar"));
-        if (c.containsKey("colorPrimary"))     t.setColorPrimary(c.get("colorPrimary"));
-        if (c.containsKey("colorAccent"))      t.setColorAccent(c.get("colorAccent"));
-        if (c.containsKey("colorAccentHover")) t.setColorAccentHover(c.get("colorAccentHover"));
-        if (c.containsKey("colorCream"))       t.setColorCream(c.get("colorCream"));
-        if (c.containsKey("colorBodyBg"))      t.setColorBodyBg(c.get("colorBodyBg"));
+        applyColor(c, "colorNavbar",      t::setColorNavbar);
+        applyColor(c, "colorPrimary",     t::setColorPrimary);
+        applyColor(c, "colorAccent",      t::setColorAccent);
+        applyColor(c, "colorAccentHover", t::setColorAccentHover);
+        applyColor(c, "colorCream",       t::setColorCream);
+        applyColor(c, "colorBodyBg",      t::setColorBodyBg);
         if (c.containsKey("fontHeadings"))     t.setFontHeadings(c.get("fontHeadings"));
         if (c.containsKey("fontBody"))         t.setFontBody(c.get("fontBody"));
+    }
+
+    private void applyColor(Map<String, String> c, String key,
+                             java.util.function.Consumer<String> setter) {
+        String val = c.get(key);
+        if (val != null && val.matches("^#[0-9a-fA-F]{6}$")) {
+            setter.accept(val);
+        }
     }
 
     // ── Email de prueba ──────────────────────────────────────────────
