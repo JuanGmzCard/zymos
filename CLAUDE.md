@@ -107,9 +107,10 @@ com.alera/
 templates/
 ├── fragments/  navbar.html (dropdowns Producción/Almacén/Comercial/Admin + botón `+` acciones rápidas + campana dropdown + búsqueda global con typeahead + dropdown usuario con rol badge + perfil), paginacion.html
 ├── error/      error.html
-├── login.html, dashboard.html (personalizable)
-├── kanban.html (SortableJS 1.15.2 — drag & drop entre 6 columnas; solo ADMIN puede arrastrar; JS en `static/js/trazabilidad-kanban.js`), calendario.html, busqueda.html
-├── index.html (trazabilidad — filtros con typeahead en campo "Estilo / Código" busca por codigoLote o estilo, badge de fase), formulario.html, detalle.html   (trazabilidad — detalle incluye sección "Curva de Fermentación" con Chart.js dual-eje + tabla + formulario inline de registro de lecturas; JS de formulario y detalle en `static/js/`)
+├── trazabilidad/ index.html (filtros con typeahead en campo "Estilo / Código" busca por codigoLote o estilo, badge de fase),
+│               formulario.html, detalle.html (detalle incluye sección "Curva de Fermentación" con Chart.js dual-eje + tabla + formulario inline de registro de lecturas; JS de formulario y detalle en `static/js/`),
+│               kanban.html (SortableJS 1.15.2 — drag & drop entre 6 columnas; solo ADMIN puede arrastrar; JS en `static/js/trazabilidad-kanban.js`)
+├── login.html, dashboard.html (personalizable), calendario.html, busqueda.html
 ├── usuarios.html  (tabla con modales: nuevo usuario, cambiar contraseña, cambiar rol; fila del usuario en sesión marcada y botones destructivos deshabilitados; typeahead en card-header, `th:id="'usuario-'+${u.id}"` en cada `<tr>`, click hace scroll+flash `:target` dorado)
 ├── perfil/     password.html (formulario autogestionado de cambio de contraseña — accesible todos los roles via `GET /perfil/password`)
 ├── equipos/    lista (typeahead en card-header respeta filtro estado), formulario, mantenimientos
