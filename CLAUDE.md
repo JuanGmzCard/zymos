@@ -41,6 +41,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30)
+- **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 
 ---
 
@@ -67,6 +68,8 @@ com.alera/
 │               CacheConfig (@EnableCaching + Caffeine), SchedulingConfig (@EnableScheduling),
 │               OpenApiConfig (Swagger),
 │               AleraAuthSuccessHandler, AleraAuthFailureHandler, AleraAccessDeniedHandler,
+│               LoginAttemptService (protección fuerza bruta — cache Caffeine por IP),
+│               LoginAttemptFilter (OncePerRequestFilter — creado como @Bean en SecurityConfig, no @Component),
 │               BrandingProperties (@ConfigurationProperties prefix=app.brand),
 │               TenantContext (ThreadLocal), TenantFilter (OncePerRequestFilter),
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
@@ -660,9 +663,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 - `@EnableMethodSecurity` activo
 - **Sesión**: timeout 30 min, `invalidSessionUrl("/login?expired=true")`
+- **Protección contra fuerza bruta**: `LoginAttemptService` (Caffeine TTL) rastrea intentos fallidos por IP. `LoginAttemptFilter` intercepta POST `/login` — si la IP está bloqueada, redirige a `/login?bloqueado=true` sin intentar autenticar. `AleraAuthFailureHandler` llama `registrarFallo(ip)` en cada fallo; `AleraAuthSuccessHandler` llama `resetear(ip)` en login exitoso. Configurable: `app.login.max-intentos` (def: 5, env: `LOGIN_MAX_INTENTOS`), `app.login.bloqueo-minutos` (def: 15, env: `LOGIN_BLOQUEO_MINUTOS`). `LoginAttemptFilter` es un bean creado en `SecurityConfig` (NO `@Component`) para evitar problemas en `@WebMvcTest`.
 - **Handlers**:
-  - `AleraAuthSuccessHandler` → registra `LOGIN_OK` en `log_accesos`
-  - `AleraAuthFailureHandler` → registra `LOGIN_FALLIDO` + redirige a `/login?error`
+  - `AleraAuthSuccessHandler` → resetea contador de intentos por IP + registra `LOGIN_OK` en `log_accesos`
+  - `AleraAuthFailureHandler` → registra fallo por IP + registra `LOGIN_FALLIDO` + redirige a `/login?error` o `/login?bloqueado=true`
   - `AleraAccessDeniedHandler` → registra `ACCESO_DENEGADO` + redirige a `/error?status=403`
 - **Restricciones por URL:**
   - `/admin/**`, `/usuarios/**`, `/tipos-cerveza/**` → solo ADMIN
@@ -883,6 +887,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `TenantRepository` — SecurityConfig crea TenantFilter que lo inyecta; sin mock → TenantFilter devuelve 503
 - `BrandingProperties` — GlobalControllerAdvice la inyecta como fallback; sin mock → contexto no carga
 - `AleraAuthSuccessHandler`, `AleraAuthFailureHandler`, `AleraAccessDeniedHandler` — SecurityConfig.filterChain() los recibe como parámetros; sin mock → Spring usa la seguridad por defecto (sin URL-based restrictions)
+- `LoginAttemptService` — requerido por `LoginAttemptFilter` (bean en SecurityConfig); sin mock → contexto no carga. **CRÍTICO**: NO mockear `LoginAttemptFilter` directamente (es creado por SecurityConfig vía `@Bean`, no auto-detectado). Mockear `LoginAttemptService` para que el filtro real pueda ser creado con la dependencia satisfecha.
 - `UsuarioService`, `LogAccesoService` — requeridos por los auth handlers y DaoAuthenticationProvider
 - **Comportamiento de seguridad en @WebMvcTest**: con `httpBasic()` configurado, requests sin autenticar devuelven `401` (no `302`). Los handlers mockeados (void, no-op) no comiten la respuesta → URL-based security no se enforce plenamente → las pruebas de seguridad URL-based verifican que el controller SE EJECUTA (no que SE BLOQUEA). La seguridad URL-based real se verifica en tests de integración.
 
