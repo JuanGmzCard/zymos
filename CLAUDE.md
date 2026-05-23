@@ -31,7 +31,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V25)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V26)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -76,32 +76,34 @@ com.alera/
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
 │               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
-├── controller/ 22 controladores:
+├── controller/ 23 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
 │               FacturaProveedorController, InsumoInventarioController,
 │               RecetaController, ProveedorController, CalendarioController,
 │               ReporteController, BusquedaController, AdminController, ApiController,
 │               TipoCervezaController, UsuarioController, MantenimientoController,
 │               LoginController, TenantAdminController, ComparativaController, AlertaController,
-│               PlanificacionController, PerfilController
+│               PlanificacionController, PerfilController, NotificacionController
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
 │               UsuarioService (implements UserDetailsService — integración Spring Security),
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
-│               EmailService, AlertaScheduler
-├── model/      21 entidades:
+│               EmailService, AlertaScheduler, NotificacionService
+├── model/      22 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
 │               LoteCerveza, Ingrediente, Receta, RecetaIngrediente, EscalonMacerado,
 │               AdicionHervor, HistorialLote, LogAcceso, Equipo, MantenimientoEquipo,
 │               InsumoInventario, FacturaProveedor, FacturaItem,
 │               Proveedor, TipoCerveza, Usuario,
-│               LoteItemFactura (tabla lote_items_factura — asignación parcial de ítems a lotes)
-│               + 8 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
-│               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA)
+│               LoteItemFactura (tabla lote_items_factura — asignación parcial de ítems a lotes),
+│               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant)
+│               + 9 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
+│               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
+│               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA)
 ├── repository/ 14 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
-│               ElaboracionPlanificadaRepository)
+│               ElaboracionPlanificadaRepository, NotificacionRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
@@ -110,7 +112,7 @@ com.alera/
                 MantenimientoMapper (MapStruct — MantenimientoDto → MantenimientoEquipo, ignora `id` y `equipo`)
 
 templates/
-├── fragments/  navbar.html (dropdowns Producción/Almacén/Comercial/Admin + botón `+` acciones rápidas + campana dropdown + búsqueda global con typeahead + dropdown usuario con rol badge + perfil), paginacion.html
+├── fragments/  navbar.html (dropdowns Producción/Almacén/Comercial/Admin + botón `+` acciones rápidas + campana notificaciones in-app + búsqueda global con typeahead + dropdown usuario con rol badge + perfil), paginacion.html
 ├── error/      error.html
 ├── trazabilidad/ index.html (filtros con typeahead en campo "Estilo / Código" busca por codigoLote o estilo, badge de fase),
 │               formulario.html, detalle.html (detalle incluye sección "Curva de Fermentación" con Chart.js dual-eje + tabla + formulario inline de registro de lecturas; JS de formulario y detalle en `static/js/`),
@@ -131,6 +133,7 @@ templates/
 ├── planificacion/ index.html (FullCalendar + panel próximas + tabla completa + modal crear/editar)
 │               — dateClick → modal nuevo con fecha pre-llenada; eventClick → modal editar con extendedProps
 │               — botón Editar en tabla usa `data-*` attrs (`th:attr`) + `onclick="abrirModalEditarDesdeBtn(this)"` para pasar strings sin violar restricción Thymeleaf 3.1 (regla 8c)
+├── notificaciones/ index.html (historial paginado con badges por tipo, marcar leída por fila, marcar todas, paginación)
 └── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores + botón "Limpiar cache" → `POST /admin/tenants/cache/evict` + botón "Usuarios" por card → `/admin/tenants/{subdomain}/usuarios`),
                 tenant-formulario.html (crear/editar tenant con color pickers y preview en vivo del navbar + selectores de tipografía con preview en vivo — `fontHeadings` y `fontBody`; campo `logoUrl` es `type="text"` para aceptar rutas relativas `/img/` además de URLs externas),
                 tenant-usuarios.html (gestión de usuarios por tenant: tabla con toggle activo/inactivo, cambiar contraseña, cambiar rol, eliminar + modal "Nuevo Usuario"; todas las queries usan SQL nativo explícito — ver regla 40),
@@ -164,6 +167,7 @@ templates/
 - `V23__fix_jpa_unique_constraints.sql` — DO block dinámico que elimina constraints únicas simples de columna (nombre generado por JPA) en `tipos_cerveza`, `recetas`, `proveedores`, `lotes_cerveza`; garantiza índices compuestos `ux_*_nombre_tenant` y `ux_lotes_codigo_tenant`
 - `V24__historial_tenants.sql` — tabla `historial_tenants(id BIGSERIAL, subdomain VARCHAR(100), accion VARCHAR(50), usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW(), detalles VARCHAR(500))` + índices en `subdomain` y `fecha DESC`. Sin FK a `tenants` (preserva historial si se elimina el tenant). Sin `@TenantId` — es auditoría de super-admin, no filtrada por tenant.
 - `V25__soft_delete_lotes_recetas.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN deleted_at TIMESTAMP` y `ALTER TABLE recetas ADD COLUMN deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en ambas entidades. `eliminar()` en los servicios setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente).
+- `V26__notificaciones.sql` — tabla `notificaciones(id BIGSERIAL, tenant_id VARCHAR(100), tipo VARCHAR(50), titulo VARCHAR(200), mensaje VARCHAR(500), url_accion VARCHAR(300), leida BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())` + índices en `(tenant_id, leida)` y `(tenant_id, created_at DESC)`. Con `@TenantId` — filtrada por tenant. Sin FK externa.
 
 ---
 
@@ -271,6 +275,14 @@ Nueva entidad. Tabla `adiciones_hervor`. Representa una adición de lúpulo o cl
 - `orden` (INTEGER, default 0) — para desempate en ordenamiento
 - Ordenadas en Receta por `minutosRestantes DESC` (adiciones más tempranas primero)
 
+### Notificacion
+Notificaciones in-app persistentes por tenant. Tabla `notificaciones`. Tiene `@TenantId`. **No extiende `AuditableEntity`.**
+- `id`, `tenantId` (@TenantId), `@Enumerated(EnumType.STRING) tipo → TipoNotificacion`, `titulo` (VARCHAR 200, NOT NULL)
+- `mensaje` (VARCHAR 500, nullable), `urlAccion` (VARCHAR 300, nullable)
+- `leida` (boolean, default false), `createdAt` (TIMESTAMP, NOT NULL, seteado por `@PrePersist`)
+- Factory: `Notificacion.of(tipo, titulo, mensaje, urlAccion)` — crea instancia sin id ni tenantId
+- **TipoNotificacion** (`com.alera.model.enums`): `BAJO_STOCK("bi-box-seam", "text-warning")`, `VENCIMIENTO("bi-calendar-x", "text-warning")`, `MANTENIMIENTO("bi-tools", "text-info")`, `SISTEMA("bi-info-circle-fill", "text-primary")`. Cada valor tiene `getIcono()` y `getColorClase()` para uso directo en templates/JS.
+
 ### HistorialLote
 - `id`, `tenantId` (@TenantId), `loteId` (sin FK), `codigoLote`, `accion` (CREADO/EDITADO/ELIMINADO), `usuario`, `fecha`, `notas`
 
@@ -364,6 +376,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### LecturaFermentacionRepository
 - `findByLoteIdOrdenadas(loteId)` — `ORDER BY l.fecha ASC, l.id ASC`. Hibernate agrega filtro de tenant automáticamente vía `@TenantId`.
+
+### NotificacionRepository
+- `findTop5ByLeidaFalseOrderByCreatedAtDesc()` — últimas 5 no leídas para el dropdown del navbar
+- `countByLeidaFalse()` — conteo para el badge de la campana
+- `findAllOrdenadas(Pageable)` — todas ordenadas: no leídas primero, luego por fecha DESC — para la página historial
+- `marcarTodasLeidas()` — `@Modifying UPDATE SET leida = true WHERE leida = false` — bulk update dentro del tenant activo
+- `existeEnPeriodo(tipo, desde, hasta)` — deduplicación diaria: evita crear la misma notificación dos veces el mismo día. Usado por `NotificacionService.crearAlertas()` antes de persistir cada tipo.
 
 ### TenantRepository
 - `findBySubdomainAndActiveTrue(String subdomain)` — usado por `TenantFilter`; la entidad `Tenant` NO tiene `@TenantId` (es la tabla maestra)
@@ -486,12 +505,24 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### AlertaScheduler (`@Component`)
 - `@Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")` — lunes a viernes a las 8 AM por defecto. Configurable con `ALERT_CRON` env var.
-- Itera todos los tenants activos con `emailAdmin` configurado. Para cada uno: establece `TenantContext`, carga alertas (bajo stock, vencimientos, mantenimiento), llama `EmailService.enviarAlertasDiarias()`, limpia contexto en `finally`.
-- Si SMTP no está configurado, sale inmediatamente con log de debug.
-- **Tracking de fallos**: si `enviarAlertasDiarias()` lanza excepción (fallo SMTP), llama `TenantService.registrarEnvioFallido()` — incrementa `alertasIntentosFallidos` y registra `alertasUltimoIntento`. Si el envío es exitoso, llama `registrarEnvioExitoso()` — resetea el contador a 0. Si no hay alertas (retorna `false` sin excepción), no modifica el contador.
-- **WARN escalado**: si `alertasIntentosFallidos >= UMBRAL_WARN (3)`, loggea WARN antes de cada intento — el admin lo verá en logs y en el badge de `/admin/tenants`. El scheduler siempre reintenta (no hay circuit breaker de bloqueo).
-- **EmailService**: `enviarAlertasDiarias()` ya NO traga la excepción SMTP — la relanza como `RuntimeException` para que el scheduler pueda trackearla.
-- Loggea resumen: "N email(s) enviado(s) de M tenant(s)"
+- Itera **todos** los tenants activos (ya no filtra por `emailAdmin` — notificaciones in-app funcionan sin SMTP). Para cada uno: establece `TenantContext`, carga alertas, llama `NotificacionService.crearAlertas()` siempre, luego envía email solo si SMTP configurado y tenant tiene email. Limpia contexto en `finally`.
+- **Notificaciones in-app**: se crean independientemente de SMTP — la app no necesita email configurado para generar notificaciones en la UI.
+- **Tracking de fallos**: solo aplica al canal email. Si `enviarAlertasDiarias()` lanza excepción, llama `TenantService.registrarEnvioFallido()`. Si exitoso, `registrarEnvioExitoso()`. Las notifs in-app no afectan el tracking.
+- **WARN escalado**: si `alertasIntentosFallidos >= UMBRAL_WARN (3)`, loggea WARN antes de cada intento de email.
+- **EmailService**: `enviarAlertasDiarias()` relanza excepción SMTP como `RuntimeException` para que el scheduler pueda trackearla.
+- Loggea resumen: "N notificación(es) in-app creada(s), M email(s) enviado(s) de K tenant(s)"
+- Inyecta `NotificacionService` (nuevo).
+
+### NotificacionService
+- `crear(tipo, titulo, mensaje, urlAccion)` — persiste una `Notificacion` para el tenant activo
+- `crearAlertas(bajoStock, proximosAVencer, mantenimiento)` — crea una notificación por cada tipo de alerta que tenga elementos, con deduplicación diaria via `existeEnPeriodo()`. Retorna cantidad de notificaciones creadas. Mensajes: resume los primeros 3 elementos + "y N más." si hay más.
+  - `BAJO_STOCK` → `urlAccion="/inventario"`, `VENCIMIENTO` → `"/inventario"`, `MANTENIMIENTO` → `"/equipos"`
+- `listarRecientes()` — top 5 no leídas, orden `createdAt DESC`
+- `contarNoLeidas()` — `countByLeidaFalse()`, usado por el badge del navbar
+- `listarTodas(page)` — `findAllOrdenadas(PageRequest)` — paginado, no leídas primero
+- `marcarLeida(id)` — busca por id y setea `leida = true`
+- `marcarTodasLeidas()` — bulk update via `repo.marcarTodasLeidas()`
+- `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
 ### PlanificacionService
 - `listarProximas()` — `findProximas(LocalDate.now().minusDays(1))` — incluye elaboraciones de ayer en adelante (para no cortar las del día actual)
@@ -603,8 +634,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **Estado colors**: PLANIFICADA → dorado `#C9A028`, EN_PROCESO → azul `#0288D1`, COMPLETADA → verde `#198754`, CANCELADA → gris `#6c757d`. Definidos en `EstadoPlanificacion.getColor()`.
 
 ### AlertaController ("/alertas") — todos los roles autenticados
-- `GET /alertas/contadores` — `@RestController`, `produces = APPLICATION_JSON_VALUE`. Retorna `AlertaContadores {bajoStock, vencimientos, mantenimiento, total}`. Inyecta `InsumoInventarioRepository` y `EquipoService`. Llamado desde el navbar vía `fetch()` al cargar la página (sin bloquear el render). El badge de la campana solo se muestra cuando `total > 0`.
-- **Campana en navbar**: `<li id="alertaBellItem" class="nav-item dropdown" style="display:none">` — al hacer clic muestra un dropdown con 3 filas (bajo stock → `/inventario`, vencimientos → `/inventario`, mantenimiento → `/equipos`), cada una con su badge de conteo. Solo se muestran las filas con `count > 0`. El badge rojo de conteo total muestra "99+" si supera 99. Falla silenciosamente.
+- `GET /alertas/contadores` — `@RestController`, `produces = APPLICATION_JSON_VALUE`. Retorna `AlertaContadores {bajoStock, vencimientos, mantenimiento, total}`. Sigue disponible para uso programático pero el navbar ya no lo usa (ver Campana).
+- **Campana en navbar** (notificaciones in-app): `<li id="alertaBellItem" class="nav-item dropdown" style="display:none">` — al cargar la página hace `fetch('/notificaciones/recientes')` (async). Si `total > 0` muestra el badge rojo ("99+" si supera 99) y el dropdown. El dropdown lista las últimas 5 notificaciones no leídas: icono por tipo, título, tiempo relativo, botón `×` (marcar leída via AJAX) y footer "Marcar todas leídas" + "Ver todas →". El JS inyecta `ALERA_CSRF_TOKEN` y `ALERA_CSRF_HEADER` via `<script th:inline="javascript">` en el navbar para los POST sin depender de meta tags del template. `_csrfToken()` y `_csrfHeader()` son helpers que prefieren los meta tags del template (si existen) y hacen fallback a las variables inline. Al abrir el dropdown se recargan las notificaciones (`show.bs.dropdown`). Falla silenciosamente.
 
 ### ComparativaController ("/comparativa") — todos los roles autenticados
 - `GET /comparativa?q=` — página de selección: tabla de lotes (últimos 100) con checkboxes, búsqueda client-side, clic en fila activa checkbox, contador JS "X seleccionados", máx. 6. Botón "Comparar" habilitado desde 2 seleccionados.
@@ -658,6 +689,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### PerfilController ("/perfil") — todos los roles autenticados
 - `GET /perfil/password` — renderiza `perfil/password.html` (formulario de cambio de contraseña propio)
 - `POST /perfil/password` — valida: `nuevaPassword.length >= 6`, `nuevaPassword == confirmarPassword`. Busca el usuario por `auth.getName()` via `usuarioService.buscarPorUsername()`, llama `cambiarPassword(id, nuevaPassword)`. Redirige a `/dashboard` con flash success o de vuelta a `/perfil/password` con flash danger. **No requiere contraseña actual** — confía en la sesión activa.
+
+### NotificacionController ("/notificaciones") — todos los roles autenticados
+- `GET /notificaciones` — página historial completo paginado. Modelo: `notificaciones` (Page), `totalNoLeidas`, `paginaActual`, `totalPaginas`. Template `notificaciones/index.html`.
+- `GET /notificaciones/recientes` — `@ResponseBody`, `produces=JSON`. Para el dropdown del navbar: retorna `{total, items:[{id, tipo, icono, colorClase, titulo, mensaje, urlAccion, leida, tiempoRelativo}]}`. `tiempoRelativo` calculado en el controller (< 1min → "Hace un momento", minutos, horas, días).
+- `POST /notificaciones/{id}/leer` — `@ResponseBody` JSON. Marca una notificación como leída, retorna `{success:true, noLeidas:N}`.
+- `POST /notificaciones/leer-todas` — marca todas como leídas, redirige a `/notificaciones`. Usado también desde el navbar via fetch (la redirección es seguida y el body HTML descartado).
+- Cae en `anyRequest().authenticated()` — accesible a todos los roles. Sin regla explícita en `SecurityConfig`.
 
 ### LoginController ("/login")
 - `GET /login` — renderiza `login.html` (Spring Security gestiona el `POST /login` directamente)
@@ -885,6 +923,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `TrazabilidadControllerTest` — 15 tests: seguridad (sin-autenticar → 401; con rol no-admin → controller corre porque URL-based security no se enforce con handler mock), index, kanban, nuevo/guardar (válido, inválido, advertencia stock), ver/404, eliminar. `@MockBean`: `PdfExportService`, `LecturaFermentacionService`, `PlanificacionService` (los tres requeridos por el constructor del controller).
 - `ApiControllerTest` — 9 tests: seguridad (401), lotes (lista, por id, 404, historial), recetas, alertas inventario, dashboard
 - `AlertaControllerTest` — 5 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento
+- `NotificacionControllerTest` — 5 tests: seguridad (401), GET /notificaciones (página con modelo), GET /recientes (JSON con total e items), POST /{id}/leer (JSON con noLeidas), POST /leer-todas (redirect)
 - `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `AleraAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
 - `LoginControllerTest` — 3 tests: GET /login público (200), con ?error, con ?bloqueado. **Nota**: en `@WebMvcTest`, Spring Security puede interceptar GET /login con su propio filtro antes del DispatcherServlet — no verificar `view().name("login")`, solo `status().isOk()`.
 - `DashboardControllerTest` — 3 tests: 401 sin auth, 200 con cualquier rol, modelo tiene `stats` attribute
@@ -919,7 +958,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V25 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V26 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
