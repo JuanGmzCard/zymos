@@ -1,20 +1,46 @@
 package com.alera.controller;
 
 import com.alera.model.Tenant;
+import com.alera.model.enums.RolUsuario;
+import com.alera.repository.UsuarioRepository;
+import com.alera.service.EmailService;
 import com.alera.service.TenantService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/admin/tenants")
 public class TenantAdminController {
 
-    private final TenantService tenantService;
+    private static final int MIN_PASSWORD_LENGTH = 6;
 
-    public TenantAdminController(TenantService tenantService) {
-        this.tenantService = tenantService;
+    private final TenantService tenantService;
+    private final UsuarioRepository usuarioRepo;
+    private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+    private final ObjectMapper objectMapper;
+
+    public TenantAdminController(TenantService tenantService,
+                                  UsuarioRepository usuarioRepo, PasswordEncoder passwordEncoder,
+                                  EmailService emailService, ObjectMapper objectMapper) {
+        this.tenantService   = tenantService;
+        this.usuarioRepo     = usuarioRepo;
+        this.passwordEncoder = passwordEncoder;
+        this.emailService    = emailService;
+        this.objectMapper    = objectMapper;
     }
 
     @GetMapping
@@ -36,6 +62,8 @@ public class TenantAdminController {
                 .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
         model.addAttribute("tenant", tenant);
         model.addAttribute("esNuevo", false);
+        model.addAttribute("otrosTenants", tenantService.listarTodos().stream()
+                .filter(t -> !t.getSubdomain().equals(subdomain)).toList());
         return "admin/tenant-formulario";
     }
 
@@ -56,5 +84,209 @@ public class TenantAdminController {
         ra.addFlashAttribute("mensaje", "Estado del tenant actualizado");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/admin/tenants";
+    }
+
+    @GetMapping("/{subdomain}/historial")
+    public String historial(@PathVariable String subdomain, Model model) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
+                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        model.addAttribute("tenant", tenant);
+        model.addAttribute("historial", tenantService.listarHistorial(subdomain));
+        return "admin/tenant-historial";
+    }
+
+    @PostMapping("/cache/evict")
+    public String evictCache(RedirectAttributes ra) {
+        tenantService.evictAllCache();
+        ra.addFlashAttribute("mensaje", "Cache de tenants limpiado correctamente");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants";
+    }
+
+    // ── Importar / Exportar configuración ────────────────────────────
+
+    @GetMapping("/{subdomain}/config")
+    @ResponseBody
+    public Map<String, Object> getConfig(@PathVariable String subdomain) {
+        Tenant t = tenantService.buscarPorSubdomain(subdomain)
+                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        return buildConfigMap(t);
+    }
+
+    @GetMapping("/{subdomain}/export")
+    public ResponseEntity<byte[]> exportConfig(@PathVariable String subdomain) throws Exception {
+        Tenant t = tenantService.buscarPorSubdomain(subdomain)
+                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        byte[] json = objectMapper.writerWithDefaultPrettyPrinter()
+                .writeValueAsBytes(buildConfigMap(t));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(subdomain + "-branding.json")
+                                .build().toString())
+                .contentType(MediaType.APPLICATION_JSON)
+                .contentLength(json.length)
+                .body(json);
+    }
+
+    @PostMapping("/{subdomain}/import")
+    public String importConfig(@PathVariable String subdomain,
+                                @RequestParam("file") MultipartFile file,
+                                RedirectAttributes ra) {
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, String> config = objectMapper.readValue(file.getInputStream(), Map.class);
+            Tenant t = tenantService.buscarPorSubdomain(subdomain)
+                    .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+            applyConfig(t, config);
+            tenantService.guardar(t);
+            tenantService.registrarAccion(subdomain, "CONFIG_IMPORTADA", file.getOriginalFilename());
+            ra.addFlashAttribute("mensaje", "Configuración importada correctamente desde " + file.getOriginalFilename());
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error al importar: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
+        return "redirect:/admin/tenants/editar/" + subdomain;
+    }
+
+    private Map<String, Object> buildConfigMap(Tenant t) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("name",            t.getName());
+        m.put("tagline",         t.getTagline());
+        m.put("logoUrl",         t.getLogoUrl());
+        m.put("colorNavbar",     t.getColorNavbar());
+        m.put("colorPrimary",    t.getColorPrimary());
+        m.put("colorAccent",     t.getColorAccent());
+        m.put("colorAccentHover",t.getColorAccentHover());
+        m.put("colorCream",      t.getColorCream());
+        m.put("colorBodyBg",     t.getColorBodyBg());
+        m.put("fontHeadings",    t.getFontHeadings());
+        m.put("fontBody",        t.getFontBody());
+        return m;
+    }
+
+    private void applyConfig(Tenant t, Map<String, String> c) {
+        if (c.containsKey("name"))             t.setName(c.get("name"));
+        if (c.containsKey("tagline"))          t.setTagline(c.get("tagline"));
+        if (c.containsKey("logoUrl"))          t.setLogoUrl(c.get("logoUrl"));
+        if (c.containsKey("colorNavbar"))      t.setColorNavbar(c.get("colorNavbar"));
+        if (c.containsKey("colorPrimary"))     t.setColorPrimary(c.get("colorPrimary"));
+        if (c.containsKey("colorAccent"))      t.setColorAccent(c.get("colorAccent"));
+        if (c.containsKey("colorAccentHover")) t.setColorAccentHover(c.get("colorAccentHover"));
+        if (c.containsKey("colorCream"))       t.setColorCream(c.get("colorCream"));
+        if (c.containsKey("colorBodyBg"))      t.setColorBodyBg(c.get("colorBodyBg"));
+        if (c.containsKey("fontHeadings"))     t.setFontHeadings(c.get("fontHeadings"));
+        if (c.containsKey("fontBody"))         t.setFontBody(c.get("fontBody"));
+    }
+
+    // ── Email de prueba ──────────────────────────────────────────────
+
+    @PostMapping("/{subdomain}/test-email")
+    @ResponseBody
+    public Map<String, Object> testEmail(@PathVariable String subdomain,
+                                          @RequestParam String email) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
+                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        String error = emailService.enviarEmailPrueba(email, tenant.getName());
+        if (error == null) {
+            return Map.of("ok", true, "mensaje", "Email enviado correctamente a " + email);
+        }
+        return Map.of("ok", false, "mensaje", error);
+    }
+
+    // ── Gestión de usuarios por tenant ───────────────────────────────
+
+    @GetMapping("/{subdomain}/usuarios")
+    public String usuarios(@PathVariable String subdomain, Model model) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
+                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        model.addAttribute("usuarios", usuarioRepo.findAllByTenantId(subdomain));
+        model.addAttribute("tenant", tenant);
+        model.addAttribute("roles", RolUsuario.values());
+        return "admin/tenant-usuarios";
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/usuarios/guardar")
+    public String guardarUsuario(@PathVariable String subdomain,
+                                  @RequestParam String username,
+                                  @RequestParam String password,
+                                  @RequestParam String confirmarPassword,
+                                  @RequestParam RolUsuario rol,
+                                  RedirectAttributes ra) {
+        String redirect = "redirect:/admin/tenants/" + subdomain + "/usuarios";
+        if (password.length() < MIN_PASSWORD_LENGTH) {
+            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        if (!password.equals(confirmarPassword)) {
+            ra.addFlashAttribute("mensaje", "Las contraseñas no coinciden");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        if (usuarioRepo.countByUsernameAndTenantId(username, subdomain) > 0) {
+            ra.addFlashAttribute("mensaje", "El usuario '" + username + "' ya existe en este tenant");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        usuarioRepo.insertarConTenant(username, passwordEncoder.encode(password), rol.name(), subdomain);
+        tenantService.registrarAccion(subdomain, "USUARIO_CREADO", username + " (" + rol.getDisplayName() + ")");
+        ra.addFlashAttribute("mensaje", "Usuario '" + username + "' creado correctamente");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return redirect;
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/usuarios/{id}/toggle")
+    public String toggleUsuario(@PathVariable String subdomain, @PathVariable Long id, RedirectAttributes ra) {
+        usuarioRepo.toggleActivoByIdAndTenantId(id, subdomain);
+        ra.addFlashAttribute("mensaje", "Estado del usuario actualizado");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants/" + subdomain + "/usuarios";
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/usuarios/{id}/password")
+    public String cambiarPassword(@PathVariable String subdomain, @PathVariable Long id,
+                                   @RequestParam String nuevaPassword,
+                                   @RequestParam String confirmarPassword,
+                                   RedirectAttributes ra) {
+        String redirect = "redirect:/admin/tenants/" + subdomain + "/usuarios";
+        if (nuevaPassword.length() < MIN_PASSWORD_LENGTH) {
+            ra.addFlashAttribute("mensaje", "La contraseña debe tener al menos " + MIN_PASSWORD_LENGTH + " caracteres");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        if (!nuevaPassword.equals(confirmarPassword)) {
+            ra.addFlashAttribute("mensaje", "Las contraseñas no coinciden");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        usuarioRepo.updatePasswordByIdAndTenantId(id, subdomain, passwordEncoder.encode(nuevaPassword));
+        ra.addFlashAttribute("mensaje", "Contraseña actualizada correctamente");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return redirect;
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/usuarios/{id}/rol")
+    public String cambiarRol(@PathVariable String subdomain, @PathVariable Long id,
+                              @RequestParam RolUsuario rol, RedirectAttributes ra) {
+        usuarioRepo.updateRolByIdAndTenantId(id, subdomain, rol.name());
+        ra.addFlashAttribute("mensaje", "Rol actualizado correctamente");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants/" + subdomain + "/usuarios";
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/usuarios/{id}/eliminar")
+    public String eliminarUsuario(@PathVariable String subdomain, @PathVariable Long id, RedirectAttributes ra) {
+        usuarioRepo.deleteByIdAndTenantId(id, subdomain);
+        tenantService.registrarAccion(subdomain, "USUARIO_ELIMINADO", "id=" + id);
+        ra.addFlashAttribute("mensaje", "Usuario eliminado");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants/" + subdomain + "/usuarios";
     }
 }

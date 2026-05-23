@@ -31,7 +31,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V19)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V23)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -39,7 +39,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - Paginación configurable: `app.page-size=15` (servicios), `app.log-page-size=25` (LogAccesoService)
 - Perfil prod: `application-prod.properties` — elimina fallbacks de credenciales BD. Docker activa `SPRING_PROFILES_ACTIVE=prod`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
-- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`
+- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30)
 
 ---
@@ -125,8 +125,11 @@ templates/
 ├── planificacion/ index.html (FullCalendar + panel próximas + tabla completa + modal crear/editar)
 │               — dateClick → modal nuevo con fecha pre-llenada; eventClick → modal editar con extendedProps
 │               — botón Editar en tabla usa `data-*` attrs (`th:attr`) + `onclick="abrirModalEditarDesdeBtn(this)"` para pasar strings sin violar restricción Thymeleaf 3.1 (regla 8c)
-└── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores),
-                tenant-formulario.html (crear/editar tenant con color pickers y preview en vivo)
+└── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores + botón "Limpiar cache" → `POST /admin/tenants/cache/evict` + botón "Usuarios" por card → `/admin/tenants/{subdomain}/usuarios`),
+                tenant-formulario.html (crear/editar tenant con color pickers y preview en vivo del navbar + selectores de tipografía con preview en vivo — `fontHeadings` y `fontBody`; campo `logoUrl` es `type="text"` para aceptar rutas relativas `/img/` además de URLs externas),
+                tenant-usuarios.html (gestión de usuarios por tenant: tabla con toggle activo/inactivo, cambiar contraseña, cambiar rol, eliminar + modal "Nuevo Usuario"; todas las queries usan SQL nativo explícito — ver regla 40),
+                tenant-historial.html (auditoría de cambios del tenant: tabla fecha/acción/usuario/detalles; badges de color por tipo de acción),
+                tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo
 ```
 
 ### Migraciones Flyway
@@ -150,6 +153,10 @@ templates/
 - `V18__tenant_email.sql` — `ALTER TABLE tenants ADD COLUMN email_admin VARCHAR(200)` — dirección de email para alertas diarias por tenant
 - `V19__planificacion_produccion.sql` — tabla `elaboraciones_planificadas(id, tenant_id, fecha_planeada, receta_id FK nullable, nombre_elaboracion, volumen_estimado, estado VARCHAR(20), notas, creado_at)` + índices en tenant_id y (fecha_planeada, tenant_id)
 - `V20__alertas_reintentos.sql` — `ALTER TABLE tenants ADD COLUMN alertas_intentos_fallidos INTEGER NOT NULL DEFAULT 0`, `alertas_ultimo_intento TIMESTAMP`, `alertas_ultimo_exito TIMESTAMP` — tracking de fallos SMTP consecutivos por tenant
+- `V21__tenant_fonts.sql` — `ALTER TABLE tenants ADD COLUMN font_headings VARCHAR(100) NOT NULL DEFAULT 'Cinzel'`, `font_body VARCHAR(100) NOT NULL DEFAULT 'Raleway'` — tipografías personalizables por tenant
+- `V22__fix_usuarios_unique_constraint.sql` — elimina constraint única simple de `username` en `usuarios` (nombre generado por JPA/Hibernate) y garantiza índice compuesto `ux_usuarios_username_tenant (username, tenant_id)` — corrige lo que V16 intentó hacer pero con nombre de constraint distinto
+- `V23__fix_jpa_unique_constraints.sql` — DO block dinámico que elimina constraints únicas simples de columna (nombre generado por JPA) en `tipos_cerveza`, `recetas`, `proveedores`, `lotes_cerveza`; garantiza índices compuestos `ux_*_nombre_tenant` y `ux_lotes_codigo_tenant`
+- `V24__historial_tenants.sql` — tabla `historial_tenants(id BIGSERIAL, subdomain VARCHAR(100), accion VARCHAR(50), usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW(), detalles VARCHAR(500))` + índices en `subdomain` y `fecha DESC`. Sin FK a `tenants` (preserva historial si se elimina el tenant). Sin `@TenantId` — es auditoría de super-admin, no filtrada por tenant.
 
 ---
 
@@ -212,15 +219,17 @@ Entidad central. Extiende `AuditableEntity`. Campos propios:
 ### Tenant
 Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es la tabla maestra, no filtrada).
 - `subdomain` (VARCHAR 100, PK) — ej: "cerveceria1", "default"
-- `name`, `tagline`, `logoUrl` — identidad del cliente
+- `name`, `tagline`, `logoUrl` — identidad del cliente. `logoUrl` acepta URL externa (`https://...`) o ruta relativa local (`/img/logo.png`). Imágenes locales van en `src/main/resources/static/img/`.
 - `colorNavbar`, `colorPrimary`, `colorAccent`, `colorAccentHover`, `colorCream`, `colorBodyBg` — paleta personalizada
+- `fontHeadings` (VARCHAR 100, default `'Cinzel'`) — fuente de títulos y navbar. Opciones disponibles: Cinzel, Playfair Display, Cormorant Garamond, EB Garamond, Oswald, Montserrat, Bowlby One SC.
+- `fontBody` (VARCHAR 100, default `'Raleway'`) — fuente de cuerpo. Opciones: Raleway, Inter, Roboto, Open Sans, Poppins, Nunito, DM Sans.
 - `emailAdmin` (VARCHAR 200, nullable) — destinatario de alertas diarias. Si es null o vacío, el tenant no recibe emails.
 - `active` (boolean) — tenants inactivos retornan 503
 - `alertasIntentosFallidos` (INTEGER, NOT NULL, default 0) — contador de fallos SMTP consecutivos. Se incrementa en cada fallo, se resetea a 0 al enviar exitosamente. Visible en `/admin/tenants` como badge amarillo.
 - `alertasUltimoIntento` (TIMESTAMP, nullable) — fecha/hora del último intento de envío (exitoso o fallido).
 - `alertasUltimoExito` (TIMESTAMP, nullable) — fecha/hora del último envío exitoso.
-- Creado por `DataInitializer` al arrancar (si no existe el tenant `default`)
-- `GlobalControllerAdvice` lo expone como `${branding}` — los templates usan `${branding.name}`, `${branding.colorAccent}`, etc. sin cambios
+- Creado por `DataInitializer` al arrancar. Al inicio, itera **todos los tenants** existentes en BD y crea usuarios/tipos de cerveza para los que no tengan ninguno. Si un tenant ya tiene usuarios, no se modifica.
+- `GlobalControllerAdvice` lo expone como `${branding}` — los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. sin cambios
 
 ### LoteItemFactura
 Asignación parcial de ítems de factura a lotes. Tabla `lote_items_factura`. Tiene `@TenantId`.
@@ -255,6 +264,14 @@ Nueva entidad. Tabla `adiciones_hervor`. Representa una adición de lúpulo o cl
 
 ### HistorialLote
 - `id`, `tenantId` (@TenantId), `loteId` (sin FK), `codigoLote`, `accion` (CREADO/EDITADO/ELIMINADO), `usuario`, `fecha`, `notas`
+
+### HistorialTenant
+Auditoría de cambios de configuración de tenants. Tabla `historial_tenants`. **Sin `@TenantId`** — datos de super-admin, no filtrados por tenant.
+- `id`, `subdomain` (sin FK — preserva historial si se elimina el tenant), `accion`, `usuario`, `fecha`, `detalles`
+- Factory: `HistorialTenant.of(subdomain, accion, usuario, detalles)`
+- Acciones registradas: `CREADO`, `EDITADO`, `ACTIVADO`, `DESACTIVADO`, `USUARIO_CREADO`, `USUARIO_ELIMINADO`, `CONFIG_IMPORTADA`
+- Consultado via `TenantService.listarHistorial(subdomain)` → `findBySubdomainOrderByFechaDesc`
+- Registrado via `TenantService.registrarAccion(subdomain, accion, detalles)` — obtiene usuario de `SecurityContextHolder`
 
 ### LogAcceso
 - `id`, `tenantId` (@TenantId), `usuario`, `tipo` (LOGIN_OK/LOGIN_FALLIDO/ACCESO_DENEGADO), `ip`, `url`, `userAgent`, `fecha`, `detalles`
@@ -431,13 +448,15 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `buscarPorUsername(username)` — retorna `Optional<Usuario>` via `repo.findByUsername()` — usado por `PerfilController` para obtener el id del usuario en sesión
 - `existeUsername(username)` — validación de unicidad
 - `esElMismoUsuario(id, username)` — verifica si el id corresponde al username dado. Usado para evitar auto-eliminación/desactivación/cambio de rol.
-- `guardar(username, password, RolUsuario rol)` — crea usuario con contraseña BCrypt; rol por defecto `RolUsuario.ADMIN`
+- `guardar(username, password, RolUsuario rol)` — crea usuario con contraseña BCrypt; rol por defecto `RolUsuario.ADMIN`. Usa `repo.save()` — depende del `TenantContext` activo para `@TenantId`. **No usar en contexto cross-tenant** (ver regla 40).
+- `guardarEnTenant(username, password, rol)` — `@Transactional(REQUIRES_NEW)`, mismo comportamiento que `guardar` pero en transacción nueva. Presente en el código pero el problema de `open-in-view` persiste; prefer `UsuarioRepository.insertarConTenant` para operaciones cross-tenant.
 - `toggleActivo(id)` — habilita/deshabilita usuario
 - `cambiarPassword(id, newPassword)` — re-encripta con BCrypt
 - `cambiarRol(id, RolUsuario nuevoRol)` — actualiza el rol del usuario
 - `eliminar(id)` — elimina usuario
 - `suggest(q)` — filtra en memoria sobre `findAllByOrderByCreatedAtDesc()` por username, retorna hasta 6 mapas con `{username, rol, activo, anchor}` donde `anchor = "usuario-{id}"` — usado por `GET /usuarios/suggest`
 - **CRÍTICO**: `Usuario.rol` es `@Enumerated(EnumType.STRING)` tipo `RolUsuario`. No usar Strings libres. Los valores válidos son `ADMIN`, `INVENTARIO`, `FACTURACION`, `EQUIPOS`.
+- **Queries cross-tenant en `UsuarioRepository`** (todas `nativeQuery = true`): `findAllByTenantId(tenantId)`, `countByUsernameAndTenantId(username, tenantId)`, `insertarConTenant(username, password, rol, tenantId)`, `toggleActivoByIdAndTenantId(id, tenantId)`, `updatePasswordByIdAndTenantId(id, tenantId, password)`, `updateRolByIdAndTenantId(id, tenantId, rol)`, `deleteByIdAndTenantId(id, tenantId)`. Usan SQL nativo con `tenant_id` explícito — ver regla 40.
 
 ### PdfExportService
 - `generarPdfLote(LoteCerveza, String brandName, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **curva de fermentación** (si hay lecturas), costos, observaciones/notas de cata, pie de página. La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene).
@@ -484,8 +503,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `listarTodos()` — `@Transactional(readOnly=true)`, ordenados por subdomain
 - `buscarPorSubdomain(subdomain)` — `Optional<Tenant>` por PK
 - `guardar(tenant)` — `repo.save()` + `tenantFilter.evictCache(subdomain)` — invalida la caché en memoria de `TenantFilter` para que el siguiente request lea los datos actualizados de BD
-- `toggleActivo(subdomain)` — invierte `active`, guarda y evicta cache
-- Inyecta `TenantFilter` como bean para poder llamar `evictCache`. El subdomain es la PK inmutable — no se puede cambiar una vez creado.
+- `evictAllCache()` — llama `tenantFilter.evictAll()` — limpia todo el cache de tenants. Usado por `POST /admin/tenants/cache/evict`.
+- `toggleActivo(subdomain)` — invierte `active`, guarda, evicta cache y registra `ACTIVADO`/`DESACTIVADO` en historial.
+- `guardar(tenant)` — detecta si es nuevo (`existsById`) antes de guardar para registrar `CREADO` o `EDITADO` en historial.
+- `listarHistorial(subdomain)` — `@Transactional(readOnly=true)`, delega a `HistorialTenantRepository.findBySubdomainOrderByFechaDesc`.
+- `registrarAccion(subdomain, accion, detalles)` — crea `HistorialTenant` con usuario de `SecurityContextHolder`. Llamado desde controller para acciones como `USUARIO_CREADO`, `USUARIO_ELIMINADO`, `CONFIG_IMPORTADA`.
+- `usuarioActual()` — método privado que lee `Authentication.getName()` del `SecurityContextHolder`. Fallback: `"sistema"`.
+- Inyecta `TenantFilter` y `HistorialTenantRepository`. El subdomain es la PK inmutable — no se puede cambiar una vez creado.
 
 ---
 
@@ -582,11 +606,26 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /admin/logs?tipo=&page=` — visor de log de accesos (solo ADMIN)
 
 ### TenantAdminController ("/admin/tenants") — solo ADMIN
-- `GET /admin/tenants` — lista todos los tenants en grid de cards con franja de colores y mini-preview del navbar
+- `GET /admin/tenants` — lista todos los tenants en grid de cards con franja de colores y mini-preview del navbar. Botón "Limpiar cache" en el header.
 - `GET /admin/tenants/nuevo` — formulario de creación (subdomain editable)
-- `GET /admin/tenants/editar/{subdomain}` — formulario de edición (subdomain readonly — es la PK)
+- `GET /admin/tenants/editar/{subdomain}` — formulario de edición (subdomain readonly — es la PK). Secciones: info básica, paleta de colores (con preview en vivo), tipografías (con preview en vivo de heading + body).
 - `POST /admin/tenants/guardar` — crea o actualiza tenant; invalida cache de `TenantFilter` con `evictCache(subdomain)`
 - `POST /admin/tenants/{subdomain}/toggle` — activa/desactiva tenant; invalida cache
+- `POST /admin/tenants/cache/evict` — limpia todo el cache en memoria de `TenantFilter` (`evictAll()`). Útil cuando se modifica un tenant directamente en BD sin pasar por la UI.
+- `GET /admin/tenants/{subdomain}/usuarios` — lista usuarios del tenant con `findAllByTenantId` (native SQL). Inyecta `UsuarioRepository` y `PasswordEncoder` directamente — no usa `UsuarioService` para evitar el filtro automático `@TenantId`.
+- `POST /admin/tenants/{subdomain}/usuarios/guardar` — crea usuario via `insertarConTenant` (native SQL INSERT con tenant_id explícito). Valida unicidad con `countByUsernameAndTenantId`.
+- `POST /admin/tenants/{subdomain}/usuarios/{id}/toggle` — `toggleActivoByIdAndTenantId` (native SQL `NOT activo`).
+- `POST /admin/tenants/{subdomain}/usuarios/{id}/password` — `updatePasswordByIdAndTenantId` (native SQL, password BCrypt).
+- `POST /admin/tenants/{subdomain}/usuarios/{id}/rol` — `updateRolByIdAndTenantId` (native SQL, rol como String).
+- `POST /admin/tenants/{subdomain}/usuarios/{id}/eliminar` — `deleteByIdAndTenantId` (native SQL DELETE). Registra `USUARIO_ELIMINADO` en historial.
+- `GET /admin/tenants/{subdomain}/historial` — lista `HistorialTenant` del tenant ordenado por fecha DESC. Template: `admin/tenant-historial.html`.
+- `GET /admin/tenants/{subdomain}/config` — `@ResponseBody` JSON con los 11 campos de branding. Usado por el "Copiar de..." client-side en el formulario.
+- `GET /admin/tenants/{subdomain}/export` — descarga `{subdomain}-branding.json` con los 11 campos de branding (name, tagline, logoUrl, colores, fuentes). NO incluye emailAdmin, active ni alertas*.
+- `POST /admin/tenants/{subdomain}/import` — multipart upload de JSON. Aplica solo campos conocidos (ignora desconocidos), guarda via `TenantService.guardar()`, registra `CONFIG_IMPORTADA` en historial.
+- `buildConfigMap(Tenant)` — helper privado que construye el `Map` de 11 campos de branding para export/config.
+- `applyConfig(Tenant, Map)` — helper privado que aplica campos del Map al Tenant, ignorando nulls y campos desconocidos.
+- Inyecta `ObjectMapper` (Jackson) para serialización/deserialización JSON.
+- `formularioEditar` pasa `otrosTenants` (todos los tenants excepto el actual) para el select "Copiar de...".
 - Hereda restricción `ADMIN` de `/admin/**` en `SecurityConfig`
 
 ### ProveedorController ("/proveedores")
@@ -640,15 +679,16 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **`/perfil/**`** cae en `anyRequest().authenticated()` — accesible a todos los roles. Sin regla explícita en `SecurityConfig`.
 - **Multi-tenant — TenantFilter** (`OncePerRequestFilter`):
   - Extrae subdomain del header `Host` (ej: `cerveceria1.app.com` → `cerveceria1`)
-  - En localhost/127.0.0.1 usa `app.default-subdomain` (normalmente `"default"`)
-  - Busca `Tenant` en BD (con caché en memoria `ConcurrentHashMap`)
+  - En localhost/127.0.0.1 usa `app.default-subdomain` (normalmente `"default"`). Para probar múltiples tenants en local, agregar entradas en `hosts` (`127.0.0.1 mosto.localhost`) y acceder via `http://mosto.localhost:8080`.
+  - Busca `Tenant` en BD usando `findBySubdomainAndActiveTrue` — **si `active=false` devuelve 503** aunque el tenant exista en BD. Cache en memoria `ConcurrentHashMap` (sin TTL — se invalida explícitamente con `evictCache(subdomain)` o `evictAll()`).
   - Llama `TenantContext.setCurrentTenant(subdomain)` + guarda en `request.setAttribute("currentTenant", tenant)`
   - `finally` llama `TenantContext.clear()` — nunca hay fuga de contexto entre requests
   - Registrado con `addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)` para que corra antes de cualquier autenticación de Spring Security
   - `FilterRegistrationBean.setEnabled(false)` evita doble registro como servlet filter
   - Salta recursos estáticos (`/css/`, `/js/`, `/img/`, etc.) via `shouldNotFilter`
+  - `evictCache(subdomain)` — elimina un tenant del cache. `evictAll()` — limpia todo el cache (útil tras edición directa en BD).
 - **Multi-tenant — Hibernate**: `TenantIdentifierResolver` implementa `CurrentTenantIdentifierResolver<String>` y lee de `TenantContext`. `HibernateMultiTenancyConfig` lo registra via `HibernatePropertiesCustomizer`. Todas las entidades con `@TenantId` son filtradas automáticamente.
-- **Branding**: `GlobalControllerAdvice.branding()` lee `request.getAttribute("currentTenant")` y lo expone como `${branding}`. Si no hay tenant resuelto, cae a `BrandingProperties` (valores de `application.properties`). Usa `try-catch` defensivo — durante el dispatch de errores el request puede estar en estado inconsistente. Los templates usan `${branding.name}`, `${branding.colorAccent}`, etc.
+- **Branding**: `GlobalControllerAdvice.branding()` lee `request.getAttribute("currentTenant")` y lo expone como `${branding}`. Si no hay tenant resuelto, cae a `BrandingProperties` (valores de `application.properties`). Usa `try-catch` defensivo — durante el dispatch de errores el request puede estar en estado inconsistente. Los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. `BrandingProperties` también tiene `fontHeadings` (def: Cinzel) y `fontBody` (def: Raleway) como fallback.
 - **Branding null-safety en navbar**: el fragment `navbar.html` usa expresiones null-safe en `<style th:inline="text">` (`branding != null ? branding.colorNavbar : '#242E0D'`) y en `th:text`/`th:if` para `branding.name` y `branding.logoUrl`. Esto evita `SpelEvaluationException` cuando `branding` es null durante el renderizado de la página de error (cascade del `HttpMessageNotWritableException`).
 
 ---
@@ -717,10 +757,15 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 32. **Trazabilidad — Costo de Producción** (activo): asignación a nivel de ítem con cantidad parcial. La sección en `formulario.html` muestra un buscador de ítems de factura (filtrable por nombre/proveedor/tipo). Los ítems seleccionados van a `lote.itemsFactura` (OneToMany `LoteItemFactura`). `detalle.html` muestra tabla con factura, proveedor, cantidad asignada y valor proporcional. Cantidad 0 = costo completo del ítem sin ingrediente.
 33. **Calculadora de escala (recetas/detalle)**: escala ingredientes, agua macerado y agua sparge. Variables JS: `AGUA_MACERADO`, `UNIDAD_MACERADO`, `AGUA_SPARGE`, `UNIDAD_SPARGE` (inline Thymeleaf). Al resetear llama `resetAgua()`.
 34. **Multi-tenant — @TenantId en todas las entidades**: todas las 17 entidades de datos tienen `@TenantId private String tenantId`. Las 6 que extienden `AuditableEntity` lo heredan; las 11 restantes lo declaran directamente. Hibernate agrega `WHERE tenant_id = :current` automáticamente a todos los SELECT. NO setear `tenantId` manualmente — Hibernate lo gestiona.
-35. **Multi-tenant — DataInitializer**: antes de crear usuarios y tipos de cerveza, llama `TenantContext.setCurrentTenant(defaultSubdomain)` y lo limpia en `finally`. El tenant `default` se crea primero (con branding de `BrandingProperties`). Si ya existe, se omite.
+35. **Multi-tenant — DataInitializer**: al arrancar, crea el tenant `defaultSubdomain` si no existe, luego itera **todos los tenants** en BD. Para cada uno con cero usuarios, crea los usuarios de las env vars (`ADMIN_USERNAME/PASSWORD`, etc.) usando `insertarConTenant` (native SQL) y tipos de cerveza. Los tenants con usuarios ya configurados no se tocan. Esto garantiza que cualquier tenant creado vía UI reciba su admin al reiniciar la app. El método `run()` tiene `@Transactional` porque `insertarConTenant` es `@Modifying` y requiere una transacción activa. **CRÍTICO**: los métodos `@Modifying` en repositorios (`insertarConTenant`, `toggleActivoByIdAndTenantId`, etc.) deben tener `@Transactional` propio si se llaman fuera de un contexto transaccional externo — de lo contrario lanzan `TransactionRequiredException`.
 36. **Multi-tenant — agregar cliente nuevo**: (1) crear tenant en `/admin/tenants/nuevo` (UI) o insertar fila en `tenants` directamente en BD; (2) DNS `cliente.tuapp.com` → servidor; (3) crear usuario admin del tenant en `/usuarios` (el contexto de tenant ya estará activo vía subdominio) o con `INSERT INTO usuarios (username, password, rol, activo, tenant_id) VALUES (...)`.
-37. **Branding — orden de prioridad**: `Tenant.color*` > `BrandingProperties` (env vars/properties). `Tenant` se crea con valores de `BrandingProperties` pero puede actualizarse directamente en BD por cliente.
+37. **Branding — orden de prioridad**: `Tenant.color*` / `Tenant.font*` > `BrandingProperties` (env vars/properties). `Tenant` se crea con valores de `BrandingProperties` pero puede actualizarse via `/admin/tenants/editar/{subdomain}` o directamente en BD. Tras edición directa en BD, usar "Limpiar cache" en `/admin/tenants` para reflejar cambios sin reiniciar.
+37b. **Login page — logo**: sin círculo decorativo. Si `branding.logoUrl` no está vacío, muestra la imagen (`max-height:90px; max-width:240px`). Si está vacío, muestra ícono `bi-droplet-fill`. El campo `logoUrl` acepta URL externa o ruta relativa (`/img/logo.png`) — archivos locales van en `src/main/resources/static/img/`.
 38. **@WebMvcTest — seguridad URL-based no se enforce con handler mock**: `AleraAccessDeniedHandler` mockeado es un no-op (void). Cuando Spring Security lanza `AccessDeniedException` y el handler no comite la respuesta, el request puede llegar al controller. Las pruebas de seguridad URL-based (como "rol no-admin no puede acceder a /nuevo") NO funcionan correctamente en `@WebMvcTest` — deben testearse en integración. Las pruebas `@PreAuthorize` (method-level) SÍ funcionan porque `@EnableMethodSecurity` está activo en `SecurityConfig`.
+41. **Tests de aislamiento multi-tenant — NO usar `@Transactional` en el test**: Con `@Transactional` en el test, Spring abre UN EntityManager al inicio del método (cuando TenantContext está vacío). Todos los cambios de TenantContext dentro del test no afectan ese EntityManager — el filtro `@TenantId` usa el tenant capturado al abrir la sesión (null/vacío), lo que hace que las queries no filtren correctamente. Solución: sin `@Transactional` en el test → cada repo call crea su propio EntityManager que captura el TenantContext activo en ese momento. Usar `JdbcTemplate` con SQL explícito para cleanup en `@AfterEach`. Agregar `@Transactional` a los métodos `@Modifying` en el repositorio para que tengan su propia transacción cuando se llaman sin contexto transaccional externo.
+
+40. **Operaciones cross-tenant (admin) — usar SIEMPRE native SQL**: Hibernate añade automáticamente `AND tenant_id = :currentTenant` a TODAS las queries sobre entidades con `@TenantId`, incluso queries JPQL custom con `WHERE u.tenantId = :tenantId` explícito. El `open-in-view` fija el tenant del EntityManager al inicio del request (antes de cualquier swap en el controller). Para operar sobre un tenant distinto al del request activo (ej: admin super-tenant gestionando usuarios de otro tenant), usar `nativeQuery = true` con `tenant_id` como parámetro explícito. Ver `UsuarioRepository`: `findAllByTenantId`, `insertarConTenant`, `toggleActivoByIdAndTenantId`, etc. Intentos fallidos: JPQL custom, `REQUIRES_NEW`, swap de `TenantContext` en controller — ninguno bypasea el filtro Hibernate con open-in-view activo.
+
 39. **@WebMvcTest — httpBasic y status de autenticación**: con `httpBasic()` configurado en `SecurityConfig`, peticiones sin credenciales y sin `Accept: text/html` devuelven `401 Unauthorized` (no `302 redirect`). Las aserciones de tests deben usar `status().isUnauthorized()` para requests no autenticados en endpoints REST.
 
 ---
@@ -835,12 +880,13 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V20 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V24 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
 - `LecturaFermentacionServiceIntegrationTest` — 9 tests: agregar (con temp, sin temp, sin densidad, notas blank→null), ordenamiento ASC, ABV parcial (fórmula, null si sin densidad, null si igual OG), eliminar (una sola, sin afectar otras)
-- **NOTA multi-tenant en tests de integración**: los tests deben llamar `TenantContext.setCurrentTenant("default")` en `@BeforeEach` y `TenantContext.clear()` en `@AfterEach` para que Hibernate pueda filtrar/insertar correctamente con el tenant discriminador.
+- `TenantIsolationIntegrationTest` — 6 tests que verifican aislamiento de datos entre tenants: `@TenantId` filtra `TipoCerveza` y `Usuario` correctamente entre tenants distintos; queries nativas cross-tenant (`findAllByTenantId`, `countByUsernameAndTenantId`) retornan solo el tenant especificado. **Sin `@Transactional` en el test** — cada repo call crea su propio `EntityManager` que captura `TenantContext` en ese momento. Cleanup via `JdbcTemplate` en `@AfterEach`.
+- **NOTA multi-tenant en tests de integración**: los tests deben llamar `TenantContext.setCurrentTenant("default")` en `@BeforeEach` y `TenantContext.clear()` en `@AfterEach` para que Hibernate pueda filtrar/insertar correctamente con el tenant discriminador. **NUNCA poner `@Transactional` en tests de aislamiento multi-tenant** — ver regla 41.
 
 **Workaround Docker Desktop 4.74 + WSL2** (`src/test/java/com/alera/WindowsDockerStrategy.java`):
 - Docker Desktop 4.74 con backend WSL2 devuelve HTTP 400 con `ServerVersion:""` para cualquier API Docker < 1.40 en el endpoint `/info` desde procesos Windows.

@@ -15,19 +15,21 @@
     --crema: #F5EDD0;
     --fondo: #F0EDE2;
     --texto-claro: #F5EDD0;
+    --font-headings: 'Cinzel', serif;
+    --font-body: 'Raleway', sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
-    font-family: 'Raleway', sans-serif;
+    font-family: var(--font-body);
     background-color: var(--fondo);
     color: #2c2c2c;
     margin: 0;
 }
 
 h1, h2, h3, h4, h5, .brand-font {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
 }
 
 /* ============================================================
@@ -40,7 +42,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .navbar-alera .navbar-brand {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--dorado) !important;
@@ -103,7 +105,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .hero-section h1 {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     color: var(--dorado);
     font-size: 1.8rem;
 }
@@ -126,7 +128,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .section-header h5, .section-header h4 {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     color: var(--dorado);
     margin: 0;
     font-size: 1rem;
@@ -161,7 +163,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .stat-card.info { border-left-color: #3498db; }
 
 .stat-card .stat-number {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 2.2rem;
     font-weight: 700;
     color: var(--verde-alera);
@@ -201,7 +203,7 @@ h1, h2, h3, h4, h5, .brand-font {
 
 .card-alera .card-header h5,
 .card-alera .card-header h4 {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     color: var(--dorado);
     margin: 0;
     font-size: 0.95rem;
@@ -300,7 +302,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .detail-value.highlight {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     color: var(--verde-alera);
     font-size: 1.1rem;
 }
@@ -340,7 +342,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .phase-step-number {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.2rem;
     font-weight: 700;
     color: var(--dorado);
@@ -390,7 +392,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .form-section-title {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 0.9rem;
     color: var(--verde-alera);
     border-bottom: 2px solid var(--dorado);
@@ -479,24 +481,20 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .login-logo {
-    width: 70px;
-    height: 70px;
-    background: rgba(201, 160, 40, 0.2);
-    border: 2px solid var(--dorado);
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 1rem;
+    min-height: 72px;
 }
 
 .login-logo i {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--dorado);
 }
 
 .login-title {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     color: var(--dorado);
     font-size: 2.2rem;
     font-weight: 700;
@@ -531,7 +529,7 @@ h1, h2, h3, h4, h5, .brand-font {
     padding: 0.7rem;
     border-radius: 8px;
     transition: all 0.2s;
-    font-family: 'Raleway', sans-serif;
+    font-family: var(--font-body);
 }
 
 .btn-login:hover {
@@ -578,7 +576,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .card-lote .lote-code {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.1rem;
     color: var(--verde-alera);
     font-weight: 700;
@@ -821,7 +819,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 }
 
 .densidad-tag {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 1.5px;
@@ -831,7 +829,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 }
 
 .densidad-valor {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.5rem;
     font-weight: 700;
     color: var(--verde-alera);
@@ -889,7 +887,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 }
 
 .fase-numero {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--dorado);
@@ -900,7 +898,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 .fase-pendiente .fase-numero { color: #adb5bd; }
 
 .fase-nombre {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 0.8rem;
     font-weight: 700;
     color: var(--verde-alera);
@@ -974,7 +972,7 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
 }
 
 .comparativa-objetivo {
-    font-family: 'Cinzel', serif;
+    font-family: var(--font-headings);
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--verde-alera);

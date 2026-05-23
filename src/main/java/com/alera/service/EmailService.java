@@ -83,6 +83,32 @@ public class EmailService {
         }
     }
 
+    /** Envía un email de prueba para verificar que SMTP y la dirección están bien configurados. */
+    public String enviarEmailPrueba(String destinatario, String tenantName) {
+        if (mailSender == null) return "SMTP no configurado en el servidor";
+        if (destinatario == null || destinatario.isBlank()) return "Ingresa un email de destino";
+        try {
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(destinatario);
+            helper.setSubject("[" + tenantName + "] Email de prueba — Alera");
+            helper.setText(
+                "<div style='font-family:sans-serif;padding:24px;'>" +
+                "<h2 style='color:#364318;'>✓ Configuración de email correcta</h2>" +
+                "<p>Este es un email de prueba enviado desde <strong>" + tenantName + "</strong>.</p>" +
+                "<p style='color:#666;font-size:.9em;'>Si recibes este mensaje, el SMTP está configurado correctamente " +
+                "y las alertas diarias llegarán a esta dirección.</p>" +
+                "</div>", true);
+            mailSender.send(msg);
+            log.info("Email de prueba enviado a {} para tenant '{}'", destinatario, tenantName);
+            return null; // null = éxito
+        } catch (Exception e) {
+            log.error("Error al enviar email de prueba a {}: {}", destinatario, e.getMessage());
+            return e.getMessage();
+        }
+    }
+
     /** Formatea días restantes hasta una fecha de vencimiento. */
     public static long diasHasta(LocalDate fecha) {
         return ChronoUnit.DAYS.between(LocalDate.now(), fecha);

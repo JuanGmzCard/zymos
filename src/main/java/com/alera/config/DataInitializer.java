@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class DataInitializer implements CommandLineRunner {
@@ -50,16 +51,19 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     @Override
+    @Transactional
     public void run(String... args) {
         crearTenantDefault();
 
-        // Todas las operaciones siguientes deben correr con el tenant activo
-        TenantContext.setCurrentTenant(defaultSubdomain);
-        try {
-            crearUsuarios();
-            crearTiposCerveza();
-        } finally {
-            TenantContext.clear();
+        // Inicializar todos los tenants existentes (no solo el default)
+        for (Tenant tenant : tenantRepo.findAll()) {
+            TenantContext.setCurrentTenant(tenant.getSubdomain());
+            try {
+                crearUsuariosSiNoTiene(tenant.getSubdomain());
+                crearTiposCerveza(tenant.getSubdomain());
+            } finally {
+                TenantContext.clear();
+            }
         }
     }
 
@@ -82,26 +86,23 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Tenant '{}' creado con branding '{}'", defaultSubdomain, branding.getName());
     }
 
-    private void crearUsuarios() {
-        crearUsuarioSiNoExiste(adminUsername,       adminPassword,       RolUsuario.ADMIN);
-        crearUsuarioSiNoExiste(inventarioUsername,  inventarioPassword,  RolUsuario.INVENTARIO);
-        crearUsuarioSiNoExiste(facturacionUsername, facturacionPassword, RolUsuario.FACTURACION);
-        crearUsuarioSiNoExiste(equiposUsername,     equiposPassword,     RolUsuario.EQUIPOS);
-    }
-
-    private void crearUsuarioSiNoExiste(String username, String password, RolUsuario rol) {
-        if (username == null || username.isBlank() || password == null || password.isBlank()) return;
-        if (!usuarioRepo.existsByUsername(username)) {
-            Usuario u = new Usuario();
-            u.setUsername(username);
-            u.setPassword(encoder.encode(password));
-            u.setRol(rol);
-            usuarioRepo.save(u);
-            log.info("Usuario '{}' ({}) creado en tenant '{}'", username, rol, defaultSubdomain);
+    // Solo crea usuarios si el tenant no tiene ninguno — no sobreescribe configuraciones existentes
+    private void crearUsuariosSiNoTiene(String subdomain) {
+        if (usuarioRepo.findAllByTenantId(subdomain).isEmpty()) {
+            crearUsuarioSiNoExiste(adminUsername,       adminPassword,       RolUsuario.ADMIN,       subdomain);
+            crearUsuarioSiNoExiste(inventarioUsername,  inventarioPassword,  RolUsuario.INVENTARIO,  subdomain);
+            crearUsuarioSiNoExiste(facturacionUsername, facturacionPassword, RolUsuario.FACTURACION, subdomain);
+            crearUsuarioSiNoExiste(equiposUsername,     equiposPassword,     RolUsuario.EQUIPOS,     subdomain);
         }
     }
 
-    private void crearTiposCerveza() {
+    private void crearUsuarioSiNoExiste(String username, String password, RolUsuario rol, String subdomain) {
+        if (username == null || username.isBlank() || password == null || password.isBlank()) return;
+        usuarioRepo.insertarConTenant(username, encoder.encode(password), rol.name(), subdomain);
+        log.info("Usuario '{}' ({}) creado en tenant '{}'", username, rol, subdomain);
+    }
+
+    private void crearTiposCerveza(String subdomain) {
         String[] tipos = {"APA", "IPA", "Stout", "Helles", "Porter", "Wheat", "Saison", "Lager", "Otro"};
         int creados = 0;
         for (String nombre : tipos) {
@@ -113,6 +114,6 @@ public class DataInitializer implements CommandLineRunner {
                 creados++;
             }
         }
-        if (creados > 0) log.info("{} tipos de cerveza inicializados en tenant '{}'", creados, defaultSubdomain);
+        if (creados > 0) log.info("{} tipos de cerveza inicializados en tenant '{}'", creados, subdomain);
     }
 }

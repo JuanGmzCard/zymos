@@ -29,8 +29,9 @@ public class SecurityConfig {
 
     @Bean
     public TenantFilter tenantFilter(TenantRepository tenantRepo,
-                                      @Value("${app.default-subdomain:default}") String defaultSubdomain) {
-        return new TenantFilter(tenantRepo, defaultSubdomain);
+                                      @Value("${app.default-subdomain:default}") String defaultSubdomain,
+                                      @Value("${app.tenant-cache-ttl-minutes:5}") long ttlMinutes) {
+        return new TenantFilter(tenantRepo, defaultSubdomain, ttlMinutes);
     }
 
     // Evitar que Spring Boot registre TenantFilter como servlet filter standalone

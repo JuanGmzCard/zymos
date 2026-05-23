@@ -9,7 +9,10 @@
 
     <!-- Variables de color del cliente (sobrescriben :root de style.css) -->
     <style th:inline="text">
+@import url('https://fonts.googleapis.com/css2?family=[[${branding != null and branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding != null and branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
     :root {
+        --font-headings: '[[${branding != null and branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
+        --font-body:     '[[${branding != null and branding.fontBody != null ? branding.fontBody : 'Raleway'}]]', sans-serif;
         --verde-oscuro: [[${branding != null ? branding.colorNavbar    : '#242E0D'}]];
         --verde-alera:  [[${branding != null ? branding.colorPrimary   : '#364318'}]];
         --dorado:       [[${branding != null ? branding.colorAccent    : '#C9A028'}]];
@@ -72,13 +75,38 @@
     html.dark-mode .search-suggest .ss-footer { border-top-color: rgba(255,255,255,.08); }
     html.dark-mode .search-suggest .ss-sub { color: #aaa; }
     html.dark-mode .search-suggest a.ss-item:hover { background: rgba(201,160,40,.15); }
+
+    /* ── Responsivo mobile (< lg) ────────────────────────────── */
+    @media (max-width: 991.98px) {
+        /* Búsqueda: ancho completo, sin flex-grow vertical */
+        #navMain form[role="search"] { flex-grow: 0 !important; margin: 0.5rem 0 !important; }
+        #navSearchInput { max-width: 100% !important; min-width: 0 !important; }
+        #searchSuggest  { left: 0 !important; right: 0 !important; min-width: 0 !important; }
+
+        /* Iconos derechos: fila horizontal con separador */
+        .navbar-icons {
+            flex-direction: row !important;
+            flex-wrap: wrap;
+            gap: 0.25rem !important;
+            border-top: 1px solid rgba(201,160,40,0.2);
+            padding-top: 0.5rem;
+            margin-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+        .navbar-icons .nav-item { flex: 0 0 auto; }
+        /* Touch targets mínimos iOS (44px) */
+        .navbar-icons .nav-link,
+        .navbar-icons button.nav-link { min-height: 40px; display: flex !important; align-items: center; }
+        /* + Nuevo: se adapta en fila */
+        .navbar-icons .nav-item.dropdown > a { white-space: nowrap; }
+    }
     </style>
 
     <div class="container-fluid">
         <a class="navbar-brand" th:href="@{/dashboard}">
             <img th:if="${branding != null and !#strings.isEmpty(branding.logoUrl)}"
                  th:src="${branding.logoUrl}" alt=""
-                 style="height:28px;margin-right:6px;object-fit:contain;vertical-align:middle;">
+                 style="height:38px;max-width:140px;margin-right:6px;object-fit:contain;vertical-align:middle;">
             <i th:unless="${branding != null and !#strings.isEmpty(branding.logoUrl)}"
                class="bi bi-droplet-fill brand-icon"></i>
             <span th:text="${branding != null ? branding.name : 'Alera'}">Alera</span>
@@ -231,7 +259,7 @@
                 </li>
             </ul>
             <!-- Búsqueda global con autocompletado -->
-            <form class="d-flex flex-grow-1 mx-3 position-relative" th:action="@{/buscar}" method="get" role="search">
+            <form class="d-flex flex-grow-1 mx-3 my-2 my-lg-0 position-relative" th:action="@{/buscar}" method="get" role="search">
                 <div class="input-group input-group-sm w-100">
                     <input type="search" name="q" id="navSearchInput" class="form-control navbar-search"
                            placeholder="Buscar…" aria-label="Buscar" autocomplete="off"
@@ -243,7 +271,7 @@
                 <div id="searchSuggest" class="search-suggest" style="display:none;"></div>
             </form>
 
-            <ul class="navbar-nav ms-auto align-items-center gap-1">
+            <ul class="navbar-nav ms-auto align-items-center gap-1 navbar-icons">
                 <!-- Botón modo oscuro -->
                 <li class="nav-item">
                     <button class="btn border-0 nav-link px-2" id="darkToggleBtn"
@@ -259,7 +287,7 @@
                        style="border:1px solid rgba(201,160,40,0.55);border-radius:6px;color:var(--dorado);font-size:0.82rem;font-weight:600;line-height:1.4;">
                         <i class="bi bi-plus-lg" style="font-size:0.85rem;"></i> Nuevo
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" style="min-width:220px;">
+                    <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:220px;">
                         <li class="px-3 pt-2 pb-1">
                             <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Crear nuevo</small>
                         </li>
@@ -305,7 +333,7 @@
                             0
                         </span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end" style="min-width:260px;">
+                    <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:260px;">
                         <li class="px-3 pt-2 pb-1">
                             <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Alertas pendientes</small>
                         </li>
@@ -342,7 +370,7 @@
                         <i class="bi bi-person-circle me-1"></i>
                         <span sec:authentication="name">Usuario</span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-end">
+                    <ul class="dropdown-menu dropdown-menu-lg-end">
                         <li class="px-3 py-2">
                             <div class="fw-600 text-truncate" style="max-width:180px;" sec:authentication="name">Usuario</div>
                             <div class="mt-1">

@@ -16,6 +16,8 @@ public class BrandingProperties {
     private String colorAccentHover = "#E0B840";
     private String colorCream    = "#F5EDD0";
     private String colorBodyBg   = "#F0EDE2";
+    private String fontHeadings  = "Cinzel";
+    private String fontBody      = "Raleway";
 
     public String getName()             { return name; }
     public void   setName(String v)     { this.name = v; }
@@ -35,4 +37,8 @@ public class BrandingProperties {
     public void   setColorCream(String v)       { this.colorCream = v; }
     public String getColorBodyBg()      { return colorBodyBg; }
     public void   setColorBodyBg(String v)      { this.colorBodyBg = v; }
+    public String getFontHeadings()     { return fontHeadings; }
+    public void   setFontHeadings(String v)     { this.fontHeadings = v; }
+    public String getFontBody()         { return fontBody; }
+    public void   setFontBody(String v)         { this.fontBody = v; }
 }

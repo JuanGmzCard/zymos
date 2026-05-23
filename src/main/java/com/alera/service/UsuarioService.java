@@ -7,6 +7,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -87,6 +88,13 @@ public class UsuarioService implements UserDetailsService {
         u.setPassword(encoder.encode(password));
         u.setRol(rol != null ? rol : RolUsuario.ADMIN);
         repo.save(u);
+    }
+
+    // TenantContext debe estar seteado al tenant destino ANTES de llamar este método.
+    // REQUIRES_NEW abre un EntityManager nuevo que captura el tenant en ese momento.
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void guardarEnTenant(String username, String password, RolUsuario rol) {
+        guardar(username, password, rol);
     }
 
     public void toggleActivo(Long id) {

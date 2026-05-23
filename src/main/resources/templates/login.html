@@ -9,7 +9,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style th:inline="text">
+@import url('https://fonts.googleapis.com/css2?family=[[${branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
     :root {
+        --font-headings: '[[${branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
+        --font-body:     '[[${branding.fontBody != null ? branding.fontBody : 'Raleway'}]]', sans-serif;
         --verde-oscuro: [[${branding.colorNavbar}]];
         --verde-alera:  [[${branding.colorPrimary}]];
         --dorado:       [[${branding.colorAccent}]];
@@ -27,7 +30,7 @@
             <div class="login-logo">
                 <img th:if="${!#strings.isEmpty(branding.logoUrl)}"
                      th:src="${branding.logoUrl}" alt=""
-                     style="height:56px;object-fit:contain;">
+                     style="max-height:90px;max-width:240px;object-fit:contain;">
                 <i th:unless="${!#strings.isEmpty(branding.logoUrl)}"
                    class="bi bi-droplet-fill"></i>
             </div>

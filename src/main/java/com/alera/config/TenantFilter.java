@@ -2,6 +2,8 @@ package com.alera.config;
 
 import com.alera.model.Tenant;
 import com.alera.repository.TenantRepository;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class TenantFilter extends OncePerRequestFilter {
 
@@ -20,12 +22,16 @@ public class TenantFilter extends OncePerRequestFilter {
     private final TenantRepository tenantRepo;
     private final String defaultSubdomain;
 
-    // Cache simple en memoria — evita una query a BD por cada request
-    private final ConcurrentHashMap<String, Tenant> cache = new ConcurrentHashMap<>();
+    // Cache con TTL — expira automáticamente; evictCache/evictAll para invalidación manual
+    private final Cache<String, Tenant> cache;
 
-    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain) {
+    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain, long ttlMinutes) {
         this.tenantRepo = tenantRepo;
         this.defaultSubdomain = defaultSubdomain;
+        this.cache = Caffeine.newBuilder()
+                .expireAfterWrite(ttlMinutes, TimeUnit.MINUTES)
+                .maximumSize(200)
+                .build();
     }
 
     @Override
@@ -59,20 +65,22 @@ public class TenantFilter extends OncePerRequestFilter {
     }
 
     private Tenant resolveTenant(String subdomain) {
-        // Try requested subdomain, fall back to default
-        Tenant t = cache.computeIfAbsent(subdomain,
+        Tenant t = cache.get(subdomain,
                 s -> tenantRepo.findBySubdomainAndActiveTrue(s).orElse(null));
         if (t != null) return t;
         if (!subdomain.equals(defaultSubdomain)) {
-            t = cache.computeIfAbsent(defaultSubdomain,
+            t = cache.get(defaultSubdomain,
                     s -> tenantRepo.findBySubdomainAndActiveTrue(s).orElse(null));
         }
         return t;
     }
 
-    // Permite invalidar el cache cuando se modifica un tenant (futuro admin panel)
     public void evictCache(String subdomain) {
-        cache.remove(subdomain);
+        cache.invalidate(subdomain);
+    }
+
+    public void evictAll() {
+        cache.invalidateAll();
     }
 
     private String extractSubdomain(String host) {

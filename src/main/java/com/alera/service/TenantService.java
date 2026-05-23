@@ -1,9 +1,13 @@
 package com.alera.service;
 
 import com.alera.config.TenantFilter;
+import com.alera.model.HistorialTenant;
 import com.alera.model.Tenant;
+import com.alera.repository.HistorialTenantRepository;
 import com.alera.repository.TenantRepository;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,10 +21,13 @@ public class TenantService {
 
     private final TenantRepository repo;
     private final TenantFilter tenantFilter;
+    private final HistorialTenantRepository historialRepo;
 
-    public TenantService(TenantRepository repo, TenantFilter tenantFilter) {
-        this.repo = repo;
+    public TenantService(TenantRepository repo, TenantFilter tenantFilter,
+                          HistorialTenantRepository historialRepo) {
+        this.repo         = repo;
         this.tenantFilter = tenantFilter;
+        this.historialRepo = historialRepo;
     }
 
     @Transactional(readOnly = true)
@@ -34,9 +41,16 @@ public class TenantService {
     }
 
     public Tenant guardar(Tenant tenant) {
+        boolean esNuevo = !repo.existsById(tenant.getSubdomain());
         Tenant saved = repo.save(tenant);
         tenantFilter.evictCache(tenant.getSubdomain());
+        historialRepo.save(HistorialTenant.of(
+                tenant.getSubdomain(), esNuevo ? "CREADO" : "EDITADO", usuarioActual(), null));
         return saved;
+    }
+
+    public void evictAllCache() {
+        tenantFilter.evictAll();
     }
 
     public void toggleActivo(String subdomain) {
@@ -44,7 +58,23 @@ public class TenantService {
             t.setActive(!t.isActive());
             repo.save(t);
             tenantFilter.evictCache(subdomain);
+            historialRepo.save(HistorialTenant.of(
+                    subdomain, t.isActive() ? "ACTIVADO" : "DESACTIVADO", usuarioActual(), null));
         });
+    }
+
+    @Transactional(readOnly = true)
+    public List<HistorialTenant> listarHistorial(String subdomain) {
+        return historialRepo.findBySubdomainOrderByFechaDesc(subdomain);
+    }
+
+    public void registrarAccion(String subdomain, String accion, String detalles) {
+        historialRepo.save(HistorialTenant.of(subdomain, accion, usuarioActual(), detalles));
+    }
+
+    private String usuarioActual() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated()) ? auth.getName() : "sistema";
     }
 
     public void registrarEnvioExitoso(String subdomain) {

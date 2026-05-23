@@ -38,6 +38,12 @@ public class Tenant {
     @Column(name = "color_body_bg", length = 20)
     private String colorBodyBg   = "#F0EDE2";
 
+    @Column(name = "font_headings", length = 100)
+    private String fontHeadings = "Cinzel";
+
+    @Column(name = "font_body", length = 100)
+    private String fontBody     = "Raleway";
+
     @Column(name = "email_admin", length = 200)
     private String emailAdmin;
 
@@ -72,6 +78,10 @@ public class Tenant {
     public void   setColorCream(String v)   { this.colorCream = v; }
     public String getColorBodyBg()          { return colorBodyBg; }
     public void   setColorBodyBg(String v)  { this.colorBodyBg = v; }
+    public String getFontHeadings()           { return fontHeadings; }
+    public void   setFontHeadings(String v)  { this.fontHeadings = v; }
+    public String getFontBody()              { return fontBody; }
+    public void   setFontBody(String v)      { this.fontBody = v; }
     public String getEmailAdmin()             { return emailAdmin; }
     public void   setEmailAdmin(String v)   { this.emailAdmin = v; }
     public boolean isActive()               { return active; }

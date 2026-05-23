@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - Usuarios de ' + ${tenant.subdomain}">Alera - Usuarios</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="hero-section">
+    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-people me-2"></i>Usuarios — <code th:text="${tenant.subdomain}">tenant</code></h1>
+            <p th:text="${tenant.name} + ' · ' + ${usuarios.size()} + ' usuario(s)'">Tenant</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-alera" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+                <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
+            </button>
+            <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-alera-outline">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4" style="max-width:900px;">
+
+    <div class="card-alera p-0 overflow-hidden">
+        <table class="table mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th class="detail-label px-3 py-2">Usuario</th>
+                    <th class="detail-label px-3 py-2">Rol</th>
+                    <th class="detail-label px-3 py-2">Estado</th>
+                    <th class="detail-label px-3 py-2">Creado</th>
+                    <th class="detail-label px-3 py-2 text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:if="${#lists.isEmpty(usuarios)}">
+                    <td colspan="5" class="text-center text-muted py-4">No hay usuarios en este tenant</td>
+                </tr>
+                <tr th:each="u : ${usuarios}">
+                    <td class="px-3 py-2 fw-semibold" th:text="${u.username}">admin</td>
+                    <td class="px-3 py-2">
+                        <span class="badge"
+                              th:text="${u.rol != null ? u.rol.displayName : '-'}"
+                              th:style="${u.rol != null and u.rol.name() == 'ADMIN'} ? 'background:var(--dorado);color:var(--verde-oscuro)' : 'background:#6c757d'">
+                        </span>
+                    </td>
+                    <td class="px-3 py-2">
+                        <span th:if="${u.activo}" class="badge bg-success">Activo</span>
+                        <span th:unless="${u.activo}" class="badge bg-secondary">Inactivo</span>
+                    </td>
+                    <td class="px-3 py-2 text-muted small"
+                        th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : '-'}">
+                    </td>
+                    <td class="px-3 py-2 text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <!-- Toggle activo -->
+                            <form th:action="@{/admin/tenants/{s}/usuarios/{id}/toggle(s=${tenant.subdomain},id=${u.id})}" method="post">
+                                <button type="submit" class="btn btn-sm"
+                                        th:classappend="${u.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                        th:title="${u.activo} ? 'Desactivar' : 'Activar'">
+                                    <i class="bi" th:classappend="${u.activo} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+                                </button>
+                            </form>
+                            <!-- Cambiar contraseña -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    title="Cambiar contraseña"
+                                    data-bs-toggle="modal" data-bs-target="#modalPassword"
+                                    th:attr="data-id=${u.id}, data-username=${u.username}"
+                                    onclick="prepararModalPassword(this)">
+                                <i class="bi bi-key"></i>
+                            </button>
+                            <!-- Cambiar rol -->
+                            <button type="button" class="btn btn-sm btn-outline-secondary"
+                                    title="Cambiar rol"
+                                    data-bs-toggle="modal" data-bs-target="#modalRol"
+                                    th:attr="data-id=${u.id}, data-username=${u.username}, data-rol=${u.rol != null ? u.rol.name() : ''}"
+                                    onclick="prepararModalRol(this)">
+                                <i class="bi bi-person-badge"></i>
+                            </button>
+                            <!-- Eliminar -->
+                            <form th:action="@{/admin/tenants/{s}/usuarios/{id}/eliminar(s=${tenant.subdomain},id=${u.id})}" method="post"
+                                  onsubmit="return confirm('¿Eliminar usuario ' + this.dataset.username + '? Esta acción no se puede deshacer.')"
+                                  th:attr="data-username=${u.username}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal: Nuevo usuario -->
+<div class="modal fade" id="modalNuevo" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form th:action="@{/admin/tenants/{s}/usuarios/guardar(s=${tenant.subdomain})}" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nuevo Usuario</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label detail-label">Usuario *</label>
+                        <input type="text" name="username" class="form-control" required autocomplete="off">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label detail-label">Contraseña *</label>
+                        <input type="password" name="password" class="form-control" minlength="6" required>
+                        <div class="form-text">Mínimo 6 caracteres.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label detail-label">Confirmar contraseña *</label>
+                        <input type="password" name="confirmarPassword" class="form-control" required>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label detail-label">Rol *</label>
+                        <select name="rol" class="form-select" required>
+                            <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.displayName}"></option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Crear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cambiar contraseña -->
+<div class="modal fade" id="modalPassword" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formPassword" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-key me-2"></i>Cambiar Contraseña — <span id="usernamePassword"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label detail-label">Nueva contraseña *</label>
+                        <input type="password" name="nuevaPassword" class="form-control" minlength="6" required>
+                        <div class="form-text">Mínimo 6 caracteres.</div>
+                    </div>
+                    <div class="mb-1">
+                        <label class="form-label detail-label">Confirmar contraseña *</label>
+                        <input type="password" name="confirmarPassword" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Cambiar rol -->
+<div class="modal fade" id="modalRol" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formRol" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Cambiar Rol — <span id="usernameRol"></span></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <select name="rol" id="selectRol" class="form-select" required>
+                        <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.displayName}"></option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    const subdomain = [[${tenant.subdomain}]];
+
+    function prepararModalPassword(btn) {
+        const id       = btn.dataset.id;
+        const username = btn.dataset.username;
+        document.getElementById('usernamePassword').textContent = username;
+        document.getElementById('formPassword').action =
+            '/admin/tenants/' + subdomain + '/usuarios/' + id + '/password';
+    }
+
+    function prepararModalRol(btn) {
+        const id       = btn.dataset.id;
+        const username = btn.dataset.username;
+        const rol      = btn.dataset.rol;
+        document.getElementById('usernameRol').textContent = username;
+        document.getElementById('formRol').action =
+            '/admin/tenants/' + subdomain + '/usuarios/' + id + '/rol';
+        const select = document.getElementById('selectRol');
+        for (const opt of select.options) {
+            opt.selected = opt.value === rol;
+        }
+    }
+</script>
+</body>
+</html>

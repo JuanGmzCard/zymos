@@ -1,0 +1,2 @@
+ALTER TABLE tenants ADD COLUMN font_headings VARCHAR(100) NOT NULL DEFAULT 'Cinzel';
+ALTER TABLE tenants ADD COLUMN font_body    VARCHAR(100) NOT NULL DEFAULT 'Raleway';
