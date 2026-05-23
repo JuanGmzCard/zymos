@@ -17,14 +17,14 @@ import java.util.List;
 public class AlertaScheduler {
 
     private static final Logger log = LoggerFactory.getLogger(AlertaScheduler.class);
-    // A partir de este umbral se emite WARN en cada intento fallido adicional
     private static final int UMBRAL_WARN = 3;
 
-    private final TenantRepository tenantRepo;
+    private final TenantRepository      tenantRepo;
     private final InsumoInventarioService insumoService;
-    private final EquipoService equipoService;
-    private final EmailService emailService;
-    private final TenantService tenantService;
+    private final EquipoService           equipoService;
+    private final EmailService            emailService;
+    private final TenantService           tenantService;
+    private final NotificacionService     notificacionService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -33,37 +33,28 @@ public class AlertaScheduler {
                             InsumoInventarioService insumoService,
                             EquipoService equipoService,
                             EmailService emailService,
-                            TenantService tenantService) {
-        this.tenantRepo    = tenantRepo;
-        this.insumoService = insumoService;
-        this.equipoService = equipoService;
-        this.emailService  = emailService;
-        this.tenantService = tenantService;
+                            TenantService tenantService,
+                            NotificacionService notificacionService) {
+        this.tenantRepo          = tenantRepo;
+        this.insumoService       = insumoService;
+        this.equipoService       = equipoService;
+        this.emailService        = emailService;
+        this.tenantService       = tenantService;
+        this.notificacionService = notificacionService;
     }
 
     @Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")
     public void enviarAlertasDiarias() {
-        if (!emailService.mailConfigurado()) {
-            log.debug("SMTP no configurado — alertas por email deshabilitadas");
-            return;
-        }
-
         List<Tenant> tenants = tenantRepo.findAll().stream()
                 .filter(Tenant::isActive)
-                .filter(t -> t.getEmailAdmin() != null && !t.getEmailAdmin().isBlank())
                 .toList();
 
-        if (tenants.isEmpty()) {
-            log.debug("Ningún tenant activo con email configurado");
-            return;
-        }
+        if (tenants.isEmpty()) return;
 
+        int notifs   = 0;
         int enviados = 0;
+
         for (Tenant tenant : tenants) {
-            if (tenant.getAlertasIntentosFallidos() >= UMBRAL_WARN) {
-                log.warn("Tenant '{}' lleva {} intentos fallidos consecutivos en alertas — revisar SMTP o email_admin.",
-                         tenant.getSubdomain(), tenant.getAlertasIntentosFallidos());
-            }
             try {
                 TenantContext.setCurrentTenant(tenant.getSubdomain());
 
@@ -71,20 +62,35 @@ public class AlertaScheduler {
                 List<InsumoInventario> proximosAVencer = insumoService.listarProximosAVencer(vencimientoDias);
                 List<Equipo>           mantenimiento   = equipoService.listarMantenimientoPendiente();
 
-                boolean enviado = emailService.enviarAlertasDiarias(
-                        tenant, bajoStock, proximosAVencer, mantenimiento);
-                if (enviado) {
-                    tenantService.registrarEnvioExitoso(tenant.getSubdomain());
-                    enviados++;
+                // Notificaciones in-app — siempre, independiente de SMTP
+                notifs += notificacionService.crearAlertas(bajoStock, proximosAVencer, mantenimiento);
+
+                // Email — solo si SMTP configurado y tenant tiene email
+                boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();
+                if (emailService.mailConfigurado() && tieneEmail) {
+                    if (tenant.getAlertasIntentosFallidos() >= UMBRAL_WARN) {
+                        log.warn("Tenant '{}' lleva {} intentos fallidos consecutivos — revisar SMTP.",
+                                tenant.getSubdomain(), tenant.getAlertasIntentosFallidos());
+                    }
+                    boolean enviado = emailService.enviarAlertasDiarias(
+                            tenant, bajoStock, proximosAVencer, mantenimiento);
+                    if (enviado) {
+                        tenantService.registrarEnvioExitoso(tenant.getSubdomain());
+                        enviados++;
+                    }
                 }
             } catch (Exception e) {
-                log.error("Error enviando alertas al tenant '{}': {}", tenant.getSubdomain(), e.getMessage());
-                tenantService.registrarEnvioFallido(tenant.getSubdomain());
+                log.error("Error procesando alertas para tenant '{}': {}", tenant.getSubdomain(), e.getMessage());
+                boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();
+                if (emailService.mailConfigurado() && tieneEmail) {
+                    tenantService.registrarEnvioFallido(tenant.getSubdomain());
+                }
             } finally {
                 TenantContext.clear();
             }
         }
 
-        log.info("Alertas diarias procesadas: {} email(s) enviado(s) de {} tenant(s)", enviados, tenants.size());
+        log.info("Alertas diarias: {} notificación(es) in-app creada(s), {} email(s) enviado(s) de {} tenant(s)",
+                notifs, enviados, tenants.size());
     }
 }

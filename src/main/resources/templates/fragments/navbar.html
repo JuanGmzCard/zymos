@@ -320,11 +320,12 @@
                     </ul>
                 </li>
 
-                <!-- Badge de alertas (dropdown) -->
+                <!-- Campana de notificaciones in-app -->
                 <li class="nav-item dropdown" id="alertaBellItem" style="display:none;">
                     <a class="nav-link px-2 position-relative" href="#"
-                       data-bs-toggle="dropdown" data-bs-auto-close="true"
-                       aria-expanded="false" style="line-height:1;">
+                       data-bs-toggle="dropdown" data-bs-auto-close="outside"
+                       aria-expanded="false" style="line-height:1;"
+                       id="notifDropdownToggle">
                         <i class="bi bi-bell-fill" style="font-size:1rem;"></i>
                         <span id="alertaBadge"
                               class="position-absolute badge rounded-pill bg-danger"
@@ -333,33 +334,21 @@
                             0
                         </span>
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:260px;">
-                        <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Alertas pendientes</small>
+                    <ul class="dropdown-menu dropdown-menu-lg-end p-0" style="min-width:300px;max-width:340px;">
+                        <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
+                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Notificaciones</small>
+                            <button id="btnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
+                                    style="font-size:.72rem;text-decoration:none;" onclick="notifMarcarTodas()">
+                                Marcar todas leídas
+                            </button>
                         </li>
                         <li><hr class="dropdown-divider mt-1 mb-0"></li>
-                        <li id="alertaItemBajoStock" style="display:none;">
-                            <a class="dropdown-item d-flex justify-content-between align-items-center py-2"
-                               th:href="@{/inventario}">
-                                <span><i class="bi bi-box-seam me-2 text-warning"></i>Bajo stock</span>
-                                <span id="alertaCountBajoStock"
-                                      class="badge rounded-pill bg-warning text-dark">0</span>
-                            </a>
-                        </li>
-                        <li id="alertaItemVencimientos" style="display:none;">
-                            <a class="dropdown-item d-flex justify-content-between align-items-center py-2"
-                               th:href="@{/inventario}">
-                                <span><i class="bi bi-calendar-x me-2 text-warning"></i>Próximos a vencer</span>
-                                <span id="alertaCountVencimientos"
-                                      class="badge rounded-pill bg-warning text-dark">0</span>
-                            </a>
-                        </li>
-                        <li id="alertaItemMantenimiento" style="display:none;">
-                            <a class="dropdown-item d-flex justify-content-between align-items-center py-2"
-                               th:href="@{/equipos}">
-                                <span><i class="bi bi-tools me-2 text-warning"></i>Mantenimiento</span>
-                                <span id="alertaCountMantenimiento"
-                                      class="badge rounded-pill bg-warning text-dark">0</span>
+                        <li id="notifLista"></li>
+                        <li><hr class="dropdown-divider my-0"></li>
+                        <li>
+                            <a class="dropdown-item text-center py-2" th:href="@{/notificaciones}"
+                               style="font-size:.82rem;color:var(--dorado);">
+                                Ver todas las notificaciones →
                             </a>
                         </li>
                     </ul>
@@ -429,7 +418,16 @@
         </div>
     </div>
 
+    <script th:inline="javascript">
+    var ALERA_CSRF_TOKEN  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
+    var ALERA_CSRF_HEADER = /*[[${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}]]*/ 'X-CSRF-TOKEN';
+    </script>
     <script>
+    // ── CSRF para fetch desde navbar ─────────────────────────────────
+    // Intenta meta tags del template (si existen); fallback a variables Thymeleaf inline.
+    function _csrfToken()  { return (document.querySelector('meta[name="_csrf"]') || {}).content || ALERA_CSRF_TOKEN || ''; }
+    function _csrfHeader() { return (document.querySelector('meta[name="_csrf_header"]') || {}).content || ALERA_CSRF_HEADER || 'X-CSRF-TOKEN'; }
+
     // ── Modo oscuro ─────────────────────────────────────────────────
     function toggleDarkMode() {
         const isDark = document.documentElement.classList.toggle('dark-mode');
@@ -447,29 +445,97 @@
         if (toastEl && typeof bootstrap !== 'undefined') {
             bootstrap.Toast.getOrCreateInstance(toastEl).show();
         }
-        // ── Badge de alertas (fetch asíncrono) ───────────────────────
-        fetch('/alertas/contadores', { credentials: 'same-origin' })
+        // ── Notificaciones in-app ────────────────────────────────────
+        notifCargar();
+        var notifToggle = document.getElementById('notifDropdownToggle');
+        if (notifToggle) {
+            notifToggle.addEventListener('show.bs.dropdown', function() { notifCargar(); });
+        }
+    });
+    // ── Notificaciones in-app ────────────────────────────────────
+    function notifCargar() {
+        fetch('/notificaciones/recientes', { credentials: 'same-origin' })
             .then(function(r) { return r.ok ? r.json() : null; })
             .then(function(data) {
-                if (!data || data.total === 0) return;
+                if (!data) return;
                 var item  = document.getElementById('alertaBellItem');
                 var badge = document.getElementById('alertaBadge');
-                if (item)  item.style.display = '';
-                if (badge) badge.textContent = data.total > 99 ? '99+' : data.total;
-                function mostrarFila(liId, spanId, count) {
-                    if (count > 0) {
-                        var li = document.getElementById(liId);
-                        var sp = document.getElementById(spanId);
-                        if (li) li.style.display = '';
-                        if (sp) sp.textContent = count;
-                    }
+                var lista = document.getElementById('notifLista');
+                var btnTodas = document.getElementById('btnMarcarTodas');
+
+                if (data.total > 0) {
+                    if (item)  item.style.display = '';
+                    if (badge) badge.textContent = data.total > 99 ? '99+' : data.total;
+                } else {
+                    if (item)  item.style.display = 'none';
                 }
-                mostrarFila('alertaItemBajoStock',    'alertaCountBajoStock',    data.bajoStock);
-                mostrarFila('alertaItemVencimientos', 'alertaCountVencimientos', data.vencimientos);
-                mostrarFila('alertaItemMantenimiento','alertaCountMantenimiento',data.mantenimiento);
+                if (btnTodas) btnTodas.style.display = data.total > 0 ? '' : 'none';
+                if (lista)    lista.innerHTML = notifRenderLista(data.items);
             })
-            .catch(function() { /* silencioso — no romper la página */ });
-    });
+            .catch(function() {});
+    }
+
+    function notifRenderLista(items) {
+        if (!items || items.length === 0) {
+            return '<div class="text-center py-3 text-muted" style="font-size:.84rem;">' +
+                   '<i class="bi bi-bell-slash d-block mb-1" style="font-size:1.4rem;opacity:.4;"></i>' +
+                   'Sin notificaciones nuevas</div>';
+        }
+        return items.map(function(n) {
+            return '<div class="d-flex align-items-start gap-2 px-3 py-2" ' +
+                   'style="border-bottom:1px solid rgba(0,0,0,.06);">' +
+                   '<i class="bi ' + notifEsc(n.icono) + ' ' + notifEsc(n.colorClase) +
+                   ' flex-shrink-0 mt-1" style="font-size:1rem;"></i>' +
+                   '<div class="flex-grow-1 overflow-hidden">' +
+                   '<div style="font-size:.84rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
+                   notifEsc(n.titulo) + '</div>' +
+                   '<div style="font-size:.72rem;color:#888;">' + notifEsc(n.tiempoRelativo) + '</div>' +
+                   '</div>' +
+                   '<div class="d-flex gap-1 flex-shrink-0">' +
+                   (n.urlAccion ? '<a href="' + notifEsc(n.urlAccion) + '" class="btn btn-sm p-0 px-1 text-muted" title="Ver"><i class="bi bi-arrow-right"></i></a>' : '') +
+                   '<button class="btn btn-sm p-0 px-1 text-muted" title="Marcar leída" ' +
+                   'onclick="notifMarcarLeida(' + n.id + ', this)"><i class="bi bi-check2"></i></button>' +
+                   '</div></div>';
+        }).join('');
+    }
+
+    function notifMarcarLeida(id, btn) {
+        fetch('/notificaciones/' + id + '/leer', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [_csrfHeader()]: _csrfToken() }
+        })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(data) {
+            if (!data) return;
+            var row = btn.closest('.d-flex.align-items-start');
+            if (row) row.remove();
+            var badge = document.getElementById('alertaBadge');
+            if (badge) badge.textContent = data.noLeidas > 99 ? '99+' : data.noLeidas;
+            if (data.noLeidas === 0) {
+                var bellItem = document.getElementById('alertaBellItem');
+                if (bellItem) bellItem.style.display = 'none';
+                var lista = document.getElementById('notifLista');
+                if (lista) lista.innerHTML = notifRenderLista([]);
+            }
+        })
+        .catch(function() {});
+    }
+
+    function notifMarcarTodas() {
+        fetch('/notificaciones/leer-todas', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [_csrfHeader()]: _csrfToken() }
+        })
+        .then(function() { notifCargar(); })
+        .catch(function() {});
+    }
+
+    function notifEsc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
     // ── Búsqueda con autocompletado ─────────────────────────────
     (function() {
         var debTimer, activeIdx = -1;
