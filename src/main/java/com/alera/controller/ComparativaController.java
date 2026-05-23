@@ -1,9 +1,14 @@
 package com.alera.controller;
 
 import com.alera.model.LoteCerveza;
+import com.alera.model.Tenant;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.service.PdfExportService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,9 +26,11 @@ import java.util.stream.Collectors;
 public class ComparativaController {
 
     private final LoteCervezaRepository loteRepo;
+    private final PdfExportService pdfService;
 
-    public ComparativaController(LoteCervezaRepository loteRepo) {
-        this.loteRepo = loteRepo;
+    public ComparativaController(LoteCervezaRepository loteRepo, PdfExportService pdfService) {
+        this.loteRepo   = loteRepo;
+        this.pdfService = pdfService;
     }
 
     @GetMapping
@@ -62,6 +69,37 @@ public class ComparativaController {
         model.addAttribute("chartAtenuacion",chartValues(lotes, LoteCerveza::getAtenuacionAparente));
         model.addAttribute("chartEficiencia",chartValues(lotes, LoteCerveza::getEficienciaMacerado));
         return "comparativa/resultado";
+    }
+
+    @GetMapping("/resultado/pdf")
+    public ResponseEntity<byte[]> pdf(@RequestParam(required = false) List<Long> ids,
+                                       HttpServletRequest request) {
+        if (ids == null || ids.size() < 2) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (ids.size() > 6) ids = ids.subList(0, 6);
+        List<LoteCerveza> lotes = loteRepo.findByIds(ids);
+
+        Map<String, Long> mejoresMap = new LinkedHashMap<>();
+        mejorMax(lotes, "abv",        LoteCerveza::getAbv,                mejoresMap);
+        mejorMax(lotes, "atenuacion", LoteCerveza::getAtenuacionAparente, mejoresMap);
+        mejorMax(lotes, "eficiencia", LoteCerveza::getEficienciaMacerado, mejoresMap);
+        mejorMax(lotes, "litros",     LoteCerveza::getLitrosFinales,      mejoresMap);
+        Map<String, Long> cplMap = new LinkedHashMap<>();
+        mejorMin(lotes, "cpl",        LoteCerveza::getCostoPorLitro,      cplMap);
+        Long mejorCpl = cplMap.get("cpl");
+
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        String brandName = tenant != null ? tenant.getName() : "Alera";
+
+        byte[] pdf = pdfService.generarPdfComparativa(lotes, mejoresMap, mejorCpl, brandName);
+        String filename = "comparativa-" + lotes.stream()
+                .map(LoteCerveza::getCodigoLote).collect(Collectors.joining("-")) + ".pdf";
+
+        return ResponseEntity.ok()
+                .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     private void mejorMax(List<LoteCerveza> lotes, String key,

@@ -27,9 +27,15 @@
             <h1><i class="bi bi-bar-chart-steps me-2"></i>Comparativa de Lotes</h1>
             <p th:text="${#lists.size(lotes)} + ' lotes comparados'">N lotes comparados</p>
         </div>
-        <a th:href="@{/comparativa}" class="btn btn-alera-outline">
-            <i class="bi bi-arrow-left me-1"></i>Nueva comparativa
-        </a>
+        <div class="d-flex gap-2">
+            <a th:href="@{/comparativa/resultado/pdf(ids=${lotes.![id]})}"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            <a th:href="@{/comparativa}" class="btn btn-alera-outline">
+                <i class="bi bi-arrow-left me-1"></i>Nueva comparativa
+            </a>
+        </div>
     </div>
 </div>
 

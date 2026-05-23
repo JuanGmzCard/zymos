@@ -4,6 +4,7 @@ import com.alera.model.Ingrediente;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
 import com.alera.model.LoteItemFactura;
+import java.util.Map;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -95,6 +96,157 @@ public class PdfExportService {
         }
         return baos.toByteArray();
     }
+
+    // ── PDF Comparativa ──────────────────────────────────────────────
+
+    public byte[] generarPdfComparativa(List<LoteCerveza> lotes,
+                                          Map<String, Long> mejoresMax,
+                                          Long mejorCpl,
+                                          String brandName) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document(PageSize.A4.rotate(), 36, 36, 50, 40);
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            // Cabecera
+            PdfPTable header = new PdfPTable(1);
+            header.setWidthPercentage(100);
+            header.setSpacingAfter(14);
+            PdfPCell hCell = new PdfPCell();
+            hCell.setBackgroundColor(C_VERDE);
+            hCell.setBorder(0);
+            hCell.setPadding(12);
+            hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                    new Font(Font.HELVETICA, 7, Font.NORMAL, C_DORADO)));
+            Paragraph titulo = new Paragraph("COMPARATIVA DE LOTES",
+                    new Font(Font.HELVETICA, 14, Font.BOLD, C_CREMA));
+            titulo.setSpacingBefore(4);
+            hCell.addElement(titulo);
+            String subtitulo = lotes.stream().map(LoteCerveza::getCodigoLote)
+                    .reduce((a, b) -> a + "  ·  " + b).orElse("");
+            hCell.addElement(new Paragraph(subtitulo,
+                    new Font(Font.HELVETICA, 8, Font.ITALIC, C_CREMA)));
+            header.addCell(hCell);
+            doc.add(header);
+
+            // Tabla de métricas (filas = métricas, columnas = lotes)
+            int cols = lotes.size() + 1;
+            PdfPTable tabla = new PdfPTable(cols);
+            float[] anchos = new float[cols];
+            anchos[0] = 2.5f;
+            for (int i = 1; i < cols; i++) anchos[i] = 1.5f;
+            tabla.setWidths(anchos);
+            tabla.setWidthPercentage(100);
+            tabla.setSpacingAfter(14);
+
+            Font fHeader = new Font(Font.HELVETICA, 8, Font.BOLD,  C_CREMA);
+            Font fLabel  = new Font(Font.HELVETICA, 7, Font.BOLD,  C_VERDE);
+            Font fValor  = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.BLACK);
+            Font fMejorMax = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(180, 130, 0));
+            Font fMejorMin = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(25, 135, 84));
+
+            // Fila header
+            addCeldaHeader(tabla, "Métrica", fHeader);
+            for (LoteCerveza l : lotes) addCeldaHeader(tabla, l.getCodigoLote(), fHeader);
+
+            // Filas de datos
+            String[][] metricas = {
+                {"Estilo",       null},
+                {"OG",           null},
+                {"FG",           null},
+                {"ABV (%)",      "abv"},
+                {"Atenuación (%)", "atenuacion"},
+                {"Eficiencia (%)", "eficiencia"},
+                {"Litros",       "litros"},
+                {"Costo total",  null},
+                {"Costo/litro",  "cpl"}
+            };
+
+            boolean alt = false;
+            for (String[] m : metricas) {
+                Color bg = alt ? C_FONDO : Color.WHITE;
+                alt = !alt;
+                addCeldaLabel(tabla, m[0], fLabel, bg);
+                for (LoteCerveza l : lotes) {
+                    String val = valorMetrica(l, m[0]);
+                    boolean esMejorMax = m[1] != null && !m[1].equals("cpl")
+                            && mejoresMax.containsKey(m[1]) && mejoresMax.get(m[1]).equals(l.getId());
+                    boolean esMejorMin = "cpl".equals(m[1]) && l.getId().equals(mejorCpl);
+                    Font f = esMejorMax ? fMejorMax : esMejorMin ? fMejorMin : fValor;
+                    String texto = val + (esMejorMax ? " ★" : esMejorMin ? " ↓" : "");
+                    PdfPCell c = new PdfPCell(new Phrase(texto, f));
+                    c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                    c.setBackgroundColor(bg);
+                    c.setBorderColor(C_BORDE);
+                    c.setPadding(5);
+                    tabla.addCell(c);
+                }
+            }
+            doc.add(tabla);
+
+            // Notas de cata
+            boolean hayNotas = lotes.stream().anyMatch(l ->
+                    l.getNotasCata() != null && !l.getNotasCata().isBlank());
+            if (hayNotas) {
+                doc.add(new Paragraph("Notas de cata",
+                        new Font(Font.HELVETICA, 9, Font.BOLD, C_VERDE)));
+                for (LoteCerveza l : lotes) {
+                    if (l.getNotasCata() != null && !l.getNotasCata().isBlank()) {
+                        doc.add(new Paragraph(l.getCodigoLote() + ": " + l.getNotasCata(),
+                                new Font(Font.HELVETICA, 7, Font.NORMAL, C_GRIS)));
+                    }
+                }
+            }
+
+            // Pie
+            Paragraph pie = new Paragraph(
+                "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName,
+                new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+            pie.setAlignment(Element.ALIGN_RIGHT);
+            doc.add(pie);
+
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando PDF de comparativa", e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void addCeldaHeader(PdfPTable tabla, String texto, Font font) {
+        PdfPCell c = new PdfPCell(new Phrase(texto, font));
+        c.setBackgroundColor(C_VERDE_OSCURO);
+        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+        c.setBorder(0);
+        c.setPadding(6);
+        tabla.addCell(c);
+    }
+
+    private void addCeldaLabel(PdfPTable tabla, String texto, Font font, Color bg) {
+        PdfPCell c = new PdfPCell(new Phrase(texto, font));
+        c.setBackgroundColor(bg);
+        c.setBorderColor(C_BORDE);
+        c.setPadding(5);
+        tabla.addCell(c);
+    }
+
+    private String valorMetrica(LoteCerveza l, String metrica) {
+        return switch (metrica) {
+            case "Estilo"          -> l.getEstilo() != null ? l.getEstilo() : "—";
+            case "OG"              -> l.getDensidadInicial() != null ? String.valueOf(l.getDensidadInicial()) : "—";
+            case "FG"              -> l.getDensidadFinal() != null ? String.valueOf(l.getDensidadFinal()) : "—";
+            case "ABV (%)"         -> l.getAbv() != null ? l.getAbv() + "%" : "—";
+            case "Atenuación (%)"  -> l.getAtenuacionAparente() != null ? l.getAtenuacionAparente() + "%" : "—";
+            case "Eficiencia (%)"  -> l.getEficienciaMacerado() != null ? l.getEficienciaMacerado() + "%" : "—";
+            case "Litros"          -> l.getLitrosFinales() != null ? l.getLitrosFinales() + " L" : "—";
+            case "Costo total"     -> l.getCostoTotal() != null ? "$ " + l.getCostoTotal().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
+            case "Costo/litro"     -> l.getCostoPorLitro() != null ? "$ " + l.getCostoPorLitro().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
+            default                -> "—";
+        };
+    }
+
+    // ── PDF Lote ─────────────────────────────────────────────────────
 
     private void addCabeceraPdf(Document doc, LoteCerveza lote, String brandName) throws DocumentException {
         PdfPTable header = new PdfPTable(new float[]{3, 2});
