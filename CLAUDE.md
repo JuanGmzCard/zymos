@@ -41,7 +41,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - Perfil prod: `application-prod.properties` — elimina fallbacks de credenciales BD. Docker activa `SPRING_PROFILES_ACTIVE=prod`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
-- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30)
+- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `alera-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
 
@@ -95,7 +95,7 @@ com.alera/
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
 │               EmailService, AlertaScheduler, NotificacionService,
 │               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
-├── model/      22 entidades:
+├── model/      23 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
 │               LoteCerveza, Ingrediente, Receta, RecetaIngrediente, EscalonMacerado,
@@ -103,13 +103,14 @@ com.alera/
 │               InsumoInventario, FacturaProveedor, FacturaItem,
 │               Proveedor, TipoCerveza, Usuario,
 │               LoteItemFactura (tabla lote_items_factura — asignación parcial de ítems a lotes),
-│               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant)
+│               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant),
+│               FacturaHistorialEstado (tabla factura_historial_estado — auditoría de cambios de estado por factura)
 │               + 10 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA)
 ├── repository/ 14 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
-│               ElaboracionPlanificadaRepository, NotificacionRepository)
+│               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
@@ -132,7 +133,7 @@ templates/
 ├── inventario/ lista (typeahead en campo nombre respeta filtro tipo), formulario,
 │               precios.html (buscador con datalist + 4 stat-cards + Chart.js barras + tabla de compras)
 ├── tipos-cerveza/ lista
-├── facturas/   lista (typeahead en card-header busca por N° o proveedor), formulario, detalle
+├── facturas/   lista (typeahead en card-header busca por N° o proveedor; 4 stat-cards: total facturas, monto total, pendientes de pago, monto pendiente), formulario, detalle (historial de cambios de estado + botón Duplicar)
 ├── recetas/    lista (tabla paginada con filtros activa/inactiva + typeahead a la derecha; respeta filtro estado), formulario, detalle (+ calculadora escala)
 ├── proveedores/ lista (typeahead en card-header busca por nombre o NIT), formulario
 ├── reportes/   produccion.html
@@ -177,6 +178,7 @@ templates/
 - `V25__soft_delete_lotes_recetas.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN deleted_at TIMESTAMP` y `ALTER TABLE recetas ADD COLUMN deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en ambas entidades. `eliminar()` en los servicios setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente).
 - `V26__notificaciones.sql` — tabla `notificaciones(id BIGSERIAL, tenant_id VARCHAR(100), tipo VARCHAR(50), titulo VARCHAR(200), mensaje VARCHAR(500), url_accion VARCHAR(300), leida BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())` + índices en `(tenant_id, leida)` y `(tenant_id, created_at DESC)`. Con `@TenantId` — filtrada por tenant. Sin FK externa.
 - `V27__estado_factura.sql` — `ALTER TABLE facturas_proveedor ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'RECIBIDA'` — estado de la factura: RECIBIDA (gris), VERIFICADA (amarillo), PAGADA (verde). Todas las facturas existentes quedan en RECIBIDA.
+- `V28__factura_historial_estado.sql` — tabla `factura_historial_estado(id BIGSERIAL, tenant_id VARCHAR(100), factura_id BIGINT NOT NULL, estado_anterior VARCHAR(20), estado_nuevo VARCHAR(20) NOT NULL, usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW())` + índices en `factura_id` y `tenant_id`. Sin FK a `facturas_proveedor` — preserva historial si se elimina la factura. Con `@TenantId` — filtrada por tenant.
 
 ---
 
@@ -318,6 +320,16 @@ Todos extienden `AuditableEntity` — los 4 campos de auditoría vienen del padr
 - **Campo `estado` en `FacturaProveedor`**: `@Enumerated(EnumType.STRING) EstadoFactura estado` — default `RECIBIDA`. Valores: `RECIBIDA` (badge gris), `VERIFICADA` (badge amarillo), `PAGADA` (badge verde). Cada valor tiene `getDisplayName()` y `getBadgeClass()` (clase Bootstrap). Se puede cambiar desde el detalle via `POST /facturas/{id}/estado` o desde el formulario de edición via select.
 - **Campo de fecha en `FacturaProveedor`**: `fechaFactura` (`LocalDate`) — **NO** `fecha`. En JPQL usar `f.fechaFactura`; en Java `getFechaFactura()`. Error frecuente: escribir `f.fecha` en un `@Query` → `UnknownPathException` al arrancar.
 
+### FacturaHistorialEstado
+Auditoría de cambios de estado de facturas. Tabla `factura_historial_estado`. Tiene `@TenantId`. **No extiende `AuditableEntity`.**
+- `id`, `tenantId` (@TenantId), `facturaId` (BIGINT, sin FK — preserva historial si se elimina la factura)
+- `@Enumerated(EnumType.STRING) estadoAnterior → EstadoFactura` — nullable (null = creación inicial de la factura)
+- `@Enumerated(EnumType.STRING) estadoNuevo → EstadoFactura` (NOT NULL)
+- `usuario` (VARCHAR 100) — nombre del usuario autenticado al momento del cambio (via `SecurityContextHolder`); `"sistema"` si no hay sesión
+- `fecha` (TIMESTAMP, NOT NULL, seteado por `@PrePersist`)
+- Factory: `FacturaHistorialEstado.of(facturaId, estadoAnterior, estadoNuevo, usuario)` — crea instancia sin id ni tenantId
+- Se crea en `FacturaProveedorService.guardar()` (estado inicial, `estadoAnterior=null`) y en `cambiarEstado()` (transición, con estado anterior)
+
 ### Usuario
 No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist createdAt`. Campos:
 - `id`, `tenantId` (@TenantId — usuarios aislados por tenant), `username` (unique por tenant)
@@ -376,6 +388,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR f.estado = :estado`, `:desde IS NULL OR f.fechaFactura >= :desde`, `:hasta IS NULL OR f.fechaFactura <= :hasta`. Orden `fechaFactura DESC NULLS LAST, id DESC`. Único query paginado — reemplazó `findAllPaged` y `findAllPagedByEstado`.
 - `findByIdWithItems(id)` — LEFT JOIN FETCH items por id
 - `search(q, Pageable)` — LIKE en `COALESCE(numeroFactura,'')` y `COALESCE(proveedor,'')`, orden `fechaFactura DESC NULLS LAST` — para el typeahead de la lista de facturas
+- `sumTotalFiltered(estado, desde, hasta)` — `COALESCE(SUM(valorTotal), 0)` con los mismos filtros opcionales de `findAllFiltered`; usado para stat-cards
+- `sumPorEstados(estados, desde, hasta)` — `COALESCE(SUM(valorTotal), 0)` donde `f.estado IN :estados`; usado para monto pendiente (RECIBIDA + VERIFICADA)
+- `countPorEstados(estados, desde, hasta)` — `COUNT(f)` donde `f.estado IN :estados`; usado para conteo pendiente
+- `findSinProcesar(estados, umbral)` — facturas con `estado IN :estados` y `fechaFactura <= :umbral`; usado por `AlertaScheduler` para detectar facturas sin procesar
+
+### FacturaHistorialEstadoRepository
+- `findByFacturaIdOrderByFechaDesc(facturaId)` — historial de cambios de estado de una factura, orden cronológico inverso. Hibernate filtra automáticamente por tenant activo via `@TenantId`.
 
 ### ElaboracionPlanificadaRepository
 - `findProximas(desde)` — elaboraciones con `fechaPlaneada >= :desde`, `LEFT JOIN FETCH receta`, orden ASC
@@ -451,11 +470,17 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### ProveedorService / FacturaProveedorService
 - `ProveedorService.contarFacturas/totalFacturas` — estadísticas para vista edición
 - `ProveedorService.suggest(q)` — filtra en memoria sobre `findAllByOrderByNombreAsc()` por nombre o NIT, retorna hasta 6 mapas con `{nombre, nit, activo, url}` — usado por `GET /proveedores/suggest`
-- `FacturaProveedorService` inyecta `ProveedorRepository` para vincular proveedor al guardar
-- `FacturaProveedorService.guardar/actualizar/eliminar` → `@CacheEvict("dashboard-stats")` — invalida caché al modificar datos financieros
+- `FacturaProveedorService` inyecta `ProveedorRepository` y `FacturaHistorialEstadoRepository` para vincular proveedor y registrar historial al guardar/cambiar estado
+- `FacturaProveedorService.guardar/actualizar/eliminar` → `@CacheEvict("dashboard-stats")` — invalida caché al modificar datos financieros. `guardar()` además registra el estado inicial en `factura_historial_estado`.
 - `FacturaProveedorService.listarPaginado(EstadoFactura estado, LocalDate desde, LocalDate hasta, int page)` — delega a `findAllFiltered`; los tres filtros son opcionales (null = sin filtro)
 - `FacturaProveedorService.listarParaExport(EstadoFactura estado, LocalDate desde, LocalDate hasta)` — `@Transactional(readOnly=true)`, llama `findAllWithItems()` y filtra en memoria; los tres parámetros son opcionales (null = sin filtro)
-- `FacturaProveedorService.cambiarEstado(id, EstadoFactura)` — busca la factura y actualiza el estado
+- `FacturaProveedorService.cambiarEstado(id, EstadoFactura)` — actualiza estado y persiste `FacturaHistorialEstado` con estado anterior, nuevo y usuario actual (via `SecurityContextHolder`)
+- `FacturaProveedorService.listarHistorial(facturaId)` — `@Transactional(readOnly=true)`, delega a `historialRepo.findByFacturaIdOrderByFechaDesc`
+- `FacturaProveedorService.sumTotal(estado, desde, hasta)` — `@Transactional(readOnly=true)`, delega a `sumTotalFiltered`; para stat-cards de la lista
+- `FacturaProveedorService.sumPendiente(desde, hasta)` — `@Transactional(readOnly=true)`, suma RECIBIDA + VERIFICADA; para stat-card de monto pendiente
+- `FacturaProveedorService.countPendiente(desde, hasta)` — `@Transactional(readOnly=true)`, cuenta RECIBIDA + VERIFICADA; para stat-card de facturas pendientes
+- `FacturaProveedorService.listarSinProcesar(dias)` — `@Transactional(readOnly=true)`, facturas RECIBIDA/VERIFICADA con `fechaFactura <= today - dias`; usado por `AlertaScheduler`
+- `FacturaProveedorService.duplicarComoFormDto(id)` — llama `toFormDto()` y limpia `numeroFactura`, `fechaFactura`; setea `estado = RECIBIDA`; devuelve DTO listo para pre-llenar el formulario
 - `FacturaProveedorService.suggest(q)` — usa `repo.search()`, retorna hasta 6 mapas con `{titulo, proveedor, fecha, total, url}` — usado por `GET /facturas/suggest`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
@@ -522,11 +547,12 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `@Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")` — lunes a viernes a las 8 AM por defecto. Configurable con `ALERT_CRON` env var.
 - Itera **todos** los tenants activos (ya no filtra por `emailAdmin` — notificaciones in-app funcionan sin SMTP). Para cada uno: establece `TenantContext`, carga alertas, llama `NotificacionService.crearAlertas()` siempre, luego envía email solo si SMTP configurado y tenant tiene email. Limpia contexto en `finally`.
 - **Notificaciones in-app**: se crean independientemente de SMTP — la app no necesita email configurado para generar notificaciones en la UI.
+- **Facturas sin procesar**: tras las alertas de inventario/equipos, llama `facturaService.listarSinProcesar(facturaAlertaDias)` y pasa la lista a `notificacionService.crearAlertaFacturas()`. Configurable via `app.facturas.alerta-dias` (def: 30). Si hay facturas RECIBIDA/VERIFICADA con más de ese número de días, se crea una notificación SISTEMA deduplicada por día.
 - **Tracking de fallos**: solo aplica al canal email. Si `enviarAlertasDiarias()` lanza excepción, llama `TenantService.registrarEnvioFallido()`. Si exitoso, `registrarEnvioExitoso()`. Las notifs in-app no afectan el tracking.
 - **WARN escalado**: si `alertasIntentosFallidos >= UMBRAL_WARN (3)`, loggea WARN antes de cada intento de email.
 - **EmailService**: `enviarAlertasDiarias()` relanza excepción SMTP como `RuntimeException` para que el scheduler pueda trackearla.
 - Loggea resumen: "N notificación(es) in-app creada(s), M email(s) enviado(s) de K tenant(s)"
-- Inyecta `NotificacionService` (nuevo).
+- Inyecta `NotificacionService` y `FacturaProveedorService`.
 
 ### NotificacionService
 - `crear(tipo, titulo, mensaje, urlAccion)` — persiste una `Notificacion` para el tenant activo
@@ -537,6 +563,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `listarTodas(page)` — `findAllOrdenadas(PageRequest)` — paginado, no leídas primero
 - `marcarLeida(id)` — busca por id y setea `leida = true`
 - `marcarTodasLeidas()` — bulk update via `repo.marcarTodasLeidas()`
+- `crearAlertaFacturas(sinProcesar, dias)` — crea notificación `TipoNotificacion.SISTEMA` con deduplicación diaria (`existeEnPeriodo(SISTEMA, hoy, maniana)`). Mensaje resume los primeros 3 proveedores. URL de acción: `/facturas`. Solo crea si `!sinProcesar.isEmpty()` y no existe notificación SISTEMA del día.
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
 ### PlanificacionService
@@ -612,11 +639,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /facturas?estado=RECIBIDA|VERIFICADA|PAGADA&desde=yyyy-MM-dd&hasta=yyyy-MM-dd` — filtros opcionales por estado y rango de fechas. Pasa `estadoFiltro`, `desde`, `hasta`, `estados` (enum values) y `extraParams` al modelo para que paginación, tabs y Excel respeten todos los filtros activos. El card principal permanece visible cuando cualquier filtro está activo (permite limpiar incluso sin resultados).
 - `POST /facturas/{id}/estado` — cambia el estado de la factura. `@RequestParam EstadoFactura estado`. Redirige a `/facturas/ver/{id}` con flash success.
 - `GET /facturas/export` — descarga `facturas-YYYY-MM-DD.xlsx`. Acepta filtros opcionales `?estado=`, `?desde=` (ISO date), `?hasta=` (ISO date). Lee el branding del tenant del `request.getAttribute("currentTenant")`. Delega a `ExcelExportService.generarExcelFacturas()`. El botón "Excel" en `lista.html` respeta todos los filtros activos.
+- `GET /facturas/duplicar/{id}` — pre-llena el formulario de nueva factura con los datos de la factura original (mismo proveedor, ítems, descripción, envío) pero sin número ni fecha, y estado RECIBIDA. Usa `service.duplicarComoFormDto(id)`. No pasa `facturaId` al modelo — el submit va a `POST /facturas/guardar` (crea nueva, no edita).
 - `GET /facturas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Busca por N° factura o proveedor. Devuelve `[{titulo, proveedor, fecha, total, url}]`.
 - `agregarDatosFormulario()` construye:
   - `insumosPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoInsumo.name()` para datalist JS
   - `equiposPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoEquipo.name()` para datalist JS
   - `estados` — `EstadoFactura.values()` para el select en el formulario de edición y las tabs de la lista
+- `lista()` pasa al modelo `statsTotal` (monto total filtrado), `statsPendiente` (monto RECIBIDA+VERIFICADA), `statsCountPend` (cantidad pendiente) — usados por las 4 stat-cards en `lista.html`
 - `POST /facturas/guardar-insumo-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0. Accesible: ADMIN, FACTURACION.
 - `POST /facturas/guardar-equipo-rapido` — `@ResponseBody` JSON. Crea equipo en estado OPERATIVO. Accesible: ADMIN, FACTURACION.
 - Inyecta `InsumoInventarioService`, `EquipoService` y `ExcelExportService`
@@ -935,7 +964,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Unitarios** (`src/test/java/com/alera/service/`):
 - `InsumoInventarioServiceTest`, `TrazabilidadServiceTest`, `DashboardServiceTest`
-- `FacturaProveedorServiceTest`, `UnidadUtilsTest`
+- `FacturaProveedorServiceTest`, `UnidadUtilsTest` — `FacturaProveedorServiceTest` requiere `@Mock FacturaHistorialEstadoRepository historialRepo` y `@Mock ProveedorRepository proveedorRepo` (además de los mocks previos) porque el constructor del servicio los inyecta. El `@BeforeEach` stubea `historialRepo.save(any())` para que `guardar()` no lance NPE.
 - `LogAccesoServiceTest` — cubre `registrar`, `listarPaginado` (con/sin filtro) y `fallidosUltimaHora` (verifica ventana de 1 hora). Usa `ReflectionTestUtils.setField` para inyectar `pageSize` sin contexto Spring.
 - `EquipoServiceTest` — 11 tests: listar/paginar (con y sin filtro de estado), buscarPorId, guardar, eliminar (happy path, no encontrado, con lotes activos → EquipoEnUsoException), fermentadores disponibles, mantenimiento pendiente (verifica ventana de 7 días).
 - `RecetaServiceTest` — 14 tests: listarActivas/Todas/Paginado (filtros null/true/false), buscarPorId (found/not found), guardar (campos básicos, normalización kg→gr, ignorar vacíos, escalones en orden), actualizar (limpia ingredientes anteriores), eliminar, toFormDto (mapeo directo, parseo "5000 gr"→{cantidad,unidad}, fila vacía si lista vacía). OG/FG objetivo usan literales Integer (ej: `1050`, `1010`) — NO BigDecimal.
@@ -968,7 +997,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `EquipoControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
-- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())` — los tres primeros `any()` cubren `EstadoFactura`, `LocalDate desde`, `LocalDate hasta`.
+- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
