@@ -165,8 +165,8 @@
                     </ul>
                 </li>
 
-                <!-- Almacén (ADMIN / INVENTARIO) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO')">
+                <!-- Almacén (ADMIN / INVENTARIO / SUPERADMIN) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas'))} ? 'active' : ''">
                         <i class="bi bi-box-seam"></i> Almacén
@@ -187,16 +187,16 @@
                     </ul>
                 </li>
 
-                <!-- Equipos (ADMIN / EQUIPOS) -->
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS')">
+                <!-- Equipos (ADMIN / EQUIPOS / SUPERADMIN) -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN')">
                     <a class="nav-link" th:href="@{/equipos}"
                        th:classappend="${currentUri != null and currentUri.contains('/equipos')} ? 'active' : ''">
                         <i class="bi bi-tools"></i> Equipos
                     </a>
                 </li>
 
-                <!-- Comercial (ADMIN / FACTURACION) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION')">
+                <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores'))} ? 'active' : ''">
                         <i class="bi bi-receipt"></i> Comercial
@@ -224,26 +224,26 @@
                         <i class="bi bi-shield-lock"></i> Admin
                     </a>
                     <ul class="dropdown-menu">
-                        <li sec:authorize="hasRole('ADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/reportes/produccion}"
                                th:classappend="${currentUri != null and currentUri.contains('/reportes')} ? 'active' : ''">
                                 <i class="bi bi-bar-chart-line me-2"></i>Reportes
                             </a>
                         </li>
-                        <li sec:authorize="hasRole('ADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/tipos-cerveza}"
                                th:classappend="${currentUri != null and currentUri.contains('/tipos-cerveza')} ? 'active' : ''">
                                 <i class="bi bi-tag me-2"></i>Tipos de Cerveza
                             </a>
                         </li>
-                        <li sec:authorize="hasRole('ADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/usuarios}"
                                th:classappend="${currentUri != null and currentUri.contains('/usuarios')} ? 'active' : ''">
                                 <i class="bi bi-people me-2"></i>Usuarios
                             </a>
                         </li>
-                        <li sec:authorize="hasRole('ADMIN')"><hr class="dropdown-divider"></li>
-                        <li sec:authorize="hasRole('ADMIN')">
+                        <li><hr class="dropdown-divider"></li>
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/admin/logs}"
                                th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? 'active' : ''">
                                 <i class="bi bi-journal-text me-2"></i>Log de Accesos
@@ -368,7 +368,7 @@
                                       sec:authorize="hasRole('SUPERADMIN')">Super Admin</span>
                                 <span class="badge rounded-pill"
                                       style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('ADMIN')">Administrador</span>
+                                      sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Administrador</span>
                                 <span class="badge rounded-pill"
                                       style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
                                       sec:authorize="hasRole('INVENTARIO')">Inventario</span>

@@ -403,7 +403,7 @@
                             <th class="text-center">ABV parcial</th>
                             <th class="text-center">Temperatura</th>
                             <th>Notas</th>
-                            <th sec:authorize="hasRole('ADMIN')" style="width:40px;"></th>
+                            <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -421,7 +421,7 @@
                             <td class="text-center"
                                 th:text="${lec.temperatura != null} ? ${lec.temperatura} + ' °C' : '—'">—</td>
                             <td class="text-muted small" th:text="${lec.notas ?: '—'}">—</td>
-                            <td sec:authorize="hasRole('ADMIN')">
+                            <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
@@ -437,7 +437,7 @@
             </div>
 
             <!-- Formulario de nueva lectura -->
-            <div sec:authorize="hasRole('ADMIN')">
+            <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <div class="detail-label mb-2">
                     <i class="bi bi-plus-circle me-1"></i>Registrar lectura
                 </div>

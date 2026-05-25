@@ -41,7 +41,7 @@
             <h1><i class="bi bi-calendar-week me-2"></i>Planificación de Producción</h1>
             <p>Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
         </div>
-        <button class="btn btn-alera" sec:authorize="hasRole('ADMIN')"
+        <button class="btn btn-alera" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                 data-bs-toggle="modal" data-bs-target="#modalPlan" onclick="abrirModalNuevo()">
             <i class="bi bi-plus-circle me-1"></i>Nueva Planificación
         </button>
@@ -117,7 +117,7 @@
                         <th class="text-center">Vol. estimado</th>
                         <th class="text-center">Estado</th>
                         <th>Notas</th>
-                        <th sec:authorize="hasRole('ADMIN')" style="width:200px;"></th>
+                        <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:200px;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -139,7 +139,7 @@
                         </td>
                         <td class="text-muted small"
                             th:text="${p.notas != null} ? ${#strings.abbreviate(p.notas, 50)} : '—'">—</td>
-                        <td sec:authorize="hasRole('ADMIN')">
+                        <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <div class="d-flex gap-1 flex-wrap">
                                 <!-- Editar -->
                                 <button class="btn btn-sm btn-alera-outline py-0 px-2 btn-editar-plan"

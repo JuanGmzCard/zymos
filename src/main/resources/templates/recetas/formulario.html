@@ -80,7 +80,7 @@
                                placeholder="Ej: Stout" required
                                list="datalist-estilos" autocomplete="off">
                         <button type="button" class="btn btn-outline-secondary"
-                                sec:authorize="hasRole('ADMIN')"
+                                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                                 onclick="abrirModalTipoCerveza()" title="Crear tipo de cerveza">
                             <i class="bi bi-plus-square"></i>
                         </button>
