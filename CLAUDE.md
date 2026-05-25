@@ -455,6 +455,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `FacturaProveedorService` inyecta `ProveedorRepository` para vincular proveedor al guardar
 - `FacturaProveedorService.guardar/actualizar/eliminar` → `@CacheEvict("dashboard-stats")` — invalida caché al modificar datos financieros
 - `FacturaProveedorService.listarPaginado(EstadoFactura estado, int page)` — si `estado` es null, devuelve todas; si no, filtra por ese estado
+- `FacturaProveedorService.listarParaExport(EstadoFactura estado, LocalDate desde, LocalDate hasta)` — `@Transactional(readOnly=true)`, llama `findAllWithItems()` y filtra en memoria; los tres parámetros son opcionales (null = sin filtro)
 - `FacturaProveedorService.cambiarEstado(id, EstadoFactura)` — busca la factura y actualiza el estado
 - `FacturaProveedorService.suggest(q)` — usa `repo.search()`, retorna hasta 6 mapas con `{titulo, proveedor, fecha, total, url}` — usado por `GET /facturas/suggest`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
@@ -506,6 +507,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
+- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` de facturas. Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), 11 columnas con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Filas alternas con fondo crema.
 - Solo importa `org.apache.poi.*` — sin colisión con OpenPDF. Usa `XSSFFont` con cast `(XSSFFont) wb.createFont()`.
 - Inyectado en `ReporteController`.
 
@@ -614,9 +616,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `insumosPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoInsumo.name()` para datalist JS
   - `equiposPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoEquipo.name()` para datalist JS
   - `estados` — `EstadoFactura.values()` para el select en el formulario de edición
+- `GET /facturas/export` — descarga `facturas-YYYY-MM-DD.xlsx`. Acepta filtros opcionales `?estado=`, `?desde=` (ISO date), `?hasta=` (ISO date). Lee el branding del tenant del `request.getAttribute("currentTenant")`. Delega a `ExcelExportService.generarExcelFacturas()`. El botón "Excel" en `lista.html` respeta el filtro de estado activo.
 - `POST /facturas/guardar-insumo-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0. Accesible: ADMIN, FACTURACION.
 - `POST /facturas/guardar-equipo-rapido` — `@ResponseBody` JSON. Crea equipo en estado OPERATIVO. Accesible: ADMIN, FACTURACION.
-- Inyecta `InsumoInventarioService` y `EquipoService`
+- Inyecta `InsumoInventarioService`, `EquipoService` y `ExcelExportService`
 
 ### AuthController ("/api/auth") — público, produce JSON
 - `POST /api/auth/login` — body `{username, password}`. Autentica con Spring `AuthenticationManager`. Retorna `{token, tipo:"Bearer", expiresIn, username, rol}`. El tenant se resuelve del `Host` header (ya establecido por `TenantFilter`). En caso de credenciales inválidas: HTTP 401 `{error:"Credenciales inválidas"}`. Body vacío/inválido: HTTP 400.
@@ -965,7 +968,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `EquipoControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
-- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository` y `EquipoRepository` adicionales. **Nota**: stub usa `listarPaginado(any(), anyInt())` — la firma acepta `EstadoFactura` (nullable) como primer parámetro.
+- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), anyInt())` — la firma acepta `EstadoFactura` (nullable) como primer parámetro.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
