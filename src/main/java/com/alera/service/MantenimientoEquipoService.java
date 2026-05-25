@@ -51,4 +51,14 @@ public class MantenimientoEquipoService {
     public void eliminar(Long id) {
         repo.deleteById(id);
     }
+
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal sumCostoPorEquipo(Long equipoId) {
+        return repo.sumCostoByEquipoId(equipoId);
+    }
+
+    @Transactional(readOnly = true)
+    public long countPorEquipo(Long equipoId) {
+        return repo.countByEquipoId(equipoId);
+    }
 }

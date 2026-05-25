@@ -30,6 +30,46 @@
     <div th:if="${mensaje}" class="alert"
          th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : 'alert-danger'" th:text="${mensaje}"></div>
 
+    <!-- Stat-cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-tools"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${statsTotal}">0</div>
+                    <div class="stat-label">Equipos totales</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#198754;"><i class="bi bi-check-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${statsOperativos}">0</div>
+                    <div class="stat-label">Operativos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-wrench"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${statsMantenimiento}">0</div>
+                    <div class="stat-label">En mantenimiento</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#dc3545;"><i class="bi bi-exclamation-triangle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${statsPendientes}">0</div>
+                    <div class="stat-label">Mantenimiento próximo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filtros por estado -->
     <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
         <span class="text-muted small me-1">Filtrar:</span>
@@ -90,9 +130,16 @@
                             <span class="badge equipo-tipo-badge" th:text="${equipo.tipo.displayName}">—</span>
                         </td>
                         <td>
-                            <span class="badge"
-                                  th:classappend="'bg-' + ${equipo.colorEstado}"
-                                  th:text="${equipo.estado.displayName}">—</span>
+                            <form th:action="@{/equipos/{id}/estado(id=${equipo.id})}" method="post" class="d-inline">
+                                <select name="estado" class="form-select form-select-sm border-0 px-1 py-0"
+                                        style="width:auto;background:transparent;cursor:pointer;"
+                                        onchange="this.form.submit()">
+                                    <option th:each="est : ${estadosEquipo}"
+                                            th:value="${est.name()}"
+                                            th:text="${est.displayName}"
+                                            th:selected="${equipo.estado == est}">Estado</option>
+                                </select>
+                            </form>
                         </td>
                         <td>
                             <span th:if="${equipo.capacidad != null}"
@@ -114,6 +161,10 @@
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
+                                <a th:href="@{/equipos/ver/{id}(id=${equipo.id})}"
+                                   class="btn btn-sm btn-alera" title="Ver detalle">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                                 <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}"
                                    class="btn btn-sm btn-alera-outline" title="Mantenimientos">
                                     <i class="bi bi-wrench"></i>

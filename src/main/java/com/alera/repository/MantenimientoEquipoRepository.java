@@ -16,4 +16,10 @@ public interface MantenimientoEquipoRepository extends JpaRepository<Mantenimien
 
     @Query("SELECT SUM(m.costo) FROM MantenimientoEquipo m")
     java.math.BigDecimal sumTotalCostos();
+
+    @Query("SELECT COALESCE(SUM(m.costo), 0) FROM MantenimientoEquipo m WHERE m.equipo.id = :equipoId")
+    java.math.BigDecimal sumCostoByEquipoId(@Param("equipoId") Long equipoId);
+
+    @Query("SELECT COUNT(m) FROM MantenimientoEquipo m WHERE m.equipo.id = :equipoId")
+    long countByEquipoId(@Param("equipoId") Long equipoId);
 }

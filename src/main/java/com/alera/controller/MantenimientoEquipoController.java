@@ -24,10 +24,12 @@ public class MantenimientoEquipoController {
     @GetMapping
     public String lista(@PathVariable Long equipoId, Model model) {
         var equipo = equipoService.buscarPorId(equipoId).orElseThrow();
-        model.addAttribute("equipo", equipo);
-        model.addAttribute("mantenimientos", service.listarPorEquipo(equipoId));
-        model.addAttribute("mantenimientoForm", new MantenimientoDto());
-        model.addAttribute("tiposMantenimiento", TipoMantenimiento.values());
+        model.addAttribute("equipo",              equipo);
+        model.addAttribute("mantenimientos",      service.listarPorEquipo(equipoId));
+        model.addAttribute("costoTotal",          service.sumCostoPorEquipo(equipoId));
+        model.addAttribute("totalMantenimientos", service.countPorEquipo(equipoId));
+        model.addAttribute("mantenimientoForm",   new MantenimientoDto());
+        model.addAttribute("tiposMantenimiento",  TipoMantenimiento.values());
         return "equipos/mantenimientos";
     }
 

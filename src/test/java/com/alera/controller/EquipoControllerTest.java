@@ -5,6 +5,7 @@ import com.alera.repository.TenantRepository;
 import com.alera.service.EquipoService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
+import com.alera.service.MantenimientoEquipoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,8 +18,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -41,6 +44,7 @@ class EquipoControllerTest {
     @MockBean LoginAttemptService        loginAttemptService;
     @MockBean JwtService                 jwtService;
     @MockBean EquipoService              equipoService;
+    @MockBean MantenimientoEquipoService mantenimientoService;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +53,9 @@ class EquipoControllerTest {
                 .when(equipoService).listarPaginado(any(), anyInt());
         when(equipoService.suggest(anyString(), any())).thenReturn(List.of());
         when(equipoService.listarFermentadoresDisponibles()).thenReturn(List.of());
+        when(equipoService.countTotal()).thenReturn(0L);
+        when(equipoService.countByEstado(any())).thenReturn(0L);
+        when(equipoService.countMantenimientoPendiente()).thenReturn(0L);
     }
 
     @Test
@@ -74,5 +81,24 @@ class EquipoControllerTest {
         mockMvc.perform(get("/equipos/suggest").param("q", "fer"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /equipos/ver/{id} retorna detalle")
+    void ver_retornaDetalle() throws Exception {
+        com.alera.model.Equipo equipo = new com.alera.model.Equipo();
+        equipo.setId(1L);
+        equipo.setNombre("Fermentador A");
+        equipo.setTipo(com.alera.model.enums.TipoEquipo.FERMENTADOR);
+        equipo.setEstado(com.alera.model.enums.EstadoEquipo.OPERATIVO);
+        when(equipoService.buscarPorId(1L)).thenReturn(Optional.of(equipo));
+        when(mantenimientoService.listarPorEquipo(1L)).thenReturn(List.of());
+        when(mantenimientoService.sumCostoPorEquipo(1L)).thenReturn(BigDecimal.ZERO);
+        when(mantenimientoService.countPorEquipo(1L)).thenReturn(0L);
+
+        mockMvc.perform(get("/equipos/ver/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("equipos/detalle"));
     }
 }

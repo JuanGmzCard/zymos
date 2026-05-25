@@ -201,4 +201,54 @@ class EquipoServiceTest {
                 })
         );
     }
+
+    // ── cambiarEstado ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("cambiarEstado actualiza y persiste el estado")
+    void cambiarEstado_actualizaEstado() {
+        Equipo equipo = new Equipo();
+        equipo.setId(1L);
+        equipo.setNombre("Tank A");
+        equipo.setTipo(TipoEquipo.FERMENTADOR);
+        equipo.setEstado(EstadoEquipo.OPERATIVO);
+        when(repo.findById(1L)).thenReturn(Optional.of(equipo));
+        when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        Equipo resultado = service.cambiarEstado(1L, EstadoEquipo.MANTENIMIENTO);
+
+        assertThat(resultado.getEstado()).isEqualTo(EstadoEquipo.MANTENIMIENTO);
+        verify(repo).save(equipo);
+    }
+
+    @Test
+    @DisplayName("cambiarEstado lanza excepción si equipo no existe")
+    void cambiarEstado_noExiste_lanzaExcepcion() {
+        when(repo.findById(99L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> service.cambiarEstado(99L, EstadoEquipo.INACTIVO))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    // ── countByEstado / countMantenimientoPendiente / countTotal ─────────
+
+    @Test
+    @DisplayName("countByEstado delega al repositorio")
+    void countByEstado_delegaAlRepositorio() {
+        when(repo.countByEstado(EstadoEquipo.OPERATIVO)).thenReturn(5L);
+        assertThat(service.countByEstado(EstadoEquipo.OPERATIVO)).isEqualTo(5L);
+    }
+
+    @Test
+    @DisplayName("countMantenimientoPendiente usa ventana de 7 días")
+    void countMantenimientoPendiente_usa7Dias() {
+        when(repo.countMantenimientoPendiente(any())).thenReturn(3L);
+        assertThat(service.countMantenimientoPendiente()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("countTotal delega al repositorio")
+    void countTotal_delegaAlRepositorio() {
+        when(repo.count()).thenReturn(10L);
+        assertThat(service.countTotal()).isEqualTo(10L);
+    }
 }

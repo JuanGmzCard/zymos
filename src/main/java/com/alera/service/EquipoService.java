@@ -95,4 +95,26 @@ public class EquipoService {
     public List<Equipo> listarMantenimientoPendiente() {
         return repo.findMantenimientoPendiente(java.time.LocalDate.now().plusDays(7));
     }
+
+    public Equipo cambiarEstado(Long id, EstadoEquipo estado) {
+        Equipo equipo = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Equipo no encontrado: " + id));
+        equipo.setEstado(estado);
+        return repo.save(equipo);
+    }
+
+    @Transactional(readOnly = true)
+    public long countByEstado(EstadoEquipo estado) {
+        return repo.countByEstado(estado);
+    }
+
+    @Transactional(readOnly = true)
+    public long countMantenimientoPendiente() {
+        return repo.countMantenimientoPendiente(java.time.LocalDate.now().plusDays(7));
+    }
+
+    @Transactional(readOnly = true)
+    public long countTotal() {
+        return repo.count();
+    }
 }

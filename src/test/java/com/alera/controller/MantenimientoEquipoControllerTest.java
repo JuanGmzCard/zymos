@@ -19,6 +19,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -54,6 +55,8 @@ class MantenimientoEquipoControllerTest {
         equipo.setEstado(EstadoEquipo.OPERATIVO);
         when(equipoService.buscarPorId(1L)).thenReturn(Optional.of(equipo));
         when(mantenimientoService.listarPorEquipo(1L)).thenReturn(List.of());
+        when(mantenimientoService.sumCostoPorEquipo(1L)).thenReturn(BigDecimal.ZERO);
+        when(mantenimientoService.countPorEquipo(1L)).thenReturn(0L);
     }
 
     @Test

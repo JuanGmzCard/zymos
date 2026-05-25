@@ -73,7 +73,13 @@
         <!-- Historial -->
         <div class="col-md-8">
             <div class="card-alera">
-                <div class="card-header"><h5><i class="bi bi-clock-history me-2"></i>Historial</h5></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Historial</h5>
+                    <div class="d-flex gap-3 small text-muted">
+                        <span><strong th:text="${totalMantenimientos}">0</strong> registros</span>
+                        <span>Total: <strong th:text="'$' + ${#numbers.formatDecimal(costoTotal,1,'COMMA',0,'POINT')}">$0</strong></span>
+                    </div>
+                </div>
                 <div class="card-body p-0">
                     <div th:if="${#lists.isEmpty(mantenimientos)}" class="empty-state py-4">
                         <i class="bi bi-wrench"></i>
