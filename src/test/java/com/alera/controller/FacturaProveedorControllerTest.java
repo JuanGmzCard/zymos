@@ -44,6 +44,7 @@ class FacturaProveedorControllerTest {
     @MockBean EquipoRepository              equipoRepo;
     @MockBean InsumoInventarioService       insumoService;
     @MockBean EquipoService                 equipoService;
+    @MockBean ExcelExportService            excelService;
 
     @BeforeEach
     void setUp() {

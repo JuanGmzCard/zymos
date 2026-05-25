@@ -83,6 +83,15 @@ public class FacturaProveedorService {
         return repo.findByIdWithItems(id);
     }
 
+    @Transactional(readOnly = true)
+    public List<FacturaProveedor> listarParaExport(EstadoFactura estado, java.time.LocalDate desde, java.time.LocalDate hasta) {
+        return repo.findAllWithItems().stream()
+                .filter(f -> estado == null || f.getEstado() == estado)
+                .filter(f -> desde == null || (f.getFechaFactura() != null && !f.getFechaFactura().isBefore(desde)))
+                .filter(f -> hasta == null || (f.getFechaFactura() != null && !f.getFechaFactura().isAfter(hasta)))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     public void cambiarEstado(Long id, EstadoFactura nuevoEstado) {
         repo.findById(id).ifPresent(f -> {
             f.setEstado(nuevoEstado);

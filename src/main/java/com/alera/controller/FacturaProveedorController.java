@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.dto.FacturaFormDto;
 import com.alera.model.Equipo;
 import com.alera.model.InsumoInventario;
+import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoEquipo;
 import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.TipoEquipo;
@@ -11,10 +12,14 @@ import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.service.EquipoService;
+import com.alera.service.ExcelExportService;
 import com.alera.service.FacturaProveedorService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.ProveedorService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,19 +44,22 @@ public class FacturaProveedorController {
     private final EquipoRepository equipoRepo;
     private final InsumoInventarioService insumoService;
     private final EquipoService equipoService;
+    private final ExcelExportService excelService;
 
     public FacturaProveedorController(FacturaProveedorService service,
                                        ProveedorService proveedorService,
                                        InsumoInventarioRepository insumoRepo,
                                        EquipoRepository equipoRepo,
                                        InsumoInventarioService insumoService,
-                                       EquipoService equipoService) {
+                                       EquipoService equipoService,
+                                       ExcelExportService excelService) {
         this.service = service;
         this.proveedorService = proveedorService;
         this.insumoRepo = insumoRepo;
         this.equipoRepo = equipoRepo;
         this.insumoService = insumoService;
         this.equipoService = equipoService;
+        this.excelService = excelService;
     }
 
     @GetMapping
@@ -66,6 +76,23 @@ public class FacturaProveedorController {
         model.addAttribute("baseUrl",       "/facturas");
         model.addAttribute("extraParams",   estado != null ? "&estado=" + estado.name() : "");
         return "facturas/lista";
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportarExcel(
+            @RequestParam(required = false) EstadoFactura estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request) {
+        var facturas = service.listarParaExport(estado, desde, hasta);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        String brandName = tenant != null ? tenant.getName() : "Alera";
+        byte[] bytes = excelService.generarExcelFacturas(facturas, estado, desde, hasta, brandName);
+        String filename = "facturas-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(bytes);
     }
 
     @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)

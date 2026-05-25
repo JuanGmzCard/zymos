@@ -1,6 +1,8 @@
 package com.alera.service;
 
+import com.alera.model.FacturaProveedor;
 import com.alera.model.LoteCerveza;
+import com.alera.model.enums.EstadoFactura;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -18,7 +20,9 @@ import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExcelExportService {
@@ -31,6 +35,161 @@ public class ExcelExportService {
     private static final Color C_BORDE        = new Color(222, 226, 230);
 
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    public byte[] generarExcelFacturas(List<FacturaProveedor> facturas,
+                                        EstadoFactura estadoFiltro,
+                                        LocalDate desde, LocalDate hasta,
+                                        String brandName) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            construirSheetFacturas(wb, facturas, estadoFiltro, desde, hasta, brandName);
+            construirSheetProveedores(wb, facturas, brandName);
+            wb.write(baos);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando Excel de facturas", e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void construirSheetFacturas(XSSFWorkbook wb, List<FacturaProveedor> facturas,
+                                         EstadoFactura estadoFiltro,
+                                         LocalDate desde, LocalDate hasta, String brandName) {
+        Sheet sheet = wb.createSheet("Facturas");
+        sheet.setDefaultColumnWidth(15);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb);
+        XSSFCellStyle stPeriodo = estiloPeriodo(wb);
+        XSSFCellStyle stResumen = estiloResumen(wb);
+        XSSFCellStyle stHeader  = estiloHeader(wb);
+        XSSFCellStyle stDato    = estiloDato(wb, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, true);
+
+        int r = 0;
+
+        Row fTitulo = sheet.createRow(r++);
+        fTitulo.setHeight((short)(20 * 20));
+        Cell cTitulo = fTitulo.createCell(0);
+        cTitulo.setCellValue(brandName + " — Facturas de Proveedores");
+        cTitulo.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+
+        Row fFiltro = sheet.createRow(r++);
+        Cell cFiltro = fFiltro.createCell(0);
+        String desdeStr = desde != null ? desde.format(FMT_FECHA) : "—";
+        String hastaStr = hasta != null ? hasta.format(FMT_FECHA) : "—";
+        String estadoStr = estadoFiltro != null ? estadoFiltro.getDisplayName() : "Todas";
+        cFiltro.setCellValue("Estado: " + estadoStr + "   |   Período: " + desdeStr + " — " + hastaStr);
+        cFiltro.setCellStyle(stPeriodo);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+
+        r++;
+        Row fRes = sheet.createRow(r++);
+        BigDecimal totalSubtotal = facturas.stream()
+                .map(f -> f.getSubtotal() != null ? f.getSubtotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIva = facturas.stream()
+                .map(f -> f.getValorIva() != null ? f.getValorIva() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalEnvio = facturas.stream()
+                .map(f -> f.getCostoEnvio() != null ? f.getCostoEnvio() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalGeneral = facturas.stream()
+                .map(f -> f.getValorTotal() != null ? f.getValorTotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        celda(fRes, 0, "Facturas: " + facturas.size(), stResumen);
+        celda(fRes, 2, "Subtotal: $" + totalSubtotal.toPlainString(), stResumen);
+        celda(fRes, 5, "IVA: $" + totalIva.toPlainString(), stResumen);
+        celda(fRes, 7, "Total: $" + totalGeneral.toPlainString(), stResumen);
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short)(16 * 20));
+        String[] headers = {
+                "N° Factura", "Proveedor", "Fecha", "Estado",
+                "Ítems", "Subtotal", "IVA", "Envío", "Total", "Descripción", "Creado por"
+        };
+        for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
+
+        int[] widths = {14, 22, 12, 12, 7, 14, 14, 14, 14, 24, 14};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        for (int i = 0; i < facturas.size(); i++) {
+            FacturaProveedor f = facturas.get(i);
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+            XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+            celda(fila, 0, f.getNumeroFactura() != null ? f.getNumeroFactura() : "#" + f.getId(), sD);
+            celda(fila, 1, f.getProveedor() != null ? f.getProveedor() : "", sD);
+            celda(fila, 2, f.getFechaFactura() != null ? f.getFechaFactura().format(FMT_FECHA) : "", sD);
+            celda(fila, 3, f.getEstado() != null ? f.getEstado().getDisplayName() : "", sD);
+            celdaNum(fila, 4, (double) f.getItems().size(), sN);
+            celdaNum(fila, 5, toDouble(f.getSubtotal()), sN);
+            celdaNum(fila, 6, toDouble(f.getValorIva()), sN);
+            celdaNum(fila, 7, toDouble(f.getCostoEnvio()), sN);
+            celdaNum(fila, 8, toDouble(f.getValorTotal()), sN);
+            celda(fila, 9, f.getDescripcion() != null ? f.getDescripcion() : "", sD);
+            celda(fila, 10, f.getCreatedBy() != null ? f.getCreatedBy() : "", sD);
+        }
+
+        if (!facturas.isEmpty()) {
+            sheet.setAutoFilter(new CellRangeAddress(5, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetProveedores(XSSFWorkbook wb, List<FacturaProveedor> facturas, String brandName) {
+        Sheet sheet = wb.createSheet("Por Proveedor");
+        sheet.setDefaultColumnWidth(20);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb);
+        XSSFCellStyle stHeader  = estiloHeader(wb);
+        XSSFCellStyle stDato    = estiloDato(wb, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short)(20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Resumen por Proveedor");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+
+        r++;
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short)(16 * 20));
+        celda(fH, 0, "Proveedor", stHeader);
+        celda(fH, 1, "Facturas", stHeader);
+        celda(fH, 2, "Total ($)", stHeader);
+
+        Map<String, long[]> resumen = new LinkedHashMap<>();
+        for (FacturaProveedor f : facturas) {
+            String prov = f.getProveedor() != null ? f.getProveedor() : "Sin proveedor";
+            resumen.computeIfAbsent(prov, k -> new long[]{0, 0});
+            resumen.get(prov)[0]++;
+            if (f.getValorTotal() != null) {
+                resumen.get(prov)[1] += f.getValorTotal().longValue();
+            }
+        }
+
+        int i = 0;
+        for (Map.Entry<String, long[]> e : resumen.entrySet()) {
+            boolean alt = i++ % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            celda(fila, 0, e.getKey(),                          alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, (double) e.getValue()[0],         alt ? stNumAlt  : stNum);
+            celdaNum(fila, 2, (double) e.getValue()[1],         alt ? stNumAlt  : stNum);
+        }
+
+        sheet.setColumnWidth(0, 30 * 256);
+        sheet.setColumnWidth(1, 12 * 256);
+        sheet.setColumnWidth(2, 18 * 256);
+    }
 
     public byte[] generarExcelReporteProduccion(List<LoteCerveza> lotes,
                                                  List<Object[]> resumen,
