@@ -105,14 +105,12 @@
                 <!-- Importar -->
                 <div class="col-md-4">
                     <div class="small text-muted mb-1">Importar desde archivo JSON</div>
-                    <form th:action="@{/admin/tenants/{s}/import(s=${tenant.subdomain})}"
-                          method="post" enctype="multipart/form-data" class="d-flex gap-2">
-                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                        <input type="file" name="file" accept=".json" class="form-control form-control-sm" required>
-                        <button type="submit" class="btn btn-alera btn-sm text-nowrap">
+                    <div class="d-flex gap-2">
+                        <input type="file" id="importJsonFile" accept=".json" class="form-control form-control-sm">
+                        <button type="button" class="btn btn-alera btn-sm text-nowrap" onclick="importarConfig()">
                             <i class="bi bi-upload me-1"></i>Aplicar
                         </button>
-                    </form>
+                    </div>
                 </div>
 
                 <!-- Copiar de otro tenant -->
@@ -275,6 +273,8 @@
                         <option value="EB Garamond">EB Garamond — Garamond clásica</option>
                         <option value="Oswald">Oswald — Sans condensada bold</option>
                         <option value="Montserrat">Montserrat — Geométrica moderna</option>
+                        <option value="Inter">Inter — UI moderna y legible</option>
+                        <option value="Roboto">Roboto — Clean y neutral</option>
                         <option value="Bowlby One SC">Bowlby One SC — Display bold compacta</option>
                     </select>
                     <div class="form-text">Se aplica en títulos, encabezados y el nombre en el navbar.</div>
@@ -340,6 +340,25 @@
                 updateFontPreview();
             })
             .catch(() => alert('No se pudo obtener la configuración del tenant origen.'));
+    }
+
+    function importarConfig() {
+        const fileInput = document.getElementById('importJsonFile');
+        if (!fileInput || !fileInput.files.length) {
+            alert('Selecciona un archivo JSON primero.');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        const headers = {};
+        if (csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+        fetch('/admin/tenants/' + tenantSubdomain + '/import', {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        }).then(() => {
+            window.location.reload();
+        }).catch(() => alert('Error de conexión al importar.'));
     }
 
     function enviarEmailPrueba() {

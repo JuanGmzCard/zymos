@@ -129,7 +129,7 @@ templates/
 ├── login.html, dashboard.html (personalizable), calendario.html, busqueda.html
 ├── usuarios.html  (tabla con modales: nuevo usuario, cambiar contraseña, cambiar rol; fila del usuario en sesión marcada y botones destructivos deshabilitados; typeahead en card-header, `th:id="'usuario-'+${u.id}"` en cada `<tr>`, click hace scroll+flash `:target` dorado)
 ├── perfil/     password.html (formulario autogestionado de cambio de contraseña — accesible todos los roles via `GET /perfil/password`)
-├── equipos/    lista (typeahead en card-header respeta filtro estado), formulario, mantenimientos
+├── equipos/    lista (4 stat-cards + typeahead en card-header respeta filtro estado + select de cambio rápido de estado por fila), formulario, mantenimientos (muestra totalMantenimientos + costoTotal en el header del historial), detalle (nuevа — 4 stat-cards + datos del equipo + selector de estado + historial completo)
 ├── inventario/ lista (typeahead en campo nombre respeta filtro tipo), formulario,
 │               precios.html (buscador con datalist + 4 stat-cards + Chart.js barras + tabla de compras)
 ├── tipos-cerveza/ lista
@@ -244,7 +244,7 @@ Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es 
 - `subdomain` (VARCHAR 100, PK) — ej: "cerveceria1", "default"
 - `name`, `tagline`, `logoUrl` — identidad del cliente. `logoUrl` acepta URL externa (`https://...`) o ruta relativa local (`/img/logo.png`). Imágenes locales van en `src/main/resources/static/img/`.
 - `colorNavbar`, `colorPrimary`, `colorAccent`, `colorAccentHover`, `colorCream`, `colorBodyBg` — paleta personalizada
-- `fontHeadings` (VARCHAR 100, default `'Cinzel'`) — fuente de títulos y navbar. Opciones disponibles: Cinzel, Playfair Display, Cormorant Garamond, EB Garamond, Oswald, Montserrat, Bowlby One SC.
+- `fontHeadings` (VARCHAR 100, default `'Cinzel'`) — fuente de títulos y navbar. Opciones disponibles: Cinzel, Playfair Display, Cormorant Garamond, EB Garamond, Oswald, Montserrat, Inter, Roboto, Bowlby One SC.
 - `fontBody` (VARCHAR 100, default `'Raleway'`) — fuente de cuerpo. Opciones: Raleway, Inter, Roboto, Open Sans, Poppins, Nunito, DM Sans.
 - `emailAdmin` (VARCHAR 200, nullable) — destinatario de alertas diarias. Si es null o vacío, el tenant no recibe emails.
 - `active` (boolean) — tenants inactivos retornan 503
@@ -493,11 +493,17 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### EquipoService
 - `suggest(q, EstadoEquipo estado)` — filtra en memoria sobre `listarPorEstado(estado)` o `listarTodos()`, retorna hasta 6 mapas con `{nombre, tipo, estado, colorEstado, pendiente, url}` — usado por `GET /equipos/suggest`
+- `cambiarEstado(id, EstadoEquipo)` — busca el equipo por id, actualiza `estado` y guarda. Lanza `RuntimeException` si no existe.
+- `countByEstado(EstadoEquipo)` — delega a `repo.countByEstado()` — para stat-cards
+- `countMantenimientoPendiente()` — delega a `repo.countMantenimientoPendiente(LocalDate.now().plusDays(7))` — para stat-cards
+- `countTotal()` — delega a `repo.count()` — para stat-cards
 
 ### MantenimientoEquipoService
 - `listarPorEquipo(equipoId)` — historial de mantenimientos ordenado por fecha desc
 - `registrar(equipoId, dto)` — crea `MantenimientoEquipo` Y actualiza `equipo.fechaUltimoMantenimiento` y `equipo.proximoMantenimiento` en la misma transacción
 - `eliminar(id)` — elimina registro de mantenimiento
+- `sumCostoPorEquipo(equipoId)` — `@Transactional(readOnly=true)`, delega a `repo.sumCostoByEquipoId()` con `COALESCE(..., 0)` — retorna BigDecimal nunca null
+- `countPorEquipo(equipoId)` — `@Transactional(readOnly=true)`, delega a `repo.countByEquipoId()` — retorna long
 
 ### TipoCervezaService
 - `listarActivos()` — `findByActivoTrueOrderByNombreAsc()` — para selects y datalists en formularios
@@ -727,6 +733,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### EquipoController ("/equipos")
 - CRUD + filtro por `EstadoEquipo` + paginación
+- `GET /equipos` — lista paginada con stat-cards: total, operativos, en mantenimiento, próximos (ventana 7 días). Modelo: `statsTotal`, `statsOperativos`, `statsMantenimiento`, `statsPendientes`. Inyecta `MantenimientoEquipoService` via constructor.
+- `POST /equipos/{id}/estado` — cambio rápido de estado. `@RequestParam EstadoEquipo estado`. Delega a `service.cambiarEstado(id, estado)`. Accionado desde un `<select onchange="this.form.submit()">` en cada fila de la lista y en el detalle.
+- `GET /equipos/ver/{id}` — página de detalle del equipo. Modelo: `equipo`, `mantenimientos` (lista completa ordenada DESC), `costoTotal` (BigDecimal sum de todos los mantenimientos del equipo), `totalMantenimientos` (long count), `estadosEquipo`.
 - `GET /equipos/suggest?q=&estado=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q, estado)`. El parámetro `estado` es opcional (`EstadoEquipo` enum, Spring lo convierte). Devuelve `[{nombre, tipo, estado, colorEstado, pendiente, url}]`. La template pasa el estado seleccionado via `data-estado` para respetar el filtro activo.
 
 ### UsuarioController ("/usuarios") — solo ADMIN
@@ -966,7 +975,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `InsumoInventarioServiceTest`, `TrazabilidadServiceTest`, `DashboardServiceTest`
 - `FacturaProveedorServiceTest`, `UnidadUtilsTest` — `FacturaProveedorServiceTest` requiere `@Mock FacturaHistorialEstadoRepository historialRepo` y `@Mock ProveedorRepository proveedorRepo` (además de los mocks previos) porque el constructor del servicio los inyecta. El `@BeforeEach` stubea `historialRepo.save(any())` para que `guardar()` no lance NPE.
 - `LogAccesoServiceTest` — cubre `registrar`, `listarPaginado` (con/sin filtro) y `fallidosUltimaHora` (verifica ventana de 1 hora). Usa `ReflectionTestUtils.setField` para inyectar `pageSize` sin contexto Spring.
-- `EquipoServiceTest` — 11 tests: listar/paginar (con y sin filtro de estado), buscarPorId, guardar, eliminar (happy path, no encontrado, con lotes activos → EquipoEnUsoException), fermentadores disponibles, mantenimiento pendiente (verifica ventana de 7 días).
+- `EquipoServiceTest` — 17 tests: listar/paginar (con y sin filtro de estado), buscarPorId, guardar, eliminar (happy path, no encontrado, con lotes activos → EquipoEnUsoException), fermentadores disponibles, mantenimiento pendiente (verifica ventana de 7 días), `cambiarEstado` (actualiza y persiste, no existe → excepción), `countByEstado`, `countMantenimientoPendiente`, `countTotal`.
 - `RecetaServiceTest` — 14 tests: listarActivas/Todas/Paginado (filtros null/true/false), buscarPorId (found/not found), guardar (campos básicos, normalización kg→gr, ignorar vacíos, escalones en orden), actualizar (limpia ingredientes anteriores), eliminar, toFormDto (mapeo directo, parseo "5000 gr"→{cantidad,unidad}, fila vacía si lista vacía). OG/FG objetivo usan literales Integer (ej: `1050`, `1010`) — NO BigDecimal.
 - `UsuarioServiceTest` — 25 tests: `loadUserByUsername` (usuario válido, no existe, inactivo, mapeo de todos los roles → `ROLE_X`), `guardar` (BCrypt encode, rol específico, null→ADMIN), `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op), `cambiarPassword` (encode y guarda, no existe no-op), `cambiarRol`, `eliminar`, `existeUsername`, `esElMismoUsuario` (mismo, distinto, no existe), `suggest` (null/corta, filtro, límite 6, estructura del mapa con displayName).
 - `TenantServiceTest` — 19 tests: `listarTodos` (orden por subdomain), `buscarPorSubdomain`, `guardar` (CREADO/EDITADO, evicta cache, registra historial, retorna tenant), `evictAllCache`, `toggleActivo` (ACTIVADO/DESACTIVADO, evicta cache, no existe no-op), `listarHistorial`, `registrarAccion` (con/sin autenticación → "sistema"), `registrarEnvioExitoso` (resetea contador, timestamps, no existe no-op), `registrarEnvioFallido` (incrementa, no existe no-op). Usa `SecurityContextHolder` para simular usuario autenticado; limpia en `@AfterEach`.
@@ -994,12 +1003,12 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `TipoCervezaControllerTest` — 3 tests: 401, 200 ADMIN, `guardarRapido` → JSON 200. **Nota**: stub `service.guardar(any())` para devolver un `TipoCerveza` con id/nombre, si no el NPE cae al catch → 400
 - `UsuarioControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, guardar con contraseña inválida redirige. **Nota**: el parámetro del controller se llama `confirmPassword` (no `confirmarPassword`)
 - `RecetaControllerTest` — 4 tests: 401, 200 con filtro activas, suggest JSON, GET /editar retorna formulario
-- `EquipoControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`
+- `EquipoControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, GET /ver/{id} retorna detalle. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`. Requiere `@MockBean MantenimientoEquipoService`. Stubs adicionales: `countTotal()`, `countByEstado(any())`, `countMantenimientoPendiente()` → 0L.
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
 - `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
-- `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check
+- `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context

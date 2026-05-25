@@ -102,11 +102,11 @@
                 <!-- Filtro de fechas -->
                 <form method="get" action="/facturas" class="d-flex align-items-center gap-1">
                     <input th:if="${estadoFiltro != null}" type="hidden" name="estado" th:value="${estadoFiltro.name()}">
-                    <div class="input-group input-group-sm">
+                    <div class="input-group input-group-sm flex-nowrap">
                         <span class="input-group-text px-2">Desde</span>
                         <input type="date" name="desde" th:value="${desde}" class="form-control form-control-sm" style="width:130px;">
                     </div>
-                    <div class="input-group input-group-sm">
+                    <div class="input-group input-group-sm flex-nowrap">
                         <span class="input-group-text px-2">Hasta</span>
                         <input type="date" name="hasta" th:value="${hasta}" class="form-control form-control-sm" style="width:130px;">
                     </div>
