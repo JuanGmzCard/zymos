@@ -91,39 +91,40 @@
         <!-- SECCIÓN: Importar / Exportar (solo en modo edición) -->
         <div th:if="${!esNuevo}" class="card-alera p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i>Importar / Exportar configuración</h6>
-            <div class="row g-3 align-items-end">
+            <div class="d-flex flex-wrap gap-4 align-items-end">
 
                 <!-- Exportar -->
-                <div class="col-md-4">
-                    <div class="small text-muted mb-1">Exportar branding actual como JSON</div>
+                <div>
+                    <div class="small text-muted mb-1">Exportar branding</div>
                     <a th:href="@{/admin/tenants/{s}/export(s=${tenant.subdomain})}"
-                       class="btn btn-alera-outline w-100">
+                       class="btn btn-alera-outline btn-sm text-nowrap">
                         <i class="bi bi-download me-1"></i>Exportar JSON
                     </a>
                 </div>
 
                 <!-- Importar -->
-                <div class="col-md-4">
+                <div style="min-width:260px; flex:1 1 260px;">
                     <div class="small text-muted mb-1">Importar desde archivo JSON</div>
-                    <div class="d-flex gap-2">
-                        <input type="file" id="importJsonFile" accept=".json" class="form-control form-control-sm">
-                        <button type="button" class="btn btn-alera btn-sm text-nowrap" onclick="importarConfig()">
+                    <div class="input-group input-group-sm">
+                        <input type="file" id="importJsonFile" accept=".json" class="form-control">
+                        <button type="button" class="btn btn-alera text-nowrap" onclick="importarConfig()">
                             <i class="bi bi-upload me-1"></i>Aplicar
                         </button>
                     </div>
                 </div>
 
                 <!-- Copiar de otro tenant -->
-                <div class="col-md-4" th:if="${otrosTenants != null and !otrosTenants.isEmpty()}">
+                <div th:if="${otrosTenants != null and !otrosTenants.isEmpty()}"
+                     style="min-width:240px; flex:1 1 240px;">
                     <div class="small text-muted mb-1">Copiar branding de otro tenant</div>
-                    <div class="d-flex gap-2">
-                        <select id="copiarDeTenant" class="form-select form-select-sm">
+                    <div class="input-group input-group-sm">
+                        <select id="copiarDeTenant" class="form-select">
                             <option th:each="ot : ${otrosTenants}"
                                     th:value="${ot.subdomain}"
                                     th:text="${ot.name} + ' (' + ${ot.subdomain} + ')'">
                             </option>
                         </select>
-                        <button type="button" class="btn btn-outline-secondary btn-sm text-nowrap"
+                        <button type="button" class="btn btn-outline-secondary text-nowrap"
                                 onclick="copiarConfigDeTenant()">
                             <i class="bi bi-copy me-1"></i>Copiar
                         </button>
