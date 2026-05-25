@@ -110,24 +110,25 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
-                .requestMatchers("/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/actuator/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
 
-                .requestMatchers("/usuarios/**").hasRole("ADMIN")
-                .requestMatchers("/tipos-cerveza/**").hasRole("ADMIN")
-                .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/admin/tenants/**").hasRole("SUPERADMIN")
+                .requestMatchers("/usuarios/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/tipos-cerveza/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
                 .requestMatchers(HttpMethod.POST,
                         "/guardar", "/actualizar/**", "/eliminar/**",
-                        "/duplicar/**").hasRole("ADMIN")
-                .requestMatchers("/nuevo", "/editar/**").hasRole("ADMIN")
+                        "/duplicar/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/nuevo", "/editar/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
-                .requestMatchers("/facturas/**").hasAnyRole("ADMIN", "FACTURACION")
-                .requestMatchers("/proveedores/**").hasAnyRole("ADMIN", "FACTURACION")
-                .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO")
-                .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO")
-                .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS")
+                .requestMatchers("/facturas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
+                .requestMatchers("/proveedores/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
+                .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "SUPERADMIN")
+                .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "SUPERADMIN")
+                .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "SUPERADMIN")
 
                 .anyRequest().authenticated()
             )

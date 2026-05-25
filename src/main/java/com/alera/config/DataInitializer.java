@@ -1,9 +1,11 @@
 package com.alera.config;
 
+import com.alera.model.SuperAdmin;
 import com.alera.model.Tenant;
 import com.alera.model.TipoCerveza;
 import com.alera.model.Usuario;
 import com.alera.model.enums.RolUsuario;
+import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.repository.UsuarioRepository;
@@ -25,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     private final TenantRepository tenantRepo;
     private final BrandingProperties branding;
     private final PasswordEncoder encoder;
+    private final SuperAdminRepository superAdminRepo;
 
     @Value("${app.default-subdomain:default}")
     private String defaultSubdomain;
@@ -38,21 +41,27 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${EQUIPOS_USERNAME:}")           private String equiposUsername;
     @Value("${EQUIPOS_PASSWORD:}")           private String equiposPassword;
 
+    @Value("${SUPERADMIN_USERNAME:Juancho}") private String superadminUsername;
+    @Value("${SUPERADMIN_PASSWORD:Juancho_2229}") private String superadminPassword;
+
     public DataInitializer(UsuarioRepository usuarioRepo,
                             TipoCervezaRepository tipoCervezaRepo,
                             TenantRepository tenantRepo,
                             BrandingProperties branding,
-                            PasswordEncoder encoder) {
+                            PasswordEncoder encoder,
+                            SuperAdminRepository superAdminRepo) {
         this.usuarioRepo     = usuarioRepo;
         this.tipoCervezaRepo = tipoCervezaRepo;
         this.tenantRepo      = tenantRepo;
         this.branding        = branding;
         this.encoder         = encoder;
+        this.superAdminRepo  = superAdminRepo;
     }
 
     @Override
     @Transactional
     public void run(String... args) {
+        crearSuperAdmin();
         crearTenantDefault();
 
         // Inicializar todos los tenants existentes (no solo el default)
@@ -65,6 +74,16 @@ public class DataInitializer implements CommandLineRunner {
                 TenantContext.clear();
             }
         }
+    }
+
+    private void crearSuperAdmin() {
+        if (superAdminRepo.existsByUsername(superadminUsername)) return;
+        SuperAdmin sa = new SuperAdmin();
+        sa.setUsername(superadminUsername);
+        sa.setPassword(encoder.encode(superadminPassword));
+        sa.setActivo(true);
+        superAdminRepo.save(sa);
+        log.info("Super-admin '{}' creado", superadminUsername);
     }
 
     private void crearTenantDefault() {

@@ -1,7 +1,9 @@
 package com.alera.service;
 
+import com.alera.model.SuperAdmin;
 import com.alera.model.Usuario;
 import com.alera.model.enums.RolUsuario;
+import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.UsuarioRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.*;
@@ -20,14 +22,24 @@ public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository repo;
     private final PasswordEncoder encoder;
+    private final SuperAdminRepository superAdminRepo;
 
-    public UsuarioService(UsuarioRepository repo, PasswordEncoder encoder) {
+    public UsuarioService(UsuarioRepository repo, PasswordEncoder encoder, SuperAdminRepository superAdminRepo) {
         this.repo = repo;
         this.encoder = encoder;
+        this.superAdminRepo = superAdminRepo;
     }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        // Super-admins no tienen tenant — se buscan antes del filtro de tenant de Hibernate
+        Optional<SuperAdmin> superAdmin = superAdminRepo.findByUsernameAndActivoTrue(username);
+        if (superAdmin.isPresent()) {
+            SuperAdmin sa = superAdmin.get();
+            return new org.springframework.security.core.userdetails.User(
+                    sa.getUsername(), sa.getPassword(),
+                    List.of(new SimpleGrantedAuthority("ROLE_SUPERADMIN")));
+        }
         Usuario u = repo.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
         if (!u.isActivo()) throw new UsernameNotFoundException("Usuario inactivo: " + username);

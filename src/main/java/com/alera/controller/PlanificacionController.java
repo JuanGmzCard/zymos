@@ -75,7 +75,7 @@ public class PlanificacionController {
     }
 
     @PostMapping("/guardar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String guardar(@RequestParam(required = false) Long id,
                           @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaPlaneada,
                           @RequestParam String nombreElaboracion,
@@ -99,7 +99,7 @@ public class PlanificacionController {
     }
 
     @PostMapping("/{id}/estado")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String cambiarEstado(@PathVariable Long id,
                                  @RequestParam EstadoPlanificacion estado,
                                  RedirectAttributes ra) {
@@ -110,7 +110,7 @@ public class PlanificacionController {
     }
 
     @PostMapping("/{id}/eliminar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         planService.eliminar(id);
         ra.addFlashAttribute("mensaje", "Planificación eliminada");

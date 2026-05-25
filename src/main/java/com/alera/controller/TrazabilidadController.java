@@ -239,7 +239,7 @@ public class TrazabilidadController {
     }
 
     @PostMapping("/ver/{id}/lecturas/agregar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String agregarLectura(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
@@ -254,7 +254,7 @@ public class TrazabilidadController {
     }
 
     @PostMapping("/ver/{id}/lecturas/{lecturaId}/eliminar")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String eliminarLectura(@PathVariable Long id,
                                    @PathVariable Long lecturaId,
                                    RedirectAttributes ra) {
