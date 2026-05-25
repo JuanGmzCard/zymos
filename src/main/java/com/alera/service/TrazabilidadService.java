@@ -142,43 +142,61 @@ public class TrazabilidadService {
         switch (fase) {
             case "sinIniciar" -> {
                 lote.setFermFechaInicial(null);
+                lote.setFermFechaFinal(null);
                 lote.setAcondFechaInicial(null);
+                lote.setAcondFechaFinal(null);
                 lote.setMadurFechaInicial(null);
+                lote.setMadurFechaFinal(null);
                 lote.setCarbFechaInicial(null);
                 lote.setCarbFechaFinal(null);
             }
             case "fermentacion" -> {
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
+                lote.setFermFechaFinal(null);
                 lote.setAcondFechaInicial(null);
+                lote.setAcondFechaFinal(null);
                 lote.setMadurFechaInicial(null);
+                lote.setMadurFechaFinal(null);
                 lote.setCarbFechaInicial(null);
                 lote.setCarbFechaFinal(null);
             }
             case "acondicionamiento" -> {
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
+                if (lote.getFermFechaFinal() == null) lote.setFermFechaFinal(hoy);
                 if (lote.getAcondFechaInicial() == null) lote.setAcondFechaInicial(hoy);
+                lote.setAcondFechaFinal(null);
                 lote.setMadurFechaInicial(null);
+                lote.setMadurFechaFinal(null);
                 lote.setCarbFechaInicial(null);
                 lote.setCarbFechaFinal(null);
             }
             case "maduracion" -> {
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
+                if (lote.getFermFechaFinal() == null) lote.setFermFechaFinal(hoy);
                 if (lote.getAcondFechaInicial() == null) lote.setAcondFechaInicial(hoy);
+                if (lote.getAcondFechaFinal() == null) lote.setAcondFechaFinal(hoy);
                 if (lote.getMadurFechaInicial() == null) lote.setMadurFechaInicial(hoy);
+                lote.setMadurFechaFinal(null);
                 lote.setCarbFechaInicial(null);
                 lote.setCarbFechaFinal(null);
             }
             case "carbonatacion" -> {
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
+                if (lote.getFermFechaFinal() == null) lote.setFermFechaFinal(hoy);
                 if (lote.getAcondFechaInicial() == null) lote.setAcondFechaInicial(hoy);
+                if (lote.getAcondFechaFinal() == null) lote.setAcondFechaFinal(hoy);
                 if (lote.getMadurFechaInicial() == null) lote.setMadurFechaInicial(hoy);
+                if (lote.getMadurFechaFinal() == null) lote.setMadurFechaFinal(hoy);
                 if (lote.getCarbFechaInicial() == null) lote.setCarbFechaInicial(hoy);
                 lote.setCarbFechaFinal(null);
             }
             case "completados" -> {
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
+                if (lote.getFermFechaFinal() == null) lote.setFermFechaFinal(hoy);
                 if (lote.getAcondFechaInicial() == null) lote.setAcondFechaInicial(hoy);
+                if (lote.getAcondFechaFinal() == null) lote.setAcondFechaFinal(hoy);
                 if (lote.getMadurFechaInicial() == null) lote.setMadurFechaInicial(hoy);
+                if (lote.getMadurFechaFinal() == null) lote.setMadurFechaFinal(hoy);
                 if (lote.getCarbFechaInicial() == null) lote.setCarbFechaInicial(hoy);
                 if (lote.getCarbFechaFinal() == null) lote.setCarbFechaFinal(hoy);
             }
