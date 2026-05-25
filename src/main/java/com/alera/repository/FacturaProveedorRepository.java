@@ -1,6 +1,7 @@
 package com.alera.repository;
 
 import com.alera.model.FacturaProveedor;
+import com.alera.model.enums.EstadoFactura;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,6 +18,9 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
 
     @Query("SELECT f FROM FacturaProveedor f ORDER BY f.id DESC")
     Page<FacturaProveedor> findAllPaged(Pageable pageable);
+
+    @Query("SELECT f FROM FacturaProveedor f WHERE f.estado = :estado ORDER BY f.id DESC")
+    Page<FacturaProveedor> findAllPagedByEstado(@Param("estado") EstadoFactura estado, Pageable pageable);
 
     @Query("SELECT f FROM FacturaProveedor f LEFT JOIN FETCH f.items WHERE f.id = :id")
     Optional<FacturaProveedor> findByIdWithItems(@Param("id") Long id);

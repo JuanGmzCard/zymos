@@ -76,6 +76,14 @@
                     <label class="form-label">Costo Envío</label>
                     <input type="number" step="0.01" th:field="*{costoEnvio}" class="form-control" placeholder="0.00">
                 </div>
+                <div class="col-md-2" th:if="${facturaId != null}">
+                    <label class="form-label">Estado</label>
+                    <select th:field="*{estado}" class="form-select">
+                        <option th:each="est : ${estados}"
+                                th:value="${est}"
+                                th:text="${est.displayName}">-</option>
+                    </select>
+                </div>
                 <div class="col-md-6">
                     <label class="form-label">Descripción</label>
                     <input type="text" th:field="*{descripcion}" class="form-control" placeholder="Descripción opcional">

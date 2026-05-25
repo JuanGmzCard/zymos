@@ -1,5 +1,6 @@
 package com.alera.dto;
 
+import com.alera.model.enums.EstadoFactura;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -9,6 +10,7 @@ import java.util.List;
 public class FacturaFormDto {
 
     private String numeroFactura;
+    private EstadoFactura estado = EstadoFactura.RECIBIDA;
     private Long proveedorId;
 
     @NotBlank(message = "El proveedor es obligatorio")
@@ -29,6 +31,8 @@ public class FacturaFormDto {
 
     public String getNumeroFactura() { return numeroFactura; }
     public void setNumeroFactura(String numeroFactura) { this.numeroFactura = numeroFactura; }
+    public EstadoFactura getEstado() { return estado; }
+    public void setEstado(EstadoFactura estado) { this.estado = estado; }
     public Long getProveedorId() { return proveedorId; }
     public void setProveedorId(Long proveedorId) { this.proveedorId = proveedorId; }
     public String getProveedor() { return proveedor; }

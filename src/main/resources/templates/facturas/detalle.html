@@ -56,6 +56,33 @@
             </div>
         </div>
 
+        <!-- Estado -->
+        <div class="col-md-4">
+            <div class="card-alera h-100">
+                <div class="card-header"><h5><i class="bi bi-check2-circle me-2"></i>Estado</h5></div>
+                <div class="card-body d-flex flex-column gap-3">
+                    <div class="text-center py-2">
+                        <span class="badge fs-6 px-4 py-2"
+                              th:classappend="${factura.estado.badgeClass}"
+                              th:text="${factura.estado.displayName}">-</span>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <form th:each="est : ${T(com.alera.model.enums.EstadoFactura).values()}"
+                              th:action="@{/facturas/{id}/estado(id=${factura.id})}"
+                              method="post">
+                            <button type="submit"
+                                    th:name="estado" th:value="${est.name()}"
+                                    th:disabled="${factura.estado == est}"
+                                    th:classappend="${factura.estado == est} ? 'disabled'"
+                                    class="btn btn-sm w-100"
+                                    th:class="'btn btn-sm w-100 ' + ${factura.estado == est ? 'btn-secondary disabled' : 'btn-outline-secondary'}"
+                                    th:text="${est.displayName}">-</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Resumen financiero -->
         <div class="col-md-4">
             <div class="card-alera h-100">

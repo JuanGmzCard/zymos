@@ -32,8 +32,18 @@
     </div>
 
     <div th:unless="${#lists.isEmpty(facturas)}" class="card-alera">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-table me-2"></i>Listado de Facturas</h5>
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h5 class="mb-0"><i class="bi bi-table me-2"></i>Listado de Facturas</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <a th:href="@{/facturas}" th:classappend="${estadoFiltro == null} ? 'active'" class="btn btn-outline-secondary">Todas</a>
+                    <a th:each="est : ${estados}"
+                       th:href="@{/facturas(estado=${est.name()})}"
+                       th:classappend="${estadoFiltro == est} ? 'active'"
+                       th:text="${est.displayName}"
+                       class="btn btn-outline-secondary">-</a>
+                </div>
+            </div>
             <div class="position-relative">
                 <input type="text" id="facturaInput" class="form-control form-control-sm"
                        style="width:230px;" placeholder="N° factura o proveedor..." autocomplete="off">
@@ -48,6 +58,7 @@
                         <th style="background:#364318;color:#F5EDD0;padding:0.75rem 1rem;">N° Factura</th>
                         <th style="background:#364318;color:#F5EDD0;">Proveedor</th>
                         <th style="background:#364318;color:#F5EDD0;">Fecha</th>
+                        <th style="background:#364318;color:#F5EDD0;">Estado</th>
                         <th style="background:#364318;color:#F5EDD0;">Items</th>
                         <th style="background:#364318;color:#F5EDD0;">Subtotal</th>
                         <th style="background:#364318;color:#F5EDD0;">Total</th>
@@ -59,6 +70,11 @@
                         <td class="ps-3 fw-semibold" th:text="${factura.numeroFactura != null} ? ${factura.numeroFactura} : '#' + ${factura.id}">-</td>
                         <td th:text="${factura.proveedor}">-</td>
                         <td th:text="${factura.fechaFactura != null} ? ${#temporals.format(factura.fechaFactura,'dd/MM/yyyy')} : '-'">-</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${factura.estado.badgeClass}"
+                                  th:text="${factura.estado.displayName}">-</span>
+                        </td>
                         <td><span class="badge bg-secondary" th:text="${#lists.size(factura.items)}">0</span></td>
                         <td th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</td>
                         <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</td>

@@ -4,6 +4,7 @@ import com.alera.dto.FacturaFormDto;
 import com.alera.model.Equipo;
 import com.alera.model.InsumoInventario;
 import com.alera.model.enums.EstadoEquipo;
+import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.TipoEquipo;
 import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoItemFactura;
@@ -52,14 +53,18 @@ public class FacturaProveedorController {
     }
 
     @GetMapping
-    public String lista(@RequestParam(defaultValue = "0") int page, Model model) {
-        var pagina = service.listarPaginado(page);
-        model.addAttribute("facturas",     pagina.getContent());
-        model.addAttribute("paginaActual", page);
-        model.addAttribute("totalPaginas", pagina.getTotalPages());
+    public String lista(@RequestParam(defaultValue = "0") int page,
+                        @RequestParam(required = false) EstadoFactura estado,
+                        Model model) {
+        var pagina = service.listarPaginado(estado, page);
+        model.addAttribute("facturas",      pagina.getContent());
+        model.addAttribute("paginaActual",  page);
+        model.addAttribute("totalPaginas",  pagina.getTotalPages());
         model.addAttribute("totalFacturas", pagina.getTotalElements());
-        model.addAttribute("baseUrl",      "/facturas");
-        model.addAttribute("extraParams",  "");
+        model.addAttribute("estadoFiltro",  estado);
+        model.addAttribute("estados",       EstadoFactura.values());
+        model.addAttribute("baseUrl",       "/facturas");
+        model.addAttribute("extraParams",   estado != null ? "&estado=" + estado.name() : "");
         return "facturas/lista";
     }
 
@@ -127,6 +132,16 @@ public class FacturaProveedorController {
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/facturas";
+    }
+
+    @PostMapping("/{id}/estado")
+    public String cambiarEstado(@PathVariable Long id,
+                                @RequestParam EstadoFactura estado,
+                                RedirectAttributes ra) {
+        service.cambiarEstado(id, estado);
+        ra.addFlashAttribute("mensaje", "Estado actualizado a: " + estado.getDisplayName());
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/facturas/ver/" + id;
     }
 
     @PostMapping("/eliminar/{id}")
@@ -208,6 +223,7 @@ public class FacturaProveedorController {
         model.addAttribute("tiposInsumo", TipoInsumo.values());
         model.addAttribute("tiposEquipo", TipoEquipo.values());
         model.addAttribute("tiposItem",   TipoItemFactura.values());
+        model.addAttribute("estados",     EstadoFactura.values());
         model.addAttribute("proveedoresActivos", proveedorService.listarActivos());
 
         // Agrupados por tipo para el datalist dinámico en el JS del formulario

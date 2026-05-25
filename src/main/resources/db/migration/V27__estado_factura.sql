@@ -1,0 +1,3 @@
+-- V27: Estado de factura (RECIBIDA / VERIFICADA / PAGADA)
+ALTER TABLE facturas_proveedor
+    ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'RECIBIDA';

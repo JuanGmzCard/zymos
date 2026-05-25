@@ -1,5 +1,6 @@
 package com.alera.model;
 
+import com.alera.model.enums.EstadoFactura;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -43,6 +44,10 @@ public class FacturaProveedor extends AuditableEntity {
     @Column(precision = 15, scale = 2)
     private BigDecimal valorTotal = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EstadoFactura estado = EstadoFactura.RECIBIDA;
+
     @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FacturaItem> items = new ArrayList<>();
 
@@ -69,6 +74,8 @@ public class FacturaProveedor extends AuditableEntity {
     public void setCostoEnvio(BigDecimal costoEnvio) { this.costoEnvio = costoEnvio; }
     public BigDecimal getValorTotal() { return valorTotal; }
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
+    public EstadoFactura getEstado() { return estado; }
+    public void setEstado(EstadoFactura estado) { this.estado = estado; }
     public List<FacturaItem> getItems() { return items; }
     public void setItems(List<FacturaItem> items) { this.items = items; }
 }

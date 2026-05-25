@@ -5,6 +5,7 @@ import com.alera.dto.FacturaFormDto;
 import com.alera.dto.FacturaItemDto;
 import com.alera.model.*;
 import com.alera.model.enums.EstadoEquipo;
+import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.TipoEquipo;
 import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.*;
@@ -56,8 +57,9 @@ public class FacturaProveedorService {
         return repo.findAllWithItems();
     }
 
-    public Page<FacturaProveedor> listarPaginado(int page) {
-        return repo.findAllPaged(PageRequest.of(page, pageSize));
+    public Page<FacturaProveedor> listarPaginado(EstadoFactura estado, int page) {
+        PageRequest pr = PageRequest.of(page, pageSize);
+        return estado != null ? repo.findAllPagedByEstado(estado, pr) : repo.findAllPaged(pr);
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +81,14 @@ public class FacturaProveedorService {
 
     public Optional<FacturaProveedor> buscarPorId(Long id) {
         return repo.findByIdWithItems(id);
+    }
+
+    public void cambiarEstado(Long id, EstadoFactura nuevoEstado) {
+        repo.findById(id).ifPresent(f -> {
+            f.setEstado(nuevoEstado);
+            repo.save(f);
+            log.info("Factura {} → estado {}", id, nuevoEstado);
+        });
     }
 
     @CacheEvict(value = "dashboard-stats", allEntries = true)
@@ -118,6 +128,7 @@ public class FacturaProveedorService {
 
     private void mapearDto(FacturaProveedor factura, FacturaFormDto dto) {
         factura.setNumeroFactura(dto.getNumeroFactura());
+        factura.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoFactura.RECIBIDA);
         if (dto.getProveedorId() != null) {
             proveedorRepo.findById(dto.getProveedorId()).ifPresent(p -> {
                 factura.setProveedorRef(p);
@@ -249,6 +260,7 @@ public class FacturaProveedorService {
     public FacturaFormDto toFormDto(FacturaProveedor f) {
         FacturaFormDto dto = new FacturaFormDto();
         dto.setNumeroFactura(f.getNumeroFactura());
+        dto.setEstado(f.getEstado());
         dto.setProveedor(f.getProveedor());
         if (f.getProveedorRef() != null) dto.setProveedorId(f.getProveedorRef().getId());
         dto.setFechaFactura(f.getFechaFactura());
