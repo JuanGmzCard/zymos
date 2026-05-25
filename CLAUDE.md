@@ -21,6 +21,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - OpenPDF 1.3.43 (`com.github.librepdf`) — generación de PDF (licencia LGPL/Apache). Clases en `com.lowagie.text.*`
 - Spring Boot Starter Mail — envío de emails HTML vía SMTP. `JavaMailSender` solo se auto-configura si `spring.mail.host` está definido (no vacío). `EmailService` usa `@Autowired(required = false)` para soportar entornos sin SMTP.
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
+- JJWT 0.12.6 (`jjwt-api` + `jjwt-impl` + `jjwt-jackson`) — generación y validación de tokens JWT HS256 para la API REST
 - JUnit 5 + Mockito (unitarios) + Testcontainers (integración con PostgreSQL real)
 - Tipografías: Cinzel (headings), Raleway (body)
 - `spring.thymeleaf.cache=false` | `spring.jpa.hibernate.ddl-auto=validate`
@@ -42,6 +43,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30)
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
+- **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `alera-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
 
 ---
 
@@ -74,22 +76,25 @@ com.alera/
 │               BrandingProperties (@ConfigurationProperties prefix=app.brand),
 │               TenantContext (ThreadLocal), TenantFilter (OncePerRequestFilter),
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
-│               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer)
+│               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer),
+│               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
-├── controller/ 23 controladores:
+├── controller/ 24 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
 │               FacturaProveedorController, InsumoInventarioController,
 │               RecetaController, ProveedorController, CalendarioController,
 │               ReporteController, BusquedaController, AdminController, ApiController,
 │               TipoCervezaController, UsuarioController, MantenimientoController,
 │               LoginController, TenantAdminController, ComparativaController, AlertaController,
-│               PlanificacionController, PerfilController, NotificacionController
+│               PlanificacionController, PerfilController, NotificacionController,
+│               AuthController (POST /api/auth/login — obtención de token JWT)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
 │               UsuarioService (implements UserDetailsService — integración Spring Security),
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
-│               EmailService, AlertaScheduler, NotificacionService
+│               EmailService, AlertaScheduler, NotificacionService,
+│               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
 ├── model/      22 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
@@ -107,7 +112,9 @@ com.alera/
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
-│               AlertaContadores (bajoStock, vencimientos, mantenimiento + getTotal() — devuelto por AlertaController)
+│               AlertaContadores (bajoStock, vencimientos, mantenimiento + getTotal() — devuelto por AlertaController),
+│               AuthRequest (@NotBlank username + password — body de POST /api/auth/login),
+│               AuthResponse (token, tipo="Bearer", expiresIn, username, rol — respuesta del login JWT)
 └── mapper/     LoteMapper (MapStruct — LoteCerveza → LoteFormDto),
                 MantenimientoMapper (MapStruct — MantenimientoDto → MantenimientoEquipo, ignora `id` y `equipo`)
 
@@ -602,11 +609,16 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /facturas/guardar-equipo-rapido` — `@ResponseBody` JSON. Crea equipo en estado OPERATIVO. Accesible: ADMIN, FACTURACION.
 - Inyecta `InsumoInventarioService` y `EquipoService`
 
+### AuthController ("/api/auth") — público, produce JSON
+- `POST /api/auth/login` — body `{username, password}`. Autentica con Spring `AuthenticationManager`. Retorna `{token, tipo:"Bearer", expiresIn, username, rol}`. El tenant se resuelve del `Host` header (ya establecido por `TenantFilter`). En caso de credenciales inválidas: HTTP 401 `{error:"Credenciales inválidas"}`. Body vacío/inválido: HTTP 400.
+- Documentado en Swagger UI con esquema `bearerAuth`.
+- CSRF deshabilitado para `/api/**` — clientes REST usan el token, no cookies de sesión.
+
 ### ApiController ("/api/v1") — REST JSON con Swagger
 - `GET /api/v1/lotes` + `GET /api/v1/lotes/{id}` + `GET /api/v1/lotes/{id}/historial`
 - `GET /api/v1/recetas` + `GET /api/v1/recetas/{id}`
 - `GET /api/v1/inventario/alertas` + `GET /api/v1/dashboard`
-- Autenticación: HTTP Basic + sesión
+- Autenticación: HTTP Basic, sesión, **o Bearer JWT** (obtenido de `POST /api/auth/login`)
 - Anotado con `@Tag` y `@Operation` (SpringDoc) — documentado en `/swagger-ui.html`
 - Lanza `LoteNoEncontradoException` → GlobalExceptionHandler devuelve HTTP 404
 - **`produces = MediaType.APPLICATION_JSON_VALUE` a nivel de clase** — CRÍTICO: sin esto, un navegador que accede directamente con `Accept: text/html` hace que Spring negocie HTML, no puede serializar el `LinkedHashMap` devuelto y lanza `HttpMessageNotWritableException`. Con `produces`, el navegador recibe 406 en lugar de una excepción descontrolada.
@@ -718,9 +730,11 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `/facturas/**`, `/proveedores/**` → ADMIN, FACTURACION
   - `/inventario/**`, `/recetas/**` → ADMIN, INVENTARIO
   - `/equipos/**` → ADMIN, EQUIPOS
-  - `/api/**` → cualquier usuario autenticado (Basic o sesión)
+  - `/api/auth/**` → público (sin autenticación — endpoint de login JWT)
+  - `/api/**` → cualquier usuario autenticado (HTTP Basic, sesión, o Bearer JWT)
   - Todo lo demás (incluido `/swagger-ui/**`, `/v3/api-docs/**`) → cualquier rol autenticado
 - **Endpoints quick-create**: `POST /inventario/guardar-rapido` hereda `/inventario/**` (ADMIN, INVENTARIO). `POST /facturas/guardar-insumo-rapido` y `/facturas/guardar-equipo-rapido` heredan `/facturas/**` (ADMIN, FACTURACION). `POST /tipos-cerveza/guardar-rapido` hereda `/tipos-cerveza/**` (ADMIN).
+- **JWT — `JwtFilter`** (`OncePerRequestFilter`, bean en SecurityConfig): actúa solo en `/api/**`. Lee el header `Authorization: Bearer <token>`, valida la firma HMAC-SHA256, verifica que el tenant del claim coincida con `TenantContext.getCurrentTenant()`, y si todo es válido establece la autenticación en `SecurityContextHolder`. Si no hay token o es inválido, la request continúa sin autenticación (HTTP Basic puede tomar el relevo). CSRF deshabilitado para `/api/**` — clientes REST usan el token, no cookies. El tenant del token se embebe al generarlo y se verifica en cada request para evitar que un token de tenant A acceda a datos de tenant B. `JwtService` genera tokens con claims `{sub: username, tenant, rol}` y TTL configurable. **CRÍTICO**: en `@WebMvcTest`, mockear `JwtService` (no `JwtFilter`) — mismo patrón que `LoginAttemptService`.
 - **CSRF en AJAX**: todos los endpoints `@ResponseBody POST` requieren el token CSRF. Los templates que los usan incluyen `<meta name="_csrf" th:content="${_csrf.token}"/>` y `<meta name="_csrf_header" th:content="${_csrf.headerName}"/>`. El JS lee estos metas y los envía como header en el `fetch()`.
 - **JPA Auditing**: `JpaConfig` con `@EnableJpaAuditing(auditorAwareRef="auditorAwareImpl")`, `AuditorAwareImpl` lee usuario de SecurityContext. Fallback a `"sistema"` si no hay sesión activa.
 - **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario; **Almacén** (ADMIN/INVENTARIO): Inventario, Recetas; **Comercial** (ADMIN/FACTURACION): Facturas, Proveedores; **Admin** (ADMIN): Reportes, Tipos de Cerveza, Usuarios, Log de Accesos, Tenants. Equipos queda como ítem standalone (ADMIN/EQUIPOS). El botón `+` muestra acciones rápidas de creación filtradas por rol. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`.
@@ -879,6 +893,10 @@ FACTURACION_PASSWORD=fac2024
 EQUIPOS_USERNAME=equipos
 EQUIPOS_PASSWORD=eq2024
 
+# JWT — obligatorio en producción (docker-compose falla si no está definido)
+JWT_SECRET=cambia-esto-por-un-secreto-seguro-de-32-chars-minimo
+JWT_TTL_HOURS=24                 # opcional — default 24h
+
 # Multi-tenant
 DEFAULT_SUBDOMAIN=default        # subdomain del tenant inicial (localhost usa este valor)
 
@@ -896,8 +914,8 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 - Build multi-etapa: `maven:3.9-eclipse-temurin-21` + `eclipse-temurin:21-jre-alpine`
 - Healthcheck: `GET /actuator/health` cada 30s (requiere `spring-boot-starter-actuator`)
-- Docker activa automáticamente `SPRING_PROFILES_ACTIVE=prod` → usa `application-prod.properties` (sin fallbacks de credenciales)
-- Desarrollo local: `application.properties` mantiene fallbacks (ej: `DB_PASSWORD:12345`) para arrancar sin variables de entorno
+- Docker activa automáticamente `SPRING_PROFILES_ACTIVE=prod` → usa `application-prod.properties` (sin fallbacks de credenciales BD ni JWT — la app falla al iniciar si `DB_PASSWORD` o `JWT_SECRET` no están definidos)
+- Desarrollo local: `application.properties` mantiene fallbacks (ej: `DB_PASSWORD:12345`, `JWT_SECRET:alera-dev-secret-key-change-in-production-2024`) para arrancar sin variables de entorno
 
 ---
 
@@ -921,6 +939,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Controladores** (`src/test/java/com/alera/controller/`) — `@WebMvcTest` + `@MockBean`:
 - `TrazabilidadControllerTest` — 15 tests: seguridad (sin-autenticar → 401; con rol no-admin → controller corre porque URL-based security no se enforce con handler mock), index, kanban, nuevo/guardar (válido, inválido, advertencia stock), ver/404, eliminar. `@MockBean`: `PdfExportService`, `LecturaFermentacionService`, `PlanificacionService` (los tres requeridos por el constructor del controller).
+- `AuthControllerTest` — 3 tests (`@AutoConfigureMockMvc(addFilters=false)` para aislar la lógica del controller): login con credenciales válidas retorna token + campos del `AuthResponse`, credenciales inválidas → 401 con `{error}`, body vacío → 400. `@MockBean AuthenticationManager` y `JwtService`.
 - `ApiControllerTest` — 9 tests: seguridad (401), lotes (lista, por id, 404, historial), recetas, alertas inventario, dashboard
 - `AlertaControllerTest` — 5 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento
 - `NotificacionControllerTest` — 5 tests: seguridad (401), GET /notificaciones (página con modelo), GET /recientes (JSON con total e items), POST /{id}/leer (JSON con noLeidas), POST /leer-todas (redirect)
@@ -949,6 +968,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `BrandingProperties` — GlobalControllerAdvice la inyecta como fallback; sin mock → contexto no carga
 - `AleraAuthSuccessHandler`, `AleraAuthFailureHandler`, `AleraAccessDeniedHandler` — SecurityConfig.filterChain() los recibe como parámetros; sin mock → Spring usa la seguridad por defecto (sin URL-based restrictions)
 - `LoginAttemptService` — requerido por `LoginAttemptFilter` (bean en SecurityConfig); sin mock → contexto no carga. **CRÍTICO**: NO mockear `LoginAttemptFilter` directamente (es creado por SecurityConfig vía `@Bean`, no auto-detectado). Mockear `LoginAttemptService` para que el filtro real pueda ser creado con la dependencia satisfecha.
+- `JwtService` — requerido por `JwtFilter` (bean en SecurityConfig); sin mock → contexto no carga. Mismo patrón que `LoginAttemptService`. **CRÍTICO**: NO mockear `JwtFilter` directamente.
 - `UsuarioService`, `LogAccesoService` — requeridos por los auth handlers y DaoAuthenticationProvider
 - `PasswordEncoder` — si el controller lo inyecta directamente (ej: `TenantAdminController`), agregar `@MockBean PasswordEncoder`
 - **NO mockear `ObjectMapper`**: Spring Boot lo autoconfigura en `@WebMvcTest`. Mockearlo hace que `routerFunctionMapping` falle al crear (`objectMapper.reader()` retorna null). Si el controller usa `ObjectMapper`, usa el bean autoconfigurdo directamente.
