@@ -89,6 +89,10 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     @Query("SELECT l FROM LoteCerveza l WHERE l.receta.id = :recetaId ORDER BY l.fechaElaboracion DESC NULLS LAST")
     List<LoteCerveza> findByRecetaId(@Param("recetaId") Long recetaId);
 
+    // Conteo de lotes por receta (para badge en lista de recetas)
+    @Query("SELECT l.receta.id, COUNT(l) FROM LoteCerveza l WHERE l.receta IS NOT NULL GROUP BY l.receta.id")
+    List<Object[]> countPorReceta();
+
     // Comparativa: carga ingredientes para calcular eficiencia sin N+1
     @Query("SELECT DISTINCT l FROM LoteCerveza l LEFT JOIN FETCH l.ingredientes WHERE l.id IN :ids")
     List<LoteCerveza> findByIds(@Param("ids") List<Long> ids);

@@ -87,6 +87,14 @@ public class RecetaService {
         });
     }
 
+    public RecetaFormDto duplicarComoFormDto(Long id) {
+        Receta r = buscarPorId(id);
+        RecetaFormDto dto = toFormDto(r);
+        dto.setId(null);
+        dto.setNombre(r.getNombre() + " (Copia)");
+        return dto;
+    }
+
     public RecetaFormDto toFormDto(Receta r) {
         RecetaFormDto dto = new RecetaFormDto();
         dto.setId(r.getId());

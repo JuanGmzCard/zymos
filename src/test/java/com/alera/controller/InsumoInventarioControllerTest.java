@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.service.ExcelExportService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
@@ -42,6 +43,7 @@ class InsumoInventarioControllerTest {
     @MockBean JwtService                 jwtService;
     @MockBean InsumoInventarioService    insumoService;
     @MockBean FacturaItemRepository      facturaItemRepo;
+    @MockBean ExcelExportService         excelService;
 
     @BeforeEach
     void setUp() {

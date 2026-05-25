@@ -1,8 +1,10 @@
 package com.alera.service;
 
 import com.alera.model.FacturaProveedor;
+import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
 import com.alera.model.enums.EstadoFactura;
+import com.alera.model.enums.TipoInsumo;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -35,6 +37,125 @@ public class ExcelExportService {
     private static final Color C_BORDE        = new Color(222, 226, 230);
 
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    public byte[] generarExcelInventario(List<InsumoInventario> insumos, String brandName) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            construirSheetInventario(wb, insumos, brandName);
+            construirSheetInventarioTipos(wb, insumos, brandName);
+            wb.write(baos);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando Excel de inventario", e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void construirSheetInventario(XSSFWorkbook wb, List<InsumoInventario> insumos, String brandName) {
+        Sheet sheet = wb.createSheet("Inventario");
+        sheet.setDefaultColumnWidth(15);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb);
+        XSSFCellStyle stResumen = estiloResumen(wb);
+        XSSFCellStyle stHeader  = estiloHeader(wb);
+        XSSFCellStyle stDato    = estiloDato(wb, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short)(20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Inventario de Insumos");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 7));
+
+        r++;
+        long totalBajoStock = insumos.stream().filter(InsumoInventario::isBajoStock).count();
+        Row fRes = sheet.createRow(r++);
+        celda(fRes, 0, "Total: " + insumos.size() + " insumos", stResumen);
+        celda(fRes, 3, "Bajo stock: " + totalBajoStock, stResumen);
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short)(16 * 20));
+        String[] headers = {"Nombre", "Tipo", "Cantidad", "Unidad", "Stock Mínimo", "Estado", "Vencimiento", "Proveedor"};
+        for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
+
+        int[] widths = {28, 14, 12, 10, 13, 10, 14, 20};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        for (int i = 0; i < insumos.size(); i++) {
+            InsumoInventario ins = insumos.get(i);
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+            XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+            celda(fila, 0, ins.getNombre(), sD);
+            celda(fila, 1, ins.getTipo() != null ? ins.getTipo().getDisplayName() : "", sD);
+            celdaNum(fila, 2, ins.getCantidad() != null ? ins.getCantidad().doubleValue() : null, sN);
+            celda(fila, 3, ins.getUnidad() != null ? ins.getUnidad() : "", sD);
+            celdaNum(fila, 4, ins.getStockMinimo() != null ? ins.getStockMinimo().doubleValue() : null, sN);
+            celda(fila, 5, ins.isBajoStock() ? "Bajo stock" : "OK", sD);
+            celda(fila, 6, ins.getFechaVencimiento() != null
+                    ? ins.getFechaVencimiento().format(FMT_FECHA) : "", sD);
+            celda(fila, 7, ins.getProveedor() != null ? ins.getProveedor() : "", sD);
+        }
+
+        if (!insumos.isEmpty()) {
+            sheet.setAutoFilter(new CellRangeAddress(4, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetInventarioTipos(XSSFWorkbook wb, List<InsumoInventario> insumos, String brandName) {
+        Sheet sheet = wb.createSheet("Por Tipo");
+        sheet.setDefaultColumnWidth(18);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb);
+        XSSFCellStyle stHeader  = estiloHeader(wb);
+        XSSFCellStyle stDato    = estiloDato(wb, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short)(20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Inventario por Tipo");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short)(16 * 20));
+        String[] headers = {"Tipo", "Cantidad de items", "Items bajo stock", "% bajo stock"};
+        for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
+
+        java.util.EnumMap<TipoInsumo, long[]> grouped = new java.util.EnumMap<>(TipoInsumo.class);
+        for (TipoInsumo t : TipoInsumo.values()) grouped.put(t, new long[]{0, 0});
+        for (InsumoInventario ins : insumos) {
+            if (ins.getTipo() != null) {
+                grouped.get(ins.getTipo())[0]++;
+                if (ins.isBajoStock()) grouped.get(ins.getTipo())[1]++;
+            }
+        }
+
+        int idx = 0;
+        for (Map.Entry<TipoInsumo, long[]> entry : grouped.entrySet()) {
+            if (entry.getValue()[0] == 0) continue;
+            boolean alt = idx % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            long total = entry.getValue()[0];
+            long bajo  = entry.getValue()[1];
+            celda(fila, 0, entry.getKey().getDisplayName(), alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, (double) total, alt ? stNumAlt : stNum);
+            celdaNum(fila, 2, (double) bajo,  alt ? stNumAlt : stNum);
+            celdaNum(fila, 3, total > 0 ? (bajo * 100.0 / total) : 0.0, alt ? stNumAlt : stNum);
+            idx++;
+        }
+    }
 
     public byte[] generarExcelFacturas(List<FacturaProveedor> facturas,
                                         EstadoFactura estadoFiltro,

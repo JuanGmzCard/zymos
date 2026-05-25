@@ -13,6 +13,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,9 @@ public class RecetaController {
         model.addAttribute("activaFiltro", activa);
         model.addAttribute("baseUrl",      "/recetas");
         model.addAttribute("extraParams",  activa != null ? "&activa=" + activa : "");
+        Map<Long, Long> lotesCount = new HashMap<>();
+        loteRepo.countPorReceta().forEach(row -> lotesCount.put((Long) row[0], (Long) row[1]));
+        model.addAttribute("lotesCountMap", lotesCount);
         return "recetas/lista";
     }
 
@@ -115,6 +119,14 @@ public class RecetaController {
         model.addAttribute("receta", receta);
         model.addAttribute("lotesDeReceta", loteRepo.findByRecetaId(id));
         return "recetas/detalle";
+    }
+
+    @GetMapping("/duplicar/{id}")
+    public String duplicar(@PathVariable Long id, Model model) {
+        model.addAttribute("recetaForm",      service.duplicarComoFormDto(id));
+        model.addAttribute("insumosInventario", insumoService.listarTodos());
+        model.addAttribute("tiposCerveza",     tipoCervezaService.listarActivos());
+        return "recetas/formulario";
     }
 
     @PostMapping("/eliminar/{id}")

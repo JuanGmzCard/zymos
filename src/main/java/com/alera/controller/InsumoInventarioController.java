@@ -5,7 +5,10 @@ import com.alera.model.InsumoInventario;
 import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
+import com.alera.service.ExcelExportService;
 import com.alera.service.InsumoInventarioService;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -24,11 +27,14 @@ public class InsumoInventarioController {
 
     private final InsumoInventarioService service;
     private final FacturaItemRepository facturaItemRepo;
+    private final ExcelExportService excelService;
 
     public InsumoInventarioController(InsumoInventarioService service,
-                                       FacturaItemRepository facturaItemRepo) {
+                                       FacturaItemRepository facturaItemRepo,
+                                       ExcelExportService excelService) {
         this.service         = service;
         this.facturaItemRepo = facturaItemRepo;
+        this.excelService    = excelService;
     }
 
     @GetMapping
@@ -149,6 +155,29 @@ public class InsumoInventarioController {
         ra.addFlashAttribute("mensaje", "Insumo eliminado");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/inventario";
+    }
+
+    // ── Exportar a Excel ─────────────────────────────────────────────────
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(defaultValue = "") String nombre,
+            @RequestParam(required = false) TipoInsumo tipo,
+            HttpServletRequest request) {
+        var pagina = service.listarPaginado(nombre, tipo, 0);
+        // Si hay filtros activos exporta solo la primera página; sin filtros exporta todo
+        List<InsumoInventario> insumos = (nombre.isBlank() && tipo == null)
+                ? service.listarTodos()
+                : pagina.getContent();
+        com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
+        String brandName = (tenant != null) ? tenant.getName() : "Alera";
+        byte[] bytes = excelService.generarExcelInventario(insumos, brandName);
+        String filename = "inventario-" + java.time.LocalDate.now() + ".xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .contentLength(bytes.length)
+                .body(bytes);
     }
 
     // ── Ajuste rápido de stock ────────────────────────────────────────────

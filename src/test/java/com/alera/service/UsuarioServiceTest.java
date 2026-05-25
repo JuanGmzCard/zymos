@@ -1,7 +1,9 @@
 package com.alera.service;
 
+import com.alera.model.SuperAdmin;
 import com.alera.model.Usuario;
 import com.alera.model.enums.RolUsuario;
+import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.UsuarioRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,8 +27,9 @@ import static org.mockito.Mockito.*;
 @DisplayName("UsuarioService")
 class UsuarioServiceTest {
 
-    @Mock UsuarioRepository repo;
-    @Mock PasswordEncoder   encoder;
+    @Mock UsuarioRepository    repo;
+    @Mock PasswordEncoder      encoder;
+    @Mock SuperAdminRepository superAdminRepo;
 
     @InjectMocks
     UsuarioService service;
@@ -48,6 +51,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("loadUserByUsername retorna UserDetails con username, password y rol correcto")
     void loadUserByUsername_retornaUserDetails() {
+        when(superAdminRepo.findByUsernameAndActivoTrue("admin")).thenReturn(Optional.empty());
         when(repo.findByUsername("admin")).thenReturn(Optional.of(
                 usuario(1L, "admin", RolUsuario.ADMIN, true)));
 
@@ -63,6 +67,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("loadUserByUsername lanza UsernameNotFoundException si no existe el usuario")
     void loadUserByUsername_noExiste_lanzaExcepcion() {
+        when(superAdminRepo.findByUsernameAndActivoTrue("fantasma")).thenReturn(Optional.empty());
         when(repo.findByUsername("fantasma")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.loadUserByUsername("fantasma"))
@@ -73,6 +78,7 @@ class UsuarioServiceTest {
     @Test
     @DisplayName("loadUserByUsername lanza UsernameNotFoundException si el usuario está inactivo")
     void loadUserByUsername_inactivo_lanzaExcepcion() {
+        when(superAdminRepo.findByUsernameAndActivoTrue("inactivo")).thenReturn(Optional.empty());
         when(repo.findByUsername("inactivo")).thenReturn(Optional.of(
                 usuario(2L, "inactivo", RolUsuario.INVENTARIO, false)));
 
@@ -85,6 +91,7 @@ class UsuarioServiceTest {
     @DisplayName("loadUserByUsername mapea correctamente cada rol al authority ROLE_X")
     void loadUserByUsername_mapeoDeRoles() {
         for (RolUsuario rol : RolUsuario.values()) {
+            when(superAdminRepo.findByUsernameAndActivoTrue(rol.name())).thenReturn(Optional.empty());
             when(repo.findByUsername(rol.name())).thenReturn(Optional.of(
                     usuario(99L, rol.name(), rol, true)));
 

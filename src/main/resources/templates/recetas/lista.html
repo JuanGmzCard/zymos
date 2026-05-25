@@ -130,6 +130,11 @@
                         <td class="text-center">
                             <span th:if="${rec.activa}" class="badge bg-success">Activa</span>
                             <span th:unless="${rec.activa}" class="badge bg-secondary">Inactiva</span>
+                            <span th:with="cnt=${lotesCountMap != null ? lotesCountMap[rec.id] : null}"
+                                  th:if="${cnt != null and cnt > 0}"
+                                  class="badge ms-1" style="background:#C9A028;color:#242E0D;"
+                                  th:title="${cnt} + ' lote(s) elaborado(s)'"
+                                  th:text="${cnt} + ' lote' + (${cnt} != 1 ? 's' : '')">0 lotes</span>
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
@@ -138,12 +143,17 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <a th:href="@{/recetas/editar/{id}(id=${rec.id})}"
-                                   sec:authorize="hasAnyRole('ADMIN','INVENTARIO')"
+                                   sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
                                    class="btn btn-sm btn-alera-outline" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <a th:href="@{/recetas/duplicar/{id}(id=${rec.id})}"
+                                   sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                                   class="btn btn-sm btn-outline-secondary" title="Duplicar receta">
+                                    <i class="bi bi-copy"></i>
+                                </a>
                                 <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
-                                      sec:authorize="hasAnyRole('ADMIN','INVENTARIO')"
+                                      sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
                                       onsubmit="return confirm('¿Archivar la receta «' + /*[[${rec.nombre}]]*/ '' + '»? Los datos se conservan.')">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="Archivar">
                                         <i class="bi bi-archive"></i>
