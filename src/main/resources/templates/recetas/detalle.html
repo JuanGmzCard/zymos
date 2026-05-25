@@ -25,13 +25,17 @@
                 </div>
                 <p class="mb-0" th:text="${receta.estilo}">Estilo</p>
             </div>
-            <div class="d-flex gap-2 align-self-center">
+            <div class="d-flex gap-2 align-self-center flex-wrap">
                 <a th:href="@{/recetas/editar/{id}(id=${receta.id})}" class="btn btn-alera">
                     <i class="bi bi-pencil me-1"></i>Editar
                 </a>
                 <a th:href="@{/recetas/duplicar/{id}(id=${receta.id})}" class="btn btn-outline-crema"
                    title="Crear una copia de esta receta">
                     <i class="bi bi-copy me-1"></i>Duplicar
+                </a>
+                <a th:href="@{/recetas/ver/{id}/pdf(id=${receta.id})}" class="btn btn-outline-crema"
+                   title="Exportar ficha de receta a PDF">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
                 </a>
                 <a th:href="@{/recetas}" class="btn btn-outline-crema">
                     <i class="bi bi-arrow-left me-1"></i>Volver
@@ -310,6 +314,59 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <!-- Costo estimado por lote -->
+    <div class="card-alera mb-4" th:if="${costosIngredientes != null and !#lists.isEmpty(costosIngredientes)}">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-cash-coin me-2"></i>Costo Estimado de Ingredientes</h5>
+            <span class="text-muted small">Basado en últimas compras registradas</span>
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-alera mb-0" style="font-size:0.82rem;">
+                <thead>
+                    <tr>
+                        <th>Ingrediente</th>
+                        <th>Cantidad</th>
+                        <th>Último precio</th>
+                        <th class="text-end">Costo estimado</th>
+                        <th class="text-muted">Compra</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="ci : ${costosIngredientes}">
+                        <td class="fw-600" th:text="${ci.nombre}">—</td>
+                        <td class="text-muted" th:text="${ci.cantidad ?: '—'}">—</td>
+                        <td>
+                            <span th:if="${ci.valorUnitario != null}"
+                                  th:text="'$ ' + ${#numbers.formatDecimal(ci.valorUnitario, 1, 2)} + ' / ' + (${ci.unidadFactura} ?: '')"></span>
+                            <span th:unless="${ci.valorUnitario != null}" class="text-muted">Sin datos</span>
+                        </td>
+                        <td class="text-end">
+                            <span th:if="${ci.costoEstimado != null}"
+                                  style="font-weight:700;color:var(--verde-alera);"
+                                  th:text="'$ ' + ${#numbers.formatDecimal(ci.costoEstimado, 1, 0)}">—</span>
+                            <span th:unless="${ci.costoEstimado != null}" class="text-muted">—</span>
+                        </td>
+                        <td class="text-muted small"
+                            th:text="${ci.fechaFactura != null} ? ${#temporals.format(ci.fechaFactura, 'dd/MM/yy')} : ''">—</td>
+                    </tr>
+                </tbody>
+                <tfoot th:if="${totalCostoEstimado != null}">
+                    <tr style="background:var(--fondo);">
+                        <td colspan="3" class="fw-bold text-end">Total estimado</td>
+                        <td class="text-end fw-bold" style="color:var(--dorado);"
+                            th:text="'$ ' + ${#numbers.formatDecimal(totalCostoEstimado, 1, 0)}">—</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="card-footer text-muted small py-2 px-3">
+            <i class="bi bi-info-circle me-1"></i>
+            Estimación basada en el precio más reciente por ingrediente encontrado en facturas.
+            Los valores no incluyen IVA ni fletes adicionales.
         </div>
     </div>
 

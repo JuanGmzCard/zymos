@@ -1,6 +1,7 @@
 package com.alera.controller;
 
 import com.alera.config.*;
+import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.*;
@@ -41,6 +42,8 @@ class RecetaControllerTest {
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean InsumoInventarioService    insumoService;
     @MockBean TipoCervezaService         tipoCervezaService;
+    @MockBean FacturaItemRepository      facturaItemRepo;
+    @MockBean PdfExportService           pdfExportService;
 
     @BeforeEach
     void setUp() {

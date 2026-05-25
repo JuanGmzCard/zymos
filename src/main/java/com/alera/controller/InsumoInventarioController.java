@@ -41,18 +41,43 @@ public class InsumoInventarioController {
     public String lista(
             @RequestParam(defaultValue = "") String nombre,
             @RequestParam(required = false) TipoInsumo tipo,
+            @RequestParam(defaultValue = "false") boolean filtroBajoStock,
+            @RequestParam(defaultValue = "false") boolean filtroPorVencer,
             @RequestParam(defaultValue = "0") int page,
             Model model) {
-        var pagina = service.listarPaginado(nombre, tipo, page);
-        model.addAttribute("insumos",      pagina.getContent());
-        model.addAttribute("paginaActual", page);
-        model.addAttribute("totalPaginas", pagina.getTotalPages());
-        model.addAttribute("totalInsumos", pagina.getTotalElements());
-        model.addAttribute("nombreFiltro", nombre);
-        model.addAttribute("tipoFiltro",   tipo);
-        model.addAttribute("tiposInsumo",  TipoInsumo.values());
-        model.addAttribute("bajoStock",    service.listarBajoStock());
-        model.addAttribute("proximosVencer", service.listarProximosAVencer(30));
+
+        List<InsumoInventario> insumos;
+        long totalInsumos;
+        int totalPaginas;
+
+        if (filtroBajoStock) {
+            insumos = service.listarBajoStock();
+            totalInsumos = insumos.size();
+            totalPaginas = 1;
+            page = 0;
+        } else if (filtroPorVencer) {
+            insumos = service.listarProximosAVencer(30);
+            totalInsumos = insumos.size();
+            totalPaginas = 1;
+            page = 0;
+        } else {
+            var pagina = service.listarPaginado(nombre, tipo, page);
+            insumos = pagina.getContent();
+            totalInsumos = pagina.getTotalElements();
+            totalPaginas = pagina.getTotalPages();
+        }
+
+        model.addAttribute("insumos",          insumos);
+        model.addAttribute("paginaActual",     page);
+        model.addAttribute("totalPaginas",     totalPaginas);
+        model.addAttribute("totalInsumos",     totalInsumos);
+        model.addAttribute("nombreFiltro",     nombre);
+        model.addAttribute("tipoFiltro",       tipo);
+        model.addAttribute("tiposInsumo",      TipoInsumo.values());
+        model.addAttribute("bajoStock",        service.listarBajoStock());
+        model.addAttribute("proximosVencer",   service.listarProximosAVencer(30));
+        model.addAttribute("filtroBajoStock",  filtroBajoStock);
+        model.addAttribute("filtroPorVencer",  filtroPorVencer);
         return "inventario/lista";
     }
 
@@ -163,12 +188,19 @@ public class InsumoInventarioController {
     public ResponseEntity<byte[]> export(
             @RequestParam(defaultValue = "") String nombre,
             @RequestParam(required = false) TipoInsumo tipo,
+            @RequestParam(defaultValue = "false") boolean filtroBajoStock,
+            @RequestParam(defaultValue = "false") boolean filtroPorVencer,
             HttpServletRequest request) {
-        var pagina = service.listarPaginado(nombre, tipo, 0);
-        // Si hay filtros activos exporta solo la primera página; sin filtros exporta todo
-        List<InsumoInventario> insumos = (nombre.isBlank() && tipo == null)
-                ? service.listarTodos()
-                : pagina.getContent();
+        List<InsumoInventario> insumos;
+        if (filtroBajoStock) {
+            insumos = service.listarBajoStock();
+        } else if (filtroPorVencer) {
+            insumos = service.listarProximosAVencer(30);
+        } else {
+            insumos = (nombre.isBlank() && tipo == null)
+                    ? service.listarTodos()
+                    : service.listarPaginado(nombre, tipo, 0).getContent();
+        }
         com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
         String brandName = (tenant != null) ? tenant.getName() : "Alera";
         byte[] bytes = excelService.generarExcelInventario(insumos, brandName);

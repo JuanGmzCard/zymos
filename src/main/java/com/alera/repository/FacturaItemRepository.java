@@ -19,4 +19,11 @@ public interface FacturaItemRepository extends JpaRepository<FacturaItem, Long> 
     // Nombres distintos de ítems de factura para el datalist de búsqueda
     @Query("SELECT DISTINCT fi.nombre FROM FacturaItem fi WHERE fi.nombre IS NOT NULL ORDER BY fi.nombre ASC")
     List<String> findNombresDistintos();
+
+    // Últimas compras de una lista de ingredientes — para estimación de costo en recetas
+    @Query("SELECT fi FROM FacturaItem fi JOIN FETCH fi.factura f " +
+           "WHERE LOWER(TRIM(fi.nombre)) IN :nombres " +
+           "AND fi.valorUnitario IS NOT NULL AND fi.valorUnitario > 0 " +
+           "ORDER BY f.fechaFactura DESC NULLS LAST, fi.id DESC")
+    List<FacturaItem> findUltimosPrecios(@Param("nombres") List<String> nombres);
 }

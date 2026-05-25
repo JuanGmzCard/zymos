@@ -20,7 +20,7 @@
             <p>Control de materias primas y suministros</p>
         </div>
         <div class="d-flex gap-2">
-            <a th:href="@{/inventario/export(nombre=${nombreFiltro},tipo=${tipoFiltro})}"
+            <a th:href="@{/inventario/export(nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
                class="btn btn-outline-crema" title="Exportar a Excel">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
             </a>
@@ -71,6 +71,31 @@
         </div>
     </form>
 
+    <!-- Filtros rápidos -->
+    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
+        <span class="text-muted small me-1">Filtros rápidos:</span>
+        <a th:href="@{/inventario}" class="btn btn-sm"
+           th:classappend="${!filtroBajoStock and !filtroPorVencer} ? 'btn-alera' : 'btn-alera-outline'">
+            <i class="bi bi-grid-3x3-gap me-1"></i>Todos
+        </a>
+        <a th:href="@{/inventario(filtroBajoStock=true)}" class="btn btn-sm"
+           th:classappend="${filtroBajoStock} ? 'btn-danger' : 'btn-outline-danger'">
+            <i class="bi bi-exclamation-triangle me-1"></i>Bajo Stock
+            <span th:if="${!#lists.isEmpty(bajoStock)}"
+                  class="badge ms-1"
+                  th:style="${filtroBajoStock} ? 'background:#fff;color:#dc3545;' : 'background:#dc3545;'"
+                  th:text="${#lists.size(bajoStock)}"></span>
+        </a>
+        <a th:href="@{/inventario(filtroPorVencer=true)}" class="btn btn-sm"
+           th:classappend="${filtroPorVencer} ? 'btn-warning text-dark' : 'btn-outline-warning'">
+            <i class="bi bi-calendar-x me-1"></i>Por Vencer
+            <span th:if="${!#lists.isEmpty(proximosVencer)}"
+                  class="badge ms-1"
+                  th:style="${filtroPorVencer} ? 'background:#212529;' : 'background:#ffc107;color:#212529;'"
+                  th:text="${#lists.size(proximosVencer)}"></span>
+        </a>
+    </div>
+
     <!-- Alertas -->
     <div class="row g-3 mb-4">
         <div class="col-md-6" th:if="${!#lists.isEmpty(bajoStock)}">
@@ -92,7 +117,16 @@
     </div>
 
     <div class="card-alera">
-        <div class="card-header"><h5><i class="bi bi-table me-2"></i>Todos los Insumos</h5></div>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-table me-2"></i>
+                <span th:if="${filtroBajoStock}">Insumos con Bajo Stock</span>
+                <span th:if="${filtroPorVencer}">Insumos Próximos a Vencer (30 días)</span>
+                <span th:if="${!filtroBajoStock and !filtroPorVencer}">Todos los Insumos</span>
+            </h5>
+            <span class="text-muted small"
+                  th:text="${totalInsumos} + ' insumo' + (${totalInsumos} != 1 ? 's' : '')"></span>
+        </div>
         <div class="card-body p-0">
             <div th:if="${#lists.isEmpty(insumos)}" class="empty-state py-4">
                 <i class="bi bi-box"></i>
@@ -165,18 +199,18 @@
         <nav aria-label="Paginación">
             <ul class="pagination pagination-sm justify-content-center mb-0">
                 <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/inventario(page=${paginaActual - 1},nombre=${nombreFiltro},tipo=${tipoFiltro})}">
+                    <a class="page-link" th:href="@{/inventario(page=${paginaActual - 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}">
                         <i class="bi bi-chevron-left"></i>
                     </a>
                 </li>
                 <li th:each="num : ${#numbers.sequence(0, totalPaginas - 1)}"
                     class="page-item" th:classappend="${num == paginaActual} ? 'active' : ''">
                     <a class="page-link"
-                       th:href="@{/inventario(page=${num},nombre=${nombreFiltro},tipo=${tipoFiltro})}"
+                       th:href="@{/inventario(page=${num},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
                        th:text="${num + 1}">1</a>
                 </li>
                 <li class="page-item" th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/inventario(page=${paginaActual + 1},nombre=${nombreFiltro},tipo=${tipoFiltro})}">
+                    <a class="page-link" th:href="@{/inventario(page=${paginaActual + 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}">
                         <i class="bi bi-chevron-right"></i>
                     </a>
                 </li>

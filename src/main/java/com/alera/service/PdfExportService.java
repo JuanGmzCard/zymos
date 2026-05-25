@@ -1,9 +1,13 @@
 package com.alera.service;
 
+import com.alera.model.AdicionHervor;
+import com.alera.model.EscalonMacerado;
 import com.alera.model.Ingrediente;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
 import com.alera.model.LoteItemFactura;
+import com.alera.model.Receta;
+import com.alera.model.RecetaIngrediente;
 import java.util.Map;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -95,6 +99,184 @@ public class PdfExportService {
             throw new RuntimeException("Error generando PDF del lote " + lote.getCodigoLote(), e);
         }
         return baos.toByteArray();
+    }
+
+    // ── PDF Receta ───────────────────────────────────────────────────
+
+    public byte[] generarPdfReceta(Receta receta, String brandName) {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            // Cabecera
+            PdfPTable header = new PdfPTable(1);
+            header.setWidthPercentage(100);
+            header.setSpacingAfter(10);
+            PdfPCell hCell = new PdfPCell();
+            hCell.setBackgroundColor(C_VERDE);
+            hCell.setBorder(0);
+            hCell.setPaddingTop(12);
+            hCell.setPaddingBottom(12);
+            hCell.setPaddingLeft(14);
+            hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                    new Font(Font.HELVETICA, 7, Font.NORMAL, C_DORADO)));
+            Paragraph tituloH = new Paragraph("FICHA DE RECETA",
+                    new Font(Font.HELVETICA, 13, Font.BOLD, C_CREMA));
+            tituloH.setSpacingBefore(4);
+            hCell.addElement(tituloH);
+            Paragraph subH = new Paragraph(
+                    receta.getNombre() + (receta.getEstilo() != null ? "  ·  " + receta.getEstilo() : ""),
+                    new Font(Font.HELVETICA, 9, Font.ITALIC, C_VERDE_CLARO));
+            subH.setSpacingBefore(4);
+            hCell.addElement(subH);
+            header.addCell(hCell);
+            doc.add(header);
+
+            // Información básica
+            addTituloPdf(doc, "INFORMACIÓN GENERAL");
+            Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, C_VERDE);
+            Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            PdfPTable info = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
+            info.setWidthPercentage(100);
+            par(info, "Nombre",    receta.getNombre() != null ? receta.getNombre() : "—", lbl, val);
+            par(info, "Estilo",    receta.getEstilo() != null ? receta.getEstilo() : "—", lbl, val);
+            par(info, "Estado",    receta.isActiva() ? "Activa" : "Inactiva", lbl, val);
+            par(info, "Versión",   receta.getVersion() != null ? "v" + receta.getVersion() : "v1", lbl, val);
+            par(info, "Hervor",    receta.getTiempoHervorMinutos() != null
+                    ? receta.getTiempoHervorMinutos() + " min" : "—", lbl, val);
+            par(info, "Vol. base", receta.getVolumenBase() != null
+                    ? receta.getVolumenBase() + " L" : "—", lbl, val);
+            if (receta.getAguaMacerado() != null) {
+                par(info, "Agua macerado", receta.getAguaMacerado() + " "
+                        + (receta.getUnidadAguaMacerado() != null ? receta.getUnidadAguaMacerado() : "L"), lbl, val);
+                par(info, "Agua sparge", receta.getAguaSparge() != null
+                        ? receta.getAguaSparge() + " "
+                          + (receta.getUnidadAguaSparge() != null ? receta.getUnidadAguaSparge() : "L") : "—",
+                        lbl, val);
+            }
+            doc.add(info);
+
+            // Métricas objetivo
+            if (receta.getOgObjetivo() != null || receta.getFgObjetivo() != null) {
+                addTituloPdf(doc, "PARÁMETROS OBJETIVO");
+                Font lblM = new Font(Font.HELVETICA, 7, Font.BOLD, C_VERDE);
+                Font valM = new Font(Font.HELVETICA, 10, Font.BOLD, C_VERDE_OSCURO);
+                Font subM = new Font(Font.HELVETICA, 8, Font.NORMAL, C_GRIS);
+                PdfPTable metricasR = new PdfPTable(3);
+                metricasR.setWidthPercentage(60);
+                if (receta.getOgObjetivo() != null)
+                    metricaCell(metricasR, "OG", String.valueOf(receta.getOgObjetivo()), lblM, valM, subM, "Gravedad inicial");
+                if (receta.getFgObjetivo() != null)
+                    metricaCell(metricasR, "FG", String.valueOf(receta.getFgObjetivo()), lblM, valM, subM, "Gravedad final");
+                if (receta.getOgObjetivo() != null && receta.getFgObjetivo() != null) {
+                    double abvObj = (receta.getOgObjetivo() - receta.getFgObjetivo()) * 0.13125;
+                    metricaCell(metricasR, "ABV",
+                            String.format(java.util.Locale.US, "%.2f%%", abvObj), lblM, valM, subM, "Estimado");
+                }
+                doc.add(metricasR);
+            }
+
+            // Ingredientes
+            if (!receta.getIngredientes().isEmpty()) {
+                addTituloPdf(doc, "INGREDIENTES");
+                addIngredientesReceta(doc, receta);
+            }
+
+            // Escalones de macerado
+            if (!receta.getEscalones().isEmpty()) {
+                addTituloPdf(doc, "ESCALONES DE MACERADO");
+                Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, C_CREMA);
+                Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable tEsc = new PdfPTable(new float[]{0.5f, 2, 1, 1});
+                tEsc.setWidthPercentage(100);
+                for (String h : new String[]{"#", "Escalón", "Duración", "Temp."}) {
+                    PdfPCell c = new PdfPCell(new Phrase(h, thF));
+                    c.setBackgroundColor(C_VERDE_OSCURO); c.setBorder(0); c.setPadding(5);
+                    tEsc.addCell(c);
+                }
+                int idx = 1;
+                for (EscalonMacerado e : receta.getEscalones()) {
+                    tableCell(tEsc, String.valueOf(idx++), tdF);
+                    tableCell(tEsc, e.getNombre() != null ? e.getNombre() : "—", tdF);
+                    tableCell(tEsc, e.getDuracionMinutos() != null ? e.getDuracionMinutos() + " min" : "—", tdF);
+                    tableCell(tEsc, e.getTemperaturaC() != null ? e.getTemperaturaC() + " °C" : "—", tdF);
+                }
+                doc.add(tEsc);
+            }
+
+            // Hervor / adiciones
+            if (!receta.getAdicionesHervor().isEmpty()) {
+                addTituloPdf(doc, "HERVOR Y ADICIONES");
+                Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, C_CREMA);
+                Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable tAdic = new PdfPTable(new float[]{3, 1.5f, 1.5f});
+                tAdic.setWidthPercentage(100);
+                for (String h : new String[]{"Insumo", "Min. restantes", "Cantidad"}) {
+                    PdfPCell c = new PdfPCell(new Phrase(h, thF));
+                    c.setBackgroundColor(C_VERDE_OSCURO); c.setBorder(0); c.setPadding(5);
+                    tAdic.addCell(c);
+                }
+                for (AdicionHervor a : receta.getAdicionesHervor()) {
+                    tableCell(tAdic, a.getNombre() != null ? a.getNombre() : "—", tdF);
+                    String mins = a.getMinutosRestantes() != null
+                            ? (a.getMinutosRestantes() == 0 ? "Flameout" : a.getMinutosRestantes() + " min") : "—";
+                    tableCell(tAdic, mins, tdF);
+                    tableCell(tAdic, a.getCantidad() != null
+                            ? a.getCantidad() + " " + (a.getUnidad() != null ? a.getUnidad() : "") : "—", tdF);
+                }
+                doc.add(tAdic);
+            }
+
+            // Notas
+            if (notBlank(receta.getNotas())) {
+                addTituloPdf(doc, "NOTAS TÉCNICAS");
+                doc.add(new Paragraph(receta.getNotas(),
+                        new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
+            }
+
+            // Pie
+            doc.add(new Paragraph("\n"));
+            Paragraph pie = new Paragraph(
+                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
+                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+            pie.setAlignment(Element.ALIGN_RIGHT);
+            doc.add(pie);
+
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando PDF de receta " + receta.getNombre(), e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void addIngredientesReceta(Document doc, Receta receta) throws DocumentException {
+        Font grupoFont = new Font(Font.HELVETICA, 8, Font.BOLD, C_VERDE);
+        Font ingFont   = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+        PdfPTable t = new PdfPTable(new float[]{1, 4});
+        t.setWidthPercentage(100);
+        addGrupoRecetaIngredientes(t, "MALTAS",       receta.getMaltas(),        grupoFont, ingFont);
+        addGrupoRecetaIngredientes(t, "LÚPULOS",      receta.getLupulos(),       grupoFont, ingFont);
+        addGrupoRecetaIngredientes(t, "LEVADURAS",    receta.getLevaduras(),     grupoFont, ingFont);
+        addGrupoRecetaIngredientes(t, "CLARIFICANTES",receta.getClarificantes(), grupoFont, ingFont);
+        doc.add(t);
+    }
+
+    private void addGrupoRecetaIngredientes(PdfPTable t, String grupo,
+                                             List<RecetaIngrediente> lista,
+                                             Font grupoFont, Font ingFont) {
+        if (lista.isEmpty()) return;
+        PdfPCell cGrupo = new PdfPCell(new Phrase(grupo, grupoFont));
+        cGrupo.setBackgroundColor(C_FONDO); cGrupo.setBorderColor(C_BORDE); cGrupo.setPadding(6);
+        cGrupo.setVerticalAlignment(Element.ALIGN_MIDDLE);
+        t.addCell(cGrupo);
+        String texto = lista.stream()
+                .map(ri -> ri.getNombre() + (notBlank(ri.getCantidad()) ? " · " + ri.getCantidad() : ""))
+                .collect(Collectors.joining("   |   "));
+        PdfPCell cVal = new PdfPCell(new Phrase(texto, ingFont));
+        cVal.setBorderColor(C_BORDE); cVal.setPadding(6);
+        t.addCell(cVal);
     }
 
     // ── PDF Comparativa ──────────────────────────────────────────────
