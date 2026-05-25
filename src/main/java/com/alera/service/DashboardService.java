@@ -1,5 +1,6 @@
 package com.alera.service;
 
+import com.alera.config.TenantContext;
 import com.alera.dto.DashboardStats;
 import com.alera.model.enums.EstadoEquipo;
 import com.alera.repository.*;
@@ -39,10 +40,11 @@ public class DashboardService {
         this.mantenimientoRepo = mantenimientoRepo;
     }
 
-    @Cacheable("dashboard-litros-mes")
+    @Cacheable(value = "dashboard-litros-mes", key = "T(com.alera.config.TenantContext).getCurrentTenant()")
     public Map<String, Number> getLitrosPorMes() {
+        String tenantId = TenantContext.getCurrentTenant();
         LocalDate desde = LocalDate.now().minusMonths(5).withDayOfMonth(1);
-        List<Object[]> raw = loteRepo.findLitrosPorMes(desde);
+        List<Object[]> raw = loteRepo.findLitrosPorMes(desde, tenantId);
 
         Map<String, Number> result = new LinkedHashMap<>();
         LocalDate now = LocalDate.now();
@@ -60,9 +62,10 @@ public class DashboardService {
         return result;
     }
 
-    @Cacheable("dashboard-estilos")
+    @Cacheable(value = "dashboard-estilos", key = "T(com.alera.config.TenantContext).getCurrentTenant()")
     public Map<String, Long> getLotesPorEstilo() {
-        List<Object[]> raw = loteRepo.findLotesPorEstilo();
+        String tenantId = TenantContext.getCurrentTenant();
+        List<Object[]> raw = loteRepo.findLotesPorEstilo(tenantId);
         Map<String, Long> result = new LinkedHashMap<>();
         for (Object[] row : raw) {
             result.put((String) row[0], ((Number) row[1]).longValue());
@@ -75,7 +78,7 @@ public class DashboardService {
                + " " + date.getYear();
     }
 
-    @Cacheable("dashboard-stats")
+    @Cacheable(value = "dashboard-stats", key = "T(com.alera.config.TenantContext).getCurrentTenant()")
     public DashboardStats obtenerEstadisticas() {
         log.debug("Calculando estadísticas del dashboard");
 

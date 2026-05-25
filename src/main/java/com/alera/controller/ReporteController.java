@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.TenantContext;
 import com.alera.model.Tenant;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.service.ExcelExportService;
@@ -39,7 +40,7 @@ public class ReporteController {
         if (hasta == null) hasta = LocalDate.now();
 
         var lotes = loteRepo.findByPeriodo(desde, hasta);
-        var resumen = loteRepo.findResumenPorEstilo(desde, hasta);
+        var resumen = loteRepo.findResumenPorEstilo(desde, hasta, TenantContext.getCurrentTenant());
 
         // Estadísticas del período
         long totalLotes = lotes.size();
@@ -76,7 +77,7 @@ public class ReporteController {
         if (hasta == null) hasta = LocalDate.now();
 
         var lotes   = loteRepo.findByPeriodo(desde, hasta);
-        var resumen = loteRepo.findResumenPorEstilo(desde, hasta);
+        var resumen = loteRepo.findResumenPorEstilo(desde, hasta, TenantContext.getCurrentTenant());
 
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         String brandName = tenant != null ? tenant.getName() : "Alera";

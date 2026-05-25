@@ -90,9 +90,9 @@ public class TrazabilidadService {
     }
 
     @Caching(evict = {
-        @CacheEvict("dashboard-stats"),
-        @CacheEvict("dashboard-litros-mes"),
-        @CacheEvict("dashboard-estilos")
+        @CacheEvict(value = "dashboard-stats",      allEntries = true),
+        @CacheEvict(value = "dashboard-litros-mes", allEntries = true),
+        @CacheEvict(value = "dashboard-estilos",    allEntries = true)
     })
     public LoteGuardadoResult guardar(LoteFormDto dto) {
         LoteCerveza lote = new LoteCerveza();
@@ -114,9 +114,9 @@ public class TrazabilidadService {
     }
 
     @Caching(evict = {
-        @CacheEvict("dashboard-stats"),
-        @CacheEvict("dashboard-litros-mes"),
-        @CacheEvict("dashboard-estilos")
+        @CacheEvict(value = "dashboard-stats",      allEntries = true),
+        @CacheEvict(value = "dashboard-litros-mes", allEntries = true),
+        @CacheEvict(value = "dashboard-estilos",    allEntries = true)
     })
     public LoteGuardadoResult actualizar(Long id, LoteFormDto dto) {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)
@@ -134,7 +134,7 @@ public class TrazabilidadService {
         return new LoteGuardadoResult(lote, advertencias);
     }
 
-    @CacheEvict("dashboard-stats")
+    @CacheEvict(value = "dashboard-stats", allEntries = true)
     public void moverFase(Long id, String fase) {
         LoteCerveza lote = loteRepo.findById(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
@@ -209,9 +209,9 @@ public class TrazabilidadService {
     }
 
     @Caching(evict = {
-        @CacheEvict("dashboard-stats"),
-        @CacheEvict("dashboard-litros-mes"),
-        @CacheEvict("dashboard-estilos")
+        @CacheEvict(value = "dashboard-stats",      allEntries = true),
+        @CacheEvict(value = "dashboard-litros-mes", allEntries = true),
+        @CacheEvict(value = "dashboard-estilos",    allEntries = true)
     })
     public void eliminar(Long id) {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)

@@ -73,14 +73,17 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
                    "       COALESCE(SUM(litros_finales), 0) " +
                    "FROM lotes_cerveza " +
                    "WHERE fecha_elaboracion >= :desde AND fecha_elaboracion IS NOT NULL " +
+                   "AND deleted_at IS NULL AND tenant_id = :tenantId " +
                    "GROUP BY 1, 2 ORDER BY 1, 2",
            nativeQuery = true)
-    List<Object[]> findLitrosPorMes(@Param("desde") LocalDate desde);
+    List<Object[]> findLitrosPorMes(@Param("desde") LocalDate desde, @Param("tenantId") String tenantId);
 
     // Top estilos por cantidad de lotes
-    @Query(value = "SELECT estilo, COUNT(*) FROM lotes_cerveza GROUP BY estilo ORDER BY COUNT(*) DESC LIMIT 6",
+    @Query(value = "SELECT estilo, COUNT(*) FROM lotes_cerveza " +
+                   "WHERE tenant_id = :tenantId AND deleted_at IS NULL " +
+                   "GROUP BY estilo ORDER BY COUNT(*) DESC LIMIT 6",
            nativeQuery = true)
-    List<Object[]> findLotesPorEstilo();
+    List<Object[]> findLotesPorEstilo(@Param("tenantId") String tenantId);
 
     // Lotes creados desde una receta
     @Query("SELECT l FROM LoteCerveza l WHERE l.receta.id = :recetaId ORDER BY l.fechaElaboracion DESC NULLS LAST")
@@ -100,7 +103,9 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
 
     @Query(value = "SELECT estilo, COUNT(*) as cantidad, COALESCE(SUM(litros_finales),0) as litros " +
                    "FROM lotes_cerveza WHERE fecha_elaboracion BETWEEN :desde AND :hasta " +
+                   "AND tenant_id = :tenantId AND deleted_at IS NULL " +
                    "GROUP BY estilo ORDER BY litros DESC",
            nativeQuery = true)
-    List<Object[]> findResumenPorEstilo(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
+    List<Object[]> findResumenPorEstilo(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta,
+                                        @Param("tenantId") String tenantId);
 }

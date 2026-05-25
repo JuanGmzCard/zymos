@@ -19,18 +19,18 @@ public class CacheConfig {
         manager.registerCustomCache("dashboard-stats",
                 Caffeine.newBuilder()
                         .expireAfterWrite(5, TimeUnit.MINUTES)
-                        .maximumSize(1)
+                        .maximumSize(50)
                         .build());
         // Datos de gráficas: 10 minutos TTL (cambian menos frecuente)
         manager.registerCustomCache("dashboard-litros-mes",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
-                        .maximumSize(1)
+                        .maximumSize(50)
                         .build());
         manager.registerCustomCache("dashboard-estilos",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
-                        .maximumSize(1)
+                        .maximumSize(50)
                         .build());
         return manager;
     }
