@@ -422,6 +422,15 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findNombresDistintos()` — `SELECT DISTINCT fi.nombre` para datalist de búsqueda
 - Usado también por `TrazabilidadService.mapearDto()` para resolver ítems por ID al guardar lotes
 
+### MantenimientoEquipoRepository
+- `JpaRepository<MantenimientoEquipo, Long>`
+- `findByEquipoIdOrderByFechaDesc(equipoId)` — historial de mantenimientos de un equipo, orden cronológico inverso
+- `findMantenimientoPendiente(fecha)` — equipos cuyo `proximoMantenimiento <= :fecha`; usado por `EquipoService.listarMantenimientoPendiente()`
+- `countMantenimientoPendiente(fecha)` — `COUNT` de equipos con `proximoMantenimiento <= :fecha`; ventana por defecto 7 días
+- `sumTotalCostos()` — `SUM(m.costo)` global; usado en el dashboard
+- `sumCostoByEquipoId(equipoId)` — `COALESCE(SUM(m.costo), 0)` filtrado por equipo; retorna `BigDecimal` nunca null — para costoTotal en detalle y mantenimientos
+- `countByEquipoId(equipoId)` — `COUNT(m)` filtrado por equipo; para totalMantenimientos en detalle y mantenimientos
+
 ---
 
 ## SERVICIOS (lógica de negocio)
