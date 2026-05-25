@@ -22,6 +22,9 @@
             <a th:href="@{/facturas/editar/{id}(id=${factura.id})}" class="btn btn-alera">
                 <i class="bi bi-pencil me-1"></i>Editar
             </a>
+            <a th:href="@{/facturas/duplicar/{id}(id=${factura.id})}" class="btn btn-alera-outline">
+                <i class="bi bi-copy me-1"></i>Duplicar
+            </a>
             <a th:href="@{/facturas}" class="btn btn-alera-outline">
                 <i class="bi bi-arrow-left me-1"></i>Volver
             </a>
@@ -105,6 +108,42 @@
                         <span class="fw-bold">TOTAL</span>
                         <span class="fw-bold detail-value highlight" th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historial de estado -->
+        <div class="col-12" th:if="${!#lists.isEmpty(historial)}">
+            <div class="card-alera">
+                <div class="card-header"><h5><i class="bi bi-clock-history me-2"></i>Historial de Estado</h5></div>
+                <div class="card-body p-0">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                        <tr>
+                            <th style="background:#364318;color:#F5EDD0;padding:0.6rem 1rem;">Fecha</th>
+                            <th style="background:#364318;color:#F5EDD0;">Usuario</th>
+                            <th style="background:#364318;color:#F5EDD0;">Desde</th>
+                            <th style="background:#364318;color:#F5EDD0;">Hacia</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="h : ${historial}">
+                            <td class="ps-3 text-muted small"
+                                th:text="${#temporals.format(h.fecha,'dd/MM/yyyy HH:mm')}">-</td>
+                            <td th:text="${h.usuario}">-</td>
+                            <td>
+                                <span th:if="${h.estadoAnterior == null}" class="text-muted fst-italic small">Creación</span>
+                                <span th:unless="${h.estadoAnterior == null}"
+                                      class="badge" th:classappend="${h.estadoAnterior.badgeClass}"
+                                      th:text="${h.estadoAnterior.displayName}">-</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="${h.estadoNuevo.badgeClass}"
+                                      th:text="${h.estadoNuevo.displayName}">-</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.dto.FacturaFormDto;
 import com.alera.model.Equipo;
+import com.alera.model.FacturaHistorialEstado;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoEquipo;
@@ -83,6 +84,12 @@ public class FacturaProveedorController {
         if (desde   != null) extra.append("&desde=").append(desde);
         if (hasta   != null) extra.append("&hasta=").append(hasta);
         model.addAttribute("extraParams", extra.toString());
+
+        // Stat-cards
+        model.addAttribute("statsTotal",      service.sumTotal(estado, desde, hasta));
+        model.addAttribute("statsPendiente",  service.sumPendiente(desde, hasta));
+        model.addAttribute("statsCountPend",  service.countPendiente(desde, hasta));
+
         return "facturas/lista";
     }
 
@@ -136,8 +143,16 @@ public class FacturaProveedorController {
 
     @GetMapping("/ver/{id}")
     public String ver(@PathVariable Long id, Model model) {
-        model.addAttribute("factura", service.buscarPorId(id).orElseThrow());
+        model.addAttribute("factura",   service.buscarPorId(id).orElseThrow());
+        model.addAttribute("historial", service.listarHistorial(id));
         return "facturas/detalle";
+    }
+
+    @GetMapping("/duplicar/{id}")
+    public String duplicar(@PathVariable Long id, Model model) {
+        model.addAttribute("facturaForm", service.duplicarComoFormDto(id));
+        agregarDatosFormulario(model);
+        return "facturas/formulario";
     }
 
     @GetMapping("/editar/{id}")

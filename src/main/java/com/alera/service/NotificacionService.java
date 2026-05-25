@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.model.Equipo;
+import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Notificacion;
 import com.alera.model.enums.TipoNotificacion;
@@ -113,5 +114,25 @@ public class NotificacionService {
 
     public void marcarTodasLeidas() {
         repo.marcarTodasLeidas();
+    }
+
+    public void crearAlertaFacturas(List<FacturaProveedor> sinProcesar, int dias) {
+        if (sinProcesar.isEmpty()) return;
+        LocalDateTime hoy     = LocalDate.now().atStartOfDay();
+        LocalDateTime maniana = hoy.plusDays(1);
+        if (repo.existeEnPeriodo(TipoNotificacion.SISTEMA, hoy, maniana)) return;
+        int n = sinProcesar.size();
+        String msg = n == 1
+                ? "La factura de " + sinProcesar.get(0).getProveedor() + " lleva más de " + dias + " días sin procesar."
+                : sinProcesar.stream().limit(3)
+                             .map(f -> f.getProveedor() != null ? f.getProveedor() : "#" + f.getId())
+                             .reduce((a, b) -> a + ", " + b).orElse("")
+                  + (n > 3 ? " y " + (n - 3) + " más llevan" : " llevan")
+                  + " más de " + dias + " días sin procesar.";
+        repo.save(Notificacion.of(
+                TipoNotificacion.SISTEMA,
+                n + " factura" + (n > 1 ? "s" : "") + " sin procesar",
+                msg,
+                "/facturas"));
     }
 }

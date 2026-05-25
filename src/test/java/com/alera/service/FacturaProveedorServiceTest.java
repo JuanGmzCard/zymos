@@ -5,8 +5,10 @@ import com.alera.dto.FacturaItemDto;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.EquipoRepository;
+import com.alera.repository.FacturaHistorialEstadoRepository;
 import com.alera.repository.FacturaProveedorRepository;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.repository.ProveedorRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,10 +28,12 @@ import static org.mockito.Mockito.when;
 @DisplayName("FacturaProveedorService — cálculo de totales")
 class FacturaProveedorServiceTest {
 
-    @Mock private FacturaProveedorRepository repo;
-    @Mock private InsumoInventarioRepository insumoRepo;
-    @Mock private EquipoRepository equipoRepo;
-    @Mock private InsumoInventarioService insumoService;
+    @Mock private FacturaProveedorRepository    repo;
+    @Mock private FacturaHistorialEstadoRepository historialRepo;
+    @Mock private InsumoInventarioRepository    insumoRepo;
+    @Mock private EquipoRepository              equipoRepo;
+    @Mock private InsumoInventarioService       insumoService;
+    @Mock private ProveedorRepository           proveedorRepo;
 
     @InjectMocks
     private FacturaProveedorService service;
@@ -56,9 +60,9 @@ class FacturaProveedorServiceTest {
     void setUp() {
         when(repo.save(any())).thenAnswer(inv -> {
             FacturaProveedor f = inv.getArgument(0);
-            // Simula que la BD asigna ID
             return f;
         });
+        when(historialRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoRepo.findByNombreExacto(any())).thenReturn(Optional.empty());
     }
 

@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,4 +43,35 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
 
     @Query("SELECT COUNT(f) FROM FacturaProveedor f")
     long countTotal();
+
+    @Query("SELECT COALESCE(SUM(f.valorTotal), 0) FROM FacturaProveedor f WHERE " +
+           "(:estado IS NULL OR f.estado = :estado) AND " +
+           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+    BigDecimal sumTotalFiltered(@Param("estado") EstadoFactura estado,
+                                @Param("desde")  LocalDate desde,
+                                @Param("hasta")  LocalDate hasta);
+
+    @Query("SELECT COALESCE(SUM(f.valorTotal), 0) FROM FacturaProveedor f WHERE " +
+           "f.estado IN :estados AND " +
+           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+    BigDecimal sumPorEstados(@Param("estados") Collection<EstadoFactura> estados,
+                             @Param("desde")   LocalDate desde,
+                             @Param("hasta")   LocalDate hasta);
+
+    @Query("SELECT COUNT(f) FROM FacturaProveedor f WHERE " +
+           "f.estado IN :estados AND " +
+           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+    long countPorEstados(@Param("estados") Collection<EstadoFactura> estados,
+                         @Param("desde")   LocalDate desde,
+                         @Param("hasta")   LocalDate hasta);
+
+    @Query("SELECT f FROM FacturaProveedor f WHERE " +
+           "f.estado IN :estados AND " +
+           "(f.fechaFactura IS NULL OR f.fechaFactura <= :umbral) " +
+           "ORDER BY f.fechaFactura ASC NULLS LAST")
+    List<FacturaProveedor> findSinProcesar(@Param("estados") Collection<EstadoFactura> estados,
+                                           @Param("umbral")  LocalDate umbral);
 }

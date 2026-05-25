@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
@@ -51,6 +52,9 @@ class FacturaProveedorControllerTest {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(facturaService.listarPaginado(any(), any(), any(), anyInt())).thenReturn(new PageImpl<>(List.of()));
         when(facturaService.suggest(anyString())).thenReturn(List.of());
+        when(facturaService.sumTotal(any(), any(), any())).thenReturn(BigDecimal.ZERO);
+        when(facturaService.sumPendiente(any(), any())).thenReturn(BigDecimal.ZERO);
+        when(facturaService.countPendiente(any(), any())).thenReturn(0L);
         when(proveedorService.listarActivos()).thenReturn(List.of());
         when(insumoRepo.findAll()).thenReturn(List.of());
         when(equipoRepo.findAll()).thenReturn(List.of());

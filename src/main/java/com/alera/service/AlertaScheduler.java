@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.config.TenantContext;
 import com.alera.model.Equipo;
+import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
 import com.alera.repository.TenantRepository;
@@ -19,28 +20,34 @@ public class AlertaScheduler {
     private static final Logger log = LoggerFactory.getLogger(AlertaScheduler.class);
     private static final int UMBRAL_WARN = 3;
 
-    private final TenantRepository      tenantRepo;
-    private final InsumoInventarioService insumoService;
-    private final EquipoService           equipoService;
-    private final EmailService            emailService;
-    private final TenantService           tenantService;
-    private final NotificacionService     notificacionService;
+    private final TenantRepository        tenantRepo;
+    private final InsumoInventarioService  insumoService;
+    private final EquipoService            equipoService;
+    private final EmailService             emailService;
+    private final TenantService            tenantService;
+    private final NotificacionService      notificacionService;
+    private final FacturaProveedorService  facturaService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
+
+    @Value("${app.facturas.alerta-dias:30}")
+    private int facturaAlertaDias;
 
     public AlertaScheduler(TenantRepository tenantRepo,
                             InsumoInventarioService insumoService,
                             EquipoService equipoService,
                             EmailService emailService,
                             TenantService tenantService,
-                            NotificacionService notificacionService) {
+                            NotificacionService notificacionService,
+                            FacturaProveedorService facturaService) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
         this.emailService        = emailService;
         this.tenantService       = tenantService;
         this.notificacionService = notificacionService;
+        this.facturaService      = facturaService;
     }
 
     @Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")
@@ -64,6 +71,9 @@ public class AlertaScheduler {
 
                 // Notificaciones in-app — siempre, independiente de SMTP
                 notifs += notificacionService.crearAlertas(bajoStock, proximosAVencer, mantenimiento);
+
+                List<FacturaProveedor> sinProcesar = facturaService.listarSinProcesar(facturaAlertaDias);
+                notificacionService.crearAlertaFacturas(sinProcesar, facturaAlertaDias);
 
                 // Email — solo si SMTP configurado y tenant tiene email
                 boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();

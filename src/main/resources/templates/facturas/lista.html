@@ -34,6 +34,47 @@
         <a th:href="@{/facturas/nueva}" class="btn btn-alera">Crear Primera Factura</a>
     </div>
 
+    <!-- Stat-cards — visibles siempre que el card principal esté visible -->
+    <div th:unless="${#lists.isEmpty(facturas) and estadoFiltro == null and desde == null and hasta == null}"
+         class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-receipt-cutoff"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${totalFacturas}">0</div>
+                    <div class="stat-label">Facturas en vista</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(statsTotal,1,'COMMA',0,'POINT')}">$0</div>
+                    <div class="stat-label">Monto total filtrado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="${statsCountPend}">0</div>
+                    <div class="stat-label">Pendientes de pago</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-3">
+            <div class="stat-card">
+                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-exclamation-circle"></i></div>
+                <div class="stat-info">
+                    <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(statsPendiente,1,'COMMA',0,'POINT')}">$0</div>
+                    <div class="stat-label">Monto pendiente</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Card principal — visible siempre que haya filtros activos o resultados -->
     <div th:unless="${#lists.isEmpty(facturas) and estadoFiltro == null and desde == null and hasta == null}"
          class="card-alera">

@@ -14,12 +14,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -33,17 +35,20 @@ public class FacturaProveedorService {
     private static final Logger log = LoggerFactory.getLogger(FacturaProveedorService.class);
 
     private final FacturaProveedorRepository repo;
+    private final FacturaHistorialEstadoRepository historialRepo;
     private final InsumoInventarioRepository insumoRepo;
     private final EquipoRepository equipoRepo;
     private final InsumoInventarioService insumoService;
     private final ProveedorRepository proveedorRepo;
 
     public FacturaProveedorService(FacturaProveedorRepository repo,
+                                    FacturaHistorialEstadoRepository historialRepo,
                                     InsumoInventarioRepository insumoRepo,
                                     EquipoRepository equipoRepo,
                                     InsumoInventarioService insumoService,
                                     ProveedorRepository proveedorRepo) {
         this.repo = repo;
+        this.historialRepo = historialRepo;
         this.insumoRepo = insumoRepo;
         this.equipoRepo = equipoRepo;
         this.proveedorRepo = proveedorRepo;
@@ -93,10 +98,47 @@ public class FacturaProveedorService {
 
     public void cambiarEstado(Long id, EstadoFactura nuevoEstado) {
         repo.findById(id).ifPresent(f -> {
+            EstadoFactura anterior = f.getEstado();
             f.setEstado(nuevoEstado);
             repo.save(f);
-            log.info("Factura {} → estado {}", id, nuevoEstado);
+            historialRepo.save(FacturaHistorialEstado.of(id, anterior, nuevoEstado, usuarioActual()));
+            log.info("Factura {} → estado {} (antes: {})", id, nuevoEstado, anterior);
         });
+    }
+
+    @Transactional(readOnly = true)
+    public List<FacturaHistorialEstado> listarHistorial(Long facturaId) {
+        return historialRepo.findByFacturaIdOrderByFechaDesc(facturaId);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal sumTotal(EstadoFactura estado, LocalDate desde, LocalDate hasta) {
+        return repo.sumTotalFiltered(estado, desde, hasta);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal sumPendiente(LocalDate desde, LocalDate hasta) {
+        return repo.sumPorEstados(List.of(EstadoFactura.RECIBIDA, EstadoFactura.VERIFICADA), desde, hasta);
+    }
+
+    @Transactional(readOnly = true)
+    public long countPendiente(LocalDate desde, LocalDate hasta) {
+        return repo.countPorEstados(List.of(EstadoFactura.RECIBIDA, EstadoFactura.VERIFICADA), desde, hasta);
+    }
+
+    @Transactional(readOnly = true)
+    public List<FacturaProveedor> listarSinProcesar(int dias) {
+        LocalDate umbral = LocalDate.now().minusDays(dias);
+        return repo.findSinProcesar(List.of(EstadoFactura.RECIBIDA, EstadoFactura.VERIFICADA), umbral);
+    }
+
+    public FacturaFormDto duplicarComoFormDto(Long id) {
+        FacturaProveedor original = buscarPorId(id).orElseThrow();
+        FacturaFormDto dto = toFormDto(original);
+        dto.setNumeroFactura(null);
+        dto.setFechaFactura(null);
+        dto.setEstado(EstadoFactura.RECIBIDA);
+        return dto;
     }
 
     @CacheEvict(value = "dashboard-stats", allEntries = true)
@@ -105,6 +147,7 @@ public class FacturaProveedorService {
         mapearDto(factura, dto);
         calcularTotales(factura);
         FacturaProveedor saved = repo.save(factura);
+        historialRepo.save(FacturaHistorialEstado.of(saved.getId(), null, saved.getEstado(), usuarioActual()));
         procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura());
         log.info("Factura creada: id={} | proveedor={} | items={} | total={}",
                 saved.getId(), saved.getProveedor(), saved.getItems().size(), saved.getValorTotal());
@@ -263,6 +306,12 @@ public class FacturaProveedorService {
 
     private String normalizeUnit(String unidad) {
         return UnidadUtils.unidadBase(unidad);
+    }
+
+    private String usuarioActual() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
+               ? auth.getName() : "sistema";
     }
 
     public FacturaFormDto toFormDto(FacturaProveedor f) {
