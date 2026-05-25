@@ -104,8 +104,9 @@ com.alera/
 │               Proveedor, TipoCerveza, Usuario,
 │               LoteItemFactura (tabla lote_items_factura — asignación parcial de ítems a lotes),
 │               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant)
-│               + 9 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
+│               + 10 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
+│               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA)
 ├── repository/ 14 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
 │               ElaboracionPlanificadaRepository, NotificacionRepository)
@@ -175,6 +176,7 @@ templates/
 - `V24__historial_tenants.sql` — tabla `historial_tenants(id BIGSERIAL, subdomain VARCHAR(100), accion VARCHAR(50), usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW(), detalles VARCHAR(500))` + índices en `subdomain` y `fecha DESC`. Sin FK a `tenants` (preserva historial si se elimina el tenant). Sin `@TenantId` — es auditoría de super-admin, no filtrada por tenant.
 - `V25__soft_delete_lotes_recetas.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN deleted_at TIMESTAMP` y `ALTER TABLE recetas ADD COLUMN deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en ambas entidades. `eliminar()` en los servicios setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente).
 - `V26__notificaciones.sql` — tabla `notificaciones(id BIGSERIAL, tenant_id VARCHAR(100), tipo VARCHAR(50), titulo VARCHAR(200), mensaje VARCHAR(500), url_accion VARCHAR(300), leida BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())` + índices en `(tenant_id, leida)` y `(tenant_id, created_at DESC)`. Con `@TenantId` — filtrada por tenant. Sin FK externa.
+- `V27__estado_factura.sql` — `ALTER TABLE facturas_proveedor ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'RECIBIDA'` — estado de la factura: RECIBIDA (gris), VERIFICADA (amarillo), PAGADA (verde). Todas las facturas existentes quedan en RECIBIDA.
 
 ---
 
@@ -313,6 +315,7 @@ Extiende `AuditableEntity`. Campos propios:
 ### Equipo / InsumoInventario / FacturaProveedor
 Todos extienden `AuditableEntity` — los 4 campos de auditoría vienen del padre.
 - `FacturaProveedor`: `proveedor` (String original) + `@ManyToOne proveedorRef → Proveedor` (LAZY, nullable) — coexisten para compat. histórica. V10 backfill vincula automáticamente donde los nombres coincidan.
+- **Campo `estado` en `FacturaProveedor`**: `@Enumerated(EnumType.STRING) EstadoFactura estado` — default `RECIBIDA`. Valores: `RECIBIDA` (badge gris), `VERIFICADA` (badge amarillo), `PAGADA` (badge verde). Cada valor tiene `getDisplayName()` y `getBadgeClass()` (clase Bootstrap). Se puede cambiar desde el detalle via `POST /facturas/{id}/estado` o desde el formulario de edición via select.
 - **Campo de fecha en `FacturaProveedor`**: `fechaFactura` (`LocalDate`) — **NO** `fecha`. En JPQL usar `f.fechaFactura`; en Java `getFechaFactura()`. Error frecuente: escribir `f.fecha` en un `@Query` → `UnknownPathException` al arrancar.
 
 ### Usuario
@@ -370,6 +373,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### FacturaProveedorRepository
 - `findAllWithItems()` — DISTINCT + JOIN FETCH (usado en `TrazabilidadController.agregarInventarioAlModelo()` para el buscador de costos)
+- `findAllPagedByEstado(estado, Pageable)` — paginado filtrado por `EstadoFactura`
 - `findAllPaged(Pageable)` — paginación sin JOIN FETCH
 - `findByIdWithItems(id)` — LEFT JOIN FETCH items por id
 - `search(q, Pageable)` — LIKE en `COALESCE(numeroFactura,'')` y `COALESCE(proveedor,'')`, orden `fechaFactura DESC NULLS LAST` — para el typeahead de la lista de facturas
@@ -450,6 +454,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `ProveedorService.suggest(q)` — filtra en memoria sobre `findAllByOrderByNombreAsc()` por nombre o NIT, retorna hasta 6 mapas con `{nombre, nit, activo, url}` — usado por `GET /proveedores/suggest`
 - `FacturaProveedorService` inyecta `ProveedorRepository` para vincular proveedor al guardar
 - `FacturaProveedorService.guardar/actualizar/eliminar` → `@CacheEvict("dashboard-stats")` — invalida caché al modificar datos financieros
+- `FacturaProveedorService.listarPaginado(EstadoFactura estado, int page)` — si `estado` es null, devuelve todas; si no, filtra por ese estado
+- `FacturaProveedorService.cambiarEstado(id, EstadoFactura)` — busca la factura y actualiza el estado
 - `FacturaProveedorService.suggest(q)` — usa `repo.search()`, retorna hasta 6 mapas con `{titulo, proveedor, fecha, total, url}` — usado por `GET /facturas/suggest`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
@@ -601,10 +607,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### FacturaProveedorController ("/facturas")
 - CRUD + `GET /ver/{id}`
+- `GET /facturas?estado=RECIBIDA|VERIFICADA|PAGADA` — filtro opcional por estado; sin parámetro muestra todas. Pasa `estadoFiltro`, `estados` (enum values) y `extraParams` al modelo para que la paginación respete el filtro activo.
+- `POST /facturas/{id}/estado` — cambia el estado de la factura. `@RequestParam EstadoFactura estado`. Redirige a `/facturas/ver/{id}` con flash success.
 - `GET /facturas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Busca por N° factura o proveedor. Devuelve `[{titulo, proveedor, fecha, total, url}]`.
 - `agregarDatosFormulario()` construye:
   - `insumosPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoInsumo.name()` para datalist JS
   - `equiposPorTipo` — `Map<String, List<String>>` agrupando nombres por `TipoEquipo.name()` para datalist JS
+  - `estados` — `EstadoFactura.values()` para el select en el formulario de edición
 - `POST /facturas/guardar-insumo-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0. Accesible: ADMIN, FACTURACION.
 - `POST /facturas/guardar-equipo-rapido` — `@ResponseBody` JSON. Crea equipo en estado OPERATIVO. Accesible: ADMIN, FACTURACION.
 - Inyecta `InsumoInventarioService` y `EquipoService`
@@ -956,7 +965,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `EquipoControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
-- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository` y `EquipoRepository` adicionales
+- `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository` y `EquipoRepository` adicionales. **Nota**: stub usa `listarPaginado(any(), anyInt())` — la firma acepta `EstadoFactura` (nullable) como primer parámetro.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
