@@ -43,13 +43,13 @@ class LoteCervezaRepositoryIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void findLitrosPorMesNoLanzaExcepcion() {
-        var resultado = repo.findLitrosPorMes(LocalDate.now().minusMonths(6));
+        var resultado = repo.findLitrosPorMes(LocalDate.now().minusMonths(6), "default");
         assertThat(resultado).isNotNull();
     }
 
     @Test
     void findLotesPorEstiloNoLanzaExcepcion() {
-        var resultado = repo.findLotesPorEstilo();
+        var resultado = repo.findLotesPorEstilo("default");
         assertThat(resultado).isNotNull().isEmpty();
     }
 

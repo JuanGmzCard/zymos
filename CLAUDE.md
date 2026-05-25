@@ -349,9 +349,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findTop5(Pageable)`, `findByIdWithIngredientes(id)`
 - `countDistinctEstilos()`, `countEnProceso()`, `countCompletados()`
 - `countLotesActivosByEquipo(equipoId)`
-- `findLitrosPorMes(desde)` — nativeQuery, usa `CAST(EXTRACT(...) AS integer)` (NO `::int`)
-- `findLotesPorEstilo()`, `findParaKanban(limite)`, `findByPeriodo(desde, hasta)`
-- `findResumenPorEstilo(desde, hasta)` — nativeQuery para reporte
+- `findLitrosPorMes(desde, tenantId)` — nativeQuery, usa `CAST(EXTRACT(...) AS integer)` (NO `::int`); filtra por `tenant_id` y `deleted_at IS NULL` explícitamente (Hibernate no filtra queries nativas)
+- `findLotesPorEstilo(tenantId)`, `findParaKanban(limite)`, `findByPeriodo(desde, hasta)`
+- `findResumenPorEstilo(desde, hasta, tenantId)` — nativeQuery para reporte; filtra por `tenant_id` y `deleted_at IS NULL` explícitamente
 - `findByRecetaId(recetaId)` — lotes elaborados con una receta
 - `findByIds(List<Long> ids)` — `SELECT DISTINCT ... LEFT JOIN FETCH ingredientes WHERE id IN :ids` — para comparativa; DISTINCT evita filas duplicadas del join con colección
 - `search(q, Pageable)` — búsqueda global por codigoLote o estilo
@@ -438,9 +438,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### TrazabilidadService
 - `listarPaginado(estilo, fase, page)` — sobrecarga sin fechas
 - `listarPaginado(estilo, fase, desde, hasta, page)` — con rango de fechas
-- `guardar/actualizar/eliminar` → registra historial + auditing JPA automático + `@CacheEvict` en las 3 caches del dashboard
+- `guardar/actualizar/eliminar` → registra historial + auditing JPA automático + `@CacheEvict(value="...", allEntries=true)` en las 3 caches del dashboard (`allEntries=true` requerido porque la clave es el tenant, no los parámetros del método)
 - `listarParaKanban()` — lotes activos + completados últimos 7 días
-- `moverFase(id, fase)` — cambia las fechas de fase del lote. **Avanzar**: setea `*FechaInicial` solo si era null (preserva fecha real de inicio); setea `*FechaFinal` de la fase que se deja solo si era null. **Retroceder**: limpia `*FechaInicial` y `*FechaFinal` de todas las fases posteriores a la destino, y `*FechaFinal` de la fase destino misma (el lote vuelve a estar "en curso" en esa fase). Comportamiento por destino: `sinIniciar` → limpia todo; `fermentacion` → preserva `fermFechaInicial`, limpia `fermFechaFinal` y todo lo posterior; `acondicionamiento` → cierra ferm, abre acond; `maduracion` → cierra ferm+acond, abre madur; `carbonatacion` → cierra ferm+acond+madur, abre carb; `completados` → cierra todas las fases. `@CacheEvict("dashboard-stats")` + registra `HistorialLote` con acción "EDITADO" y notas "Fase → {fase}". Valores válidos de `fase`: `sinIniciar`, `fermentacion`, `acondicionamiento`, `maduracion`, `carbonatacion`, `completados`.
+- `moverFase(id, fase)` — cambia las fechas de fase del lote. **Avanzar**: setea `*FechaInicial` solo si era null (preserva fecha real de inicio); setea `*FechaFinal` de la fase que se deja solo si era null. **Retroceder**: limpia `*FechaInicial` y `*FechaFinal` de todas las fases posteriores a la destino, y `*FechaFinal` de la fase destino misma (el lote vuelve a estar "en curso" en esa fase). Comportamiento por destino: `sinIniciar` → limpia todo; `fermentacion` → preserva `fermFechaInicial`, limpia `fermFechaFinal` y todo lo posterior; `acondicionamiento` → cierra ferm, abre acond; `maduracion` → cierra ferm+acond, abre madur; `carbonatacion` → cierra ferm+acond+madur, abre carb; `completados` → cierra todas las fases. `@CacheEvict(value="dashboard-stats", allEntries=true)` + registra `HistorialLote` con acción "EDITADO" y notas "Fase → {fase}". Valores válidos de `fase`: `sinIniciar`, `fermentacion`, `acondicionamiento`, `maduracion`, `carbonatacion`, `completados`.
 - `obtenerHistorial(loteId)` → historial manual (complementa auditing JPA)
 - `toLoteFormDto(lote)` — delega a `LoteMapper` (MapStruct). No hace mapeo manual.
 - `suggest(q)` — busca por codigoLote o estilo via `loteRepo.search()`, retorna hasta 6 mapas con `{codigoLote, estilo, fase, completado, url}` — usado por `GET /suggest`
@@ -494,11 +494,12 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
 ### DashboardService
-- `getLitrosPorMes()` — datos para Chart.js — `@Cacheable("dashboard-litros-mes")` TTL 10 min
-- `getLotesPorEstilo()` — datos para Chart.js — `@Cacheable("dashboard-estilos")` TTL 10 min
-- `obtenerEstadisticas()` — 13 COUNT queries a nivel BD — `@Cacheable("dashboard-stats")` TTL 5 min
-- Caché Caffeine configurada en `CacheConfig`: `dashboard-stats` (1 entrada, 5 min), `dashboard-litros-mes` y `dashboard-estilos` (1 entrada c/u, 10 min)
-- Las 3 caches se invalidan automáticamente al crear/editar/eliminar lotes; `dashboard-stats` también al modificar facturas
+- `getLitrosPorMes()` — datos para Chart.js — `@Cacheable(value="dashboard-litros-mes", key="T(com.alera.config.TenantContext).getCurrentTenant()")` TTL 10 min; pasa `tenantId` a `findLitrosPorMes`
+- `getLotesPorEstilo()` — datos para Chart.js — `@Cacheable(value="dashboard-estilos", key="T(com.alera.config.TenantContext).getCurrentTenant()")` TTL 10 min; pasa `tenantId` a `findLotesPorEstilo`
+- `obtenerEstadisticas()` — 13 COUNT queries a nivel BD — `@Cacheable(value="dashboard-stats", key="T(com.alera.config.TenantContext).getCurrentTenant()")` TTL 5 min; queries JPQL ya filtradas por Hibernate via `@TenantId`
+- **CRÍTICO multi-tenant**: las 3 queries nativas del dashboard (`findLitrosPorMes`, `findLotesPorEstilo`, `findResumenPorEstilo`) requieren `tenantId` explícito — Hibernate NO filtra `nativeQuery=true`
+- Caché Caffeine configurada en `CacheConfig`: `dashboard-stats` (50 entradas, 5 min), `dashboard-litros-mes` y `dashboard-estilos` (50 entradas c/u, 10 min). `maximumSize(50)` soporta múltiples tenants con claves distintas
+- Las 3 caches se invalidan automáticamente al crear/editar/eliminar lotes (`allEntries = true`); `dashboard-stats` también al modificar facturas
 
 ### EquipoService
 - `suggest(q, EstadoEquipo estado)` — filtra en memoria sobre `listarPorEstado(estado)` o `listarTodos()`, retorna hasta 6 mapas con `{nombre, tipo, estado, colorEstado, pendiente, url}` — usado por `GET /equipos/suggest`
@@ -682,6 +683,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### ReporteController ("/reportes")
 - `GET /reportes/produccion?desde=&hasta=` — reporte con Chart.js y tabla de lotes
 - `GET /reportes/produccion/excel?desde=&hasta=` — descarga `.xlsx` con dos hojas: "Reporte de Producción" (14 columnas: código, estilo, receta, fecha, fase, OG, FG, ABV, atenuación, eficiencia, litros, costo total, costo/litro, creado por) y "Por Estilo" (estilo, cantidad, litros). Botón "Excel" en `produccion.html`.
+- Ambos endpoints pasan `TenantContext.getCurrentTenant()` a `findResumenPorEstilo` — obligatorio porque es nativeQuery y Hibernate no filtra automáticamente.
 
 ### CalendarioController ("/calendario")
 - `GET /calendario` — template con FullCalendar
