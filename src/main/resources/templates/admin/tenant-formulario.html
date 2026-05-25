@@ -88,13 +88,13 @@
             </div>
         </div>
 
-        <!-- SECCIÓN: Importar / Exportar (solo en modo edición) -->
-        <div th:if="${!esNuevo}" class="card-alera p-4 mb-3">
+        <!-- SECCIÓN: Importar / Exportar -->
+        <div class="card-alera p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i>Importar / Exportar configuración</h6>
             <div class="d-flex flex-wrap gap-4 align-items-end">
 
-                <!-- Exportar -->
-                <div>
+                <!-- Exportar (solo en edición) -->
+                <div th:if="${!esNuevo}">
                     <div class="small text-muted mb-1">Exportar branding</div>
                     <a th:href="@{/admin/tenants/{s}/export(s=${tenant.subdomain})}"
                        class="btn btn-alera-outline btn-sm text-nowrap">
@@ -313,33 +313,28 @@
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
 
+    function aplicarConfig(config) {
+        ['name','tagline','logoUrl','colorNavbar','colorPrimary',
+         'colorAccent','colorAccentHover','colorCream','colorBodyBg'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && config[id] != null) { el.value = config[id]; el.dispatchEvent(new Event('input')); }
+        });
+        ['fontHeadings','fontBody'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el && config[id] != null) { el.value = config[id]; el.dispatchEvent(new Event('change')); }
+        });
+        updatePreview();
+        updateLoginPreview();
+        updateFontPreview();
+    }
+
     function copiarConfigDeTenant() {
         const origen = document.getElementById('copiarDeTenant')?.value;
         if (!origen) return;
         if (!confirm('¿Copiar el branding de "' + origen + '" a este tenant? Se sobreescribirán colores, fuentes y nombre.')) return;
-
         fetch('/admin/tenants/' + origen + '/config')
             .then(r => r.json())
-            .then(config => {
-                const campos = {
-                    name: 'name', tagline: 'tagline', logoUrl: 'logoUrl',
-                    colorNavbar: 'colorNavbar', colorPrimary: 'colorPrimary',
-                    colorAccent: 'colorAccent', colorAccentHover: 'colorAccentHover',
-                    colorCream: 'colorCream', colorBodyBg: 'colorBodyBg'
-                };
-                Object.entries(campos).forEach(([key, id]) => {
-                    const el = document.getElementById(id);
-                    if (el && config[key] != null) { el.value = config[key]; el.dispatchEvent(new Event('input')); }
-                });
-                // Fuentes (selects, usan 'change')
-                ['fontHeadings','fontBody'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el && config[id] != null) { el.value = config[id]; el.dispatchEvent(new Event('change')); }
-                });
-                updatePreview();
-                updateLoginPreview();
-                updateFontPreview();
-            })
+            .then(config => aplicarConfig(config))
             .catch(() => alert('No se pudo obtener la configuración del tenant origen.'));
     }
 
@@ -349,6 +344,21 @@
             alert('Selecciona un archivo JSON primero.');
             return;
         }
+        // Tenant nuevo: leer JSON en el cliente y poblar formulario directamente
+        if (!tenantSubdomain) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                try {
+                    const config = JSON.parse(e.target.result);
+                    aplicarConfig(config);
+                } catch (err) {
+                    alert('El archivo no es un JSON válido:\n' + err.message);
+                }
+            };
+            reader.readAsText(fileInput.files[0]);
+            return;
+        }
+        // Tenant existente: enviar al servidor
         const formData = new FormData();
         formData.append('file', fileInput.files[0]);
         const headers = {};
