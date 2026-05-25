@@ -461,8 +461,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `listarTodas()` — lista completa sin paginar
 - `listarPaginado(Boolean activa, int page)` — paginada con filtro opcional (null=todas, true=activas, false=inactivas)
 - `toFormDto` parsea `cantidad` normalizada de vuelta a `{cantidad, unidad}` y mapea `adicionesHervor`
-- `actualizar()` → limpia `ingredientes`, `escalones` **y `adicionesHervor`** antes de remapear
+- `actualizar()` → limpia `ingredientes`, `escalones` **y `adicionesHervor`** antes de remapear; incrementa `version` automáticamente (`version = (version ?? 1) + 1`)
 - `mapDtoToEntity()` → persiste `adicionesHervor` además de ingredientes y escalones
+- `duplicarComoFormDto(Long id)` — carga la receta, llama `toFormDto()`, limpia `id` (null) y agrega " (Copia)" al nombre. El submit va a `POST /recetas/guardar` — crea una nueva receta, no edita la original. Version siempre empieza en 1 en la copia.
 - `suggest(q, Boolean activa)` — filtra via `repo.search()` (limit 10) + stream filter por `activa` si no es null, retorna hasta 6 mapas con `{nombre, estilo, activa, url}` — usado por `GET /recetas/suggest`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
@@ -547,8 +548,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
-- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` de facturas. Dos hojas: hoja 1 "Facturas" con título, fila de filtros activos, fila de totales (N facturas, subtotal, IVA, total), tabla con 11 columnas (N°, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, notas, creada por) con autofilter; hoja 2 "Por Proveedor" con agrupación por nombre de proveedor (N facturas, total). Inyectado también en `FacturaProveedorController`.
-- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` de facturas. Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), 11 columnas con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Filas alternas con fondo crema.
+- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` de facturas. Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), 11 columnas con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Filas alternas con fondo crema. Inyectado también en `FacturaProveedorController`.
+- `generarExcelInventario(insumos, brandName)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por `TipoInsumo` (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
 - Solo importa `org.apache.poi.*` — sin colisión con OpenPDF. Usa `XSSFFont` con cast `(XSSFFont) wb.createFont()`.
 - Inyectado en `ReporteController`.
 
@@ -631,20 +632,25 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `formulario.html` — sección Costos de Producción: buscador en tiempo real sobre `ITEMS_FACTURA` JS, tabla de ítems asignados con cantidad editable, botón "Aplicar a Receta e Insumos" (auto-llena ingredientes por tipo y navega al tab 2). **JS en `static/js/trazabilidad-costos.js`** (costos) y **`static/js/trazabilidad-ingredientes.js`** (wizard, volumen, ingredientes, receta). El bloque `th:inline="javascript"` del template solo inyecta `ITEMS_FACTURA`, `INIT_IDS`, `INIT_CANTIDADES`.
 
 ### RecetaController ("/recetas")
-- `GET /recetas?activa=true|false&page=N` — lista paginada con filtro opcional por estado activa
+- `GET /recetas?activa=true|false&page=N` — lista paginada con filtro opcional por estado activa. Pasa `lotesCountMap` (Map<Long, Long>) al modelo — consulta bulk `countPorReceta()` para mostrar badge de lotes por receta sin N+1.
 - `GET /recetas/suggest?q=&activa=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q, activa)`. El parámetro `activa` es opcional; si se omite busca en todas. Devuelve `[{nombre, estilo, activa, url}]`.
 - CRUD completo + `GET /api/{id}` (@ResponseBody JSON)
-- `GET /ver/{id}` — incluye `lotesDeReceta` (lotes elaborados con esa receta)
+- `GET /ver/{id}` — incluye `lotesDeReceta` (lotes elaborados con esa receta). El header del detalle muestra el badge de versión (`v1`, `v2`, etc.) y botón "Duplicar".
+- `GET /duplicar/{id}` — delega a `service.duplicarComoFormDto(id)`, inyecta `insumosInventario` y `tiposCerveza`, retorna `recetas/formulario`. El submit crea una receta nueva (no edita la original). La copia siempre empieza en version 1.
 - `GET /nueva` y `GET /editar/{id}` — inyectan al modelo:
   - `insumosInventario` (List<InsumoInventario>) para datalists de ingredientes por tipo
   - `tiposCerveza` (List<TipoCerveza> activos) para datalist del campo Estilo
-- Inyecta `InsumoInventarioService` y `TipoCervezaService`
+- Inyecta `InsumoInventarioService`, `TipoCervezaService` y `LoteCervezaRepository`
 
 ### InsumoInventarioController ("/inventario")
 - CRUD estándar
 - `GET /inventario/suggest?nombre=&tipo=` — `@ResponseBody`, `produces=JSON`. Delega a `service.listarPaginado(nombre, tipo, 0)` (limit 6). El parámetro `tipo` es opcional (`TipoInsumo` enum). Devuelve `[{id, nombre, tipoNombre, colorTipo, bajoStock, url}]`. La template pasa el tipo seleccionado via `data-activa` para respetar el filtro activo.
 - `POST /inventario/guardar-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0 sin redirigir. Devuelve `{success, id, nombre}`. Accesible: ADMIN, INVENTARIO. Usado desde formularios de receta y factura vía AJAX + CSRF header.
+- `GET /inventario/export?nombre=&tipo=` — descarga `inventario-YYYY-MM-DD.xlsx`. Respeta los mismos filtros que la lista. Sin filtros exporta todo (via `listarTodos()`); con filtros exporta solo el resultado paginado. Lee branding del request. Delega a `ExcelExportService.generarExcelInventario()`.
+- `POST /inventario/{id}/ajuste` — ajuste rápido de stock. `@RequestParam TipoMovimiento tipo, BigDecimal cantidad, String motivo`. Delega a `service.ajustar()`. Flash success/danger. Solo ADMIN/INVENTARIO (hereda de `/inventario/**`).
+- `GET /inventario/{id}/historial?page=` — historial de movimientos del insumo. Paginado. Template `inventario/historial.html`. Modelo: `insumo`, `movimientos`, `paginaActual`, `totalPaginas`.
 - `GET /inventario/precios?nombre=X` — **Historial de precios** para el insumo con nombre X. Busca en `FacturaItem` por nombre (case-insensitive) via `findHistorialPreciosPorNombre`. Calcula: último precio, promedio, mínimo, máximo, variación (último vs primero), N compras, N proveedores. Pasa arrays `chartFechas`, `chartPrecios`, `chartProveedores` para Chart.js (barras). La fila más reciente se resalta en la tabla. Botón 📈 en `inventario/lista.html` abre directamente con el nombre del insumo. **Nota**: usa `fi.getFactura().getFechaFactura()` (no `getFecha()`) — campo correcto en `FacturaProveedor`.
+- Inyecta `ExcelExportService` vía constructor (requerido — mockear en `@WebMvcTest`).
 
 ### TipoCervezaController ("/tipos-cerveza") — solo ADMIN
 - CRUD + toggle activo
@@ -984,11 +990,12 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Unitarios** (`src/test/java/com/alera/service/`):
 - `InsumoInventarioServiceTest`, `TrazabilidadServiceTest`, `DashboardServiceTest`
+- `InsumoInventarioServiceTest` — requiere `@Mock MovimientoInventarioRepository movimientoRepo` y stub `lenient().when(movimientoRepo.save(any())).thenReturn(new MovimientoInventario())` en `@BeforeEach` — el servicio registra movimientos en `descontarIngrediente`, `restaurarIngrediente` y `ajustar`. `descontarIngrediente` y `restaurarIngrediente` son de 3 args: `(nombre, cantidadTexto, referencia)` — actualizar stubs en `TrazabilidadServiceTest` con el arg adicional `any()`.
 - `FacturaProveedorServiceTest`, `UnidadUtilsTest` — `FacturaProveedorServiceTest` requiere `@Mock FacturaHistorialEstadoRepository historialRepo` y `@Mock ProveedorRepository proveedorRepo` (además de los mocks previos) porque el constructor del servicio los inyecta. El `@BeforeEach` stubea `historialRepo.save(any())` para que `guardar()` no lance NPE.
 - `LogAccesoServiceTest` — cubre `registrar`, `listarPaginado` (con/sin filtro) y `fallidosUltimaHora` (verifica ventana de 1 hora). Usa `ReflectionTestUtils.setField` para inyectar `pageSize` sin contexto Spring.
 - `EquipoServiceTest` — 17 tests: listar/paginar (con y sin filtro de estado), buscarPorId, guardar, eliminar (happy path, no encontrado, con lotes activos → EquipoEnUsoException), fermentadores disponibles, mantenimiento pendiente (verifica ventana de 7 días), `cambiarEstado` (actualiza y persiste, no existe → excepción), `countByEstado`, `countMantenimientoPendiente`, `countTotal`.
 - `RecetaServiceTest` — 14 tests: listarActivas/Todas/Paginado (filtros null/true/false), buscarPorId (found/not found), guardar (campos básicos, normalización kg→gr, ignorar vacíos, escalones en orden), actualizar (limpia ingredientes anteriores), eliminar, toFormDto (mapeo directo, parseo "5000 gr"→{cantidad,unidad}, fila vacía si lista vacía). OG/FG objetivo usan literales Integer (ej: `1050`, `1010`) — NO BigDecimal.
-- `UsuarioServiceTest` — 25 tests: `loadUserByUsername` (usuario válido, no existe, inactivo, mapeo de todos los roles → `ROLE_X`), `guardar` (BCrypt encode, rol específico, null→ADMIN), `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op), `cambiarPassword` (encode y guarda, no existe no-op), `cambiarRol`, `eliminar`, `existeUsername`, `esElMismoUsuario` (mismo, distinto, no existe), `suggest` (null/corta, filtro, límite 6, estructura del mapa con displayName).
+- `UsuarioServiceTest` — 25 tests: `loadUserByUsername` (usuario válido, no existe, inactivo, mapeo de todos los roles → `ROLE_X`), `guardar` (BCrypt encode, rol específico, null→ADMIN), `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op), `cambiarPassword` (encode y guarda, no existe no-op), `cambiarRol`, `eliminar`, `existeUsername`, `esElMismoUsuario` (mismo, distinto, no existe), `suggest` (null/corta, filtro, límite 6, estructura del mapa con displayName). Requiere `@Mock SuperAdminRepository superAdminRepo` — `loadUserByUsername` lo consulta primero (super-admins no tienen tenant). Los tests de `loadUserByUsername` deben stubear `superAdminRepo.findByUsernameAndActivoTrue(username)` → `Optional.empty()` para que la lógica pase al repositorio de usuario regular.
 - `TenantServiceTest` — 19 tests: `listarTodos` (orden por subdomain), `buscarPorSubdomain`, `guardar` (CREADO/EDITADO, evicta cache, registra historial, retorna tenant), `evictAllCache`, `toggleActivo` (ACTIVADO/DESACTIVADO, evicta cache, no existe no-op), `listarHistorial`, `registrarAccion` (con/sin autenticación → "sistema"), `registrarEnvioExitoso` (resetea contador, timestamps, no existe no-op), `registrarEnvioFallido` (incrementa, no existe no-op). Usa `SecurityContextHolder` para simular usuario autenticado; limpia en `@AfterEach`.
 - `EmailService` usa `@Autowired` en campos (no constructor) → tests usan `ReflectionTestUtils.setField` para inyectar `mailSender`, `templateEngine`, `fromAddress`, `baseUrl`. `MimeMessage` creado con `new MimeMessage((jakarta.mail.Session) null)` — permite que `MimeMessageHelper` opere sin SMTP real.
 - `EmailServiceTest` — 19 tests: `mailConfigurado` (con/sin SMTP), `enviarAlertasDiarias` (sin SMTP, email null/vacío, sin alertas, con bajoStock/vencimientos/mantenimiento, fallo SMTP → RuntimeException, variables al template), `enviarEmailPrueba` (sin SMTP, destinatario null/vacío, éxito → null, fallo → mensaje error), `diasHasta` (hoy/futuro/pasado).
@@ -1016,7 +1023,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `RecetaControllerTest` — 4 tests: 401, 200 con filtro activas, suggest JSON, GET /editar retorna formulario
 - `EquipoControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, GET /ver/{id} retorna detalle. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`. Requiere `@MockBean MantenimientoEquipoService`. Stubs adicionales: `countTotal()`, `countByEstado(any())`, `countMantenimientoPendiente()` → 0L.
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
-- `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre
+- `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre. Requiere `@MockBean ExcelExportService excelService` — el controller lo inyecta en el constructor para el endpoint `/export`.
 - `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
