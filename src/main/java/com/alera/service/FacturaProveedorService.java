@@ -57,9 +57,8 @@ public class FacturaProveedorService {
         return repo.findAllWithItems();
     }
 
-    public Page<FacturaProveedor> listarPaginado(EstadoFactura estado, int page) {
-        PageRequest pr = PageRequest.of(page, pageSize);
-        return estado != null ? repo.findAllPagedByEstado(estado, pr) : repo.findAllPaged(pr);
+    public Page<FacturaProveedor> listarPaginado(EstadoFactura estado, java.time.LocalDate desde, java.time.LocalDate hasta, int page) {
+        return repo.findAllFiltered(estado, desde, hasta, PageRequest.of(page, pageSize));
     }
 
     @Transactional(readOnly = true)

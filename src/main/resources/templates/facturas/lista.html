@@ -25,38 +25,84 @@
 </div>
 
 <div class="container-fluid px-4 py-4">
-    <div th:if="${#lists.isEmpty(facturas)}" class="empty-state">
+
+    <!-- Empty state sin filtros activos -->
+    <div th:if="${#lists.isEmpty(facturas) and estadoFiltro == null and desde == null and hasta == null}"
+         class="empty-state">
         <i class="bi bi-receipt"></i>
         <h4>No hay facturas registradas</h4>
         <a th:href="@{/facturas/nueva}" class="btn btn-alera">Crear Primera Factura</a>
     </div>
 
-    <div th:unless="${#lists.isEmpty(facturas)}" class="card-alera">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <!-- Card principal — visible siempre que haya filtros activos o resultados -->
+    <div th:unless="${#lists.isEmpty(facturas) and estadoFiltro == null and desde == null and hasta == null}"
+         class="card-alera">
+
+        <!-- Header: tabs de estado + filtro de fechas + Excel + typeahead -->
+        <div class="card-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+
+            <!-- Izquierda: título + tabs de estado -->
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <h5 class="mb-0"><i class="bi bi-table me-2"></i>Listado de Facturas</h5>
                 <div class="btn-group btn-group-sm" role="group">
-                    <a th:href="@{/facturas}" th:classappend="${estadoFiltro == null} ? 'active'" class="btn btn-outline-secondary">Todas</a>
+                    <a th:href="@{/facturas(desde=${desde},hasta=${hasta})}"
+                       th:classappend="${estadoFiltro == null} ? 'active'"
+                       class="btn btn-outline-secondary">Todas</a>
                     <a th:each="est : ${estados}"
-                       th:href="@{/facturas(estado=${est.name()})}"
+                       th:href="@{/facturas(estado=${est.name()},desde=${desde},hasta=${hasta})}"
                        th:classappend="${estadoFiltro == est} ? 'active'"
                        th:text="${est.displayName}"
                        class="btn btn-outline-secondary">-</a>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <a th:href="${estadoFiltro != null} ? @{/facturas/export(estado=${estadoFiltro.name()})} : @{/facturas/export}"
+
+            <!-- Derecha: filtro fechas + Excel + typeahead -->
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <!-- Filtro de fechas -->
+                <form method="get" action="/facturas" class="d-flex align-items-center gap-1">
+                    <input th:if="${estadoFiltro != null}" type="hidden" name="estado" th:value="${estadoFiltro.name()}">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text px-2">Desde</span>
+                        <input type="date" name="desde" th:value="${desde}" class="form-control form-control-sm" style="width:130px;">
+                    </div>
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text px-2">Hasta</span>
+                        <input type="date" name="hasta" th:value="${hasta}" class="form-control form-control-sm" style="width:130px;">
+                    </div>
+                    <button type="submit" class="btn btn-sm btn-alera">
+                        <i class="bi bi-funnel"></i>
+                    </button>
+                    <a th:if="${desde != null or hasta != null}"
+                       th:href="@{/facturas(estado=${estadoFiltro?.name()})}"
+                       class="btn btn-sm btn-outline-secondary" title="Limpiar fechas">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </form>
+
+                <!-- Excel -->
+                <a th:href="@{/facturas/export(estado=${estadoFiltro?.name()},desde=${desde},hasta=${hasta})}"
                    class="btn btn-sm btn-outline-success">
                     <i class="bi bi-file-earmark-excel me-1"></i>Excel
                 </a>
+
+                <!-- Typeahead -->
                 <div class="position-relative">
                     <input type="text" id="facturaInput" class="form-control form-control-sm"
-                           style="width:230px;" placeholder="N° factura o proveedor..." autocomplete="off">
+                           style="width:200px;" placeholder="N° o proveedor..." autocomplete="off">
                     <div id="facturaSuggest" class="search-suggest" style="display:none;"></div>
                 </div>
             </div>
         </div>
-        <div class="card-body p-0">
+
+        <!-- Sin resultados con filtros activos -->
+        <div th:if="${#lists.isEmpty(facturas)}" class="text-center py-5 text-muted">
+            <i class="bi bi-search fs-2 d-block mb-2"></i>
+            No hay facturas para los filtros seleccionados.
+            <a th:href="@{/facturas}" class="ms-1">Limpiar todos los filtros</a>
+        </div>
+
+        <!-- Tabla -->
+        <div th:unless="${#lists.isEmpty(facturas)}" class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
                     <thead>
@@ -103,7 +149,8 @@
                 </table>
             </div>
         </div>
-        <div class="card-footer bg-transparent py-2">
+
+        <div th:unless="${#lists.isEmpty(facturas)}" class="card-footer bg-transparent py-2">
             <div th:replace="~{fragments/paginacion :: paginacion}"></div>
             <p class="text-center text-muted small mt-1" th:if="${totalPaginas > 1}">
                 Página <span th:text="${paginaActual + 1}"></span> de <span th:text="${totalPaginas}"></span>
@@ -112,6 +159,7 @@
         </div>
     </div>
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function() {

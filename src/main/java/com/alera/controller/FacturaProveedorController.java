@@ -65,16 +65,24 @@ public class FacturaProveedorController {
     @GetMapping
     public String lista(@RequestParam(defaultValue = "0") int page,
                         @RequestParam(required = false) EstadoFactura estado,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
                         Model model) {
-        var pagina = service.listarPaginado(estado, page);
+        var pagina = service.listarPaginado(estado, desde, hasta, page);
         model.addAttribute("facturas",      pagina.getContent());
         model.addAttribute("paginaActual",  page);
         model.addAttribute("totalPaginas",  pagina.getTotalPages());
         model.addAttribute("totalFacturas", pagina.getTotalElements());
         model.addAttribute("estadoFiltro",  estado);
+        model.addAttribute("desde",         desde);
+        model.addAttribute("hasta",         hasta);
         model.addAttribute("estados",       EstadoFactura.values());
         model.addAttribute("baseUrl",       "/facturas");
-        model.addAttribute("extraParams",   estado != null ? "&estado=" + estado.name() : "");
+        StringBuilder extra = new StringBuilder();
+        if (estado != null) extra.append("&estado=").append(estado.name());
+        if (desde   != null) extra.append("&desde=").append(desde);
+        if (hasta   != null) extra.append("&hasta=").append(hasta);
+        model.addAttribute("extraParams", extra.toString());
         return "facturas/lista";
     }
 

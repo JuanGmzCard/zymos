@@ -49,7 +49,7 @@ class FacturaProveedorControllerTest {
     @BeforeEach
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
-        when(facturaService.listarPaginado(any(), anyInt())).thenReturn(new PageImpl<>(List.of()));
+        when(facturaService.listarPaginado(any(), any(), any(), anyInt())).thenReturn(new PageImpl<>(List.of()));
         when(facturaService.suggest(anyString())).thenReturn(List.of());
         when(proveedorService.listarActivos()).thenReturn(List.of());
         when(insumoRepo.findAll()).thenReturn(List.of());

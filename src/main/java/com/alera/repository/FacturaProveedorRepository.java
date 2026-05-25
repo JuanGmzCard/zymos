@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,11 +17,16 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
     @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items ORDER BY f.fechaFactura DESC")
     List<FacturaProveedor> findAllWithItems();
 
-    @Query("SELECT f FROM FacturaProveedor f ORDER BY f.id DESC")
-    Page<FacturaProveedor> findAllPaged(Pageable pageable);
-
-    @Query("SELECT f FROM FacturaProveedor f WHERE f.estado = :estado ORDER BY f.id DESC")
-    Page<FacturaProveedor> findAllPagedByEstado(@Param("estado") EstadoFactura estado, Pageable pageable);
+    @Query("SELECT f FROM FacturaProveedor f WHERE " +
+           "(:estado IS NULL OR f.estado = :estado) AND " +
+           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(:hasta  IS NULL OR f.fechaFactura <= :hasta) " +
+           "ORDER BY f.fechaFactura DESC NULLS LAST, f.id DESC")
+    Page<FacturaProveedor> findAllFiltered(
+            @Param("estado") EstadoFactura estado,
+            @Param("desde")  LocalDate desde,
+            @Param("hasta")  LocalDate hasta,
+            Pageable pageable);
 
     @Query("SELECT f FROM FacturaProveedor f LEFT JOIN FETCH f.items WHERE f.id = :id")
     Optional<FacturaProveedor> findByIdWithItems(@Param("id") Long id);
