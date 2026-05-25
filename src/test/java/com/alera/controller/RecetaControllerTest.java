@@ -36,6 +36,7 @@ class RecetaControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
     @MockBean RecetaService              recetaService;
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean InsumoInventarioService    insumoService;

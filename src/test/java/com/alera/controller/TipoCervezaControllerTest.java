@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.*;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.TipoCervezaService;
 import com.alera.service.UsuarioService;
@@ -36,6 +37,7 @@ class TipoCervezaControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
     @MockBean TipoCervezaService         tipoCervezaService;
 
     @BeforeEach

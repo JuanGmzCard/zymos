@@ -37,6 +37,7 @@ class FacturaProveedorControllerTest {
     @MockBean UsuarioService                usuarioService;
     @MockBean LogAccesoService              logAccesoService;
     @MockBean LoginAttemptService           loginAttemptService;
+    @MockBean JwtService                    jwtService;
     @MockBean FacturaProveedorService       facturaService;
     @MockBean ProveedorService              proveedorService;
     @MockBean InsumoInventarioRepository    insumoRepo;

@@ -8,6 +8,7 @@ import com.alera.config.LoginAttemptService;
 import com.alera.model.Notificacion;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.NotificacionService;
 import com.alera.service.UsuarioService;
@@ -47,6 +48,7 @@ class NotificacionControllerTest {
     @MockBean AleraAuthFailureHandler   failureHandler;
     @MockBean AleraAccessDeniedHandler  accessDeniedHandler;
     @MockBean LoginAttemptService       loginAttemptService;
+    @MockBean JwtService                jwtService;
 
     @BeforeEach
     void setUp() {

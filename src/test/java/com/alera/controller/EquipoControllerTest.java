@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.repository.TenantRepository;
 import com.alera.service.EquipoService;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +39,7 @@ class EquipoControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
     @MockBean EquipoService              equipoService;
 
     @BeforeEach

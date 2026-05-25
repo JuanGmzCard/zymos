@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.PdfExportService;
 import com.alera.service.UsuarioService;
@@ -36,6 +37,7 @@ class ComparativaControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean PdfExportService           pdfService;
 

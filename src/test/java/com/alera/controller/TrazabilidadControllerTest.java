@@ -52,6 +52,7 @@ class TrazabilidadControllerTest {
     @MockBean BrandingProperties           brandingProperties;
     @MockBean AleraAuthSuccessHandler      successHandler;
     @MockBean LoginAttemptService          loginAttemptService;
+    @MockBean JwtService                   jwtService;
     @MockBean AleraAuthFailureHandler      failureHandler;
     @MockBean AleraAccessDeniedHandler     accessDeniedHandler;
     @MockBean PdfExportService             pdfExportService;

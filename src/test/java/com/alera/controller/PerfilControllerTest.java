@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.model.Usuario;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,7 @@ class PerfilControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
 
     @BeforeEach void setUp() { WebMvcTestHelper.configureTenantMock(tenantRepo); }
 

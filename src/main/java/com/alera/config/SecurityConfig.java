@@ -1,13 +1,16 @@
 package com.alera.config;
 
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -15,6 +18,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 
 @Configuration
@@ -54,6 +58,23 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public JwtFilter jwtFilter(JwtService jwtService, UsuarioService usuarioService) {
+        return new JwtFilter(jwtService, usuarioService);
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtFilter> jwtFilterRegistration(JwtFilter filter) {
+        FilterRegistrationBean<JwtFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
     public DaoAuthenticationProvider authProvider(UsuarioService usuarioService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(usuarioService);
@@ -66,12 +87,14 @@ public class SecurityConfig {
                                             DaoAuthenticationProvider authProvider,
                                             TenantFilter tenantFilter,
                                             LoginAttemptFilter loginAttemptFilter,
+                                            JwtFilter jwtFilter,
                                             AleraAuthSuccessHandler successHandler,
                                             AleraAuthFailureHandler failureHandler,
                                             AleraAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
+            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
             .sessionManagement(session -> session
@@ -88,6 +111,7 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasRole("ADMIN")
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
 
                 .requestMatchers("/usuarios/**").hasRole("ADMIN")
@@ -119,7 +143,7 @@ public class SecurityConfig {
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
             )
-            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**"));
+            .csrf(csrf -> csrf.ignoringRequestMatchers("/api/**", "/api/auth/**"));
         return http.build();
     }
 }

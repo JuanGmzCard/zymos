@@ -5,6 +5,7 @@ import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.RecetaRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,7 @@ class BusquedaControllerTest {
     @MockBean UsuarioService                usuarioService;
     @MockBean LogAccesoService              logAccesoService;
     @MockBean LoginAttemptService           loginAttemptService;
+    @MockBean JwtService                    jwtService;
     @MockBean LoteCervezaRepository         loteRepo;
     @MockBean RecetaRepository              recetaRepo;
     @MockBean InsumoInventarioRepository    insumoRepo;

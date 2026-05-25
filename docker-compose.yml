@@ -36,6 +36,9 @@ services:
       FACTURACION_PASSWORD: ${FACTURACION_PASSWORD:-}
       EQUIPOS_USERNAME:    ${EQUIPOS_USERNAME:-}
       EQUIPOS_PASSWORD:    ${EQUIPOS_PASSWORD:-}
+      # ── JWT ──────────────────────────────────────────────────────
+      JWT_SECRET:              ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_TTL_HOURS:           ${JWT_TTL_HOURS:-24}
       # ── Multi-tenant ─────────────────────────────────────────────
       DEFAULT_SUBDOMAIN:       ${DEFAULT_SUBDOMAIN:-default}
       # ── Branding del cliente ─────────────────────────────────────

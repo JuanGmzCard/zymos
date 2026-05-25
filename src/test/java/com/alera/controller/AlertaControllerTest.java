@@ -9,6 +9,7 @@ import com.alera.model.Equipo;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.EquipoService;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ class AlertaControllerTest {
     @MockBean AleraAuthFailureHandler    failureHandler;
     @MockBean AleraAccessDeniedHandler   accessDeniedHandler;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
 
     @BeforeEach
     void setUp() {

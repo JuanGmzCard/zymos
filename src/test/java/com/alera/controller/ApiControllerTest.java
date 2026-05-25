@@ -45,6 +45,7 @@ class ApiControllerTest {
     @MockBean AleraAuthFailureHandler  failureHandler;
     @MockBean AleraAccessDeniedHandler accessDeniedHandler;
     @MockBean LoginAttemptService      loginAttemptService;
+    @MockBean JwtService               jwtService;
 
     @BeforeEach
     void setUp() {

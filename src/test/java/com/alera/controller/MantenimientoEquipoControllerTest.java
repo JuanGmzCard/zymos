@@ -6,6 +6,7 @@ import com.alera.model.enums.EstadoEquipo;
 import com.alera.model.enums.TipoEquipo;
 import com.alera.repository.TenantRepository;
 import com.alera.service.EquipoService;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.MantenimientoEquipoService;
 import com.alera.service.UsuarioService;
@@ -39,6 +40,7 @@ class MantenimientoEquipoControllerTest {
     @MockBean UsuarioService                 usuarioService;
     @MockBean LogAccesoService               logAccesoService;
     @MockBean LoginAttemptService            loginAttemptService;
+    @MockBean JwtService                     jwtService;
     @MockBean MantenimientoEquipoService     mantenimientoService;
     @MockBean EquipoService                  equipoService;
 

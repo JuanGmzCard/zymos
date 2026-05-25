@@ -7,6 +7,7 @@ import com.alera.config.BrandingProperties;
 import com.alera.config.LoginAttemptService;
 import com.alera.model.ElaboracionPlanificada;
 import com.alera.repository.TenantRepository;
+import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.PlanificacionService;
 import com.alera.service.RecetaService;
@@ -45,6 +46,7 @@ class PlanificacionControllerTest {
     @MockBean AleraAuthFailureHandler  failureHandler;
     @MockBean AleraAccessDeniedHandler accessDeniedHandler;
     @MockBean LoginAttemptService      loginAttemptService;
+    @MockBean JwtService               jwtService;
 
     @BeforeEach
     void setUp() {

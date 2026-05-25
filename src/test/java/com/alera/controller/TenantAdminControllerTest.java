@@ -35,6 +35,7 @@ class TenantAdminControllerTest {
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
+    @MockBean JwtService                 jwtService;
     @MockBean TenantService              tenantService;
     @MockBean UsuarioRepository          usuarioRepository;
     @MockBean EmailService               emailService;
