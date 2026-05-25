@@ -356,9 +356,16 @@
             method: 'POST',
             headers: headers,
             body: formData
-        }).then(() => {
-            window.location.reload();
-        }).catch(() => alert('Error de conexión al importar.'));
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                window.location.reload();
+            } else {
+                alert('Error al importar:\n' + data.message);
+            }
+        })
+        .catch(() => alert('Error de conexión al importar.'));
     }
 
     function enviarEmailPrueba() {

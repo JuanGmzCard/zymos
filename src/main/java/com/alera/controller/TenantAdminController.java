@@ -137,10 +137,11 @@ public class TenantAdminController {
     }
 
     @PostMapping("/{subdomain}/import")
-    public String importConfig(@PathVariable String subdomain,
-                                @RequestParam("file") MultipartFile file,
-                                RedirectAttributes ra) {
+    @ResponseBody
+    public Map<String, Object> importConfig(@PathVariable String subdomain,
+                                             @RequestParam("file") MultipartFile file) {
         try {
+            if (file.isEmpty()) return Map.of("ok", false, "message", "El archivo está vacío.");
             @SuppressWarnings("unchecked")
             Map<String, String> config = objectMapper.readValue(file.getInputStream(), Map.class);
             Tenant t = tenantService.buscarPorSubdomain(subdomain)
@@ -148,13 +149,10 @@ public class TenantAdminController {
             applyConfig(t, config);
             tenantService.guardar(t);
             tenantService.registrarAccion(subdomain, "CONFIG_IMPORTADA", file.getOriginalFilename());
-            ra.addFlashAttribute("mensaje", "Configuración importada correctamente desde " + file.getOriginalFilename());
-            ra.addFlashAttribute("tipoMensaje", "success");
+            return Map.of("ok", true, "message", "Configuración importada correctamente.");
         } catch (Exception e) {
-            ra.addFlashAttribute("mensaje", "Error al importar: " + e.getMessage());
-            ra.addFlashAttribute("tipoMensaje", "danger");
+            return Map.of("ok", false, "message", "Error al importar: " + e.getMessage());
         }
-        return "redirect:/admin/tenants/editar/" + subdomain;
     }
 
     private Map<String, Object> buildConfigMap(Tenant t) {
