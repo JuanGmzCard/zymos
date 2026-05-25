@@ -88,6 +88,9 @@
                     <tr th:each="rec : ${recetas}">
                         <td>
                             <span class="fw-600" th:text="${rec.nombre}">—</span>
+                            <span class="badge ms-1" style="background:#6c757d;font-size:.65rem;"
+                                  th:if="${rec.version != null and rec.version > 1}"
+                                  th:text="'v' + ${rec.version}">v1</span>
                             <div th:if="${rec.descripcion != null and !rec.descripcion.isBlank()}"
                                  class="text-muted small"
                                  th:text="${#strings.abbreviate(rec.descripcion, 60)}"></div>

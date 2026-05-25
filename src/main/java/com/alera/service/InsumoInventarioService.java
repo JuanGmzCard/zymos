@@ -1,12 +1,17 @@
 package com.alera.service;
 
 import com.alera.model.InsumoInventario;
+import com.alera.model.MovimientoInventario;
 import com.alera.model.enums.TipoInsumo;
+import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.repository.MovimientoInventarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -20,10 +25,16 @@ public class InsumoInventarioService {
 
     private static final Logger log = LoggerFactory.getLogger(InsumoInventarioService.class);
 
-    private final InsumoInventarioRepository repo;
+    @Value("${app.page-size:15}")
+    private int pageSize;
 
-    public InsumoInventarioService(InsumoInventarioRepository repo) {
-        this.repo = repo;
+    private final InsumoInventarioRepository repo;
+    private final MovimientoInventarioRepository movimientoRepo;
+
+    public InsumoInventarioService(InsumoInventarioRepository repo,
+                                   MovimientoInventarioRepository movimientoRepo) {
+        this.repo          = repo;
+        this.movimientoRepo = movimientoRepo;
     }
 
     public static final int PAGE_SIZE = 15;
@@ -32,11 +43,9 @@ public class InsumoInventarioService {
         return repo.findAllByOrderByNombreAsc();
     }
 
-    // Fix 5+6: paginación + filtros
     public Page<InsumoInventario> listarPaginado(String nombre, TipoInsumo tipo, int page) {
-        // Pasar "" en vez de null para evitar inferencia de tipo bytea en PostgreSQL
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre.trim() : "";
-        return repo.findByFiltros(nombreParam, tipo, PageRequest.of(page, PAGE_SIZE));
+        return repo.findByFiltros(nombreParam, tipo, PageRequest.of(page, pageSize));
     }
 
     public Optional<InsumoInventario> buscarPorId(Long id) {
@@ -63,41 +72,82 @@ public class InsumoInventarioService {
         return repo.findProximosAVencer(LocalDate.now().plusDays(dias));
     }
 
+    public Page<MovimientoInventario> listarMovimientos(Long insumoId, int page) {
+        return movimientoRepo.findByInsumoIdOrderByFechaDesc(insumoId, PageRequest.of(page, pageSize));
+    }
+
+    public void ajustar(Long id, TipoMovimiento tipo, BigDecimal cantidad, String motivo) {
+        InsumoInventario insumo = repo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Insumo no encontrado: " + id));
+        BigDecimal anterior = insumo.getCantidad();
+        BigDecimal posterior;
+        if (tipo == TipoMovimiento.ENTRADA) {
+            posterior = anterior.add(cantidad);
+        } else if (tipo == TipoMovimiento.SALIDA) {
+            posterior = anterior.subtract(cantidad).max(BigDecimal.ZERO);
+        } else {
+            posterior = cantidad;
+        }
+        insumo.setCantidad(posterior);
+        repo.save(insumo);
+        registrarMovimiento(insumo.getId(), insumo.getNombre(), tipo,
+                cantidad, anterior, posterior, motivo, null);
+        log.info("Ajuste de stock '{}': {} {} → {} {}", insumo.getNombre(),
+                tipo, cantidad, posterior, insumo.getUnidad());
+    }
+
     /**
      * Descuenta del inventario. Retorna el nombre del insumo si el stock era insuficiente,
      * o null si había suficiente stock (o el insumo no existe en inventario).
      */
     public String descontarIngrediente(String nombre, String cantidadTexto) {
+        return descontarIngrediente(nombre, cantidadTexto, null);
+    }
+
+    public String descontarIngrediente(String nombre, String cantidadTexto, String referencia) {
         if (nombre == null || nombre.isBlank()) return null;
         BigDecimal cantidad = parsearCantidad(cantidadTexto);
         if (cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return null;
 
         Optional<InsumoInventario> opt = repo.findByNombreExacto(nombre);
-        if (opt.isEmpty()) return null; // no registrado en inventario → no hay que descontar
+        if (opt.isEmpty()) return null;
 
         InsumoInventario insumo = opt.get();
         BigDecimal disponible = insumo.getCantidad();
-        boolean insuficiente = disponible.compareTo(cantidad) < 0;
+        boolean insuficiente  = disponible.compareTo(cantidad) < 0;
 
-        insumo.setCantidad(disponible.subtract(cantidad).max(BigDecimal.ZERO));
+        BigDecimal posterior = disponible.subtract(cantidad).max(BigDecimal.ZERO);
+        insumo.setCantidad(posterior);
         repo.save(insumo);
+
+        registrarMovimiento(insumo.getId(), insumo.getNombre(), TipoMovimiento.DESCUENTO_LOTE,
+                insuficiente ? disponible : cantidad, disponible, posterior,
+                insuficiente ? "Stock insuficiente — se dejó en 0" : null, referencia);
 
         if (insuficiente) {
             log.warn("Stock insuficiente para '{}': disponible={} requerido={} — se dejó en 0",
                     nombre, disponible, cantidad);
         } else {
-            log.debug("Descuento inventario '{}': -{} | nuevo stock={}", nombre, cantidad, insumo.getCantidad());
+            log.debug("Descuento inventario '{}': -{} | nuevo stock={}", nombre, cantidad, posterior);
         }
         return insuficiente ? nombre : null;
     }
 
     public void restaurarIngrediente(String nombre, String cantidadTexto) {
+        restaurarIngrediente(nombre, cantidadTexto, null);
+    }
+
+    public void restaurarIngrediente(String nombre, String cantidadTexto, String referencia) {
         if (nombre == null || nombre.isBlank()) return;
         BigDecimal cantidad = parsearCantidad(cantidadTexto);
         if (cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
         repo.findByNombreExacto(nombre).ifPresent(insumo -> {
-            insumo.setCantidad(insumo.getCantidad().add(cantidad));
+            BigDecimal anterior  = insumo.getCantidad();
+            BigDecimal posterior = anterior.add(cantidad);
+            insumo.setCantidad(posterior);
             repo.save(insumo);
+            registrarMovimiento(insumo.getId(), insumo.getNombre(), TipoMovimiento.RESTAURACION_LOTE,
+                    cantidad, anterior, posterior, null, referencia);
         });
     }
 
@@ -120,5 +170,21 @@ public class InsumoInventarioService {
         if (n.contains("clarific") || n.contains("gelatin") || n.contains("irish")) return TipoInsumo.CLARIFICANTE;
         if (n.contains("envase") || n.contains("botell") || n.contains("lata"))  return TipoInsumo.ENVASE;
         return TipoInsumo.OTRO;
+    }
+
+    private void registrarMovimiento(Long insumoId, String nombre, TipoMovimiento tipo,
+                                     BigDecimal cantidad, BigDecimal anterior,
+                                     BigDecimal posterior, String motivo, String referencia) {
+        movimientoRepo.save(MovimientoInventario.of(
+                insumoId, nombre, tipo, cantidad, anterior, posterior, motivo, referencia, currentUser()));
+    }
+
+    private String currentUser() {
+        try {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            return auth != null ? auth.getName() : "sistema";
+        } catch (Exception e) {
+            return "sistema";
+        }
     }
 }

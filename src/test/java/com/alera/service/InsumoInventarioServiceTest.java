@@ -1,8 +1,10 @@
 package com.alera.service;
 
 import com.alera.model.InsumoInventario;
+import com.alera.model.MovimientoInventario;
 import com.alera.model.enums.TipoInsumo;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.repository.MovimientoInventarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,9 @@ class InsumoInventarioServiceTest {
     @Mock
     private InsumoInventarioRepository repo;
 
+    @Mock
+    private MovimientoInventarioRepository movimientoRepo;
+
     @InjectMocks
     private InsumoInventarioService service;
 
@@ -37,6 +42,7 @@ class InsumoInventarioServiceTest {
         insumoConStock.setCantidad(new BigDecimal("5000"));
         insumoConStock.setUnidad("gr");
         insumoConStock.setStockMinimo(new BigDecimal("500"));
+        lenient().when(movimientoRepo.save(any(MovimientoInventario.class))).thenReturn(new MovimientoInventario());
     }
 
     // ── parsearCantidad ─────────────────────────────────────────────

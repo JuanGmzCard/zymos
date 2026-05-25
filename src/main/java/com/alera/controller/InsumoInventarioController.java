@@ -3,6 +3,7 @@ package com.alera.controller;
 import com.alera.model.FacturaItem;
 import com.alera.model.InsumoInventario;
 import com.alera.model.enums.TipoInsumo;
+import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.service.InsumoInventarioService;
 import org.springframework.http.MediaType;
@@ -148,6 +149,42 @@ public class InsumoInventarioController {
         ra.addFlashAttribute("mensaje", "Insumo eliminado");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/inventario";
+    }
+
+    // ── Ajuste rápido de stock ────────────────────────────────────────────
+
+    @PostMapping("/{id}/ajuste")
+    public String ajustarStock(@PathVariable Long id,
+                                @RequestParam TipoMovimiento tipo,
+                                @RequestParam BigDecimal cantidad,
+                                @RequestParam(defaultValue = "") String motivo,
+                                RedirectAttributes ra) {
+        try {
+            service.ajustar(id, tipo, cantidad, motivo.isBlank() ? null : motivo.trim());
+            ra.addFlashAttribute("mensaje", "Stock ajustado correctamente");
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
+        return "redirect:/inventario";
+    }
+
+    // ── Historial de movimientos ──────────────────────────────────────────
+
+    @GetMapping("/{id}/historial")
+    public String historialMovimientos(@PathVariable Long id,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        Model model) {
+        InsumoInventario insumo = service.buscarPorId(id).orElseThrow();
+        var pagina = service.listarMovimientos(id, page);
+        model.addAttribute("insumo",       insumo);
+        model.addAttribute("movimientos",  pagina.getContent());
+        model.addAttribute("paginaActual", page);
+        model.addAttribute("totalPaginas", pagina.getTotalPages());
+        model.addAttribute("baseUrl",      "/inventario/" + id + "/historial");
+        model.addAttribute("extraParams",  "");
+        return "inventario/historial";
     }
 
     // ── Historial de precios ──────────────────────────────────────────────

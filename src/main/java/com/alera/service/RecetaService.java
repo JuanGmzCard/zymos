@@ -73,8 +73,9 @@ public class RecetaService {
         receta.getEscalones().clear();
         receta.getAdicionesHervor().clear();
         mapDtoToEntity(dto, receta);
+        receta.setVersion((receta.getVersion() == null ? 1 : receta.getVersion()) + 1);
         Receta saved = repo.save(receta);
-        log.info("Receta actualizada: {} ({})", saved.getNombre(), saved.getId());
+        log.info("Receta actualizada: {} ({}) — v{}", saved.getNombre(), saved.getId(), saved.getVersion());
         return saved;
     }
 

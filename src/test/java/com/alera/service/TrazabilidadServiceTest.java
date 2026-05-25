@@ -61,7 +61,7 @@ class TrazabilidadServiceTest {
     void guardar_generaCodigoCorrectoParaPrimerLote() {
         when(loteRepo.findMaxConsecutivoPorPrefix("IPA")).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
         LoteGuardadoResult resultado = service.guardar(loteFormBasico);
 
@@ -73,7 +73,7 @@ class TrazabilidadServiceTest {
     void guardar_incrementaConsecutivo() {
         when(loteRepo.findMaxConsecutivoPorPrefix("IPA")).thenReturn(2);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
         LoteGuardadoResult resultado = service.guardar(loteFormBasico);
 
@@ -87,7 +87,7 @@ class TrazabilidadServiceTest {
     void guardar_sinAdvertenciasConStockSuficiente() {
         when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
         LoteGuardadoResult resultado = service.guardar(loteFormBasico);
 
@@ -101,7 +101,7 @@ class TrazabilidadServiceTest {
         when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         // Simula que "Swaen Ale" tiene stock insuficiente
-        when(insumoService.descontarIngrediente(eq("Swaen Ale"), any())).thenReturn("Swaen Ale");
+        when(insumoService.descontarIngrediente(eq("Swaen Ale"), any(), any())).thenReturn("Swaen Ale");
 
         LoteGuardadoResult resultado = service.guardar(loteFormBasico);
 
@@ -120,12 +120,12 @@ class TrazabilidadServiceTest {
 
         when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
         service.guardar(loteFormBasico);
 
         // Verifica que se descuenta con 2000 gr, no 2 kg
-        verify(insumoService).descontarIngrediente(eq("Swaen Ale"), contains("2000"));
+        verify(insumoService).descontarIngrediente(eq("Swaen Ale"), contains("2000"), any());
     }
 
     @Test
@@ -136,11 +136,11 @@ class TrazabilidadServiceTest {
 
         when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
         service.guardar(loteFormBasico);
 
-        verify(insumoService).descontarIngrediente(eq("Levadura Líquida"), contains("3785"));
+        verify(insumoService).descontarIngrediente(eq("Levadura Líquida"), contains("3785"), any());
     }
 
     // ── Eliminar ────────────────────────────────────────────────────
@@ -161,14 +161,14 @@ class TrazabilidadServiceTest {
 
         when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoService.descontarIngrediente(any(), any())).thenReturn(null);
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
         LoteGuardadoResult res = service.guardar(dto);
 
         when(loteRepo.findByIdWithIngredientes(1L)).thenReturn(Optional.of(res.getLote()));
 
         service.eliminar(1L);
 
-        verify(insumoService).restaurarIngrediente(eq("Swaen Ale"), any());
+        verify(insumoService).restaurarIngrediente(eq("Swaen Ale"), any(), any());
         // soft delete: save con deletedAt seteado, no loteRepo.delete()
         verify(loteRepo, never()).delete(any());
         verify(loteRepo, atLeast(2)).save(argThat(l ->

@@ -102,7 +102,7 @@ public class TrazabilidadService {
         loteRepo.save(lote);
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "CREADO", currentUser(), lote.getEstilo()));
-        List<String> advertencias = descontarInventario(lote.getIngredientes());
+        List<String> advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
         if (advertencias.isEmpty()) {
             log.info("Lote creado: {} | estilo={} | ingredientes={}",
                     lote.getCodigoLote(), lote.getEstilo(), lote.getIngredientes().size());
@@ -122,14 +122,14 @@ public class TrazabilidadService {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
         log.info("Actualizando lote: {}", lote.getCodigoLote());
-        restaurarInventario(lote.getIngredientes());
+        restaurarInventario(lote.getIngredientes(), lote.getCodigoLote());
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "EDITADO", currentUser(), null));
-        List<String> advertencias = descontarInventario(lote.getIngredientes());
+        List<String> advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
         log.info("Lote actualizado: {}", lote.getCodigoLote());
         return new LoteGuardadoResult(lote, advertencias);
     }
@@ -216,7 +216,7 @@ public class TrazabilidadService {
     public void eliminar(Long id) {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
-        restaurarInventario(lote.getIngredientes());
+        restaurarInventario(lote.getIngredientes(), lote.getCodigoLote());
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "ARCHIVADO", currentUser(), null));
         lote.setDeletedAt(java.time.LocalDateTime.now());
@@ -321,9 +321,13 @@ public class TrazabilidadService {
      * @return nombres de ingredientes donde el stock era insuficiente (advertencias, no errores)
      */
     private List<String> descontarInventario(List<Ingrediente> ingredientes) {
+        return descontarInventario(ingredientes, null);
+    }
+
+    private List<String> descontarInventario(List<Ingrediente> ingredientes, String codigoLote) {
         List<String> insuficientes = new ArrayList<>();
         for (Ingrediente ing : ingredientes) {
-            String advertencia = insumoService.descontarIngrediente(ing.getNombre(), ing.getCantidad());
+            String advertencia = insumoService.descontarIngrediente(ing.getNombre(), ing.getCantidad(), codigoLote);
             if (advertencia != null) {
                 insuficientes.add(advertencia);
             }
@@ -331,13 +335,13 @@ public class TrazabilidadService {
         return insuficientes;
     }
 
-    /**
-     * Restaura todos los ingredientes en una sola unidad transaccional.
-     * Se llama desde actualizar() y eliminar() que ya están bajo @Transactional.
-     */
     private void restaurarInventario(List<Ingrediente> ingredientes) {
+        restaurarInventario(ingredientes, null);
+    }
+
+    private void restaurarInventario(List<Ingrediente> ingredientes, String codigoLote) {
         for (Ingrediente ing : ingredientes) {
-            insumoService.restaurarIngrediente(ing.getNombre(), ing.getCantidad());
+            insumoService.restaurarIngrediente(ing.getNombre(), ing.getCantidad(), codigoLote);
         }
     }
 

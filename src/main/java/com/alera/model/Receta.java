@@ -42,6 +42,9 @@ public class Receta extends AuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String notas;
 
+    @Column(nullable = false)
+    private Integer version = 1;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
@@ -99,6 +102,8 @@ public class Receta extends AuditableEntity {
     public void setVolumenBase(BigDecimal volumenBase) { this.volumenBase = volumenBase; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+    public Integer getVersion() { return version; }
+    public void setVersion(Integer version) { this.version = version; }
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public List<RecetaIngrediente> getIngredientes() { return ingredientes; }

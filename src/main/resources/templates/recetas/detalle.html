@@ -19,6 +19,9 @@
                 <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
                     <h1 class="mb-0" th:text="${receta.nombre}">Nombre</h1>
                     <span th:if="${!receta.activa}" class="phase-badge inicio">Inactiva</span>
+                    <span class="badge" style="background:#6c757d;font-size:.7rem;"
+                          th:if="${receta.version != null}"
+                          th:text="'v' + ${receta.version}">v1</span>
                 </div>
                 <p class="mb-0" th:text="${receta.estilo}">Estilo</p>
             </div>
