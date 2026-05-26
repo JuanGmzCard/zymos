@@ -167,12 +167,34 @@ function sincronizarIngredientesDesdeItems() {
     goTab(1);
 }
 
+// ── Conversión de unidades para cantidad asignada ─────────────────
+function convertirCantidadUnidades(cantidad, unidadOrigen, unidadDestino) {
+    var FACTORES = { gr: 1, kg: 1000, ml: 1, l: 1000, gal: 3785.41, und: 1 };
+    var BASE     = { gr: 'gr', kg: 'gr', ml: 'ml', l: 'ml', gal: 'ml', und: 'und' };
+    var uo = (unidadOrigen  || 'gr').toLowerCase();
+    var ud = (unidadDestino || 'gr').toLowerCase();
+    if (uo === ud) return cantidad;
+    var fo = FACTORES[uo] || 1, fd = FACTORES[ud] || 1;
+    if ((BASE[uo] || 'gr') !== (BASE[ud] || 'gr')) return cantidad; // unidades incompatibles (peso vs volumen)
+    return (cantidad * fo) / fd;
+}
+
 // ── Auto-agregar ítems de factura desde receta con bajo stock ─────
 function autoAgregarCostosReceta(costosSugeridos, advertencias) {
     var agregados = 0;
     (costosSugeridos || []).forEach(function(it) {
         if (!asignados.some(function(a) { return a.itemId == it.id; })) {
-            asignados.push({ itemId: it.id, cantidadAsignada: parseFloat(it.cantidad) || 0, itemData: it });
+            var cantAsignada;
+            if (it.cantidadReceta != null && it.cantidadReceta > 0) {
+                cantAsignada = convertirCantidadUnidades(it.cantidadReceta, it.unidadReceta, it.unidad);
+            } else {
+                cantAsignada = parseFloat(it.cantidad) || 0;
+            }
+            // itemData debe ser el ítem de factura original (sin los campos extra de receta)
+            var itemData = Object.assign({}, it);
+            delete itemData.cantidadReceta;
+            delete itemData.unidadReceta;
+            asignados.push({ itemId: it.id, cantidadAsignada: cantAsignada, itemData: itemData });
             agregados++;
         }
     });

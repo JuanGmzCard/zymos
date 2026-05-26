@@ -240,7 +240,12 @@ function verificarStockReceta(data) {
 
             // Siempre buscar ítem de factura para todos los ingredientes
             var costoItem = encontrarItemCostoPorNombre(item.nombre);
-            if (costoItem) costosSugeridos.push(costoItem);
+            if (costoItem) {
+                costosSugeridos.push(Object.assign({}, costoItem, {
+                    cantidadReceta: parseFloat(item.cantidad) || 0,
+                    unidadReceta:   item.unidad || 'gr'
+                }));
+            }
 
             if (insuficiente) {
                 advertencias.push(item.nombre);
