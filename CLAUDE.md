@@ -420,6 +420,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `JpaRepository<FacturaItem, Long>`
 - `findHistorialPreciosPorNombre(nombre)` — `JOIN FETCH fi.factura`, filtra por `LOWER(TRIM(fi.nombre)) = LOWER(TRIM(:nombre))`, `cantidad > 0`, orden `f.fechaFactura DESC NULLS LAST`. **CRÍTICO**: el campo de fecha en `FacturaProveedor` es `fechaFactura` (no `fecha`) — usar `f.fechaFactura` en JPQL y `getFechaFactura()` en Java.
 - `findNombresDistintos()` — `SELECT DISTINCT fi.nombre` para datalist de búsqueda
+- `findUltimosPrecios(List<String> nombres)` — `JOIN FETCH fi.factura`, filtra por `LOWER(TRIM(fi.nombre)) IN :nombres` y `valorUnitario > 0`, orden `f.fechaFactura DESC NULLS LAST, fi.id DESC`. Devuelve todos los ítems que coincidan; el controller toma el primero por nombre (más reciente). Usado por `RecetaController.calcularCostosEstimados()` para estimación de costo por ingrediente.
 - Usado también por `TrazabilidadService.mapearDto()` para resolver ítems por ID al guardar lotes
 
 ### MantenimientoEquipoRepository
@@ -543,8 +544,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### PdfExportService
 - `generarPdfLote(LoteCerveza, String brandName, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **curva de fermentación** (si hay lecturas), costos, observaciones/notas de cata, pie de página. La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene).
+- `generarPdfReceta(Receta receta, String brandName)` → `byte[]` — genera PDF A4 con OpenPDF. Secciones: cabecera (nombre de receta + estilo), información general (nombre, estilo, estado, versión, hervor, vol. base, agua macerado/sparge), parámetros objetivo (OG/FG/ABV estimado si ambos están presentes), ingredientes agrupados por tipo (maltas/lúpulos/levaduras/clarificantes), escalones de macerado, adiciones de hervor, notas técnicas, pie de página. Reutiliza helpers `addTituloPdf`, `par`, `metricaCell`, `tableCell`.
 - Solo importa `com.lowagie.text.*` — sin colisión con POI.
-- Inyectado en `TrazabilidadController`.
+- Inyectado en `TrazabilidadController` y `RecetaController`.
 
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
@@ -635,18 +637,23 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /recetas?activa=true|false&page=N` — lista paginada con filtro opcional por estado activa. Pasa `lotesCountMap` (Map<Long, Long>) al modelo — consulta bulk `countPorReceta()` para mostrar badge de lotes por receta sin N+1.
 - `GET /recetas/suggest?q=&activa=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q, activa)`. El parámetro `activa` es opcional; si se omite busca en todas. Devuelve `[{nombre, estilo, activa, url}]`.
 - CRUD completo + `GET /api/{id}` (@ResponseBody JSON)
-- `GET /ver/{id}` — incluye `lotesDeReceta` (lotes elaborados con esa receta). El header del detalle muestra el badge de versión (`v1`, `v2`, etc.) y botón "Duplicar".
+- `GET /ver/{id}` — incluye `lotesDeReceta` (lotes elaborados con esa receta) y `costosIngredientes` (List<Map>) con precio estimado por ingrediente desde `FacturaItemRepository.findUltimosPrecios()`. Si algún ingrediente tiene precio, agrega `totalCostoEstimado` (BigDecimal). El header muestra el badge de versión (`v1`, `v2`, etc.) y botones "Duplicar" y "PDF".
+- `GET /ver/{id}/pdf` — descarga `receta-{nombre}.pdf`. Lee el tenant del `request.getAttribute("currentTenant")`. Delega a `PdfExportService.generarPdfReceta()`. Botón "PDF" en `detalle.html`.
 - `GET /duplicar/{id}` — delega a `service.duplicarComoFormDto(id)`, inyecta `insumosInventario` y `tiposCerveza`, retorna `recetas/formulario`. El submit crea una receta nueva (no edita la original). La copia siempre empieza en version 1.
 - `GET /nueva` y `GET /editar/{id}` — inyectan al modelo:
   - `insumosInventario` (List<InsumoInventario>) para datalists de ingredientes por tipo
   - `tiposCerveza` (List<TipoCerveza> activos) para datalist del campo Estilo
-- Inyecta `InsumoInventarioService`, `TipoCervezaService` y `LoteCervezaRepository`
+- `calcularCostosEstimados(Receta, Model)` — método privado: recopila nombres de ingredientes, llama `facturaItemRepo.findUltimosPrecios(nombres)`, toma el más reciente por nombre, normaliza unidades con `UnidadUtils` y calcula el costo estimado de cada ingrediente. Normalización: convierte cantidad de la receta y precio unitario de la factura a la misma unidad base (gr o mL).
+- `estimarCosto(cantidadTexto, valorUnitario, unidadFactura)` — método privado: parsea "5000 gr" → BigDecimal+unidad, convierte a base via `UnidadUtils`, calcula precio por unidad base y multiplica. Si las bases son incompatibles (ej: peso vs volumen) aplica valorUnitario directo.
+- Inyecta `InsumoInventarioService`, `TipoCervezaService`, `LoteCervezaRepository`, `FacturaItemRepository`, `PdfExportService`
+- **`@WebMvcTest`**: agregar `@MockBean FacturaItemRepository facturaItemRepo` y `@MockBean PdfExportService pdfExportService`
 
 ### InsumoInventarioController ("/inventario")
 - CRUD estándar
+- `GET /inventario?filtroBajoStock=true` — activa el filtro "Bajo Stock": llama `service.listarBajoStock()`, devuelve lista completa sin paginar (totalPaginas=1). `?filtroPorVencer=true` — activa el filtro "Por Vencer": llama `service.listarProximosAVencer(30)`. Sin filtro especial: paginación normal. Los botones "Todos / Bajo Stock / Por Vencer" en `inventario/lista.html` aplican el filtro y muestran un badge con el conteo. La paginación y el botón "Excel" preservan el filtro activo via query params.
 - `GET /inventario/suggest?nombre=&tipo=` — `@ResponseBody`, `produces=JSON`. Delega a `service.listarPaginado(nombre, tipo, 0)` (limit 6). El parámetro `tipo` es opcional (`TipoInsumo` enum). Devuelve `[{id, nombre, tipoNombre, colorTipo, bajoStock, url}]`. La template pasa el tipo seleccionado via `data-activa` para respetar el filtro activo.
 - `POST /inventario/guardar-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0 sin redirigir. Devuelve `{success, id, nombre}`. Accesible: ADMIN, INVENTARIO. Usado desde formularios de receta y factura vía AJAX + CSRF header.
-- `GET /inventario/export?nombre=&tipo=` — descarga `inventario-YYYY-MM-DD.xlsx`. Respeta los mismos filtros que la lista. Sin filtros exporta todo (via `listarTodos()`); con filtros exporta solo el resultado paginado. Lee branding del request. Delega a `ExcelExportService.generarExcelInventario()`.
+- `GET /inventario/export?nombre=&tipo=&filtroBajoStock=&filtroPorVencer=` — descarga `inventario-YYYY-MM-DD.xlsx`. Respeta todos los filtros de la lista (incluyendo `filtroBajoStock` y `filtroPorVencer`). Sin filtros exporta todo (via `listarTodos()`). Lee branding del request. Delega a `ExcelExportService.generarExcelInventario()`.
 - `POST /inventario/{id}/ajuste` — ajuste rápido de stock. `@RequestParam TipoMovimiento tipo, BigDecimal cantidad, String motivo`. Delega a `service.ajustar()`. Flash success/danger. Solo ADMIN/INVENTARIO (hereda de `/inventario/**`).
 - `GET /inventario/{id}/historial?page=` — historial de movimientos del insumo. Paginado. Template `inventario/historial.html`. Modelo: `insumo`, `movimientos`, `paginaActual`, `totalPaginas`.
 - `GET /inventario/precios?nombre=X` — **Historial de precios** para el insumo con nombre X. Busca en `FacturaItem` por nombre (case-insensitive) via `findHistorialPreciosPorNombre`. Calcula: último precio, promedio, mínimo, máximo, variación (último vs primero), N compras, N proveedores. Pasa arrays `chartFechas`, `chartPrecios`, `chartProveedores` para Chart.js (barras). La fila más reciente se resalta en la tabla. Botón 📈 en `inventario/lista.html` abre directamente con el nombre del insumo. **Nota**: usa `fi.getFactura().getFechaFactura()` (no `getFecha()`) — campo correcto en `FacturaProveedor`.
