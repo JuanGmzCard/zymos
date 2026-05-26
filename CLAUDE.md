@@ -570,6 +570,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Variables de entorno: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_FROM`, `APP_BASE_URL`
 
 ### AlertaScheduler (`@Component`)
+- `@EventListener(ApplicationReadyEvent.class)` → `inicializarNotificaciones()` — ejecuta `enviarAlertasDiarias()` una vez al arrancar la app. La deduplicación diaria (`existeEnPeriodo`) evita duplicados si el cron ya corrió hoy. Garantiza que las notificaciones in-app existan desde el primer request, sin esperar las 8 AM.
 - `@Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")` — lunes a viernes a las 8 AM por defecto. Configurable con `ALERT_CRON` env var.
 - Itera **todos** los tenants activos (ya no filtra por `emailAdmin` — notificaciones in-app funcionan sin SMTP). Para cada uno: establece `TenantContext`, carga alertas, llama `NotificacionService.crearAlertas()` siempre, luego envía email solo si SMTP configurado y tenant tiene email. Limpia contexto en `finally`.
 - **Notificaciones in-app**: se crean independientemente de SMTP — la app no necesita email configurado para generar notificaciones en la UI.
@@ -726,6 +727,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### AlertaController ("/alertas") — todos los roles autenticados
 - `GET /alertas/contadores` — `@RestController`, `produces = APPLICATION_JSON_VALUE`. Retorna `AlertaContadores {bajoStock, vencimientos, mantenimiento, total}`. Sigue disponible para uso programático pero el navbar ya no lo usa (ver Campana).
+- `POST /alertas/ejecutar` — `@PreAuthorize("hasRole('ADMIN')")`. Llama `AlertaScheduler.enviarAlertasDiarias()` de forma síncrona y retorna `{success:true}`. Permite forzar la creación de notificaciones sin esperar el cron. Invocado desde el botón "Verificar alertas" en `/admin/tenants`. Inyecta `AlertaScheduler`.
 - **Campana en navbar** (notificaciones in-app): `<li id="alertaBellItem" class="nav-item dropdown" style="display:none">` — al cargar la página hace `fetch('/notificaciones/recientes')` (async). Si `total > 0` muestra el badge rojo ("99+" si supera 99) y el dropdown. El dropdown lista las últimas 5 notificaciones no leídas: icono por tipo, título, tiempo relativo, botón `×` (marcar leída via AJAX) y footer "Marcar todas leídas" + "Ver todas →". El JS inyecta `ALERA_CSRF_TOKEN` y `ALERA_CSRF_HEADER` via `<script th:inline="javascript">` en el navbar para los POST sin depender de meta tags del template. `_csrfToken()` y `_csrfHeader()` son helpers que prefieren los meta tags del template (si existen) y hacen fallback a las variables inline. Al abrir el dropdown se recargan las notificaciones (`show.bs.dropdown`). Falla silenciosamente.
 
 ### ComparativaController ("/comparativa") — todos los roles autenticados
@@ -737,7 +739,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /admin/logs?tipo=&page=` — visor de log de accesos (solo ADMIN)
 
 ### TenantAdminController ("/admin/tenants") — solo ADMIN
-- `GET /admin/tenants` — lista todos los tenants en grid de cards con franja de colores y mini-preview del navbar. Botón "Limpiar cache" en el header.
+- `GET /admin/tenants` — lista todos los tenants en grid de cards con franja de colores y mini-preview del navbar. Botones en el header: "Verificar alertas" (POST AJAX a `/alertas/ejecutar` con feedback spinner/confirmación) y "Limpiar cache" (`POST /admin/tenants/cache/evict`).
 - `GET /admin/tenants/nuevo` — formulario de creación (subdomain editable)
 - `GET /admin/tenants/editar/{subdomain}` — formulario de edición (subdomain readonly — es la PK). Secciones: info básica, paleta de colores (con preview en vivo), tipografías (con preview en vivo de heading + body).
 - `POST /admin/tenants/guardar` — crea o actualiza tenant; invalida cache de `TenantFilter` con `evictCache(subdomain)`
@@ -1024,7 +1026,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `TrazabilidadControllerTest` — 15 tests: seguridad (sin-autenticar → 401; con rol no-admin → controller corre porque URL-based security no se enforce con handler mock), index, kanban, nuevo/guardar (válido, inválido, advertencia stock), ver/404, eliminar. `@MockBean`: `PdfExportService`, `LecturaFermentacionService`, `PlanificacionService` (los tres requeridos por el constructor del controller).
 - `AuthControllerTest` — 3 tests (`@AutoConfigureMockMvc(addFilters=false)` para aislar la lógica del controller): login con credenciales válidas retorna token + campos del `AuthResponse`, credenciales inválidas → 401 con `{error}`, body vacío → 400. `@MockBean AuthenticationManager` y `JwtService`.
 - `ApiControllerTest` — 9 tests: seguridad (401), lotes (lista, por id, 404, historial), recetas, alertas inventario, dashboard
-- `AlertaControllerTest` — 5 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento
+- `AlertaControllerTest` — 6 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento, `POST /alertas/ejecutar` llama al scheduler y retorna `{success:true}`. Requiere `@MockBean AlertaScheduler`.
 - `NotificacionControllerTest` — 5 tests: seguridad (401), GET /notificaciones (página con modelo), GET /recientes (JSON con total e items), POST /{id}/leer (JSON con noLeidas), POST /leer-todas (redirect)
 - `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `AleraAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
 - `LoginControllerTest` — 3 tests: GET /login público (200), con ?error, con ?bloqueado. **Nota**: en `@WebMvcTest`, Spring Security puede interceptar GET /login con su propio filtro antes del DispatcherServlet — no verificar `view().name("login")`, solo `status().isOk()`.
