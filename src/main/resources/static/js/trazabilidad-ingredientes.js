@@ -105,6 +105,8 @@ const UNIT_OPTIONS = `
     <option value="mL">mL</option>
     <option value="L">L</option>
     <option value="gal">gal</option>`;
+const UNIT_OPTIONS_CLAR = UNIT_OPTIONS + `
+    <option value="und">und</option>`;
 
 function addRow(containerId, tipo, listId, placeholder) {
     const container = document.getElementById(containerId);
@@ -121,7 +123,7 @@ function addRow(containerId, tipo, listId, placeholder) {
                 </div>
                 <div class="col-md-3">
                     <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">
-                        ${UNIT_OPTIONS}
+                        ${tipo === 'clarificantes' ? UNIT_OPTIONS_CLAR : UNIT_OPTIONS}
                     </select>
                 </div>
                 <div class="col-md-1 text-end">
@@ -381,7 +383,7 @@ function poblarDesdeReceta(containerId, tipo, listId, placeholder, items) {
                     </div>
                     <div class="col-md-3">
                         <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">
-                            ${unitOptionsSelected(unidad)}
+                            ${unitOptionsSelected(unidad, tipo === 'clarificantes')}
                         </select>
                     </div>
                     <div class="col-md-1 text-end">
@@ -394,8 +396,10 @@ function poblarDesdeReceta(containerId, tipo, listId, placeholder, items) {
     });
 }
 
-function unitOptionsSelected(selected) {
-    return ['gr', 'kg', 'mL', 'L', 'gal'].map(u =>
+function unitOptionsSelected(selected, includePcs) {
+    var units = ['gr', 'kg', 'mL', 'L', 'gal'];
+    if (includePcs) units.push('und');
+    return units.map(u =>
         `<option value="${u}"${u === selected ? ' selected' : ''}>${u}</option>`
     ).join('');
 }

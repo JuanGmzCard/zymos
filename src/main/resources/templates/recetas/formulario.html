@@ -330,6 +330,7 @@
                                     <option th:selected="${clar.unidad == 'mL'}"  value="mL">mL</option>
                                     <option th:selected="${clar.unidad == 'L'}"   value="L">L</option>
                                     <option th:selected="${clar.unidad == 'gal'}" value="gal">gal</option>
+                                    <option th:selected="${clar.unidad == 'und'}" value="und">und</option>
                                 </select>
                             </div>
                             <div class="col-md-1 text-end">
@@ -654,7 +655,7 @@ function addRecetaRow(containerId, tipo, placeholder) {
                     <input type="text" name="${tipo}[${idx}].cantidad" class="form-control form-control-sm" placeholder="Cantidad">
                 </div>
                 <div class="col-md-3">
-                    <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">${UNIT_OPTIONS}</select>
+                    <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">${tipo === 'clarificantes' ? UNIT_OPTIONS + '<option value="und">und</option>' : UNIT_OPTIONS}</select>
                 </div>
                 <div class="col-md-1 text-end">
                     <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
