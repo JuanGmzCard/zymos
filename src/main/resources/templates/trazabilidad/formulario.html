@@ -585,10 +585,15 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Fermentador Asignado</label>
-                        <select th:field="*{equipoFermentadorId}" class="form-select">
+                        <select th:field="*{equipoFermentadorId}"
+                                th:classappend="${#fields.hasErrors('equipoFermentadorId')} ? 'is-invalid' : ''"
+                                class="form-select">
                             <option value="">-- Sin asignar --</option>
                             <option th:each="f : ${fermentadores}" th:value="${f.id}" th:text="${f.nombre}"></option>
                         </select>
+                        <div th:if="${#fields.hasErrors('equipoFermentadorId')}"
+                             class="invalid-feedback d-block"
+                             th:errors="*{equipoFermentadorId}"></div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Fecha de Inicio</label>

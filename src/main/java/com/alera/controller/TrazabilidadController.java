@@ -157,6 +157,12 @@ public class TrazabilidadController {
             agregarInventarioAlModelo(model);
             return "trazabilidad/formulario";
         }
+        if (dto.getFermFechaInicial() != null && dto.getEquipoFermentadorId() == null) {
+            result.rejectValue("equipoFermentadorId", "required",
+                    "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
+            agregarInventarioAlModelo(model);
+            return "trazabilidad/formulario";
+        }
         try {
             var resultado = service.guardar(dto);
             if (resultado.tieneAdvertencias()) {
@@ -199,6 +205,13 @@ public class TrazabilidadController {
                              @Valid @ModelAttribute("loteForm") LoteFormDto dto,
                              BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
+            agregarInventarioAlModelo(model);
+            model.addAttribute("loteId", id);
+            return "trazabilidad/formulario";
+        }
+        if (dto.getFermFechaInicial() != null && dto.getEquipoFermentadorId() == null) {
+            result.rejectValue("equipoFermentadorId", "required",
+                    "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
             return "trazabilidad/formulario";

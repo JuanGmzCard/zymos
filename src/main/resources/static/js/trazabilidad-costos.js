@@ -212,7 +212,27 @@ function autoAgregarCostosReceta(costosSugeridos, advertencias) {
         '</div>';
 }
 
-document.getElementById('loteForm').addEventListener('submit', function() {
+document.getElementById('loteForm').addEventListener('submit', function(e) {
+    // Validar: fecha inicio fermentación requiere fermentador asignado
+    var fermFecha   = document.getElementById('fermFechaInicial');
+    var fermentador = document.getElementById('equipoFermentadorId');
+    if (fermFecha && fermFecha.value && fermentador && !fermentador.value) {
+        e.preventDefault();
+        goTab(2);
+        fermentador.classList.add('is-invalid');
+        var fb = document.getElementById('fermentador-feedback');
+        if (!fb) {
+            fb = document.createElement('div');
+            fb.id = 'fermentador-feedback';
+            fb.className = 'invalid-feedback d-block';
+            fermentador.parentNode.appendChild(fb);
+        }
+        fb.textContent = 'Seleccione un fermentador para registrar la fecha de inicio de fermentación.';
+        fermentador.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    if (fermentador) fermentador.classList.remove('is-invalid');
+
     var container = document.getElementById('items-asignados-container');
     if (!container) return;
     container.innerHTML = '';
@@ -229,7 +249,20 @@ document.getElementById('loteForm').addEventListener('submit', function() {
     });
 });
 
-document.addEventListener('DOMContentLoaded', initAsignados);
+document.addEventListener('DOMContentLoaded', function() {
+    initAsignados();
+    // Limpiar error de fermentador cuando el usuario selecciona uno
+    var fermentador = document.getElementById('equipoFermentadorId');
+    if (fermentador) {
+        fermentador.addEventListener('change', function() {
+            if (this.value) {
+                this.classList.remove('is-invalid');
+                var fb = document.getElementById('fermentador-feedback');
+                if (fb) fb.textContent = '';
+            }
+        });
+    }
+});
 
 // ── Utilidades ────────────────────────────────────────────────────
 function esc(s) {

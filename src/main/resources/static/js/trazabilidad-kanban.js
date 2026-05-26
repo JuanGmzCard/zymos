@@ -1,7 +1,4 @@
-// Depende de: esAdmin (inyectado por Thymeleaf), Sortable (CDN)
-
-var CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]').content;
-var CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]').content;
+// Depende de: esAdmin (inyectado por Thymeleaf), Sortable (CDN), _csrfToken()/_csrfHeader() (navbar)
 
 var FASE_LABELS = {
     sinIniciar:        'Sin Iniciar',
@@ -52,7 +49,7 @@ function enviarCambioFase(loteId, fase, card, fromCol, oldIndex) {
     card.classList.add('saving');
 
     var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-    headers[CSRF_HEADER] = CSRF_TOKEN;
+    headers[_csrfHeader()] = _csrfToken();
 
     fetch('/actualizar/' + loteId + '/fase', {
         method:  'POST',
