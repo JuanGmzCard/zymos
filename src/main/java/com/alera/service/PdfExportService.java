@@ -27,8 +27,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.stream.Collectors;
 
 @Service
@@ -912,6 +914,171 @@ public class PdfExportService {
         if (hayNotas) return new float[]{1.5f, 1.2f, 1.2f, 2f};
         return new float[]{2f, 1.5f, 1.5f};
     }
+
+    // ── PDF Reporte de Producción ────────────────────────────────────
+
+    public byte[] generarPdfReporteProduccion(List<LoteCerveza> lotes,
+                                               LocalDate desde, LocalDate hasta,
+                                               String estiloFiltro,
+                                               ExportBranding branding) {
+        Pal pal = Pal.of(branding);
+        String brandName = branding.name();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document(PageSize.A4.rotate(), 36, 36, 45, 40);
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            // ── Cabecera ──────────────────────────────────────────────
+            PdfPTable header = new PdfPTable(1);
+            header.setWidthPercentage(100);
+            header.setSpacingAfter(10);
+            PdfPCell hCell = new PdfPCell();
+            hCell.setBackgroundColor(pal.verde()); hCell.setBorder(0);
+            hCell.setPaddingTop(10); hCell.setPaddingBottom(10); hCell.setPaddingLeft(14);
+            hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                    new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+            Paragraph tituloH = new Paragraph("REPORTE DE PRODUCCIÓN",
+                    new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
+            tituloH.setSpacingBefore(3);
+            hCell.addElement(tituloH);
+            String periodoStr = desde.format(FMT_FECHA) + " — " + hasta.format(FMT_FECHA);
+            if (estiloFiltro != null && !estiloFiltro.isBlank()) periodoStr += "  ·  " + estiloFiltro;
+            hCell.addElement(new Paragraph(periodoStr,
+                    new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro())));
+            header.addCell(hCell);
+            doc.add(header);
+
+            // ── Estadísticas del período ──────────────────────────────
+            long totalLotes = lotes.size();
+            BigDecimal totalLitros = lotes.stream()
+                    .map(l -> l.getLitrosFinales() != null ? l.getLitrosFinales() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            long completados = lotes.stream().filter(LoteCerveza::isCompletado).count();
+            int tasaComp = totalLotes > 0 ? (int)(completados * 100 / totalLotes) : 0;
+            OptionalDouble avgAbvOpt = lotes.stream()
+                    .filter(l -> l.getAbv() != null)
+                    .mapToDouble(l -> l.getAbv().doubleValue()).average();
+            String avgAbvStr = avgAbvOpt.isPresent()
+                    ? String.format("%.2f%%", avgAbvOpt.getAsDouble()) : "—";
+            OptionalDouble avgEfOpt = lotes.stream()
+                    .filter(l -> l.getEficienciaMacerado() != null)
+                    .mapToDouble(l -> l.getEficienciaMacerado().doubleValue()).average();
+            String avgEfStr = avgEfOpt.isPresent()
+                    ? String.format("%.1f%%", avgEfOpt.getAsDouble()) : "—";
+            boolean hayCostos = lotes.stream().anyMatch(l -> l.getCostoTotal() != null);
+            BigDecimal costoTotal = hayCostos
+                    ? lotes.stream().map(l -> l.getCostoTotal() != null ? l.getCostoTotal() : BigDecimal.ZERO)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add) : null;
+
+            addTituloPdf(doc, "RESUMEN DEL PERÍODO", pal);
+            Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+            Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            PdfPTable stats = new PdfPTable(new float[]{1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f});
+            stats.setWidthPercentage(100);
+            par(stats, "Total Lotes",       String.valueOf(totalLotes),       lbl, val, pal);
+            par(stats, "Litros Producidos", fmt2(totalLitros) + " L",          lbl, val, pal);
+            par(stats, "ABV Promedio",      avgAbvStr,                         lbl, val, pal);
+            par(stats, "Eficiencia Prom.",  avgEfStr,                          lbl, val, pal);
+            par(stats, "Estilos Distintos", String.valueOf(lotes.stream().map(LoteCerveza::getEstilo).distinct().count()), lbl, val, pal);
+            par(stats, "Completados",       completados + " (" + tasaComp + "%)", lbl, val, pal);
+            par(stats, "Costo Total",       costoTotal != null ? "$" + fmt2(costoTotal) : "—", lbl, val, pal);
+            par(stats, "Generado",          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
+            doc.add(stats);
+
+            // ── Tabla de lotes ────────────────────────────────────────
+            if (!lotes.isEmpty()) {
+                addTituloPdf(doc, "LOTES EN EL PERÍODO", pal);
+                PdfPTable tabla = new PdfPTable(new float[]{1.4f, 1.5f, 1.8f, 1f, 0.8f, 0.8f, 0.9f, 0.9f, 1.2f});
+                tabla.setWidthPercentage(100);
+                Font th = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                Font td = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                Font tdGreen = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
+                for (String h : new String[]{"Código","Estilo","Receta","Fecha","Litros","OG","ABV","Efic.","Estado"}) {
+                    PdfPCell c = new PdfPCell(new Phrase(h, th));
+                    c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
+                    c.setPadding(4); tabla.addCell(c);
+                }
+                boolean alt = false;
+                for (LoteCerveza lote : lotes) {
+                    Color bg = alt ? pal.fondo() : Color.WHITE;
+                    alt = !alt;
+                    PdfPCell codCell = new PdfPCell(new Phrase(lote.getCodigoLote(), tdGreen));
+                    codCell.setBackgroundColor(bg); codCell.setBorderColor(C_BORDE); codCell.setPadding(4);
+                    tabla.addCell(codCell);
+                    tablaCelda(tabla, lote.getEstilo(), td, bg);
+                    tablaCelda(tabla, lote.getReceta() != null ? lote.getReceta().getNombre() : "—", td, bg);
+                    tablaCelda(tabla, fmt(lote.getFechaElaboracion()), td, bg);
+                    tablaCelda(tabla, lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", td, bg);
+                    tablaCelda(tabla, lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—", td, bg);
+                    String abvTxt = lote.getAbv() != null ? lote.getAbv() + "%" : "—";
+                    PdfPCell abvCell = new PdfPCell(new Phrase(abvTxt, lote.getAbv() != null ? tdGreen : td));
+                    abvCell.setBackgroundColor(bg); abvCell.setBorderColor(C_BORDE); abvCell.setPadding(4);
+                    tabla.addCell(abvCell);
+                    tablaCelda(tabla, lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", td, bg);
+                    tablaCelda(tabla, lote.getFaseActual() != null ? lote.getFaseActual() : "—", td, bg);
+                }
+                doc.add(tabla);
+            }
+
+            // ── Resumen por estilo ────────────────────────────────────
+            Map<String, BigDecimal[]> resAgg = new LinkedHashMap<>();
+            for (var lote : lotes) {
+                String est = lote.getEstilo() != null ? lote.getEstilo() : "Sin estilo";
+                BigDecimal[] agg = resAgg.computeIfAbsent(est, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+                agg[0] = agg[0].add(BigDecimal.ONE);
+                agg[1] = agg[1].add(lote.getLitrosFinales() != null ? lote.getLitrosFinales() : BigDecimal.ZERO);
+            }
+            if (resAgg.size() > 1) {
+                addTituloPdf(doc, "RESUMEN POR ESTILO", pal);
+                PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 1f});
+                resTabla.setWidthPercentage(60);
+                resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
+                Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                for (String h : new String[]{"Estilo","Lotes","Litros","% Vol."}) {
+                    PdfPCell c = new PdfPCell(new Phrase(h, rth));
+                    c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
+                    resTabla.addCell(c);
+                }
+                boolean a2 = false;
+                for (var e : resAgg.entrySet().stream()
+                        .sorted((x, y) -> y.getValue()[1].compareTo(x.getValue()[1]))
+                        .collect(Collectors.toList())) {
+                    Color bg = a2 ? pal.fondo() : Color.WHITE; a2 = !a2;
+                    BigDecimal litE = e.getValue()[1];
+                    int pct = totalLitros.compareTo(BigDecimal.ZERO) > 0
+                            ? litE.multiply(BigDecimal.valueOf(100))
+                                    .divide(totalLitros, 0, java.math.RoundingMode.HALF_UP).intValue() : 0;
+                    Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                    tablaCelda(resTabla, e.getKey(), rtd, bg);
+                    tablaCelda(resTabla, String.valueOf(e.getValue()[0].intValue()), rtd, bg);
+                    tablaCelda(resTabla, fmt2(litE) + " L", rtd, bg);
+                    tablaCelda(resTabla, pct + "%", rtd, bg);
+                }
+                doc.add(resTabla);
+            }
+
+            // ── Pie ───────────────────────────────────────────────────
+            doc.add(new Paragraph("\n"));
+            Paragraph pie = new Paragraph(
+                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
+                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+            pie.setAlignment(Element.ALIGN_RIGHT);
+            doc.add(pie);
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando PDF del reporte de producción", e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void tablaCelda(PdfPTable t, String text, Font font, Color bg) {
+        PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        c.setBackgroundColor(bg); c.setBorderColor(C_BORDE); c.setPadding(4);
+        t.addCell(c);
+    }
+
+    // ── Helpers comunes ──────────────────────────────────────────────
 
     private String fmt(LocalDate d)    { return d != null ? d.format(FMT_FECHA) : null; }
     private String temp(BigDecimal t)  { return t != null ? t + " °C" : null; }

@@ -5,6 +5,7 @@ import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.JwtService;
+import com.alera.service.PdfExportService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,7 @@ class ReporteControllerTest {
     @MockBean JwtService                 jwtService;
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean ExcelExportService         excelService;
+    @MockBean PdfExportService           pdfService;
 
     @BeforeEach
     void setUp() {
@@ -49,6 +51,8 @@ class ReporteControllerTest {
         when(loteRepo.findResumenPorEstilo(any(), any(), any())).thenReturn(List.of());
         when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x50, 0x4B});
+        when(pdfService.generarPdfReporteProduccion(any(), any(), any(), any(), any()))
+                .thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
     }
 
     @Test
@@ -77,5 +81,16 @@ class ReporteControllerTest {
                 .param("desde", LocalDate.now().minusMonths(1).toString())
                 .param("hasta",  LocalDate.now().toString()))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /reportes/produccion/pdf descarga archivo")
+    void pdf_retornaDescarga() throws Exception {
+        mockMvc.perform(get("/reportes/produccion/pdf")
+                .param("desde", LocalDate.now().minusMonths(1).toString())
+                .param("hasta",  LocalDate.now().toString()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("reporte-produccion")));
     }
 }
