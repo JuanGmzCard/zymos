@@ -25,6 +25,10 @@
             <p>Clientes registrados en la plataforma multi-tenant</p>
         </div>
         <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-info" id="btnVerificarAlertas"
+                    onclick="verificarAlertas()">
+                <i class="bi bi-bell me-1"></i>Verificar alertas
+            </button>
             <form th:action="@{/admin/tenants/cache/evict}" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <button type="submit" class="btn btn-outline-warning">
@@ -132,5 +136,33 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+function verificarAlertas() {
+    var btn = document.getElementById('btnVerificarAlertas');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verificando...';
+    fetch('/alertas/ejecutar', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { [_csrfHeader()]: _csrfToken() }
+    })
+    .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+    .then(function() {
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Alertas verificadas';
+        btn.className = 'btn btn-outline-success';
+        setTimeout(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
+            btn.className = 'btn btn-outline-info';
+        }, 3000);
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
+        btn.className = 'btn btn-outline-danger';
+        setTimeout(function() { btn.className = 'btn btn-outline-info'; }, 3000);
+    });
+}
+</script>
 </body>
 </html>

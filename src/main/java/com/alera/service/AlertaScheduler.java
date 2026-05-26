@@ -9,6 +9,8 @@ import com.alera.repository.TenantRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +50,12 @@ public class AlertaScheduler {
         this.tenantService       = tenantService;
         this.notificacionService = notificacionService;
         this.facturaService      = facturaService;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void inicializarNotificaciones() {
+        log.info("Inicializando notificaciones in-app al arrancar...");
+        enviarAlertasDiarias();
     }
 
     @Scheduled(cron = "${app.alert.cron:0 0 8 * * MON-FRI}")

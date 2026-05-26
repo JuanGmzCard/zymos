@@ -8,6 +8,7 @@ import com.alera.config.LoginAttemptService;
 import com.alera.model.Equipo;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.service.AlertaScheduler;
 import com.alera.service.EquipoService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
@@ -24,8 +25,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AlertaController.class)
@@ -35,6 +39,7 @@ class AlertaControllerTest {
 
     @MockBean InsumoInventarioRepository insumoRepo;
     @MockBean EquipoService              equipoService;
+    @MockBean AlertaScheduler            alertaScheduler;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean UsuarioService             usuarioService;
     @MockBean TenantRepository           tenantRepo;
@@ -120,5 +125,14 @@ class AlertaControllerTest {
                 .andExpect(jsonPath("$.bajoStock").value(0))
                 .andExpect(jsonPath("$.mantenimiento").value(2))
                 .andExpect(jsonPath("$.total").value(2));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void ejecutarLlamaAlScheduler() throws Exception {
+        mockMvc.perform(post("/alertas/ejecutar").with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+        verify(alertaScheduler).enviarAlertasDiarias();
     }
 }
