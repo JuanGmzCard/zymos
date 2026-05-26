@@ -208,6 +208,28 @@
             ══════════════════════════════════════ -->
             <div class="wz-panel" id="panel-0">
                 <div class="wz-title general"><i class="bi bi-info-circle-fill"></i>Datos Generales del Lote</div>
+
+                <!-- CARGAR DESDE RECETA -->
+                <div class="receta-loader-box mb-3" th:if="${!#lists.isEmpty(recetasActivas)}">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <i class="bi bi-journal-bookmark text-dorado"></i>
+                        <span class="fw-600 small">Cargar desde receta:</span>
+                        <select id="recetaSelectLote" class="form-select form-select-sm" style="max-width:300px;">
+                            <option value="">— Seleccionar receta —</option>
+                            <option th:each="rec : ${recetasActivas}"
+                                    th:value="${rec.id}"
+                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"></option>
+                        </select>
+                        <button type="button" class="btn btn-sm btn-alera" onclick="cargarRecetaEnLote()">
+                            <i class="bi bi-arrow-down-circle me-1"></i>Cargar
+                        </button>
+                    </div>
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-info-circle me-1"></i>Precarga agua, volumen, densidades e ingredientes desde la receta
+                    </div>
+                    <div id="stock-warnings" class="mt-2"></div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Estilo de Cerveza *</label>
@@ -387,26 +409,6 @@
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-1">
                 <div class="wz-title recipe"><i class="bi bi-basket-fill"></i>Receta e Insumos</div>
-
-                <!-- CARGAR RECETA -->
-                <div class="receta-loader-box mb-4" th:if="${!#lists.isEmpty(recetasActivas)}">
-                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                        <i class="bi bi-journal-bookmark text-dorado"></i>
-                        <span class="fw-600 small">Cargar desde receta:</span>
-                        <select id="recetaSelectLote" class="form-select form-select-sm" style="max-width:280px;">
-                            <option value="">— Seleccionar receta —</option>
-                            <option th:each="rec : ${recetasActivas}"
-                                    th:value="${rec.id}"
-                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"></option>
-                        </select>
-                        <button type="button" class="btn btn-sm btn-alera" onclick="cargarRecetaEnLote()">
-                            <i class="bi bi-arrow-down-circle me-1"></i>Cargar
-                        </button>
-                    </div>
-                    <div class="text-muted small mt-1">
-                        <i class="bi bi-info-circle me-1"></i>Reemplaza los ingredientes actuales con los de la receta seleccionada
-                    </div>
-                </div>
 
                 <!-- MALTAS -->
                 <div class="phase-card mb-3">
@@ -748,6 +750,7 @@
 var ITEMS_FACTURA = /*[[${todosItemsFactura}]]*/ [];
 var INIT_IDS = /*[[${loteForm.itemsIds}]]*/ [];
 var INIT_CANTIDADES = /*[[${loteForm.itemsCantidades}]]*/ [];
+var INVENTARIO_STOCK = /*[[${inventarioStock}]]*/ [];
 /*]]>*/
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js}"></script>

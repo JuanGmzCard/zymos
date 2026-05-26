@@ -126,20 +126,206 @@ function addRow(containerId, tipo, listId, placeholder) {
         </div>`);
 }
 
+// ── Conversión de unidades para comparar stock ────────────────────
+const BASE_FACTOR_STOCK = { gr: 1, kg: 1000, ml: 1, l: 1000, gal: 3785.41, und: 1 };
+const BASE_UNIT_STOCK   = { gr: 'gr', kg: 'gr', ml: 'ml', l: 'ml', gal: 'ml', und: 'und' };
+
+function toBaseStock(amount, unit) {
+    var u = (unit || 'gr').toLowerCase();
+    return (parseFloat(amount) || 0) * (BASE_FACTOR_STOCK[u] || 1);
+}
+function baseUnitOf(unit) {
+    var u = (unit || 'gr').toLowerCase();
+    return BASE_UNIT_STOCK[u] || 'gr';
+}
+
 // ── Cargar receta en lote ─────────────────────────────────────────
 function cargarRecetaEnLote() {
-    const id = document.getElementById('recetaSelectLote').value;
-    if (!id) return;
+    var sel = document.getElementById('recetaSelectLote');
+    if (!sel) return;
+    var id = sel.value;
+    if (!id) { alert('Seleccioná una receta primero'); return; }
     document.getElementById('recetaIdHidden').value = id;
     fetch('/recetas/api/' + id)
-        .then(r => r.json())
-        .then(data => {
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            // 1. Ingredientes
             poblarDesdeReceta('maltas-container',        'maltas',        'lista-maltas',        'Malta',        data.maltas        || []);
             poblarDesdeReceta('lupulos-container',       'lupulos',       'lista-lupulos',       'Lúpulo',       data.lupulos       || []);
             poblarDesdeReceta('levaduras-container',     'levaduras',     'lista-levaduras',     'Levadura',     data.levaduras     || []);
             poblarDesdeReceta('clarificantes-container', 'clarificantes', 'lista-clarificantes', 'Clarificante', data.clarificantes || []);
+
+            // 2. Estilo (solo si está vacío)
+            if (data.estilo) {
+                var estiloEl = document.querySelector('[name="estilo"]');
+                if (estiloEl && !estiloEl.value) estiloEl.value = data.estilo;
+            }
+
+            // 3. Agua de macerado
+            if (data.aguaMacerado != null) {
+                var rawU = (data.unidadAguaMacerado || 'L');
+                var unit = rawU === 'mL' ? 'mL' : rawU === 'gal' ? 'gal' : 'L';
+                document.getElementById('agua-unit').value = unit;
+                document.getElementById('agua-display').value = data.aguaMacerado;
+                var liters = parseFloat(data.aguaMacerado) * TO_LITERS[unit];
+                document.getElementById('agua-value').value = liters.toFixed(6);
+                showEquiv('agua', liters);
+            }
+
+            // 4. Volumen base → litros finales
+            if (data.volumenBase != null) {
+                document.getElementById('litros-unit').value = 'L';
+                document.getElementById('litros-display').value = data.volumenBase;
+                document.getElementById('litros-value').value = parseFloat(data.volumenBase);
+                showEquiv('litros', parseFloat(data.volumenBase));
+            }
+
+            // 5. Densidades
+            if (data.ogObjetivo != null) {
+                var ogEl = document.querySelector('[name="densidadInicial"]');
+                if (ogEl) ogEl.value = data.ogObjetivo;
+            }
+            if (data.fgObjetivo != null) {
+                var fgEl = document.querySelector('[name="densidadFinal"]');
+                if (fgEl) fgEl.value = data.fgObjetivo;
+            }
+
+            // 6. Verificar stock e integrar con costos
+            verificarStockReceta(data);
         })
-        .catch(() => alert('Error al cargar la receta'));
+        .catch(function() { alert('Error al cargar la receta'); });
+}
+
+// ── Verificar stock de ingredientes de la receta ──────────────────
+function verificarStockReceta(data) {
+    var grupos = [
+        { key: 'maltas',        containerId: 'maltas-container',        tipo: 'MALTA' },
+        { key: 'lupulos',       containerId: 'lupulos-container',       tipo: 'LUPULO' },
+        { key: 'levaduras',     containerId: 'levaduras-container',     tipo: 'LEVADURA' },
+        { key: 'clarificantes', containerId: 'clarificantes-container', tipo: 'CLARIFICANTE' }
+    ];
+
+    var advertencias = [];
+    var costosSugeridos = [];
+
+    grupos.forEach(function(cfg) {
+        var items = data[cfg.key] || [];
+        var container = document.getElementById(cfg.containerId);
+        if (!container) return;
+        var rows = container.querySelectorAll('.ingrediente-row');
+
+        items.forEach(function(item, idx) {
+            if (!item.nombre || !item.cantidad) return;
+            var cantRecetaBase = toBaseStock(parseFloat(item.cantidad) || 0, item.unidad);
+            var baseReceta = baseUnitOf(item.unidad);
+
+            var nombreNorm = (item.nombre || '').toLowerCase().trim();
+            var stockItem = (INVENTARIO_STOCK || []).find(function(s) {
+                return s.nombre === nombreNorm;
+            });
+
+            var cantStockBase = stockItem ? toBaseStock(parseFloat(stockItem.cantidad) || 0, stockItem.unidad) : 0;
+            var baseStock = stockItem ? baseUnitOf(stockItem.unidad) : baseReceta;
+
+            var insuficiente = !stockItem || (baseReceta === baseStock && cantStockBase < cantRecetaBase);
+
+            if (insuficiente && rows[idx]) {
+                marcarIngredienteBajoStock(rows[idx], item, stockItem, cfg.tipo);
+                advertencias.push(item.nombre);
+                var costoItem = encontrarItemCostoPorNombre(item.nombre);
+                if (costoItem) costosSugeridos.push(costoItem);
+            }
+        });
+    });
+
+    // Delega la integración con costos al archivo trazabilidad-costos.js
+    if (typeof autoAgregarCostosReceta === 'function') {
+        autoAgregarCostosReceta(costosSugeridos, advertencias);
+    }
+}
+
+// ── Marcar fila con badge de bajo stock + panel de reemplazo ──────
+function marcarIngredienteBajoStock(row, item, stockItem, tipo) {
+    if (row.querySelector('.stock-badge')) return; // ya marcado
+    row.style.borderColor = '#ffc107';
+    row.style.background = '#fffdf0';
+
+    var nameInput = row.querySelector('input[type="text"]');
+    if (nameInput) {
+        var disponible = stockItem
+            ? 'Disponible: ' + (parseFloat(stockItem.cantidad) || 0) + ' ' + (stockItem.unidad || '')
+            : 'No está en inventario';
+        var badge = document.createElement('div');
+        badge.className = 'stock-badge d-flex align-items-center gap-2 mb-1';
+        badge.innerHTML =
+            '<span class="badge bg-warning text-dark" style="font-size:0.65rem;">' +
+            '<i class="bi bi-exclamation-triangle-fill me-1"></i>Stock insuficiente</span>' +
+            '<small class="text-muted">' + disponible + '</small>';
+        nameInput.parentNode.insertBefore(badge, nameInput);
+    }
+
+    var panel = construirPanelReemplazo(item, stockItem, tipo, row);
+    row.appendChild(panel);
+}
+
+// ── Panel de reemplazo por ingrediente alternativo ────────────────
+function construirPanelReemplazo(item, stockItem, tipo, row) {
+    var alternativas = (INVENTARIO_STOCK || []).filter(function(s) {
+        return s.tipo === tipo &&
+               s.nombre !== (item.nombre || '').toLowerCase().trim() &&
+               parseFloat(s.cantidad) > 0;
+    });
+
+    var div = document.createElement('div');
+    div.className = 'reemplazo-panel mt-2 pt-2 border-top';
+
+    if (!alternativas.length) {
+        div.innerHTML = '<small class="text-muted"><i class="bi bi-info-circle me-1"></i>No hay alternativas con stock disponible.</small>';
+    } else {
+        var opts = alternativas.map(function(a) {
+            var nombreDisplay = a.nombre.charAt(0).toUpperCase() + a.nombre.slice(1);
+            return '<option value="' + escAttr(a.nombre) + '">' +
+                   nombreDisplay + ' (' + (parseFloat(a.cantidad) || 0) + ' ' + (a.unidad || '') + ')</option>';
+        }).join('');
+        div.innerHTML =
+            '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+            '<small class="fw-600 text-warning-emphasis"><i class="bi bi-arrow-left-right me-1"></i>Reemplazar con:</small>' +
+            '<select class="form-select form-select-sm reemplazo-select" style="max-width:300px;">' +
+            '<option value="">— Seleccionar alternativa —</option>' + opts +
+            '</select>' +
+            '<button type="button" class="btn btn-sm btn-outline-warning py-0" onclick="aplicarReemplazo(this)">' +
+            '<i class="bi bi-check-lg me-1"></i>Aplicar</button>' +
+            '</div>';
+    }
+    return div;
+}
+
+function aplicarReemplazo(btn) {
+    var panel = btn.closest('.reemplazo-panel');
+    var sel = panel.querySelector('.reemplazo-select');
+    if (!sel || !sel.value) return;
+    var nuevoNombre = sel.value.charAt(0).toUpperCase() + sel.value.slice(1);
+    var row = panel.closest('.ingrediente-row');
+    var nameInput = row.querySelector('input[type="text"]');
+    if (nameInput) {
+        nameInput.value = nuevoNombre;
+        row.style.borderColor = '';
+        row.style.background = '';
+        var badge = row.querySelector('.stock-badge');
+        if (badge) badge.remove();
+        panel.remove();
+    }
+}
+
+function encontrarItemCostoPorNombre(nombre) {
+    var nombreLower = (nombre || '').toLowerCase().trim();
+    return (ITEMS_FACTURA || []).find(function(it) {
+        return (it.nombre || '').toLowerCase().trim() === nombreLower;
+    }) || null;
+}
+
+function escAttr(s) {
+    return (s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function poblarDesdeReceta(containerId, tipo, listId, placeholder, items) {

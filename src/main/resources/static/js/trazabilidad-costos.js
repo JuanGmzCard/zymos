@@ -155,6 +155,45 @@ function sincronizarIngredientesDesdeItems() {
     goTab(1);
 }
 
+// ── Auto-agregar ítems de factura desde receta con bajo stock ─────
+function autoAgregarCostosReceta(costosSugeridos, advertencias) {
+    var agregados = 0;
+    (costosSugeridos || []).forEach(function(it) {
+        if (!asignados.some(function(a) { return a.itemId == it.id; })) {
+            asignados.push({ itemId: it.id, cantidadAsignada: parseFloat(it.cantidad) || 0, itemData: it });
+            agregados++;
+        }
+    });
+    if (agregados) {
+        renderizarAsignados();
+        var collapse = document.getElementById('costos-collapse');
+        if (collapse && !collapse.classList.contains('show')) {
+            var bsCol = bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false });
+            bsCol.show();
+        }
+    }
+
+    var warn = document.getElementById('stock-warnings');
+    if (!warn) return;
+    warn.innerHTML = '';
+    if (!advertencias || !advertencias.length) return;
+
+    var badge = document.getElementById('costo-count-badge');
+    var msgCostos = agregados
+        ? ' Se agregaron <strong>' + agregados + ' ítem(s)</strong> en Costos de Producción para su seguimiento.'
+        : ' No se encontraron ítems en facturas para estos ingredientes.';
+
+    warn.innerHTML =
+        '<div class="alert alert-warning d-flex gap-2 align-items-start p-2 mb-0 mt-1" style="font-size:0.82rem;">' +
+        '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
+        '<div><strong>Stock insuficiente</strong> para: ' +
+        advertencias.map(function(n) { return '<em>' + esc(n) + '</em>'; }).join(', ') +
+        '. Revisá las filas marcadas en la pestaña <a href="#" onclick="goTab(1);return false;">Receta e Insumos</a>.' +
+        msgCostos + '</div>' +
+        '<button type="button" class="btn-close btn-sm ms-auto" onclick="this.closest(\'.alert\').remove()"></button>' +
+        '</div>';
+}
+
 document.getElementById('loteForm').addEventListener('submit', function() {
     var container = document.getElementById('items-asignados-container');
     if (!container) return;

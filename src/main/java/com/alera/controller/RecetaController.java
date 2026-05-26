@@ -189,6 +189,11 @@ public class RecetaController {
         }).toList());
         if (r.getOgObjetivo() != null) resp.put("ogObjetivo", r.getOgObjetivo());
         if (r.getFgObjetivo() != null) resp.put("fgObjetivo", r.getFgObjetivo());
+        if (r.getEstilo() != null)     resp.put("estilo", r.getEstilo());
+        if (r.getAguaMacerado() != null) resp.put("aguaMacerado", r.getAguaMacerado());
+        if (r.getUnidadAguaMacerado() != null && !r.getUnidadAguaMacerado().isBlank())
+            resp.put("unidadAguaMacerado", r.getUnidadAguaMacerado());
+        if (r.getVolumenBase() != null) resp.put("volumenBase", r.getVolumenBase());
         return resp;
     }
 

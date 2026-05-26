@@ -338,6 +338,15 @@ public class TrazabilidadController {
                 .filter(i -> i.getTipo() == TipoInsumo.LEVADURA).toList());
         model.addAttribute("clarificantesInventario", todosInsumos.stream()
                 .filter(i -> i.getTipo() == TipoInsumo.CLARIFICANTE).toList());
+        var stockList = todosInsumos.stream().map(i -> {
+            var ms = new java.util.LinkedHashMap<String, Object>();
+            ms.put("nombre", i.getNombre() != null ? i.getNombre().toLowerCase().trim() : "");
+            ms.put("tipo", i.getTipo() != null ? i.getTipo().name() : null);
+            ms.put("cantidad", i.getCantidad());
+            ms.put("unidad", i.getUnidad());
+            return ms;
+        }).collect(java.util.stream.Collectors.toList());
+        model.addAttribute("inventarioStock", stockList);
         model.addAttribute("fermentadores", equipoService.listarFermentadoresDisponibles());
         model.addAttribute("tiposCerveza", tipoCervezaRepo.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("recetasActivas", recetaService.listarActivas());
