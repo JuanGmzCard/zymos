@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -27,7 +27,7 @@
     <!-- Nueva búsqueda -->
     <form th:action="@{/buscar}" method="get" class="mb-4 d-flex gap-2" style="max-width:500px;">
         <input type="search" name="q" class="form-control" th:value="${q}" placeholder="Buscar lotes, recetas, insumos...">
-        <button type="submit" class="btn btn-alera px-3"><i class="bi bi-search"></i></button>
+        <button type="submit" class="btn btn-zymos px-3"><i class="bi bi-search"></i></button>
     </form>
 
     <!-- Sin resultados -->
@@ -41,10 +41,10 @@
 
         <!-- Lotes -->
         <div class="col-lg-4" th:if="${!#lists.isEmpty(lotes)}">
-            <div class="card-alera h-100">
+            <div class="card-zymos h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-droplet-fill me-2"></i>Lotes</h5>
-                    <span class="badge" style="background:var(--verde-alera);"
+                    <span class="badge" style="background:var(--verde-zymos);"
                           th:text="${#lists.size(lotes)}"></span>
                 </div>
                 <div class="list-group list-group-flush">
@@ -53,7 +53,7 @@
                        class="list-group-item list-group-item-action py-2 px-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <div style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-alera);font-size:0.88rem;"
+                                <div style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-zymos);font-size:0.88rem;"
                                      th:text="${lote.codigoLote}">—</div>
                                 <div class="text-muted small" th:text="${lote.estilo}">—</div>
                             </div>
@@ -65,7 +65,7 @@
                     </a>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <a th:href="@{/(estilo=${q})}" class="btn btn-sm btn-alera-outline w-100">
+                    <a th:href="@{/(estilo=${q})}" class="btn btn-sm btn-zymos-outline w-100">
                         Ver todos los lotes con "<span th:text="${q}"></span>"
                     </a>
                 </div>
@@ -74,10 +74,10 @@
 
         <!-- Recetas -->
         <div class="col-lg-4" th:if="${!#lists.isEmpty(recetas)}">
-            <div class="card-alera h-100">
+            <div class="card-zymos h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-journal-bookmark me-2"></i>Recetas</h5>
-                    <span class="badge" style="background:var(--verde-alera);"
+                    <span class="badge" style="background:var(--verde-zymos);"
                           th:text="${#lists.size(recetas)}"></span>
                 </div>
                 <div class="list-group list-group-flush">
@@ -94,7 +94,7 @@
                     </a>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <a th:href="@{/recetas}" class="btn btn-sm btn-alera-outline w-100">
+                    <a th:href="@{/recetas}" class="btn btn-sm btn-zymos-outline w-100">
                         Ver todas las recetas
                     </a>
                 </div>
@@ -103,10 +103,10 @@
 
         <!-- Insumos -->
         <div class="col-lg-4" th:if="${!#lists.isEmpty(insumos)}">
-            <div class="card-alera h-100">
+            <div class="card-zymos h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-box-seam me-2"></i>Inventario</h5>
-                    <span class="badge" style="background:var(--verde-alera);"
+                    <span class="badge" style="background:var(--verde-zymos);"
                           th:text="${#lists.size(insumos)}"></span>
                 </div>
                 <div class="list-group list-group-flush">
@@ -123,7 +123,7 @@
                     </a>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <a th:href="@{/inventario(nombre=${q})}" class="btn btn-sm btn-alera-outline w-100">
+                    <a th:href="@{/inventario(nombre=${q})}" class="btn btn-sm btn-zymos-outline w-100">
                         Buscar en inventario
                     </a>
                 </div>

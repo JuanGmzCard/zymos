@@ -92,7 +92,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(fromAddress);
             helper.setTo(destinatario);
-            helper.setSubject("[" + tenantName + "] Email de prueba — Alera");
+            helper.setSubject("[" + tenantName + "] Email de prueba — Zymos");
             helper.setText(
                 "<div style='font-family:sans-serif;padding:24px;'>" +
                 "<h2 style='color:#364318;'>✓ Configuración de email correcta</h2>" +

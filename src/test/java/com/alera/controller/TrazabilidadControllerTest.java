@@ -1,8 +1,8 @@
 package com.alera.controller;
 
-import com.alera.config.AleraAccessDeniedHandler;
-import com.alera.config.AleraAuthFailureHandler;
-import com.alera.config.AleraAuthSuccessHandler;
+import com.alera.config.ZymosAccessDeniedHandler;
+import com.alera.config.ZymosAuthFailureHandler;
+import com.alera.config.ZymosAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
 import com.alera.config.LoginAttemptService;
 import com.alera.exception.LoteNoEncontradoException;
@@ -50,11 +50,11 @@ class TrazabilidadControllerTest {
     @MockBean UsuarioService               usuarioService;
     @MockBean TenantRepository             tenantRepo;
     @MockBean BrandingProperties           brandingProperties;
-    @MockBean AleraAuthSuccessHandler      successHandler;
+    @MockBean ZymosAuthSuccessHandler      successHandler;
     @MockBean LoginAttemptService          loginAttemptService;
     @MockBean JwtService                   jwtService;
-    @MockBean AleraAuthFailureHandler      failureHandler;
-    @MockBean AleraAccessDeniedHandler     accessDeniedHandler;
+    @MockBean ZymosAuthFailureHandler      failureHandler;
+    @MockBean ZymosAccessDeniedHandler     accessDeniedHandler;
     @MockBean PdfExportService             pdfExportService;
     @MockBean LecturaFermentacionService   lecturaService;
     @MockBean PlanificacionService         planificacionService;
@@ -140,7 +140,7 @@ class TrazabilidadControllerTest {
     @Test
     @WithMockUser(roles = "INVENTARIO")
     void nuevoConRolNoAdminEsAccesible() throws Exception {
-        // En @WebMvcTest con AleraAccessDeniedHandler mocked (void, no-op), el controller
+        // En @WebMvcTest con ZymosAccessDeniedHandler mocked (void, no-op), el controller
         // se ejecuta igualmente y retorna 200. La seguridad URL-based real se verifica
         // en tests de integración (AbstractIntegrationTest). El mock handler no comite
         // la respuesta → el controller renderiza el formulario normalmente.

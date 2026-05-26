@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-public class AleraAuthSuccessHandler implements AuthenticationSuccessHandler {
+public class ZymosAuthSuccessHandler implements AuthenticationSuccessHandler {
 
     private final LogAccesoService logService;
     private final LoginAttemptService loginAttemptService;
 
-    public AleraAuthSuccessHandler(LogAccesoService logService,
+    public ZymosAuthSuccessHandler(LogAccesoService logService,
                                     LoginAttemptService loginAttemptService) {
         this.logService          = logService;
         this.loginAttemptService = loginAttemptService;

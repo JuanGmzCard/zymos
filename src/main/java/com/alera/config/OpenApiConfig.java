@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Configuration;
         type        = SecuritySchemeType.HTTP,
         scheme      = "basic",
         in          = SecuritySchemeIn.HEADER,
-        description = "Usuario y contraseña del sistema Alera"
+        description = "Usuario y contraseña del sistema Zymos"
     ),
     @SecurityScheme(
         name          = "bearerAuth",

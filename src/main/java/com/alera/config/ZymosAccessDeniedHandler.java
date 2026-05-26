@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 
 @Component
-public class AleraAccessDeniedHandler implements AccessDeniedHandler {
+public class ZymosAccessDeniedHandler implements AccessDeniedHandler {
 
     private final LogAccesoService logService;
 
-    public AleraAccessDeniedHandler(LogAccesoService logService) {
+    public ZymosAccessDeniedHandler(LogAccesoService logService) {
         this.logService = logService;
     }
 

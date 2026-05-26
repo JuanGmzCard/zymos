@@ -1,8 +1,8 @@
 package com.alera.controller;
 
-import com.alera.config.AleraAccessDeniedHandler;
-import com.alera.config.AleraAuthFailureHandler;
-import com.alera.config.AleraAuthSuccessHandler;
+import com.alera.config.ZymosAccessDeniedHandler;
+import com.alera.config.ZymosAuthFailureHandler;
+import com.alera.config.ZymosAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
 import com.alera.config.LoginAttemptService;
 import com.alera.model.ElaboracionPlanificada;
@@ -42,9 +42,9 @@ class PlanificacionControllerTest {
     @MockBean UsuarioService       usuarioService;
     @MockBean TenantRepository     tenantRepo;
     @MockBean BrandingProperties   brandingProperties;
-    @MockBean AleraAuthSuccessHandler  successHandler;
-    @MockBean AleraAuthFailureHandler  failureHandler;
-    @MockBean AleraAccessDeniedHandler accessDeniedHandler;
+    @MockBean ZymosAuthSuccessHandler  successHandler;
+    @MockBean ZymosAuthFailureHandler  failureHandler;
+    @MockBean ZymosAccessDeniedHandler accessDeniedHandler;
     @MockBean LoginAttemptService      loginAttemptService;
     @MockBean JwtService               jwtService;
 
@@ -125,7 +125,7 @@ class PlanificacionControllerTest {
     @Test
     @WithMockUser(roles = "INVENTARIO")
     void guardarSinRolAdminEsDenegado() throws Exception {
-        // AleraAccessDeniedHandler redirige a /error?status=403 (302), no responde 403 directo.
+        // ZymosAccessDeniedHandler redirige a /error?status=403 (302), no responde 403 directo.
         mockMvc.perform(post("/planificacion/guardar")
                         .param("fechaPlaneada", "2025-07-01")
                         .param("nombreElaboracion", "Test")

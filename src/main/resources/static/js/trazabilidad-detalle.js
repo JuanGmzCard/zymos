@@ -6,7 +6,7 @@
     if (CHART_FECHAS.length === 0) return;
 
     const dorado     = getComputedStyle(document.documentElement).getPropertyValue('--dorado').trim()      || '#C9A028';
-    const verdeAlera = getComputedStyle(document.documentElement).getPropertyValue('--verde-alera').trim() || '#364318';
+    const verdeZymos = getComputedStyle(document.documentElement).getPropertyValue('--verde-zymos').trim() || '#364318';
 
     const labels = CHART_FECHAS.map(f => {
         const parts = f.split('-');
@@ -32,9 +32,9 @@
                 {
                     label: 'Temperatura (°C)',
                     data: CHART_TEMP,
-                    borderColor: verdeAlera,
-                    backgroundColor: verdeAlera + '22',
-                    pointBackgroundColor: verdeAlera,
+                    borderColor: verdeZymos,
+                    backgroundColor: verdeZymos + '22',
+                    pointBackgroundColor: verdeZymos,
                     borderWidth: 2,
                     tension: 0.3,
                     spanGaps: true,

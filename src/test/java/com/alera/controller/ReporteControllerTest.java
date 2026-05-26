@@ -32,9 +32,9 @@ class ReporteControllerTest {
 
     @MockBean TenantRepository           tenantRepo;
     @MockBean BrandingProperties         brandingProperties;
-    @MockBean AleraAuthSuccessHandler    successHandler;
-    @MockBean AleraAuthFailureHandler    failureHandler;
-    @MockBean AleraAccessDeniedHandler   accessDeniedHandler;
+    @MockBean ZymosAuthSuccessHandler    successHandler;
+    @MockBean ZymosAuthFailureHandler    failureHandler;
+    @MockBean ZymosAccessDeniedHandler   accessDeniedHandler;
     @MockBean UsuarioService             usuarioService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;

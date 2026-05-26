@@ -1,8 +1,8 @@
 package com.alera.controller;
 
-import com.alera.config.AleraAccessDeniedHandler;
-import com.alera.config.AleraAuthFailureHandler;
-import com.alera.config.AleraAuthSuccessHandler;
+import com.alera.config.ZymosAccessDeniedHandler;
+import com.alera.config.ZymosAuthFailureHandler;
+import com.alera.config.ZymosAuthSuccessHandler;
 import com.alera.config.BrandingProperties;
 import com.alera.config.LoginAttemptService;
 import com.alera.repository.TenantRepository;
@@ -49,9 +49,9 @@ class AuthControllerTest {
     @MockBean UsuarioService           usuarioService;
     @MockBean TenantRepository         tenantRepo;
     @MockBean BrandingProperties       brandingProperties;
-    @MockBean AleraAuthSuccessHandler  successHandler;
-    @MockBean AleraAuthFailureHandler  failureHandler;
-    @MockBean AleraAccessDeniedHandler accessDeniedHandler;
+    @MockBean ZymosAuthSuccessHandler  successHandler;
+    @MockBean ZymosAuthFailureHandler  failureHandler;
+    @MockBean ZymosAccessDeniedHandler accessDeniedHandler;
     @MockBean LoginAttemptService      loginAttemptService;
 
     @BeforeEach

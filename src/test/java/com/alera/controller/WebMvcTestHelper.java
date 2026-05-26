@@ -1,8 +1,8 @@
 package com.alera.controller;
 
-import com.alera.config.AleraAccessDeniedHandler;
-import com.alera.config.AleraAuthFailureHandler;
-import com.alera.config.AleraAuthSuccessHandler;
+import com.alera.config.ZymosAccessDeniedHandler;
+import com.alera.config.ZymosAuthFailureHandler;
+import com.alera.config.ZymosAuthSuccessHandler;
 import com.alera.model.Tenant;
 import com.alera.repository.TenantRepository;
 import org.mockito.Mockito;
@@ -15,9 +15,9 @@ import java.util.Optional;
  * SecurityConfig.filterChain() necesita 6 dependencias que NO se crean automáticamente
  * en @WebMvcTest. Hay que @MockBean todas:
  *   - TenantRepository             → TenantFilter lo inyecta
- *   - AleraAuthSuccessHandler      → filterChain lo recibe como parámetro
- *   - AleraAuthFailureHandler      → ídem
- *   - AleraAccessDeniedHandler     → ídem
+ *   - ZymosAuthSuccessHandler      → filterChain lo recibe como parámetro
+ *   - ZymosAuthFailureHandler      → ídem
+ *   - ZymosAccessDeniedHandler     → ídem
  *   - UsuarioService               → DaoAuthenticationProvider + auth handlers
  *   - BrandingProperties           → GlobalControllerAdvice lo inyecta
  *   - LogAccesoService             → auth handlers lo inyectan

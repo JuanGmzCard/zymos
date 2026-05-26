@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -18,7 +18,7 @@
             <h1><i class="bi bi-tools me-2"></i>Equipos</h1>
             <p>Gestión del parque de equipos de la cervecería</p>
         </div>
-        <a th:href="@{/equipos/nuevo}" class="btn btn-alera">
+        <a th:href="@{/equipos/nuevo}" class="btn btn-zymos">
             <i class="bi bi-plus-lg me-1"></i>Nuevo Equipo
         </a>
     </div>
@@ -74,13 +74,13 @@
     <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
         <span class="text-muted small me-1">Filtrar:</span>
         <a th:href="@{/equipos}" class="btn btn-sm"
-           th:classappend="${estadoFiltro == null} ? 'btn-alera' : 'btn-alera-outline'">
+           th:classappend="${estadoFiltro == null} ? 'btn-zymos' : 'btn-zymos-outline'">
             <i class="bi bi-grid-3x3-gap me-1"></i>Todos
         </a>
         <a th:each="est : ${estadosEquipo}"
            th:href="@{/equipos(estado=${est})}"
            class="btn btn-sm"
-           th:classappend="${estadoFiltro == est} ? 'btn-alera' : 'btn-alera-outline'"
+           th:classappend="${estadoFiltro == est} ? 'btn-zymos' : 'btn-zymos-outline'"
            th:text="${est.displayName}">Estado</a>
     </div>
 
@@ -88,13 +88,13 @@
     <div th:if="${#lists.isEmpty(equipos)}" class="empty-state">
         <i class="bi bi-tools"></i>
         <h5>No hay equipos registrados</h5>
-        <a th:href="@{/equipos/nuevo}" class="btn btn-alera mt-2">
+        <a th:href="@{/equipos/nuevo}" class="btn btn-zymos mt-2">
             <i class="bi bi-plus-lg me-1"></i>Agregar Equipo
         </a>
     </div>
 
     <!-- Tabla de equipos -->
-    <div th:unless="${#lists.isEmpty(equipos)}" class="card-alera">
+    <div th:unless="${#lists.isEmpty(equipos)}" class="card-zymos">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-list-ul me-2"></i>Listado de Equipos</h5>
             <div class="d-flex align-items-center gap-3">
@@ -109,7 +109,7 @@
             </div>
         </div>
         <div class="table-responsive">
-            <table class="table table-alera mb-0">
+            <table class="table table-zymos mb-0">
                 <thead>
                     <tr>
                         <th>Nombre</th>
@@ -162,11 +162,11 @@
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a th:href="@{/equipos/ver/{id}(id=${equipo.id})}"
-                                   class="btn btn-sm btn-alera" title="Ver detalle">
+                                   class="btn btn-sm btn-zymos" title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}"
-                                   class="btn btn-sm btn-alera-outline" title="Mantenimientos">
+                                   class="btn btn-sm btn-zymos-outline" title="Mantenimientos">
                                     <i class="bi bi-wrench"></i>
                                 </a>
                                 <a th:href="@{/equipos/editar/{id}(id=${equipo.id})}"

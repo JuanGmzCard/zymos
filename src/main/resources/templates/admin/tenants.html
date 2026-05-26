@@ -35,7 +35,7 @@
                     <i class="bi bi-arrow-clockwise me-1"></i>Limpiar cache
                 </button>
             </form>
-            <a th:href="@{/admin/tenants/nuevo}" class="btn btn-alera">
+            <a th:href="@{/admin/tenants/nuevo}" class="btn btn-zymos">
                 <i class="bi bi-plus-circle me-1"></i>Nuevo Tenant
             </a>
         </div>
@@ -51,7 +51,7 @@
 
     <div class="row g-3">
         <div class="col-xl-4 col-md-6" th:each="t : ${tenants}">
-            <div class="card-alera h-100 overflow-hidden"
+            <div class="card-zymos h-100 overflow-hidden"
                  th:classappend="${!t.active} ? 'opacity-75' : ''">
 
                 <!-- Franja de colores -->
@@ -110,7 +110,7 @@
                     <!-- Acciones -->
                     <div class="d-flex gap-2 flex-wrap">
                         <a th:href="@{/admin/tenants/editar/{sub}(sub=${t.subdomain})}"
-                           class="btn btn-alera-outline btn-sm flex-fill">
+                           class="btn btn-zymos-outline btn-sm flex-fill">
                             <i class="bi bi-pencil me-1"></i>Editar
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/usuarios(sub=${t.subdomain})}"

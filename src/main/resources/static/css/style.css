@@ -9,7 +9,7 @@
 
 :root {
     --verde-oscuro: #242E0D;
-    --verde-alera: #364318;
+    --verde-zymos: #364318;
     --dorado: #C9A028;
     --dorado-claro: #E0B840;
     --crema: #F5EDD0;
@@ -35,13 +35,13 @@ h1, h2, h3, h4, h5, .brand-font {
 /* ============================================================
    NAVBAR
    ============================================================ */
-.navbar-alera {
+.navbar-zymos {
     background-color: var(--verde-oscuro) !important;
     border-bottom: 3px solid var(--dorado);
     padding: 0.6rem 1.5rem;
 }
 
-.navbar-alera .navbar-brand {
+.navbar-zymos .navbar-brand {
     font-family: var(--font-headings);
     font-size: 1.5rem;
     font-weight: 700;
@@ -49,12 +49,12 @@ h1, h2, h3, h4, h5, .brand-font {
     letter-spacing: 2px;
 }
 
-.navbar-alera .navbar-brand .brand-icon {
+.navbar-zymos .navbar-brand .brand-icon {
     color: var(--dorado-claro);
     margin-right: 6px;
 }
 
-.navbar-alera .nav-link {
+.navbar-zymos .nav-link {
     color: var(--crema) !important;
     font-weight: 500;
     font-size: 0.85rem;
@@ -64,33 +64,33 @@ h1, h2, h3, h4, h5, .brand-font {
     transition: all 0.2s;
 }
 
-.navbar-alera .nav-link:hover,
-.navbar-alera .nav-link.active {
+.navbar-zymos .nav-link:hover,
+.navbar-zymos .nav-link.active {
     color: var(--dorado) !important;
     background-color: rgba(201, 160, 40, 0.12);
 }
 
-.navbar-alera .nav-link i {
+.navbar-zymos .nav-link i {
     margin-right: 4px;
 }
 
-.navbar-alera .dropdown-menu {
-    background-color: var(--verde-alera);
+.navbar-zymos .dropdown-menu {
+    background-color: var(--verde-zymos);
     border: 1px solid var(--dorado);
     border-radius: 6px;
 }
 
-.navbar-alera .dropdown-item {
+.navbar-zymos .dropdown-item {
     color: var(--crema);
     font-size: 0.85rem;
 }
 
-.navbar-alera .dropdown-item:hover {
+.navbar-zymos .dropdown-item:hover {
     background-color: rgba(201, 160, 40, 0.2);
     color: var(--dorado-claro);
 }
 
-.navbar-alera .dropdown-divider {
+.navbar-zymos .dropdown-divider {
     border-color: rgba(201, 160, 40, 0.3);
 }
 
@@ -98,7 +98,7 @@ h1, h2, h3, h4, h5, .brand-font {
    HERO SECTION
    ============================================================ */
 .hero-section {
-    background: linear-gradient(135deg, var(--verde-alera) 0%, var(--verde-oscuro) 100%);
+    background: linear-gradient(135deg, var(--verde-zymos) 0%, var(--verde-oscuro) 100%);
     color: var(--crema);
     padding: 2rem 1.5rem;
     margin-bottom: 0;
@@ -120,7 +120,7 @@ h1, h2, h3, h4, h5, .brand-font {
    SECTION HEADER
    ============================================================ */
 .section-header {
-    background: linear-gradient(90deg, var(--verde-alera), var(--verde-oscuro));
+    background: linear-gradient(90deg, var(--verde-zymos), var(--verde-oscuro));
     color: var(--crema);
     padding: 0.9rem 1.5rem;
     border-radius: 8px 8px 0 0;
@@ -166,7 +166,7 @@ h1, h2, h3, h4, h5, .brand-font {
     font-family: var(--font-headings);
     font-size: 2.2rem;
     font-weight: 700;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     line-height: 1;
 }
 
@@ -181,28 +181,28 @@ h1, h2, h3, h4, h5, .brand-font {
 .stat-card .stat-icon {
     font-size: 2rem;
     opacity: 0.15;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
 }
 
 /* ============================================================
    CARD ALERA
    ============================================================ */
-.card-alera {
+.card-zymos {
     border: none;
     border-radius: 10px;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     overflow: hidden;
 }
 
-.card-alera .card-header {
-    background: linear-gradient(90deg, var(--verde-alera), var(--verde-oscuro));
+.card-zymos .card-header {
+    background: linear-gradient(90deg, var(--verde-zymos), var(--verde-oscuro));
     color: var(--crema);
     border: none;
     padding: 0.9rem 1.2rem;
 }
 
-.card-alera .card-header h5,
-.card-alera .card-header h4 {
+.card-zymos .card-header h5,
+.card-zymos .card-header h4 {
     font-family: var(--font-headings);
     color: var(--dorado);
     margin: 0;
@@ -212,7 +212,7 @@ h1, h2, h3, h4, h5, .brand-font {
 /* ============================================================
    BUTTONS
    ============================================================ */
-.btn-alera {
+.btn-zymos {
     background-color: var(--dorado);
     border-color: var(--dorado);
     color: var(--verde-oscuro);
@@ -221,22 +221,22 @@ h1, h2, h3, h4, h5, .brand-font {
     transition: all 0.2s;
 }
 
-.btn-alera:hover {
+.btn-zymos:hover {
     background-color: var(--dorado-claro);
     border-color: var(--dorado-claro);
     color: var(--verde-oscuro);
     transform: translateY(-1px);
 }
 
-.btn-alera-outline {
+.btn-zymos-outline {
     background: transparent;
     border: 2px solid var(--dorado);
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     font-weight: 600;
     transition: all 0.2s;
 }
 
-.btn-alera-outline:hover {
+.btn-zymos-outline:hover {
     background-color: var(--dorado);
     color: var(--verde-oscuro);
 }
@@ -273,7 +273,7 @@ h1, h2, h3, h4, h5, .brand-font {
     border-radius: 20px;
     padding: 3px 10px;
     font-size: 0.78rem;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     margin: 2px;
     font-weight: 500;
 }
@@ -303,7 +303,7 @@ h1, h2, h3, h4, h5, .brand-font {
 
 .detail-value.highlight {
     font-family: var(--font-headings);
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     font-size: 1.1rem;
 }
 
@@ -330,7 +330,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .phase-step:last-child { border-right: none; }
 
 .phase-step.active {
-    background: linear-gradient(135deg, var(--verde-alera), var(--verde-oscuro));
+    background: linear-gradient(135deg, var(--verde-zymos), var(--verde-oscuro));
     color: var(--crema);
 }
 
@@ -355,7 +355,7 @@ h1, h2, h3, h4, h5, .brand-font {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
 }
 
 .phase-step-date {
@@ -366,8 +366,8 @@ h1, h2, h3, h4, h5, .brand-font {
 /* ============================================================
    TABLE
    ============================================================ */
-.table-alera thead th {
-    background-color: var(--verde-alera);
+.table-zymos thead th {
+    background-color: var(--verde-zymos);
     color: var(--crema);
     font-size: 0.78rem;
     text-transform: uppercase;
@@ -376,7 +376,7 @@ h1, h2, h3, h4, h5, .brand-font {
     padding: 0.75rem 1rem;
 }
 
-.table-alera tbody tr:hover {
+.table-zymos tbody tr:hover {
     background-color: rgba(201, 160, 40, 0.06);
 }
 
@@ -394,7 +394,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .form-section-title {
     font-family: var(--font-headings);
     font-size: 0.9rem;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     border-bottom: 2px solid var(--dorado);
     padding-bottom: 0.5rem;
     margin-bottom: 1.2rem;
@@ -455,7 +455,7 @@ h1, h2, h3, h4, h5, .brand-font {
    ============================================================ */
 .login-body {
     min-height: 100vh;
-    background: linear-gradient(135deg, var(--verde-oscuro) 0%, var(--verde-alera) 100%);
+    background: linear-gradient(135deg, var(--verde-oscuro) 0%, var(--verde-zymos) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -475,7 +475,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .login-header {
-    background: linear-gradient(135deg, var(--verde-alera), var(--verde-oscuro));
+    background: linear-gradient(135deg, var(--verde-zymos), var(--verde-oscuro));
     padding: 2.5rem 2rem 2rem;
     text-align: center;
 }
@@ -547,8 +547,8 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .text-dorado { color: var(--dorado) !important; }
-.text-verde { color: var(--verde-alera) !important; }
-.bg-verde { background-color: var(--verde-alera) !important; }
+.text-verde { color: var(--verde-zymos) !important; }
+.bg-verde { background-color: var(--verde-zymos) !important; }
 .bg-dorado { background-color: var(--dorado) !important; }
 
 .badge-fase {
@@ -557,8 +557,8 @@ h1, h2, h3, h4, h5, .brand-font {
     border-radius: 12px;
 }
 
-.progress-alera .progress-bar {
-    background: linear-gradient(90deg, var(--verde-alera), var(--dorado));
+.progress-zymos .progress-bar {
+    background: linear-gradient(90deg, var(--verde-zymos), var(--dorado));
 }
 
 .card-lote {
@@ -578,7 +578,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .card-lote .lote-code {
     font-family: var(--font-headings);
     font-size: 1.1rem;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     font-weight: 700;
 }
 
@@ -601,7 +601,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .empty-state i {
     font-size: 4rem;
     opacity: 0.3;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     display: block;
     margin-bottom: 1rem;
 }
@@ -615,7 +615,7 @@ html.dark-mode body {
 }
 
 /* Fondos de cards y contenedores */
-html.dark-mode .card-alera,
+html.dark-mode .card-zymos,
 html.dark-mode .stat-card,
 html.dark-mode .form-section,
 html.dark-mode .wizard-panel,
@@ -661,7 +661,7 @@ html.dark-mode .form-select:focus {
 
 /* Tablas */
 html.dark-mode .table,
-html.dark-mode .table-alera tbody tr {
+html.dark-mode .table-zymos tbody tr {
     color: #e8dfc8;
 }
 html.dark-mode .table tbody tr:hover td,
@@ -748,7 +748,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
    ============================================================ */
 .equipo-tipo-badge {
     background: rgba(54, 67, 24, 0.1);
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     border: 1px solid rgba(54, 67, 24, 0.2);
     font-size: 0.7rem;
     font-weight: 600;
@@ -757,7 +757,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 
 .receta-estilo-badge {
     background: rgba(54, 67, 24, 0.12);
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     border: 1px solid rgba(54, 67, 24, 0.25);
     font-size: 0.72rem;
     font-weight: 600;
@@ -832,7 +832,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
     font-family: var(--font-headings);
     font-size: 1.5rem;
     font-weight: 700;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     line-height: 1.1;
 }
 
@@ -873,7 +873,7 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
 
 .fase-col.fase-activa {
     background: linear-gradient(180deg, rgba(54, 67, 24, 0.07) 0%, transparent 100%);
-    border-top: 3px solid var(--verde-alera);
+    border-top: 3px solid var(--verde-zymos);
 }
 
 .fase-col.fase-completada {
@@ -894,14 +894,14 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
     line-height: 1;
 }
 
-.fase-activa .fase-numero { color: var(--verde-alera); }
+.fase-activa .fase-numero { color: var(--verde-zymos); }
 .fase-pendiente .fase-numero { color: #adb5bd; }
 
 .fase-nombre {
     font-family: var(--font-headings);
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     margin-bottom: 0.85rem;
@@ -975,7 +975,7 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
     font-family: var(--font-headings);
     font-size: 1.6rem;
     font-weight: 700;
-    color: var(--verde-alera);
+    color: var(--verde-zymos);
     line-height: 1.1;
     margin: 4px 0;
 }
@@ -990,7 +990,7 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
    PRINT — detalle de lote
    ============================================================ */
 @media print {
-    .navbar-alera,
+    .navbar-zymos,
     .hero-section .btn,
     .hero-section button,
     .card-footer,
@@ -1010,7 +1010,7 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
     .hero-section h1 { color: #364318 !important; font-size: 1.4rem !important; }
     .hero-section p, .hero-meta { color: #495057 !important; }
 
-    .card-alera {
+    .card-zymos {
         box-shadow: none !important;
         border: 1px solid #dee2e6 !important;
         break-inside: avoid;

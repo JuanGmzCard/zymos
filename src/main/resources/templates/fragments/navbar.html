@@ -2,10 +2,10 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-alera">
+<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-zymos">
 
     <!-- Inicializar dark mode antes del render (evita flash) -->
-    <script>(function(){if(localStorage.getItem('alera-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
+    <script>(function(){if(localStorage.getItem('zymos-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
 
     <!-- Variables de color del cliente (sobrescriben :root de style.css) -->
     <style th:inline="text">
@@ -14,7 +14,7 @@
         --font-headings: '[[${branding != null and branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
         --font-body:     '[[${branding != null and branding.fontBody != null ? branding.fontBody : 'Raleway'}]]', sans-serif;
         --verde-oscuro: [[${branding != null ? branding.colorNavbar    : '#242E0D'}]];
-        --verde-alera:  [[${branding != null ? branding.colorPrimary   : '#364318'}]];
+        --verde-zymos:  [[${branding != null ? branding.colorPrimary   : '#364318'}]];
         --dorado:       [[${branding != null ? branding.colorAccent    : '#C9A028'}]];
         --dorado-claro: [[${branding != null ? branding.colorAccentHover : '#E0B840'}]];
         --crema:        [[${branding != null ? branding.colorCream     : '#F5EDD0'}]];
@@ -403,7 +403,7 @@
     <!-- Toast de notificaciones -->
     <div th:if="${mensaje}"
          class="position-fixed end-0 p-3" style="z-index:1090;top:70px;">
-        <div id="aleraToast" class="toast border-0 shadow"
+        <div id="zymosToast" class="toast border-0 shadow"
              role="alert" aria-live="assertive" aria-atomic="true"
              data-bs-autohide="true" data-bs-delay="5000">
             <div class="toast-header border-0"
@@ -434,7 +434,7 @@
     // ── Modo oscuro ─────────────────────────────────────────────────
     function toggleDarkMode() {
         const isDark = document.documentElement.classList.toggle('dark-mode');
-        localStorage.setItem('alera-theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('zymos-theme', isDark ? 'dark' : 'light');
         _updateDarkIcon(isDark);
     }
     function _updateDarkIcon(isDark) {
@@ -444,7 +444,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         _updateDarkIcon(document.documentElement.classList.contains('dark-mode'));
         // ── Toast ────────────────────────────────────────────────────
-        var toastEl = document.getElementById('aleraToast');
+        var toastEl = document.getElementById('zymosToast');
         if (toastEl && typeof bootstrap !== 'undefined') {
             bootstrap.Toast.getOrCreateInstance(toastEl).show();
         }

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -11,12 +11,12 @@
     <style>
         /* Estilos FullCalendar */
         .fc { font-family: 'Raleway', sans-serif; }
-        .fc-toolbar-title { font-family: 'Cinzel', serif !important; color: var(--verde-alera); font-size: 1.1rem !important; }
-        .fc-button-primary { background-color: var(--verde-alera) !important; border-color: var(--verde-alera) !important; }
+        .fc-toolbar-title { font-family: 'Cinzel', serif !important; color: var(--verde-zymos); font-size: 1.1rem !important; }
+        .fc-button-primary { background-color: var(--verde-zymos) !important; border-color: var(--verde-zymos) !important; }
         .fc-button-primary:hover { background-color: var(--dorado) !important; border-color: var(--dorado) !important; color: var(--verde-oscuro) !important; }
         .fc-day-today { background: rgba(201,160,40,0.08) !important; }
         .fc-event { font-size: 0.72rem; cursor: pointer; border-radius: 4px; }
-        .fc-col-header-cell { background: var(--verde-alera); color: var(--crema) !important; }
+        .fc-col-header-cell { background: var(--verde-zymos); color: var(--crema) !important; }
         .fc-col-header-cell a { color: var(--crema) !important; font-weight: 600; font-size: 0.78rem; }
         html.dark-mode .fc-daygrid-day { background: #1c2410; }
         html.dark-mode .fc-daygrid-day-number { color: #e8dfc8; }
@@ -47,7 +47,7 @@
     <div class="row g-4">
         <!-- Calendario -->
         <div class="col-lg-9">
-            <div class="card-alera">
+            <div class="card-zymos">
                 <div class="card-body p-3">
                     <div id="calendario"></div>
                 </div>
@@ -56,7 +56,7 @@
 
         <!-- Leyenda -->
         <div class="col-lg-3">
-            <div class="card-alera mb-3">
+            <div class="card-zymos mb-3">
                 <div class="card-header"><h5><i class="bi bi-palette me-2"></i>Leyenda</h5></div>
                 <div class="card-body d-flex flex-column gap-3">
                     <div class="leyenda-item">
@@ -77,7 +77,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card-alera">
+            <div class="card-zymos">
                 <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Ayuda</h5></div>
                 <div class="card-body small text-muted">
                     <p>Cada barra representa la duración de una fase. Haz clic en un evento para ver el detalle del lote.</p>

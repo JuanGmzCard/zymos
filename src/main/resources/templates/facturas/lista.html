@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -18,7 +18,7 @@
             <h1><i class="bi bi-receipt me-2"></i>Facturas de Proveedores</h1>
             <p>Registro de compras y sincronización automática de inventario</p>
         </div>
-        <a th:href="@{/facturas/nueva}" class="btn btn-alera">
+        <a th:href="@{/facturas/nueva}" class="btn btn-zymos">
             <i class="bi bi-plus-lg me-1"></i>Nueva Factura
         </a>
     </div>
@@ -31,7 +31,7 @@
          class="empty-state">
         <i class="bi bi-receipt"></i>
         <h4>No hay facturas registradas</h4>
-        <a th:href="@{/facturas/nueva}" class="btn btn-alera">Crear Primera Factura</a>
+        <a th:href="@{/facturas/nueva}" class="btn btn-zymos">Crear Primera Factura</a>
     </div>
 
     <!-- Stat-cards — visibles siempre que el card principal esté visible -->
@@ -77,7 +77,7 @@
 
     <!-- Card principal — visible siempre que haya filtros activos o resultados -->
     <div th:unless="${#lists.isEmpty(facturas) and estadoFiltro == null and desde == null and hasta == null}"
-         class="card-alera">
+         class="card-zymos">
 
         <!-- Header: tabs de estado + filtro de fechas + Excel + typeahead -->
         <div class="card-header d-flex justify-content-between align-items-start flex-wrap gap-2">
@@ -110,7 +110,7 @@
                         <span class="input-group-text px-2">Hasta</span>
                         <input type="date" name="hasta" th:value="${hasta}" class="form-control form-control-sm" style="width:130px;">
                     </div>
-                    <button type="submit" class="btn btn-sm btn-alera">
+                    <button type="submit" class="btn btn-sm btn-zymos">
                         <i class="bi bi-funnel"></i>
                     </button>
                     <a th:if="${desde != null or hasta != null}"
@@ -172,7 +172,7 @@
                         <td th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</td>
                         <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</td>
                         <td>
-                            <a th:href="@{/facturas/ver/{id}(id=${factura.id})}" class="btn btn-sm btn-alera">
+                            <a th:href="@{/facturas/ver/{id}(id=${factura.id})}" class="btn btn-sm btn-zymos">
                                 <i class="bi bi-eye"></i>
                             </a>
                             <a th:href="@{/facturas/editar/{id}(id=${factura.id})}" class="btn btn-sm btn-outline-secondary ms-1">

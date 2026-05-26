@@ -41,7 +41,7 @@
             <h1><i class="bi bi-calendar-week me-2"></i>Planificación de Producción</h1>
             <p>Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
         </div>
-        <button class="btn btn-alera" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+        <button class="btn btn-zymos" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                 onclick="abrirModalNuevo()">
             <i class="bi bi-plus-circle me-1"></i>Nueva Planificación
         </button>
@@ -55,14 +55,14 @@
 
         <!-- Calendario FullCalendar -->
         <div class="col-lg-8">
-            <div class="card-alera p-3">
+            <div class="card-zymos p-3">
                 <div id="calPlanificacion"></div>
             </div>
         </div>
 
         <!-- Panel de próximas -->
         <div class="col-lg-4">
-            <div class="card-alera p-3 h-100">
+            <div class="card-zymos p-3 h-100">
                 <h6 class="detail-label mb-3">
                     <i class="bi bi-list-check me-2"></i>Próximas elaboraciones
                 </h6>
@@ -96,7 +96,7 @@
     </div>
 
     <!-- Tabla completa -->
-    <div class="card-alera">
+    <div class="card-zymos">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-table me-2"></i>Todas las planificaciones</h5>
             <span class="text-muted small" th:text="${#lists.size(todas)} + ' registros'"></span>
@@ -108,7 +108,7 @@
         </div>
 
         <div th:unless="${#lists.isEmpty(todas)}" class="table-responsive">
-            <table class="table table-alera mb-0" style="font-size:.85rem;">
+            <table class="table table-zymos mb-0" style="font-size:.85rem;">
                 <thead>
                     <tr>
                         <th>Fecha</th>
@@ -142,7 +142,7 @@
                         <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <div class="d-flex gap-1 flex-wrap">
                                 <!-- Editar -->
-                                <button class="btn btn-sm btn-alera-outline py-0 px-2 btn-editar-plan"
+                                <button class="btn btn-sm btn-zymos-outline py-0 px-2 btn-editar-plan"
                                         th:attr="data-plan-id=${p.id},
                                                  data-nombre=${p.nombreElaboracion},
                                                  data-receta-id=${p.receta != null ? p.receta.id : ''},
@@ -241,8 +241,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-alera">
+                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zymos">
                         <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
                 </div>

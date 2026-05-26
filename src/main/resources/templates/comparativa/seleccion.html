@@ -28,7 +28,7 @@
         <input type="search" name="q" class="form-control" style="max-width:320px;"
                placeholder="Buscar por código o estilo…"
                th:value="${qFiltro}" autocomplete="off">
-        <button type="submit" class="btn btn-alera-outline">
+        <button type="submit" class="btn btn-zymos-outline">
             <i class="bi bi-search"></i>
         </button>
         <a th:if="${!qFiltro.isBlank()}" th:href="@{/comparativa}" class="btn btn-outline-secondary">
@@ -44,7 +44,7 @@
                 <span id="contadorSeleccion">0</span> seleccionado<span id="pluralS" style="display:none;">s</span>
                 <span class="text-muted"> (mín. 2, máx. 6)</span>
             </span>
-            <button type="submit" id="btnComparar" class="btn btn-alera" disabled>
+            <button type="submit" id="btnComparar" class="btn btn-zymos" disabled>
                 <i class="bi bi-bar-chart-steps me-1"></i>Comparar seleccionados
             </button>
         </div>
@@ -54,9 +54,9 @@
             <p class="mt-3">No se encontraron lotes</p>
         </div>
 
-        <div class="card-alera" th:unless="${#lists.isEmpty(lotes)}">
+        <div class="card-zymos" th:unless="${#lists.isEmpty(lotes)}">
             <div class="table-responsive">
-                <table class="table table-alera mb-0" style="font-size:0.85rem;">
+                <table class="table table-zymos mb-0" style="font-size:0.85rem;">
                     <thead>
                         <tr>
                             <th style="width:36px;"></th>

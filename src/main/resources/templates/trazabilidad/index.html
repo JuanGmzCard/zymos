@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -28,14 +28,14 @@
         .filter-bar .form-select:focus { border-color: #C9A028; box-shadow: 0 0 0 0.15rem rgba(201,160,40,0.2); }
 
         /* ══ TABS ══════════════════════════════════════════ */
-        .nav-tabs-alera {
+        .nav-tabs-zymos {
             border-bottom: none;
             gap: 4px;
             flex-wrap: nowrap;
             overflow-x: auto;
             padding-bottom: 0;
         }
-        .nav-tabs-alera .nav-link {
+        .nav-tabs-zymos .nav-link {
             border: none;
             border-radius: 8px 8px 0 0;
             padding: 9px 18px;
@@ -48,14 +48,14 @@
             white-space: nowrap;
             transition: all 0.18s;
         }
-        .nav-tabs-alera .nav-link:hover { background: #dee2e6; color: #364318; }
-        .nav-tabs-alera .nav-link.active { color: #F5EDD0; }
-        .nav-tabs-alera .nav-link.tab-general.active  { background: #1a3a5c; }
-        .nav-tabs-alera .nav-link.tab-ferm.active     { background: #1a5e20; }
-        .nav-tabs-alera .nav-link.tab-acond.active    { background: #0c5460; }
-        .nav-tabs-alera .nav-link.tab-madur.active    { background: #856404; }
-        .nav-tabs-alera .nav-link.tab-carbon.active   { background: #004085; }
-        .nav-tabs-alera .nav-link.tab-density.active  { background: #4a148c; }
+        .nav-tabs-zymos .nav-link:hover { background: #dee2e6; color: #364318; }
+        .nav-tabs-zymos .nav-link.active { color: #F5EDD0; }
+        .nav-tabs-zymos .nav-link.tab-general.active  { background: #1a3a5c; }
+        .nav-tabs-zymos .nav-link.tab-ferm.active     { background: #1a5e20; }
+        .nav-tabs-zymos .nav-link.tab-acond.active    { background: #0c5460; }
+        .nav-tabs-zymos .nav-link.tab-madur.active    { background: #856404; }
+        .nav-tabs-zymos .nav-link.tab-carbon.active   { background: #004085; }
+        .nav-tabs-zymos .nav-link.tab-density.active  { background: #4a148c; }
 
         /* ══ PANEL ═════════════════════════════════════════ */
         .tab-panel-wrapper {
@@ -139,7 +139,7 @@
             <h1><i class="bi bi-clipboard-data me-2"></i>Trazabilidad de Lotes</h1>
             <p>Seguimiento completo del proceso cervecero</p>
         </div>
-        <a th:href="@{/nuevo}" class="btn btn-alera">
+        <a th:href="@{/nuevo}" class="btn btn-zymos">
             <i class="bi bi-plus-lg me-1"></i>Nuevo Lote
         </a>
     </div>
@@ -187,10 +187,10 @@
                    th:value="${hastaFiltro != null} ? ${#temporals.format(hastaFiltro,'yyyy-MM-dd')} : ''">
         </div>
         <div class="d-flex gap-2 align-items-end">
-            <button type="submit" class="btn btn-alera btn-sm px-3">
+            <button type="submit" class="btn btn-zymos btn-sm px-3">
                 <i class="bi bi-search me-1"></i>Filtrar
             </button>
-            <a th:href="@{/}" class="btn btn-alera-outline btn-sm px-3">
+            <a th:href="@{/}" class="btn btn-zymos-outline btn-sm px-3">
                 <i class="bi bi-x-lg me-1"></i>Limpiar
             </a>
         </div>
@@ -216,7 +216,7 @@
             </span>
         </p>
         <a th:if="${#lists.isEmpty(lotes) and (estiloFiltro == null or estiloFiltro.isBlank()) and (faseFiltro == null or faseFiltro.isBlank())}"
-           th:href="@{/nuevo}" class="btn btn-alera btn-sm">
+           th:href="@{/nuevo}" class="btn btn-zymos btn-sm">
             <i class="bi bi-plus-lg me-1"></i>Crear Primer Lote
         </a>
     </div>
@@ -224,7 +224,7 @@
     <div th:unless="${#lists.isEmpty(lotes)}">
 
         <!-- ══ TABS ══ -->
-        <ul class="nav nav-tabs-alera mb-0" id="trazaTabs" role="tablist">
+        <ul class="nav nav-tabs-zymos mb-0" id="trazaTabs" role="tablist">
             <li class="nav-item">
                 <button class="nav-link tab-general active" data-bs-toggle="tab" data-bs-target="#tab-general" type="button">
                     <i class="bi bi-info-circle me-1"></i>General e Insumos
@@ -283,7 +283,7 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-alera btn-sm py-0 px-2" style="font-size:0.65rem;" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;" title="Ver detalle"><i class="bi bi-eye"></i></a>
                                     <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Editar"><i class="bi bi-pencil"></i></a>
                                     <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Duplicar lote"><i class="bi bi-copy"></i></a>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto (los datos se conservan).')">

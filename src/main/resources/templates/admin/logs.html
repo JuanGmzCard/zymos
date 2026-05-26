@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -34,7 +34,7 @@
     <div class="d-flex gap-2 mb-3 align-items-center">
         <span class="text-muted small me-1">Filtrar:</span>
         <a th:href="@{/admin/logs}" class="btn btn-sm"
-           th:classappend="${tipoFiltro.isBlank()} ? 'btn-alera' : 'btn-alera-outline'">Todos</a>
+           th:classappend="${tipoFiltro.isBlank()} ? 'btn-zymos' : 'btn-zymos-outline'">Todos</a>
         <a th:href="@{/admin/logs(tipo='LOGIN_OK')}" class="btn btn-sm"
            th:classappend="${tipoFiltro == 'LOGIN_OK'} ? 'btn-success' : 'btn-outline-success'">
             <i class="bi bi-check-circle me-1"></i>Login OK</a>
@@ -49,9 +49,9 @@
     </div>
 
     <!-- Tabla -->
-    <div class="card-alera">
+    <div class="card-zymos">
         <div class="table-responsive">
-            <table class="table table-alera mb-0" style="font-size:0.8rem;">
+            <table class="table table-zymos mb-0" style="font-size:0.8rem;">
                 <thead>
                     <tr>
                         <th>Fecha</th>

@@ -18,14 +18,14 @@
             <h1><i class="bi bi-clock-history me-2"></i>Historial — <code th:text="${tenant.subdomain}">tenant</code></h1>
             <p th:text="${tenant.name} + ' · ' + ${historial.size()} + ' evento(s)'">Tenant</p>
         </div>
-        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-alera-outline">
+        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-zymos-outline">
             <i class="bi bi-arrow-left me-1"></i>Volver
         </a>
     </div>
 </div>
 
 <div class="container-fluid px-4 py-4" style="max-width:860px;">
-    <div class="card-alera p-0 overflow-hidden">
+    <div class="card-zymos p-0 overflow-hidden">
         <table class="table mb-0 align-middle">
             <thead>
                 <tr>

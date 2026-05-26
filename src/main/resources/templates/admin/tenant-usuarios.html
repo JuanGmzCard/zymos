@@ -19,10 +19,10 @@
             <p th:text="${tenant.name} + ' · ' + ${usuarios.size()} + ' usuario(s)'">Tenant</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-alera" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+            <button type="button" class="btn btn-zymos" data-bs-toggle="modal" data-bs-target="#modalNuevo">
                 <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
             </button>
-            <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-alera-outline">
+            <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-zymos-outline">
                 <i class="bi bi-arrow-left me-1"></i>Volver
             </a>
         </div>
@@ -31,7 +31,7 @@
 
 <div class="container-fluid px-4 py-4" style="max-width:900px;">
 
-    <div class="card-alera p-0 overflow-hidden">
+    <div class="card-zymos p-0 overflow-hidden">
         <table class="table mb-0 align-middle">
             <thead>
                 <tr>
@@ -134,8 +134,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Crear</button>
+                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Crear</button>
                 </div>
             </form>
         </div>
@@ -164,8 +164,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Guardar</button>
                 </div>
             </form>
         </div>
@@ -188,8 +188,8 @@
                     </select>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-alera-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-alera"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Guardar</button>
                 </div>
             </form>
         </div>

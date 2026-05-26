@@ -13,7 +13,7 @@
         .mejor-valor .bi { font-size: .75em; vertical-align: middle; }
         .tabla-comparativa th.lote-header { min-width: 140px; text-align: center; }
         .tabla-comparativa td.valor-celda { text-align: center; vertical-align: middle; }
-        .tabla-comparativa .seccion-header { background: var(--verde-alera); color: var(--crema);
+        .tabla-comparativa .seccion-header { background: var(--verde-zymos); color: var(--crema);
             font-family: Cinzel; font-size: .75rem; letter-spacing: .05em; }
         .cpl-mejor { color: #198754; font-weight: 700; }
     </style>
@@ -32,7 +32,7 @@
                class="btn btn-outline-secondary">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <a th:href="@{/comparativa}" class="btn btn-alera-outline">
+            <a th:href="@{/comparativa}" class="btn btn-zymos-outline">
                 <i class="bi bi-arrow-left me-1"></i>Nueva comparativa
             </a>
         </div>
@@ -42,7 +42,7 @@
 <div class="container-fluid px-4 py-4">
 
     <!-- Gráfico de métricas -->
-    <div class="card-alera p-3 mb-4">
+    <div class="card-zymos p-3 mb-4">
         <h6 class="detail-label mb-3"><i class="bi bi-graph-up me-2"></i>Métricas de calidad (%)</h6>
         <div style="max-height:280px;">
             <canvas id="chartComparativa"></canvas>
@@ -50,7 +50,7 @@
     </div>
 
     <!-- Tabla comparativa transpuesta -->
-    <div class="card-alera mb-4">
+    <div class="card-zymos mb-4">
         <div class="table-responsive">
             <table class="table tabla-comparativa mb-0" style="font-size:0.85rem;">
                 <thead>
@@ -253,7 +253,7 @@
         <h6 class="detail-label mb-3"><i class="bi bi-journal-text me-2"></i>Notas de cata</h6>
         <div class="row g-3">
             <div class="col-md-6 col-xl-4" th:each="lote : ${lotes}" th:if="${!#strings.isEmpty(lote.notasCata)}">
-                <div class="card-alera p-3 h-100">
+                <div class="card-zymos p-3 h-100">
                     <div class="d-flex align-items-center gap-2 mb-2">
                         <span class="fw-bold" th:style="'color:var(--dorado);'" th:text="${lote.codigoLote}">LOTE</span>
                         <span class="text-muted small" th:text="${lote.estilo}">Estilo</span>
@@ -276,7 +276,7 @@ const ATENUAC   = /*[[${chartAtenuacion}]]*/ [];
 const EFIC      = /*[[${chartEficiencia}]]*/ [];
 
 const dorado        = getComputedStyle(document.documentElement).getPropertyValue('--dorado').trim()       || '#C9A028';
-const verdeAlera    = getComputedStyle(document.documentElement).getPropertyValue('--verde-alera').trim()  || '#364318';
+const verdeZymos    = getComputedStyle(document.documentElement).getPropertyValue('--verde-zymos').trim()  || '#364318';
 const verdeOscuro   = getComputedStyle(document.documentElement).getPropertyValue('--verde-oscuro').trim() || '#242E0D';
 
 new Chart(document.getElementById('chartComparativa'), {
@@ -295,8 +295,8 @@ new Chart(document.getElementById('chartComparativa'), {
             {
                 label: 'Atenuación (%)',
                 data: ATENUAC,
-                backgroundColor: verdeAlera + 'cc',
-                borderColor: verdeAlera,
+                backgroundColor: verdeZymos + 'cc',
+                borderColor: verdeZymos,
                 borderWidth: 1,
                 borderRadius: 4
             },

@@ -32,7 +32,7 @@
         <input th:if="${!esNuevo}" type="hidden" th:field="*{subdomain}">
 
         <!-- SECCIÓN: Información básica -->
-        <div class="card-alera p-4 mb-3">
+        <div class="card-zymos p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i>Información básica</h6>
 
             <div class="row g-3">
@@ -68,7 +68,7 @@
                         <input type="email" th:field="*{emailAdmin}" id="emailAdmin"
                                class="form-control" placeholder="admin@cerveceria.com">
                         <button th:if="${!esNuevo}" type="button" id="btnTestEmail"
-                                class="btn btn-alera-outline btn-sm text-nowrap"
+                                class="btn btn-zymos-outline btn-sm text-nowrap"
                                 onclick="enviarEmailPrueba()">
                             <i class="bi bi-send me-1"></i>Probar
                         </button>
@@ -89,7 +89,7 @@
         </div>
 
         <!-- SECCIÓN: Importar / Exportar -->
-        <div class="card-alera p-4 mb-3">
+        <div class="card-zymos p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i>Importar / Exportar configuración</h6>
             <div class="d-flex flex-wrap gap-4 align-items-end">
 
@@ -97,7 +97,7 @@
                 <div th:if="${!esNuevo}">
                     <div class="small text-muted mb-1">Exportar branding</div>
                     <a th:href="@{/admin/tenants/{s}/export(s=${tenant.subdomain})}"
-                       class="btn btn-alera-outline btn-sm text-nowrap">
+                       class="btn btn-zymos-outline btn-sm text-nowrap">
                         <i class="bi bi-download me-1"></i>Exportar JSON
                     </a>
                 </div>
@@ -107,7 +107,7 @@
                     <div class="small text-muted mb-1">Importar desde archivo JSON</div>
                     <div class="input-group input-group-sm">
                         <input type="file" id="importJsonFile" accept=".json" class="form-control">
-                        <button type="button" class="btn btn-alera text-nowrap" onclick="importarConfig()">
+                        <button type="button" class="btn btn-zymos text-nowrap" onclick="importarConfig()">
                             <i class="bi bi-upload me-1"></i>Aplicar
                         </button>
                     </div>
@@ -135,7 +135,7 @@
         </div>
 
         <!-- SECCIÓN: Paleta de colores -->
-        <div class="card-alera p-4 mb-3">
+        <div class="card-zymos p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i>Paleta de colores</h6>
 
             <!-- Previews en vivo -->
@@ -249,13 +249,13 @@
         </div>
 
         <!-- SECCIÓN: Tipografías -->
-        <div class="card-alera p-4 mb-3">
+        <div class="card-zymos p-4 mb-3">
             <h6 class="detail-label mb-3"><i class="bi bi-fonts me-2"></i>Tipografías</h6>
 
             <!-- Preview de fuentes en vivo -->
             <div class="mb-4 p-3 rounded" style="background:var(--fondo);border:1px solid rgba(0,0,0,.08);">
                 <div id="previewFontHeading"
-                     style="font-size:1.4rem;font-weight:600;color:var(--verde-alera);margin-bottom:4px;">
+                     style="font-size:1.4rem;font-weight:600;color:var(--verde-zymos);margin-bottom:4px;">
                     Cervecería Artesanal
                 </div>
                 <div id="previewFontBody" style="font-size:0.9rem;color:#555;line-height:1.5;">
@@ -298,11 +298,11 @@
 
         <!-- Botones -->
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-alera">
+            <button type="submit" class="btn btn-zymos">
                 <i class="bi bi-check-lg me-1"></i>
                 <span th:text="${esNuevo} ? 'Crear Tenant' : 'Guardar Cambios'">Guardar</span>
             </button>
-            <a th:href="@{/admin/tenants}" class="btn btn-alera-outline">Cancelar</a>
+            <a th:href="@{/admin/tenants}" class="btn btn-zymos-outline">Cancelar</a>
         </div>
     </form>
 </div>

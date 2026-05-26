@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -26,7 +26,7 @@
                 <p class="mb-0" th:text="${receta.estilo}">Estilo</p>
             </div>
             <div class="d-flex gap-2 align-self-center flex-wrap">
-                <a th:href="@{/recetas/editar/{id}(id=${receta.id})}" class="btn btn-alera">
+                <a th:href="@{/recetas/editar/{id}(id=${receta.id})}" class="btn btn-zymos">
                     <i class="bi bi-pencil me-1"></i>Editar
                 </a>
                 <a th:href="@{/recetas/duplicar/{id}(id=${receta.id})}" class="btn btn-outline-crema"
@@ -89,7 +89,7 @@
 
         <!-- Información + agua -->
         <div class="col-lg-5">
-            <div class="card-alera mb-4">
+            <div class="card-zymos mb-4">
                 <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Información</h5></div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -132,10 +132,10 @@
             </div>
 
             <!-- Escalones de macerado -->
-            <div class="card-alera mb-4" th:if="${!#lists.isEmpty(receta.escalones)}">
+            <div class="card-zymos mb-4" th:if="${!#lists.isEmpty(receta.escalones)}">
                 <div class="card-header"><h5><i class="bi bi-thermometer-sun me-2"></i>Escalones de Macerado</h5></div>
                 <div class="card-body p-0">
-                    <table class="table table-alera mb-0">
+                    <table class="table table-zymos mb-0">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -157,14 +157,14 @@
             </div>
 
             <!-- Hervor y Lúpulo -->
-            <div class="card-alera" th:if="${!#lists.isEmpty(receta.adicionesHervor)}">
+            <div class="card-zymos" th:if="${!#lists.isEmpty(receta.adicionesHervor)}">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-fire me-2"></i>Hervor y Lúpulo</h5>
                     <span class="text-muted small" th:if="${receta.tiempoHervorMinutos != null}"
                           th:text="'Total: ' + ${receta.tiempoHervorMinutos} + ' min'"></span>
                 </div>
                 <div class="card-body p-0">
-                    <table class="table table-alera mb-0">
+                    <table class="table table-zymos mb-0">
                         <thead>
                             <tr>
                                 <th>Insumo</th>
@@ -192,7 +192,7 @@
 
         <!-- Ingredientes -->
         <div class="col-lg-7">
-            <div class="card-alera h-100">
+            <div class="card-zymos h-100">
                 <div class="card-header"><h5><i class="bi bi-basket me-2"></i>Ingredientes</h5></div>
                 <div class="card-body">
                     <div class="mb-4" th:if="${!#lists.isEmpty(receta.maltas)}">
@@ -245,7 +245,7 @@
     </div>
 
     <!-- Notas -->
-    <div class="card-alera mb-4" th:if="${receta.notas != null and !receta.notas.isBlank()}">
+    <div class="card-zymos mb-4" th:if="${receta.notas != null and !receta.notas.isBlank()}">
         <div class="card-header"><h5><i class="bi bi-chat-left-text me-2"></i>Notas Técnicas</h5></div>
         <div class="card-body">
             <p class="observaciones-texto mb-0" th:text="${receta.notas}"></p>
@@ -267,14 +267,14 @@
     </div>
 
     <!-- Lotes elaborados con esta receta -->
-    <div class="card-alera mb-4" th:if="${!#lists.isEmpty(lotesDeReceta)}">
+    <div class="card-zymos mb-4" th:if="${!#lists.isEmpty(lotesDeReceta)}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-droplet-fill me-2"></i>Lotes Elaborados con esta Receta</h5>
-            <span class="badge" style="background:var(--verde-alera);"
+            <span class="badge" style="background:var(--verde-zymos);"
                   th:text="${#lists.size(lotesDeReceta)} + ' lote' + (${#lists.size(lotesDeReceta)} != 1 ? 's' : '')"></span>
         </div>
         <div class="table-responsive">
-            <table class="table table-alera mb-0" style="font-size:0.82rem;">
+            <table class="table table-zymos mb-0" style="font-size:0.82rem;">
                 <thead>
                     <tr>
                         <th>Código</th>
@@ -291,7 +291,7 @@
                     <tr th:each="lote : ${lotesDeReceta}">
                         <td>
                             <a th:href="@{/ver/{id}(id=${lote.id})}"
-                               style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-alera);"
+                               style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-zymos);"
                                th:text="${lote.codigoLote}">—</a>
                         </td>
                         <td class="text-muted"
@@ -308,7 +308,7 @@
                             th:classappend="${lote.densidadFinal == null} ? 'text-muted' : ''">—</td>
                         <td>
                             <span th:if="${lote.abv != null}"
-                                  style="font-weight:700;color:var(--verde-alera);"
+                                  style="font-weight:700;color:var(--verde-zymos);"
                                   th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'">—</span>
                             <span th:unless="${lote.abv != null}" class="text-muted">—</span>
                         </td>
@@ -326,13 +326,13 @@
     </div>
 
     <!-- Costo estimado por lote -->
-    <div class="card-alera mb-4" th:if="${costosIngredientes != null and !#lists.isEmpty(costosIngredientes)}">
+    <div class="card-zymos mb-4" th:if="${costosIngredientes != null and !#lists.isEmpty(costosIngredientes)}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-cash-coin me-2"></i>Costo Estimado de Ingredientes</h5>
             <span class="text-muted small">Basado en últimas compras registradas</span>
         </div>
         <div class="card-body p-0">
-            <table class="table table-alera mb-0" style="font-size:0.82rem;">
+            <table class="table table-zymos mb-0" style="font-size:0.82rem;">
                 <thead>
                     <tr>
                         <th>Ingrediente</th>
@@ -353,7 +353,7 @@
                         </td>
                         <td class="text-end">
                             <span th:if="${ci['costoEstimado'] != null}"
-                                  style="font-weight:700;color:var(--verde-alera);"
+                                  style="font-weight:700;color:var(--verde-zymos);"
                                   th:text="'$ ' + ${#numbers.formatDecimal(ci['costoEstimado'], 1, 0)}">—</span>
                             <span th:unless="${ci['costoEstimado'] != null}" class="text-muted">—</span>
                         </td>
@@ -379,7 +379,7 @@
     </div>
 
     <!-- Calculadora de escala -->
-    <div class="card-alera" th:if="${receta.volumenBase != null and !#lists.isEmpty(receta.maltas)}">
+    <div class="card-zymos" th:if="${receta.volumenBase != null and !#lists.isEmpty(receta.maltas)}">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5><i class="bi bi-calculator me-2"></i>Calculadora de Escala</h5>
             <span class="text-muted small">Base: <span th:text="${receta.volumenBase} + ' L'"></span></span>
@@ -396,7 +396,7 @@
                     <div class="form-control-plaintext fw-bold text-verde" id="factorEscala">—</div>
                 </div>
                 <div class="col-md-4">
-                    <button type="button" class="btn btn-alera-outline"
+                    <button type="button" class="btn btn-zymos-outline"
                             onclick="document.getElementById('volObjetivo').value='';calcularEscala()">
                         <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer
                     </button>

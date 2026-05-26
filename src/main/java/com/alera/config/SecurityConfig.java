@@ -88,9 +88,9 @@ public class SecurityConfig {
                                             TenantFilter tenantFilter,
                                             LoginAttemptFilter loginAttemptFilter,
                                             JwtFilter jwtFilter,
-                                            AleraAuthSuccessHandler successHandler,
-                                            AleraAuthFailureHandler failureHandler,
-                                            AleraAccessDeniedHandler accessDeniedHandler) throws Exception {
+                                            ZymosAuthSuccessHandler successHandler,
+                                            ZymosAuthFailureHandler failureHandler,
+                                            ZymosAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
