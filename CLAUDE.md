@@ -32,7 +32,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V26)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V31)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -74,6 +74,7 @@ com.alera/
 │               LoginAttemptFilter (OncePerRequestFilter — creado como @Bean en SecurityConfig, no @Component),
 │               PasswordPolicy (utilidad estática — MIN_LENGTH=8, requiere letra + número; `validar(pwd)` retorna null si OK o mensaje de error),
 │               BrandingProperties (@ConfigurationProperties prefix=app.brand),
+│               ExportBranding (record — pre-parsea colores del tenant en java.awt.Color para PDF/Excel; ExportBranding.from(Tenant) y ExportBranding.defaults(name); helper lighten(Color,float)),
 │               TenantContext (ThreadLocal), TenantFilter (OncePerRequestFilter),
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
 │               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer),
@@ -179,6 +180,9 @@ templates/
 - `V26__notificaciones.sql` — tabla `notificaciones(id BIGSERIAL, tenant_id VARCHAR(100), tipo VARCHAR(50), titulo VARCHAR(200), mensaje VARCHAR(500), url_accion VARCHAR(300), leida BOOLEAN DEFAULT FALSE, created_at TIMESTAMP DEFAULT NOW())` + índices en `(tenant_id, leida)` y `(tenant_id, created_at DESC)`. Con `@TenantId` — filtrada por tenant. Sin FK externa.
 - `V27__estado_factura.sql` — `ALTER TABLE facturas_proveedor ADD COLUMN estado VARCHAR(20) NOT NULL DEFAULT 'RECIBIDA'` — estado de la factura: RECIBIDA (gris), VERIFICADA (amarillo), PAGADA (verde). Todas las facturas existentes quedan en RECIBIDA.
 - `V28__factura_historial_estado.sql` — tabla `factura_historial_estado(id BIGSERIAL, tenant_id VARCHAR(100), factura_id BIGINT NOT NULL, estado_anterior VARCHAR(20), estado_nuevo VARCHAR(20) NOT NULL, usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW())` + índices en `factura_id` y `tenant_id`. Sin FK a `facturas_proveedor` — preserva historial si se elimina la factura. Con `@TenantId` — filtrada por tenant.
+- `V29__superadmin_table.sql` — tabla `super_admins(id BIGSERIAL, username VARCHAR(100) UNIQUE, password VARCHAR(255), activo BOOLEAN DEFAULT TRUE)` — super-administradores globales sin `tenant_id`; tienen acceso a todos los tenants. Sin `@TenantId`.
+- `V30__movimientos_inventario_receta_version.sql` — tabla `movimientos_inventario(id, tenant_id, insumo_id, insumo_nombre, tipo, cantidad, cantidad_anterior, cantidad_posterior, motivo, referencia, usuario, fecha)` para auditoría de stock + índices; y `ALTER TABLE recetas ADD COLUMN version INTEGER NOT NULL DEFAULT 1` — versionado de recetas.
+- `V31__receta_ph_agua.sql` — `ALTER TABLE recetas ADD COLUMN IF NOT EXISTS ph_agua DECIMAL(4,2)` — pH objetivo del agua de macerado en receta.
 
 ---
 
@@ -268,7 +272,7 @@ Extiende `AuditableEntity`. Campos propios:
 - `tiempoHervorMinutos`
 - `ogObjetivo` (`Integer`) — formato XXXX, ej: 1060. **NO usar BigDecimal.**
 - `fgObjetivo` (`Integer`) — formato XXXX, ej: 1014. **NO usar BigDecimal.**
-- `volumenBase`, `notas`
+- `volumenBase`, `phAgua` (DECIMAL 4,2, nullable — pH objetivo del agua; rango típico 5.0–5.5), `notas`
 - `@OneToMany ingredientes → RecetaIngrediente` + `@OneToMany escalones → EscalonMacerado`
 - `@OneToMany adicionesHervor → AdicionHervor` (CASCADE ALL, orphanRemoval) — ordenadas por `minutosRestantes DESC, orden ASC`
 - **CRÍTICO**: el campo se llama `activa` (no `activo`) — los métodos derivados de Spring Data son `findAllByActivaTrue*`, `findByActiva*`
@@ -354,6 +358,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findResumenPorEstilo(desde, hasta, tenantId)` — nativeQuery para reporte; filtra por `tenant_id` y `deleted_at IS NULL` explícitamente
 - `findByRecetaId(recetaId)` — lotes elaborados con una receta
 - `findByIds(List<Long> ids)` — `SELECT DISTINCT ... LEFT JOIN FETCH ingredientes WHERE id IN :ids` — para comparativa; DISTINCT evita filas duplicadas del join con colección
+- `findMaxConsecutivoPorPrefix(prefix, tenantId)` — `nativeQuery=true`, `MAX(CAST(SUBSTRING(...) AS integer)) WHERE codigo_lote LIKE :prefix||'-%' AND tenant_id = :tenantId`. Native para incluir filtro explícito de tenant y evitar colisiones cross-tenant en códigos de lote. **CRÍTICO**: Hibernate NO hace flush automático antes de native queries → `TrazabilidadService.generarCodigo()` llama `em.flush()` antes de invocar esta query para ver inserts previos de la misma transacción.
 - `search(q, Pageable)` — búsqueda global por codigoLote o estilo
 
 ### RecetaRepository
@@ -449,6 +454,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **CRÍTICO**: `@DateTimeFormat(iso=DATE)` en todos los `LocalDate` de `LoteFormDto`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 - Inyecta `FacturaItemRepository` (no `FacturaProveedorRepository`) — `mapearDto()` resuelve ítems por ID y construye `LoteItemFactura` con `cantidadAsignada`
+- Inyecta `EntityManager em` — usado en dos lugares: (1) `em.flush()` en `generarCodigo()` antes de `findMaxConsecutivoPorPrefix` para que Hibernate sincronice inserts previos con la BD antes de ejecutar la native query; (2) `em.flush()` en `mapearDto()` antes de los INSERT de `LoteItemFactura` para forzar los DELETE de orphans previos y evitar conflictos de constraint.
 - `LoteFormDto` usa `itemsIds` (List<Long>) + `itemsCantidades` (List<BigDecimal>) como listas paralelas para binding de ítems de costo
 
 ### LogAccesoService
@@ -461,9 +467,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `listarActivas()` — para selects en formularios
 - `listarTodas()` — lista completa sin paginar
 - `listarPaginado(Boolean activa, int page)` — paginada con filtro opcional (null=todas, true=activas, false=inactivas)
-- `toFormDto` parsea `cantidad` normalizada de vuelta a `{cantidad, unidad}` y mapea `adicionesHervor`
+- `toFormDto` parsea `cantidad` normalizada de vuelta a `{cantidad, unidad}`, mapea `adicionesHervor` y mapea `phAgua`
 - `actualizar()` → limpia `ingredientes`, `escalones` **y `adicionesHervor`** antes de remapear; incrementa `version` automáticamente (`version = (version ?? 1) + 1`)
-- `mapDtoToEntity()` → persiste `adicionesHervor` además de ingredientes y escalones
+- `mapDtoToEntity()` → persiste `adicionesHervor` además de ingredientes y escalones; copia `phAgua` del DTO
 - `duplicarComoFormDto(Long id)` — carga la receta, llama `toFormDto()`, limpia `id` (null) y agrega " (Copia)" al nombre. El submit va a `POST /recetas/guardar` — crea una nueva receta, no edita la original. Version siempre empieza en 1 en la copia.
 - `suggest(q, Boolean activa)` — filtra via `repo.search()` (limit 10) + stream filter por `activa` si no es null, retorna hasta 6 mapas con `{nombre, estilo, activa, url}` — usado por `GET /recetas/suggest`
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
@@ -543,15 +549,16 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **Queries cross-tenant en `UsuarioRepository`** (todas `nativeQuery = true`): `findAllByTenantId(tenantId)`, `countByUsernameAndTenantId(username, tenantId)`, `insertarConTenant(username, password, rol, tenantId)`, `toggleActivoByIdAndTenantId(id, tenantId)`, `updatePasswordByIdAndTenantId(id, tenantId, password)`, `updateRolByIdAndTenantId(id, tenantId, rol)`, `deleteByIdAndTenantId(id, tenantId)`. Usan SQL nativo con `tenant_id` explícito — ver regla 40.
 
 ### PdfExportService
-- `generarPdfLote(LoteCerveza, String brandName, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **curva de fermentación** (si hay lecturas), costos, observaciones/notas de cata, pie de página. La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene).
-- `generarPdfReceta(Receta receta, String brandName)` → `byte[]` — genera PDF A4 con OpenPDF. Secciones: cabecera (nombre de receta + estilo), información general (nombre, estilo, estado, versión, hervor, vol. base, agua macerado/sparge), parámetros objetivo (OG/FG/ABV estimado si ambos están presentes), ingredientes agrupados por tipo (maltas/lúpulos/levaduras/clarificantes), escalones de macerado, adiciones de hervor, notas técnicas, pie de página. Reutiliza helpers `addTituloPdf`, `par`, `metricaCell`, `tableCell`.
+- `generarPdfLote(LoteCerveza, ExportBranding, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF usando la paleta de colores del tenant. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **curva de fermentación** (si hay lecturas), costos, observaciones/notas de cata, pie de página. La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene).
+- `generarPdfReceta(Receta receta, ExportBranding)` → `byte[]` — genera PDF A4 con OpenPDF usando paleta del tenant. Secciones: cabecera (nombre de receta + estilo), información general (nombre, estilo, estado, versión, hervor, vol. base, agua macerado/sparge, **pH agua si no es null**), parámetros objetivo (OG/FG/ABV estimado si ambos están presentes), ingredientes agrupados por tipo (maltas/lúpulos/levaduras/clarificantes), escalones de macerado, adiciones de hervor, notas técnicas, pie de página. Reutiliza helpers `addTituloPdf`, `par`, `metricaCell`, `tableCell`.
+- Colores neutros fijos (no cambian con branding): `C_GRIS`, `C_BORDE`. El resto usa `Pal` record interno calculado desde `ExportBranding`.
 - Solo importa `com.lowagie.text.*` — sin colisión con POI.
 - Inyectado en `TrazabilidadController` y `RecetaController`.
 
 ### ExcelExportService
-- `generarExcelReporteProduccion(lotes, resumen, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
-- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, brandName)` → `byte[]` — genera `.xlsx` de facturas. Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), 11 columnas con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Filas alternas con fondo crema. Inyectado también en `FacturaProveedorController`.
-- `generarExcelInventario(insumos, brandName)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por `TipoInsumo` (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
+- `generarExcelReporteProduccion(lotes, resumen, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
+- `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` de facturas. Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), 11 columnas con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Filas alternas con fondo crema. Inyectado también en `FacturaProveedorController`.
+- `generarExcelInventario(insumos, ExportBranding)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por `TipoInsumo` (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
 - Solo importa `org.apache.poi.*` — sin colisión con OpenPDF. Usa `XSSFFont` con cast `(XSSFFont) wb.createFont()`.
 - Inyectado en `ReporteController`.
 
@@ -636,9 +643,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### RecetaController ("/recetas")
 - `GET /recetas?activa=true|false&page=N` — lista paginada con filtro opcional por estado activa. Pasa `lotesCountMap` (Map<Long, Long>) al modelo — consulta bulk `countPorReceta()` para mostrar badge de lotes por receta sin N+1.
 - `GET /recetas/suggest?q=&activa=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q, activa)`. El parámetro `activa` es opcional; si se omite busca en todas. Devuelve `[{nombre, estilo, activa, url}]`.
-- CRUD completo + `GET /api/{id}` (@ResponseBody JSON)
+- CRUD completo + `GET /api/{id}` (@ResponseBody JSON) — incluye `phAgua` en la respuesta JSON cuando no es null
 - `GET /ver/{id}` — incluye `lotesDeReceta` (lotes elaborados con esa receta) y `costosIngredientes` (List<Map>) con precio estimado por ingrediente desde `FacturaItemRepository.findUltimosPrecios()`. Si algún ingrediente tiene precio, agrega `totalCostoEstimado` (BigDecimal). El header muestra el badge de versión (`v1`, `v2`, etc.) y botones "Duplicar" y "PDF".
-- `GET /ver/{id}/pdf` — descarga `receta-{nombre}.pdf`. Lee el tenant del `request.getAttribute("currentTenant")`. Delega a `PdfExportService.generarPdfReceta()`. Botón "PDF" en `detalle.html`.
+- `GET /ver/{id}/pdf` — descarga `receta-{nombre}.pdf`. Lee el tenant del `request.getAttribute("currentTenant")`, construye `ExportBranding.from(tenant)`. Delega a `PdfExportService.generarPdfReceta(receta, branding)`. Botón "PDF" en `detalle.html`.
 - `GET /duplicar/{id}` — delega a `service.duplicarComoFormDto(id)`, inyecta `insumosInventario` y `tiposCerveza`, retorna `recetas/formulario`. El submit crea una receta nueva (no edita la original). La copia siempre empieza en version 1.
 - `GET /nueva` y `GET /editar/{id}` — inyectan al modelo:
   - `insumosInventario` (List<InsumoInventario>) para datalists de ingredientes por tipo
@@ -657,7 +664,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /inventario/{id}/ajuste` — ajuste rápido de stock. `@RequestParam TipoMovimiento tipo, BigDecimal cantidad, String motivo`. Delega a `service.ajustar()`. Flash success/danger. Solo ADMIN/INVENTARIO (hereda de `/inventario/**`).
 - `GET /inventario/{id}/historial?page=` — historial de movimientos del insumo. Paginado. Template `inventario/historial.html`. Modelo: `insumo`, `movimientos`, `paginaActual`, `totalPaginas`.
 - `GET /inventario/precios?nombre=X` — **Historial de precios** para el insumo con nombre X. Busca en `FacturaItem` por nombre (case-insensitive) via `findHistorialPreciosPorNombre`. Calcula: último precio, promedio, mínimo, máximo, variación (último vs primero), N compras, N proveedores. Pasa arrays `chartFechas`, `chartPrecios`, `chartProveedores` para Chart.js (barras). La fila más reciente se resalta en la tabla. Botón 📈 en `inventario/lista.html` abre directamente con el nombre del insumo. **Nota**: usa `fi.getFactura().getFechaFactura()` (no `getFecha()`) — campo correcto en `FacturaProveedor`.
-- Inyecta `ExcelExportService` vía constructor (requerido — mockear en `@WebMvcTest`).
+- Inyecta `ExcelExportService` y `ProveedorService` vía constructor. `nuevo()` y `editar()` pasan `proveedores` (List<Proveedor> activos) al modelo para el `<select>` del campo Proveedor (ya no es input libre).
+- **`@WebMvcTest`**: agregar `@MockBean ProveedorService proveedorService` y stubear `proveedorService.listarActivos()` en `@BeforeEach`.
 
 ### TipoCervezaController ("/tipos-cerveza") — solo ADMIN
 - CRUD + toggle activo
@@ -928,8 +936,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **Branding en templates**: `${branding.name}`, `${branding.tagline}`, `${branding.logoUrl}`, `${branding.colorAccent}`, etc. — disponible en todos los templates via `GlobalControllerAdvice`. NO hardcodear "Alera" en HTML. En contextos donde `branding` puede ser null (página de error, dispatches de error de Servlet), usar `${branding != null ? branding.name : 'Alera'}` o el operador safe-navigation `${branding?.name}`.
 - **Costos en formulario**: `ITEMS_FACTURA`, `INIT_IDS`, `INIT_CANTIDADES` se inyectan como JS via `<script th:inline="javascript">`. El submit handler construye `itemsIds[]` + `itemsCantidades[]` como hidden inputs desde el array `asignados`. El botón "Aplicar a Receta e Insumos" llama `sincronizarIngredientesDesdeItems()` que rellena los containers de ingredientes y navega al tab 1 (`goTab(1)`).
 - **JS estático de trazabilidad** (`src/main/resources/static/js/`): la lógica JS de los templates de trazabilidad está extraída a archivos externos para facilitar mantenimiento. Patrón: el `<script th:inline="javascript">` del template inyecta solo los datos Thymeleaf como variables globales; el archivo `.js` externo lee esas variables. Archivos:
-  - `trazabilidad-ingredientes.js` — wizard de tabs, conversión de volumen, filas dinámicas de ingredientes, carga de receta. Usado por `formulario.html`.
-  - `trazabilidad-costos.js` — buscador de ítems de factura, asignación de costos, sincronización con ingredientes, submit handler. Depende de `trazabilidad-ingredientes.js` (llama `goTab`, `poblarDesdeReceta`). Usado por `formulario.html`.
+  - `trazabilidad-ingredientes.js` — wizard de tabs, conversión de volumen, filas dinámicas de ingredientes, carga de receta. `cargarRecetaEnLote()` guarda los datos de la receta en `_recetaPendiente` (no aplica ingredientes inmediatamente). `_actualizarEstadoAplicar(bloqueado)` deshabilita/habilita el botón "Aplicar" y el botón Siguiente según estado de stock. `verificarStockReceta()` recopila todos los ítems de costo para la advertencia de stock. `goTab()` re-habilita el botón Siguiente al cambiar de tab. Usado por `formulario.html`.
+  - `trazabilidad-costos.js` — buscador de ítems de factura, asignación de costos, sincronización con ingredientes, submit handler. `sincronizarIngredientesDesdeItems()` verifica primero `_recetaPendiente`; si está seteado aplica los ingredientes de la receta y navega al tab 1. Alerta de stock insuficiente incluye botón "Ignorar advertencias y continuar". Depende de `trazabilidad-ingredientes.js` (llama `goTab`, `poblarDesdeReceta`). Usado por `formulario.html`.
   - `trazabilidad-detalle.js` — construcción del gráfico Chart.js dual-eje (densidad + temperatura). Lee `CHART_FECHAS`, `CHART_DENSIDAD`, `CHART_TEMP`. Usado por `detalle.html`.
   - `trazabilidad-kanban.js` — drag & drop SortableJS, AJAX POST de cambio de fase, toast, contadores. Lee `esAdmin`. Usado por `kanban.html`.
   - **Orden de carga en `formulario.html`**: (1) `th:inline` data block, (2) `trazabilidad-ingredientes.js`, (3) `trazabilidad-costos.js`.
@@ -1009,8 +1017,8 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `TipoCervezaServiceTest` — 11 tests: `listarActivos/Todos`, `buscarPorId`, `existePorNombre`, `guardar`, `eliminar`, `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op).
 - `ProveedorServiceTest` — 15 tests: `listarActivos/Todos`, `buscarPorId`, `suggest` (null/corta, filtro nombre, filtro NIT, límite 6, estructura mapa con url, NIT null → string vacío), `guardar`, `eliminar`, `contarFacturas`, `totalFacturas`.
 - `MantenimientoEquipoServiceTest` — 9 tests: `listarPorEquipo` (vacío y con resultados), `registrar` (campos del DTO en MantenimientoEquipo, actualiza `fechaUltimoMantenimiento`, actualiza/no-actualiza `proximoMantenimiento` según null, equipo no existe → RuntimeException, retorna guardado), `eliminar`.
-- `PdfExportServiceTest` — 8 smoke tests: verifica magic bytes `%PDF`, lote mínimo sin lecturas, lote completo (densidades, fases, obs), lecturas con densidad+temp, solo densidad, solo temperatura, lecturas null, tamaño >1KB, PDFs distintos para lotes distintos. Instancia `PdfExportService` directamente (sin Spring context — no tiene dependencias).
-- `ExcelExportServiceTest` — 8 smoke tests: verifica magic bytes `PK` (ZIP/XLSX), listas vacías, lote mínimo, lotes con métricas, resumen por estilos, 50 lotes sin excepción, contenido distinto para lotes distintos. **Bug descubierto**: fechas `null` en `desde`/`hasta` → `RuntimeException` (NPE interno al formatear) — el test lo documenta y verifica el comportamiento real. **NOTA**: `List.of(Object[])` causa ambigüedad de tipos en Java 26 — usar `new ArrayList<>()` para listas de `Object[]`.
+- `PdfExportServiceTest` — 8 smoke tests: verifica magic bytes `%PDF`, lote mínimo sin lecturas, lote completo (densidades, fases, obs), lecturas con densidad+temp, solo densidad, solo temperatura, lecturas null, tamaño >1KB, PDFs distintos para lotes distintos. Instancia `PdfExportService` directamente (sin Spring context — no tiene dependencias). Usa `private static final ExportBranding BRANDING = ExportBranding.defaults("Alera")` como constante de test.
+- `ExcelExportServiceTest` — 8 smoke tests: verifica magic bytes `PK` (ZIP/XLSX), listas vacías, lote mínimo, lotes con métricas, resumen por estilos, 50 lotes sin excepción, contenido distinto para lotes distintos. Usa `ExportBranding.defaults("Alera")` como constante de test. **Bug descubierto**: fechas `null` en `desde`/`hasta` → `RuntimeException` (NPE interno al formatear) — el test lo documenta y verifica el comportamiento real. **NOTA**: `List.of(Object[])` causa ambigüedad de tipos en Java 26 — usar `new ArrayList<>()` para listas de `Object[]`.
 
 **Controladores** (`src/test/java/com/alera/controller/`) — `@WebMvcTest` + `@MockBean`:
 - `TrazabilidadControllerTest` — 15 tests: seguridad (sin-autenticar → 401; con rol no-admin → controller corre porque URL-based security no se enforce con handler mock), index, kanban, nuevo/guardar (válido, inválido, advertencia stock), ver/404, eliminar. `@MockBean`: `PdfExportService`, `LecturaFermentacionService`, `PlanificacionService` (los tres requeridos por el constructor del controller).
@@ -1030,7 +1038,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `RecetaControllerTest` — 4 tests: 401, 200 con filtro activas, suggest JSON, GET /editar retorna formulario
 - `EquipoControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, GET /ver/{id} retorna detalle. **Nota**: método se llama `listarFermentadoresDisponibles()` (no `fermentadoresDisponibles()`). Usar `doReturn(new PageImpl<>(Collections.emptyList())).when(service).listarPaginado(any(), anyInt())`. Requiere `@MockBean MantenimientoEquipoService`. Stubs adicionales: `countTotal()`, `countByEstado(any())`, `countMantenimientoPendiente()` → 0L.
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
-- `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre. Requiere `@MockBean ExcelExportService excelService` — el controller lo inyecta en el constructor para el endpoint `/export`.
+- `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre. Requiere `@MockBean ExcelExportService excelService` y `@MockBean ProveedorService proveedorService` — ambos inyectados en el constructor del controller. Stubear `proveedorService.listarActivos()` → `List.of()` en `@BeforeEach`.
 - `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
 - `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
@@ -1053,9 +1061,9 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V26 sin errores ni migraciones pendientes; también verifica que haya ≥19 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V31 sin errores ni migraciones pendientes; también verifica que haya ≥28 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
-- `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial
+- `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
 - `LecturaFermentacionServiceIntegrationTest` — 9 tests: agregar (con temp, sin temp, sin densidad, notas blank→null), ordenamiento ASC, ABV parcial (fórmula, null si sin densidad, null si igual OG), eliminar (una sola, sin afectar otras)
 - `TenantIsolationIntegrationTest` — 6 tests que verifican aislamiento de datos entre tenants: `@TenantId` filtra `TipoCerveza` y `Usuario` correctamente entre tenants distintos; queries nativas cross-tenant (`findAllByTenantId`, `countByUsernameAndTenantId`) retornan solo el tenant especificado. **Sin `@Transactional` en el test** — cada repo call crea su propio `EntityManager` que captura `TenantContext` en ese momento. Cleanup via `JdbcTemplate` en `@AfterEach`.
