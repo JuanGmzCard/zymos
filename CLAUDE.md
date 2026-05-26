@@ -1,7 +1,7 @@
-# Alera — Sistema de Gestión de Trazabilidad de Cerveza Artesanal
+# Zymos — Sistema de Gestión de Trazabilidad de Cerveza Artesanal
 
-Alera es una aplicación web desarrollada con Spring Boot 3.4.4 + Java 21 (runtime Java 26) + Thymeleaf + PostgreSQL.
-Sistema de gestión integral para una cervecería artesanal.
+Zymos es una plataforma SaaS multi-tenant desarrollada con Spring Boot 3.4.4 + Java 21 (runtime Java 26) + Thymeleaf + PostgreSQL.
+Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es el nombre de uno de los tenants; la infraestructura del proyecto se llama Zymos.
 **Arquitectura multi-tenant SaaS**: una misma instancia sirve a múltiples clientes aislados por subdominio (`cliente.app.com`). Cada tenant tiene sus propios datos y branding.
 
 ---
@@ -41,9 +41,9 @@ Sistema de gestión integral para una cervecería artesanal.
 - Perfil prod: `application-prod.properties` — elimina fallbacks de credenciales BD. Docker activa `SPRING_PROFILES_ACTIVE=prod`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
-- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@alera.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
+- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
-- **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `alera-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
+- **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
 
 ---
 
@@ -56,7 +56,7 @@ Sistema de gestión integral para una cervecería artesanal.
 - Crema: `#F5EDD0` (texto sobre fondos oscuros) — CSS var `--crema`
 - Fondo body: `#F0EDE2` — CSS var `--fondo`
 - Dark mode: fondo `#111606`, cards `#1c2410`, texto crema — activado con clase `html.dark-mode`
-- Componentes clave: `.card-alera`, `.hero-section`, `.stat-card`, `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`
+- Componentes clave: `.card-zymos`, `.hero-section`, `.stat-card`, `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`
 - **Multi-tenant**: el navbar fragment inyecta `<style th:inline="text">:root { --verde-oscuro: [[${branding.colorNavbar}]]; ... }</style>` que sobrescribe las variables CSS del archivo. `login.html` hace lo mismo en su `<head>`. Los templates NO cambian — siguen usando `${branding.*}` y las CSS vars son transparentes.
 
 ---
@@ -69,7 +69,7 @@ com.alera/
 │               DataInitializer, GlobalExceptionHandler, GlobalControllerAdvice, UnidadUtils,
 │               CacheConfig (@EnableCaching + Caffeine), SchedulingConfig (@EnableScheduling),
 │               OpenApiConfig (Swagger),
-│               AleraAuthSuccessHandler, AleraAuthFailureHandler, AleraAccessDeniedHandler,
+│               ZymosAuthSuccessHandler, ZymosAuthFailureHandler, ZymosAccessDeniedHandler,
 │               LoginAttemptService (protección fuerza bruta — cache Caffeine por IP),
 │               LoginAttemptFilter (OncePerRequestFilter — creado como @Bean en SecurityConfig, no @Component),
 │               PasswordPolicy (utilidad estática — MIN_LENGTH=8, requiere letra + número; `validar(pwd)` retorna null si OK o mensaje de error),
@@ -802,11 +802,11 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 - `@EnableMethodSecurity` activo
 - **Sesión**: timeout 30 min, `invalidSessionUrl("/login?expired=true")`
-- **Protección contra fuerza bruta**: `LoginAttemptService` (Caffeine TTL) rastrea intentos fallidos por IP. `LoginAttemptFilter` intercepta POST `/login` — si la IP está bloqueada, redirige a `/login?bloqueado=true` sin intentar autenticar. `AleraAuthFailureHandler` llama `registrarFallo(ip)` en cada fallo; `AleraAuthSuccessHandler` llama `resetear(ip)` en login exitoso. Configurable: `app.login.max-intentos` (def: 5, env: `LOGIN_MAX_INTENTOS`), `app.login.bloqueo-minutos` (def: 15, env: `LOGIN_BLOQUEO_MINUTOS`). `LoginAttemptFilter` es un bean creado en `SecurityConfig` (NO `@Component`) para evitar problemas en `@WebMvcTest`.
+- **Protección contra fuerza bruta**: `LoginAttemptService` (Caffeine TTL) rastrea intentos fallidos por IP. `LoginAttemptFilter` intercepta POST `/login` — si la IP está bloqueada, redirige a `/login?bloqueado=true` sin intentar autenticar. `ZymosAuthFailureHandler` llama `registrarFallo(ip)` en cada fallo; `ZymosAuthSuccessHandler` llama `resetear(ip)` en login exitoso. Configurable: `app.login.max-intentos` (def: 5, env: `LOGIN_MAX_INTENTOS`), `app.login.bloqueo-minutos` (def: 15, env: `LOGIN_BLOQUEO_MINUTOS`). `LoginAttemptFilter` es un bean creado en `SecurityConfig` (NO `@Component`) para evitar problemas en `@WebMvcTest`.
 - **Handlers**:
-  - `AleraAuthSuccessHandler` → resetea contador de intentos por IP + registra `LOGIN_OK` en `log_accesos`
-  - `AleraAuthFailureHandler` → registra fallo por IP + registra `LOGIN_FALLIDO` + redirige a `/login?error` o `/login?bloqueado=true`
-  - `AleraAccessDeniedHandler` → registra `ACCESO_DENEGADO` + redirige a `/error?status=403`
+  - `ZymosAuthSuccessHandler` → resetea contador de intentos por IP + registra `LOGIN_OK` en `log_accesos`
+  - `ZymosAuthFailureHandler` → registra fallo por IP + registra `LOGIN_FALLIDO` + redirige a `/login?error` o `/login?bloqueado=true`
+  - `ZymosAccessDeniedHandler` → registra `ACCESO_DENEGADO` + redirige a `/error?status=403`
 - **Restricciones por URL:**
   - `/admin/**`, `/usuarios/**`, `/tipos-cerveza/**` → solo ADMIN
   - `/actuator/**` → ADMIN (excepto `/actuator/health` que es público)
@@ -907,7 +907,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 36. **Multi-tenant — agregar cliente nuevo**: (1) crear tenant en `/admin/tenants/nuevo` (UI) o insertar fila en `tenants` directamente en BD; (2) DNS `cliente.tuapp.com` → servidor; (3) crear usuario admin del tenant en `/usuarios` (el contexto de tenant ya estará activo vía subdominio) o con `INSERT INTO usuarios (username, password, rol, activo, tenant_id) VALUES (...)`.
 37. **Branding — orden de prioridad**: `Tenant.color*` / `Tenant.font*` > `BrandingProperties` (env vars/properties). `Tenant` se crea con valores de `BrandingProperties` pero puede actualizarse via `/admin/tenants/editar/{subdomain}` o directamente en BD. Tras edición directa en BD, usar "Limpiar cache" en `/admin/tenants` para reflejar cambios sin reiniciar.
 37b. **Login page — logo**: sin círculo decorativo. Si `branding.logoUrl` no está vacío, muestra la imagen (`max-height:90px; max-width:240px`). Si está vacío, muestra ícono `bi-droplet-fill`. El campo `logoUrl` acepta URL externa o ruta relativa (`/img/logo.png`) — archivos locales van en `src/main/resources/static/img/`.
-38. **@WebMvcTest — seguridad URL-based no se enforce con handler mock**: `AleraAccessDeniedHandler` mockeado es un no-op (void). Cuando Spring Security lanza `AccessDeniedException` y el handler no comite la respuesta, el request puede llegar al controller. Las pruebas de seguridad URL-based (como "rol no-admin no puede acceder a /nuevo") NO funcionan correctamente en `@WebMvcTest` — deben testearse en integración. Las pruebas `@PreAuthorize` (method-level) SÍ funcionan porque `@EnableMethodSecurity` está activo en `SecurityConfig`.
+38. **@WebMvcTest — seguridad URL-based no se enforce con handler mock**: `ZymosAccessDeniedHandler` mockeado es un no-op (void). Cuando Spring Security lanza `AccessDeniedException` y el handler no comite la respuesta, el request puede llegar al controller. Las pruebas de seguridad URL-based (como "rol no-admin no puede acceder a /nuevo") NO funcionan correctamente en `@WebMvcTest` — deben testearse en integración. Las pruebas `@PreAuthorize` (method-level) SÍ funcionan porque `@EnableMethodSecurity` está activo en `SecurityConfig`.
 41. **Tests de aislamiento multi-tenant — NO usar `@Transactional` en el test**: Con `@Transactional` en el test, Spring abre UN EntityManager al inicio del método (cuando TenantContext está vacío). Todos los cambios de TenantContext dentro del test no afectan ese EntityManager — el filtro `@TenantId` usa el tenant capturado al abrir la sesión (null/vacío), lo que hace que las queries no filtren correctamente. Solución: sin `@Transactional` en el test → cada repo call crea su propio EntityManager que captura el TenantContext activo en ese momento. Usar `JdbcTemplate` con SQL explícito para cleanup en `@AfterEach`. Agregar `@Transactional` a los métodos `@Modifying` en el repositorio para que tengan su propia transacción cuando se llaman sin contexto transaccional externo.
 
 40. **Operaciones cross-tenant (admin) — usar SIEMPRE native SQL**: Hibernate añade automáticamente `AND tenant_id = :currentTenant` a TODAS las queries sobre entidades con `@TenantId`, incluso queries JPQL custom con `WHERE u.tenantId = :tenantId` explícito. El `open-in-view` fija el tenant del EntityManager al inicio del request (antes de cualquier swap en el controller). Para operar sobre un tenant distinto al del request activo (ej: admin super-tenant gestionando usuarios de otro tenant), usar `nativeQuery = true` con `tenant_id` como parámetro explícito. Ver `UsuarioRepository`: `findAllByTenantId`, `insertarConTenant`, `toggleActivoByIdAndTenantId`, etc. Intentos fallidos: JPQL custom, `REQUIRES_NEW`, swap de `TenantContext` en controller — ninguno bypasea el filtro Hibernate con open-in-view activo.
@@ -926,8 +926,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Bean Validation en DTOs + `@DateTimeFormat(iso=DATE)` en todos los campos `LocalDate`
 - Dark mode: toggle luna/sol en navbar, clase `html.dark-mode` en `<html>`, persiste en `localStorage`
 - Dashboard personalizable (todo localStorage, sin backend):
-  - **Visibilidad**: dropdown "Personalizar" con checkboxes por sección → `localStorage` key `alera-dashboard-secciones`. `restaurarVisibilidad()` aplica al cargar.
-  - **Orden drag & drop**: SortableJS 1.15.2 sobre `#dash-sortable`, `handle: '.dash-handle'` → `localStorage` key `alera-dashboard-orden`. `restaurarOrden()` reordena el DOM antes de aplicar visibilidad (orden primero, luego show/hide). `guardarOrden()` se llama en `onEnd`.
+  - **Visibilidad**: dropdown "Personalizar" con checkboxes por sección → `localStorage` key `zymos-dashboard-secciones`. `restaurarVisibilidad()` aplica al cargar.
+  - **Orden drag & drop**: SortableJS 1.15.2 sobre `#dash-sortable`, `handle: '.dash-handle'` → `localStorage` key `zymos-dashboard-orden`. `restaurarOrden()` reordena el DOM antes de aplicar visibilidad (orden primero, luego show/hide). `guardarOrden()` se llama en `onEnd`.
   - **Secciones** (`id="dash-{nombre}"`): `stats-lotes`, `stats-inventario`, `alertas`, `charts`, `finanzas`. Cada una tiene `class="dash-section"` con `<div class="dash-handle">` (grip icon, visible en hover). `alertas` usa `th:if` → puede no existir en DOM; `restaurarOrden()` lo ignora con `getElementById` null-check.
   - **Botón "Restablecer"**: borra ambas claves localStorage y recarga.
   - **SortableJS**: mismo CDN que kanban (`sortablejs@1.15.2`). `ghostClass:'dash-ghost'`, `dragClass:'dash-drag'`.
@@ -999,7 +999,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - Build multi-etapa: `maven:3.9-eclipse-temurin-21` + `eclipse-temurin:21-jre-alpine`
 - Healthcheck: `GET /actuator/health` cada 30s (requiere `spring-boot-starter-actuator`)
 - Docker activa automáticamente `SPRING_PROFILES_ACTIVE=prod` → usa `application-prod.properties` (sin fallbacks de credenciales BD ni JWT — la app falla al iniciar si `DB_PASSWORD` o `JWT_SECRET` no están definidos)
-- Desarrollo local: `application.properties` mantiene fallbacks (ej: `DB_PASSWORD:12345`, `JWT_SECRET:alera-dev-secret-key-change-in-production-2024`) para arrancar sin variables de entorno
+- Desarrollo local: `application.properties` mantiene fallbacks (ej: `DB_PASSWORD:12345`, `JWT_SECRET:zymos-dev-secret-key-change-in-production-2024`) para arrancar sin variables de entorno
 
 ---
 
@@ -1028,7 +1028,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `ApiControllerTest` — 9 tests: seguridad (401), lotes (lista, por id, 404, historial), recetas, alertas inventario, dashboard
 - `AlertaControllerTest` — 6 tests: seguridad (401), estructura JSON, totales (suma de 3 contadores), sin alertas, solo mantenimiento, `POST /alertas/ejecutar` llama al scheduler y retorna `{success:true}`. Requiere `@MockBean AlertaScheduler`.
 - `NotificacionControllerTest` — 5 tests: seguridad (401), GET /notificaciones (página con modelo), GET /recientes (JSON con total e items), POST /{id}/leer (JSON con noLeidas), POST /leer-todas (redirect)
-- `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `AleraAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
+- `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `ZymosAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
 - `LoginControllerTest` — 3 tests: GET /login público (200), con ?error, con ?bloqueado. **Nota**: en `@WebMvcTest`, Spring Security puede interceptar GET /login con su propio filtro antes del DispatcherServlet — no verificar `view().name("login")`, solo `status().isOk()`.
 - `DashboardControllerTest` — 3 tests: 401 sin auth, 200 con cualquier rol, modelo tiene `stats` attribute
 - `CalendarioControllerTest` — 3 tests: 401 sin auth, 200 autenticado, eventos JSON
@@ -1051,7 +1051,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
 - `TenantRepository` — SecurityConfig crea TenantFilter que lo inyecta; sin mock → TenantFilter devuelve 503
 - `BrandingProperties` — GlobalControllerAdvice la inyecta como fallback; sin mock → contexto no carga
-- `AleraAuthSuccessHandler`, `AleraAuthFailureHandler`, `AleraAccessDeniedHandler` — SecurityConfig.filterChain() los recibe como parámetros; sin mock → Spring usa la seguridad por defecto (sin URL-based restrictions)
+- `ZymosAuthSuccessHandler`, `ZymosAuthFailureHandler`, `ZymosAccessDeniedHandler` — SecurityConfig.filterChain() los recibe como parámetros; sin mock → Spring usa la seguridad por defecto (sin URL-based restrictions)
 - `LoginAttemptService` — requerido por `LoginAttemptFilter` (bean en SecurityConfig); sin mock → contexto no carga. **CRÍTICO**: NO mockear `LoginAttemptFilter` directamente (es creado por SecurityConfig vía `@Bean`, no auto-detectado). Mockear `LoginAttemptService` para que el filtro real pueda ser creado con la dependencia satisfecha.
 - `JwtService` — requerido por `JwtFilter` (bean en SecurityConfig); sin mock → contexto no carga. Mismo patrón que `LoginAttemptService`. **CRÍTICO**: NO mockear `JwtFilter` directamente.
 - `UsuarioService`, `LogAccesoService` — requeridos por los auth handlers y DaoAuthenticationProvider
