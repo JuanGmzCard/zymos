@@ -336,21 +336,21 @@
                 </thead>
                 <tbody>
                     <tr th:each="ci : ${costosIngredientes}">
-                        <td class="fw-600" th:text="${ci.nombre}">—</td>
-                        <td class="text-muted" th:text="${ci.cantidad ?: '—'}">—</td>
+                        <td class="fw-600" th:text="${ci['nombre']}">—</td>
+                        <td class="text-muted" th:text="${ci['cantidad'] ?: '—'}">—</td>
                         <td>
-                            <span th:if="${ci.valorUnitario != null}"
-                                  th:text="'$ ' + ${#numbers.formatDecimal(ci.valorUnitario, 1, 2)} + ' / ' + (${ci.unidadFactura} ?: '')"></span>
-                            <span th:unless="${ci.valorUnitario != null}" class="text-muted">Sin datos</span>
+                            <span th:if="${ci['valorUnitario'] != null}"
+                                  th:text="'$ ' + ${#numbers.formatDecimal(ci['valorUnitario'], 1, 2)} + ' / ' + (${ci['unidadFactura']} ?: '')"></span>
+                            <span th:unless="${ci['valorUnitario'] != null}" class="text-muted">Sin datos</span>
                         </td>
                         <td class="text-end">
-                            <span th:if="${ci.costoEstimado != null}"
+                            <span th:if="${ci['costoEstimado'] != null}"
                                   style="font-weight:700;color:var(--verde-alera);"
-                                  th:text="'$ ' + ${#numbers.formatDecimal(ci.costoEstimado, 1, 0)}">—</span>
-                            <span th:unless="${ci.costoEstimado != null}" class="text-muted">—</span>
+                                  th:text="'$ ' + ${#numbers.formatDecimal(ci['costoEstimado'], 1, 0)}">—</span>
+                            <span th:unless="${ci['costoEstimado'] != null}" class="text-muted">—</span>
                         </td>
                         <td class="text-muted small"
-                            th:text="${ci.fechaFactura != null} ? ${#temporals.format(ci.fechaFactura, 'dd/MM/yy')} : ''">—</td>
+                            th:text="${ci['fechaFactura'] != null} ? ${#temporals.format(ci['fechaFactura'], 'dd/MM/yy')} : ''">—</td>
                     </tr>
                 </tbody>
                 <tfoot th:if="${totalCostoEstimado != null}">
