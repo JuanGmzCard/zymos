@@ -46,60 +46,103 @@
                     <input type="date" name="hasta" class="form-control"
                            th:value="${#temporals.format(hasta,'yyyy-MM-dd')}">
                 </div>
-                <div class="d-flex gap-2">
+                <div>
                     <button type="submit" class="btn btn-zymos">
                         <i class="bi bi-search me-1"></i>Aplicar
                     </button>
-                    <a th:href="@{/reportes/produccion}" class="btn btn-zymos-outline">Últimos 3 meses</a>
+                </div>
+                <!-- Shortcuts de período -->
+                <div class="d-flex gap-1 align-items-end flex-wrap">
+                    <a th:href="${urlEsteMes}"   class="btn btn-outline-secondary btn-sm">Este mes</a>
+                    <a th:href="${urlUltimoMes}" class="btn btn-outline-secondary btn-sm">Último mes</a>
+                    <a th:href="${urlUltimos3}"  class="btn btn-outline-secondary btn-sm">3 meses</a>
+                    <a th:href="${urlEsteAnio}"  class="btn btn-outline-secondary btn-sm">Este año</a>
                 </div>
                 <div class="ms-auto text-muted small align-self-center">
+                    <i class="bi bi-calendar2-range me-1"></i>
                     <span th:text="${#temporals.format(desde,'dd/MM/yyyy')} + ' — ' + ${#temporals.format(hasta,'dd/MM/yyyy')}"></span>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Stat cards -->
+    <!-- Stat cards — 6 métricas -->
     <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
             <div class="stat-card">
                 <div class="stat-number" th:text="${totalLotes}">0</div>
                 <div class="stat-label">Lotes Elaborados</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
             <div class="stat-card success">
-                <div class="stat-number" th:text="${#numbers.formatDecimal(totalLitros,1,1)} + ' L'">0</div>
+                <div class="stat-number" th:text="${#numbers.formatDecimal(totalLitros,1,1)} + ' L'">0 L</div>
                 <div class="stat-label">Litros Producidos</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
+            <div class="stat-card info">
+                <div class="stat-number" th:text="${#numbers.formatDecimal(avgLitros,1,1)} + ' L'">0 L</div>
+                <div class="stat-label">Prom. por Lote</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="stat-card warning">
+                <div class="stat-number"
+                     th:text="${avgAbv != null} ? ${#numbers.formatDecimal(avgAbv,1,2)} + '%' : '—'">—</div>
+                <div class="stat-label">ABV Promedio</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
             <div class="stat-card info">
                 <div class="stat-number" th:text="${estilosUnicos}">0</div>
                 <div class="stat-label">Estilos Distintos</div>
             </div>
         </div>
-        <div class="col-6 col-md-3">
-            <div class="stat-card warning">
+        <div class="col-6 col-md-2">
+            <div class="stat-card success">
                 <div class="stat-number" th:text="${completados}">0</div>
-                <div class="stat-label">Completados</div>
+                <div class="stat-label"
+                     th:text="'Completados (' + ${tasaCompletados} + '%)'">Completados</div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4 mb-4">
-        <!-- Gráfica litros por estilo -->
-        <div class="col-md-5" th:if="${!chartEstilosLitros.isEmpty()}">
+    <!-- Gráficos -->
+    <div class="row g-4 mb-4" th:if="${!chartTendencia.isEmpty() or !chartEstilosLitros.isEmpty()}">
+
+        <!-- Tendencia mensual (litros/mes) -->
+        <div th:if="${!chartTendencia.isEmpty()}"
+             th:class="${!chartEstilosLitros.isEmpty()} ? 'col-md-7' : 'col-12'">
             <div class="card-zymos h-100">
-                <div class="card-header"><h5><i class="bi bi-bar-chart me-2"></i>Litros por Estilo</h5></div>
+                <div class="card-header">
+                    <h5><i class="bi bi-graph-up me-2"></i>Tendencia Mensual</h5>
+                </div>
+                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+                    <canvas id="chartTendencia" style="max-height:200px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Litros por estilo -->
+        <div th:if="${!chartEstilosLitros.isEmpty()}"
+             th:class="${!chartTendencia.isEmpty()} ? 'col-md-5' : 'col-12'">
+            <div class="card-zymos h-100">
+                <div class="card-header">
+                    <h5><i class="bi bi-bar-chart me-2"></i>Litros por Estilo</h5>
+                </div>
                 <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
                     <canvas id="chartPeriodo" style="max-height:200px;"></canvas>
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Tabla de lotes + Resumen por estilo -->
+    <div class="row g-4 mb-4">
 
         <!-- Tabla de lotes -->
-        <div th:classappend="${!chartEstilosLitros.isEmpty()} ? 'col-md-7' : 'col-12'">
+        <div th:class="${!#lists.isEmpty(resumenEstilos)} ? 'col-md-8' : 'col-12'">
             <div class="card-zymos h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5><i class="bi bi-list-ul me-2"></i>Lotes en el Período</h5>
@@ -115,6 +158,7 @@
                             <tr>
                                 <th>Código</th>
                                 <th>Estilo</th>
+                                <th>Receta</th>
                                 <th>Fecha</th>
                                 <th>Litros</th>
                                 <th>OG</th>
@@ -130,6 +174,11 @@
                                        th:text="${lote.codigoLote}">-</a>
                                 </td>
                                 <td th:text="${lote.estilo}">-</td>
+                                <td>
+                                    <span th:if="${lote.receta != null}" class="text-muted"
+                                          th:text="${lote.receta.nombre}">-</span>
+                                    <span th:unless="${lote.receta != null}" class="text-muted">—</span>
+                                </td>
                                 <td class="text-muted"
                                     th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yy')} : '—'">-</td>
                                 <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'">-</td>
@@ -151,6 +200,35 @@
                 </div>
             </div>
         </div>
+
+        <!-- Resumen por estilo con barras de progreso -->
+        <div class="col-md-4" th:unless="${#lists.isEmpty(resumenEstilos)}">
+            <div class="card-zymos h-100">
+                <div class="card-header">
+                    <h5><i class="bi bi-pie-chart me-2"></i>Resumen por Estilo</h5>
+                </div>
+                <div class="card-body">
+                    <div th:each="r : ${resumenEstilos}" class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold" style="font-size:0.85rem;" th:text="${r.estilo}">—</span>
+                            <span class="text-muted" style="font-size:0.75rem;">
+                                <span th:text="${r.cantidad}">0</span> lote(s) ·
+                                <span th:text="${#numbers.formatDecimal(r.litros,1,1)}">0</span> L
+                            </span>
+                        </div>
+                        <div class="progress" style="height:6px; border-radius:3px;">
+                            <div class="progress-bar progress-zymos" role="progressbar"
+                                 th:style="'width:' + ${r.pct} + '%'"
+                                 th:attr="aria-valuenow=${r.pct}"
+                                 aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <div class="text-end mt-1" style="font-size:0.7rem; color:var(--dorado);"
+                             th:text="${r.pct} + '% del volumen'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 </div>
@@ -159,7 +237,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-const chartData = /*[[${chartEstilosLitros}]]*/ {};
+const chartData    = /*[[${chartEstilosLitros}]]*/ {};
+const trendData    = /*[[${chartTendencia}]]*/ {};
+
+// Gráfico litros por estilo (barras)
 if (Object.keys(chartData).length > 0) {
     new Chart(document.getElementById('chartPeriodo'), {
         type: 'bar',
@@ -178,8 +259,36 @@ if (Object.keys(chartData).length > 0) {
             responsive: true,
             plugins: { legend: { display: false } },
             scales: {
-                y: { beginAtZero: true },
-                x: { ticks: { font: { family: 'Raleway', size: 11 } } }
+                y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
+                x: { ticks: { font: { family: 'Raleway', size: 10 } } }
+            }
+        }
+    });
+}
+
+// Gráfico tendencia mensual (línea)
+if (Object.keys(trendData).length > 0) {
+    new Chart(document.getElementById('chartTendencia'), {
+        type: 'line',
+        data: {
+            labels: Object.keys(trendData),
+            datasets: [{
+                label: 'Litros',
+                data: Object.values(trendData),
+                borderColor: '#C9A028',
+                backgroundColor: 'rgba(201,160,40,0.12)',
+                pointBackgroundColor: '#C9A028',
+                pointRadius: 5,
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
+                x: { ticks: { font: { family: 'Raleway', size: 10 } } }
             }
         }
     });
