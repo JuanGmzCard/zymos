@@ -42,7 +42,7 @@
             <p>Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
         </div>
         <button class="btn btn-alera" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                data-bs-toggle="modal" data-bs-target="#modalPlan" onclick="abrirModalNuevo()">
+                onclick="abrirModalNuevo()">
             <i class="bi bi-plus-circle me-1"></i>Nueva Planificación
         </button>
     </div>
@@ -193,6 +193,9 @@
     </div>
 </div>
 
+<!-- Marcador de permisos para JS (renderizado solo si es admin) -->
+<span id="adminMarker" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="display:none"></span>
+
 <!-- Modal crear / editar -->
 <div class="modal fade" id="modalPlan" tabindex="-1">
     <div class="modal-dialog">
@@ -252,7 +255,8 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var esAdmin = /*[[${#authorization.expression('hasRole(''ADMIN'')')}]]*/ false;
+var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'')')}]]*/ false
+    || document.getElementById('adminMarker') !== null;
 
 document.addEventListener('DOMContentLoaded', function () {
     var cal = new FullCalendar.Calendar(document.getElementById('calPlanificacion'), {
@@ -294,7 +298,7 @@ function abrirModalNuevo(fecha) {
     document.getElementById('planVolumen').value = '';
     document.getElementById('planNotas').value = '';
     document.getElementById('modalPlanTitulo').textContent = 'Nueva Planificación';
-    new bootstrap.Modal(document.getElementById('modalPlan')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPlan')).show();
 }
 
 function abrirModalEditar(id, nombre, recetaId, fecha, volumen, notas) {
@@ -305,7 +309,7 @@ function abrirModalEditar(id, nombre, recetaId, fecha, volumen, notas) {
     document.getElementById('planVolumen').value = volumen != null ? volumen : '';
     document.getElementById('planNotas').value  = notas || '';
     document.getElementById('modalPlanTitulo').textContent = 'Editar Planificación';
-    new bootstrap.Modal(document.getElementById('modalPlan')).show();
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalPlan')).show();
 }
 
 function abrirModalEditarDesdeBtn(btn) {
