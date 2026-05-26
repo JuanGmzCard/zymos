@@ -7,6 +7,7 @@ import com.alera.service.DashboardService;
 import com.alera.service.JwtService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.LogAccesoService;
+import com.alera.service.PlanificacionService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -41,6 +42,7 @@ class DashboardControllerTest {
     @MockBean JwtService                 jwtService;
     @MockBean DashboardService           dashboardService;
     @MockBean InsumoInventarioService    insumoService;
+    @MockBean PlanificacionService       planificacionService;
 
     @BeforeEach
     void setUp() {
@@ -50,6 +52,7 @@ class DashboardControllerTest {
         when(dashboardService.getLotesPorEstilo()).thenReturn(java.util.Collections.emptyMap());
         when(insumoService.listarBajoStock()).thenReturn(List.of());
         when(insumoService.listarProximosAVencer(30)).thenReturn(List.of());
+        when(planificacionService.listarProximas()).thenReturn(List.of());
     }
 
     @Test

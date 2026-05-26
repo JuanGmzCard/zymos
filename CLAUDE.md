@@ -130,7 +130,7 @@ templates/
 ├── trazabilidad/ index.html (filtros con typeahead en campo "Estilo / Código" busca por codigoLote o estilo, badge de fase),
 │               formulario.html, detalle.html (detalle incluye sección "Curva de Fermentación" con Chart.js dual-eje + tabla + formulario inline de registro de lecturas; JS de formulario y detalle en `static/js/`),
 │               kanban.html (SortableJS 1.15.2 — drag & drop entre 6 columnas; ADMIN y SUPERADMIN pueden arrastrar; `esAdmin = hasAnyRole('ADMIN','SUPERADMIN')`; cada card tiene `data-tiene-fermentador` para validación client-side; JS en `static/js/trazabilidad-kanban.js`)
-├── login.html, dashboard.html (personalizable), calendario.html, busqueda.html
+├── login.html, dashboard.html (personalizable — 6 secciones drag-sortable: Stats Lotes, Inventario, Alertas, Próximas Elaboraciones, Gráficas, Finanzas; stat-cards clickeables con `.stat-card-link`; colores de tabla y Chart.js leen CSS vars en runtime; botón "Reporte" en Finanzas), calendario.html, busqueda.html
 ├── usuarios.html  (tabla con modales: nuevo usuario, cambiar contraseña, cambiar rol; fila del usuario en sesión marcada y botones destructivos deshabilitados; typeahead en card-header, `th:id="'usuario-'+${u.id}"` en cada `<tr>`, click hace scroll+flash `:target` dorado)
 ├── perfil/     password.html (formulario autogestionado de cambio de contraseña — accesible todos los roles via `GET /perfil/password`)
 ├── equipos/    lista (4 stat-cards + typeahead en card-header respeta filtro estado + select de cambio rápido de estado por fila), formulario, mantenimientos (muestra totalMantenimientos + costoTotal en el header del historial), detalle (nuevа — 4 stat-cards + datos del equipo + selector de estado + historial completo)
@@ -761,6 +761,12 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /reportes/produccion/pdf?desde=&hasta=&estilo=` — descarga PDF landscape A4. Delega a `PdfExportService.generarPdfReporteProduccion(lotes, desde, hasta, estiloFiltro, branding)`. Botón "PDF" en `produccion.html`.
 - `findResumenPorEstilo` se llama solo en el endpoint `/excel` (para la hoja "Por Estilo") — pasa `TenantContext.getCurrentTenant()` como parámetro explícito (nativeQuery no filtra automáticamente). El endpoint `/produccion` ya no llama queries nativas — todo se calcula desde `loteRepo.findByPeriodo(desde, hasta)`.
 
+### DashboardController ("/dashboard")
+- `GET /dashboard` — inyecta estadísticas del tenant al modelo. Atributos: todos los campos de `DashboardStats` como atributos individuales + `chartLitrosMes`, `chartEstilos`, `alertasBajoStock`, `alertasProxVencer`, `proximasElaboraciones`.
+- `proximasElaboraciones` — lista de hasta 5 `ElaboracionPlanificada` desde ayer en adelante, via `PlanificacionService.listarProximas()` con `subList(0, 5)` si hay más de 5.
+- Inyecta `DashboardService`, `InsumoInventarioService`, `PlanificacionService`.
+- **`@WebMvcTest`**: agregar `@MockBean PlanificacionService planificacionService` y stubear `planificacionService.listarProximas()` → `List.of()` en `@BeforeEach`.
+
 ### CalendarioController ("/calendario")
 - `GET /calendario` — template con FullCalendar
 - `GET /calendario/eventos` — @ResponseBody JSON de eventos para FullCalendar
@@ -989,7 +995,11 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Dashboard personalizable (todo localStorage, sin backend):
   - **Visibilidad**: dropdown "Personalizar" con checkboxes por sección → `localStorage` key `zymos-dashboard-secciones`. `restaurarVisibilidad()` aplica al cargar.
   - **Orden drag & drop**: SortableJS 1.15.2 sobre `#dash-sortable`, `handle: '.dash-handle'` → `localStorage` key `zymos-dashboard-orden`. `restaurarOrden()` reordena el DOM antes de aplicar visibilidad (orden primero, luego show/hide). `guardarOrden()` se llama en `onEnd`.
-  - **Secciones** (`id="dash-{nombre}"`): `stats-lotes`, `stats-inventario`, `alertas`, `charts`, `finanzas`. Cada una tiene `class="dash-section"` con `<div class="dash-handle">` (grip icon, visible en hover). `alertas` usa `th:if` → puede no existir en DOM; `restaurarOrden()` lo ignora con `getElementById` null-check.
+  - **Secciones** (`id="dash-{nombre}"`): `stats-lotes`, `stats-inventario`, `alertas`, `elaboraciones`, `charts`, `finanzas`. Cada una tiene `class="dash-section"` con `<div class="dash-handle">` (grip icon, visible en hover). `alertas` usa `th:if` → puede no existir en DOM; `restaurarOrden()` lo ignora con `getElementById` null-check. `elaboraciones` siempre está en el DOM (el empty-state está dentro).
+  - **Stat-cards clickeables**: cada stat-card está envuelta en `<a class="stat-card-link">`. CSS: `display:block; text-decoration:none; transition:transform 0.15s` + `translateY(-2px)` en hover. Links: totalLotes → `/`, enProceso → `/kanban`, completados → `/`, estilosDistintos → `/reportes/produccion`, totalInsumos → `/inventario`, bajoStock → `/inventario?filtroBajoStock=true`, proximosAVencer → `/inventario?filtroPorVencer=true`, mantenimientoPendiente → `/equipos`.
+  - **Stats Lotes** — 4 cards: `totalLotes`, `enProceso`, `completados`, `estilosDistintos` (4ª card; antes era `totalEquipos` — movido a Stats Inventario implícitamente via mantenimientoPendiente link a `/equipos`).
+  - **Chart.js — colores en runtime**: `VERDE` y `DORADO` se leen con `getComputedStyle(document.documentElement).getPropertyValue('--verde-alera')` y `'--dorado'` dentro de `DOMContentLoaded`, después de que el navbar inyecta las CSS vars del tenant. Fallback a literales `'#364318'` / `'#C9A028'`.
+  - **Próximas Elaboraciones** (`dash-elaboraciones`): tabla con hasta 5 elaboraciones futuras (desde ayer). Columnas: Fecha, Nombre, Receta, Volumen, Estado (badge con color del enum), acción. Estado PLANIFICADA → botón ▶ "Iniciar" link a `/nuevo?planId={id}`; otros estados → ícono ojo link a `/planificacion`. Alimentado por `PlanificacionService.listarProximas()` (usa `LEFT JOIN FETCH receta`).
   - **Botón "Restablecer"**: borra ambas claves localStorage y recarga.
   - **SortableJS**: mismo CDN que kanban (`sortablejs@1.15.2`). `ghostClass:'dash-ghost'`, `dragClass:'dash-drag'`.
 - Búsqueda global: `GET /buscar?q=` (página completa) + `GET /buscar/suggest?q=` (JSON para typeahead del navbar)
@@ -1091,7 +1101,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `NotificacionControllerTest` — 5 tests: seguridad (401), GET /notificaciones (página con modelo), GET /recientes (JSON con total e items), POST /{id}/leer (JSON con noLeidas), POST /leer-todas (redirect)
 - `PlanificacionControllerTest` — 11 tests: seguridad (401 sin autenticar; 302 via `ZymosAccessDeniedHandler` para acceso denegado), página principal, eventos JSON, guardar/cambiarEstado/eliminar (ADMIN vs no-ADMIN)
 - `LoginControllerTest` — 3 tests: GET /login público (200), con ?error, con ?bloqueado. **Nota**: en `@WebMvcTest`, Spring Security puede interceptar GET /login con su propio filtro antes del DispatcherServlet — no verificar `view().name("login")`, solo `status().isOk()`.
-- `DashboardControllerTest` — 3 tests: 401 sin auth, 200 con cualquier rol, modelo tiene `stats` attribute
+- `DashboardControllerTest` — 3 tests: 401 sin auth, 200 con cualquier rol, modelo tiene `stats` attribute. Requiere `@MockBean PlanificacionService planificacionService` + stub `planificacionService.listarProximas()` → `List.of()` en `@BeforeEach`.
 - `CalendarioControllerTest` — 3 tests: 401 sin auth, 200 autenticado, eventos JSON
 - `AdminControllerTest` — 3 tests: 401, 200 ADMIN con lista vacía de logs, filtro por tipo
 - `PerfilControllerTest` — 3 tests: 401, 200 con cualquier rol, POST cambio de contraseña redirige

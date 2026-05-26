@@ -21,6 +21,12 @@
         .dash-handle:active { cursor: grabbing; }
         .dash-ghost { opacity: 0.25; outline: 2px dashed var(--dorado); border-radius: 8px; }
         .dash-drag  { box-shadow: 0 8px 28px rgba(0,0,0,0.15); }
+        .stat-card-link {
+            display: block; text-decoration: none; color: inherit;
+            transition: transform 0.15s;
+        }
+        .stat-card-link:hover { transform: translateY(-2px); }
+        .stat-card-link:hover .stat-card { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
     </style>
 </head>
 <body>
@@ -47,11 +53,15 @@
                 </label></li>
                 <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
                     <input type="checkbox" class="form-check-input dash-toggle" data-seccion="stats-inventario" checked>
-                    <span>Inventario</span>
+                    <span>Inventario y Equipos</span>
                 </label></li>
                 <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
                     <input type="checkbox" class="form-check-input dash-toggle" data-seccion="alertas" checked>
                     <span>Alertas</span>
+                </label></li>
+                <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
+                    <input type="checkbox" class="form-check-input dash-toggle" data-seccion="elaboraciones" checked>
+                    <span>Próximas Elaboraciones</span>
                 </label></li>
                 <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
                     <input type="checkbox" class="form-check-input dash-toggle" data-seccion="charts" checked>
@@ -82,101 +92,117 @@
         </div>
         <div class="row g-3">
             <div class="col-6 col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${totalLotes}">0</div>
-                            <div class="stat-label">Total Lotes</div>
+                <a th:href="@{/}" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${totalLotes}">0</div>
+                                <div class="stat-label">Total Lotes</div>
+                            </div>
+                            <i class="bi bi-droplet-fill stat-icon"></i>
                         </div>
-                        <i class="bi bi-droplet-fill stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card warning">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${enProceso}">0</div>
-                            <div class="stat-label">En Proceso</div>
+                <a th:href="@{/kanban}" class="stat-card-link">
+                    <div class="stat-card warning">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${enProceso}">0</div>
+                                <div class="stat-label">En Proceso</div>
+                            </div>
+                            <i class="bi bi-arrow-repeat stat-icon"></i>
                         </div>
-                        <i class="bi bi-arrow-repeat stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card success">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${completados}">0</div>
-                            <div class="stat-label">Completados</div>
+                <a th:href="@{/}" class="stat-card-link">
+                    <div class="stat-card success">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${completados}">0</div>
+                                <div class="stat-label">Completados</div>
+                            </div>
+                            <i class="bi bi-check-circle stat-icon"></i>
                         </div>
-                        <i class="bi bi-check-circle stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card info">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${totalEquipos}">0</div>
-                            <div class="stat-label">Equipos</div>
+                <a th:href="@{/reportes/produccion}" class="stat-card-link">
+                    <div class="stat-card info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${estilosDistintos}">0</div>
+                                <div class="stat-label">Estilos Distintos</div>
+                            </div>
+                            <i class="bi bi-tags stat-icon"></i>
                         </div>
-                        <i class="bi bi-tools stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- Stats Inventario -->
+    <!-- Stats Inventario y Equipos -->
     <div id="dash-stats-inventario" class="dash-section mb-4">
         <div class="dash-handle" title="Arrastrar para mover sección">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
             <div class="col-6 col-md-3">
-                <div class="stat-card">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${totalInsumos}">0</div>
-                            <div class="stat-label">Insumos</div>
+                <a th:href="@{/inventario}" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${totalInsumos}">0</div>
+                                <div class="stat-label">Insumos</div>
+                            </div>
+                            <i class="bi bi-box-seam stat-icon"></i>
                         </div>
-                        <i class="bi bi-box-seam stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card" th:classappend="${bajoStock > 0} ? 'danger' : 'success'">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${bajoStock}">0</div>
-                            <div class="stat-label">Bajo Stock</div>
+                <a th:href="@{/inventario(filtroBajoStock=true)}" class="stat-card-link">
+                    <div class="stat-card" th:classappend="${bajoStock > 0} ? 'danger' : 'success'">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${bajoStock}">0</div>
+                                <div class="stat-label">Bajo Stock</div>
+                            </div>
+                            <i class="bi bi-exclamation-triangle stat-icon"></i>
                         </div>
-                        <i class="bi bi-exclamation-triangle stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card" th:classappend="${proximosAVencer > 0} ? 'warning' : ''">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${proximosAVencer}">0</div>
-                            <div class="stat-label">Próx. Vencer</div>
+                <a th:href="@{/inventario(filtroPorVencer=true)}" class="stat-card-link">
+                    <div class="stat-card" th:classappend="${proximosAVencer > 0} ? 'warning' : ''">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${proximosAVencer}">0</div>
+                                <div class="stat-label">Próx. Vencer</div>
+                            </div>
+                            <i class="bi bi-calendar-x stat-icon"></i>
                         </div>
-                        <i class="bi bi-calendar-x stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stat-card" th:classappend="${mantenimientoPendiente > 0} ? 'warning' : ''">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <div>
-                            <div class="stat-number" th:text="${mantenimientoPendiente}">0</div>
-                            <div class="stat-label">Mantenimientos</div>
+                <a th:href="@{/equipos}" class="stat-card-link">
+                    <div class="stat-card" th:classappend="${mantenimientoPendiente > 0} ? 'warning' : ''">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${mantenimientoPendiente}">0</div>
+                                <div class="stat-label">Mantenimientos</div>
+                            </div>
+                            <i class="bi bi-wrench stat-icon"></i>
                         </div>
-                        <i class="bi bi-wrench stat-icon"></i>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
@@ -239,6 +265,72 @@
         </div>
     </div>
 
+    <!-- Próximas Elaboraciones -->
+    <div id="dash-elaboraciones" class="dash-section mb-4">
+        <div class="dash-handle" title="Arrastrar para mover sección">
+            <i class="bi bi-grip-horizontal"></i>
+        </div>
+        <div class="card-zymos">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5><i class="bi bi-calendar-check me-2"></i>Próximas Elaboraciones</h5>
+                <a th:href="@{/planificacion}" class="btn btn-zymos-outline btn-sm">
+                    <i class="bi bi-calendar3 me-1"></i>Ver calendario
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div th:if="${#lists.isEmpty(proximasElaboraciones)}" class="empty-state py-4">
+                    <i class="bi bi-calendar"></i>
+                    <p>No hay elaboraciones planificadas</p>
+                    <a th:href="@{/planificacion}" class="btn btn-zymos btn-sm">Planificar</a>
+                </div>
+                <table th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table table-hover mb-0">
+                    <thead>
+                    <tr>
+                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fecha</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Elaboración</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Receta</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Volumen</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Estado</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;"></th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="plan : ${proximasElaboraciones}">
+                        <td class="ps-3">
+                            <small th:text="${#temporals.format(plan.fechaPlaneada,'dd/MM/yyyy')}">-</small>
+                        </td>
+                        <td th:text="${plan.nombreElaboracion}">-</td>
+                        <td>
+                            <small class="text-muted"
+                                   th:text="${plan.receta != null ? plan.receta.nombre : '—'}">—</small>
+                        </td>
+                        <td>
+                            <small th:text="${plan.volumenEstimado != null ? plan.volumenEstimado + ' L' : '—'}">—</small>
+                        </td>
+                        <td>
+                            <span class="badge"
+                                  th:style="'background:' + ${plan.estado.color} + ';color:' + ${plan.estado.colorTexto}"
+                                  th:text="${plan.estado.displayName}">—</span>
+                        </td>
+                        <td class="pe-3 text-end">
+                            <a th:href="@{/nuevo(planId=${plan.id})}"
+                               th:if="${plan.estado.name() == 'PLANIFICADA'}"
+                               class="btn btn-sm btn-zymos" title="Iniciar elaboración">
+                                <i class="bi bi-play-fill"></i>
+                            </a>
+                            <a th:href="@{/planificacion}"
+                               th:unless="${plan.estado.name() == 'PLANIFICADA'}"
+                               class="btn btn-sm btn-outline-secondary" title="Ver planificación">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- Gráficas -->
     <div id="dash-charts" class="dash-section mb-4">
         <div class="dash-handle" title="Arrastrar para mover sección">
@@ -294,9 +386,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-transparent">
-                        <a th:href="@{/facturas}" class="btn btn-zymos btn-sm w-100">
-                            <i class="bi bi-receipt me-1"></i>Ver Facturas
+                    <div class="card-footer bg-transparent d-flex gap-2">
+                        <a th:href="@{/facturas}" class="btn btn-zymos btn-sm flex-fill">
+                            <i class="bi bi-receipt me-1"></i>Facturas
+                        </a>
+                        <a th:href="@{/reportes/produccion}" class="btn btn-zymos-outline btn-sm flex-fill">
+                            <i class="bi bi-bar-chart me-1"></i>Reporte
                         </a>
                     </div>
                 </div>
@@ -316,11 +411,11 @@
                             <table class="table table-hover mb-0">
                                 <thead>
                                 <tr>
-                                    <th class="ps-3" style="background:#364318;color:#F5EDD0;font-size:0.75rem;">Código</th>
-                                    <th style="background:#364318;color:#F5EDD0;font-size:0.75rem;">Estilo</th>
-                                    <th style="background:#364318;color:#F5EDD0;font-size:0.75rem;">Fase</th>
-                                    <th style="background:#364318;color:#F5EDD0;font-size:0.75rem;">Fecha</th>
-                                    <th style="background:#364318;color:#F5EDD0;font-size:0.75rem;"></th>
+                                    <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Código</th>
+                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Estilo</th>
+                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fase</th>
+                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fecha</th>
+                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;"></th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -367,7 +462,7 @@
 // ── Claves localStorage ───────────────────────────────────────────
 const DASH_VIS_KEY   = 'zymos-dashboard-secciones';
 const DASH_ORDEN_KEY = 'zymos-dashboard-orden';
-const TODAS_SECCIONES = ['stats-lotes','stats-inventario','alertas','charts','finanzas'];
+const TODAS_SECCIONES = ['stats-lotes','stats-inventario','alertas','elaboraciones','charts','finanzas'];
 
 // ── Orden ─────────────────────────────────────────────────────────
 function guardarOrden() {
@@ -442,41 +537,49 @@ document.addEventListener('DOMContentLoaded', function() {
 const litrosMesData = /*[[${chartLitrosMes}]]*/ {};
 const estilosData   = /*[[${chartEstilos}]]*/ {};
 
-const VERDE   = '#364318';
-const DORADO  = '#C9A028';
-const COLORES = ['#364318','#C9A028','#E0B840','#556B2F','#8B7355','#6B8E23'];
+document.addEventListener('DOMContentLoaded', function() {
+    const cvars  = getComputedStyle(document.documentElement);
+    const VERDE  = cvars.getPropertyValue('--verde-alera').trim() || '#364318';
+    const DORADO = cvars.getPropertyValue('--dorado').trim()      || '#C9A028';
+    const COLORES = [
+        VERDE,
+        DORADO,
+        cvars.getPropertyValue('--dorado-claro').trim() || '#E0B840',
+        '#556B2F', '#8B7355', '#6B8E23'
+    ];
 
-new Chart(document.getElementById('chartLitros'), {
-    type: 'bar',
-    data: {
-        labels: Object.keys(litrosMesData),
-        datasets: [{ label: 'Litros', data: Object.values(litrosMesData),
-            backgroundColor: DORADO, borderColor: VERDE, borderWidth: 1, borderRadius: 4 }]
-    },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: { beginAtZero: true, ticks: { font: { family: 'Raleway' } } },
-            x: { ticks: { font: { family: 'Raleway', size: 11 } } }
+    new Chart(document.getElementById('chartLitros'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(litrosMesData),
+            datasets: [{ label: 'Litros', data: Object.values(litrosMesData),
+                backgroundColor: DORADO, borderColor: VERDE, borderWidth: 1, borderRadius: 4 }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { font: { family: 'Raleway' } } },
+                x: { ticks: { font: { family: 'Raleway', size: 11 } } }
+            }
         }
-    }
-});
+    });
 
-new Chart(document.getElementById('chartEstilos'), {
-    type: 'doughnut',
-    data: {
-        labels: Object.keys(estilosData),
-        datasets: [{ data: Object.values(estilosData),
-            backgroundColor: COLORES, borderWidth: 2, borderColor: '#fff' }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { position: 'bottom',
-                labels: { font: { family: 'Raleway', size: 11 }, padding: 12 } }
+    new Chart(document.getElementById('chartEstilos'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(estilosData),
+            datasets: [{ data: Object.values(estilosData),
+                backgroundColor: COLORES, borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom',
+                    labels: { font: { family: 'Raleway', size: 11 }, padding: 12 } }
+            }
         }
-    }
+    });
 });
 /*]]>*/
 </script>

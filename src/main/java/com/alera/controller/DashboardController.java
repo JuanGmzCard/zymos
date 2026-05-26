@@ -3,7 +3,7 @@ package com.alera.controller;
 import com.alera.dto.DashboardStats;
 import com.alera.service.DashboardService;
 import com.alera.service.InsumoInventarioService;
-import java.time.LocalDate;
+import com.alera.service.PlanificacionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,17 +15,20 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
     private final InsumoInventarioService insumoService;
+    private final PlanificacionService planificacionService;
 
-    public DashboardController(DashboardService dashboardService, InsumoInventarioService insumoService) {
+    public DashboardController(DashboardService dashboardService,
+                                InsumoInventarioService insumoService,
+                                PlanificacionService planificacionService) {
         this.dashboardService = dashboardService;
         this.insumoService = insumoService;
+        this.planificacionService = planificacionService;
     }
 
     @GetMapping
     public String dashboard(Model model) {
         DashboardStats stats = dashboardService.obtenerEstadisticas();
         model.addAttribute("stats", stats);
-        // Atributos individuales para compatibilidad con el template existente
         model.addAttribute("totalLotes",            stats.getTotalLotes());
         model.addAttribute("enProceso",             stats.getEnProceso());
         model.addAttribute("completados",           stats.getCompletados());
@@ -44,6 +47,9 @@ public class DashboardController {
         model.addAttribute("chartEstilos",    dashboardService.getLotesPorEstilo());
         model.addAttribute("alertasBajoStock",    insumoService.listarBajoStock());
         model.addAttribute("alertasProxVencer",   insumoService.listarProximosAVencer(30));
+        var proximas = planificacionService.listarProximas();
+        model.addAttribute("proximasElaboraciones",
+            proximas.size() > 5 ? proximas.subList(0, 5) : proximas);
         return "dashboard";
     }
 }

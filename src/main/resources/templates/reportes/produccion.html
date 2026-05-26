@@ -218,7 +218,7 @@
                             <tr th:each="lote : ${lotes}">
                                 <td>
                                     <a th:href="@{/ver/{id}(id=${lote.id})}"
-                                       style="font-family:'Cinzel',serif;font-weight:700;color:var(--verde-zymos);font-size:0.8rem;"
+                                       style="font-family:'Cinzel',serif;font-weight:700;color:var(--dorado);font-size:0.8rem;"
                                        th:text="${lote.codigoLote}">-</a>
                                 </td>
                                 <td th:text="${lote.estilo}">-</td>
@@ -232,13 +232,13 @@
                                 <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'">-</td>
                                 <td>
                                     <span th:if="${lote.abv != null}"
-                                          style="font-weight:700;color:var(--verde-zymos);"
+                                          style="font-weight:700;color:var(--dorado);"
                                           th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'">-</span>
                                     <span th:unless="${lote.abv != null}" class="text-muted">—</span>
                                 </td>
                                 <td>
                                     <span th:if="${lote.eficienciaMacerado != null}"
-                                          th:style="${lote.eficienciaMacerado >= 75} ? 'color:#198754;font-weight:600;' : (${lote.eficienciaMacerado >= 60} ? 'color:#C9A028;font-weight:600;' : 'color:#dc3545;font-weight:600;')"
+                                          th:style="${lote.eficienciaMacerado >= 75} ? 'color:#198754;font-weight:600;' : (${lote.eficienciaMacerado >= 60} ? 'color:var(--dorado);font-weight:600;' : 'color:#dc3545;font-weight:600;')"
                                           th:text="${#numbers.formatDecimal(lote.eficienciaMacerado,1,1)} + '%'">-</span>
                                     <span th:unless="${lote.eficienciaMacerado != null}" class="text-muted">—</span>
                                 </td>
@@ -299,89 +299,102 @@ const chartData    = /*[[${chartEstilosLitros}]]*/ {};
 const trendData    = /*[[${chartTendencia}]]*/ {};
 const abvDistData  = /*[[${chartAbvDist}]]*/ {};
 
-// Gráfico litros por estilo (barras)
-if (Object.keys(chartData).length > 0) {
-    new Chart(document.getElementById('chartPeriodo'), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(chartData),
-            datasets: [{
-                label: 'Litros',
-                data: Object.values(chartData),
-                backgroundColor: '#C9A028',
-                borderColor: '#364318',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
-                x: { ticks: { font: { family: 'Raleway', size: 10 } } }
-            }
-        }
-    });
-}
+document.addEventListener('DOMContentLoaded', function() {
+    const cvars      = getComputedStyle(document.documentElement);
+    const DORADO     = cvars.getPropertyValue('--dorado').trim()      || '#C9A028';
+    const DORADO_CL  = cvars.getPropertyValue('--dorado-claro').trim()|| '#E0B840';
+    const VERDE      = cvars.getPropertyValue('--verde-alera').trim() || '#364318';
 
-// Gráfico tendencia mensual (línea)
-if (Object.keys(trendData).length > 0) {
-    new Chart(document.getElementById('chartTendencia'), {
-        type: 'line',
-        data: {
-            labels: Object.keys(trendData),
-            datasets: [{
-                label: 'Litros',
-                data: Object.values(trendData),
-                borderColor: '#C9A028',
-                backgroundColor: 'rgba(201,160,40,0.12)',
-                pointBackgroundColor: '#C9A028',
-                pointRadius: 5,
-                tension: 0.35,
-                fill: true
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
-                x: { ticks: { font: { family: 'Raleway', size: 10 } } }
-            }
-        }
-    });
-}
+    function hexToRgba(hex, alpha) {
+        const h = hex.startsWith('#') ? hex.slice(1) : hex;
+        const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+        return 'rgba(' + r + ',' + g + ',' + b + ',' + alpha + ')';
+    }
 
-// Gráfico distribución ABV
-if (Object.keys(abvDistData).length > 0) {
-    new Chart(document.getElementById('chartAbv'), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(abvDistData),
-            datasets: [{
-                label: 'Lotes',
-                data: Object.values(abvDistData),
-                backgroundColor: Object.values(abvDistData).map((_, i) => {
-                    const colors = ['#6c757d','#0288D1','#0288D1','#C9A028','#C9A028','#E0B840','#dc3545'];
-                    return colors[i] || '#C9A028';
-                }),
-                borderRadius: 4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' lote(s)' } }
+    // Gráfico litros por estilo (barras)
+    if (Object.keys(chartData).length > 0) {
+        new Chart(document.getElementById('chartPeriodo'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(chartData),
+                datasets: [{
+                    label: 'Litros',
+                    data: Object.values(chartData),
+                    backgroundColor: DORADO,
+                    borderColor: VERDE,
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
             },
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Raleway', size: 10 } } },
-                x: { ticks: { font: { family: 'Raleway', size: 10 } } }
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
+                    x: { ticks: { font: { family: 'Raleway', size: 10 } } }
+                }
             }
-        }
-    });
-}
+        });
+    }
+
+    // Gráfico tendencia mensual (línea)
+    if (Object.keys(trendData).length > 0) {
+        new Chart(document.getElementById('chartTendencia'), {
+            type: 'line',
+            data: {
+                labels: Object.keys(trendData),
+                datasets: [{
+                    label: 'Litros',
+                    data: Object.values(trendData),
+                    borderColor: DORADO,
+                    backgroundColor: hexToRgba(DORADO, 0.12),
+                    pointBackgroundColor: DORADO,
+                    pointRadius: 5,
+                    tension: 0.35,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { font: { family: 'Raleway', size: 10 } } },
+                    x: { ticks: { font: { family: 'Raleway', size: 10 } } }
+                }
+            }
+        });
+    }
+
+    // Gráfico distribución ABV
+    if (Object.keys(abvDistData).length > 0) {
+        new Chart(document.getElementById('chartAbv'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(abvDistData),
+                datasets: [{
+                    label: 'Lotes',
+                    data: Object.values(abvDistData),
+                    backgroundColor: Object.values(abvDistData).map((_, i) => {
+                        const colors = ['#6c757d','#0288D1','#0288D1', DORADO, DORADO, DORADO_CL,'#dc3545'];
+                        return colors[i] || DORADO;
+                    }),
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { callbacks: { label: ctx => ctx.parsed.y + ' lote(s)' } }
+                },
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Raleway', size: 10 } } },
+                    x: { ticks: { font: { family: 'Raleway', size: 10 } } }
+                }
+            }
+        });
+    }
+}); // DOMContentLoaded
 
 // Paginación de la tabla
 const PAGE_SIZE = 15;
