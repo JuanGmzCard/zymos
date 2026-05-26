@@ -85,7 +85,7 @@
             <div class="kanban-col-body" id="col-sinIniciar" data-fase="sinIniciar">
                 <div th:if="${#lists.isEmpty(sinIniciar)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${sinIniciar}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                         <span class="kanban-dias" style="background:#e9ecef;color:#6c757d;"
@@ -113,7 +113,7 @@
             <div class="kanban-col-body" id="col-fermentacion" data-fase="fermentacion">
                 <div th:if="${#lists.isEmpty(fermentacion)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${fermentacion}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                         <span class="kanban-dias" style="background:#d4edda;color:#155724;"
@@ -143,7 +143,7 @@
             <div class="kanban-col-body" id="col-acondicionamiento" data-fase="acondicionamiento">
                 <div th:if="${#lists.isEmpty(acondicionamiento)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${acondicionamiento}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                         <span class="kanban-dias" style="background:#d1ecf1;color:#0c5460;"
@@ -170,7 +170,7 @@
             <div class="kanban-col-body" id="col-maduracion" data-fase="maduracion">
                 <div th:if="${#lists.isEmpty(maduracion)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${maduracion}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                         <span class="kanban-dias" style="background:#fff3cd;color:#856404;"
@@ -197,7 +197,7 @@
             <div class="kanban-col-body" id="col-carbonatacion" data-fase="carbonatacion">
                 <div th:if="${#lists.isEmpty(carbonatacion)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${carbonatacion}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                         <span class="kanban-dias" style="background:#cce5ff;color:#004085;"
@@ -225,7 +225,7 @@
             <div class="kanban-col-body" id="col-completados" data-fase="completados">
                 <div th:if="${#lists.isEmpty(completados)}" class="kanban-empty">Sin lotes</div>
                 <div th:each="lote : ${completados}" class="kanban-card"
-                     th:attr="data-lote-id=${lote.id}">
+                     th:attr="data-lote-id=${lote.id},data-tiene-fermentador=${lote.equipoFermentador != null}">
                     <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                     <div class="kanban-estilo" th:text="${lote.estilo}">-</div>
                     <div class="kanban-meta" th:if="${lote.abv != null}">

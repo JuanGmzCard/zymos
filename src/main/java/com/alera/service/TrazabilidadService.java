@@ -156,6 +156,9 @@ public class TrazabilidadService {
                 lote.setCarbFechaFinal(null);
             }
             case "fermentacion" -> {
+                if (lote.getEquipoFermentador() == null)
+                    throw new IllegalStateException(
+                        "El lote no tiene fermentador asignado. Editá el lote y asigná un fermentador antes de iniciar la fermentación.");
                 if (lote.getFermFechaInicial() == null) lote.setFermFechaInicial(hoy);
                 lote.setFermFechaFinal(null);
                 lote.setAcondFechaInicial(null);
