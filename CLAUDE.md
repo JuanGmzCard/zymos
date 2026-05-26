@@ -32,7 +32,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V31)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V32)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -80,7 +80,7 @@ com.alera/
 │               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer),
 │               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
-├── controller/ 24 controladores:
+├── controller/ 25 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
 │               FacturaProveedorController, InsumoInventarioController,
 │               RecetaController, ProveedorController, CalendarioController,
@@ -88,13 +88,14 @@ com.alera/
 │               TipoCervezaController, UsuarioController, MantenimientoController,
 │               LoginController, TenantAdminController, ComparativaController, AlertaController,
 │               PlanificacionController, PerfilController, NotificacionController,
+│               MigracionController (/admin/migracion — plantillas + importación por módulo),
 │               AuthController (POST /api/auth/login — obtención de token JWT)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
 │               UsuarioService (implements UserDetailsService — integración Spring Security),
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
-│               EmailService, AlertaScheduler, NotificacionService,
+│               EmailService, AlertaScheduler, NotificacionService, MigracionTemplateService, MigracionService,
 │               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
 ├── model/      23 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
@@ -105,13 +106,15 @@ com.alera/
 │               Proveedor, TipoCerveza, Usuario,
 │               LoteItemFactura (tabla lote_items_factura — asignación parcial de ítems a lotes),
 │               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant),
-│               FacturaHistorialEstado (tabla factura_historial_estado — auditoría de cambios de estado por factura)
+│               FacturaHistorialEstado (tabla factura_historial_estado — auditoría de cambios de estado por factura),
+│               MigracionLog (tabla migracion_log — historial de importaciones por tenant, sin @TenantId)
 │               + 10 enums (incluye RolUsuario: ADMIN, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA)
 ├── repository/ 14 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
-│               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository)
+│               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository,
+│               MigracionLogRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
@@ -144,11 +147,12 @@ templates/
 │               — dateClick → modal nuevo con fecha pre-llenada; eventClick → modal editar con extendedProps
 │               — botón Editar en tabla usa `data-*` attrs (`th:attr`) + `onclick="abrirModalEditarDesdeBtn(this)"` para pasar strings sin violar restricción Thymeleaf 3.1 (regla 8c)
 ├── notificaciones/ index.html (historial paginado con badges por tipo, marcar leída por fila, marcar todas, paginación)
-└── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores + botón "Limpiar cache" → `POST /admin/tenants/cache/evict` + botón "Usuarios" por card → `/admin/tenants/{subdomain}/usuarios`),
+└── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores + botón "Limpiar cache" → `POST /admin/tenants/cache/evict` + botón "Usuarios" por card → `/admin/tenants/{subdomain}/usuarios` + botón "Migración" → `/admin/migracion/{subdomain}`),
                 tenant-formulario.html (crear/editar tenant con color pickers y preview en vivo del navbar + selectores de tipografía con preview en vivo — `fontHeadings` y `fontBody`; campo `logoUrl` es `type="text"` para aceptar rutas relativas `/img/` además de URLs externas),
                 tenant-usuarios.html (gestión de usuarios por tenant: tabla con toggle activo/inactivo, cambiar contraseña, cambiar rol, eliminar + modal "Nuevo Usuario"; todas las queries usan SQL nativo explícito — ver regla 40),
                 tenant-historial.html (auditoría de cambios del tenant: tabla fecha/acción/usuario/detalles; badges de color por tipo de acción),
-                tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo
+                tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo,
+                migracion/detalle.html (página de migración por tenant: instrucciones generales, 4 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores)
 ```
 
 ### Migraciones Flyway
@@ -183,6 +187,7 @@ templates/
 - `V29__superadmin_table.sql` — tabla `super_admins(id BIGSERIAL, username VARCHAR(100) UNIQUE, password VARCHAR(255), activo BOOLEAN DEFAULT TRUE)` — super-administradores globales sin `tenant_id`; tienen acceso a todos los tenants. Sin `@TenantId`.
 - `V30__movimientos_inventario_receta_version.sql` — tabla `movimientos_inventario(id, tenant_id, insumo_id, insumo_nombre, tipo, cantidad, cantidad_anterior, cantidad_posterior, motivo, referencia, usuario, fecha)` para auditoría de stock + índices; y `ALTER TABLE recetas ADD COLUMN version INTEGER NOT NULL DEFAULT 1` — versionado de recetas.
 - `V31__receta_ph_agua.sql` — `ALTER TABLE recetas ADD COLUMN IF NOT EXISTS ph_agua DECIMAL(4,2)` — pH objetivo del agua de macerado en receta.
+- `V32__migracion_log.sql` — tabla `migracion_log(id BIGSERIAL PK, tenant_id VARCHAR(100), modulo VARCHAR(50), archivo VARCHAR(255), procesadas INT, exitosas INT, con_errores INT, estado VARCHAR(20), detalles TEXT, usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW())` + índices en `tenant_id` y `fecha DESC`. Sin `@TenantId` — el admin puede consultar historial cross-tenant libremente.
 
 ---
 
@@ -334,6 +339,18 @@ Auditoría de cambios de estado de facturas. Tabla `factura_historial_estado`. T
 - Factory: `FacturaHistorialEstado.of(facturaId, estadoAnterior, estadoNuevo, usuario)` — crea instancia sin id ni tenantId
 - Se crea en `FacturaProveedorService.guardar()` (estado inicial, `estadoAnterior=null`) y en `cambiarEstado()` (transición, con estado anterior)
 
+### MigracionLog
+Registro de importaciones de datos por tenant. Tabla `migracion_log`. **Sin `@TenantId`** — el admin puede consultar historial de cualquier tenant libremente.
+- `id`, `tenantId` (VARCHAR 100, NOT NULL — columna regular, no discriminador), `modulo` (VARCHAR 50 — almacen/equipos/comercial/produccion)
+- `archivo` (VARCHAR 255) — nombre original del archivo subido
+- `procesadas`, `exitosas`, `conErrores` (int) — contadores de filas
+- `estado` (VARCHAR 20) — `"EXITOSO"` / `"PARCIAL"` / `"FALLIDO"`
+- `detalles` (TEXT, nullable) — mensajes de error de filas fallidas, separados por `\n`
+- `usuario` (VARCHAR 100) — nombre del usuario autenticado que realizó la importación
+- `fecha` (TIMESTAMP, NOT NULL, seteado por `@PrePersist`)
+- Factory: `MigracionLog.of(tenantId, modulo, archivo, procesadas, exitosas, conErrores, estado, detalles, usuario)`
+- Solo getters (sin setters) — inmutable tras creación
+
 ### Usuario
 No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist createdAt`. Campos:
 - `id`, `tenantId` (@TenantId — usuarios aislados por tenant), `username` (unique por tenant)
@@ -400,6 +417,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### FacturaHistorialEstadoRepository
 - `findByFacturaIdOrderByFechaDesc(facturaId)` — historial de cambios de estado de una factura, orden cronológico inverso. Hibernate filtra automáticamente por tenant activo via `@TenantId`.
+
+### MigracionLogRepository
+- `findByTenantIdOrderByFechaDesc(tenantId)` — historial de importaciones del tenant, orden cronológico inverso. Query JPQL sin `@TenantId` — consulta por el campo `tenantId` directamente (Hibernate NO añade filtro automático porque la entidad no tiene `@TenantId`).
+- `countByTenantId(tenantId)` — conteo de importaciones del tenant.
 
 ### ElaboracionPlanificadaRepository
 - `findProximas(desde)` — elaboraciones con `fechaPlaneada >= :desde`, `LEFT JOIN FETCH receta`, orden ASC
@@ -551,9 +572,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### PdfExportService
 - `generarPdfLote(LoteCerveza, ExportBranding, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF usando la paleta de colores del tenant. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **curva de fermentación** (si hay lecturas), costos, observaciones/notas de cata, pie de página. La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene).
 - `generarPdfReceta(Receta receta, ExportBranding)` → `byte[]` — genera PDF A4 con OpenPDF usando paleta del tenant. Secciones: cabecera (nombre de receta + estilo), información general (nombre, estilo, estado, versión, hervor, vol. base, agua macerado/sparge, **pH agua si no es null**), parámetros objetivo (OG/FG/ABV estimado si ambos están presentes), ingredientes agrupados por tipo (maltas/lúpulos/levaduras/clarificantes), escalones de macerado, adiciones de hervor, notas técnicas, pie de página. Reutiliza helpers `addTituloPdf`, `par`, `metricaCell`, `tableCell`.
+- `generarPdfReporteProduccion(lotes, desde, hasta, estiloFiltro, ExportBranding)` → `byte[]` — genera PDF **landscape A4** con OpenPDF. Secciones: cabecera con período y filtro de estilo activo, resumen estadístico (8 métricas en tabla 8 cols), tabla de lotes (9 cols: Código, Estilo, Receta, Fecha, Litros, OG, ABV, Eficiencia, Estado) con filas alternas y código en color del tenant, y resumen por estilo (solo si hay >1 estilo). Helper privado `tablaCelda(t, text, font, bg)` para celdas con color de fila alterno.
 - Colores neutros fijos (no cambian con branding): `C_GRIS`, `C_BORDE`. El resto usa `Pal` record interno calculado desde `ExportBranding`.
 - Solo importa `com.lowagie.text.*` — sin colisión con POI.
-- Inyectado en `TrazabilidadController` y `RecetaController`.
+- Inyectado en `TrazabilidadController`, `RecetaController` y `ReporteController`.
 
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, resumen estadístico, datos de lotes con autofilter; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
@@ -561,6 +583,37 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `generarExcelInventario(insumos, ExportBranding)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por `TipoInsumo` (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
 - Solo importa `org.apache.poi.*` — sin colisión con OpenPDF. Usa `XSSFFont` con cast `(XSSFFont) wb.createFont()`.
 - Inyectado en `ReporteController`.
+
+### MigracionTemplateService
+- `plantillaAlmacen()` → `byte[]` — genera `plantilla-almacen.xlsx` (1 hoja: Insumos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown TipoInsumo), cantidad, unidad (dropdown: gr/kg/mL/L/gal/und), stockMinimo, descripcion, proveedor.
+- `plantillaEquipos()` → `byte[]` — genera `plantilla-equipos.xlsx` (1 hoja: Equipos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown TipoEquipo), descripcion, ubicacion, fechaAdquisicion, proximoMantenimiento, estado (dropdown EstadoEquipo, default OPERATIVO).
+- `plantillaComercial()` → `byte[]` — genera `plantilla-comercial.xlsx` (3 hojas en orden: Proveedores, Facturas, Factura_Items + hoja Instrucciones). Relación: Facturas.proveedor → Proveedores.nombre; Factura_Items.numeroFactura → Facturas.numeroFactura.
+- `plantillaProduccion()` → `byte[]` — genera `plantilla-produccion.xlsx` (6 hojas en orden: Recetas, Receta_Ingredientes, Receta_Escalones, Receta_Adiciones, Lotes, Lote_Ingredientes + hoja Instrucciones). Relaciones: Ingredientes/Escalones/Adiciones.receta → Recetas.nombre; Lotes.receta → Recetas.nombre (opcional); Lote_Ingredientes.codigoLote → Lotes.codigoLote.
+- **Estructura de cada hoja**: row 0 = cabeceras (verde oscuro=obligatorio, gris=opcional) con sufijo " *" en requeridas; row 1 = leyenda " * = obligatorio"; row 2 = fila de ejemplo en gris/italic; row 3+ = datos del usuario. El parser en `MigracionService` salta filas `rowNum < 3`.
+- **Helpers privados**: `estilos(wb)` — record `Estilos(req, opt, example, data, instrTitle, instrBody)` con los 6 `XSSFCellStyle`; `cabecera(sh, estilos, cols[][])` — row 0 + row 1 legend; `ejemplo(sh, estilos, valores[])` — row 2; `fila(Row, estilo, valores[])` — rellena fila (`Cell` no `XSSFCell` porque `Row` es interfaz); `dropdown(sh, firstRow, lastRow, col, opciones...)` — `XSSFDataValidationHelper` lista explícita; `anchos(sh, chars...)` — anchos de columna; `hojaInstrucciones(wb, estilos, modulo, reglas[][])` — hoja primera con tabla de reglas.
+- **CRÍTICO**: `Row.createCell()` devuelve `Cell` (interfaz), NO `XSSFCell` — declarar como `Cell` en todos los helpers que reciban `Row` como parámetro.
+
+### MigracionService
+- `importarAlmacen(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Insumos", valida tipo (`TipoInsumo` enum), inserta en `insumos_inventario` via `JdbcTemplate` con `tenant_id` explícito. Idempotente: salta duplicados si `LOWER(nombre) + tenant_id` ya existe.
+- `importarEquipos(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Equipos", defaults `estado` a `"OPERATIVO"`, inserta en `equipos`.
+- `importarComercial(archivo, tenantId, usuario)` → `Resultado` — 3 hojas en orden:
+  1. "Proveedores" → inserta en `proveedores`, salta duplicados por nombre
+  2. "Facturas" → inserta en `facturas_proveedor`, resuelve `proveedor_id` por nombre, construye `Map<String, Long> facturaIds`
+  3. "Factura_Items" → inserta en `factura_items` usando `facturaIds`, recalcula `subtotal`/`valor_total` de la factura
+- `importarProduccion(archivo, tenantId, usuario)` → `Resultado` — 6 hojas en orden:
+  1. "Recetas" → inserta en `recetas`, construye `Map<String, Long> recetaIds`
+  2. "Receta_Ingredientes" → inserta en `receta_ingredientes` (cantidad como String "5000 gr")
+  3. "Receta_Escalones" → inserta en `escalones_macerado` (columnas `temperatura_c`, `duracion_minutos`)
+  4. "Receta_Adiciones" → inserta en `adiciones_hervor`
+  5. "Lotes" → inserta en `lotes_cerveza`, resuelve receta por nombre, construye `Map<String, Long> loteIds`
+  6. "Lote_Ingredientes" → inserta en `ingredientes`
+- `historial(tenantId)` → `List<MigracionLog>` — delega a `logRepo.findByTenantIdOrderByFechaDesc`
+- `Resultado` record: `(int procesadas, int exitosas, int errores, List<String> mensajes, String estado)`. `estado` = "EXITOSO" / "PARCIAL" / "FALLIDO" según si hubo 0, algunos o todos los errores.
+- **JdbcTemplate cross-tenant**: usa `JdbcTemplate` (no JPA) con `tenant_id` como parámetro explícito — igual que `TenantAdminController`. Esto bypasea el filtro `@TenantId` de Hibernate que aplicaría el tenant del request activo (super-admin), no el del destinatario.
+- **`insertarYRetornarId`**: helper con `KeyHolder + GeneratedKeyHolder`, usa `conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)` para capturar el ID generado en inserts con hijos.
+- **Parsing helpers**: `texto(row, col)`, `decimal(row, col)`, `entero(row, col)`, `fecha(row, col)` — manejan tanto celdas NUMERIC como STRING. `fecha()` detecta `DateUtil.isCellDateFormatted()` para celdas de fecha nativas Excel.
+- **Tolerancia a errores**: errores por fila se capturan y acumulan; el procesamiento continúa con la siguiente fila. Al final se guarda `MigracionLog` con el resumen.
+- Inyecta `JdbcTemplate jdbc` y `MigracionLogRepository logRepo`.
 
 ### EmailService
 - `mailConfigurado()` → boolean — true si `JavaMailSender` fue auto-configurado (requiere `spring.mail.host` no vacío)
@@ -703,9 +756,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **`produces = MediaType.APPLICATION_JSON_VALUE` a nivel de clase** — CRÍTICO: sin esto, un navegador que accede directamente con `Accept: text/html` hace que Spring negocie HTML, no puede serializar el `LinkedHashMap` devuelto y lanza `HttpMessageNotWritableException`. Con `produces`, el navegador recibe 406 en lugar de una excepción descontrolada.
 
 ### ReporteController ("/reportes")
-- `GET /reportes/produccion?desde=&hasta=` — reporte con Chart.js y tabla de lotes
-- `GET /reportes/produccion/excel?desde=&hasta=` — descarga `.xlsx` con dos hojas: "Reporte de Producción" (14 columnas: código, estilo, receta, fecha, fase, OG, FG, ABV, atenuación, eficiencia, litros, costo total, costo/litro, creado por) y "Por Estilo" (estilo, cantidad, litros). Botón "Excel" en `produccion.html`.
-- Ambos endpoints pasan `TenantContext.getCurrentTenant()` a `findResumenPorEstilo` — obligatorio porque es nativeQuery y Hibernate no filtra automáticamente.
+- `GET /reportes/produccion?desde=&hasta=&estilo=` — reporte de producción. 8 stat-cards (Total Lotes, Litros, Prom/Lote, ABV Prom, Eficiencia Prom, Costo Total, Estilos Únicos, Completados%). Filtro opcional por estilo (`<select>` dinámico con los estilos del período). Atajos de período: Este mes, Último mes, 3 meses, Este año. 3 gráficos Chart.js (tendencia mensual de litros, litros por estilo, distribución ABV). Tabla con paginación client-side (15 filas/página) con columnas Eficiencia (color-coded: verde ≥75%, ámbar ≥60%, rojo <60%) y Costo/L. Los 3 gráficos y todas las estadísticas se calculan en Java desde la lista `lotes` (ya filtrada por estilo) — no usan queries nativas adicionales.
+- `GET /reportes/produccion/excel?desde=&hasta=&estilo=` — descarga `.xlsx` con dos hojas: "Reporte de Producción" (14 columnas: código, estilo, receta, fecha, fase, OG, FG, ABV, atenuación, eficiencia, litros, costo total, costo/litro, creado por) y "Por Estilo" (estilo, cantidad, litros). Acepta filtro `estilo` opcional. Botón "Excel" en `produccion.html`.
+- `GET /reportes/produccion/pdf?desde=&hasta=&estilo=` — descarga PDF landscape A4. Delega a `PdfExportService.generarPdfReporteProduccion(lotes, desde, hasta, estiloFiltro, branding)`. Botón "PDF" en `produccion.html`.
+- `findResumenPorEstilo` se llama solo en el endpoint `/excel` (para la hoja "Por Estilo") — pasa `TenantContext.getCurrentTenant()` como parámetro explícito (nativeQuery no filtra automáticamente). El endpoint `/produccion` ya no llama queries nativas — todo se calcula desde `loteRepo.findByPeriodo(desde, hasta)`.
 
 ### CalendarioController ("/calendario")
 - `GET /calendario` — template con FullCalendar
@@ -760,6 +814,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Inyecta `ObjectMapper` (Jackson) para serialización/deserialización JSON.
 - `formularioEditar` pasa `otrosTenants` (todos los tenants excepto el actual) para el select "Copiar de...".
 - Hereda restricción `ADMIN` de `/admin/**` en `SecurityConfig`
+
+### MigracionController ("/admin/migracion") — solo ADMIN (hereda de `/admin/**`)
+- `GET /admin/migracion/{subdomain}` — página de migración del tenant. Carga el tenant por subdomain, lista el historial via `migracionService.historial(subdomain)`. Modelo: `tenant`, `historial`. Template: `admin/migracion/detalle.html`.
+- `GET /admin/migracion/{subdomain}/plantilla/{modulo}` — descarga plantilla Excel. `modulo` ∈ {almacen, equipos, comercial, produccion}. Delega a `MigracionTemplateService`. Nombre de archivo: `plantilla-{modulo}-{subdomain}.xlsx`. Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+- `POST /admin/migracion/{subdomain}/importar/{modulo}` — procesa la importación. Rechaza archivos vacíos con flash warning. Delega a `MigracionService.importar*()` según módulo. Flash success/warning/danger con resumen: filas procesadas, exitosas, errores y primeros 3 mensajes de error. Siempre redirige a `GET /admin/migracion/{subdomain}`.
+- Accesible desde el botón "Migración" en cada card de `/admin/tenants`.
+- Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
 
 ### ProveedorController ("/proveedores")
 - CRUD + acceso ADMIN y FACTURACION
@@ -1042,7 +1103,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - `ProveedorControllerTest` — 3 tests: 401, 200 con roles ADMIN/FACTURACION, suggest JSON
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre. Requiere `@MockBean ExcelExportService excelService` y `@MockBean ProveedorService proveedorService` — ambos inyectados en el constructor del controller. Stubear `proveedorService.listarActivos()` → `List.of()` en `@BeforeEach`.
 - `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
-- `ReporteControllerTest` — 2 tests: 401, 200 con rango de fechas
+- `ReporteControllerTest` — 4 tests: 401, 200 con rango de fechas, excel retorna descarga, pdf retorna descarga con `Content-Disposition` que contiene "reporte-produccion". Requiere `@MockBean PdfExportService pdfService` y stub `pdfService.generarPdfReporteProduccion(any(),any(),any(),any(),any())` en `@BeforeEach`.
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
@@ -1063,7 +1124,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V31 sin errores ni migraciones pendientes; también verifica que haya ≥28 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V32 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
