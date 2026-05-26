@@ -218,7 +218,8 @@
                             <option value="">— Seleccionar receta —</option>
                             <option th:each="rec : ${recetasActivas}"
                                     th:value="${rec.id}"
-                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"></option>
+                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
+                                    th:selected="${loteForm.recetaId != null and rec.id == loteForm.recetaId}"></option>
                         </select>
                         <button type="button" class="btn btn-sm btn-alera" onclick="cargarRecetaEnLote()">
                             <i class="bi bi-arrow-down-circle me-1"></i>Cargar
@@ -370,7 +371,7 @@
                                     </div>
 
                                     <div class="d-flex justify-content-end mt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        <button type="button" id="btnAplicarReceta" class="btn btn-sm btn-outline-secondary"
                                                 onclick="sincronizarIngredientesDesdeItems()">
                                             <i class="bi bi-basket me-1"></i>Aplicar a Receta e Insumos
                                         </button>

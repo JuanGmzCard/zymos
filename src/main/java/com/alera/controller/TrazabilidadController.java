@@ -268,9 +268,9 @@ public class TrazabilidadController {
     public ResponseEntity<byte[]> verPdf(@PathVariable Long id, HttpServletRequest request) {
         LoteCerveza lote = service.buscarPorId(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
-        String brandName = tenant != null ? tenant.getName() : "Alera";
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
         List<LecturaFermentacion> lecturas = lecturaService.listarPorLote(id);
-        byte[] pdf = pdfExportService.generarPdfLote(lote, brandName, lecturas);
+        byte[] pdf = pdfExportService.generarPdfLote(lote, branding, lecturas);
         String filename = "lote-" + lote.getCodigoLote().toLowerCase() + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)

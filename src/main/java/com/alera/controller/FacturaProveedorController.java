@@ -101,8 +101,8 @@ public class FacturaProveedorController {
             HttpServletRequest request) {
         var facturas = service.listarParaExport(estado, desde, hasta);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
-        String brandName = tenant != null ? tenant.getName() : "Alera";
-        byte[] bytes = excelService.generarExcelFacturas(facturas, estado, desde, hasta, brandName);
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
+        byte[] bytes = excelService.generarExcelFacturas(facturas, estado, desde, hasta, branding);
         String filename = "facturas-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".xlsx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

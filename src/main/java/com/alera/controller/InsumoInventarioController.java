@@ -7,6 +7,7 @@ import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.InsumoInventarioService;
+import com.alera.service.ProveedorService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -28,13 +29,16 @@ public class InsumoInventarioController {
     private final InsumoInventarioService service;
     private final FacturaItemRepository facturaItemRepo;
     private final ExcelExportService excelService;
+    private final ProveedorService proveedorService;
 
     public InsumoInventarioController(InsumoInventarioService service,
                                        FacturaItemRepository facturaItemRepo,
-                                       ExcelExportService excelService) {
-        this.service         = service;
-        this.facturaItemRepo = facturaItemRepo;
-        this.excelService    = excelService;
+                                       ExcelExportService excelService,
+                                       ProveedorService proveedorService) {
+        this.service          = service;
+        this.facturaItemRepo  = facturaItemRepo;
+        this.excelService     = excelService;
+        this.proveedorService = proveedorService;
     }
 
     @GetMapping
@@ -85,6 +89,7 @@ public class InsumoInventarioController {
     public String nuevo(Model model) {
         model.addAttribute("insumo", new InsumoInventario());
         model.addAttribute("tiposInsumo", TipoInsumo.values());
+        model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }
 
@@ -105,6 +110,7 @@ public class InsumoInventarioController {
     public String editar(@PathVariable Long id, Model model) {
         model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
         model.addAttribute("tiposInsumo", TipoInsumo.values());
+        model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }
 
@@ -202,8 +208,8 @@ public class InsumoInventarioController {
                     : service.listarPaginado(nombre, tipo, 0).getContent();
         }
         com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
-        String brandName = (tenant != null) ? tenant.getName() : "Alera";
-        byte[] bytes = excelService.generarExcelInventario(insumos, brandName);
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
+        byte[] bytes = excelService.generarExcelInventario(insumos, branding);
         String filename = "inventario-" + java.time.LocalDate.now() + ".xlsx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

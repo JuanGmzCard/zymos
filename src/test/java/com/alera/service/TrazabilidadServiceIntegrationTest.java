@@ -1,11 +1,17 @@
 package com.alera.service;
 
 import com.alera.AbstractIntegrationTest;
+import com.alera.config.TenantContext;
 import com.alera.dto.InsumoDto;
 import com.alera.dto.LoteFormDto;
 import com.alera.repository.LoteCervezaRepository;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.transaction.BeforeTransaction;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,11 +23,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Transactional
 class TrazabilidadServiceIntegrationTest extends AbstractIntegrationTest {
 
-    @Autowired
-    private TrazabilidadService service;
+    @Autowired private TrazabilidadService service;
+    @Autowired private LoteCervezaRepository loteRepo;
+    @Autowired private JdbcTemplate jdbcTemplate;
 
-    @Autowired
-    private LoteCervezaRepository loteRepo;
+    @BeforeEach void setUp()    { TenantContext.setCurrentTenant("default"); }
+    @AfterEach  void tearDown() { TenantContext.clear(); }
+
+    @BeforeTransaction
+    void limpiarAntesDeTransaccion() {
+        // Elimina lotes creados por estos tests ANTES de que la transacción del test comience.
+        // Al correr fuera de la transacción, el DELETE se auto-commitea y libera
+        // el unique constraint, evitando colisiones cuando Testcontainers reutiliza el container.
+        jdbcTemplate.update(
+                "DELETE FROM lotes_cerveza " +
+                "WHERE codigo_lote LIKE 'IND-%' OR codigo_lote LIKE 'STO-%' " +
+                "   OR codigo_lote LIKE 'POR-%' OR codigo_lote LIKE 'LAG-%' " +
+                "   OR codigo_lote LIKE 'WHE-%'"
+        );
+    }
 
     @Test
     void guardarLoteGeneraCodigoCorrecto() {

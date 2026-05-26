@@ -130,6 +130,11 @@
                     <div class="form-control-plaintext fw-bold text-verde" id="abvEstimado">—</div>
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label">pH del Agua</label>
+                    <input type="number" step="0.01" min="0" max="14" th:field="*{phAgua}" class="form-control"
+                           placeholder="5.2" inputmode="decimal">
+                </div>
+                <div class="col-md-3">
                     <label class="form-label">Agua de Macerado</label>
                     <div class="input-group">
                         <input type="number" step="0.01" th:field="*{aguaMacerado}" class="form-control" placeholder="0.0">

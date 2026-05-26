@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.exception.LoteNoEncontradoException;
+import com.alera.config.TenantContext;
 import com.alera.config.UnidadUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -14,6 +15,7 @@ import com.alera.repository.*;
 import org.slf4j.Logger;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.slf4j.LoggerFactory;
+import jakarta.persistence.EntityManager;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -38,6 +40,7 @@ public class TrazabilidadService {
     private final HistorialLoteRepository historialRepo;
     private final InsumoInventarioService insumoService;
     private final LoteMapper loteMapper;
+    private final EntityManager em;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -45,7 +48,8 @@ public class TrazabilidadService {
                                 FacturaItemRepository facturaItemRepo,
                                 HistorialLoteRepository historialRepo,
                                 InsumoInventarioService insumoService,
-                                LoteMapper loteMapper) {
+                                LoteMapper loteMapper,
+                                EntityManager em) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -53,6 +57,7 @@ public class TrazabilidadService {
         this.historialRepo = historialRepo;
         this.insumoService = insumoService;
         this.loteMapper = loteMapper;
+        this.em = em;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -254,6 +259,9 @@ public class TrazabilidadService {
         lote.setNotasCata(dto.getNotasCata());
 
         lote.getItemsFactura().clear();
+        if (lote.getId() != null) {
+            em.flush(); // fuerza los DELETE de orphans antes de los INSERT nuevos (solo en actualizar)
+        }
         List<Long> itemsIds = dto.getItemsIds();
         List<java.math.BigDecimal> itemsCantidades = dto.getItemsCantidades();
         if (itemsIds != null) {
@@ -290,7 +298,11 @@ public class TrazabilidadService {
         if (estilo == null || estilo.isBlank()) estilo = "LOT";
         String prefix = estilo.trim().toUpperCase().replaceAll("[^A-Z]", "");
         prefix = prefix.length() >= 3 ? prefix.substring(0, 3) : prefix;
-        Integer max = loteRepo.findMaxConsecutivoPorPrefix(prefix);
+        String tenantId = TenantContext.getCurrentTenant();
+        // Native queries no disparan flush automático en Hibernate; forzarlo para ver
+        // inserts previos de la misma transacción (ej: dos lotes del mismo estilo seguidos).
+        em.flush();
+        Integer max = loteRepo.findMaxConsecutivoPorPrefix(prefix, tenantId);
         int siguiente = (max == null ? 0 : max) + 1;
         return String.format("%s-%03d", prefix, siguiente);
     }

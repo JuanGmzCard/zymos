@@ -80,9 +80,9 @@ public class ReporteController {
         var resumen = loteRepo.findResumenPorEstilo(desde, hasta, TenantContext.getCurrentTenant());
 
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
-        String brandName = tenant != null ? tenant.getName() : "Alera";
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
 
-        byte[] excel = excelExportService.generarExcelReporteProduccion(lotes, resumen, desde, hasta, brandName);
+        byte[] excel = excelExportService.generarExcelReporteProduccion(lotes, resumen, desde, hasta, branding);
         String filename = "reporte-produccion-" + desde + "-" + hasta + ".xlsx";
 
         return ResponseEntity.ok()

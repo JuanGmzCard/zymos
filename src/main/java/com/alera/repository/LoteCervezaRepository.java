@@ -50,9 +50,10 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     @Query("SELECT l FROM LoteCerveza l LEFT JOIN FETCH l.ingredientes WHERE l.id = :id")
     Optional<LoteCerveza> findByIdWithIngredientes(@Param("id") Long id);
 
-    @Query("SELECT MAX(CAST(SUBSTRING(l.codigoLote, LENGTH(:prefix) + 2) AS int)) " +
-           "FROM LoteCerveza l WHERE l.codigoLote LIKE CONCAT(:prefix, '-%')")
-    Integer findMaxConsecutivoPorPrefix(@Param("prefix") String prefix);
+    @Query(value = "SELECT MAX(CAST(SUBSTRING(codigo_lote, LENGTH(:prefix) + 2) AS integer)) " +
+                   "FROM lotes_cerveza WHERE codigo_lote LIKE CONCAT(:prefix, '-%') AND tenant_id = :tenantId",
+           nativeQuery = true)
+    Integer findMaxConsecutivoPorPrefix(@Param("prefix") String prefix, @Param("tenantId") String tenantId);
 
     @Query("SELECT COUNT(l) FROM LoteCerveza l WHERE l.carbFechaFinal IS NULL")
     long countEnProceso();

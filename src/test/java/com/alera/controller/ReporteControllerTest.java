@@ -47,7 +47,7 @@ class ReporteControllerTest {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(loteRepo.findByPeriodo(any(), any())).thenReturn(List.of());
         when(loteRepo.findResumenPorEstilo(any(), any(), any())).thenReturn(List.of());
-        when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), anyString()))
+        when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x50, 0x4B});
     }
 

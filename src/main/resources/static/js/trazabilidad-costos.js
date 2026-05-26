@@ -129,6 +129,18 @@ function renderizarAsignados() {
 }
 
 function sincronizarIngredientesDesdeItems() {
+    // Si hay receta pendiente, aplicar sus ingredientes directamente al panel-1
+    if (typeof _recetaPendiente !== 'undefined' && _recetaPendiente) {
+        poblarDesdeReceta('maltas-container',        'maltas',        'lista-maltas',        'Malta',        _recetaPendiente.maltas        || []);
+        poblarDesdeReceta('lupulos-container',       'lupulos',       'lista-lupulos',       'Lúpulo',       _recetaPendiente.lupulos       || []);
+        poblarDesdeReceta('levaduras-container',     'levaduras',     'lista-levaduras',     'Levadura',     _recetaPendiente.levaduras     || []);
+        poblarDesdeReceta('clarificantes-container', 'clarificantes', 'lista-clarificantes', 'Clarificante', _recetaPendiente.clarificantes || []);
+        _recetaPendiente = null;
+        goTab(1);
+        return;
+    }
+
+    // Sin receta pendiente: aplicar desde ítems de costo asignados
     var TIPOS_ING = {
         'MALTA':        ['maltas-container',        'maltas',        'lista-maltas',        'Malta'],
         'LUPULO':       ['lupulos-container',        'lupulos',       'lista-lupulos',       'Lúpulo'],
@@ -184,13 +196,19 @@ function autoAgregarCostosReceta(costosSugeridos, advertencias) {
         : ' No se encontraron ítems en facturas para estos ingredientes.';
 
     warn.innerHTML =
-        '<div class="alert alert-warning d-flex gap-2 align-items-start p-2 mb-0 mt-1" style="font-size:0.82rem;">' +
+        '<div class="alert alert-warning gap-2 p-2 mb-0 mt-1" style="font-size:0.82rem;">' +
+        '<div class="d-flex align-items-start gap-2">' +
         '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
-        '<div><strong>Stock insuficiente</strong> para: ' +
+        '<div class="flex-grow-1"><strong>Stock insuficiente</strong> para: ' +
         advertencias.map(function(n) { return '<em>' + esc(n) + '</em>'; }).join(', ') +
-        '. Revisá las filas marcadas en la pestaña <a href="#" onclick="goTab(1);return false;">Receta e Insumos</a>.' +
-        msgCostos + '</div>' +
-        '<button type="button" class="btn-close btn-sm ms-auto" onclick="this.closest(\'.alert\').remove()"></button>' +
+        '.' + msgCostos + '</div>' +
+        '<button type="button" class="btn-close btn-sm" onclick="this.closest(\'.alert\').remove()"></button>' +
+        '</div>' +
+        '<div class="mt-2 ps-4">' +
+        '<button type="button" class="btn btn-sm btn-warning py-0 px-2" ' +
+        'onclick="if(typeof _actualizarEstadoAplicar===\'function\') _actualizarEstadoAplicar(false); this.closest(\'.alert\').remove();">' +
+        '<i class="bi bi-arrow-right-circle me-1"></i>Ignorar advertencias y continuar</button>' +
+        '</div>' +
         '</div>';
 }
 

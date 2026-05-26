@@ -90,9 +90,9 @@ public class ComparativaController {
         Long mejorCpl = cplMap.get("cpl");
 
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
-        String brandName = tenant != null ? tenant.getName() : "Alera";
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
 
-        byte[] pdf = pdfService.generarPdfComparativa(lotes, mejoresMap, mejorCpl, brandName);
+        byte[] pdf = pdfService.generarPdfComparativa(lotes, mejoresMap, mejorCpl, branding);
         String filename = "comparativa-" + lotes.stream()
                 .map(LoteCerveza::getCodigoLote).collect(Collectors.joining("-")) + ".pdf";
 

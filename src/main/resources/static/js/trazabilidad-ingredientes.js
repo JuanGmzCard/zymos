@@ -1,6 +1,7 @@
 // ── Wizard tabs ──────────────────────────────────────────────────
 const TOTAL_TABS = 6;
 let currentTab = 0;
+var _recetaPendiente = null; // receta cargada pero aún no aplicada a panel-1
 
 function goTab(idx) {
     document.getElementById('panel-' + currentTab).classList.add('d-none');
@@ -11,6 +12,12 @@ function goTab(idx) {
     currentTab = idx;
     document.getElementById('panel-' + currentTab).classList.remove('d-none');
     document.querySelectorAll('.wz-tab')[currentTab].classList.add('active');
+
+    // Al salir del tab 0, re-habilitar btnNext (el bloqueo por stock es solo en tab 0)
+    if (idx !== 0) {
+        var _bn = document.getElementById('btnNext');
+        if (_bn) { _bn.disabled = false; _bn.title = ''; }
+    }
 
     for (let i = 0; i < TOTAL_TABS; i++) {
         const dot = document.getElementById('dot-' + i);
@@ -149,19 +156,15 @@ function cargarRecetaEnLote() {
     fetch('/recetas/api/' + id)
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            // 1. Ingredientes
-            poblarDesdeReceta('maltas-container',        'maltas',        'lista-maltas',        'Malta',        data.maltas        || []);
-            poblarDesdeReceta('lupulos-container',       'lupulos',       'lista-lupulos',       'Lúpulo',       data.lupulos       || []);
-            poblarDesdeReceta('levaduras-container',     'levaduras',     'lista-levaduras',     'Levadura',     data.levaduras     || []);
-            poblarDesdeReceta('clarificantes-container', 'clarificantes', 'lista-clarificantes', 'Clarificante', data.clarificantes || []);
+            _recetaPendiente = data; // guardar para poblar panel-1 al hacer clic en Aplicar
 
-            // 2. Estilo (solo si está vacío)
+            // 1. Estilo (solo si está vacío)
             if (data.estilo) {
                 var estiloEl = document.querySelector('[name="estilo"]');
                 if (estiloEl && !estiloEl.value) estiloEl.value = data.estilo;
             }
 
-            // 3. Agua de macerado
+            // 2. Agua de macerado
             if (data.aguaMacerado != null) {
                 var rawU = (data.unidadAguaMacerado || 'L');
                 var unit = rawU === 'mL' ? 'mL' : rawU === 'gal' ? 'gal' : 'L';
@@ -172,7 +175,7 @@ function cargarRecetaEnLote() {
                 showEquiv('agua', liters);
             }
 
-            // 4. Volumen base → litros finales
+            // 3. Volumen base → litros finales
             if (data.volumenBase != null) {
                 document.getElementById('litros-unit').value = 'L';
                 document.getElementById('litros-display').value = data.volumenBase;
@@ -180,7 +183,7 @@ function cargarRecetaEnLote() {
                 showEquiv('litros', parseFloat(data.volumenBase));
             }
 
-            // 5. Densidades
+            // 4. Densidades
             if (data.ogObjetivo != null) {
                 var ogEl = document.querySelector('[name="densidadInicial"]');
                 if (ogEl) ogEl.value = data.ogObjetivo;
@@ -188,6 +191,12 @@ function cargarRecetaEnLote() {
             if (data.fgObjetivo != null) {
                 var fgEl = document.querySelector('[name="densidadFinal"]');
                 if (fgEl) fgEl.value = data.fgObjetivo;
+            }
+
+            // 5. pH del Agua
+            if (data.phAgua != null) {
+                var phEl = document.querySelector('[name="phAgua"]');
+                if (phEl) phEl.value = data.phAgua;
             }
 
             // 6. Verificar stock e integrar con costos
@@ -229,18 +238,36 @@ function verificarStockReceta(data) {
 
             var insuficiente = !stockItem || (baseReceta === baseStock && cantStockBase < cantRecetaBase);
 
-            if (insuficiente && rows[idx]) {
-                marcarIngredienteBajoStock(rows[idx], item, stockItem, cfg.tipo);
+            // Siempre buscar ítem de factura para todos los ingredientes
+            var costoItem = encontrarItemCostoPorNombre(item.nombre);
+            if (costoItem) costosSugeridos.push(costoItem);
+
+            if (insuficiente) {
                 advertencias.push(item.nombre);
-                var costoItem = encontrarItemCostoPorNombre(item.nombre);
-                if (costoItem) costosSugeridos.push(costoItem);
+                if (rows[idx]) marcarIngredienteBajoStock(rows[idx], item, stockItem, cfg.tipo);
             }
         });
     });
 
+    // Bloquear/habilitar "Aplicar a Receta e Insumos" y "Siguiente" según stock
+    _actualizarEstadoAplicar(advertencias.length > 0);
+
     // Delega la integración con costos al archivo trazabilidad-costos.js
     if (typeof autoAgregarCostosReceta === 'function') {
         autoAgregarCostosReceta(costosSugeridos, advertencias);
+    }
+}
+
+function _actualizarEstadoAplicar(bloqueado) {
+    var btnAplicar = document.getElementById('btnAplicarReceta');
+    var btnNext = document.getElementById('btnNext');
+    if (btnAplicar) {
+        btnAplicar.disabled = bloqueado;
+        btnAplicar.title = bloqueado ? 'Corregí los avisos de stock antes de aplicar' : '';
+    }
+    if (btnNext && currentTab === 0) {
+        btnNext.disabled = bloqueado;
+        btnNext.title = bloqueado ? 'Corregí los avisos de stock antes de continuar' : '';
     }
 }
 

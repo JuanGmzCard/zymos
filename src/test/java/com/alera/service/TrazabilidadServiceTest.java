@@ -10,6 +10,7 @@ import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.HistorialLoteRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.RecetaRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,7 @@ class TrazabilidadServiceTest {
     @Mock private HistorialLoteRepository historialRepo;
     @Mock private InsumoInventarioService insumoService;
     @Mock private LoteMapper loteMapper;
+    @Mock private EntityManager em;
 
     @InjectMocks
     private TrazabilidadService service;
@@ -59,7 +61,7 @@ class TrazabilidadServiceTest {
     @Test
     @DisplayName("guardar genera código IPA-001 para primer lote IPA")
     void guardar_generaCodigoCorrectoParaPrimerLote() {
-        when(loteRepo.findMaxConsecutivoPorPrefix("IPA")).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(eq("IPA"), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
@@ -71,7 +73,7 @@ class TrazabilidadServiceTest {
     @Test
     @DisplayName("guardar genera código IPA-003 cuando ya existen IPA-001 e IPA-002")
     void guardar_incrementaConsecutivo() {
-        when(loteRepo.findMaxConsecutivoPorPrefix("IPA")).thenReturn(2);
+        when(loteRepo.findMaxConsecutivoPorPrefix(eq("IPA"), any())).thenReturn(2);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
@@ -85,7 +87,7 @@ class TrazabilidadServiceTest {
     @Test
     @DisplayName("guardar retorna resultado sin advertencias cuando hay stock suficiente")
     void guardar_sinAdvertenciasConStockSuficiente() {
-        when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
@@ -98,7 +100,7 @@ class TrazabilidadServiceTest {
     @Test
     @DisplayName("guardar retorna advertencias cuando el stock es insuficiente")
     void guardar_conAdvertenciasDeStockInsuficiente() {
-        when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         // Simula que "Swaen Ale" tiene stock insuficiente
         when(insumoService.descontarIngrediente(eq("Swaen Ale"), any(), any())).thenReturn("Swaen Ale");
@@ -118,7 +120,7 @@ class TrazabilidadServiceTest {
         loteFormBasico.getMaltas().get(0).setCantidad("2");
         loteFormBasico.getMaltas().get(0).setUnidad("kg");
 
-        when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
@@ -134,7 +136,7 @@ class TrazabilidadServiceTest {
         InsumoDto levadura = new InsumoDto("Levadura Líquida", "1", "gal");
         loteFormBasico.setLevaduras(List.of(levadura));
 
-        when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
 
@@ -159,7 +161,7 @@ class TrazabilidadServiceTest {
         dto.setLevaduras(List.of());
         dto.setClarificantes(List.of());
 
-        when(loteRepo.findMaxConsecutivoPorPrefix(any())).thenReturn(null);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
         when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
         LoteGuardadoResult res = service.guardar(dto);

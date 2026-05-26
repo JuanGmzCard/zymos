@@ -1,5 +1,6 @@
 package com.alera.service;
 
+import com.alera.config.ExportBranding;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.*;
 class PdfExportServiceTest {
 
     private final PdfExportService service = new PdfExportService();
+    private static final ExportBranding BRANDING = ExportBranding.defaults("Alera");
 
     // ── Helpers ───────────────────────────────────────────────────────
 
@@ -66,7 +68,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lote mínimo y sin lecturas")
     void generarPdfLote_loteMinimo_sinLecturas_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteMinimo(), "Alera", List.of());
+        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, List.of());
 
         assertEsPdf(resultado);
     }
@@ -74,7 +76,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lote completo (densidades, fases, observaciones)")
     void generarPdfLote_loteCompleto_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteCompleto(), "Mosto Cervecería", List.of());
+        byte[] resultado = service.generarPdfLote(loteCompleto(), ExportBranding.defaults("Mosto Cervecería"), List.of());
 
         assertEsPdf(resultado);
     }
@@ -90,7 +92,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 10), 1012, new BigDecimal("18.9"))
         );
 
-        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas);
 
         assertEsPdf(resultado);
     }
@@ -105,7 +107,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 10), 1012, null)
         );
 
-        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas);
 
         assertEsPdf(resultado);
     }
@@ -119,7 +121,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 5), null, new BigDecimal("19.5"))
         );
 
-        byte[] resultado = service.generarPdfLote(lote, "Alera", lecturas);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas);
 
         assertEsPdf(resultado);
     }
@@ -127,7 +129,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lecturas null (trata igual que lista vacía)")
     void generarPdfLote_lecturasNull_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteMinimo(), "Alera", null);
+        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, null);
 
         assertEsPdf(resultado);
     }
@@ -135,7 +137,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF generado tiene un tamaño razonable (mayor a 1KB)")
     void generarPdfLote_tamanioRazonable() {
-        byte[] resultado = service.generarPdfLote(loteCompleto(), "Alera", List.of());
+        byte[] resultado = service.generarPdfLote(loteCompleto(), BRANDING, List.of());
 
         assertThat(resultado.length).isGreaterThan(1024);
     }
@@ -148,8 +150,8 @@ class PdfExportServiceTest {
         lote2.setCodigoLote("STOUT-001");
         lote2.setEstilo("Stout");
 
-        byte[] pdf1 = service.generarPdfLote(lote1, "Alera", List.of());
-        byte[] pdf2 = service.generarPdfLote(lote2, "Alera", List.of());
+        byte[] pdf1 = service.generarPdfLote(lote1, BRANDING, List.of());
+        byte[] pdf2 = service.generarPdfLote(lote2, BRANDING, List.of());
 
         assertThat(pdf1).isNotEqualTo(pdf2);
     }

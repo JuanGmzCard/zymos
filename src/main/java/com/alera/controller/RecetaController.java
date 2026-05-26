@@ -140,8 +140,8 @@ public class RecetaController {
     public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
         Receta receta = service.buscarPorId(id);
         com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
-        String brandName = (tenant != null) ? tenant.getName() : "Alera";
-        byte[] bytes = pdfService.generarPdfReceta(receta, brandName);
+        com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
+        byte[] bytes = pdfService.generarPdfReceta(receta, branding);
         String filename = "receta-" + receta.getNombre().replaceAll("[^a-zA-Z0-9]", "-") + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
@@ -194,6 +194,7 @@ public class RecetaController {
         if (r.getUnidadAguaMacerado() != null && !r.getUnidadAguaMacerado().isBlank())
             resp.put("unidadAguaMacerado", r.getUnidadAguaMacerado());
         if (r.getVolumenBase() != null) resp.put("volumenBase", r.getVolumenBase());
+        if (r.getPhAgua() != null)      resp.put("phAgua", r.getPhAgua());
         return resp;
     }
 

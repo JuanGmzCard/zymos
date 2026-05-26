@@ -7,6 +7,7 @@ import com.alera.service.ExcelExportService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
+import com.alera.service.ProveedorService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -44,6 +45,7 @@ class InsumoInventarioControllerTest {
     @MockBean InsumoInventarioService    insumoService;
     @MockBean FacturaItemRepository      facturaItemRepo;
     @MockBean ExcelExportService         excelService;
+    @MockBean ProveedorService           proveedorService;
 
     @BeforeEach
     void setUp() {
@@ -52,6 +54,7 @@ class InsumoInventarioControllerTest {
         when(insumoService.listarBajoStock()).thenReturn(List.of());
         when(insumoService.listarProximosAVencer(anyInt())).thenReturn(List.of());
         when(facturaItemRepo.findNombresDistintos()).thenReturn(List.of());
+        when(proveedorService.listarActivos()).thenReturn(List.of());
     }
 
     @Test

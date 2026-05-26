@@ -110,6 +110,7 @@ public class RecetaService {
         dto.setOgObjetivo(r.getOgObjetivo());
         dto.setFgObjetivo(r.getFgObjetivo());
         dto.setVolumenBase(r.getVolumenBase());
+        dto.setPhAgua(r.getPhAgua());
         dto.setNotas(r.getNotas());
 
         r.getMaltas().forEach(i      -> dto.getMaltas().add(parseInsumoDto(i)));
@@ -171,6 +172,7 @@ public class RecetaService {
         receta.setOgObjetivo(dto.getOgObjetivo());
         receta.setFgObjetivo(dto.getFgObjetivo());
         receta.setVolumenBase(dto.getVolumenBase());
+        receta.setPhAgua(dto.getPhAgua());
         receta.setNotas(dto.getNotas());
 
         addIngredientes(dto.getMaltas(),       TipoIngrediente.MALTA,        receta);

@@ -115,6 +115,14 @@
                             <div class="detail-value"
                                  th:text="${receta.aguaSparge} + ' ' + (${receta.unidadAguaSparge} ?: 'L')">—</div>
                         </div>
+                        <div class="col-6" th:if="${receta.phAgua != null}">
+                            <div class="detail-label">pH del Agua</div>
+                            <div class="detail-value" th:text="${receta.phAgua}">—</div>
+                        </div>
+                        <div class="col-6" th:if="${receta.volumenBase != null}">
+                            <div class="detail-label">Volumen Base</div>
+                            <div class="detail-value" th:text="${receta.volumenBase} + ' L'">—</div>
+                        </div>
                     </div>
                     <div class="mt-3" th:if="${receta.descripcion != null and !receta.descripcion.isBlank()}">
                         <div class="detail-label">Descripción</div>

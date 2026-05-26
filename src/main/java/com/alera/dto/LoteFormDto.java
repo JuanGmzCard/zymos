@@ -92,6 +92,7 @@ public class LoteFormDto {
 
     public static LoteFormDto empty() {
         LoteFormDto dto = new LoteFormDto();
+        dto.fechaElaboracion = LocalDate.now();
         dto.maltas.add(new InsumoDto());
         dto.lupulos.add(new InsumoDto());
         dto.levaduras.add(new InsumoDto());

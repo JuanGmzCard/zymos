@@ -38,6 +38,7 @@ public class Receta extends AuditableEntity {
     private Integer ogObjetivo;
     private Integer fgObjetivo;
     private BigDecimal volumenBase;
+    private BigDecimal phAgua;
 
     @Column(columnDefinition = "TEXT")
     private String notas;
@@ -100,6 +101,8 @@ public class Receta extends AuditableEntity {
     public void setFgObjetivo(Integer fgObjetivo) { this.fgObjetivo = fgObjetivo; }
     public BigDecimal getVolumenBase() { return volumenBase; }
     public void setVolumenBase(BigDecimal volumenBase) { this.volumenBase = volumenBase; }
+    public BigDecimal getPhAgua() { return phAgua; }
+    public void setPhAgua(BigDecimal phAgua) { this.phAgua = phAgua; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
     public Integer getVersion() { return version; }
