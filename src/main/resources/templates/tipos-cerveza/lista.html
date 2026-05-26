@@ -35,10 +35,10 @@
             <table class="table table-hover mb-0">
                 <thead>
                 <tr>
-                    <th style="background:#364318;color:#F5EDD0;padding:0.75rem 1rem;">Nombre</th>
-                    <th style="background:#364318;color:#F5EDD0;">Descripción</th>
-                    <th style="background:#364318;color:#F5EDD0;">Estado</th>
-                    <th style="background:#364318;color:#F5EDD0;">Acciones</th>
+                    <th style="background:var(--verde-alera);color:var(--crema);padding:0.75rem 1rem;">Nombre</th>
+                    <th style="background:var(--verde-alera);color:var(--crema);">Descripción</th>
+                    <th style="background:var(--verde-alera);color:var(--crema);">Estado</th>
+                    <th style="background:var(--verde-alera);color:var(--crema);">Acciones</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -73,8 +73,8 @@
 <div class="modal fade" id="modalNuevo" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background:#364318;">
-                <h5 class="modal-title" style="color:#C9A028;font-family:'Cinzel',serif;">Nuevo Tipo de Cerveza</h5>
+            <div class="modal-header" style="background:var(--verde-alera);">
+                <h5 class="modal-title" style="color:var(--dorado);font-family:'Cinzel',serif;">Nuevo Tipo de Cerveza</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form th:action="@{/tipos-cerveza/guardar}" th:object="${tipoCerveza}" method="post">

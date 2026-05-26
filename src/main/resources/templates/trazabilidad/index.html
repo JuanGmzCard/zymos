@@ -25,7 +25,7 @@
         .filter-bar .form-control,
         .filter-bar .form-select { font-size: 0.82rem; border-radius: 6px; }
         .filter-bar .form-control:focus,
-        .filter-bar .form-select:focus { border-color: #C9A028; box-shadow: 0 0 0 0.15rem rgba(201,160,40,0.2); }
+        .filter-bar .form-select:focus { border-color: var(--dorado); box-shadow: 0 0 0 0.15rem rgba(201,160,40,0.2); }
 
         /* ══ TABS ══════════════════════════════════════════ */
         .nav-tabs-zymos {
@@ -48,8 +48,8 @@
             white-space: nowrap;
             transition: all 0.18s;
         }
-        .nav-tabs-zymos .nav-link:hover { background: #dee2e6; color: #364318; }
-        .nav-tabs-zymos .nav-link.active { color: #F5EDD0; }
+        .nav-tabs-zymos .nav-link:hover { background: #dee2e6; color: var(--verde-alera); }
+        .nav-tabs-zymos .nav-link.active { color: var(--crema); }
         .nav-tabs-zymos .nav-link.tab-general.active  { background: #1a3a5c; }
         .nav-tabs-zymos .nav-link.tab-ferm.active     { background: #1a5e20; }
         .nav-tabs-zymos .nav-link.tab-acond.active    { background: #0c5460; }
@@ -70,7 +70,7 @@
         .traza-table thead th {
             padding: 8px 10px; font-size: 0.71rem; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.4px;
-            white-space: nowrap; color: #F5EDD0; border: none;
+            white-space: nowrap; color: var(--crema); border: none;
         }
         .traza-table tbody td { padding: 7px 10px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
         .traza-table tbody tr:hover td { background: rgba(201,160,40,0.06); }
@@ -87,7 +87,7 @@
         thead .col-lote { z-index: 3; }
         tr:hover .col-lote { background: #fffbf0; }
 
-        .lote-code { font-family: 'Cinzel', serif; font-weight: 700; color: #364318; font-size: 0.85rem; }
+        .lote-code { font-family: 'Cinzel', serif; font-weight: 700; color: var(--verde-alera); font-size: 0.85rem; }
         .lote-actions { display: flex; gap: 3px; margin-top: 3px; }
 
         .ing-chip { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; margin: 1px; white-space: nowrap; }
@@ -106,28 +106,28 @@
 
         .f-date { color:#495057; white-space:nowrap; }
         .f-none { color:#ccc; font-style:italic; }
-        .f-temp { font-weight:600; color:#364318; }
+        .f-temp { font-weight:600; color:var(--verde-alera); }
 
         .fase-progress { display:flex; gap:3px; align-items:center; }
         .fase-dot { width:9px; height:9px; border-radius:50%; background:#dee2e6; flex-shrink:0; }
         .fase-dot.done   { background:#27ae60; }
-        .fase-dot.active { background:#C9A028; box-shadow:0 0 0 2px rgba(201,160,40,0.35); }
+        .fase-dot.active { background:var(--dorado); box-shadow:0 0 0 2px rgba(201,160,40,0.35); }
 
         .empty-state { text-align:center; padding:3rem; color:#6c757d; }
-        .empty-state i { font-size:3rem; opacity:.25; color:#364318; display:block; margin-bottom:.8rem; }
+        .empty-state i { font-size:3rem; opacity:.25; color:var(--verde-alera); display:block; margin-bottom:.8rem; }
 
         /* ══ PAGINACIÓN ════════════════════════════════════ */
         .pagination .page-link {
-            color: #364318;
+            color: var(--verde-alera);
             border-color: #dee2e6;
             font-size: 0.82rem;
         }
         .pagination .page-item.active .page-link {
-            background-color: #364318;
-            border-color: #364318;
-            color: #F5EDD0;
+            background-color: var(--verde-alera);
+            border-color: var(--verde-alera);
+            color: var(--crema);
         }
-        .pagination .page-link:hover { background: rgba(201,160,40,0.12); color: #364318; }
+        .pagination .page-link:hover { background: rgba(201,160,40,0.12); color: var(--verde-alera); }
     </style>
 </head>
 <body>
@@ -195,7 +195,7 @@
             </a>
         </div>
         <div class="ms-auto align-self-center">
-            <span class="badge" style="background:#364318;font-size:0.75rem;">
+            <span class="badge" style="background:var(--verde-alera);font-size:0.75rem;">
                 <span th:text="${totalLotes}">0</span> lotes
                 <span th:if="${estiloFiltro != null and !estiloFiltro.isBlank()} or ${faseFiltro != null and !faseFiltro.isBlank()}"
                       class="ms-1 opacity-75">(filtrados)</span>
@@ -489,7 +489,7 @@
                             <td class="f-date" th:classappend="${lote.densidadFinalFecha == null} ? 'f-none' : ''" th:text="${lote.densidadFinalFecha != null} ? ${#temporals.format(lote.densidadFinalFecha,'dd/MM/yyyy')} : '—'">-</td>
                             <td>
                                 <span th:if="${lote.densidadInicial != null and lote.densidadFinal != null}"
-                                      style="font-family:'Cinzel',serif;font-size:0.82rem;color:#364318;font-weight:700;"
+                                      style="font-family:'Cinzel',serif;font-size:0.82rem;color:var(--verde-alera);font-weight:700;"
                                       th:text="${#numbers.formatDecimal((lote.densidadInicial - lote.densidadFinal) * 0.13125, 1, 2)} + '%'">-</span>
                                 <span th:unless="${lote.densidadInicial != null and lote.densidadFinal != null}" class="f-none">—</span>
                             </td>
@@ -612,7 +612,7 @@
                 '<i class="bi bi-clipboard-data ss-icon"></i>' +
                 '<span class="ss-title" style="font-family:\'Cinzel\',serif;">' + esc(item.codigoLote) + '</span>' +
                 (item.estilo ? '<span class="ss-sub">' + esc(item.estilo) + '</span>' : '') +
-                '<span class="badge ms-auto" style="font-size:.65rem;background:' + color + ';color:#F5EDD0;">' + esc(item.fase) + '</span>' +
+                '<span class="badge ms-auto" style="font-size:.65rem;background:' + color + ';color:var(--crema);">' + esc(item.fase) + '</span>' +
                 '</a>';
         });
         suggest.innerHTML = html;

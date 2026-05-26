@@ -132,7 +132,7 @@
                             <span th:unless="${rec.activa}" class="badge bg-secondary">Inactiva</span>
                             <span th:with="cnt=${lotesCountMap != null ? lotesCountMap[rec.id] : null}"
                                   th:if="${cnt != null and cnt > 0}"
-                                  class="badge ms-1" style="background:#C9A028;color:#242E0D;"
+                                  class="badge ms-1" style="background:var(--dorado);color:var(--verde-oscuro);"
                                   th:title="${cnt} + ' lote(s) elaborado(s)'"
                                   th:text="${cnt} + ' lote' + (${cnt} != 1 ? 's' : '')">0 lotes</span>
                         </td>

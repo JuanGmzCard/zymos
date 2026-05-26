@@ -34,14 +34,14 @@
             font-family: 'Cinzel', serif;
             font-size: 4.5rem;
             font-weight: 700;
-            color: #C9A028;
+            color: var(--dorado);
             line-height: 1;
             margin-bottom: 0.5rem;
         }
         .error-title {
             font-family: 'Cinzel', serif;
             font-size: 1.4rem;
-            color: #364318;
+            color: var(--verde-alera);
             margin-bottom: 1rem;
         }
         .error-desc {
@@ -64,7 +64,7 @@
 <div class="error-content">
     <div class="error-card">
         <div class="error-icon">
-            <i class="bi bi-exclamation-triangle-fill" style="color:#C9A028;"></i>
+            <i class="bi bi-exclamation-triangle-fill" style="color:var(--dorado);"></i>
         </div>
         <div class="error-code" th:text="${codigo}">500</div>
         <div class="error-title" th:text="${titulo}">Error</div>

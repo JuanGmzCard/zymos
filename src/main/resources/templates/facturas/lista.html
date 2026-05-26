@@ -57,7 +57,7 @@
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-hourglass-split"></i></div>
+                <div class="stat-icon" style="color:var(--dorado);"><i class="bi bi-hourglass-split"></i></div>
                 <div class="stat-info">
                     <div class="stat-number" th:text="${statsCountPend}">0</div>
                     <div class="stat-label">Pendientes de pago</div>
@@ -66,7 +66,7 @@
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-exclamation-circle"></i></div>
+                <div class="stat-icon" style="color:var(--dorado);"><i class="bi bi-exclamation-circle"></i></div>
                 <div class="stat-info">
                     <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(statsPendiente,1,'COMMA',0,'POINT')}">$0</div>
                     <div class="stat-label">Monto pendiente</div>
@@ -148,14 +148,14 @@
                 <table class="table table-hover mb-0">
                     <thead>
                     <tr>
-                        <th style="background:#364318;color:#F5EDD0;padding:0.75rem 1rem;">N° Factura</th>
-                        <th style="background:#364318;color:#F5EDD0;">Proveedor</th>
-                        <th style="background:#364318;color:#F5EDD0;">Fecha</th>
-                        <th style="background:#364318;color:#F5EDD0;">Estado</th>
-                        <th style="background:#364318;color:#F5EDD0;">Items</th>
-                        <th style="background:#364318;color:#F5EDD0;">Subtotal</th>
-                        <th style="background:#364318;color:#F5EDD0;">Total</th>
-                        <th style="background:#364318;color:#F5EDD0;">Acciones</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);padding:0.75rem 1rem;">N° Factura</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Proveedor</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Fecha</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Estado</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Items</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Subtotal</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Total</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);">Acciones</th>
                     </tr>
                     </thead>
                     <tbody>

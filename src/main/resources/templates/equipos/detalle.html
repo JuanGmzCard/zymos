@@ -55,7 +55,7 @@
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card">
-                <div class="stat-icon" style="color:#C9A028;"><i class="bi bi-cash-stack"></i></div>
+                <div class="stat-icon" style="color:var(--dorado);"><i class="bi bi-cash-stack"></i></div>
                 <div class="stat-info">
                     <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(costoTotal,1,'COMMA',0,'POINT')}">$0</div>
                     <div class="stat-label">Costo total mantenimiento</div>
@@ -151,11 +151,11 @@
                     <table th:unless="${#lists.isEmpty(mantenimientos)}" class="table table-hover mb-0">
                         <thead>
                         <tr>
-                            <th style="background:#364318;color:#F5EDD0;padding:0.7rem 1rem;">Fecha</th>
-                            <th style="background:#364318;color:#F5EDD0;">Tipo</th>
-                            <th style="background:#364318;color:#F5EDD0;">Descripción</th>
-                            <th style="background:#364318;color:#F5EDD0;">Técnico</th>
-                            <th style="background:#364318;color:#F5EDD0;">Costo</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);padding:0.7rem 1rem;">Fecha</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);">Tipo</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);">Descripción</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);">Técnico</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);">Costo</th>
                         </tr>
                         </thead>
                         <tbody>
