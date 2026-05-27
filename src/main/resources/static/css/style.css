@@ -10,6 +10,7 @@
 :root {
     --verde-oscuro: #242E0D;
     --verde-zymos: #364318;
+    --verde-alera: #364318; /* alias para compatibilidad con templates */
     --dorado: #C9A028;
     --dorado-claro: #E0B840;
     --crema: #F5EDD0;
@@ -144,7 +145,7 @@ h1, h2, h3, h4, h5, .brand-font {
    ============================================================ */
 .stat-card {
     background: white;
-    border-radius: 12px;
+    border-radius: 10px;
     padding: 1.4rem;
     box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     border-left: 4px solid var(--dorado);
@@ -219,6 +220,7 @@ h1, h2, h3, h4, h5, .brand-font {
     font-weight: 600;
     letter-spacing: 0.3px;
     transition: all 0.2s;
+    border-radius: 6px;
 }
 
 .btn-zymos:hover {
@@ -234,6 +236,7 @@ h1, h2, h3, h4, h5, .brand-font {
     color: var(--verde-zymos);
     font-weight: 600;
     transition: all 0.2s;
+    border-radius: 6px;
 }
 
 .btn-zymos-outline:hover {
@@ -606,12 +609,58 @@ h1, h2, h3, h4, h5, .brand-font {
     margin-bottom: 1rem;
 }
 
+/* Badge neutral — reemplaza bg-secondary de Bootstrap con paleta Zymos */
+.badge-neutral {
+    background-color: rgba(54, 67, 24, 0.1) !important;
+    color: var(--verde-zymos) !important;
+    border: 1px solid rgba(54, 67, 24, 0.2);
+}
+
+/* Badge rol — navbar user dropdown */
+.badge-role {
+    background: rgba(201, 160, 40, 0.15);
+    color: var(--dorado);
+    font-size: 0.7rem;
+    border: 1px solid rgba(201, 160, 40, 0.3);
+}
+html.dark-mode .badge-role {
+    background: rgba(201, 160, 40, 0.2) !important;
+    color: var(--dorado-claro) !important;
+    border-color: rgba(201, 160, 40, 0.4) !important;
+}
+
 /* ============================================================
-   MODO OSCURO
+   MODO OSCURO — variables centralizadas
+   Editar este bloque para ajustar toda la paleta dark de una vez
    ============================================================ */
+html.dark-mode {
+    --dm-bg:           #111606;
+    --dm-bg-deep:      #141a07;
+    --dm-card:         #1c2410;
+    --dm-input:        #242e12;
+    --dm-input-focus:  #2c3818;
+    --dm-text:         #e8dfc8;
+    --dm-text-strong:  rgba(232,223,200,0.75);
+    --dm-text-faint:   rgba(232,223,200,0.6);
+    --dm-text-muted:   rgba(232,223,200,0.55);
+    --dm-text-soft:    rgba(232,223,200,0.5);
+    --dm-text-dim:     rgba(232,223,200,0.4);
+    --dm-text-dimmer:  rgba(232,223,200,0.3);
+    --dm-border:       rgba(201,160,40,0.18);
+    --dm-border-heavy: rgba(201,160,40,0.3);
+    --dm-border-med:   rgba(201,160,40,0.2);
+    --dm-border-light: rgba(201,160,40,0.15);
+    --dm-border-faint: rgba(201,160,40,0.12);
+    --dm-border-focus: rgba(201,160,40,0.25);
+    --dm-hover:        rgba(201,160,40,0.1);
+    --dm-verde-bg:     rgba(54,67,24,0.35);
+    --dm-verde-faint:  rgba(54,67,24,0.25);
+    --dm-verde-border: rgba(54,67,24,0.5);
+}
+
 html.dark-mode body {
-    background-color: #111606 !important;
-    color: #e8dfc8;
+    background-color: var(--dm-bg) !important;
+    color: var(--dm-text);
 }
 
 /* Fondos de cards y contenedores */
@@ -623,8 +672,8 @@ html.dark-mode .tab-panel-wrapper,
 html.dark-mode .filter-bar,
 html.dark-mode .card-lote,
 html.dark-mode .login-card {
-    background: #1c2410 !important;
-    border-color: rgba(201,160,40,0.18) !important;
+    background: var(--dm-card) !important;
+    border-color: var(--dm-border) !important;
     box-shadow: 0 2px 12px rgba(0,0,0,0.35) !important;
 }
 
@@ -638,86 +687,86 @@ html.dark-mode p,
 html.dark-mode li,
 html.dark-mode td,
 html.dark-mode th:not([class*="th-"]):not([style*="background"]) {
-    color: #e8dfc8;
+    color: var(--dm-text);
 }
 html.dark-mode .detail-label,
-html.dark-mode .text-muted { color: rgba(232,223,200,0.55) !important; }
+html.dark-mode .text-muted { color: var(--dm-text-muted) !important; }
 html.dark-mode .stat-number { color: var(--dorado-claro) !important; }
 
 /* Inputs y selects */
 html.dark-mode .form-control,
 html.dark-mode .form-select {
-    background-color: #242e12 !important;
-    border-color: rgba(201,160,40,0.3) !important;
-    color: #e8dfc8 !important;
+    background-color: var(--dm-input) !important;
+    border-color: var(--dm-border-heavy) !important;
+    color: var(--dm-text) !important;
 }
-html.dark-mode .form-control::placeholder { color: rgba(232,223,200,0.4); }
+html.dark-mode .form-control::placeholder { color: var(--dm-text-dim); }
 html.dark-mode .form-control:focus,
 html.dark-mode .form-select:focus {
-    background-color: #2c3818 !important;
+    background-color: var(--dm-input-focus) !important;
     border-color: var(--dorado) !important;
-    box-shadow: 0 0 0 0.2rem rgba(201,160,40,0.25) !important;
+    box-shadow: 0 0 0 0.2rem var(--dm-border-focus) !important;
 }
 
 /* Tablas */
 html.dark-mode .table,
 html.dark-mode .table-zymos tbody tr {
-    color: #e8dfc8;
+    color: var(--dm-text);
 }
 html.dark-mode .table tbody tr:hover td,
 html.dark-mode .traza-table tbody tr:hover td {
-    background: rgba(201,160,40,0.1) !important;
+    background: var(--dm-hover) !important;
 }
-html.dark-mode .table tbody tr { border-color: rgba(201,160,40,0.12); }
+html.dark-mode .table tbody tr { border-color: var(--dm-border-faint); }
 html.dark-mode .table-responsive { background: transparent; }
 
 /* Filas de ingredientes */
 html.dark-mode .ingrediente-row {
-    background: #1c2410 !important;
-    border-color: rgba(201,160,40,0.2) !important;
+    background: var(--dm-card) !important;
+    border-color: var(--dm-border-med) !important;
 }
 html.dark-mode .ingrediente-row:hover { border-color: var(--dorado) !important; }
 
 /* Timeline de fases */
-html.dark-mode .phase-step { background: #1c2410 !important; }
-html.dark-mode .phase-timeline { border-color: rgba(201,160,40,0.2) !important; }
-html.dark-mode .phase-step { border-color: rgba(201,160,40,0.12) !important; }
+html.dark-mode .phase-step { background: var(--dm-card) !important; }
+html.dark-mode .phase-timeline { border-color: var(--dm-border-med) !important; }
+html.dark-mode .phase-step { border-color: var(--dm-border-faint) !important; }
 html.dark-mode .phase-step-label { color: var(--dorado-claro) !important; }
-html.dark-mode .phase-step-date { color: rgba(232,223,200,0.6) !important; }
+html.dark-mode .phase-step-date { color: var(--dm-text-faint) !important; }
 
 /* Fases detalle */
-html.dark-mode .fase-col { border-color: rgba(201,160,40,0.15) !important; }
-html.dark-mode .fase-dato-key { color: rgba(232,223,200,0.55) !important; }
-html.dark-mode .fase-dato-val { color: #e8dfc8 !important; }
-html.dark-mode .fases-grid { border-color: rgba(201,160,40,0.15) !important; }
+html.dark-mode .fase-col { border-color: var(--dm-border-light) !important; }
+html.dark-mode .fase-dato-key { color: var(--dm-text-muted) !important; }
+html.dark-mode .fase-dato-val { color: var(--dm-text) !important; }
+html.dark-mode .fases-grid { border-color: var(--dm-border-light) !important; }
 
 /* Densidades */
 html.dark-mode .densidad-box {
-    background: rgba(54,67,24,0.35) !important;
-    border-color: rgba(54,67,24,0.5) !important;
+    background: var(--dm-verde-bg) !important;
+    border-color: var(--dm-verde-border) !important;
 }
 html.dark-mode .densidad-box.densidad-final {
-    background: rgba(201,160,40,0.12) !important;
+    background: var(--dm-hover) !important;
 }
 html.dark-mode .densidad-valor { color: var(--dorado-claro) !important; }
 
 /* Comparativa */
 html.dark-mode .comparativa-box {
-    background: rgba(54,67,24,0.25) !important;
-    border-color: rgba(201,160,40,0.2) !important;
+    background: var(--dm-verde-faint) !important;
+    border-color: var(--dm-border-med) !important;
 }
 html.dark-mode .comparativa-objetivo { color: var(--dorado-claro) !important; }
 
 /* Loader de receta */
 html.dark-mode .receta-loader-box {
-    background: rgba(201,160,40,0.1) !important;
-    border-color: rgba(201,160,40,0.25) !important;
+    background: var(--dm-hover) !important;
+    border-color: var(--dm-border-focus) !important;
 }
 
 /* Paginación */
 html.dark-mode .pagination .page-link {
-    background: #1c2410;
-    border-color: rgba(201,160,40,0.2);
+    background: var(--dm-card);
+    border-color: var(--dm-border-med);
     color: var(--dorado-claro);
 }
 html.dark-mode .pagination .page-item.active .page-link {
@@ -725,8 +774,22 @@ html.dark-mode .pagination .page-item.active .page-link {
     color: var(--verde-oscuro);
 }
 html.dark-mode .pagination .page-item.disabled .page-link {
-    background: #141a07;
-    color: rgba(232,223,200,0.3);
+    background: var(--dm-bg-deep);
+    color: var(--dm-text-dimmer);
+}
+
+/* Hero section en dark mode — gradiente más profundo + textos interiores */
+html.dark-mode .hero-section {
+    background: linear-gradient(135deg, #1e2a0a 0%, #111606 100%) !important;
+}
+html.dark-mode .hero-section p,
+html.dark-mode .hero-section small {
+    color: rgba(245,237,208,0.85) !important;
+    opacity: 1 !important;
+}
+html.dark-mode .hero-section .text-muted,
+html.dark-mode .hero-section code {
+    color: rgba(245,237,208,0.55) !important;
 }
 
 /* Alerts */
@@ -737,11 +800,51 @@ html.dark-mode .alert-info    { background:#0a2030; border-color:#154060; color:
 
 /* Dropdown menus */
 html.dark-mode .dropdown-menu {
-    background: #1c2410 !important;
-    border-color: rgba(201,160,40,0.2) !important;
+    background: var(--dm-card) !important;
+    border-color: var(--dm-border-med) !important;
 }
-html.dark-mode .dropdown-item { color: #e8dfc8 !important; }
-html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !important; }
+html.dark-mode .dropdown-item { color: var(--dm-text) !important; }
+html.dark-mode .dropdown-item:hover { background: var(--dm-hover) !important; }
+
+/* Separadores hr y dividers */
+html.dark-mode hr { border-color: var(--dm-border-med) !important; opacity: 1; }
+html.dark-mode .dropdown-divider { border-color: var(--dm-border-light) !important; }
+
+/* card-header (Bootstrap genérico y card-zymos) */
+html.dark-mode .card-header {
+    background: var(--dm-verde-faint) !important;
+    border-color: var(--dm-border-light) !important;
+    color: var(--dm-text) !important;
+}
+html.dark-mode .card-zymos .card-header {
+    background: linear-gradient(90deg, rgba(36,46,13,0.95), rgba(17,22,6,0.98)) !important;
+    color: var(--crema) !important;
+    border-color: var(--dm-border-med) !important;
+}
+html.dark-mode .card-zymos .card-header h5,
+html.dark-mode .card-zymos .card-header h4 { color: var(--dorado) !important; }
+
+/* Badge neutral en dark mode */
+html.dark-mode .badge-neutral {
+    background-color: rgba(201,160,40,0.22) !important;
+    color: var(--dorado-claro) !important;
+    border-color: var(--dm-border-med) !important;
+}
+
+/* Ingrediente chips en dark mode */
+html.dark-mode .ingrediente-chip { background: var(--dm-verde-bg) !important; border-color: var(--dm-verde-border) !important; color: var(--dorado-claro) !important; }
+html.dark-mode .ingrediente-chip.malta { background: rgba(201,160,40,0.2) !important; border-color: rgba(201,160,40,0.4) !important; color: var(--dorado-claro) !important; }
+html.dark-mode .ingrediente-chip.lupulo { background: rgba(39,174,96,0.2) !important; border-color: rgba(39,174,96,0.4) !important; color: #6ee6a0 !important; }
+html.dark-mode .ingrediente-chip.levadura { background: rgba(52,152,219,0.2) !important; border-color: rgba(52,152,219,0.4) !important; color: #80c8f0 !important; }
+html.dark-mode .ingrediente-chip.clarificante { background: rgba(142,68,173,0.2) !important; border-color: rgba(142,68,173,0.4) !important; color: #c890e8 !important; }
+
+/* Phase badges (kanban, detalle, comparativa) en dark mode */
+html.dark-mode .phase-badge.fermentacion    { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
+html.dark-mode .phase-badge.acondicionamiento { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
+html.dark-mode .phase-badge.maduracion      { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+html.dark-mode .phase-badge.carbonatacion   { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
+html.dark-mode .phase-badge.completado      { background: rgba(142,68,173,0.2)  !important; color: #c890e8 !important; }
+html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-med) !important; }
 
 /* ============================================================
    RECETAS
@@ -958,8 +1061,8 @@ html.dark-mode .dropdown-item:hover { background: rgba(201,160,40,0.12) !importa
     font-size: 0.75rem;
     color: #6c757d;
 }
-html.dark-mode .audit-meta { border-color: rgba(201,160,40,0.15); color: rgba(232,223,200,0.5); }
-html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
+html.dark-mode .audit-meta { border-color: var(--dm-border-light); color: var(--dm-text-soft); }
+html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
 
 /* ============================================================
    COMPARATIVA RECETA VS LOTE
@@ -1003,11 +1106,11 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
     .hero-section {
         background: white !important;
         color: #212529 !important;
-        border-bottom: 2px solid #364318;
+        border-bottom: 2px solid var(--verde-alera);
         padding: 1rem !important;
     }
 
-    .hero-section h1 { color: #364318 !important; font-size: 1.4rem !important; }
+    .hero-section h1 { color: var(--verde-alera) !important; font-size: 1.4rem !important; }
     .hero-section p, .hero-meta { color: #495057 !important; }
 
     .card-zymos {
@@ -1023,6 +1126,10 @@ html.dark-mode .audit-meta strong { color: rgba(232,223,200,0.75); }
 
     .container-fluid { padding: 0.5rem !important; }
     .fases-grid .fase-pendiente { opacity: 1 !important; }
+}
+
+@media (max-width: 576px) {
+    .stat-card .stat-number { font-size: 1.6rem; }
 }
 
 @media (max-width: 768px) {

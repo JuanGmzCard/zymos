@@ -70,11 +70,14 @@
     .search-suggest .ss-footer a { color: var(--dorado); text-decoration: none; }
     .search-suggest .ss-footer a:hover { text-decoration: underline; }
     .search-suggest .ss-empty { padding: 12px; font-size: .85rem; color: #888; text-align: center; }
-    html.dark-mode .search-suggest { background: #1c2410; border-color: rgba(201,160,40,.3); color: #F5EDD0; }
-    html.dark-mode .search-suggest .ss-section { color: #aaa; border-top-color: rgba(255,255,255,.08); }
-    html.dark-mode .search-suggest .ss-footer { border-top-color: rgba(255,255,255,.08); }
-    html.dark-mode .search-suggest .ss-sub { color: #aaa; }
-    html.dark-mode .search-suggest a.ss-item:hover { background: rgba(201,160,40,.15); }
+    html.dark-mode .search-suggest { background: var(--dm-card); border-color: var(--dm-border-med); color: var(--dm-text); }
+    html.dark-mode .search-suggest a.ss-item { color: var(--dm-text) !important; }
+    html.dark-mode .search-suggest a.ss-item:hover,
+    html.dark-mode .search-suggest a.ss-item.ss-active { background: var(--dm-hover) !important; }
+    html.dark-mode .search-suggest .ss-section { color: var(--dm-text-muted); border-top-color: var(--dm-border-faint); }
+    html.dark-mode .search-suggest .ss-footer { border-top-color: var(--dm-border-faint); }
+    html.dark-mode .search-suggest .ss-sub { color: var(--dm-text-muted); }
+    html.dark-mode .search-suggest .ss-empty { color: var(--dm-text-muted); }
 
     /* ── Responsivo mobile (< lg) ────────────────────────────── */
     @media (max-width: 991.98px) {
@@ -377,24 +380,12 @@
                         <li class="px-3 py-2">
                             <div class="fw-600 text-truncate" style="max-width:180px;" sec:authentication="name">Usuario</div>
                             <div class="mt-1">
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('SUPERADMIN')">Super Admin</span>
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Administrador</span>
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('INVENTARIO')">Inventario</span>
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('FACTURACION')">Facturación</span>
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('EQUIPOS')">Equipos</span>
-                                <span class="badge rounded-pill"
-                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
-                                      sec:authorize="hasRole('PRODUCCION')">Producción</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('SUPERADMIN')">Super Admin</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Administrador</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('INVENTARIO')">Inventario</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('FACTURACION')">Facturación</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('EQUIPOS')">Equipos</span>
+                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('PRODUCCION')">Producción</span>
                             </div>
                         </li>
                         <li><hr class="dropdown-divider"></li>

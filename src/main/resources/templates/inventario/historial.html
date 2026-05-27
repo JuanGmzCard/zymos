@@ -89,7 +89,7 @@
                             th:text="${mov.cantidadPosterior != null ? mov.cantidadPosterior : '—'}">—</td>
                         <td>
                             <span th:if="${mov.referencia != null}"
-                                  class="badge bg-secondary me-1" th:text="${mov.referencia}">—</span>
+                                  class="badge badge-neutral me-1" th:text="${mov.referencia}">—</span>
                             <span th:if="${mov.motivo != null}" class="text-muted small" th:text="${mov.motivo}">—</span>
                             <span th:if="${mov.referencia == null and mov.motivo == null}" class="text-muted">—</span>
                         </td>

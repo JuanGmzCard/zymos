@@ -47,6 +47,18 @@
         .kanban-toast.show { opacity: 1; transform: translateY(0); }
         .kanban-toast.success { background: #198754; }
         .kanban-toast.danger  { background: #dc3545; }
+        html.dark-mode .col-inicio    .kanban-col-header { background: rgba(255,255,255,0.06) !important; color: var(--dm-text-muted) !important; }
+        html.dark-mode .col-ferm      .kanban-col-header { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
+        html.dark-mode .col-acond     .kanban-col-header { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
+        html.dark-mode .col-madur     .kanban-col-header { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+        html.dark-mode .col-carbon    .kanban-col-header { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
+        html.dark-mode .col-completado .kanban-col-header { background: rgba(142,68,173,0.2) !important; color: #c890e8 !important; }
+        html.dark-mode .col-inicio    .kanban-dias { background: rgba(255,255,255,0.08) !important; color: var(--dm-text-muted) !important; }
+        html.dark-mode .col-ferm      .kanban-dias { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
+        html.dark-mode .col-acond     .kanban-dias { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
+        html.dark-mode .col-madur     .kanban-dias { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+        html.dark-mode .col-carbon    .kanban-dias { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
+        html.dark-mode .col-completado .kanban-dias { background: rgba(142,68,173,0.2) !important; color: #c890e8 !important; }
     </style>
 </head>
 <body>
@@ -80,7 +92,7 @@
         <div class="kanban-col col-inicio">
             <div class="kanban-col-header">
                 <span><i class="bi bi-circle me-1"></i>Sin Iniciar</span>
-                <span class="badge bg-secondary kanban-count" id="count-sinIniciar" th:text="${#lists.size(sinIniciar)}">0</span>
+                <span class="badge badge-neutral kanban-count" id="count-sinIniciar" th:text="${#lists.size(sinIniciar)}">0</span>
             </div>
             <div class="kanban-col-body" id="col-sinIniciar" data-fase="sinIniciar">
                 <div th:if="${#lists.isEmpty(sinIniciar)}" class="kanban-empty">Sin lotes</div>

@@ -47,12 +47,12 @@
             <div class="form-section-title"><i class="bi bi-building me-2"></i>Datos del Proveedor</div>
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" for="nombre">Nombre *</label>
                     <input type="text" th:field="*{nombre}" class="form-control" required
                            placeholder="Nombre o razón social">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">NIT / RUT</label>
+                    <label class="form-label" for="nit">NIT / RUT</label>
                     <input type="text" th:field="*{nit}" class="form-control" placeholder="900.123.456-7">
                 </div>
                 <div class="col-md-3 d-flex align-items-end pb-1">
@@ -62,15 +62,15 @@
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Teléfono</label>
+                    <label class="form-label" for="telefono">Teléfono</label>
                     <input type="text" th:field="*{telefono}" class="form-control" placeholder="+57 300 000 0000">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Email</label>
+                    <label class="form-label" for="email">Email</label>
                     <input type="email" th:field="*{email}" class="form-control" placeholder="contacto@proveedor.com">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Dirección</label>
+                    <label class="form-label" for="direccion">Dirección</label>
                     <textarea th:field="*{direccion}" class="form-control" rows="2"
                               placeholder="Dirección física del proveedor"></textarea>
                 </div>

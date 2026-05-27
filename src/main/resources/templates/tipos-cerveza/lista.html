@@ -47,7 +47,7 @@
                     <td class="text-muted small" th:text="${tipo.descripcion != null} ? ${tipo.descripcion} : '-'">-</td>
                     <td>
                         <span th:if="${tipo.activo}" class="badge bg-success">Activo</span>
-                        <span th:unless="${tipo.activo}" class="badge bg-secondary">Inactivo</span>
+                        <span th:unless="${tipo.activo}" class="badge badge-neutral">Inactivo</span>
                     </td>
                     <td>
                         <form th:action="@{/tipos-cerveza/{id}/toggle(id=${tipo.id})}" method="post" class="d-inline">

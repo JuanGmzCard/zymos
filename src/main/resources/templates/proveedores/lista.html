@@ -72,7 +72,7 @@
                         </td>
                         <td>
                             <span th:if="${prov.activo}" class="badge bg-success">Activo</span>
-                            <span th:unless="${prov.activo}" class="badge bg-secondary">Inactivo</span>
+                            <span th:unless="${prov.activo}" class="badge badge-neutral">Inactivo</span>
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
@@ -163,7 +163,7 @@
         items.forEach(function(item) {
             var badge = item.activo
                 ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">Activo</span>'
-                : '<span class="badge bg-secondary ms-auto" style="font-size:.65rem;">Inactivo</span>';
+                : '<span class="badge badge-neutral ms-auto" style="font-size:.65rem;">Inactivo</span>';
             html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                 '<i class="bi bi-building ss-icon"></i>' +
                 '<span class="ss-title">' + esc(item.nombre) + '</span>' +

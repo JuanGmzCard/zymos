@@ -56,7 +56,7 @@
                     </td>
                     <td class="px-3 py-2">
                         <span th:if="${u.activo}" class="badge bg-success">Activo</span>
-                        <span th:unless="${u.activo}" class="badge bg-secondary">Inactivo</span>
+                        <span th:unless="${u.activo}" class="badge badge-neutral">Inactivo</span>
                     </td>
                     <td class="px-3 py-2 text-muted small"
                         th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : '-'}">

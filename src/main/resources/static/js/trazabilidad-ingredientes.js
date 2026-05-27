@@ -19,11 +19,18 @@ function goTab(idx) {
         if (_bn) { _bn.disabled = false; _bn.title = ''; }
     }
 
+    const allTabs = document.querySelectorAll('.wz-tab');
     for (let i = 0; i < TOTAL_TABS; i++) {
         const dot = document.getElementById('dot-' + i);
+        const tab = allTabs[i];
         dot.classList.remove('active', 'done');
-        if (i < currentTab) dot.classList.add('done');
-        else if (i === currentTab) dot.classList.add('active');
+        tab.classList.remove('done');
+        if (i < currentTab) {
+            dot.classList.add('done');
+            tab.classList.add('done');
+        } else if (i === currentTab) {
+            dot.classList.add('active');
+        }
     }
 
     document.getElementById('btnPrev').style.display = currentTab > 0 ? 'inline-flex' : 'none';

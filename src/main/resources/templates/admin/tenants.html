@@ -70,7 +70,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <code class="text-muted small" th:text="${t.subdomain}">default</code>
                             <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;">Activo</span>
-                            <span th:unless="${t.active}" class="badge bg-secondary" style="font-size:.65rem;">Inactivo</span>
+                            <span th:unless="${t.active}" class="badge badge-neutral" style="font-size:.65rem;">Inactivo</span>
                             <span th:if="${t.alertasIntentosFallidos > 0}"
                                   class="badge bg-warning text-dark"
                                   style="font-size:.65rem; cursor:default;"

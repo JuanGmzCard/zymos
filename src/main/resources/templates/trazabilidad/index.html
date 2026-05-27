@@ -68,7 +68,7 @@
         /* ══ TABLA ═════════════════════════════════════════ */
         .traza-table { font-size: 0.79rem; font-family: 'Raleway', sans-serif; margin: 0; }
         .traza-table thead th {
-            padding: 8px 10px; font-size: 0.71rem; font-weight: 700;
+            padding: 8px 10px; font-size: 0.75rem; font-weight: 700;
             text-transform: uppercase; letter-spacing: 0.4px;
             white-space: nowrap; color: var(--crema); border: none;
         }
@@ -89,6 +89,7 @@
 
         .lote-code { font-family: 'Cinzel', serif; font-weight: 700; color: var(--verde-alera); font-size: 0.85rem; }
         .lote-actions { display: flex; gap: 3px; margin-top: 3px; }
+        .lote-actions .btn { font-size: 0.7rem; }
 
         .ing-chip { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; margin: 1px; white-space: nowrap; }
         .ing-chip.malta    { background:rgba(201,160,40,0.15); color:#7a5c00; border:1px solid rgba(201,160,40,0.4); }
@@ -128,6 +129,32 @@
             color: var(--crema);
         }
         .pagination .page-link:hover { background: rgba(201,160,40,0.12); color: var(--verde-alera); }
+
+        /* ══ DARK MODE ═════════════════════════════════════ */
+        html.dark-mode .filter-bar { background: var(--dm-card) !important; }
+        html.dark-mode .filter-bar label { color: var(--dm-text-muted) !important; }
+        html.dark-mode .tab-panel-wrapper { background: var(--dm-card) !important; }
+        html.dark-mode .col-lote { background: var(--dm-card) !important; }
+        html.dark-mode tr:hover .col-lote { background: var(--dm-hover) !important; }
+        html.dark-mode .lote-code { color: var(--dorado-claro) !important; }
+        html.dark-mode .f-date { color: var(--dm-text) !important; }
+        html.dark-mode .f-none { color: var(--dm-text-dimmer) !important; }
+        html.dark-mode .f-temp { color: var(--dorado-claro) !important; }
+        html.dark-mode .nav-tabs-zymos .nav-link { background: #1e2810; color: var(--dm-text-muted); }
+        html.dark-mode .nav-tabs-zymos .nav-link:hover { background: #252e14; color: var(--dorado-claro); }
+        html.dark-mode .ing-chip.malta    { background:rgba(201,160,40,0.2) !important; color:var(--dorado-claro) !important; border-color:rgba(201,160,40,0.4) !important; }
+        html.dark-mode .ing-chip.lupulo   { background:rgba(39,174,96,0.2)  !important; color:#6ee6a0 !important; border-color:rgba(39,174,96,0.4) !important; }
+        html.dark-mode .ing-chip.levadura { background:rgba(52,152,219,0.2) !important; color:#80c8f0 !important; border-color:rgba(52,152,219,0.4) !important; }
+        html.dark-mode .ing-chip.clar     { background:rgba(142,68,173,0.2) !important; color:#c890e8 !important; border-color:rgba(142,68,173,0.4) !important; }
+        html.dark-mode .pagination .page-link { color: var(--dorado-claro) !important; border-color: var(--dm-border-med) !important; background: var(--dm-card) !important; }
+        html.dark-mode .pagination .page-item.active .page-link { background: var(--dorado) !important; border-color: var(--dorado) !important; color: var(--verde-oscuro) !important; }
+        html.dark-mode .pagination .page-link:hover { background: var(--dm-hover) !important; color: var(--dorado-claro) !important; }
+        html.dark-mode .fase-pill.ferm   { background:rgba(39,174,96,0.2)   !important; color:#6ee6a0 !important; }
+        html.dark-mode .fase-pill.acond  { background:rgba(13,202,240,0.15) !important; color:#7fd8e8 !important; }
+        html.dark-mode .fase-pill.madur  { background:rgba(201,160,40,0.2)  !important; color:var(--dorado-claro) !important; }
+        html.dark-mode .fase-pill.carbon { background:rgba(52,152,219,0.2)  !important; color:#80c8f0 !important; }
+        html.dark-mode .fase-pill.done   { background:rgba(142,68,173,0.2)  !important; color:#c890e8 !important; }
+        html.dark-mode .fase-pill.inicio { background:rgba(255,255,255,0.07) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-med) !important; }
     </style>
 </head>
 <body>
@@ -270,9 +297,9 @@
                             <th class="th-general">Fermentador</th>
                             <th class="th-general">Fase Actual</th>
                             <th class="th-general">Progreso</th>
-                            <th class="th-general" style="min-width:160px;">Maltas</th>
-                            <th class="th-general" style="min-width:160px;">Lúpulos</th>
-                            <th class="th-general" style="min-width:120px;">Levadura</th>
+                            <th class="th-general d-none d-md-table-cell" style="min-width:160px;">Maltas</th>
+                            <th class="th-general d-none d-md-table-cell" style="min-width:160px;">Lúpulos</th>
+                            <th class="th-general d-none d-md-table-cell" style="min-width:120px;">Levadura</th>
                             <th class="th-general" style="min-width:100px;">Clarificante</th>
                             <th class="th-general">Agua (L)</th>
                             <th class="th-general">pH</th>
@@ -283,11 +310,11 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Editar"><i class="bi bi-pencil"></i></a>
-                                    <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Duplicar lote"><i class="bi bi-copy"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Duplicar lote"><i class="bi bi-copy"></i></a>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto (los datos se conservan).')">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" title="Archivar"><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -313,15 +340,15 @@
                                     <div class="fase-dot" th:classappend="${lote.carbFechaFinal != null} ? 'done' : (${lote.carbFechaInicial != null} ? 'active' : '')"></div>
                                 </div>
                             </td>
-                            <td style="white-space:normal;">
+                            <td class="d-none d-md-table-cell" style="white-space:normal;">
                                 <span th:each="m : ${lote.maltas}" class="ing-chip malta" th:text="${m.nombre} + (${m.cantidad != null} ? ' · ' + ${m.cantidad} : '')">-</span>
                                 <span th:if="${#lists.isEmpty(lote.maltas)}" class="f-none">—</span>
                             </td>
-                            <td style="white-space:normal;">
+                            <td class="d-none d-md-table-cell" style="white-space:normal;">
                                 <span th:each="lup : ${lote.lupulos}" class="ing-chip lupulo" th:text="${lup.nombre} + (${lup.cantidad != null} ? ' · ' + ${lup.cantidad} : '')">-</span>
                                 <span th:if="${#lists.isEmpty(lote.lupulos)}" class="f-none">—</span>
                             </td>
-                            <td style="white-space:normal;">
+                            <td class="d-none d-md-table-cell" style="white-space:normal;">
                                 <span th:each="lev : ${lote.levaduras}" class="ing-chip levadura" th:text="${lev.nombre} + (${lev.cantidad != null} ? ' · ' + ${lev.cantidad} : '')">-</span>
                                 <span th:if="${#lists.isEmpty(lote.levaduras)}" class="f-none">—</span>
                             </td>

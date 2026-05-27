@@ -168,7 +168,7 @@
                                   th:classappend="${factura.estado.badgeClass}"
                                   th:text="${factura.estado.displayName}">-</span>
                         </td>
-                        <td><span class="badge bg-secondary" th:text="${#lists.size(factura.items)}">0</span></td>
+                        <td><span class="badge badge-neutral" th:text="${#lists.size(factura.items)}">0</span></td>
                         <td th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</td>
                         <td class="fw-bold" th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</td>
                         <td>

@@ -61,7 +61,8 @@
         .wz-tab.tab-carbon.active .wz-num   { background:#0d5ea8; color:#fff; }
 
         /* Estado completado */
-        .wz-tab.done .wz-num { background:#27ae60; color:#fff; }
+        .wz-tab.done .wz-num { background:#27ae60; color:#fff; font-size:0; }
+        .wz-tab.done .wz-num::after { content:'✓'; font-size:0.8rem; font-weight:900; }
         .wz-tab.done { color:#27ae60; }
 
         /* ══ PANEL ═══════════════════════════════════ */
@@ -145,6 +146,17 @@
         }
         .wz-dot.active { background: var(--dorado); transform: scale(1.3); }
         .wz-dot.done   { background: #27ae60; }
+
+        /* ══ DARK MODE ═══════════════════════════════════ */
+        html.dark-mode .wizard-nav { border-bottom-color: var(--dm-border-med) !important; }
+        html.dark-mode .wizard-nav .wz-tab { color: var(--dm-text-muted); }
+        html.dark-mode .wizard-nav .wz-tab:hover { color: var(--dorado-claro); }
+        html.dark-mode .wizard-nav .wz-tab .wz-num { background: rgba(255,255,255,0.08); color: var(--dm-text-muted); }
+        html.dark-mode .phase-card { border-color: var(--dm-border-med) !important; }
+        html.dark-mode .wizard-footer { border-top-color: var(--dm-border-med) !important; }
+        html.dark-mode .wz-dot { background: var(--dm-border-heavy); }
+        html.dark-mode .wz-tab.done { color: #6ee6a0 !important; }
+        html.dark-mode .wz-tab.done .wz-num { background: #27ae60 !important; color: #fff !important; }
     </style>
 </head>
 <body>
@@ -233,7 +245,7 @@
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Estilo de Cerveza *</label>
+                        <label class="form-label" for="estilo">Estilo de Cerveza *</label>
                         <input type="text" th:field="*{estilo}" class="form-control"
                                list="listaTipos" placeholder="Ej: India Pale Ale" required>
                         <datalist id="listaTipos">
@@ -242,11 +254,11 @@
                         <div th:if="${#fields.hasErrors('estilo')}" class="text-danger small mt-1" th:errors="*{estilo}"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Fecha de Elaboración</label>
+                        <label class="form-label" for="fechaElaboracion">Fecha de Elaboración</label>
                         <input type="date" th:field="*{fechaElaboracion}" class="form-control">
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label">Agua Utilizada</label>
+                        <label class="form-label" for="agua-display">Agua Utilizada</label>
                         <div class="input-group">
                             <input type="number" step="0.001" id="agua-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.aguaUtilizada}"
@@ -263,11 +275,11 @@
                         <small class="text-muted" id="agua-equiv"></small>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">pH del Agua</label>
+                        <label class="form-label" for="phAgua">pH del Agua</label>
                         <input type="number" step="0.01" th:field="*{phAgua}" class="form-control" placeholder="5.2">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Volumen Final</label>
+                        <label class="form-label" for="litros-display">Volumen Final</label>
                         <div class="input-group">
                             <input type="number" step="0.001" id="litros-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.litrosFinales}"
@@ -387,19 +399,19 @@
                         <p class="text-muted small mb-2"><i class="bi bi-activity me-1"></i><strong>Densidades</strong> — pueden completarse al avanzar el proceso</p>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Densidad Inicial (OG)</label>
+                        <label class="form-label" for="densidadInicial">Densidad Inicial (OG)</label>
                         <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
                                placeholder="1060" inputmode="numeric">
                         <small class="text-muted">Rango: 1000–1150</small>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Densidad Final (FG)</label>
+                        <label class="form-label" for="densidadFinal">Densidad Final (FG)</label>
                         <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
                                placeholder="1014" inputmode="numeric">
                         <small class="text-muted">Rango: 990–1060</small>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Fecha Densidad Final</label>
+                        <label class="form-label" for="densidadFinalFecha">Fecha Densidad Final</label>
                         <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
                     </div>
                 </div>
@@ -585,7 +597,7 @@
                 <p class="text-muted small mb-3">Primera etapa: los azúcares se convierten en alcohol y CO₂ por acción de la levadura.</p>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Fermentador Asignado</label>
+                        <label class="form-label" for="equipoFermentadorId">Fermentador Asignado</label>
                         <select th:field="*{equipoFermentadorId}"
                                 th:classappend="${#fields.hasErrors('equipoFermentadorId')} ? 'is-invalid' : ''"
                                 class="form-select">
@@ -597,22 +609,22 @@
                              th:errors="*{equipoFermentadorId}"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label">Fecha de Inicio</label>
+                        <label class="form-label" for="fermFechaInicial">Fecha de Inicio</label>
                         <input type="date" th:field="*{fermFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Ideal</label>
+                        <label class="form-label" for="fermFechaFinalIdeal">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{fermFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Temperatura (°C)</label>
+                        <label class="form-label" for="fermTemperatura">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{fermTemperatura}" class="form-control" placeholder="18">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Real</label>
+                        <label class="form-label" for="fermFechaFinal">Fecha Fin Real</label>
                         <input type="date" th:field="*{fermFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -626,22 +638,22 @@
                 <p class="text-muted small mb-3">Segunda etapa: estabilización de sabores, clarificación y acondicionamiento del producto.</p>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Fecha de Inicio</label>
+                        <label class="form-label" for="acondFechaInicial">Fecha de Inicio</label>
                         <input type="date" th:field="*{acondFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Ideal</label>
+                        <label class="form-label" for="acondFechaFinalIdeal">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{acondFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Temperatura (°C)</label>
+                        <label class="form-label" for="acondTemperatura">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{acondTemperatura}" class="form-control" placeholder="12">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Real</label>
+                        <label class="form-label" for="acondFechaFinal">Fecha Fin Real</label>
                         <input type="date" th:field="*{acondFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -655,22 +667,22 @@
                 <p class="text-muted small mb-3">Tercera etapa: la cerveza reposa a baja temperatura para desarrollar y refinar su perfil de sabor.</p>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label">Fecha de Inicio</label>
+                        <label class="form-label" for="madurFechaInicial">Fecha de Inicio</label>
                         <input type="date" th:field="*{madurFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Ideal</label>
+                        <label class="form-label" for="madurFechaFinalIdeal">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{madurFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Temperatura (°C)</label>
+                        <label class="form-label" for="madurTemperatura">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{madurTemperatura}" class="form-control" placeholder="2">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Real</label>
+                        <label class="form-label" for="madurFechaFinal">Fecha Fin Real</label>
                         <input type="date" th:field="*{madurFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -684,22 +696,22 @@
                 <p class="text-muted small mb-3">Etapa final: la cerveza adquiere el gas carbónico necesario para su presentación.</p>
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
-                        <label class="form-label">Fecha de Inicio</label>
+                        <label class="form-label" for="carbFechaInicial">Fecha de Inicio</label>
                         <input type="date" th:field="*{carbFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Ideal</label>
+                        <label class="form-label" for="carbFechaFinalIdeal">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{carbFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Temperatura (°C)</label>
+                        <label class="form-label" for="carbTemperatura">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Fecha Fin Real</label>
+                        <label class="form-label" for="carbFechaFinal">Fecha Fin Real</label>
                         <input type="date" th:field="*{carbFechaFinal}" class="form-control">
                     </div>
                 </div>

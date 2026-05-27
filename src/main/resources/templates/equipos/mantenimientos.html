@@ -98,7 +98,7 @@
                         <tbody>
                         <tr th:each="mant : ${mantenimientos}">
                             <td class="ps-3" th:text="${#temporals.format(mant.fecha,'dd/MM/yyyy')}">-</td>
-                            <td><span class="badge bg-secondary" th:text="${mant.tipo.displayName}">-</span></td>
+                            <td><span class="badge badge-neutral" th:text="${mant.tipo.displayName}">-</span></td>
                             <td th:text="${mant.tecnico != null} ? ${mant.tecnico} : '-'">-</td>
                             <td th:text="${mant.costo != null} ? '$' + ${#numbers.formatDecimal(mant.costo,1,'COMMA',2,'POINT')} : '-'">-</td>
                             <td>

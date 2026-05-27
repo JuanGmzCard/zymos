@@ -129,7 +129,7 @@
                         </td>
                         <td class="text-center">
                             <span th:if="${rec.activa}" class="badge bg-success">Activa</span>
-                            <span th:unless="${rec.activa}" class="badge bg-secondary">Inactiva</span>
+                            <span th:unless="${rec.activa}" class="badge badge-neutral">Inactiva</span>
                             <span th:with="cnt=${lotesCountMap != null ? lotesCountMap[rec.id] : null}"
                                   th:if="${cnt != null and cnt > 0}"
                                   class="badge ms-1" style="background:var(--dorado);color:var(--verde-oscuro);"
@@ -245,7 +245,7 @@
         items.forEach(function(item) {
             var badge = item.activa
                 ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">Activa</span>'
-                : '<span class="badge bg-secondary ms-auto" style="font-size:.65rem;">Inactiva</span>';
+                : '<span class="badge badge-neutral ms-auto" style="font-size:.65rem;">Inactiva</span>';
             html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                 '<i class="bi bi-journal-bookmark ss-icon"></i>' +
                 '<span class="ss-title">' + esc(item.nombre) + '</span>' +

@@ -68,13 +68,13 @@
             <div class="form-section-title"><i class="bi bi-info-circle me-2"></i>Información de la Receta</div>
             <div class="row g-3">
                 <div class="col-md-5">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" for="nombre">Nombre *</label>
                     <input type="text" th:field="*{nombre}" class="form-control"
                            placeholder="Ej: Stout Robusta Invierno" required>
                     <div th:if="${#fields.hasErrors('nombre')}" class="text-danger small mt-1" th:errors="*{nombre}"></div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Estilo *</label>
+                    <label class="form-label" for="estilo">Estilo *</label>
                     <div class="input-group">
                         <input type="text" th:field="*{estilo}" class="form-control"
                                placeholder="Ej: Stout" required
@@ -94,7 +94,7 @@
                     </div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Descripción</label>
+                    <label class="form-label" for="descripcion">Descripción</label>
                     <textarea th:field="*{descripcion}" class="form-control" rows="2"
                               placeholder="Descripción breve de la cerveza..."></textarea>
                 </div>
@@ -106,21 +106,21 @@
             <div class="form-section-title"><i class="bi bi-sliders me-2"></i>Parámetros de Proceso</div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">OG Objetivo</label>
+                    <label class="form-label" for="ogObjetivo">OG Objetivo</label>
                     <input type="number" step="1" min="900" max="1200" th:field="*{ogObjetivo}" class="form-control"
                            placeholder="1060" inputmode="numeric">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">FG Objetivo</label>
+                    <label class="form-label" for="fgObjetivo">FG Objetivo</label>
                     <input type="number" step="1" min="900" max="1200" th:field="*{fgObjetivo}" class="form-control"
                            placeholder="1014" inputmode="numeric">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Tiempo de Hervor (min)</label>
+                    <label class="form-label" for="tiempoHervorMinutos">Tiempo de Hervor (min)</label>
                     <input type="number" th:field="*{tiempoHervorMinutos}" class="form-control" placeholder="60">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Volumen Base (L)</label>
+                    <label class="form-label" for="volumenBase">Volumen Base (L)</label>
                     <input type="number" step="any" th:field="*{volumenBase}" class="form-control"
                            placeholder="20" inputmode="decimal">
                     <small class="text-muted">Base para la calculadora de escala</small>
@@ -130,12 +130,12 @@
                     <div class="form-control-plaintext fw-bold text-verde" id="abvEstimado">—</div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">pH del Agua</label>
+                    <label class="form-label" for="phAgua">pH del Agua</label>
                     <input type="number" step="0.01" min="0" max="14" th:field="*{phAgua}" class="form-control"
                            placeholder="5.2" inputmode="decimal">
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Agua de Macerado</label>
+                    <label class="form-label" for="aguaMacerado">Agua de Macerado</label>
                     <div class="input-group">
                         <input type="number" step="0.01" th:field="*{aguaMacerado}" class="form-control" placeholder="0.0">
                         <select th:field="*{unidadAguaMacerado}" class="form-select" style="max-width:90px;">
@@ -146,7 +146,7 @@
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Agua Sparge</label>
+                    <label class="form-label" for="aguaSparge">Agua Sparge</label>
                     <div class="input-group">
                         <input type="number" step="0.01" th:field="*{aguaSparge}" class="form-control" placeholder="0.0">
                         <select th:field="*{unidadAguaSparge}" class="form-select" style="max-width:90px;">
@@ -478,7 +478,7 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" for="nombre">Nombre *</label>
                     <input type="text" id="nuevoTipoNombre" class="form-control" placeholder="Ej: Imperial Stout">
                 </div>
                 <div id="nuevoTipoError" class="alert alert-danger py-2 d-none"></div>
@@ -504,7 +504,7 @@
             <div class="modal-body">
                 <p class="text-muted small">El insumo se crea con stock en cero. No descuenta inventario.</p>
                 <div class="mb-3">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" for="nombre">Nombre *</label>
                     <input type="text" id="nuevoInsumoNombre" class="form-control" placeholder="Nombre del insumo">
                 </div>
                 <div class="mb-3">
