@@ -48,6 +48,9 @@ public class FacturaProveedor extends AuditableEntity {
     @Column(nullable = false)
     private EstadoFactura estado = EstadoFactura.RECIBIDA;
 
+    @Column(nullable = false)
+    private boolean ivaIncluido = false;
+
     @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FacturaItem> items = new ArrayList<>();
 
@@ -76,6 +79,8 @@ public class FacturaProveedor extends AuditableEntity {
     public void setValorTotal(BigDecimal valorTotal) { this.valorTotal = valorTotal; }
     public EstadoFactura getEstado() { return estado; }
     public void setEstado(EstadoFactura estado) { this.estado = estado; }
+    public boolean isIvaIncluido() { return ivaIncluido; }
+    public void setIvaIncluido(boolean ivaIncluido) { this.ivaIncluido = ivaIncluido; }
     public List<FacturaItem> getItems() { return items; }
     public void setItems(List<FacturaItem> items) { this.items = items; }
 }

@@ -159,4 +159,40 @@ class FacturaProveedorServiceTest {
 
         assertThat(factura.getValorTotal()).isEqualByComparingTo(new BigDecimal("10500"));
     }
+
+    @Test
+    @DisplayName("ivaIncluido=true: subtotal es base extraída, total = cantidad × valorUnitario")
+    void calcularTotales_ivaIncluido() {
+        // 1 unidad × $11900 (precio con IVA 19%) → base = $10000, IVA = $1900, total = $11900
+        FacturaFormDto dto = buildDto(
+                BigDecimal.ONE,
+                new BigDecimal("11900"),
+                BigDecimal.ZERO,
+                new BigDecimal("19"));
+        dto.setIvaIncluido(true);
+
+        FacturaProveedor factura = service.guardar(dto);
+
+        assertThat(factura.getSubtotal()).isEqualByComparingTo(new BigDecimal("10000.00"));
+        assertThat(factura.getValorIva()).isEqualByComparingTo(new BigDecimal("1900.00"));
+        assertThat(factura.getValorTotal()).isEqualByComparingTo(new BigDecimal("11900.00"));
+    }
+
+    @Test
+    @DisplayName("ivaIncluido=true con descuento: descuento se aplica al precio con IVA")
+    void calcularTotales_ivaIncluido_conDescuento() {
+        // 1 unidad × $11900 (c/IVA 19%) - 10% desc → total = $10710, base = $9000, IVA = $1710
+        FacturaFormDto dto = buildDto(
+                BigDecimal.ONE,
+                new BigDecimal("11900"),
+                new BigDecimal("10"),
+                new BigDecimal("19"));
+        dto.setIvaIncluido(true);
+
+        FacturaProveedor factura = service.guardar(dto);
+
+        assertThat(factura.getSubtotal()).isEqualByComparingTo(new BigDecimal("9000.00"));
+        assertThat(factura.getValorIva()).isEqualByComparingTo(new BigDecimal("1710.00"));
+        assertThat(factura.getValorTotal()).isEqualByComparingTo(new BigDecimal("10710.00"));
+    }
 }

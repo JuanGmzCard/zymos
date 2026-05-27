@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -180,6 +179,7 @@ public class FacturaProveedorService {
     private void mapearDto(FacturaProveedor factura, FacturaFormDto dto) {
         factura.setNumeroFactura(dto.getNumeroFactura());
         factura.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoFactura.RECIBIDA);
+        factura.setIvaIncluido(dto.isIvaIncluido());
         if (dto.getProveedorId() != null) {
             proveedorRepo.findById(dto.getProveedorId()).ifPresent(p -> {
                 factura.setProveedorRef(p);
@@ -209,7 +209,6 @@ public class FacturaProveedorService {
                 item.setValorUnitario(itemDto.getValorUnitario() != null ? itemDto.getValorUnitario() : BigDecimal.ZERO);
                 item.setPorcentajeDescuento(itemDto.getPorcentajeDescuento() != null ? itemDto.getPorcentajeDescuento() : BigDecimal.ZERO);
                 item.setPorcentajeIvaItem(itemDto.getPorcentajeIvaItem() != null ? itemDto.getPorcentajeIvaItem() : BigDecimal.ZERO);
-                item.setValorLinea(item.calcularValorLinea());
                 item.setFactura(factura);
                 factura.getItems().add(item);
             }
@@ -221,18 +220,8 @@ public class FacturaProveedorService {
         BigDecimal totalIva = BigDecimal.ZERO;
 
         for (FacturaItem item : f.getItems()) {
-            BigDecimal cant = item.getCantidad() != null ? item.getCantidad() : BigDecimal.ONE;
-            BigDecimal vUnit = item.getValorUnitario() != null ? item.getValorUnitario() : BigDecimal.ZERO;
-            BigDecimal desc = item.getPorcentajeDescuento() != null ? item.getPorcentajeDescuento() : BigDecimal.ZERO;
-            BigDecimal ivaPct = item.getPorcentajeIvaItem() != null ? item.getPorcentajeIvaItem() : BigDecimal.ZERO;
-
-            BigDecimal base = cant.multiply(vUnit)
-                    .multiply(BigDecimal.ONE.subtract(desc.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)))
-                    .setScale(2, RoundingMode.HALF_UP);
-
-            BigDecimal ivaItem = base.multiply(ivaPct.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP))
-                    .setScale(2, RoundingMode.HALF_UP);
-
+            BigDecimal base    = item.getValorBase();
+            BigDecimal ivaItem = item.getValorIvaItem();
             subtotal = subtotal.add(base);
             totalIva = totalIva.add(ivaItem);
             item.setValorLinea(base.add(ivaItem));
@@ -324,6 +313,7 @@ public class FacturaProveedorService {
         dto.setDescripcion(f.getDescripcion());
         dto.setPorcentajeIva(f.getPorcentajeIva());
         dto.setCostoEnvio(f.getCostoEnvio());
+        dto.setIvaIncluido(f.isIvaIncluido());
         List<FacturaItemDto> itemDtos = f.getItems().stream().map(item -> {
             FacturaItemDto d = new FacturaItemDto();
             d.setTipoItem(item.getTipoItem());

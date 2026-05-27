@@ -88,6 +88,17 @@
                     <label class="form-label">Descripción</label>
                     <input type="text" th:field="*{descripcion}" class="form-control" placeholder="Descripción opcional">
                 </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="ivaIncluido" th:field="*{ivaIncluido}"
+                               onchange="recalcularTodo()">
+                        <label class="form-check-label" for="ivaIncluido">
+                            El precio unitario <strong>ya incluye IVA</strong>
+                            <small class="text-muted ms-1">(precio bruto — el IVA está incluido en el valor ingresado)</small>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -102,7 +113,7 @@
                 <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">NOMBRE</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">CANTIDAD</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">UNIDAD</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">V. UNITARIO</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" id="colUnitarioHeader">V. UNITARIO</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">DESC %</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IVA %</span></div>
                 <div class="col-md-1 text-end"><span class="text-muted" style="font-size:0.7rem;">TOTAL</span></div>
@@ -458,15 +469,32 @@ function renumberItems() {
 // ── Total por línea ───────────────────────────────────────────────────────
 
 function calcularTotalFila(input) {
-    const row      = input.closest('.ingrediente-row');
+    const ivainc    = document.getElementById('ivaIncluido')?.checked;
+    const row       = input.closest('.ingrediente-row');
     const cantidad  = parseFloat(row.querySelector('input[name*=".cantidad"]')?.value)            || 0;
     const unitario  = parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)       || 0;
     const descuento = parseFloat(row.querySelector('input[name*=".porcentajeDescuento"]')?.value) || 0;
     const iva       = parseFloat(row.querySelector('input[name*=".porcentajeIvaItem"]')?.value)   || 0;
-    const base      = cantidad * unitario * (1 - descuento / 100);
-    const total     = base * (1 + iva / 100);
-    const span      = row.querySelector('.item-total');
+    let total;
+    if (ivainc) {
+        // valorUnitario already includes IVA; total = cantidad * unitario * (1 - desc%)
+        total = cantidad * unitario * (1 - descuento / 100);
+    } else {
+        const base = cantidad * unitario * (1 - descuento / 100);
+        total = base * (1 + iva / 100);
+    }
+    const span = row.querySelector('.item-total');
     if (span) span.textContent = total > 0 ? formatCurrency(total) : '—';
+}
+
+function recalcularTodo() {
+    const ivainc = document.getElementById('ivaIncluido')?.checked;
+    const lbl = document.getElementById('colUnitarioHeader');
+    if (lbl) lbl.textContent = ivainc ? 'V. UNITARIO (c/IVA)' : 'V. UNITARIO';
+    document.querySelectorAll('#items-container .ingrediente-row').forEach(row => {
+        const ref = row.querySelector('input[name*=".cantidad"]');
+        if (ref) calcularTotalFila(ref);
+    });
 }
 
 function formatCurrency(v) {
@@ -474,10 +502,7 @@ function formatCurrency(v) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('#items-container .ingrediente-row').forEach(row => {
-        const ref = row.querySelector('input[name*=".cantidad"]');
-        if (ref) calcularTotalFila(ref);
-    });
+    recalcularTodo();
 });
 
 // ── Selección de proveedor ────────────────────────────────────────────────

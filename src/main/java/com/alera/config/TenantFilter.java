@@ -39,7 +39,7 @@ public class TenantFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.startsWith("/css/") || path.startsWith("/js/")
             || path.startsWith("/img/") || path.startsWith("/webjars/")
-            || path.startsWith("/favicon");
+            || path.startsWith("/favicon") || path.equals("/error") || path.startsWith("/error/");
     }
 
     @Override

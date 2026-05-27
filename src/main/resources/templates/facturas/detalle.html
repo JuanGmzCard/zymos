@@ -51,6 +51,11 @@
                         <div class="detail-label">Fecha</div>
                         <div class="detail-value" th:text="${factura.fechaFactura != null} ? ${#temporals.format(factura.fechaFactura,'dd/MM/yyyy')} : '-'">-</div>
                     </div>
+                    <div th:if="${factura.ivaIncluido}" class="mb-2">
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-percent me-1"></i>Precio unitario con IVA incluido
+                        </span>
+                    </div>
                     <div th:if="${factura.descripcion != null}">
                         <div class="detail-label">Descripción</div>
                         <div class="detail-value small" th:text="${factura.descripcion}">-</div>
@@ -92,7 +97,8 @@
                 <div class="card-header"><h5><i class="bi bi-calculator me-2"></i>Resumen Financiero</h5></div>
                 <div class="card-body">
                     <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Subtotal (base sin IVA)</span>
+                        <span class="text-muted"
+                              th:text="${factura.ivaIncluido} ? 'Subtotal (base extraída sin IVA)' : 'Subtotal (base sin IVA)'">Subtotal</span>
                         <span th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
@@ -159,7 +165,9 @@
                             <th style="background:var(--verde-alera);color:var(--crema);padding:0.75rem 1rem;">Tipo</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Nombre</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Cantidad</th>
-                            <th style="background:var(--verde-alera);color:var(--crema);">V. Unitario</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);"
+                                th:text="${factura.ivaIncluido} ? 'V. Unitario (c/IVA)' : 'V. Unitario'">V. Unitario</th>
+                            <th th:if="${factura.ivaIncluido}" style="background:var(--verde-alera);color:var(--crema);">V. sin IVA</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Desc.</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">IVA %</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Valor IVA</th>
@@ -175,6 +183,9 @@
                             <td th:text="${item.nombre}">-</td>
                             <td th:text="${item.cantidad} + ' ' + (${item.unidad} != null ? ${item.unidad} : '')">-</td>
                             <td th:text="'$' + ${#numbers.formatDecimal(item.valorUnitario,1,'COMMA',2,'POINT')}">-</td>
+                            <td th:if="${factura.ivaIncluido}"
+                                class="text-muted small"
+                                th:text="'$' + ${#numbers.formatDecimal(item.valorUnitarioSinIva,1,'COMMA',2,'POINT')}">-</td>
                             <td th:text="${item.porcentajeDescuento} + '%'">-</td>
                             <td th:text="${item.porcentajeIvaItem} + '%'">-</td>
                             <td class="text-muted small"

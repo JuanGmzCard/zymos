@@ -100,6 +100,8 @@ public class DataInitializer implements CommandLineRunner {
         t.setColorAccentHover(branding.getColorAccentHover());
         t.setColorCream(branding.getColorCream());
         t.setColorBodyBg(branding.getColorBodyBg());
+        t.setFontHeadings(branding.getFontHeadings());
+        t.setFontBody(branding.getFontBody());
         t.setActive(true);
         tenantRepo.save(t);
         log.info("Tenant '{}' creado con branding '{}'", defaultSubdomain, branding.getName());

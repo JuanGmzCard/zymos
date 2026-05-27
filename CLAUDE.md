@@ -32,7 +32,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V32)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V33)
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -40,7 +40,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Paginación configurable: `app.page-size=15` (servicios), `app.log-page-size=25` (LogAccesoService)
 - Perfil prod: `application-prod.properties` — elimina fallbacks de credenciales BD. Docker activa `SPRING_PROFILES_ACTIVE=prod`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
-- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME`, `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR`, `APP_BRAND_COLOR_PRIMARY`, `APP_BRAND_COLOR_ACCENT`, `APP_BRAND_COLOR_ACCENT_HOVER`, `APP_BRAND_COLOR_CREAM`, `APP_BRAND_COLOR_BODY_BG`, `APP_BRAND_FONT_HEADINGS` (def: Cinzel), `APP_BRAND_FONT_BODY` (def: Raleway)
+- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zimos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL`, `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
@@ -90,7 +90,8 @@ com.alera/
 │               LoginController, TenantAdminController, ComparativaController, AlertaController,
 │               PlanificacionController, PerfilController, NotificacionController,
 │               MigracionController (/admin/migracion — plantillas + importación por módulo),
-│               AuthController (POST /api/auth/login — obtención de token JWT)
+│               AuthController (POST /api/auth/login — obtención de token JWT),
+│               CustomErrorController (GET /error — intercepta el endpoint de error de Spring Boot)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
@@ -138,7 +139,7 @@ templates/
 ├── inventario/ lista (typeahead en campo nombre respeta filtro tipo), formulario,
 │               precios.html (buscador con datalist + 4 stat-cards + Chart.js barras + tabla de compras)
 ├── tipos-cerveza/ lista
-├── facturas/   lista (typeahead en card-header busca por N° o proveedor; 4 stat-cards: total facturas, monto total, pendientes de pago, monto pendiente), formulario, detalle (historial de cambios de estado + botón Duplicar)
+├── facturas/   lista (typeahead en card-header busca por N° o proveedor; 4 stat-cards: total facturas, monto total, pendientes de pago, monto pendiente), formulario (toggle "El precio ya incluye IVA" — cambia la etiqueta de la columna V. Unitario y recalcula totales en tiempo real), detalle (historial de cambios de estado + botón Duplicar + badge "Precio con IVA incluido" + columna "V. sin IVA" condicional en tabla de ítems)
 ├── recetas/    lista (tabla paginada con filtros activa/inactiva + typeahead a la derecha; respeta filtro estado), formulario, detalle (+ calculadora escala)
 ├── proveedores/ lista (typeahead en card-header busca por nombre o NIT), formulario
 ├── reportes/   produccion.html (8 stat-cards, 3 gráficos Chart.js, tabla con paginación client-side, resumen por estilo con barras de progreso; colores leen CSS vars del tenant en `DOMContentLoaded`)
@@ -189,6 +190,7 @@ templates/
 - `V30__movimientos_inventario_receta_version.sql` — tabla `movimientos_inventario(id, tenant_id, insumo_id, insumo_nombre, tipo, cantidad, cantidad_anterior, cantidad_posterior, motivo, referencia, usuario, fecha)` para auditoría de stock + índices; y `ALTER TABLE recetas ADD COLUMN version INTEGER NOT NULL DEFAULT 1` — versionado de recetas.
 - `V31__receta_ph_agua.sql` — `ALTER TABLE recetas ADD COLUMN IF NOT EXISTS ph_agua DECIMAL(4,2)` — pH objetivo del agua de macerado en receta.
 - `V32__migracion_log.sql` — tabla `migracion_log(id BIGSERIAL PK, tenant_id VARCHAR(100), modulo VARCHAR(50), archivo VARCHAR(255), procesadas INT, exitosas INT, con_errores INT, estado VARCHAR(20), detalles TEXT, usuario VARCHAR(100), fecha TIMESTAMP DEFAULT NOW())` + índices en `tenant_id` y `fecha DESC`. Sin `@TenantId` — el admin puede consultar historial cross-tenant libremente.
+- `V33__factura_iva_incluido.sql` — `ALTER TABLE facturas_proveedor ADD COLUMN IF NOT EXISTS iva_incluido BOOLEAN NOT NULL DEFAULT FALSE` — flag que indica si los precios unitarios de los ítems ya incluyen IVA. Facturas existentes quedan en `false` (modo estándar sin IVA incluido).
 
 ---
 
@@ -328,6 +330,7 @@ Extiende `AuditableEntity`. Campos propios:
 Todos extienden `AuditableEntity` — los 4 campos de auditoría vienen del padre.
 - `FacturaProveedor`: `proveedor` (String original) + `@ManyToOne proveedorRef → Proveedor` (LAZY, nullable) — coexisten para compat. histórica. V10 backfill vincula automáticamente donde los nombres coincidan.
 - **Campo `estado` en `FacturaProveedor`**: `@Enumerated(EnumType.STRING) EstadoFactura estado` — default `RECIBIDA`. Valores: `RECIBIDA` (badge gris), `VERIFICADA` (badge amarillo), `PAGADA` (badge verde). Cada valor tiene `getDisplayName()` y `getBadgeClass()` (clase Bootstrap). Se puede cambiar desde el detalle via `POST /facturas/{id}/estado` o desde el formulario de edición via select.
+- **Campo `ivaIncluido` en `FacturaProveedor`**: `boolean ivaIncluido = false`. Cuando `true`, el `valorUnitario` ingresado en cada ítem ya incluye el IVA (precio bruto). `FacturaItem.getValorUnitarioSinIva()` extrae la base dividiendo por `(1 + iva%/100)`; cuando `false` devuelve `valorUnitario` directamente. `calcularTotales()` en el servicio delega a los métodos computados del ítem, que acceden a `factura.isIvaIncluido()` via la referencia `@ManyToOne factura` (ya seteada antes de llamar al método). Visible en el formulario como toggle switch; en el detalle muestra badge y columna adicional "V. sin IVA".
 - **Campo de fecha en `FacturaProveedor`**: `fechaFactura` (`LocalDate`) — **NO** `fecha`. En JPQL usar `f.fechaFactura`; en Java `getFechaFactura()`. Error frecuente: escribir `f.fecha` en un `@Query` → `UnknownPathException` al arrancar.
 
 ### FacturaHistorialEstado
@@ -511,6 +514,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `ProveedorService.suggest(q)` — filtra en memoria sobre `findAllByOrderByNombreAsc()` por nombre o NIT, retorna hasta 6 mapas con `{nombre, nit, activo, url}` — usado por `GET /proveedores/suggest`
 - `FacturaProveedorService` inyecta `ProveedorRepository` y `FacturaHistorialEstadoRepository` para vincular proveedor y registrar historial al guardar/cambiar estado
 - `FacturaProveedorService.guardar/actualizar/eliminar` → `@CacheEvict("dashboard-stats")` — invalida caché al modificar datos financieros. `guardar()` además registra el estado inicial en `factura_historial_estado`.
+- `FacturaProveedorService.mapearDto()` copia `dto.isIvaIncluido()` → `factura.setIvaIncluido()` **antes** del loop de ítems, para que `calcularTotales()` pueda acceder a `factura.isIvaIncluido()` via la referencia `item.factura`. `toFormDto()` hace el camino inverso (`dto.setIvaIncluido(f.isIvaIncluido())`).
+- `FacturaProveedorService.calcularTotales()` — delega enteramente a los métodos computados de `FacturaItem` (`getValorBase()`, `getValorIvaItem()`), que internamente respetan `ivaIncluido`. No duplica lógica de IVA en el servicio (DRY).
 - `FacturaProveedorService.listarPaginado(EstadoFactura estado, LocalDate desde, LocalDate hasta, int page)` — delega a `findAllFiltered`; los tres filtros son opcionales (null = sin filtro)
 - `FacturaProveedorService.listarParaExport(EstadoFactura estado, LocalDate desde, LocalDate hasta)` — `@Transactional(readOnly=true)`, llama `findAllWithItems()` y filtra en memoria; los tres parámetros son opcionales (null = sin filtro)
 - `FacturaProveedorService.cambiarEstado(id, EstadoFactura)` — actualiza estado y persiste `FacturaHistorialEstado` con estado anterior, nuevo y usuario actual (via `SecurityContextHolder`)
@@ -865,6 +870,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### LoginController ("/login")
 - `GET /login` — renderiza `login.html` (Spring Security gestiona el `POST /login` directamente)
 
+### CustomErrorController ("/error")
+- Implementa `org.springframework.boot.web.servlet.error.ErrorController` — intercepta el endpoint `/error` que Spring Boot usa cuando Tomcat reenvía errores HTTP (ej: `ZymosAccessDeniedHandler` redirige a `/error?status=403`).
+- Lee `RequestDispatcher.ERROR_STATUS_CODE` del request y puebla `codigo`, `titulo`, `descripcion` según el status. Casos: 403 → "Acceso denegado", 404 → "Página no encontrada", 503 → "Servicio no disponible", resto → "Error inesperado".
+- Devuelve vista `"error/error"` — el mismo template que usa `GlobalExceptionHandler` para excepciones Java.
+- `/error` está en `permitAll()` en `SecurityConfig` y en `shouldNotFilter()` en `TenantFilter` para evitar bucles de redirección.
+- **NOTA**: `GlobalExceptionHandler` maneja excepciones Java lanzadas desde controllers; `CustomErrorController` maneja el endpoint `/error` generado por Tomcat/Spring Boot para errores HTTP. Son complementarios, no redundantes.
+
 ---
 
 ## SEGURIDAD
@@ -877,6 +889,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `ZymosAuthFailureHandler` → registra fallo por IP + registra `LOGIN_FALLIDO` + redirige a `/login?error` o `/login?bloqueado=true`
   - `ZymosAccessDeniedHandler` → registra `ACCESO_DENEGADO` + redirige a `/error?status=403`
 - **Restricciones por URL:**
+  - `/error`, `/error/**` → público (`permitAll`) — necesario para que usuarios no autenticados puedan ver la página de error sin generar otro redirect 403
   - `/admin/**`, `/usuarios/**`, `/tipos-cerveza/**` → solo ADMIN
   - `/actuator/**` → ADMIN (excepto `/actuator/health` que es público)
   - `POST /guardar`, `POST /actualizar/**`, `POST /eliminar/**`, `GET /nuevo`, `GET /editar/**` → solo ADMIN (trazabilidad escritura)
@@ -900,7 +913,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `finally` llama `TenantContext.clear()` — nunca hay fuga de contexto entre requests
   - Registrado con `addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)` para que corra antes de cualquier autenticación de Spring Security
   - `FilterRegistrationBean.setEnabled(false)` evita doble registro como servlet filter
-  - Salta recursos estáticos (`/css/`, `/js/`, `/img/`, etc.) via `shouldNotFilter`
+  - Salta recursos estáticos (`/css/`, `/js/`, `/img/`, etc.) y `/error` via `shouldNotFilter` — permite que la página de error se renderice aunque no haya tenant resuelto
   - `evictCache(subdomain)` — elimina un tenant del cache. `evictAll()` — limpia todo el cache (útil tras edición directa en BD).
 - **Multi-tenant — Hibernate**: `TenantIdentifierResolver` implementa `CurrentTenantIdentifierResolver<String>` y lee de `TenantContext`. `HibernateMultiTenancyConfig` lo registra via `HibernatePropertiesCustomizer`. Todas las entidades con `@TenantId` son filtradas automáticamente.
 - **Branding**: `GlobalControllerAdvice.branding()` lee `request.getAttribute("currentTenant")` y lo expone como `${branding}`. Si no hay tenant resuelto, cae a `BrandingProperties` (valores de `application.properties`). Usa `try-catch` defensivo — durante el dispatch de errores el request puede estar en estado inconsistente. Los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. `BrandingProperties` también tiene `fontHeadings` (def: Cinzel) y `fontBody` (def: Raleway) como fallback.
@@ -955,7 +968,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 15. **Historial lotes**: `HistorialLote` sin FK intencionalmente — preserva historia tras borrar el lote.
 16. **Log accesos**: `LogAccesoService.registrar()` usa `REQUIRES_NEW` — se guarda aunque la tx principal haga rollback.
 17. **Proveedores**: campo `activo` (no `activa`) — Spring Data derivado debe ser `findAllByActivoTrue*`.
-18. **FacturaProveedor**: tiene dos campos de proveedor: `proveedor` (String original) y `proveedorRef` (FK LAZY nullable). Coexisten para compat. histórica. El campo de fecha es `fechaFactura` — **NO** `fecha`. En JPQL: `f.fechaFactura`; en Java: `getFechaFactura()`. Escribir `f.fecha` en un `@Query` provoca `UnknownPathException` al arrancar.
+18. **FacturaProveedor**: tiene dos campos de proveedor: `proveedor` (String original) y `proveedorRef` (FK LAZY nullable). Coexisten para compat. histórica. El campo de fecha es `fechaFactura` — **NO** `fecha`. En JPQL: `f.fechaFactura`; en Java: `getFechaFactura()`. Escribir `f.fecha` en un `@Query` provoca `UnknownPathException` al arrancar. El flag `ivaIncluido` (boolean, default false) indica si los valores unitarios de los ítems ya incluyen IVA — `FacturaItem.getValorUnitarioSinIva()` hace la extracción automáticamente consultando `factura.isIvaIncluido()`.
 19. **Fechas en filtros JPQL**: para `LocalDate` nullable usar `:param IS NULL OR campo >= :param` — no hay equivalente al truco `""` de strings.
 20. **AuditableEntity — error de compilación**: si una subclase declara `getCreatedAt()` / `setCreatedAt()` o cualquier getter/setter de los 4 campos auditados, el compilador lanza `createdAt has private access in AuditableEntity`. Solución: eliminar esos métodos de la subclase.
 21. **AuditableEntity — @PrePersist incompatible**: no usar `@PrePersist` para setear `createdAt` en entidades que extienden `AuditableEntity`; el campo ya lo maneja `@CreatedDate`. Si coexisten, el valor queda `null` porque Spring Data Auditing no sobreescribe un valor ya seteado.
@@ -973,7 +986,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 32. **Trazabilidad — Costo de Producción** (activo): asignación a nivel de ítem con cantidad parcial. La sección en `formulario.html` muestra un buscador de ítems de factura (filtrable por nombre/proveedor/tipo). Los ítems seleccionados van a `lote.itemsFactura` (OneToMany `LoteItemFactura`). `detalle.html` muestra tabla con factura, proveedor, cantidad asignada y valor proporcional. Cantidad 0 = costo completo del ítem sin ingrediente. **Auto-población al cargar receta**: al hacer click en "Cargar Receta", `verificarStockReceta()` busca el ítem de factura que coincide por nombre con cada ingrediente y pasa `cantidadReceta`/`unidadReceta` en el objeto sugerido; `autoAgregarCostosReceta()` usa esa cantidad convertida a la unidad del ítem de factura como `cantidadAsignada` inicial.
 33. **Calculadora de escala (recetas/detalle)**: escala ingredientes, agua macerado y agua sparge. Variables JS: `AGUA_MACERADO`, `UNIDAD_MACERADO`, `AGUA_SPARGE`, `UNIDAD_SPARGE` (inline Thymeleaf). Al resetear llama `resetAgua()`.
 34. **Multi-tenant — @TenantId en todas las entidades**: todas las 17 entidades de datos tienen `@TenantId private String tenantId`. Las 6 que extienden `AuditableEntity` lo heredan; las 11 restantes lo declaran directamente. Hibernate agrega `WHERE tenant_id = :current` automáticamente a todos los SELECT. NO setear `tenantId` manualmente — Hibernate lo gestiona.
-35. **Multi-tenant — DataInitializer**: al arrancar, crea el tenant `defaultSubdomain` si no existe, luego itera **todos los tenants** en BD. Para cada uno con cero usuarios, crea los usuarios de las env vars (`ADMIN_USERNAME/PASSWORD`, etc.) usando `insertarConTenant` (native SQL) y tipos de cerveza. Los tenants con usuarios ya configurados no se tocan. Esto garantiza que cualquier tenant creado vía UI reciba su admin al reiniciar la app. El método `run()` tiene `@Transactional` porque `insertarConTenant` es `@Modifying` y requiere una transacción activa. **CRÍTICO**: los métodos `@Modifying` en repositorios (`insertarConTenant`, `toggleActivoByIdAndTenantId`, etc.) deben tener `@Transactional` propio si se llaman fuera de un contexto transaccional externo — de lo contrario lanzan `TransactionRequiredException`.
+35. **Multi-tenant — DataInitializer**: al arrancar, crea el tenant `defaultSubdomain` si no existe (copia todos los campos de `BrandingProperties` incluyendo `fontHeadings` y `fontBody`), luego itera **todos los tenants** en BD. Para cada uno con cero usuarios, crea los usuarios de las env vars (`ADMIN_USERNAME/PASSWORD`, etc.) usando `insertarConTenant` (native SQL) y tipos de cerveza. Los tenants con usuarios ya configurados no se tocan. Esto garantiza que cualquier tenant creado vía UI reciba su admin al reiniciar la app. El método `run()` tiene `@Transactional` porque `insertarConTenant` es `@Modifying` y requiere una transacción activa. **CRÍTICO**: los métodos `@Modifying` en repositorios (`insertarConTenant`, `toggleActivoByIdAndTenantId`, etc.) deben tener `@Transactional` propio si se llaman fuera de un contexto transaccional externo — de lo contrario lanzan `TransactionRequiredException`.
 36. **Multi-tenant — agregar cliente nuevo**: (1) crear tenant en `/admin/tenants/nuevo` (UI) o insertar fila en `tenants` directamente en BD; (2) DNS `cliente.tuapp.com` → servidor; (3) crear usuario admin del tenant en `/usuarios` (el contexto de tenant ya estará activo vía subdominio) o con `INSERT INTO usuarios (username, password, rol, activo, tenant_id) VALUES (...)`.
 37. **Branding — orden de prioridad**: `Tenant.color*` / `Tenant.font*` > `BrandingProperties` (env vars/properties). `Tenant` se crea con valores de `BrandingProperties` pero puede actualizarse via `/admin/tenants/editar/{subdomain}` o directamente en BD. Tras edición directa en BD, usar "Limpiar cache" en `/admin/tenants` para reflejar cambios sin reiniciar.
 37b. **Login page — logo**: sin círculo decorativo. Si `branding.logoUrl` no está vacío, muestra la imagen (`max-height:90px; max-width:240px`). Si está vacío, muestra ícono `bi-droplet-fill`. El campo `logoUrl` acepta URL externa o ruta relativa (`/img/logo.png`) — archivos locales van en `src/main/resources/static/img/`.
@@ -1082,7 +1095,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 **Unitarios** (`src/test/java/com/alera/service/`):
 - `InsumoInventarioServiceTest`, `TrazabilidadServiceTest`, `DashboardServiceTest`
 - `InsumoInventarioServiceTest` — requiere `@Mock MovimientoInventarioRepository movimientoRepo` y stub `lenient().when(movimientoRepo.save(any())).thenReturn(new MovimientoInventario())` en `@BeforeEach` — el servicio registra movimientos en `descontarIngrediente`, `restaurarIngrediente` y `ajustar`. `descontarIngrediente` y `restaurarIngrediente` son de 3 args: `(nombre, cantidadTexto, referencia)` — actualizar stubs en `TrazabilidadServiceTest` con el arg adicional `any()`.
-- `FacturaProveedorServiceTest`, `UnidadUtilsTest` — `FacturaProveedorServiceTest` requiere `@Mock FacturaHistorialEstadoRepository historialRepo` y `@Mock ProveedorRepository proveedorRepo` (además de los mocks previos) porque el constructor del servicio los inyecta. El `@BeforeEach` stubea `historialRepo.save(any())` para que `guardar()` no lance NPE.
+- `FacturaProveedorServiceTest`, `UnidadUtilsTest` — `FacturaProveedorServiceTest` requiere `@Mock FacturaHistorialEstadoRepository historialRepo` y `@Mock ProveedorRepository proveedorRepo` (además de los mocks previos) porque el constructor del servicio los inyecta. El `@BeforeEach` stubea `historialRepo.save(any())` para que `guardar()` no lance NPE. 7 tests en total: sin descuento/IVA, con IVA 19%, descuento antes de IVA, múltiples ítems, costo de envío, `ivaIncluido=true` (base extraída correctamente), `ivaIncluido=true` con descuento.
 - `LogAccesoServiceTest` — cubre `registrar`, `listarPaginado` (con/sin filtro) y `fallidosUltimaHora` (verifica ventana de 1 hora). Usa `ReflectionTestUtils.setField` para inyectar `pageSize` sin contexto Spring.
 - `EquipoServiceTest` — 17 tests: listar/paginar (con y sin filtro de estado), buscarPorId, guardar, eliminar (happy path, no encontrado, con lotes activos → EquipoEnUsoException), fermentadores disponibles, mantenimiento pendiente (verifica ventana de 7 días), `cambiarEstado` (actualiza y persiste, no existe → excepción), `countByEstado`, `countMantenimientoPendiente`, `countTotal`.
 - `RecetaServiceTest` — 14 tests: listarActivas/Todas/Paginado (filtros null/true/false), buscarPorId (found/not found), guardar (campos básicos, normalización kg→gr, ignorar vacíos, escalones en orden), actualizar (limpia ingredientes anteriores), eliminar, toFormDto (mapeo directo, parseo "5000 gr"→{cantidad,unidad}, fila vacía si lista vacía). OG/FG objetivo usan literales Integer (ej: `1050`, `1010`) — NO BigDecimal.
@@ -1137,7 +1150,7 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V32 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V33 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar

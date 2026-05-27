@@ -52,11 +52,23 @@ public class FacturaItem {
     @JoinColumn(name = "factura_id")
     private FacturaProveedor factura;
 
+    public BigDecimal getValorUnitarioSinIva() {
+        if (valorUnitario == null) return BigDecimal.ZERO;
+        if (factura != null && factura.isIvaIncluido()) {
+            BigDecimal iva = porcentajeIvaItem != null ? porcentajeIvaItem : BigDecimal.ZERO;
+            if (iva.compareTo(BigDecimal.ZERO) == 0) return valorUnitario;
+            return valorUnitario.divide(
+                BigDecimal.ONE.add(iva.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)),
+                2, RoundingMode.HALF_UP);
+        }
+        return valorUnitario;
+    }
+
     public BigDecimal getValorBase() {
         if (cantidad == null || valorUnitario == null) return BigDecimal.ZERO;
         BigDecimal desc = porcentajeDescuento != null ? porcentajeDescuento : BigDecimal.ZERO;
         return cantidad
-                .multiply(valorUnitario)
+                .multiply(getValorUnitarioSinIva())
                 .multiply(BigDecimal.ONE.subtract(desc.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)))
                 .setScale(2, RoundingMode.HALF_UP);
     }

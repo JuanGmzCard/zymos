@@ -20,6 +20,7 @@ public class FacturaFormDto {
     private String descripcion;
     private BigDecimal porcentajeIva = BigDecimal.valueOf(19);
     private BigDecimal costoEnvio = BigDecimal.ZERO;
+    private boolean ivaIncluido = false;
 
     private List<FacturaItemDto> items = new ArrayList<>();
 
@@ -45,6 +46,8 @@ public class FacturaFormDto {
     public void setPorcentajeIva(BigDecimal porcentajeIva) { this.porcentajeIva = porcentajeIva; }
     public BigDecimal getCostoEnvio() { return costoEnvio; }
     public void setCostoEnvio(BigDecimal costoEnvio) { this.costoEnvio = costoEnvio; }
+    public boolean isIvaIncluido() { return ivaIncluido; }
+    public void setIvaIncluido(boolean ivaIncluido) { this.ivaIncluido = ivaIncluido; }
     public List<FacturaItemDto> getItems() { return items; }
     public void setItems(List<FacturaItemDto> items) { this.items = items; }
 }
