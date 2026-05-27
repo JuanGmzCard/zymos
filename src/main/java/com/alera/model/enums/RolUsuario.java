@@ -2,6 +2,7 @@ package com.alera.model.enums;
 
 public enum RolUsuario {
     ADMIN("Administrador"),
+    PRODUCCION("Producción"),
     INVENTARIO("Inventario"),
     FACTURACION("Facturación"),
     EQUIPOS("Equipos");

@@ -6,6 +6,7 @@ import com.alera.model.enums.TipoEquipo;
 import com.alera.service.EquipoService;
 import com.alera.service.MantenimientoEquipoService;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +48,7 @@ public class EquipoController {
         return "equipos/lista";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @PostMapping("/{id}/estado")
     public String cambiarEstado(@PathVariable Long id,
                                 @RequestParam EstadoEquipo estado,
@@ -81,6 +83,7 @@ public class EquipoController {
         return service.suggest(q, estado);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("equipo", new Equipo());
@@ -89,6 +92,7 @@ public class EquipoController {
         return "equipos/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute Equipo equipo, RedirectAttributes ra) {
         try {
@@ -102,6 +106,7 @@ public class EquipoController {
         return "redirect:/equipos";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         var equipo = service.buscarPorId(id).orElseThrow();
@@ -111,6 +116,7 @@ public class EquipoController {
         return "equipos/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @PostMapping("/actualizar/{id}")
     public String actualizar(@PathVariable Long id, @ModelAttribute Equipo equipo, RedirectAttributes ra) {
         equipo.setId(id);
@@ -125,6 +131,7 @@ public class EquipoController {
         return "redirect:/equipos";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         try {

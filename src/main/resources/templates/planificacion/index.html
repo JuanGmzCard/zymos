@@ -255,7 +255,7 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'')')}]]*/ false
+var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'',''PRODUCCION'')')}]]*/ false
     || document.getElementById('adminMarker') !== null;
 
 document.addEventListener('DOMContentLoaded', function () {

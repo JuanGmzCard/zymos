@@ -122,14 +122,14 @@ public class SecurityConfig {
 
                 .requestMatchers(HttpMethod.POST,
                         "/guardar", "/actualizar/**", "/eliminar/**",
-                        "/duplicar/**").hasAnyRole("ADMIN", "SUPERADMIN")
-                .requestMatchers("/nuevo", "/editar/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                        "/duplicar/**").hasAnyRole("ADMIN", "SUPERADMIN", "PRODUCCION")
+                .requestMatchers("/nuevo", "/editar/**").hasAnyRole("ADMIN", "SUPERADMIN", "PRODUCCION")
 
                 .requestMatchers("/facturas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
                 .requestMatchers("/proveedores/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
-                .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "SUPERADMIN")
-                .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "SUPERADMIN")
-                .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "SUPERADMIN")
+                .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
+                .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
+                .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "PRODUCCION", "SUPERADMIN")
 
                 .anyRequest().authenticated()
             )

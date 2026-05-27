@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.config.ExportBranding;
+import com.alera.model.FacturaItem;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
@@ -26,6 +27,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalDouble;
 
 @Service
 public class ExcelExportService {
@@ -176,6 +178,7 @@ public class ExcelExportService {
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             construirSheetFacturas(wb, facturas, estadoFiltro, desde, hasta, branding.name(), pal);
             construirSheetProveedores(wb, facturas, branding.name(), pal);
+            construirSheetItems(wb, facturas, branding.name(), pal);
             wb.write(baos);
         } catch (Exception e) {
             throw new RuntimeException("Error generando Excel de facturas", e);
@@ -206,7 +209,7 @@ public class ExcelExportService {
         Cell cTitulo = fTitulo.createCell(0);
         cTitulo.setCellValue(brandName + " — Facturas de Proveedores");
         cTitulo.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
 
         Row fFiltro = sheet.createRow(r++);
         Cell cFiltro = fFiltro.createCell(0);
@@ -215,7 +218,7 @@ public class ExcelExportService {
         String estadoStr = estadoFiltro != null ? estadoFiltro.getDisplayName() : "Todas";
         cFiltro.setCellValue("Estado: " + estadoStr + "   |   Período: " + desdeStr + " — " + hastaStr);
         cFiltro.setCellStyle(stPeriodo);
-        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 11));
 
         r++;
         Row fRes = sheet.createRow(r++);
@@ -239,11 +242,11 @@ public class ExcelExportService {
         fHead.setHeight((short) (16 * 20));
         String[] headers = {
                 "N° Factura", "Proveedor", "Fecha", "Estado",
-                "Ítems", "Subtotal", "IVA", "Envío", "Total", "Descripción", "Creado por"
+                "Ítems", "Subtotal", "IVA", "Envío", "Total", "IVA Incluido", "Descripción", "Creado por"
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        int[] widths = {14, 22, 12, 12, 7, 14, 14, 14, 14, 24, 14};
+        int[] widths = {14, 22, 12, 12, 7, 14, 14, 14, 14, 12, 24, 14};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         for (int i = 0; i < facturas.size(); i++) {
@@ -262,8 +265,9 @@ public class ExcelExportService {
             celdaNum(fila, 6, toDouble(f.getValorIva()),   sN);
             celdaNum(fila, 7, toDouble(f.getCostoEnvio()), sN);
             celdaNum(fila, 8, toDouble(f.getValorTotal()), sN);
-            celda(fila, 9,  f.getDescripcion() != null ? f.getDescripcion() : "", sD);
-            celda(fila, 10, f.getCreatedBy()  != null ? f.getCreatedBy()  : "", sD);
+            celda(fila, 9,  f.isIvaIncluido() ? "Sí" : "No", sD);
+            celda(fila, 10, f.getDescripcion() != null ? f.getDescripcion() : "", sD);
+            celda(fila, 11, f.getCreatedBy()  != null ? f.getCreatedBy()  : "", sD);
         }
 
         if (!facturas.isEmpty()) {
@@ -318,6 +322,74 @@ public class ExcelExportService {
         sheet.setColumnWidth(0, 30 * 256);
         sheet.setColumnWidth(1, 12 * 256);
         sheet.setColumnWidth(2, 18 * 256);
+    }
+
+    private void construirSheetItems(XSSFWorkbook wb, List<FacturaProveedor> facturas,
+                                      String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet("Ítems");
+        sheet.setDefaultColumnWidth(15);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Detalle de Ítems");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
+
+        r++;
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        String[] headers = {
+                "N° Factura", "Proveedor", "Fecha", "Tipo",
+                "Nombre", "Cantidad", "Unidad", "V. Unitario",
+                "Desc. %", "IVA %", "Valor IVA", "Total Línea"
+        };
+        for (int i = 0; i < headers.length; i++) celda(fH, i, headers[i], stHeader);
+
+        int[] widths = {14, 22, 12, 12, 28, 10, 9, 14, 9, 9, 14, 14};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        int rowIdx = 0;
+        for (FacturaProveedor f : facturas) {
+            if (f.getItems() == null || f.getItems().isEmpty()) continue;
+            String numFact = f.getNumeroFactura() != null ? f.getNumeroFactura() : "#" + f.getId();
+            String prov    = f.getProveedor() != null ? f.getProveedor() : "";
+            String fecha   = f.getFechaFactura() != null ? f.getFechaFactura().format(FMT_FECHA) : "";
+            for (FacturaItem item : f.getItems()) {
+                boolean alt = rowIdx % 2 != 0;
+                Row fila = sheet.createRow(r++);
+                XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+                XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+                celda(fila, 0, numFact, sD);
+                celda(fila, 1, prov, sD);
+                celda(fila, 2, fecha, sD);
+                celda(fila, 3, item.getTipoItem() != null ? item.getTipoItem().getDisplayName() : "", sD);
+                celda(fila, 4, item.getNombre() != null ? item.getNombre() : "", sD);
+                celdaNum(fila, 5, toDouble(item.getCantidad()), sN);
+                celda(fila, 6, item.getUnidad() != null ? item.getUnidad() : "", sD);
+                celdaNum(fila, 7, toDouble(item.getValorUnitario()), sN);
+                celdaNum(fila, 8, item.getPorcentajeDescuento() != null
+                        ? item.getPorcentajeDescuento().doubleValue() : null, sN);
+                celdaNum(fila, 9, item.getPorcentajeIvaItem() != null
+                        ? item.getPorcentajeIvaItem().doubleValue() : null, sN);
+                celdaNum(fila, 10, toDouble(item.getValorIvaItem()), sN);
+                celdaNum(fila, 11, toDouble(item.getValorLinea()), sN);
+                rowIdx++;
+            }
+        }
+
+        if (rowIdx > 0) {
+            sheet.setAutoFilter(new CellRangeAddress(2, r - 1, 0, headers.length - 1));
+        }
     }
 
     // ── Excel Reporte Producción ──────────────────────────────────────
@@ -375,13 +447,32 @@ public class ExcelExportService {
                 .filter(l -> l.getLitrosFinales() != null)
                 .map(LoteCerveza::getLitrosFinales)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        long estilos = lotes.stream().map(LoteCerveza::getEstilo).distinct().count();
+        long estilos  = lotes.stream().map(LoteCerveza::getEstilo).distinct().count();
+        long pctComp  = lotes.isEmpty() ? 0L : Math.round(completados * 100.0 / lotes.size());
+        OptionalDouble avgAbv  = lotes.stream().filter(l -> l.getAbv() != null)
+                .mapToDouble(l -> l.getAbv().doubleValue()).average();
+        OptionalDouble avgEfic = lotes.stream().filter(l -> l.getEficienciaMacerado() != null)
+                .mapToDouble(l -> l.getEficienciaMacerado().doubleValue()).average();
+        BigDecimal costoTotal  = lotes.stream().map(LoteCerveza::getCostoTotal)
+                .filter(c -> c != null && c.compareTo(BigDecimal.ZERO) > 0)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        String avgLitrosStr = lotes.isEmpty() ? "—"
+                : String.format("%.1f", totalL.doubleValue() / lotes.size()) + " L";
 
         XSSFCellStyle stResumen = estiloResumen(wb, pal);
-        celda(fRes, 0, "Total lotes: " + lotes.size(),        stResumen);
-        celda(fRes, 2, "Litros producidos: " + totalL + " L", stResumen);
-        celda(fRes, 5, "Estilos distintos: " + estilos,       stResumen);
-        celda(fRes, 8, "Completados: " + completados,         stResumen);
+        celda(fRes, 0, "Total lotes: " + lotes.size(),                       stResumen);
+        celda(fRes, 2, "Litros: " + totalL + " L",                           stResumen);
+        celda(fRes, 5, "Estilos: " + estilos,                                stResumen);
+        celda(fRes, 8, "Completados: " + completados + " (" + pctComp + "%)", stResumen);
+
+        Row fRes2 = sheet.createRow(r++);
+        celda(fRes2, 0, "Prom/lote: " + avgLitrosStr, stResumen);
+        if (avgAbv.isPresent())
+            celda(fRes2, 2, "ABV prom: " + String.format("%.2f", avgAbv.getAsDouble()) + "%", stResumen);
+        if (avgEfic.isPresent())
+            celda(fRes2, 5, "Eficiencia prom: " + String.format("%.1f", avgEfic.getAsDouble()) + "%", stResumen);
+        if (costoTotal.compareTo(BigDecimal.ZERO) > 0)
+            celda(fRes2, 8, "Costo total: $" + costoTotal.toPlainString(), stResumen);
 
         r++;
         Row fHead = sheet.createRow(r++);
@@ -421,7 +512,7 @@ public class ExcelExportService {
         }
 
         if (!lotes.isEmpty()) {
-            sheet.setAutoFilter(new CellRangeAddress(5, r - 1, 0, headers.length - 1));
+            sheet.setAutoFilter(new CellRangeAddress(6, r - 1, 0, headers.length - 1));
         }
     }
 

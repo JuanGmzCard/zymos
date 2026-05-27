@@ -249,7 +249,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'')')}]]*/ false;
+var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'',''PRODUCCION'')')}]]*/ false;
 /*]]>*/
 </script>
 <script th:src="@{/js/trazabilidad-kanban.js}"></script>

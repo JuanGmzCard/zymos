@@ -34,6 +34,8 @@ public class DataInitializer implements CommandLineRunner {
 
     @Value("${ADMIN_USERNAME:admin}")        private String adminUsername;
     @Value("${ADMIN_PASSWORD:alera2024}")    private String adminPassword;
+    @Value("${PRODUCCION_USERNAME:}")        private String produccionUsername;
+    @Value("${PRODUCCION_PASSWORD:}")        private String produccionPassword;
     @Value("${INVENTARIO_USERNAME:}")        private String inventarioUsername;
     @Value("${INVENTARIO_PASSWORD:}")        private String inventarioPassword;
     @Value("${FACTURACION_USERNAME:}")       private String facturacionUsername;
@@ -111,6 +113,7 @@ public class DataInitializer implements CommandLineRunner {
     private void crearUsuariosSiNoTiene(String subdomain) {
         if (usuarioRepo.findAllByTenantId(subdomain).isEmpty()) {
             crearUsuarioSiNoExiste(adminUsername,       adminPassword,       RolUsuario.ADMIN,       subdomain);
+            crearUsuarioSiNoExiste(produccionUsername,  produccionPassword,  RolUsuario.PRODUCCION,  subdomain);
             crearUsuarioSiNoExiste(inventarioUsername,  inventarioPassword,  RolUsuario.INVENTARIO,  subdomain);
             crearUsuarioSiNoExiste(facturacionUsername, facturacionPassword, RolUsuario.FACTURACION, subdomain);
             crearUsuarioSiNoExiste(equiposUsername,     equiposPassword,     RolUsuario.EQUIPOS,     subdomain);

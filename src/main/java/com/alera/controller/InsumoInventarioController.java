@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -85,6 +86,7 @@ public class InsumoInventarioController {
         return "inventario/lista";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("insumo", new InsumoInventario());
@@ -93,6 +95,7 @@ public class InsumoInventarioController {
         return "inventario/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/guardar")
     public String guardar(@ModelAttribute InsumoInventario insumo, RedirectAttributes ra) {
         try {
@@ -106,6 +109,7 @@ public class InsumoInventarioController {
         return "redirect:/inventario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
@@ -114,6 +118,7 @@ public class InsumoInventarioController {
         return "inventario/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/actualizar/{id}")
     public String actualizar(@PathVariable Long id, @ModelAttribute InsumoInventario insumo, RedirectAttributes ra) {
         insumo.setId(id);
@@ -180,6 +185,7 @@ public class InsumoInventarioController {
         }
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         service.eliminar(id);
@@ -220,6 +226,7 @@ public class InsumoInventarioController {
 
     // ── Ajuste rápido de stock ────────────────────────────────────────────
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/{id}/ajuste")
     public String ajustarStock(@PathVariable Long id,
                                 @RequestParam TipoMovimiento tipo,

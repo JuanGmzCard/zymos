@@ -78,6 +78,12 @@ public class PdfExportService {
                 addTablaMetricas(doc, lote, pal);
             }
 
+            if (lote.getReceta() != null &&
+                    (lote.getReceta().getOgObjetivo() != null || lote.getReceta().getFgObjetivo() != null)) {
+                addTituloPdf(doc, "COMPARATIVA RECETA VS LOTE", pal);
+                addComparativaRecetaLote(doc, lote, pal);
+            }
+
             if (!lote.getIngredientes().isEmpty()) {
                 addTituloPdf(doc, "INGREDIENTES", pal);
                 addIngredientes(doc, lote, pal);
@@ -173,7 +179,20 @@ public class PdfExportService {
                           + (receta.getUnidadAguaSparge() != null ? receta.getUnidadAguaSparge() : "L") : "—",
                         lbl, val, pal);
             }
+            if (receta.getPhAgua() != null) {
+                par(info, "pH Agua", receta.getPhAgua().toString(), lbl, val, pal);
+                par(info, "", "", lbl, val, pal);
+            }
             doc.add(info);
+
+            if (notBlank(receta.getDescripcion())) {
+                Font lblD = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                Paragraph pd = new Paragraph("Descripción", lblD);
+                pd.setSpacingBefore(4);
+                doc.add(pd);
+                doc.add(new Paragraph(receta.getDescripcion(),
+                        new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
+            }
 
             // Métricas objetivo
             if (receta.getOgObjetivo() != null || receta.getFgObjetivo() != null) {
@@ -491,7 +510,9 @@ public class PdfExportService {
         PdfPTable tm = new PdfPTable(6);
         tm.setWidthPercentage(100);
         metricaCell(tm, "OG",         lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—",    lbl, val, sub, "Densidad inicial", pal);
-        metricaCell(tm, "FG",         lote.getDensidadFinal()   != null ? String.valueOf(lote.getDensidadFinal())   : "Pendiente", lbl, val, sub, "Densidad final", pal);
+        String fgSub = lote.getDensidadFinalFecha() != null
+                ? "Densidad final · " + lote.getDensidadFinalFecha().format(FMT_FECHA) : "Densidad final";
+        metricaCell(tm, "FG",         lote.getDensidadFinal()   != null ? String.valueOf(lote.getDensidadFinal())   : "Pendiente", lbl, val, sub, fgSub, pal);
         metricaCell(tm, "ABV",        lote.getAbv()               != null ? lote.getAbv()               + "%" : "—", lbl, val, sub, "% vol.",   pal);
         metricaCell(tm, "Atenuación", lote.getAtenuacionAparente()  != null ? lote.getAtenuacionAparente()  + "%" : "—", lbl, val, sub, "Aparente", pal);
         metricaCell(tm, "Eficiencia", lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", lbl, val, sub, "Macerado", pal);
@@ -835,6 +856,89 @@ public class PdfExportService {
             }
         }
         doc.add(dt);
+    }
+
+    private void addComparativaRecetaLote(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
+        Receta r = lote.getReceta();
+        Font lblF = new Font(Font.HELVETICA, 7,  Font.BOLD,   pal.verde());
+        Font valF = new Font(Font.HELVETICA, 10, Font.BOLD,   pal.verdeOscuro());
+        Font subF = new Font(Font.HELVETICA, 8,  Font.NORMAL, C_GRIS);
+        Font posF = new Font(Font.HELVETICA, 8,  Font.BOLD,   new Color(25, 135, 84));
+        Font negF = new Font(Font.HELVETICA, 8,  Font.BOLD,   new Color(220, 53, 69));
+
+        boolean tieneOg  = r.getOgObjetivo() != null;
+        boolean tieneFg  = r.getFgObjetivo() != null;
+        boolean tieneAbv = tieneOg && tieneFg;
+        int cols = (tieneOg ? 1 : 0) + (tieneFg ? 1 : 0) + (tieneAbv ? 1 : 0);
+        if (cols == 0) return;
+
+        PdfPTable t = new PdfPTable(cols);
+        t.setWidthPercentage(cols == 1 ? 35 : cols == 2 ? 60 : 90);
+        t.setSpacingAfter(6);
+
+        if (tieneOg) {
+            PdfPCell cell = comparativaCell(lblF, valF, subF,
+                    "OG OBJETIVO", String.valueOf(r.getOgObjetivo()), pal);
+            if (lote.getDensidadInicial() != null) {
+                int diff = lote.getDensidadInicial() - r.getOgObjetivo();
+                String diffStr = (diff > 0 ? "+" : "") + diff;
+                Paragraph p = new Paragraph("Real: " + lote.getDensidadInicial() + "  (" + diffStr + ")",
+                        diff >= 0 ? posF : negF);
+                p.setAlignment(Element.ALIGN_CENTER);
+                cell.addElement(p);
+            } else {
+                addPendiente(cell, subF);
+            }
+            t.addCell(cell);
+        }
+
+        if (tieneFg) {
+            PdfPCell cell = comparativaCell(lblF, valF, subF,
+                    "FG OBJETIVO", String.valueOf(r.getFgObjetivo()), pal);
+            if (lote.getDensidadFinal() != null) {
+                Paragraph p = new Paragraph("Real: " + lote.getDensidadFinal(), subF);
+                p.setAlignment(Element.ALIGN_CENTER);
+                cell.addElement(p);
+            } else {
+                addPendiente(cell, subF);
+            }
+            t.addCell(cell);
+        }
+
+        if (tieneAbv) {
+            double abvObj = (r.getOgObjetivo() - r.getFgObjetivo()) * 0.13125;
+            PdfPCell cell = comparativaCell(lblF, valF, subF,
+                    "ABV OBJETIVO", String.format(java.util.Locale.US, "%.2f%%", abvObj), pal);
+            if (lote.getAbv() != null) {
+                Paragraph p = new Paragraph("Real: " + lote.getAbv() + "%", subF);
+                p.setAlignment(Element.ALIGN_CENTER);
+                cell.addElement(p);
+            } else {
+                addPendiente(cell, subF);
+            }
+            t.addCell(cell);
+        }
+
+        doc.add(t);
+    }
+
+    private PdfPCell comparativaCell(Font lbl, Font val, Font sub,
+                                      String label, String valor, Pal pal) {
+        PdfPCell cell = new PdfPCell();
+        cell.setBackgroundColor(pal.fondo());
+        cell.setBorderColor(C_BORDE);
+        cell.setPadding(8);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        Paragraph p1 = new Paragraph(label, lbl); p1.setAlignment(Element.ALIGN_CENTER);
+        Paragraph p2 = new Paragraph(valor,  val); p2.setAlignment(Element.ALIGN_CENTER); p2.setSpacingBefore(3);
+        cell.addElement(p1); cell.addElement(p2);
+        return cell;
+    }
+
+    private void addPendiente(PdfPCell cell, Font font) {
+        Paragraph p = new Paragraph("Pendiente", font);
+        p.setAlignment(Element.ALIGN_CENTER);
+        cell.addElement(p);
     }
 
     private void addNotas(Document doc, LoteCerveza lote,

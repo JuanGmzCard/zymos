@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -76,6 +77,7 @@ public class RecetaController {
         return service.suggest(q, activa);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/nueva")
     public String nueva(Model model) {
         model.addAttribute("recetaForm", RecetaFormDto.empty());
@@ -84,6 +86,7 @@ public class RecetaController {
         return "recetas/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute("recetaForm") RecetaFormDto dto,
                           BindingResult result, Model model, RedirectAttributes ra) {
@@ -99,6 +102,7 @@ public class RecetaController {
         return "redirect:/recetas";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         model.addAttribute("recetaForm", service.toFormDto(service.buscarPorId(id)));
@@ -108,6 +112,7 @@ public class RecetaController {
         return "recetas/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/actualizar/{id}")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("recetaForm") RecetaFormDto dto,
@@ -150,6 +155,7 @@ public class RecetaController {
                 .body(bytes);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/duplicar/{id}")
     public String duplicar(@PathVariable Long id, Model model) {
         model.addAttribute("recetaForm",      service.duplicarComoFormDto(id));
@@ -158,6 +164,7 @@ public class RecetaController {
         return "recetas/formulario";
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         try {

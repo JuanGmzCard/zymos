@@ -127,7 +127,7 @@
                 <!-- Producción (todos los roles) -->
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri == '/' or currentUri.contains('/kanban') or currentUri.contains('/planificacion') or currentUri.contains('/comparativa') or currentUri.contains('/calendario'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri == '/' or currentUri.contains('/kanban') or currentUri.contains('/planificacion') or currentUri.contains('/comparativa') or currentUri.contains('/calendario') or currentUri.contains('/reportes'))} ? 'active' : ''">
                         <i class="bi bi-clipboard-data"></i> Producción
                     </a>
                     <ul class="dropdown-menu">
@@ -162,11 +162,18 @@
                                 <i class="bi bi-calendar3 me-2"></i>Calendario
                             </a>
                         </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/reportes/produccion}"
+                               th:classappend="${currentUri != null and currentUri.contains('/reportes')} ? 'active' : ''">
+                                <i class="bi bi-bar-chart-line me-2"></i>Reportes
+                            </a>
+                        </li>
                     </ul>
                 </li>
 
-                <!-- Almacén (ADMIN / INVENTARIO / SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
+                <!-- Almacén (ADMIN / INVENTARIO / PRODUCCION / SUPERADMIN) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas'))} ? 'active' : ''">
                         <i class="bi bi-box-seam"></i> Almacén
@@ -187,8 +194,8 @@
                     </ul>
                 </li>
 
-                <!-- Equipos (ADMIN / EQUIPOS / SUPERADMIN) -->
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN')">
+                <!-- Equipos (ADMIN / EQUIPOS / PRODUCCION / SUPERADMIN) -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link" th:href="@{/equipos}"
                        th:classappend="${currentUri != null and currentUri.contains('/equipos')} ? 'active' : ''">
                         <i class="bi bi-tools"></i> Equipos
@@ -220,19 +227,13 @@
                 <!-- Admin (ADMIN y SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/reportes') or currentUri.contains('/tipos-cerveza') or currentUri.contains('/usuarios') or currentUri.contains('/admin') or currentUri.contains('/notificaciones'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri.contains('/tipos-cerveza') or currentUri.contains('/usuarios') or currentUri.contains('/admin'))} ? 'active' : ''">
                         <i class="bi bi-shield-lock"></i> Admin
                     </a>
                     <ul class="dropdown-menu">
                         <!-- Gestión -->
                         <li class="px-3 pt-2 pb-1">
                             <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;">Gestión</small>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/reportes/produccion}"
-                               th:classappend="${currentUri != null and currentUri.contains('/reportes')} ? 'active' : ''">
-                                <i class="bi bi-bar-chart-line me-2"></i>Reportes
-                            </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/usuarios}"
@@ -250,12 +251,6 @@
                         <li><hr class="dropdown-divider mb-0"></li>
                         <li class="px-3 pt-2 pb-1">
                             <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;">Sistema</small>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/notificaciones}"
-                               th:classappend="${currentUri != null and currentUri.contains('/notificaciones')} ? 'active' : ''">
-                                <i class="bi bi-bell me-2"></i>Notificaciones
-                            </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/admin/logs}"
@@ -311,7 +306,7 @@
                             <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Crear nuevo</small>
                         </li>
                         <li><hr class="dropdown-divider mt-1 mb-0"></li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION')">
                             <a class="dropdown-item py-2" th:href="@{/nuevo}">
                                 <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i>Lote de cerveza
                             </a>
@@ -340,7 +335,7 @@
                 </li>
 
                 <!-- Campana de notificaciones in-app -->
-                <li class="nav-item dropdown" id="alertaBellItem" style="display:none;">
+                <li class="nav-item dropdown" id="alertaBellItem">
                     <a class="nav-link px-2 position-relative" href="#"
                        data-bs-toggle="dropdown" data-bs-auto-close="outside"
                        aria-expanded="false" style="line-height:1;"
@@ -397,6 +392,9 @@
                                 <span class="badge rounded-pill"
                                       style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
                                       sec:authorize="hasRole('EQUIPOS')">Equipos</span>
+                                <span class="badge rounded-pill"
+                                      style="background:rgba(201,160,40,0.15);color:var(--dorado);font-size:0.7rem;border:1px solid rgba(201,160,40,0.3);"
+                                      sec:authorize="hasRole('PRODUCCION')">Producción</span>
                             </div>
                         </li>
                         <li><hr class="dropdown-divider"></li>
@@ -486,10 +484,9 @@
                 var btnTodas = document.getElementById('btnMarcarTodas');
 
                 if (data.total > 0) {
-                    if (item)  item.style.display = '';
-                    if (badge) badge.textContent = data.total > 99 ? '99+' : data.total;
+                    if (badge) { badge.style.display = ''; badge.textContent = data.total > 99 ? '99+' : data.total; }
                 } else {
-                    if (item)  item.style.display = 'none';
+                    if (badge) badge.style.display = 'none';
                 }
                 if (btnTodas) btnTodas.style.display = data.total > 0 ? '' : 'none';
                 if (lista)    lista.innerHTML = notifRenderLista(data.items);
@@ -533,10 +530,10 @@
             var row = btn.closest('.d-flex.align-items-start');
             if (row) row.remove();
             var badge = document.getElementById('alertaBadge');
-            if (badge) badge.textContent = data.noLeidas > 99 ? '99+' : data.noLeidas;
-            if (data.noLeidas === 0) {
-                var bellItem = document.getElementById('alertaBellItem');
-                if (bellItem) bellItem.style.display = 'none';
+            if (data.noLeidas > 0) {
+                if (badge) { badge.style.display = ''; badge.textContent = data.noLeidas > 99 ? '99+' : data.noLeidas; }
+            } else {
+                if (badge) badge.style.display = 'none';
                 var lista = document.getElementById('notifLista');
                 if (lista) lista.innerHTML = notifRenderLista([]);
             }
