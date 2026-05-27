@@ -20,17 +20,20 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(5, TimeUnit.MINUTES)
                         .maximumSize(50)
+                        .recordStats()
                         .build());
         // Datos de gráficas: 10 minutos TTL (cambian menos frecuente)
         manager.registerCustomCache("dashboard-litros-mes",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
                         .maximumSize(50)
+                        .recordStats()
                         .build());
         manager.registerCustomCache("dashboard-estilos",
                 Caffeine.newBuilder()
                         .expireAfterWrite(10, TimeUnit.MINUTES)
                         .maximumSize(50)
+                        .recordStats()
                         .build());
         return manager;
     }
