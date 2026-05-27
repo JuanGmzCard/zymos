@@ -13,7 +13,12 @@ RUN mvn clean package -DskipTests -q
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+RUN addgroup -S zymos && adduser -S zymos -G zymos
+
 COPY --from=build /app/target/alera-*.jar app.jar
+RUN chown zymos:zymos app.jar
+
+USER zymos
 
 EXPOSE 8080
 
