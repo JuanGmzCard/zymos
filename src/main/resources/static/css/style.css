@@ -707,6 +707,19 @@ html.dark-mode .form-select:focus {
     border-color: var(--dorado) !important;
     box-shadow: 0 0 0 0.2rem var(--dm-border-focus) !important;
 }
+/* Navbar search — preserva el look de vidrio sobre el fondo oscuro del navbar */
+html.dark-mode .navbar-search {
+    background: rgba(255,255,255,0.08) !important;
+    border-color: rgba(201,160,40,0.45) !important;
+    color: var(--crema) !important;
+}
+html.dark-mode .navbar-search:focus {
+    background: rgba(255,255,255,0.14) !important;
+    border-color: var(--dorado) !important;
+    box-shadow: 0 0 0 0.2rem rgba(201,160,40,0.2) !important;
+    color: var(--crema) !important;
+}
+html.dark-mode .navbar-search::placeholder { color: rgba(245,237,208,0.45) !important; }
 
 /* Tablas */
 html.dark-mode .table,
@@ -809,6 +822,15 @@ html.dark-mode .dropdown-item:hover { background: var(--dm-hover) !important; }
 /* Separadores hr y dividers */
 html.dark-mode hr { border-color: var(--dm-border-med) !important; opacity: 1; }
 html.dark-mode .dropdown-divider { border-color: var(--dm-border-light) !important; }
+
+/* Modales */
+html.dark-mode .modal-content {
+    background: var(--dm-card) !important;
+    border-color: var(--dm-border-med) !important;
+    color: var(--dm-text);
+}
+html.dark-mode .modal-footer { border-color: var(--dm-border-light) !important; }
+html.dark-mode .modal-body label { color: var(--dm-text-muted) !important; }
 
 /* card-header (Bootstrap genérico y card-zymos) */
 html.dark-mode .card-header {

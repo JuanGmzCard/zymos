@@ -119,12 +119,18 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label detail-label">Contraseña *</label>
-                        <input type="password" name="password" class="form-control" minlength="8" required>
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control" minlength="8" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label detail-label">Confirmar contraseña *</label>
-                        <input type="password" name="confirmarPassword" class="form-control" required>
+                        <div class="input-group">
+                            <input type="password" name="confirmarPassword" class="form-control" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <div class="mb-1">
                         <label class="form-label detail-label">Rol *</label>
@@ -155,12 +161,18 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label detail-label">Nueva contraseña *</label>
-                        <input type="password" name="nuevaPassword" class="form-control" minlength="8" required>
+                        <div class="input-group">
+                            <input type="password" name="nuevaPassword" class="form-control" minlength="8" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
                     <div class="mb-1">
                         <label class="form-label detail-label">Confirmar contraseña *</label>
-                        <input type="password" name="confirmarPassword" class="form-control" required>
+                        <div class="input-group">
+                            <input type="password" name="confirmarPassword" class="form-control" required>
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

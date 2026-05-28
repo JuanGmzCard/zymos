@@ -74,7 +74,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header" style="background:var(--verde-alera);">
-                <h5 class="modal-title" style="color:var(--dorado);font-family:'Cinzel',serif;">Nuevo Tipo de Cerveza</h5>
+                <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">Nuevo Tipo de Cerveza</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form th:action="@{/tipos-cerveza/guardar}" th:object="${tipoCerveza}" method="post">

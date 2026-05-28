@@ -141,7 +141,7 @@
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background:var(--verde-alera);">
-                                        <h5 class="modal-title" style="color:var(--dorado);font-family:'Cinzel',serif;">
+                                        <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
                                             <i class="bi bi-key me-2"></i>Cambiar Contraseña
                                         </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -153,13 +153,19 @@
                                             </p>
                                             <div class="mb-3">
                                                 <label class="form-label">Nueva contraseña</label>
-                                                <input type="password" name="newPassword" class="form-control"
-                                                       required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
+                                                <div class="input-group">
+                                                    <input type="password" name="newPassword" class="form-control"
+                                                           required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label">Confirmar contraseña</label>
-                                                <input type="password" name="confirmPassword" class="form-control"
-                                                       required minlength="8" placeholder="Repite la contraseña">
+                                                <div class="input-group">
+                                                    <input type="password" name="confirmPassword" class="form-control"
+                                                           required minlength="8" placeholder="Repite la contraseña">
+                                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
@@ -177,7 +183,7 @@
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header" style="background:var(--verde-alera);">
-                                        <h5 class="modal-title" style="color:var(--dorado);font-family:'Cinzel',serif;">
+                                        <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
                                             <i class="bi bi-person-gear me-2"></i>Cambiar Rol
                                         </h5>
                                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -219,7 +225,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header" style="background:var(--verde-alera);">
-                <h5 class="modal-title" style="color:var(--dorado);font-family:'Cinzel',serif;">
+                <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
                     <i class="bi bi-person-plus me-2"></i>Nuevo Usuario
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -233,13 +239,19 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Contraseña *</label>
-                        <input type="password" name="password" class="form-control"
-                               required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
+                        <div class="input-group">
+                            <input type="password" name="password" class="form-control"
+                                   required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Confirmar Contraseña *</label>
-                        <input type="password" name="confirmPassword" class="form-control"
-                               required minlength="8" placeholder="Repite la contraseña">
+                        <div class="input-group">
+                            <input type="password" name="confirmPassword" class="form-control"
+                                   required minlength="8" placeholder="Repite la contraseña">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Rol</label>

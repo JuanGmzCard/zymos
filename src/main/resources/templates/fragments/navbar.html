@@ -15,6 +15,7 @@
         --font-body:     '[[${branding != null and branding.fontBody != null ? branding.fontBody : 'Raleway'}]]', sans-serif;
         --verde-oscuro: [[${branding != null ? branding.colorNavbar    : '#242E0D'}]];
         --verde-zymos:  [[${branding != null ? branding.colorPrimary   : '#364318'}]];
+        --verde-alera:  [[${branding != null ? branding.colorPrimary   : '#364318'}]];
         --dorado:       [[${branding != null ? branding.colorAccent    : '#C9A028'}]];
         --dorado-claro: [[${branding != null ? branding.colorAccentHover : '#E0B840'}]];
         --crema:        [[${branding != null ? branding.colorCream     : '#F5EDD0'}]];
@@ -104,6 +105,16 @@
         .navbar-icons .nav-item.dropdown > a { white-space: nowrap; }
     }
     </style>
+
+    <script>
+    function togglePwd(btn) {
+      const inp = btn.closest('.input-group').querySelector('input');
+      const ico = btn.querySelector('i');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+    }
+    </script>
 
     <div class="container-fluid">
         <a class="navbar-brand" th:href="@{/dashboard}">
