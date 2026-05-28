@@ -43,8 +43,8 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${EQUIPOS_USERNAME:}")           private String equiposUsername;
     @Value("${EQUIPOS_PASSWORD:}")           private String equiposPassword;
 
-    @Value("${SUPERADMIN_USERNAME:Juancho}") private String superadminUsername;
-    @Value("${SUPERADMIN_PASSWORD:Juancho_2229}") private String superadminPassword;
+    @Value("${SUPERADMIN_USERNAME:}") private String superadminUsername;
+    @Value("${SUPERADMIN_PASSWORD:}") private String superadminPassword;
 
     public DataInitializer(UsuarioRepository usuarioRepo,
                             TipoCervezaRepository tipoCervezaRepo,
@@ -79,6 +79,11 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void crearSuperAdmin() {
+        if (superadminUsername == null || superadminUsername.isBlank() ||
+            superadminPassword == null || superadminPassword.isBlank()) {
+            log.warn("SUPERADMIN_USERNAME/SUPERADMIN_PASSWORD no definidos — super-admin no creado automáticamente");
+            return;
+        }
         if (superAdminRepo.existsByUsername(superadminUsername)) return;
         SuperAdmin sa = new SuperAdmin();
         sa.setUsername(superadminUsername);

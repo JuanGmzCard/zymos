@@ -469,6 +469,7 @@
         }
         // ── Notificaciones in-app ────────────────────────────────────
         notifCargar();
+        setInterval(notifCargar, 300000); // refresca cada 5 minutos
         var notifToggle = document.getElementById('notifDropdownToggle');
         if (notifToggle) {
             notifToggle.addEventListener('show.bs.dropdown', function() { notifCargar(); });

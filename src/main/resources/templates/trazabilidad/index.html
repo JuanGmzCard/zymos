@@ -213,12 +213,16 @@
                    style="width:145px;"
                    th:value="${hastaFiltro != null} ? ${#temporals.format(hastaFiltro,'yyyy-MM-dd')} : ''">
         </div>
-        <div class="d-flex gap-2 align-items-end">
+        <div class="d-flex gap-2 align-items-end flex-wrap">
             <button type="submit" class="btn btn-zymos btn-sm px-3">
                 <i class="bi bi-search me-1"></i>Filtrar
             </button>
             <a th:href="@{/}" class="btn btn-zymos-outline btn-sm px-3">
                 <i class="bi bi-x-lg me-1"></i>Limpiar
+            </a>
+            <a th:href="@{/reportes/produccion/pdf(estilo=${estiloFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
+               class="btn btn-outline-secondary btn-sm px-3" title="Exportar listado actual a PDF" target="_blank">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
         </div>
         <div class="ms-auto align-self-center">
@@ -313,6 +317,13 @@
                                     <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
                                     <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
                                     <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Duplicar lote"><i class="bi bi-copy"></i></a>
+                                    <button th:if="${!lote.completado}"
+                                            type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline" onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto (los datos se conservan).')">
                                         <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
                                     </form>
@@ -661,6 +672,30 @@
     tabs.forEach(t => t.addEventListener('shown.bs.tab', e => {
         localStorage.setItem('trazaTab', e.target.dataset.bsTarget);
     }));
+
+    // Botón "Completar lote" — llama al endpoint AJAX y recarga en éxito
+    document.querySelectorAll('.btn-completar-lote').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const loteId = this.dataset.loteId;
+            const codigo = this.dataset.codigo;
+            if (!confirm('¿Marcar el lote ' + codigo + ' como completado?')) return;
+            const csrfToken  = (typeof _csrfToken  === 'function' ? _csrfToken()  : null) || document.querySelector('meta[name="_csrf"]')?.content;
+            const csrfHeader = (typeof _csrfHeader === 'function' ? _csrfHeader() : null) || document.querySelector('meta[name="_csrf_header"]')?.content || 'X-CSRF-TOKEN';
+            this.disabled = true;
+            fetch('/actualizar/' + loteId + '/fase', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrfToken },
+                body: 'fase=completados'
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) { location.reload(); }
+                else { alert('Error: ' + (data.error || 'No se pudo completar el lote')); this.disabled = false; }
+            })
+            .catch(() => { alert('Error de conexión'); this.disabled = false; });
+        });
+    });
 </script>
 </body>
 </html>

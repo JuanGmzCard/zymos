@@ -269,6 +269,14 @@ document.getElementById('loteForm').addEventListener('submit', function(e) {
         hCant.type = 'hidden'; hCant.name = 'itemsCantidades'; hCant.value = cant;
         container.appendChild(hCant);
     });
+
+    // Prevenir doble submit
+    _formSubmitted = true;
+    var btn = this.querySelector('button[type="submit"]');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Guardando...';
+    }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -283,6 +291,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (fb) fb.textContent = '';
             }
         });
+    }
+});
+
+// ── Prevenir pérdida de datos ──────────────────────────────────────
+var _formSubmitted = false;
+var _formDirty = false;
+document.getElementById('loteForm').addEventListener('change', function() { _formDirty = true; }, true);
+document.getElementById('loteForm').addEventListener('input',  function() { _formDirty = true; }, true);
+window.addEventListener('beforeunload', function(e) {
+    if (_formDirty && !_formSubmitted) {
+        e.preventDefault();
+        e.returnValue = '';
     }
 });
 
