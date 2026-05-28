@@ -32,7 +32,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `PRODUCCION_USERNAME/PASSWORD`, `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V33)
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V33). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -1053,39 +1053,52 @@ Herramienta TypeScript independiente que usa `@anthropic-ai/sdk` como asistente 
 
 ```bash
 # Levantar con Docker Compose
+# Copiar plantilla de variables: cp .env.Zimos .env  (luego completar contraseñas)
 docker compose up --build
 
-# Variables de entorno opcionales (.env)
-DB_USERNAME=alera
-DB_PASSWORD=alera2024
+# Variables de entorno en .env (ver .env.Zimos como plantilla)
+
+# ── Base de datos — roles con mínimo privilegio (ver db_security.sql) ──
+DB_URL=jdbc:postgresql://localhost:5432/trazabilidad_cervezas
+DB_USERNAME=zymos_app           # rol solo DML — creado por db_security.sql
+DB_PASSWORD=<contraseña_fuerte>
+
+FLYWAY_USERNAME=zymos_flyway    # rol DDL para migraciones — creado por db_security.sql
+FLYWAY_PASSWORD=<contraseña_flyway>
+
+# ── Usuario administrador inicial de la app ──
 ADMIN_USERNAME=admin
-ADMIN_PASSWORD=alera2024
-PRODUCCION_USERNAME=produccion   # opcional — crea usuario con rol PRODUCCION
-PRODUCCION_PASSWORD=prod2024
-INVENTARIO_USERNAME=inventario   # opcional — crea usuario con rol INVENTARIO
-INVENTARIO_PASSWORD=inv2024
+ADMIN_PASSWORD=<contraseña_admin>
+
+# ── Usuarios adicionales por rol (opcionales) ──
+PRODUCCION_USERNAME=produccion
+PRODUCCION_PASSWORD=<pwd>
+INVENTARIO_USERNAME=inventario
+INVENTARIO_PASSWORD=<pwd>
 FACTURACION_USERNAME=facturacion
-FACTURACION_PASSWORD=fac2024
+FACTURACION_PASSWORD=<pwd>
 EQUIPOS_USERNAME=equipos
-EQUIPOS_PASSWORD=eq2024
+EQUIPOS_PASSWORD=<pwd>
 
 # JWT — obligatorio en producción (docker-compose falla si no está definido)
-JWT_SECRET=cambia-esto-por-un-secreto-seguro-de-32-chars-minimo
-JWT_TTL_HOURS=24                 # opcional — default 24h
+JWT_SECRET=<string_aleatorio_minimo_32_chars>
+JWT_TTL_HOURS=24
 
 # Multi-tenant
-DEFAULT_SUBDOMAIN=default        # subdomain del tenant inicial (localhost usa este valor)
+DEFAULT_SUBDOMAIN=default
 
-# Branding del tenant inicial (los valores por defecto son los de Alera)
-APP_BRAND_NAME=Alera
-APP_BRAND_TAGLINE=Sistema de Trazabilidad Cervecera
-APP_BRAND_LOGO_URL=              # URL pública del logo (vacío = ícono de gota)
-APP_BRAND_COLOR_NAVBAR=#242E0D
-APP_BRAND_COLOR_PRIMARY=#364318
-APP_BRAND_COLOR_ACCENT=#C9A028
-APP_BRAND_COLOR_ACCENT_HOVER=#E0B840
-APP_BRAND_COLOR_CREAM=#F5EDD0
-APP_BRAND_COLOR_BODY_BG=#F0EDE2
+# Branding (ver .env.Zimos para valores por defecto de Zimos)
+APP_BRAND_NAME=Zimos
+APP_BRAND_TAGLINE=Sistema de Gestión y Trazabilidad Integral
+APP_BRAND_LOGO_URL=
+APP_BRAND_COLOR_NAVBAR=#1e293b
+APP_BRAND_COLOR_PRIMARY=#2563eb
+APP_BRAND_COLOR_ACCENT=#0ea5e9
+APP_BRAND_COLOR_ACCENT_HOVER=#38bdf8
+APP_BRAND_COLOR_CREAM=#f8fafc
+APP_BRAND_COLOR_BODY_BG=#f1f5f9
+APP_BRAND_FONT_HEADINGS=Inter
+APP_BRAND_FONT_BODY=Roboto
 ```
 
 - Build multi-etapa: `maven:3.9-eclipse-temurin-21` + `eclipse-temurin:21-jre-alpine`
@@ -1094,6 +1107,8 @@ APP_BRAND_COLOR_BODY_BG=#F0EDE2
 - Desarrollo local: `application.properties` mantiene fallbacks (ej: `DB_PASSWORD:12345`, `JWT_SECRET:zymos-dev-secret-key-change-in-production-2024`) para arrancar sin variables de entorno
 - **Usuario no-root**: la imagen de producción crea usuario/grupo `zymos` y corre el proceso como ese usuario (principio de mínimo privilegio)
 - **Logging**: `logback-spring.xml` — perfil `!prod` con consola colorizada DEBUG; perfil `prod` con stdout estructurado, raíz en WARN, `com.alera` en INFO
+- **Seguridad BD — roles PostgreSQL** (`db_security.sql` en raíz del proyecto): ejecutar UNA VEZ en el servidor PostgreSQL de producción (`psql -U postgres -d trazabilidad_cervezas -f db_security.sql`). Crea dos roles con mínimo privilegio: `zymos_app` (solo DML — usado por HikariCP) y `zymos_flyway` (DDL completo — usado solo por Flyway en cada deploy). `ALTER DEFAULT PRIVILEGES FOR ROLE zymos_flyway` garantiza que `zymos_app` reciba DML automáticamente en tablas creadas por migraciones futuras. Cambiar contraseñas placeholder con `\password zymos_app` y `\password zymos_flyway` tras ejecutar el script.
+- **Plantilla de entorno**: `.env.Zimos` en raíz del proyecto — copiar a `.env` y completar contraseñas antes del primer deploy.
 
 ---
 

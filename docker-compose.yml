@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB:       trazabilidad_cervezas
-      POSTGRES_USER:     ${DB_USERNAME:-alera}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-alera2024}
+      POSTGRES_USER:     ${DB_USERNAME:?DB_USERNAME must be set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,8 +14,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - "5432:5432"   # expuesto solo para desarrollo local; eliminar en producción
+    # Puerto 5432 NO expuesto — solo accesible desde la red interna de Docker.
+    # Para acceso local de desarrollo usar: docker exec -it <container> psql ...
 
   app:
     build: .
@@ -25,8 +25,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_URL:             jdbc:postgresql://db:5432/trazabilidad_cervezas
-      DB_USERNAME:        ${DB_USERNAME:-alera}
-      DB_PASSWORD:        ${DB_PASSWORD:-alera2024}
+      DB_USERNAME:        ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD:        ${DB_PASSWORD:?DB_PASSWORD must be set}
+      # Rol con DDL para Flyway (si no se define, usa DB_USERNAME como fallback)
+      FLYWAY_USERNAME:    ${FLYWAY_USERNAME:-${DB_USERNAME:-alera}}
+      FLYWAY_PASSWORD:    ${FLYWAY_PASSWORD:-${DB_PASSWORD:-alera2024}}
       ADMIN_USERNAME:     ${ADMIN_USERNAME:-admin}
       ADMIN_PASSWORD:     ${ADMIN_PASSWORD:-alera2024}
       # Usuarios adicionales por rol (opcional)
