@@ -657,9 +657,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var CHART_FECHAS   = /*[[${chartFechas}]]*/ [];
-var CHART_DENSIDAD = /*[[${chartDensidad}]]*/ [];
-var CHART_TEMP     = /*[[${chartTemp}]]*/ [];
+var CHART_FECHAS        = /*[[${chartFechas}]]*/ [];
+var CHART_DENSIDAD      = /*[[${chartDensidad}]]*/ [];
+var CHART_TEMP          = /*[[${chartTemp}]]*/ [];
+var CHART_TEMP_OBJETIVO = /*[[${lote.fermTemperatura}]]*/ null;
+var CHART_FG_REAL       = /*[[${lote.densidadFinal}]]*/ null;
 /*]]>*/
 </script>
 <script th:src="@{/js/trazabilidad-detalle.js}"></script>

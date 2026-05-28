@@ -11,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDate;
 import java.util.List;
 
+
+
 public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     @Query("SELECT e FROM Equipo e WHERE e.tipo = :tipo AND e.estado = :estado " +
@@ -33,4 +35,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     @Query("SELECT COUNT(e) FROM Equipo e WHERE e.estado = :estado")
     long countByEstado(@Param("estado") EstadoEquipo estado);
+
+    @Query("SELECT e FROM Equipo e WHERE LOWER(e.nombre) LIKE LOWER(CONCAT('%',:q,'%')) ORDER BY e.nombre ASC")
+    List<Equipo> search(@Param("q") String q, Pageable pageable);
 }

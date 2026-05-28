@@ -1,8 +1,10 @@
 package com.alera.controller;
 
 import com.alera.config.*;
+import com.alera.repository.EquipoRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.ProveedorRepository;
 import com.alera.repository.RecetaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.JwtService;
@@ -44,6 +46,8 @@ class BusquedaControllerTest {
     @MockBean LoteCervezaRepository         loteRepo;
     @MockBean RecetaRepository              recetaRepo;
     @MockBean InsumoInventarioRepository    insumoRepo;
+    @MockBean ProveedorRepository           proveedorRepo;
+    @MockBean EquipoRepository              equipoRepo;
 
     @BeforeEach
     void setUp() {
@@ -51,6 +55,8 @@ class BusquedaControllerTest {
         when(loteRepo.search(any(), any())).thenReturn(java.util.List.of());
         when(recetaRepo.search(any(), any())).thenReturn(java.util.List.of());
         doReturn(new PageImpl<>(java.util.Collections.emptyList())).when(insumoRepo).findByFiltros(any(), any(), any());
+        when(proveedorRepo.search(any(), any())).thenReturn(java.util.List.of());
+        when(equipoRepo.search(any(), any())).thenReturn(java.util.List.of());
     }
 
     @Test

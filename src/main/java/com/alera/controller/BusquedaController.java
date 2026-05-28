@@ -1,7 +1,9 @@
 package com.alera.controller;
 
+import com.alera.repository.EquipoRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.ProveedorRepository;
 import com.alera.repository.RecetaRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -22,13 +24,19 @@ public class BusquedaController {
     private final LoteCervezaRepository loteRepo;
     private final RecetaRepository recetaRepo;
     private final InsumoInventarioRepository insumoRepo;
+    private final ProveedorRepository proveedorRepo;
+    private final EquipoRepository equipoRepo;
 
     public BusquedaController(LoteCervezaRepository loteRepo,
                                RecetaRepository recetaRepo,
-                               InsumoInventarioRepository insumoRepo) {
-        this.loteRepo = loteRepo;
-        this.recetaRepo = recetaRepo;
-        this.insumoRepo = insumoRepo;
+                               InsumoInventarioRepository insumoRepo,
+                               ProveedorRepository proveedorRepo,
+                               EquipoRepository equipoRepo) {
+        this.loteRepo      = loteRepo;
+        this.recetaRepo    = recetaRepo;
+        this.insumoRepo    = insumoRepo;
+        this.proveedorRepo = proveedorRepo;
+        this.equipoRepo    = equipoRepo;
     }
 
     @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -79,15 +87,20 @@ public class BusquedaController {
         if (q.isBlank()) return "redirect:/";
 
         String t = q.trim();
-        var lotes    = loteRepo.search(t, PageRequest.of(0, 6));
-        var recetas  = recetaRepo.search(t, PageRequest.of(0, 6));
-        var insumos  = insumoRepo.findByFiltros(t, null, PageRequest.of(0, 6)).getContent();
+        var lotes       = loteRepo.search(t, PageRequest.of(0, 6));
+        var recetas     = recetaRepo.search(t, PageRequest.of(0, 6));
+        var insumos     = insumoRepo.findByFiltros(t, null, PageRequest.of(0, 6)).getContent();
+        var proveedores = proveedorRepo.search(t, PageRequest.of(0, 6));
+        var equipos     = equipoRepo.search(t, PageRequest.of(0, 6));
 
-        model.addAttribute("q",       q);
-        model.addAttribute("lotes",   lotes);
-        model.addAttribute("recetas", recetas);
-        model.addAttribute("insumos", insumos);
-        model.addAttribute("total",   lotes.size() + recetas.size() + insumos.size());
+        model.addAttribute("q",           q);
+        model.addAttribute("lotes",       lotes);
+        model.addAttribute("recetas",     recetas);
+        model.addAttribute("insumos",     insumos);
+        model.addAttribute("proveedores", proveedores);
+        model.addAttribute("equipos",     equipos);
+        model.addAttribute("total",       lotes.size() + recetas.size() + insumos.size()
+                                          + proveedores.size() + equipos.size());
         return "busqueda";
     }
 }

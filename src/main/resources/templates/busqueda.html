@@ -34,7 +34,7 @@
     <div th:if="${total == 0}" class="empty-state">
         <i class="bi bi-search"></i>
         <h5>Sin resultados</h5>
-        <p class="text-muted">No se encontraron lotes, recetas ni insumos que coincidan con "<span th:text="${q}"></span>"</p>
+        <p class="text-muted">No se encontraron resultados que coincidan con "<span th:text="${q}"></span>"</p>
     </div>
 
     <div class="row g-4" th:unless="${total == 0}">
@@ -125,6 +125,61 @@
                 <div class="card-footer bg-transparent">
                     <a th:href="@{/inventario(nombre=${q})}" class="btn btn-sm btn-zymos-outline w-100">
                         Buscar en inventario
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Proveedores -->
+        <div class="col-lg-4" th:if="${!#lists.isEmpty(proveedores)}">
+            <div class="card-zymos h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-truck me-2"></i>Proveedores</h5>
+                    <span class="badge" style="background:var(--verde-zymos);"
+                          th:text="${#lists.size(proveedores)}"></span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a th:each="prov : ${proveedores}"
+                       th:href="@{/proveedores/editar/{id}(id=${prov.id})}"
+                       class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="fw-600" th:text="${prov.nombre}">—</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-muted small" th:text="${prov.nit != null} ? 'NIT: ' + ${prov.nit} : ''">—</span>
+                            <span th:if="${!prov.activo}" class="badge bg-secondary" style="font-size:.65rem;">Inactivo</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a th:href="@{/proveedores}" class="btn btn-sm btn-zymos-outline w-100">
+                        Ver todos los proveedores
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Equipos -->
+        <div class="col-lg-4" th:if="${!#lists.isEmpty(equipos)}">
+            <div class="card-zymos h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-gear me-2"></i>Equipos</h5>
+                    <span class="badge" style="background:var(--verde-zymos);"
+                          th:text="${#lists.size(equipos)}"></span>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a th:each="eq : ${equipos}"
+                       th:href="@{/equipos/ver/{id}(id=${eq.id})}"
+                       class="list-group-item list-group-item-action py-2 px-3">
+                        <div class="fw-600" th:text="${eq.nombre}">—</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge equipo-tipo-badge" th:text="${eq.tipo.displayName}">—</span>
+                            <span class="small" th:text="${eq.estado.displayName}"
+                                  th:style="${eq.estado.name() == 'OPERATIVO'} ? 'color:var(--dorado);font-weight:600;' : 'color:#6c757d;'">—</span>
+                        </div>
+                    </a>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <a th:href="@{/equipos}" class="btn btn-sm btn-zymos-outline w-100">
+                        Ver todos los equipos
                     </a>
                 </div>
             </div>

@@ -6,11 +6,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface ProveedorRepository extends JpaRepository<Proveedor, Long> {
     List<Proveedor> findAllByActivoTrueOrderByNombreAsc();
     List<Proveedor> findAllByOrderByNombreAsc();
+
+    @Query("SELECT p FROM Proveedor p WHERE LOWER(p.nombre) LIKE LOWER(CONCAT('%',:q,'%')) OR LOWER(COALESCE(p.nit,'')) LIKE LOWER(CONCAT('%',:q,'%')) ORDER BY p.nombre ASC")
+    List<Proveedor> search(@Param("q") String q, Pageable pageable);
 
     @Query("SELECT COUNT(f) FROM FacturaProveedor f WHERE f.proveedorRef.id = :id")
     long countFacturas(@Param("id") Long id);
