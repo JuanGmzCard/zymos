@@ -538,7 +538,9 @@ public class MigracionService {
     private long insertarYRetornarId(String sql, Object... params) {
         KeyHolder kh = new GeneratedKeyHolder();
         jdbc.update(conn -> {
-            PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            // PostgreSQL con RETURN_GENERATED_KEYS devuelve todas las columnas;
+            // especificar "id" garantiza que getKey() recibe exactamente una clave.
+            PreparedStatement ps = conn.prepareStatement(sql, new String[]{"id"});
             for (int i = 0; i < params.length; i++) ps.setObject(i + 1, params[i]);
             return ps;
         }, kh);
