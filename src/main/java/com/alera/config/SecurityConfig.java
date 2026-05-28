@@ -59,6 +59,19 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ApiRateLimitFilter apiRateLimitFilter(
+            @Value("${app.api.rate-limit:100}") int limit) {
+        return new ApiRateLimitFilter(limit);
+    }
+
+    @Bean
+    public FilterRegistrationBean<ApiRateLimitFilter> apiRateLimitFilterRegistration(ApiRateLimitFilter filter) {
+        FilterRegistrationBean<ApiRateLimitFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
@@ -89,12 +102,14 @@ public class SecurityConfig {
                                             TenantFilter tenantFilter,
                                             LoginAttemptFilter loginAttemptFilter,
                                             JwtFilter jwtFilter,
+                                            ApiRateLimitFilter apiRateLimitFilter,
                                             ZymosAuthSuccessHandler successHandler,
                                             ZymosAuthFailureHandler failureHandler,
                                             ZymosAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
+            .addFilterBefore(apiRateLimitFilter, JwtFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
