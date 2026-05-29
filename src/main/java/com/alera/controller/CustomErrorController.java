@@ -20,6 +20,12 @@ public class CustomErrorController implements ErrorController {
         int status = statusAttr != null ? (int) statusAttr : 500;
 
         switch (status) {
+            case 401 -> {
+                // Sesión expirada o petición AJAX sin autenticar — comportamiento esperado, no loguear
+                model.addAttribute("codigo", 401);
+                model.addAttribute("titulo", "Sesión expirada");
+                model.addAttribute("descripcion", "Tu sesión ha expirado. Por favor inicia sesión de nuevo.");
+            }
             case 403 -> {
                 model.addAttribute("codigo", 403);
                 model.addAttribute("titulo", "Acceso denegado");
@@ -36,7 +42,13 @@ public class CustomErrorController implements ErrorController {
                 model.addAttribute("descripcion", "Este tenant no está activo. Contacta al administrador.");
             }
             default -> {
-                log.error("Error HTTP {} en {}", status, request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI));
+                Throwable ex = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+                String uri = (String) request.getAttribute(RequestDispatcher.ERROR_REQUEST_URI);
+                if (ex != null) {
+                    log.error("Error HTTP {} en {}: {}", status, uri, ex.getMessage(), ex);
+                } else {
+                    log.error("Error HTTP {} en {}", status, uri);
+                }
                 model.addAttribute("codigo", status);
                 model.addAttribute("titulo", "Error inesperado");
                 model.addAttribute("descripcion", "Ocurrió un error inesperado. Por favor intenta de nuevo.");
