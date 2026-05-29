@@ -9,6 +9,7 @@ import com.alera.model.enums.EstadoPlanificacion;
 import com.alera.model.enums.TipoInsumo;
 import com.alera.service.PdfExportService;
 import com.alera.service.PlanificacionService;
+import com.alera.service.VentaService;
 import com.alera.model.LecturaFermentacion;
 import com.alera.service.LecturaFermentacionService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -49,6 +50,7 @@ public class TrazabilidadController {
     private final PdfExportService pdfExportService;
     private final LecturaFermentacionService lecturaService;
     private final PlanificacionService planificacionService;
+    private final VentaService ventaService;
 
     public TrazabilidadController(TrazabilidadService service,
                                    EquipoService equipoService,
@@ -58,7 +60,8 @@ public class TrazabilidadController {
                                    FacturaProveedorRepository facturaRepo,
                                    PdfExportService pdfExportService,
                                    LecturaFermentacionService lecturaService,
-                                   PlanificacionService planificacionService) {
+                                   PlanificacionService planificacionService,
+                                   VentaService ventaService) {
         this.service = service;
         this.equipoService = equipoService;
         this.recetaService = recetaService;
@@ -68,6 +71,7 @@ public class TrazabilidadController {
         this.pdfExportService = pdfExportService;
         this.lecturaService = lecturaService;
         this.planificacionService = planificacionService;
+        this.ventaService = ventaService;
     }
 
     @GetMapping
@@ -248,6 +252,7 @@ public class TrazabilidadController {
         model.addAttribute("lote",     lote);
         model.addAttribute("historial", service.obtenerHistorial(id));
         model.addAttribute("lecturas",  lecturas);
+        model.addAttribute("ventasLote", ventaService.listarPorLote(id));
         return "trazabilidad/detalle";
     }
 

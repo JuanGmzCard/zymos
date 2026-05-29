@@ -58,10 +58,12 @@ class TrazabilidadControllerTest {
     @MockBean PdfExportService             pdfExportService;
     @MockBean LecturaFermentacionService   lecturaService;
     @MockBean PlanificacionService         planificacionService;
+    @MockBean VentaService                 ventaService;
 
     @BeforeEach
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
+        when(ventaService.listarPorLote(any())).thenReturn(List.of());
     }
 
     // ── Seguridad ──────────────────────────────────────────────────────

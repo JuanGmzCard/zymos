@@ -219,10 +219,17 @@
                 <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas'))} ? 'active' : ''">
                         <i class="bi bi-receipt"></i> Comercial
                     </a>
                     <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/ventas}"
+                               th:classappend="${currentUri != null and currentUri.contains('/ventas')} ? 'active' : ''">
+                                <i class="bi bi-bag-check me-2"></i>Ventas
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" th:href="@{/facturas}"
                                th:classappend="${currentUri != null and currentUri.contains('/facturas')} ? 'active' : ''">
@@ -343,6 +350,11 @@
                         <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
                                 <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i>Factura
+                            </a>
+                        </li>
+                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                            <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
+                                <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i>Venta
                             </a>
                         </li>
                     </ul>

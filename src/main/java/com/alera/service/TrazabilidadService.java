@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -92,6 +93,11 @@ public class TrazabilidadService {
     public LoteCerveza buscarPorId(Long id) {
         return loteRepo.findByIdWithIngredientes(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Optional<LoteCerveza> buscarPorIdOpcional(Long id) {
+        return loteRepo.findById(id);
     }
 
     @Caching(evict = {
@@ -380,6 +386,7 @@ public class TrazabilidadService {
         return loteRepo.search(q.trim(), PageRequest.of(0, 6)).stream()
             .map(l -> {
                 Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",         l.getId());
                 m.put("codigoLote", l.getCodigoLote());
                 m.put("estilo",     l.getEstilo() != null ? l.getEstilo() : "");
                 m.put("fase",       l.isCompletado() ? "Completado" : l.getFaseActual());

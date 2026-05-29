@@ -713,6 +713,58 @@
         </div>
     </div>
 
+    <!-- Ventas y Despacho de este lote -->
+    <div class="card-zymos mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5><i class="bi bi-bag-check me-2"></i>Ventas y Despacho</h5>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small"
+                      th:text="${#lists.size(ventasLote)} + ' registro' + (${#lists.size(ventasLote) != 1} ? 's' : '')"></span>
+                <a th:href="@{/ventas/nuevo(loteId=${lote.id})}" class="btn btn-sm btn-zymos">
+                    <i class="bi bi-plus-lg me-1"></i>Registrar Venta
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0" th:if="${!#lists.isEmpty(ventasLote)}">
+            <table class="table table-sm mb-0" style="font-size:0.82rem;">
+                <thead>
+                    <tr>
+                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Cliente</th>
+                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Fecha</th>
+                        <th class="text-center" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Cantidad</th>
+                        <th class="text-center" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Estado</th>
+                        <th class="text-end" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Valor Total</th>
+                        <th class="pe-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;width:44px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="v : ${ventasLote}">
+                        <td class="ps-3 fw-semibold" th:text="${v.cliente}">—</td>
+                        <td class="text-muted"
+                            th:text="${v.fechaDespacho != null} ? ${#temporals.format(v.fechaDespacho,'dd/MM/yyyy')} : '—'">—</td>
+                        <td class="text-center"
+                            th:text="${#numbers.formatDecimal(v.cantidad,1,3)} + ' ' + (${v.unidad ?: ''})">—</td>
+                        <td class="text-center">
+                            <span class="badge" th:classappend="${v.estado.badgeClass}"
+                                  th:text="${v.estado.displayName}">—</span>
+                        </td>
+                        <td class="text-end fw-bold"
+                            th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
+                        <td class="pe-3 text-center">
+                            <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
+                               class="btn btn-sm btn-outline-secondary py-0 px-1 border-0" title="Ver">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-body text-center text-muted py-3" th:if="${#lists.isEmpty(ventasLote)}">
+            <i class="bi bi-bag-x me-1"></i>Sin ventas registradas para este lote.
+        </div>
+    </div>
+
     <!-- Metadatos de auditoría -->
     <div class="audit-meta mt-4 mb-2 text-muted small d-flex flex-wrap gap-3 align-items-center">
         <span th:if="${lote.createdAt != null}">
