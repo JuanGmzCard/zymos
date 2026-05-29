@@ -92,14 +92,14 @@ public class PdfExportService {
             addTituloPdf(doc, "FASES DEL PROCESO", pal);
             addTablaFases(doc, lote, pal);
 
+            if (lecturas != null && !lecturas.isEmpty()) {
+                addCurvaFermentacion(doc, lote, lecturas, pal);
+            }
+
             if (lote.getCarbMetodo() != null || lote.getCarbCo2Objetivo() != null
                     || lote.getCarbDestino() != null) {
                 addTituloPdf(doc, "CARBONATACIÓN — DETALLE", pal);
                 addDetalleCarbonacion(doc, lote, pal);
-            }
-
-            if (lecturas != null && !lecturas.isEmpty()) {
-                addCurvaFermentacion(doc, lote, lecturas, pal);
             }
 
             if (lote.getCostoTotal() != null) {
