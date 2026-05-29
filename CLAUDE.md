@@ -41,7 +41,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Perfil prod: `application-prod.properties` — elimina fallbacks de credenciales BD; agrega cookies seguras (`secure=true`, `http-only=true`, `same-site=Strict`), `thymeleaf.cache=true`, HikariCP pool mayor (`maximum-pool-size=${DB_POOL_SIZE:20}`, `minimum-idle=5`). Docker activa `SPRING_PROFILES_ACTIVE=prod`.
 - **HikariCP base** (en `application.properties`, sobreescrito por prod): pool `ZymosPool`, `maximum-pool-size=10`, `minimum-idle=2`, `connection-timeout=20000`, `idle-timeout=300000`, `max-lifetime=1200000`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
-- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zimos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL` (def: vacío — muestra ícono de gota), `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
+- **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zymos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL` (def: vacío — muestra ícono de gota), `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **Rate limiting API**: `app.api.rate-limit=${API_RATE_LIMIT:100}` — máximo de peticiones a `/api/**` por IP en ventana fija de 1 minuto. Implementado en `ApiRateLimitFilter` con Caffeine (`expireAfterWrite`). Devuelve HTTP 429 con `{error:"Rate limit exceeded"}` al excederse.
@@ -1073,10 +1073,10 @@ Herramienta TypeScript independiente que usa `@anthropic-ai/sdk` como asistente 
 
 ```bash
 # Levantar con Docker Compose
-# Copiar plantilla de variables: cp .env.Zimos .env  (luego completar contraseñas)
+# Copiar plantilla de variables: cp .env.Zymos .env  (luego completar contraseñas)
 docker compose up --build
 
-# Variables de entorno en .env (ver .env.Zimos como plantilla)
+# Variables de entorno en .env (ver .env.Zymos como plantilla)
 
 # ── Base de datos — roles con mínimo privilegio (ver db_security.sql) ──
 DB_URL=jdbc:postgresql://localhost:5432/trazabilidad_cervezas
@@ -1107,8 +1107,8 @@ JWT_TTL_HOURS=24
 # Multi-tenant
 DEFAULT_SUBDOMAIN=default
 
-# Branding (ver .env.Zimos para valores por defecto de Zimos)
-APP_BRAND_NAME=Zimos
+# Branding (ver .env.Zymos para valores por defecto de Zymos)
+APP_BRAND_NAME=Zymos
 APP_BRAND_TAGLINE=Sistema de Gestión y Trazabilidad Integral
 APP_BRAND_LOGO_URL=
 APP_BRAND_COLOR_NAVBAR=#1e293b
@@ -1128,7 +1128,7 @@ APP_BRAND_FONT_BODY=Roboto
 - **Usuario no-root**: la imagen de producción crea usuario/grupo `zymos` y corre el proceso como ese usuario (principio de mínimo privilegio)
 - **Logging**: `logback-spring.xml` — perfil `!prod` con consola colorizada DEBUG; perfil `prod` con stdout estructurado, raíz en WARN, `com.alera` en INFO
 - **Seguridad BD — roles PostgreSQL** (`db_security.sql` en raíz del proyecto): ejecutar UNA VEZ en el servidor PostgreSQL de producción (`psql -U postgres -d trazabilidad_cervezas -f db_security.sql`). Crea dos roles con mínimo privilegio: `zymos_app` (solo DML — usado por HikariCP) y `zymos_flyway` (DDL completo — usado solo por Flyway en cada deploy). `ALTER DEFAULT PRIVILEGES FOR ROLE zymos_flyway` garantiza que `zymos_app` reciba DML automáticamente en tablas creadas por migraciones futuras. Cambiar contraseñas placeholder con `\password zymos_app` y `\password zymos_flyway` tras ejecutar el script.
-- **Plantilla de entorno**: `.env.Zimos` en raíz del proyecto — copiar a `.env` y completar contraseñas antes del primer deploy.
+- **Plantilla de entorno**: `.env.Zymos` en raíz del proyecto — copiar a `.env` y completar contraseñas antes del primer deploy.
 
 ---
 
