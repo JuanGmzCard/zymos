@@ -168,6 +168,8 @@ public class InsumoInventarioService {
         if (n.contains("lupulo") || n.contains("lúpulo") || n.contains("hop"))  return TipoInsumo.LUPULO;
         if (n.contains("levadura") || n.contains("yeast"))                       return TipoInsumo.LEVADURA;
         if (n.contains("clarific") || n.contains("gelatin") || n.contains("irish")) return TipoInsumo.CLARIFICANTE;
+        if (n.contains("dextrosa") || n.contains("sacarosa") || n.contains("priming")
+                || n.contains("carbonat") || n.contains("extracto de malta"))     return TipoInsumo.AGENTE_CARBONATACION;
         if (n.contains("envase") || n.contains("botell") || n.contains("lata"))  return TipoInsumo.ENVASE;
         return TipoInsumo.OTRO;
     }

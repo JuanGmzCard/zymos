@@ -64,7 +64,7 @@ public class MigracionService {
                     String obs           = texto(row, 7);
 
                     if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
-                    validarEnum(tipo, "tipo", "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGUA","QUIMICO","ENVASE","OTRO");
+                    validarEnum(tipo, "tipo", "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
 
                     jdbc.update("INSERT INTO insumos_inventario " +
                             "(nombre,tipo,cantidad,unidad,stock_minimo,proveedor,fecha_vencimiento,observaciones," +

@@ -19,7 +19,7 @@ public class MigracionTemplateService {
         hojaInstrucciones(wb, es, "Almacén",
             new String[][]{
                 {"*", "Campo obligatorio"},
-                {"tipo", "MALTA | LUPULO | LEVADURA | CLARIFICANTE | AGUA | QUIMICO | ENVASE | OTRO"},
+                {"tipo", "MALTA | LUPULO | LEVADURA | CLARIFICANTE | AGENTE_CARBONATACION | AGUA | QUIMICO | ENVASE | OTRO"},
                 {"unidad", "gr | kg | mL | L | gal | und"},
                 {"fecha_vencimiento", "Formato: YYYY-MM-DD  (ej: 2025-12-31)"},
                 {"cantidad / stock_minimo", "Número decimal (ej: 5000  o  2.5)"}
@@ -106,7 +106,7 @@ public class MigracionTemplateService {
         };
         cabecera(sh, es, cols);
         ejemplo(sh, es, new Object[]{"Pale Ale 2-Row", "MALTA", 5000, "gr", 500, "MaltaCo SA", "2025-12-31", "Malta base clara"});
-        dropdown(sh, 1, 9999, 1, "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGUA","QUIMICO","ENVASE","OTRO");
+        dropdown(sh, 1, 9999, 1, "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
         dropdown(sh, 1, 9999, 3, "gr","kg","mL","L","gal","und");
         anchos(sh, 220, 160, 120, 100, 130, 200, 170, 300);
     }

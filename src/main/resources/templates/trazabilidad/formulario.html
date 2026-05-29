@@ -331,6 +331,7 @@
                                                 <option value="LUPULO">Lúpulo</option>
                                                 <option value="LEVADURA">Levadura</option>
                                                 <option value="CLARIFICANTE">Clarificante</option>
+                                                <option value="AGENTE_CARBONATACION">Agente de Carbonatación</option>
                                                 <option value="AGUA">Agua</option>
                                                 <option value="QUIMICO">Químico</option>
                                                 <option value="ENVASE">Envase</option>
@@ -757,12 +758,25 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-md-4">
                                 <label class="form-label" for="carbAzucarTipo">Tipo de Azúcar / Agente</label>
-                                <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect">
+                                <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect"
+                                        onchange="actualizarCalculadora()">
                                     <option value="">-- Seleccionar --</option>
+                                    <th:block th:if="${not #lists.isEmpty(agentesCarbonatacion)}">
+                                        <optgroup label="📦 Del inventario">
+                                            <option th:each="ag : ${agentesCarbonatacion}"
+                                                    th:value="${ag.nombre}"
+                                                    th:text="${ag.nombre} + ' (' + ${ag.cantidad} + ' ' + ${ag.unidad} + ')'">
+                                            </option>
+                                        </optgroup>
+                                        <optgroup label="Otro">
+                                    </th:block>
                                     <option value="Dextrosa (glucosa)">Dextrosa (glucosa)</option>
                                     <option value="Sacarosa">Sacarosa</option>
                                     <option value="Extracto de malta">Extracto de malta</option>
                                     <option value="Miel">Miel</option>
+                                    <th:block th:if="${not #lists.isEmpty(agentesCarbonatacion)}">
+                                        </optgroup>
+                                    </th:block>
                                 </select>
                             </div>
                             <div class="col-md-4">
@@ -779,6 +793,10 @@
                                     <i class="bi bi-calculator me-1"></i>
                                     <strong>Sugerido: <span id="gramosCalculados">—</span> g</strong>
                                     <div class="text-muted small mt-1">Basado en litros del lote y CO₂ objetivo</div>
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-2 d-none"
+                                            id="btnAgregarAgenteCosto" onclick="agregarAgenteCostoSugerido()">
+                                        <i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -873,6 +891,15 @@
                         'Extracto de malta': 1.40,
                         'Miel': 1.25
                     };
+                    function factorParaAgente(nombre) {
+                        if (!nombre) return 1.0;
+                        var n = nombre.toLowerCase();
+                        if (n.includes('dextrosa') || n.includes('glucosa')) return 1.0;
+                        if (n.includes('sacarosa') || n.includes('azucar blanca') || n.includes('azúcar blanca')) return 0.91;
+                        if (n.includes('extracto') || n.includes('mme') || n.includes('dme') || n.includes('lme')) return 1.40;
+                        if (n.includes('miel') || n.includes('honey')) return 1.25;
+                        return FACTORES_AZUCAR[nombre] || 1.0;
+                    }
 
                     function toggleMetodoCarb() {
                         const metodo = document.getElementById('carbMetodoSelect').value;
@@ -904,17 +931,52 @@
                         const temp = parseFloat(document.getElementById('carbTempInput').value) || 20;
                         const tipoAzucar = document.getElementById('carbAzucarTipoSelect').value;
 
-                        if (litros <= 0 || co2Obj <= 0) { card.classList.add('d-none'); return; }
+                        if (litros <= 0 || co2Obj <= 0) {
+                            card.classList.add('d-none');
+                            var btnC = document.getElementById('btnAgregarAgenteCosto');
+                            if (btnC) btnC.classList.add('d-none');
+                            return;
+                        }
 
                         // CO₂ residual según temperatura (aproximación estándar homebrewing)
                         const co2Residual = Math.max(0, 0.5 + (temp * 0.065));
                         const co2Extra = Math.max(0, co2Obj - co2Residual);
-                        const factorBase = FACTORES_AZUCAR[tipoAzucar] || 1.0;
+                        const factorBase = factorParaAgente(tipoAzucar);
                         // 4 g de dextrosa por litro por volumen de CO₂
                         const gramos = (co2Extra * litros * 4 * factorBase).toFixed(1);
 
                         card.classList.remove('d-none');
                         document.getElementById('gramosCalculados').textContent = gramos;
+                        var btnCosto = document.getElementById('btnAgregarAgenteCosto');
+                        if (btnCosto) btnCosto.classList.toggle('d-none', parseFloat(gramos) <= 0 || !tipoAzucar);
+                    }
+
+                    function agregarAgenteCostoSugerido() {
+                        var nombre = document.getElementById('carbAzucarTipoSelect').value;
+                        var gramos = parseFloat(document.getElementById('gramosCalculados').textContent) || 0;
+                        if (!nombre || gramos <= 0 || typeof ITEMS_FACTURA === 'undefined') return;
+                        var nombreLower = nombre.toLowerCase().trim();
+                        var match = ITEMS_FACTURA.find(function(it) {
+                            return it.nombre && it.nombre.toLowerCase().trim().includes(nombreLower);
+                        });
+                        var btn = document.getElementById('btnAgregarAgenteCosto');
+                        if (!match) {
+                            if (btn) { btn.textContent = '✗ No encontrado en facturas'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2500); }
+                            return;
+                        }
+                        if (typeof asignados !== 'undefined' && asignados.some(function(a) { return a.itemId == match.id; })) {
+                            actualizarCantidadCosto(match.id, gramos);
+                            if (btn) { btn.textContent = '✓ Cantidad actualizada'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
+                            return;
+                        }
+                        var unidad = (match.unidad || '').toLowerCase().trim();
+                        var cantAsig = unidad === 'kg' ? gramos / 1000 : gramos;
+                        if (typeof asignados !== 'undefined') {
+                            asignados.push({ itemId: match.id, cantidadAsignada: cantAsig, itemData: match });
+                            if (typeof renderizarAsignados === 'function') renderizarAsignados();
+                            if (typeof filtrarItemsCosto === 'function') filtrarItemsCosto();
+                        }
+                        if (btn) { btn.textContent = '✓ Agregado'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
                     }
 
                     // Inicialización al cargar

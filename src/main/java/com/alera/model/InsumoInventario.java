@@ -82,6 +82,7 @@ public class InsumoInventario extends AuditableEntity {
             case LUPULO -> "success";
             case LEVADURA -> "info";
             case CLARIFICANTE -> "primary";
+            case AGENTE_CARBONATACION -> "warning";
             case AGUA -> "info";
             case QUIMICO -> "danger";
             case ENVASE -> "secondary";

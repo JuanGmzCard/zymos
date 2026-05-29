@@ -5,6 +5,7 @@ public enum TipoInsumo {
     LUPULO("Lúpulo"),
     LEVADURA("Levadura"),
     CLARIFICANTE("Clarificante"),
+    AGENTE_CARBONATACION("Agente de Carbonatación"),
     AGUA("Agua"),
     QUIMICO("Químico"),
     ENVASE("Envase"),
