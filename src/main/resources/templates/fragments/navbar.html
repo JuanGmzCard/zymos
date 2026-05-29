@@ -615,14 +615,19 @@
             }
 
             function render(data, q) {
-                var total = data.lotes.length + data.recetas.length + data.insumos.length;
+                var prov  = data.proveedores || [];
+                var equip = data.equipos     || [];
+                var total = data.lotes.length + data.recetas.length + data.insumos.length
+                          + prov.length + equip.length;
                 var html = '';
                 if (total === 0) {
                     html = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
                 } else {
-                    html += buildSection(data.lotes,   'Lotes',   'bi-clipboard-data');
-                    html += buildSection(data.recetas, 'Recetas', 'bi-journal-bookmark');
-                    html += buildSection(data.insumos, 'Insumos', 'bi-box-seam');
+                    html += buildSection(data.lotes,   'Lotes',       'bi-clipboard-data');
+                    html += buildSection(data.recetas, 'Recetas',     'bi-journal-bookmark');
+                    html += buildSection(data.insumos, 'Insumos',     'bi-box-seam');
+                    html += buildSection(prov,         'Proveedores', 'bi-truck');
+                    html += buildSection(equip,        'Equipos',     'bi-gear');
                     html += '<div class="ss-footer"><a href="/buscar?q=' + encodeURIComponent(q) + '">Ver todos los resultados &rarr;</a></div>';
                 }
                 suggest.innerHTML = html;

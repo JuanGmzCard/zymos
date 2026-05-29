@@ -43,7 +43,8 @@ public class BusquedaController {
     @ResponseBody
     public Map<String, Object> suggest(@RequestParam(defaultValue = "") String q) {
         if (q.isBlank() || q.trim().length() < 2) {
-            return Map.of("lotes", List.of(), "recetas", List.of(), "insumos", List.of());
+            return Map.of("lotes", List.of(), "recetas", List.of(), "insumos", List.of(),
+                          "proveedores", List.of(), "equipos", List.of());
         }
         String t = q.trim();
 
@@ -75,10 +76,30 @@ public class BusquedaController {
                 return m;
             }).toList();
 
+        List<Map<String, Object>> proveedores = proveedorRepo.search(t, PageRequest.of(0, 4)).stream()
+            .map(p -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("titulo", p.getNombre());
+                m.put("sub",    p.getNit() != null ? "NIT: " + p.getNit() : "");
+                m.put("url",    "/proveedores/editar/" + p.getId());
+                return m;
+            }).toList();
+
+        List<Map<String, Object>> equipos = equipoRepo.search(t, PageRequest.of(0, 4)).stream()
+            .map(e -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("titulo", e.getNombre());
+                m.put("sub",    e.getTipo() != null ? e.getTipo().getDisplayName() : "");
+                m.put("url",    "/equipos/ver/" + e.getId());
+                return m;
+            }).toList();
+
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("lotes",   lotes);
-        result.put("recetas", recetas);
-        result.put("insumos", insumos);
+        result.put("lotes",       lotes);
+        result.put("recetas",     recetas);
+        result.put("insumos",     insumos);
+        result.put("proveedores", proveedores);
+        result.put("equipos",     equipos);
         return result;
     }
 

@@ -83,4 +83,14 @@ class BusquedaControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
+
+    @Test
+    @WithMockUser
+    @DisplayName("GET /buscar/suggest incluye claves proveedores y equipos")
+    void suggest_incluyeProveedoresYEquipos() throws Exception {
+        mockMvc.perform(get("/buscar/suggest").param("q", "ca"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.proveedores").isArray())
+                .andExpect(jsonPath("$.equipos").isArray());
+    }
 }
