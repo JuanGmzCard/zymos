@@ -44,6 +44,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zimos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL` (def: vacío — muestra ícono de gota), `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
+- **Rate limiting API**: `app.api.rate-limit=${API_RATE_LIMIT:100}` — máximo de peticiones a `/api/**` por IP en ventana fija de 1 minuto. Implementado en `ApiRateLimitFilter` con Caffeine (`expireAfterWrite`). Devuelve HTTP 429 con `{error:"Rate limit exceeded"}` al excederse.
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
 
 ---
@@ -80,7 +81,8 @@ com.alera/
 │               TenantContext (ThreadLocal), TenantFilter (OncePerRequestFilter),
 │               TenantIdentifierResolver (CurrentTenantIdentifierResolver<String>),
 │               HibernateMultiTenancyConfig (HibernatePropertiesCustomizer),
-│               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component)
+│               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component),
+│               ApiRateLimitFilter (OncePerRequestFilter — rate limiting /api/** por IP; ventana fija 1 min via Caffeine; creado como @Bean en SecurityConfig, no @Component)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
 ├── controller/ 25 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
@@ -780,8 +782,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /calendario/eventos` — @ResponseBody JSON de eventos para FullCalendar
 
 ### BusquedaController ("/buscar")
-- `GET /buscar?q=` — búsqueda global (lotes + recetas + insumos), renderiza `busqueda.html`
-- `GET /buscar/suggest?q=` — `@ResponseBody`, `produces=JSON`. Devuelve `{lotes:[{titulo,sub,url}], recetas:[...], insumos:[...]}` con hasta 4 resultados por categoría. Usado por el typeahead del navbar global.
+- `GET /buscar?q=` — búsqueda global (lotes + recetas + insumos + proveedores + equipos), renderiza `busqueda.html`
+- `GET /buscar/suggest?q=` — `@ResponseBody`, `produces=JSON`. Devuelve `{lotes, recetas, insumos, proveedores, equipos}` con hasta 4 resultados por categoría `[{titulo,sub,url}]`. Usado por el typeahead del navbar global. `proveedores` → sub = "NIT: X", url = `/proveedores/editar/{id}`; `equipos` → sub = tipo.displayName, url = `/equipos/ver/{id}`.
 
 ### PlanificacionController ("/planificacion") — todos los roles autenticados; escritura solo ADMIN
 - `GET /planificacion` — página principal: FullCalendar + panel de próximas + tabla completa. Inyecta `proximas` (desde ayer), `todas`, `recetas` (activas), `estados` (enum values).
@@ -901,6 +903,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `/api/**` → cualquier usuario autenticado (HTTP Basic, sesión, o Bearer JWT)
   - Todo lo demás (incluido `/swagger-ui/**`, `/v3/api-docs/**`) → cualquier rol autenticado
 - **Endpoints quick-create**: `POST /inventario/guardar-rapido` hereda `/inventario/**` (ADMIN, INVENTARIO). `POST /facturas/guardar-insumo-rapido` y `/facturas/guardar-equipo-rapido` heredan `/facturas/**` (ADMIN, FACTURACION). `POST /tipos-cerveza/guardar-rapido` hereda `/tipos-cerveza/**` (ADMIN).
+- **Rate limiting — `ApiRateLimitFilter`** (`OncePerRequestFilter`, bean en SecurityConfig): actúa solo en `/api/**`. Cuenta peticiones por IP usando `Cache<String, AtomicInteger>` Caffeine con `expireAfterWrite(1, MINUTES)` — ventana fija de 1 minuto desde la primera petición. Al superar el límite devuelve HTTP 429 `{"error":"Rate limit exceeded"}`. Resuelve IP desde `X-Forwarded-For` (primer valor) o `RemoteAddr`. Límite configurable: `app.api.rate-limit` (def: 100). `FilterRegistrationBean.setEnabled(false)` evita doble registro. **CRÍTICO**: `ApiRateLimitFilter.class` NO puede usarse como anchor en `addFilterBefore` — usar `UsernamePasswordAuthenticationFilter.class`.
 - **JWT — `JwtFilter`** (`OncePerRequestFilter`, bean en SecurityConfig): actúa solo en `/api/**`. Lee el header `Authorization: Bearer <token>`, valida la firma HMAC-SHA256, verifica que el tenant del claim coincida con `TenantContext.getCurrentTenant()`, y si todo es válido establece la autenticación en `SecurityContextHolder`. Si no hay token o es inválido, la request continúa sin autenticación (HTTP Basic puede tomar el relevo). CSRF deshabilitado para `/api/**` — clientes REST usan el token, no cookies. El tenant del token se embebe al generarlo y se verifica en cada request para evitar que un token de tenant A acceda a datos de tenant B. `JwtService` genera tokens con claims `{sub: username, tenant, rol}` y TTL configurable. **CRÍTICO**: en `@WebMvcTest`, mockear `JwtService` (no `JwtFilter`) — mismo patrón que `LoginAttemptService`.
 - **HTTP Security Headers** (configurados en `SecurityConfig.filterChain()` via `.headers()`): HSTS (`max-age=31536000; includeSubDomains`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`. CSP explícitamente omitido — el app usa múltiples CDNs y Thymeleaf inline JS que requieren `'unsafe-inline'`, lo cual vacía el beneficio de CSP.
 - **CSRF en AJAX**: todos los endpoints `@ResponseBody POST` requieren el token CSRF. Los templates que los usan incluyen `<meta name="_csrf" th:content="${_csrf.token}"/>` y `<meta name="_csrf_header" th:content="${_csrf.headerName}"/>`. El JS lee estos metas y los envía como header en el `fetch()`.
@@ -1143,7 +1146,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `CalendarioControllerTest` — 3 tests: 401 sin auth, 200 autenticado, eventos JSON
 - `AdminControllerTest` — 3 tests: 401, 200 ADMIN con lista vacía de logs, filtro por tipo
 - `PerfilControllerTest` — 3 tests: 401, 200 con cualquier rol, POST cambio de contraseña redirige
-- `BusquedaControllerTest` — 3 tests: 401, 200 con query, suggest retorna JSON. **Nota**: `loteRepo.search()` y `recetaRepo.search()` retornan `List<>` (no `Page`) — usar `when(...).thenReturn(List.of())`
+- `BusquedaControllerTest` — 4 tests: 401, 200 con query, suggest retorna JSON, suggest incluye claves `proveedores` y `equipos`. **Nota**: `loteRepo.search()` y `recetaRepo.search()` retornan `List<>` (no `Page`) — usar `when(...).thenReturn(List.of())`
 - `TipoCervezaControllerTest` — 3 tests: 401, 200 ADMIN, `guardarRapido` → JSON 200. **Nota**: stub `service.guardar(any())` para devolver un `TipoCerveza` con id/nombre, si no el NPE cae al catch → 400
 - `UsuarioControllerTest` — 4 tests: 401, 200 ADMIN, suggest JSON, guardar con contraseña inválida redirige. **Nota**: el parámetro del controller se llama `confirmPassword` (no `confirmarPassword`)
 - `RecetaControllerTest` — 4 tests: 401, 200 con filtro activas, suggest JSON, GET /editar retorna formulario
@@ -1177,6 +1180,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
 - `LecturaFermentacionServiceIntegrationTest` — 9 tests: agregar (con temp, sin temp, sin densidad, notas blank→null), ordenamiento ASC, ABV parcial (fórmula, null si sin densidad, null si igual OG), eliminar (una sola, sin afectar otras)
+- `MigracionServiceIntegrationTest` — 9 tests usando tenant aislado `"mig-test"` con cleanup JDBC en `@AfterEach`. Crea archivos Excel programáticamente con `XSSFWorkbook`. Cubre: `importarAlmacen` (happy path 2 insumos, tipo inválido PARCIAL, nombre vacío silenciosamente ignorado, log guardado); `importarEquipos` (estado OPERATIVO por defecto); `importarComercial` (proveedor+factura+ítem con subtotal, proveedor duplicado skip idempotente); `importarProduccion` (receta+escalón+lote, código duplicado reporta error). **NOTA**: filas con primera celda vacía/blank son saltadas por `vacio(row,0)` antes de incrementar `total` — no se cuentan como errores. `stock_minimo NOT NULL DEFAULT 0` requiere pasar `BigDecimal.ZERO` cuando es null (PostgreSQL rechaza null explícito aunque exista DEFAULT).
 - `TenantIsolationIntegrationTest` — 6 tests que verifican aislamiento de datos entre tenants: `@TenantId` filtra `TipoCerveza` y `Usuario` correctamente entre tenants distintos; queries nativas cross-tenant (`findAllByTenantId`, `countByUsernameAndTenantId`) retornan solo el tenant especificado. **Sin `@Transactional` en el test** — cada repo call crea su propio `EntityManager` que captura `TenantContext` en ese momento. Cleanup via `JdbcTemplate` en `@AfterEach`.
 - **NOTA multi-tenant en tests de integración**: los tests deben llamar `TenantContext.setCurrentTenant("default")` en `@BeforeEach` y `TenantContext.clear()` en `@AfterEach` para que Hibernate pueda filtrar/insertar correctamente con el tenant discriminador. **NUNCA poner `@Transactional` en tests de aislamiento multi-tenant** — ver regla 41.
 
@@ -1187,5 +1191,5 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado)
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 362 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
