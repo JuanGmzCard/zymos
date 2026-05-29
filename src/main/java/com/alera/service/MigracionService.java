@@ -442,15 +442,26 @@ public class MigracionService {
                                 Long.class, codigo, tenantId);
                         if (existe > 0) throw new IllegalArgumentException("Ya existe un lote con código '" + codigo + "'");
 
-                        BigDecimal litros = decimal(row, 3);
-                        Integer ogObj     = entero(row, 4);
-                        Integer fgObj     = entero(row, 5);
-                        BigDecimal agua   = decimal(row, 6);
-                        BigDecimal phAgua = decimal(row, 7);
-                        String clar       = texto(row, 8);
-                        String obs        = texto(row, 9);
-                        String notasCata  = texto(row, 10);
-                        String recNom     = texto(row, 11);
+                        BigDecimal litros  = decimal(row, 3);
+                        Integer ogObj      = entero(row, 4);
+                        Integer fgObj      = entero(row, 5);
+                        BigDecimal agua    = decimal(row, 6);
+                        BigDecimal phAgua  = decimal(row, 7);
+                        String clar        = texto(row, 8);
+                        String obs         = texto(row, 9);
+                        String notasCata   = texto(row, 10);
+                        String recNom      = texto(row, 11);
+                        // Carbonatación avanzada
+                        String carbMetodo        = nulaSiBlank(texto(row, 12));
+                        BigDecimal carbCo2Obj    = decimal(row, 13);
+                        BigDecimal carbCo2Real   = decimal(row, 14);
+                        String carbAzucarTipo    = nulaSiBlank(texto(row, 15));
+                        BigDecimal carbAzucarGr  = decimal(row, 16);
+                        BigDecimal carbPresionPsi = decimal(row, 17);
+                        Integer carbTiempoHoras  = entero(row, 18);
+                        String carbTecnica       = nulaSiBlank(texto(row, 19));
+                        String carbValidacion    = nulaSiBlank(texto(row, 20));
+                        String carbDestino       = obsNula(texto(row, 21));
 
                         Long recId = null;
                         if (!recNom.isBlank()) {
@@ -467,11 +478,16 @@ public class MigracionService {
                                 "INSERT INTO lotes_cerveza " +
                                 "(codigo_lote,estilo,fecha_elaboracion,litros_finales,densidad_inicial,densidad_final," +
                                 "agua_utilizada,ph_agua,clarificante,observaciones,notas_cata,receta_id," +
+                                "carb_metodo,carb_co2_objetivo,carb_co2_real,carb_azucar_tipo,carb_azucar_gramos," +
+                                "carb_presion_psi,carb_tiempo_horas,carb_tecnica,carb_validacion,carb_destino," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 codigo, estilo, fecEl, litros, ogObj, fgObj,
                                 agua, phAgua, nulaSiBlank(clar), obsNula(obs), obsNula(notasCata),
-                                recId, tenantId, usuario, usuario);
+                                recId,
+                                carbMetodo, carbCo2Obj, carbCo2Real, carbAzucarTipo, carbAzucarGr,
+                                carbPresionPsi, carbTiempoHoras, carbTecnica, carbValidacion, carbDestino,
+                                tenantId, usuario, usuario);
 
                         loteIds.put(codigo, loteId);
                         ok++;

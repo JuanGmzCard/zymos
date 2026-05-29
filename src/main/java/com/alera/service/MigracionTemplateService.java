@@ -76,9 +76,15 @@ public class MigracionTemplateService {
                 {"tipo (ingredientes)", "MALTA | LUPULO | LEVADURA | CLARIFICANTE"},
                 {"cantidad_con_unidad", "Número + espacio + unidad  (ej: 5000 gr  |  4.5 kg  |  11.5 gr)"},
                 {"og_objetivo / fg_objetivo", "Densidad en formato XXXX  (ej: 1058 para 1.058)"},
+                {"densidad_inicial / densidad_final", "Densidad en formato XXXX  (ej: 1056 para 1.056)"},
                 {"fecha_elaboracion", "Formato: YYYY-MM-DD"},
                 {"activa (Recetas)", "TRUE o FALSE  (default: TRUE)"},
-                {"minutos_restantes (Adiciones Hervor)", "0 = flameout/apagado"}
+                {"minutos_restantes (Adiciones Hervor)", "0 = flameout/apagado"},
+                {"carb_metodo", "NATURAL (priming con azúcar) | FORZADA (inyección CO₂) | vacío = sin registrar"},
+                {"carb_azucar_tipo", "dextrosa | sacarosa | extracto | miel  (solo si carb_metodo = NATURAL)"},
+                {"carb_tecnica", "PIEDRA | PRESION_FIJA  (solo si carb_metodo = FORZADA)"},
+                {"carb_validacion", "ADECUADA | RETENCION_CORRECTA | SOBRECARBONATADA | BAJA_CARBONATACION"},
+                {"carb_co2_objetivo / carb_co2_real", "Volúmenes de CO₂ en formato decimal  (ej: 2.5)"}
             });
         hojaRecetas(wb, es);
         hojaRecetaIngredientes(wb, es);
@@ -266,22 +272,39 @@ public class MigracionTemplateService {
     private void hojaLotes(XSSFWorkbook wb, Estilos es) {
         XSSFSheet sh = wb.createSheet("Lotes");
         String[][] cols = {
-            {"codigo_lote",       "req"},
-            {"estilo",            "req"},
-            {"fecha_elaboracion", "req"},
-            {"litros_finales",    "opt"},
-            {"densidad_inicial",  "opt"},
-            {"densidad_final",    "opt"},
-            {"agua_utilizada",    "opt"},
-            {"ph_agua",           "opt"},
-            {"clarificante",      "opt"},
-            {"observaciones",     "opt"},
-            {"notas_cata",        "opt"},
-            {"nombre_receta",     "opt"}
+            {"codigo_lote",        "req"},
+            {"estilo",             "req"},
+            {"fecha_elaboracion",  "req"},
+            {"litros_finales",     "opt"},
+            {"densidad_inicial",   "opt"},
+            {"densidad_final",     "opt"},
+            {"agua_utilizada",     "opt"},
+            {"ph_agua",            "opt"},
+            {"clarificante",       "opt"},
+            {"observaciones",      "opt"},
+            {"notas_cata",         "opt"},
+            {"nombre_receta",      "opt"},
+            {"carb_metodo",        "opt"},
+            {"carb_co2_objetivo",  "opt"},
+            {"carb_co2_real",      "opt"},
+            {"carb_azucar_tipo",   "opt"},
+            {"carb_azucar_gramos", "opt"},
+            {"carb_presion_psi",   "opt"},
+            {"carb_tiempo_horas",  "opt"},
+            {"carb_tecnica",       "opt"},
+            {"carb_validacion",    "opt"},
+            {"carb_destino",       "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"IPA-001","IPA","2024-01-20",19.5,1058,1012,25,5.3,"","","","IPA Clásica"});
-        anchos(sh, 140, 140, 170, 140, 160, 150, 140, 110, 180, 280, 280, 200);
+        ejemplo(sh, es, new Object[]{
+            "IPA-001","IPA","2024-01-20",19.5,1058,1012,25,5.3,"","","","IPA Clásica",
+            "NATURAL",2.5,2.4,"dextrosa",120.5,"","","","ADECUADA","Botella 330mL"});
+        dropdown(sh, 1, 9999, 12, "NATURAL", "FORZADA");
+        dropdown(sh, 1, 9999, 15, "dextrosa", "sacarosa", "extracto", "miel");
+        dropdown(sh, 1, 9999, 19, "PIEDRA", "PRESION_FIJA");
+        dropdown(sh, 1, 9999, 20, "ADECUADA", "RETENCION_CORRECTA", "SOBRECARBONATADA", "BAJA_CARBONATACION");
+        anchos(sh, 140, 140, 170, 140, 160, 150, 140, 110, 180, 280, 280, 200,
+               150, 160, 120, 160, 170, 140, 160, 150, 200, 280);
     }
 
     private void hojaLoteIngredientes(XSSFWorkbook wb, Estilos es) {
