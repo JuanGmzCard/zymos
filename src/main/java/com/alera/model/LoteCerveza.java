@@ -74,7 +74,9 @@ public class LoteCerveza extends AuditableEntity {
 
     // Carbonatación avanzada — capa 1: variables iniciales
     private String carbMetodo;           // NATURAL / FORZADA
+    @Column(name = "carb_co2_objetivo")
     private BigDecimal carbCo2Objetivo;
+    @Column(name = "carb_co2_real")
     private BigDecimal carbCo2Real;
 
     // Carbonatación avanzada — capa 2: método Natural (priming)
