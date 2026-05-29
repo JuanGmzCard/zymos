@@ -1210,3 +1210,21 @@ APP_BRAND_FONT_BODY=Roboto
 
 Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 362 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
+
+---
+
+## ARCHIVOS DE PRUEBA — MIGRACIÓN
+
+Archivos Excel listos para subir en `/admin/migracion/{subdomain}`. Ubicación: `C:\Users\Juancho\IdeaProjects\BD\Migracion\`
+Generados con `generar_pruebas.py` (requiere `openpyxl`). Estructura idéntica a las plantillas (fila 0=cabecera, 1=leyenda, 2=ejemplo, 3+=datos).
+
+| Archivo | Módulo | Contenido |
+|---|---|---|
+| `prueba_almacen.xlsx` | Almacén | 25 insumos: maltas, lúpulos, levaduras, clarificantes, agentes carbonatación, envases, químicos |
+| `prueba_equipos.xlsx` | Equipos | 16 equipos: fermentadores, ollas, enfriadores, bombas, filtro, medidores, báscula, compresor |
+| `prueba_comercial.xlsx` | Comercial | 7 proveedores · 10 facturas (2024–2025, estados mixtos) · 22 ítems con IVA 19% |
+| `prueba_produccion.xlsx` | Producción | 6 recetas completas (ingredientes, escalones, adiciones) · 9 lotes con carbonatación natural y forzada |
+
+**Dependencias entre módulos**: los lotes en `prueba_produccion.xlsx` referencian las recetas del mismo archivo (se resuelven por nombre en el orden de hojas). Las facturas en `prueba_comercial.xlsx` referencian los proveedores de la hoja "Proveedores" — se procesan en orden. Importar siempre primero `prueba_almacen.xlsx` si se necesita el inventario para validar insumos.
+
+**Casos borde incluidos**: un equipo en estado `MANTENIMIENTO`, una receta inactiva (Imperial Stout), un lote con carbonatación `SOBRECARBONATADA`, lotes con y sin receta asociada, facturas en todos los estados (RECIBIDA/VERIFICADA/PAGADA).
