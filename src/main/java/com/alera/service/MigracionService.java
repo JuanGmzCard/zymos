@@ -72,7 +72,7 @@ public class MigracionService {
                             "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                             nombre, tipo,
                             cantidad != null ? cantidad : BigDecimal.ZERO,
-                            unidadNula(unidad), stockMin, proveedorNulo(proveedor),
+                            unidadNula(unidad), stockMin != null ? stockMin : BigDecimal.ZERO, proveedorNulo(proveedor),
                             fecVenc, obsNula(obs), tenantId, usuario, usuario);
                     ok++;
                 } catch (Exception e) {

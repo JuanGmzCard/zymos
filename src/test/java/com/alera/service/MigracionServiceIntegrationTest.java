@@ -91,15 +91,17 @@ class MigracionServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("importarAlmacen reporta error para nombre vacío")
-    void importarAlmacen_nombreVacio_reportaError() throws Exception {
+    @DisplayName("importarAlmacen ignora silenciosamente filas con nombre vacío")
+    void importarAlmacen_nombreVacio_ignoraFila() throws Exception {
         MockMultipartFile file = excelConHoja("Insumos",
                 new String[][]{{"", "LUPULO", "100", "gr", null, null, null, null}});
 
         MigracionService.Resultado r = service.importarAlmacen(file, TENANT, USUARIO);
 
+        // vacio(row, 0) devuelve true → fila saltada antes de incrementar total
+        assertThat(r.procesadas()).isEqualTo(0);
         assertThat(r.exitosas()).isEqualTo(0);
-        assertThat(r.errores()).isEqualTo(1);
+        assertThat(r.errores()).isEqualTo(0);
         assertThat(r.estado()).isEqualTo("FALLIDO");
     }
 
