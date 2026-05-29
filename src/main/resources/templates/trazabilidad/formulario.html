@@ -694,7 +694,9 @@
             <div class="wz-panel d-none" id="panel-5">
                 <div class="wz-title carbon"><i class="bi bi-wind"></i>Fase de Carbonatación</div>
                 <p class="text-muted small mb-3">Etapa final: la cerveza adquiere el gas carbónico necesario para su presentación.</p>
-                <div class="row g-3 mb-4">
+
+                <!-- Capa 1 — Variables iniciales -->
+                <div class="row g-3 mb-3">
                     <div class="col-md-3">
                         <label class="form-label" for="carbFechaInicial">Fecha de Inicio</label>
                         <input type="date" th:field="*{carbFechaInicial}" class="form-control">
@@ -704,15 +706,136 @@
                         <input type="date" th:field="*{carbFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbTemperatura">Temperatura (°C)</label>
+                        <label class="form-label" for="carbTemperatura">Temp. Cerveza (°C)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4">
+                            <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4" id="carbTempInput">
                             <span class="input-group-text">°C</span>
                         </div>
+                        <div class="form-text">Afecta la absorción de CO₂</div>
                     </div>
                     <div class="col-md-3">
                         <label class="form-label" for="carbFechaFinal">Fecha Fin Real</label>
                         <input type="date" th:field="*{carbFechaFinal}" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label" for="carbCo2Objetivo">CO₂ Objetivo (vol)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" min="0.5" max="6.0"
+                                   th:field="*{carbCo2Objetivo}" class="form-control"
+                                   placeholder="2.5" id="carbCo2ObjetivoInput">
+                            <span class="input-group-text">vol</span>
+                        </div>
+                        <div class="form-text" id="co2Sugerencia"></div>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="carbCo2Real">CO₂ Real Medido (vol)</label>
+                        <div class="input-group">
+                            <input type="number" step="0.1" min="0" max="6.0"
+                                   th:field="*{carbCo2Real}" class="form-control" placeholder="—">
+                            <span class="input-group-text">vol</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="carbMetodo">Método de Carbonatación</label>
+                        <select th:field="*{carbMetodo}" class="form-select" id="carbMetodoSelect">
+                            <option value="">-- Sin especificar --</option>
+                            <option value="NATURAL">Natural / Priming (refermentación en envase)</option>
+                            <option value="FORZADA">Forzada / Inyección de CO₂</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Capa 2 — Natural / Priming -->
+                <div id="seccionNatural" class="phase-card mb-3" style="display:none;">
+                    <div class="phase-card-header" style="background:rgba(39,174,96,0.08);color:#1a6e3e;">
+                        <i class="bi bi-flower1 me-1"></i>Parámetros — Natural (Priming)
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label" for="carbAzucarTipo">Tipo de Azúcar / Agente</label>
+                                <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect">
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="Dextrosa (glucosa)">Dextrosa (glucosa)</option>
+                                    <option value="Sacarosa">Sacarosa</option>
+                                    <option value="Extracto de malta">Extracto de malta</option>
+                                    <option value="Miel">Miel</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="carbAzucarGramos">Azúcar Añadida (g)</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0"
+                                           th:field="*{carbAzucarGramos}" class="form-control"
+                                           placeholder="0.0" id="carbAzucarGramosInput">
+                                    <span class="input-group-text">g</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-info py-2 px-3 mb-0 d-none" id="calculadoraResultado">
+                                    <i class="bi bi-calculator me-1"></i>
+                                    <strong>Sugerido: <span id="gramosCalculados">—</span> g</strong>
+                                    <div class="text-muted small mt-1">Basado en litros del lote y CO₂ objetivo</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capa 2 — Forzada / Inyección -->
+                <div id="seccionForzada" class="phase-card mb-3" style="display:none;">
+                    <div class="phase-card-header" style="background:rgba(52,152,219,0.08);color:#1a4a7a;">
+                        <i class="bi bi-gear me-1"></i>Parámetros — Forzada / Inyección de CO₂
+                    </div>
+                    <div class="p-3">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="carbPresionPsi">Presión Aplicada</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.1" min="0"
+                                           th:field="*{carbPresionPsi}" class="form-control" placeholder="12">
+                                    <span class="input-group-text">PSI</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="carbTiempoHoras">Tiempo de Exposición</label>
+                                <div class="input-group">
+                                    <input type="number" step="1" min="0"
+                                           th:field="*{carbTiempoHoras}" class="form-control" placeholder="48">
+                                    <span class="input-group-text">horas</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="carbTecnica">Técnica</label>
+                                <select th:field="*{carbTecnica}" class="form-select">
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="PIEDRA">Piedra de difusión</option>
+                                    <option value="PRESION_FIJA">Presión fija (superficie / agitación)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Capa 3 — Control de calidad -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="carbValidacion">Validación Organoléptica</label>
+                        <select th:field="*{carbValidacion}" class="form-select">
+                            <option value="">-- Sin evaluar --</option>
+                            <option value="ADECUADA">✓ Espuma y retención adecuadas</option>
+                            <option value="RETENCION_CORRECTA">✓ Retención correcta</option>
+                            <option value="SOBRECARBONATADA">⚠ Sobrecarbonatada</option>
+                            <option value="BAJA_CARBONATACION">⚠ Baja carbonatación</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="carbDestino">Destino y Empaque del Lote</label>
+                        <input type="text" th:field="*{carbDestino}" class="form-control"
+                               placeholder="Ej: 400 botellas 330ml, Barril #12, Lata 473ml...">
                     </div>
                 </div>
 
@@ -731,6 +854,83 @@
                                   placeholder="Evaluación sensorial: aroma, sabor, color, espuma, carbonatación, retrogusto..."></textarea>
                     </div>
                 </div>
+
+                <script>
+                    // Rangos de CO₂ por estilo (volúmenes)
+                    const CO2_RANGOS = {
+                        stout: [1.7, 2.3], porter: [1.7, 2.5], schwarzbier: [1.7, 2.3],
+                        ipa: [2.2, 2.7], pale: [2.2, 2.7], ale: [2.0, 2.5],
+                        weizen: [3.3, 4.5], weiss: [3.3, 4.5], trigo: [3.3, 4.5], wheat: [3.3, 4.5],
+                        lager: [2.4, 2.7], pilsner: [2.4, 2.7], pils: [2.4, 2.7],
+                        belga: [2.9, 3.5], belgian: [2.9, 3.5], saison: [3.0, 3.8],
+                        barleywine: [1.7, 2.3], imperial: [1.7, 2.5], sour: [2.3, 3.0]
+                    };
+
+                    // Factores de conversión por tipo de azúcar (relativo a dextrosa=1)
+                    const FACTORES_AZUCAR = {
+                        'Dextrosa (glucosa)': 1.0,
+                        'Sacarosa': 0.91,
+                        'Extracto de malta': 1.40,
+                        'Miel': 1.25
+                    };
+
+                    function toggleMetodoCarb() {
+                        const metodo = document.getElementById('carbMetodoSelect').value;
+                        document.getElementById('seccionNatural').style.display = metodo === 'NATURAL' ? '' : 'none';
+                        document.getElementById('seccionForzada').style.display = metodo === 'FORZADA' ? '' : 'none';
+                        actualizarCalculadora();
+                    }
+
+                    function sugerirCo2PorEstilo() {
+                        const estilo = (document.getElementById('estilo') || document.querySelector('[name=estilo]') || {value:''}).value.toLowerCase();
+                        const sugerencia = document.getElementById('co2Sugerencia');
+                        if (!sugerencia) return;
+                        for (const [clave, rango] of Object.entries(CO2_RANGOS)) {
+                            if (estilo.includes(clave)) {
+                                sugerencia.textContent = 'Rango sugerido: ' + rango[0] + '–' + rango[1] + ' vol para este estilo';
+                                return;
+                            }
+                        }
+                        sugerencia.textContent = 'Rango típico: 2.0–2.7 vol';
+                    }
+
+                    function actualizarCalculadora() {
+                        const metodo = document.getElementById('carbMetodoSelect').value;
+                        const card = document.getElementById('calculadoraResultado');
+                        if (metodo !== 'NATURAL' || !card) return;
+
+                        const litros = parseFloat((document.getElementById('litrosFinales') || document.querySelector('[name=litrosFinales]') || {value:''}).value) || 0;
+                        const co2Obj = parseFloat(document.getElementById('carbCo2ObjetivoInput').value) || 0;
+                        const temp = parseFloat(document.getElementById('carbTempInput').value) || 20;
+                        const tipoAzucar = document.getElementById('carbAzucarTipoSelect').value;
+
+                        if (litros <= 0 || co2Obj <= 0) { card.classList.add('d-none'); return; }
+
+                        // CO₂ residual según temperatura (aproximación estándar homebrewing)
+                        const co2Residual = Math.max(0, 0.5 + (temp * 0.065));
+                        const co2Extra = Math.max(0, co2Obj - co2Residual);
+                        const factorBase = FACTORES_AZUCAR[tipoAzucar] || 1.0;
+                        // 4 g de dextrosa por litro por volumen de CO₂
+                        const gramos = (co2Extra * litros * 4 * factorBase).toFixed(1);
+
+                        card.classList.remove('d-none');
+                        document.getElementById('gramosCalculados').textContent = gramos;
+                    }
+
+                    // Inicialización al cargar
+                    document.addEventListener('DOMContentLoaded', function() {
+                        toggleMetodoCarb();
+                        sugerirCo2PorEstilo();
+
+                        document.getElementById('carbMetodoSelect').addEventListener('change', toggleMetodoCarb);
+                        document.getElementById('carbCo2ObjetivoInput').addEventListener('input', actualizarCalculadora);
+                        document.getElementById('carbTempInput').addEventListener('input', actualizarCalculadora);
+                        document.getElementById('carbAzucarTipoSelect').addEventListener('change', actualizarCalculadora);
+
+                        const estiloInput = document.getElementById('estilo') || document.querySelector('[name=estilo]');
+                        if (estiloInput) estiloInput.addEventListener('input', sugerirCo2PorEstilo);
+                    });
+                </script>
             </div>
 
             <!-- ══ FOOTER: navegación + guardar ══ -->

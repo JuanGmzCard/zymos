@@ -258,6 +258,16 @@ public class TrazabilidadService {
         lote.setCarbFechaFinalIdeal(dto.getCarbFechaFinalIdeal());
         lote.setCarbTemperatura(dto.getCarbTemperatura());
         lote.setCarbFechaFinal(dto.getCarbFechaFinal());
+        lote.setCarbMetodo(dto.getCarbMetodo());
+        lote.setCarbCo2Objetivo(dto.getCarbCo2Objetivo());
+        lote.setCarbCo2Real(dto.getCarbCo2Real());
+        lote.setCarbAzucarTipo(dto.getCarbAzucarTipo());
+        lote.setCarbAzucarGramos(dto.getCarbAzucarGramos());
+        lote.setCarbPresionPsi(dto.getCarbPresionPsi());
+        lote.setCarbTiempoHoras(dto.getCarbTiempoHoras());
+        lote.setCarbTecnica(dto.getCarbTecnica());
+        lote.setCarbValidacion(dto.getCarbValidacion());
+        lote.setCarbDestino(dto.getCarbDestino());
         lote.setObservaciones(dto.getObservaciones());
         lote.setNotasCata(dto.getNotasCata());
 

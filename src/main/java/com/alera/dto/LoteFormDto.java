@@ -75,7 +75,7 @@ public class LoteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate madurFechaFinal;
 
-    // Carbonatación
+    // Carbonatación — fechas y temperatura
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate carbFechaInicial;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -83,6 +83,24 @@ public class LoteFormDto {
     private BigDecimal carbTemperatura;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate carbFechaFinal;
+
+    // Carbonatación avanzada — capa 1: variables iniciales
+    private String carbMetodo;
+    private BigDecimal carbCo2Objetivo;
+    private BigDecimal carbCo2Real;
+
+    // Carbonatación avanzada — capa 2: Natural (priming)
+    private String carbAzucarTipo;
+    private BigDecimal carbAzucarGramos;
+
+    // Carbonatación avanzada — capa 2: Forzada
+    private BigDecimal carbPresionPsi;
+    private Integer carbTiempoHoras;
+    private String carbTecnica;
+
+    // Carbonatación avanzada — capa 3: control de calidad
+    private String carbValidacion;
+    private String carbDestino;
 
     private String observaciones;
     private String notasCata;
@@ -161,6 +179,26 @@ public class LoteFormDto {
     public void setCarbTemperatura(BigDecimal carbTemperatura) { this.carbTemperatura = carbTemperatura; }
     public LocalDate getCarbFechaFinal() { return carbFechaFinal; }
     public void setCarbFechaFinal(LocalDate carbFechaFinal) { this.carbFechaFinal = carbFechaFinal; }
+    public String getCarbMetodo() { return carbMetodo; }
+    public void setCarbMetodo(String carbMetodo) { this.carbMetodo = carbMetodo; }
+    public BigDecimal getCarbCo2Objetivo() { return carbCo2Objetivo; }
+    public void setCarbCo2Objetivo(BigDecimal carbCo2Objetivo) { this.carbCo2Objetivo = carbCo2Objetivo; }
+    public BigDecimal getCarbCo2Real() { return carbCo2Real; }
+    public void setCarbCo2Real(BigDecimal carbCo2Real) { this.carbCo2Real = carbCo2Real; }
+    public String getCarbAzucarTipo() { return carbAzucarTipo; }
+    public void setCarbAzucarTipo(String carbAzucarTipo) { this.carbAzucarTipo = carbAzucarTipo; }
+    public BigDecimal getCarbAzucarGramos() { return carbAzucarGramos; }
+    public void setCarbAzucarGramos(BigDecimal carbAzucarGramos) { this.carbAzucarGramos = carbAzucarGramos; }
+    public BigDecimal getCarbPresionPsi() { return carbPresionPsi; }
+    public void setCarbPresionPsi(BigDecimal carbPresionPsi) { this.carbPresionPsi = carbPresionPsi; }
+    public Integer getCarbTiempoHoras() { return carbTiempoHoras; }
+    public void setCarbTiempoHoras(Integer carbTiempoHoras) { this.carbTiempoHoras = carbTiempoHoras; }
+    public String getCarbTecnica() { return carbTecnica; }
+    public void setCarbTecnica(String carbTecnica) { this.carbTecnica = carbTecnica; }
+    public String getCarbValidacion() { return carbValidacion; }
+    public void setCarbValidacion(String carbValidacion) { this.carbValidacion = carbValidacion; }
+    public String getCarbDestino() { return carbDestino; }
+    public void setCarbDestino(String carbDestino) { this.carbDestino = carbDestino; }
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
     public String getNotasCata() { return notasCata; }
