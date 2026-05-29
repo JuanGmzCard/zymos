@@ -92,6 +92,12 @@ public class PdfExportService {
             addTituloPdf(doc, "FASES DEL PROCESO", pal);
             addTablaFases(doc, lote, pal);
 
+            if (lote.getCarbMetodo() != null || lote.getCarbCo2Objetivo() != null
+                    || lote.getCarbDestino() != null) {
+                addTituloPdf(doc, "CARBONATACIÓN — DETALLE", pal);
+                addDetalleCarbonacion(doc, lote, pal);
+            }
+
             if (lecturas != null && !lecturas.isEmpty()) {
                 addCurvaFermentacion(doc, lote, lecturas, pal);
             }
@@ -587,6 +593,66 @@ public class PdfExportService {
         PdfPCell cVal = new PdfPCell(new Phrase(texto, ingFont));
         cVal.setBorderColor(C_BORDE); cVal.setPadding(6);
         t.addCell(cVal);
+    }
+
+    private void addDetalleCarbonacion(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
+        Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.verde());
+        Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+
+        // Fila 1: método, CO₂ objetivo/real, validación, destino
+        PdfPTable t1 = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
+        t1.setWidthPercentage(100); t1.setSpacingAfter(6);
+
+        String metodoTexto = lote.getCarbMetodo() == null ? "—"
+                : "NATURAL".equals(lote.getCarbMetodo()) ? "Natural / Priming" : "Forzada / Inyección CO₂";
+        par(t1, "Método", metodoTexto, lbl, val, pal);
+
+        String co2 = "—";
+        if (lote.getCarbCo2Objetivo() != null && lote.getCarbCo2Real() != null)
+            co2 = lote.getCarbCo2Objetivo() + " vol → " + lote.getCarbCo2Real() + " vol (real)";
+        else if (lote.getCarbCo2Objetivo() != null)
+            co2 = lote.getCarbCo2Objetivo() + " vol (objetivo)";
+        else if (lote.getCarbCo2Real() != null)
+            co2 = lote.getCarbCo2Real() + " vol (real)";
+        par(t1, "CO₂", co2, lbl, val, pal);
+
+        String validacion = lote.getCarbValidacion() == null ? "—" : switch (lote.getCarbValidacion()) {
+            case "ADECUADA"           -> "Espuma y retención adecuadas";
+            case "RETENCION_CORRECTA" -> "Retención correcta";
+            case "SOBRECARBONATADA"   -> "Sobrecarbonatada";
+            case "BAJA_CARBONATACION" -> "Baja carbonatación";
+            default                   -> lote.getCarbValidacion();
+        };
+        par(t1, "Validación organoléptica", validacion, lbl, val, pal);
+        par(t1, "Destino / empaque", lote.getCarbDestino() != null ? lote.getCarbDestino() : "—", lbl, val, pal);
+        doc.add(t1);
+
+        // Fila 2: parámetros específicos del método
+        if ("NATURAL".equals(lote.getCarbMetodo())
+                && (lote.getCarbAzucarTipo() != null || lote.getCarbAzucarGramos() != null)) {
+            PdfPTable t2 = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
+            t2.setWidthPercentage(100); t2.setSpacingAfter(4);
+            par(t2, "Tipo de azúcar",
+                    lote.getCarbAzucarTipo() != null ? lote.getCarbAzucarTipo() : "—", lbl, val, pal);
+            par(t2, "Gramos añadidos",
+                    lote.getCarbAzucarGramos() != null ? lote.getCarbAzucarGramos() + " g" : "—", lbl, val, pal);
+            doc.add(t2);
+        }
+
+        if ("FORZADA".equals(lote.getCarbMetodo())
+                && (lote.getCarbPresionPsi() != null || lote.getCarbTiempoHoras() != null
+                    || lote.getCarbTecnica() != null)) {
+            PdfPTable t2 = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
+            t2.setWidthPercentage(100); t2.setSpacingAfter(4);
+            par(t2, "Presión",
+                    lote.getCarbPresionPsi() != null ? lote.getCarbPresionPsi() + " PSI" : "—", lbl, val, pal);
+            par(t2, "Tiempo exposición",
+                    lote.getCarbTiempoHoras() != null ? lote.getCarbTiempoHoras() + " horas" : "—", lbl, val, pal);
+            String tecnica = lote.getCarbTecnica() == null ? "—"
+                    : "PIEDRA".equals(lote.getCarbTecnica()) ? "Piedra de difusión" : "Presión fija (superficie / agitación)";
+            par(t2, "Técnica", tecnica, lbl, val, pal);
+            doc.add(t2);
+        }
     }
 
     private void addTablaFases(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
