@@ -303,6 +303,9 @@ public class TrazabilidadController {
         dto.setAcondFechaInicial(null); dto.setAcondFechaFinalIdeal(null); dto.setAcondFechaFinal(null);
         dto.setMadurFechaInicial(null); dto.setMadurFechaFinalIdeal(null); dto.setMadurFechaFinal(null);
         dto.setCarbFechaInicial(null); dto.setCarbFechaFinalIdeal(null); dto.setCarbFechaFinal(null);
+        dto.setCarbCo2Real(null);
+        dto.setCarbValidacion(null);
+        dto.setCarbDestino(null);
         dto.setNotasCata(null);
         dto.setObservaciones(null);
         dto.setRecetaId(null);

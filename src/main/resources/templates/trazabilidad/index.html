@@ -485,6 +485,9 @@
                             <th class="th-carbon">Fin Ideal</th>
                             <th class="th-carbon">Temperatura</th>
                             <th class="th-carbon">Fin Real</th>
+                            <th class="th-carbon d-none d-lg-table-cell">Método</th>
+                            <th class="th-carbon d-none d-lg-table-cell">CO₂ Obj.</th>
+                            <th class="th-carbon d-none d-lg-table-cell">CO₂ Real</th>
                         </tr></thead>
                         <tbody>
                         <tr th:each="lote : ${lotes}">
@@ -499,6 +502,15 @@
                             <td class="f-date" th:classappend="${lote.carbFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinalIdeal != null} ? ${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura} + ' °C' : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.carbFechaFinal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinal != null} ? ${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
+                            <td class="d-none d-lg-table-cell">
+                                <span th:if="${lote.carbMetodo == 'NATURAL'}" class="badge rounded-pill" style="background:rgba(39,174,96,0.15);color:#1a6e3e;font-size:0.75rem;">Natural</span>
+                                <span th:if="${lote.carbMetodo == 'FORZADA'}" class="badge rounded-pill" style="background:rgba(52,152,219,0.15);color:#1a4a7a;font-size:0.75rem;">Forzada</span>
+                                <span th:if="${lote.carbMetodo == null}" class="text-muted">—</span>
+                            </td>
+                            <td class="d-none d-lg-table-cell text-center"
+                                th:text="${lote.carbCo2Objetivo != null} ? ${lote.carbCo2Objetivo} + ' vol' : '—'">—</td>
+                            <td class="d-none d-lg-table-cell text-center"
+                                th:text="${lote.carbCo2Real != null} ? ${lote.carbCo2Real} + ' vol' : '—'">—</td>
                         </tr>
                         </tbody>
                     </table>

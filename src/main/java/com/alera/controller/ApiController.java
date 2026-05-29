@@ -76,6 +76,18 @@ public class ApiController {
         )).toList());
         res.put("costoTotal",    lote.getCostoTotal());
         res.put("costoPorLitro", lote.getCostoPorLitro());
+        Map<String, Object> carb = new LinkedHashMap<>();
+        carb.put("metodo",       lote.getCarbMetodo());
+        carb.put("co2Objetivo",  lote.getCarbCo2Objetivo());
+        carb.put("co2Real",      lote.getCarbCo2Real());
+        carb.put("azucarTipo",   lote.getCarbAzucarTipo());
+        carb.put("azucarGramos", lote.getCarbAzucarGramos());
+        carb.put("presionPsi",   lote.getCarbPresionPsi());
+        carb.put("tiempoHoras",  lote.getCarbTiempoHoras());
+        carb.put("tecnica",      lote.getCarbTecnica());
+        carb.put("validacion",   lote.getCarbValidacion());
+        carb.put("destino",      lote.getCarbDestino());
+        res.put("carbonatacion", carb);
         res.put("lastModifiedAt", lote.getLastModifiedAt());
         res.put("lastModifiedBy", lote.getLastModifiedBy());
         return res;
