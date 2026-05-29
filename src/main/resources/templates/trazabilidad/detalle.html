@@ -379,6 +379,115 @@
         </div>
     </div>
 
+    <!-- Detalle de Carbonatación Avanzada -->
+    <div class="card-zymos mb-4"
+         th:if="${lote.carbMetodo != null or lote.carbCo2Objetivo != null or lote.carbDestino != null}">
+        <div class="card-header">
+            <h5><i class="bi bi-wind me-2"></i>Carbonatación — Detalle</h5>
+        </div>
+        <div class="card-body">
+
+            <!-- Fila 1: método, CO₂ objetivo/real, validación -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-3" th:if="${lote.carbMetodo != null}">
+                    <div class="detail-label">Método</div>
+                    <span th:if="${lote.carbMetodo == 'NATURAL'}"
+                          class="badge rounded-pill"
+                          style="background:rgba(39,174,96,0.15);color:#1a6e3e;font-size:0.85rem;">
+                        <i class="bi bi-flower1 me-1"></i>Natural / Priming
+                    </span>
+                    <span th:if="${lote.carbMetodo == 'FORZADA'}"
+                          class="badge rounded-pill"
+                          style="background:rgba(52,152,219,0.15);color:#1a4a7a;font-size:0.85rem;">
+                        <i class="bi bi-gear me-1"></i>Forzada / CO₂
+                    </span>
+                </div>
+
+                <div class="col-md-3" th:if="${lote.carbCo2Objetivo != null or lote.carbCo2Real != null}">
+                    <div class="detail-label">Volúmenes CO₂</div>
+                    <div class="densidad-box" style="display:inline-flex;gap:1rem;align-items:center;">
+                        <span th:if="${lote.carbCo2Objetivo != null}">
+                            <small class="text-muted">Objetivo</small><br>
+                            <strong th:text="${lote.carbCo2Objetivo} + ' vol'"></strong>
+                        </span>
+                        <span th:if="${lote.carbCo2Objetivo != null and lote.carbCo2Real != null}"
+                              class="text-muted">→</span>
+                        <span th:if="${lote.carbCo2Real != null}">
+                            <small class="text-muted">Real</small><br>
+                            <strong style="color:var(--verde-alera);"
+                                    th:text="${lote.carbCo2Real} + ' vol'"></strong>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="col-md-3" th:if="${lote.carbValidacion != null}">
+                    <div class="detail-label">Validación Organoléptica</div>
+                    <span th:switch="${lote.carbValidacion}">
+                        <span th:case="'ADECUADA'" class="badge bg-success">✓ Espuma y retención adecuadas</span>
+                        <span th:case="'RETENCION_CORRECTA'" class="badge bg-success">✓ Retención correcta</span>
+                        <span th:case="'SOBRECARBONATADA'" class="badge bg-warning text-dark">⚠ Sobrecarbonatada</span>
+                        <span th:case="'BAJA_CARBONATACION'" class="badge bg-warning text-dark">⚠ Baja carbonatación</span>
+                        <span th:case="*" class="text-muted" th:text="${lote.carbValidacion}"></span>
+                    </span>
+                </div>
+
+                <div class="col-md-3" th:if="${lote.carbDestino != null}">
+                    <div class="detail-label">Destino y Empaque</div>
+                    <div class="detail-value"><i class="bi bi-box-seam me-1 text-muted"></i><span th:text="${lote.carbDestino}"></span></div>
+                </div>
+            </div>
+
+            <!-- Fila 2: parámetros según método -->
+            <div class="row g-3"
+                 th:if="${lote.carbMetodo == 'NATURAL' and (lote.carbAzucarTipo != null or lote.carbAzucarGramos != null)}">
+                <div class="col-12">
+                    <div class="phase-card">
+                        <div class="phase-card-header" style="background:rgba(39,174,96,0.08);color:#1a6e3e;">
+                            <i class="bi bi-flower1 me-1"></i>Priming
+                        </div>
+                        <div class="p-3 d-flex gap-4 flex-wrap">
+                            <div th:if="${lote.carbAzucarTipo != null}">
+                                <div class="detail-label">Tipo de azúcar</div>
+                                <div class="detail-value" th:text="${lote.carbAzucarTipo}"></div>
+                            </div>
+                            <div th:if="${lote.carbAzucarGramos != null}">
+                                <div class="detail-label">Gramos añadidos</div>
+                                <div class="detail-value" th:text="${lote.carbAzucarGramos} + ' g'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-0"
+                 th:if="${lote.carbMetodo == 'FORZADA' and (lote.carbPresionPsi != null or lote.carbTiempoHoras != null or lote.carbTecnica != null)}">
+                <div class="col-12">
+                    <div class="phase-card">
+                        <div class="phase-card-header" style="background:rgba(52,152,219,0.08);color:#1a4a7a;">
+                            <i class="bi bi-gear me-1"></i>Inyección de CO₂
+                        </div>
+                        <div class="p-3 d-flex gap-4 flex-wrap">
+                            <div th:if="${lote.carbPresionPsi != null}">
+                                <div class="detail-label">Presión</div>
+                                <div class="detail-value" th:text="${lote.carbPresionPsi} + ' PSI'"></div>
+                            </div>
+                            <div th:if="${lote.carbTiempoHoras != null}">
+                                <div class="detail-label">Tiempo exposición</div>
+                                <div class="detail-value" th:text="${lote.carbTiempoHoras} + ' horas'"></div>
+                            </div>
+                            <div th:if="${lote.carbTecnica != null}">
+                                <div class="detail-label">Técnica</div>
+                                <div class="detail-value"
+                                     th:text="${lote.carbTecnica == 'PIEDRA'} ? 'Piedra de difusión' : 'Presión fija (superficie / agitación)'"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Curva de Fermentación -->
     <div class="card-zymos mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
