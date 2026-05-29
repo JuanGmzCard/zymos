@@ -430,7 +430,7 @@ public class ExcelExportService {
         Cell cTitulo = fTitulo.createCell(0);
         cTitulo.setCellValue(brandName + " — Reporte de Producción");
         cTitulo.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 13));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 17));
 
         Row fPeriodo = sheet.createRow(r++);
         Cell cPeriodo = fPeriodo.createCell(0);
@@ -438,7 +438,7 @@ public class ExcelExportService {
         String hastaStr = hasta != null ? hasta.format(FMT_FECHA) : "—";
         cPeriodo.setCellValue("Período: " + desdeStr + " — " + hastaStr);
         cPeriodo.setCellStyle(estiloPeriodo(wb, pal));
-        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 13));
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 17));
 
         r++;
         Row fRes = sheet.createRow(r++);
@@ -480,11 +480,12 @@ public class ExcelExportService {
         String[] headers = {
                 "Código", "Estilo", "Receta", "Fecha", "Fase",
                 "OG", "FG", "ABV (%)", "Atenuación (%)", "Eficiencia (%)",
-                "Litros", "Costo Total", "Costo/Litro", "Creado por"
+                "Litros", "Costo Total", "Costo/Litro", "Creado por",
+                "Método Carb.", "CO₂ Obj. (vol)", "CO₂ Real (vol)", "Destino / Empaque"
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        int[] widths = {14, 16, 20, 12, 14, 8, 8, 9, 13, 13, 9, 14, 13, 14};
+        int[] widths = {14, 16, 20, 12, 14, 8, 8, 9, 13, 13, 9, 14, 13, 14, 16, 14, 14, 24};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         for (int i = 0; i < lotes.size(); i++) {
@@ -509,6 +510,12 @@ public class ExcelExportService {
             celdaNum(fila, 11, toDouble(l.getCostoTotal()),           sN);
             celdaNum(fila, 12, toDouble(l.getCostoPorLitro()),        sN);
             celda(fila, 13, l.getCreatedBy() != null ? l.getCreatedBy() : "", sD);
+            String metodoCarb = l.getCarbMetodo() == null ? "" :
+                    "NATURAL".equals(l.getCarbMetodo()) ? "Natural / Priming" : "Forzada / CO₂";
+            celda(fila, 14, metodoCarb, sD);
+            celdaNum(fila, 15, l.getCarbCo2Objetivo() != null ? l.getCarbCo2Objetivo().doubleValue() : null, sN);
+            celdaNum(fila, 16, l.getCarbCo2Real()     != null ? l.getCarbCo2Real().doubleValue()     : null, sN);
+            celda(fila, 17, l.getCarbDestino() != null ? l.getCarbDestino() : "", sD);
         }
 
         if (!lotes.isEmpty()) {
