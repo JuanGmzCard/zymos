@@ -109,7 +109,7 @@ public class SecurityConfig {
         http
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
-            .addFilterBefore(apiRateLimitFilter, JwtFilter.class)
+            .addFilterBefore(apiRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
