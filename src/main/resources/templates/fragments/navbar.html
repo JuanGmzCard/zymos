@@ -225,8 +225,14 @@
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" th:href="@{/ventas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/ventas')} ? 'active' : ''">
+                               th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? 'active' : ''">
                                 <i class="bi bi-bag-check me-2"></i>Ventas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/reportes/ventas}"
+                               th:classappend="${currentUri != null and currentUri.contains('/reportes/ventas')} ? 'active' : ''">
+                                <i class="bi bi-graph-up-arrow me-2"></i>Reporte Ventas
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>

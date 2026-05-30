@@ -5,7 +5,9 @@ import com.alera.model.FacturaItem;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
+import com.alera.model.Venta;
 import com.alera.model.enums.EstadoFactura;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.model.enums.TipoInsumo;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -556,6 +558,218 @@ public class ExcelExportService {
             celda(fila, 0, String.valueOf(row[0]),            alt ? stDatoAlt : stDato);
             celdaNum(fila, 1, ((Number) row[1]).doubleValue(), alt ? stNumAlt  : stNum);
             celdaNum(fila, 2, ((Number) row[2]).doubleValue(), alt ? stNumAlt  : stNum);
+        }
+    }
+
+    // ── Excel Ventas ─────────────────────────────────────────────────
+
+    public byte[] generarExcelVentas(List<Venta> ventas,
+                                      EstadoVenta estadoFiltro,
+                                      LocalDate desde, LocalDate hasta,
+                                      ExportBranding branding) {
+        Pal pal = Pal.of(branding);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            construirSheetVentas(wb, ventas, estadoFiltro, desde, hasta, branding.name(), pal);
+            construirSheetVentasPorCliente(wb, ventas, branding.name(), pal);
+            construirSheetVentasPorEstado(wb, ventas, branding.name(), pal);
+            wb.write(baos);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando Excel de ventas", e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void construirSheetVentas(XSSFWorkbook wb, List<Venta> ventas,
+                                       EstadoVenta estadoFiltro,
+                                       LocalDate desde, LocalDate hasta,
+                                       String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet("Ventas");
+        sheet.setDefaultColumnWidth(15);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stPeriodo = estiloPeriodo(wb, pal);
+        XSSFCellStyle stResumen = estiloResumen(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        // Título
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Ventas y Despacho");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+
+        // Fila período / filtros
+        String periodoStr = "Período: "
+                + (desde != null ? desde.format(FMT_FECHA) : "—")
+                + " al "
+                + (hasta != null ? hasta.format(FMT_FECHA) : "—");
+        if (estadoFiltro != null) periodoStr += "   Estado: " + estadoFiltro.getDisplayName();
+        Row fP = sheet.createRow(r++);
+        Cell cP = fP.createCell(0);
+        cP.setCellValue(periodoStr);
+        cP.setCellStyle(stPeriodo);
+        sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 10));
+
+        // Resumen
+        long totalVentas = ventas.size();
+        long totalDespachadas = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.DESPACHADO).count();
+        BigDecimal totalIngresos = ventas.stream()
+                .filter(v -> v.getEstado() == EstadoVenta.DESPACHADO)
+                .map(v -> v.getValorTotal() != null ? v.getValorTotal() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        Row fRes = sheet.createRow(r++);
+        celda(fRes, 0, "Total ventas: " + totalVentas, stResumen);
+        celda(fRes, 3, "Despachadas: " + totalDespachadas, stResumen);
+        celda(fRes, 6, "Ingresos despachados: $" + String.format("%,.0f", totalIngresos), stResumen);
+
+        r++; // fila en blanco
+        sheet.createRow(r++);
+
+        // Encabezado
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short) (16 * 20));
+        String[] headers = {"Cliente", "Lote", "Fecha Despacho", "Estado",
+                            "Cantidad", "Unidad", "Precio Unitario", "Descuento %",
+                            "Valor Total", "Notas", "Creado por"};
+        for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
+
+        int[] widths = {28, 14, 14, 13, 12, 9, 16, 13, 16, 25, 16};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        // Datos
+        for (int i = 0; i < ventas.size(); i++) {
+            Venta v = ventas.get(i);
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+            XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+            celda(fila, 0, v.getCliente(), sD);
+            celda(fila, 1, v.getCodigoLote() != null ? v.getCodigoLote() : "", sD);
+            celda(fila, 2, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "", sD);
+            celda(fila, 3, v.getEstado() != null ? v.getEstado().getDisplayName() : "", sD);
+            celdaNum(fila, 4, toDouble(v.getCantidad()), sN);
+            celda(fila, 5, v.getUnidad() != null ? v.getUnidad() : "", sD);
+            celdaNum(fila, 6, toDouble(v.getPrecioUnitario()), sN);
+            celdaNum(fila, 7, toDouble(v.getDescuentoPct()), sN);
+            celdaNum(fila, 8, toDouble(v.getValorTotal()), sN);
+            celda(fila, 9, v.getNotas() != null ? v.getNotas() : "", sD);
+            celda(fila, 10, v.getCreatedBy() != null ? v.getCreatedBy() : "", sD);
+        }
+
+        if (!ventas.isEmpty()) {
+            sheet.setAutoFilter(new CellRangeAddress(r - ventas.size() - 1, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetVentasPorCliente(XSSFWorkbook wb, List<Venta> ventas,
+                                                 String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet("Por Cliente");
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (18 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Ventas por Cliente");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short) (14 * 20));
+        celda(fHead, 0, "Cliente",        stHeader);
+        celda(fHead, 1, "Ventas",         stHeader);
+        celda(fHead, 2, "Total $",        stHeader);
+
+        sheet.setColumnWidth(0, 35 * 256);
+        sheet.setColumnWidth(1, 12 * 256);
+        sheet.setColumnWidth(2, 18 * 256);
+
+        // Agrupar por cliente
+        Map<String, long[]> agrupado = new LinkedHashMap<>();
+        for (Venta v : ventas) {
+            String cliente = v.getCliente() != null ? v.getCliente() : "Sin cliente";
+            agrupado.computeIfAbsent(cliente, k -> new long[]{0, 0});
+            agrupado.get(cliente)[0]++;
+            if (v.getValorTotal() != null) {
+                agrupado.get(cliente)[1] += v.getValorTotal().longValue();
+            }
+        }
+
+        int i = 0;
+        for (Map.Entry<String, long[]> entry : agrupado.entrySet()) {
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            celda(fila, 0, entry.getKey(), alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, (double) entry.getValue()[0], alt ? stNumAlt : stNum);
+            celdaNum(fila, 2, (double) entry.getValue()[1], alt ? stNumAlt : stNum);
+            i++;
+        }
+    }
+
+    private void construirSheetVentasPorEstado(XSSFWorkbook wb, List<Venta> ventas,
+                                                String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet("Por Estado");
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (18 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Ventas por Estado");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short) (14 * 20));
+        celda(fHead, 0, "Estado",  stHeader);
+        celda(fHead, 1, "Ventas",  stHeader);
+        celda(fHead, 2, "Total $", stHeader);
+
+        sheet.setColumnWidth(0, 18 * 256);
+        sheet.setColumnWidth(1, 12 * 256);
+        sheet.setColumnWidth(2, 18 * 256);
+
+        Map<String, long[]> agrupado = new LinkedHashMap<>();
+        for (Venta v : ventas) {
+            String estado = v.getEstado() != null ? v.getEstado().getDisplayName() : "Sin estado";
+            agrupado.computeIfAbsent(estado, k -> new long[]{0, 0});
+            agrupado.get(estado)[0]++;
+            if (v.getValorTotal() != null) {
+                agrupado.get(estado)[1] += v.getValorTotal().longValue();
+            }
+        }
+
+        int i = 0;
+        for (Map.Entry<String, long[]> entry : agrupado.entrySet()) {
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            celda(fila, 0, entry.getKey(), alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, (double) entry.getValue()[0], alt ? stNumAlt : stNum);
+            celdaNum(fila, 2, (double) entry.getValue()[1], alt ? stNumAlt : stNum);
+            i++;
         }
     }
 

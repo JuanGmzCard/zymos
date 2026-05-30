@@ -4,9 +4,12 @@ import com.alera.config.ExportBranding;
 import com.alera.config.TenantContext;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Tenant;
+import com.alera.model.Venta;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
+import com.alera.service.VentaService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -31,13 +34,16 @@ public class ReporteController {
     private final LoteCervezaRepository loteRepo;
     private final ExcelExportService    excelExportService;
     private final PdfExportService      pdfExportService;
+    private final VentaService          ventaService;
 
     public ReporteController(LoteCervezaRepository loteRepo,
                               ExcelExportService excelExportService,
-                              PdfExportService pdfExportService) {
+                              PdfExportService pdfExportService,
+                              VentaService ventaService) {
         this.loteRepo           = loteRepo;
         this.excelExportService = excelExportService;
         this.pdfExportService   = pdfExportService;
+        this.ventaService       = ventaService;
     }
 
     @GetMapping("/produccion")
@@ -256,5 +262,127 @@ public class ReporteController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(pdf);
+    }
+
+    // ── Reporte de Ventas ──────────────────────────────────────────────────────
+
+    @GetMapping("/ventas")
+    public String ventasReporte(
+            @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            Model model) {
+
+        if (desde == null) desde = LocalDate.now().minusMonths(3);
+        if (hasta == null) hasta = LocalDate.now();
+
+        List<Venta> ventas = ventaService.listarParaExport(estado, desde, hasta);
+
+        // ── Estadísticas ──────────────────────────────────────────────
+        long totalVentas      = ventas.size();
+        long totalDespachadas = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.DESPACHADO).count();
+        long totalPendientes  = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.PENDIENTE).count();
+        long totalCanceladas  = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.CANCELADO).count();
+
+        BigDecimal ingresosTotales = ventas.stream()
+                .filter(v -> v.getEstado() == EstadoVenta.DESPACHADO)
+                .map(Venta::getValorTotal)
+                .filter(Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        long clientesUnicos = ventas.stream()
+                .map(Venta::getCliente).filter(Objects::nonNull)
+                .distinct().count();
+
+        // ── Gráfico: ingresos por mes ──────────────────────────────────
+        String[] mesesNombres = {"Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"};
+        Map<String, Number> chartIngresosMes = new LinkedHashMap<>();
+        ventas.stream()
+                .filter(v -> v.getFechaDespacho() != null && v.getEstado() == EstadoVenta.DESPACHADO)
+                .sorted(Comparator.comparing(Venta::getFechaDespacho))
+                .collect(Collectors.groupingBy(
+                        v -> {
+                            LocalDate f = v.getFechaDespacho();
+                            return mesesNombres[f.getMonthValue() - 1] + " " + f.getYear();
+                        },
+                        LinkedHashMap::new,
+                        Collectors.summingDouble(v -> v.getValorTotal() != null
+                                ? v.getValorTotal().doubleValue() : 0.0)
+                ))
+                .forEach(chartIngresosMes::put);
+
+        // ── Gráfico: ventas por estado ────────────────────────────────
+        Map<String, Integer> chartEstados = new LinkedHashMap<>();
+        chartEstados.put(EstadoVenta.DESPACHADO.getDisplayName(), (int) totalDespachadas);
+        chartEstados.put(EstadoVenta.PENDIENTE.getDisplayName(),  (int) totalPendientes);
+        chartEstados.put(EstadoVenta.CANCELADO.getDisplayName(),  (int) totalCanceladas);
+
+        // ── Top clientes (para tabla resumen) ─────────────────────────
+        Map<String, double[]> clienteAgg = new LinkedHashMap<>();
+        for (var v : ventas) {
+            if (v.getCliente() == null) continue;
+            double[] agg = clienteAgg.computeIfAbsent(v.getCliente(), k -> new double[]{0, 0});
+            agg[0]++;
+            if (v.getValorTotal() != null) agg[1] += v.getValorTotal().doubleValue();
+        }
+        List<Map<String, Object>> resumenClientes = new ArrayList<>();
+        clienteAgg.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue()[1], a.getValue()[1]))
+                .limit(15)
+                .forEach(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("cliente", e.getKey());
+                    m.put("ventas",  (long) e.getValue()[0]);
+                    m.put("total",   BigDecimal.valueOf(e.getValue()[1]).setScale(0, RoundingMode.HALF_UP));
+                    resumenClientes.add(m);
+                });
+
+        // ── Shortcuts de período ───────────────────────────────────────
+        LocalDate hoy = LocalDate.now();
+        model.addAttribute("urlEsteMes",   "/reportes/ventas?desde=" + hoy.withDayOfMonth(1) + "&hasta=" + hoy);
+        model.addAttribute("urlUltimoMes", "/reportes/ventas?desde=" + hoy.withDayOfMonth(1).minusMonths(1)
+                + "&hasta=" + hoy.withDayOfMonth(1).minusDays(1));
+        model.addAttribute("urlEsteAnio",  "/reportes/ventas?desde=" + hoy.withDayOfYear(1) + "&hasta=" + hoy);
+        model.addAttribute("urlUltimos3",  "/reportes/ventas");
+
+        model.addAttribute("ventas",           ventas);
+        model.addAttribute("desde",            desde);
+        model.addAttribute("hasta",            hasta);
+        model.addAttribute("estadoFiltro",     estado);
+        model.addAttribute("estados",          EstadoVenta.values());
+        model.addAttribute("totalVentas",      totalVentas);
+        model.addAttribute("totalDespachadas", totalDespachadas);
+        model.addAttribute("totalPendientes",  totalPendientes);
+        model.addAttribute("totalCanceladas",  totalCanceladas);
+        model.addAttribute("ingresosTotales",  ingresosTotales);
+        model.addAttribute("clientesUnicos",   clientesUnicos);
+        model.addAttribute("chartIngresosMes", chartIngresosMes);
+        model.addAttribute("chartEstados",     chartEstados);
+        model.addAttribute("resumenClientes",  resumenClientes);
+        return "reportes/ventas";
+    }
+
+    @GetMapping("/ventas/excel")
+    public ResponseEntity<byte[]> ventasExcel(
+            @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request) {
+
+        if (desde == null) desde = LocalDate.now().minusMonths(3);
+        if (hasta == null) hasta = LocalDate.now();
+
+        List<Venta> ventas = ventaService.listarParaExport(estado, desde, hasta);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+
+        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding);
+        String filename = "reporte-ventas-" + desde + "-" + hasta + ".xlsx";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(excel);
     }
 }

@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.*;
 import com.alera.dto.DashboardStats;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.TenantRepository;
 import com.alera.service.DashboardService;
 import com.alera.service.JwtService;
@@ -9,6 +10,7 @@ import com.alera.service.InsumoInventarioService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.PlanificacionService;
 import com.alera.service.UsuarioService;
+import com.alera.service.VentaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,9 +20,11 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -43,6 +47,7 @@ class DashboardControllerTest {
     @MockBean DashboardService           dashboardService;
     @MockBean InsumoInventarioService    insumoService;
     @MockBean PlanificacionService       planificacionService;
+    @MockBean VentaService               ventaService;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +58,9 @@ class DashboardControllerTest {
         when(insumoService.listarBajoStock()).thenReturn(List.of());
         when(insumoService.listarProximosAVencer(30)).thenReturn(List.of());
         when(planificacionService.listarProximas()).thenReturn(List.of());
+        when(ventaService.countByEstado(any())).thenReturn(0L);
+        when(ventaService.sumIngresosDespachados()).thenReturn(BigDecimal.ZERO);
+        when(ventaService.countClientesUnicos()).thenReturn(0L);
     }
 
     @Test

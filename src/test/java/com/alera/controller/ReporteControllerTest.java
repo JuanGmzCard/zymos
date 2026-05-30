@@ -8,6 +8,7 @@ import com.alera.service.JwtService;
 import com.alera.service.PdfExportService;
 import com.alera.service.LogAccesoService;
 import com.alera.service.UsuarioService;
+import com.alera.service.VentaService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class ReporteControllerTest {
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean ExcelExportService         excelService;
     @MockBean PdfExportService           pdfService;
+    @MockBean VentaService               ventaService;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +55,9 @@ class ReporteControllerTest {
                 .thenReturn(new byte[]{0x50, 0x4B});
         when(pdfService.generarPdfReporteProduccion(any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
+        when(ventaService.listarParaExport(any(), any(), any())).thenReturn(List.of());
+        when(excelService.generarExcelVentas(any(), any(), any(), any(), any()))
+                .thenReturn(new byte[]{0x50, 0x4B});
     }
 
     @Test
@@ -92,5 +97,27 @@ class ReporteControllerTest {
                 .param("hasta",  LocalDate.now().toString()))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("reporte-produccion")));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /reportes/ventas con ADMIN retorna 200")
+    void ventasReporte_conAdmin_retorna200() throws Exception {
+        mockMvc.perform(get("/reportes/ventas")
+                .param("desde", LocalDate.now().minusMonths(1).toString())
+                .param("hasta",  LocalDate.now().toString()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("reportes/ventas"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /reportes/ventas/excel descarga archivo")
+    void ventasExcel_retornaDescarga() throws Exception {
+        mockMvc.perform(get("/reportes/ventas/excel")
+                .param("desde", LocalDate.now().minusMonths(1).toString())
+                .param("hasta",  LocalDate.now().toString()))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("reporte-ventas")));
     }
 }

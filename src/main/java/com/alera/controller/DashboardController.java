@@ -1,9 +1,11 @@
 package com.alera.controller;
 
 import com.alera.dto.DashboardStats;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.service.DashboardService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.PlanificacionService;
+import com.alera.service.VentaService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,13 +18,16 @@ public class DashboardController {
     private final DashboardService dashboardService;
     private final InsumoInventarioService insumoService;
     private final PlanificacionService planificacionService;
+    private final VentaService ventaService;
 
     public DashboardController(DashboardService dashboardService,
                                 InsumoInventarioService insumoService,
-                                PlanificacionService planificacionService) {
+                                PlanificacionService planificacionService,
+                                VentaService ventaService) {
         this.dashboardService = dashboardService;
         this.insumoService = insumoService;
         this.planificacionService = planificacionService;
+        this.ventaService = ventaService;
     }
 
     @GetMapping
@@ -50,6 +55,10 @@ public class DashboardController {
         var proximas = planificacionService.listarProximas();
         model.addAttribute("proximasElaboraciones",
             proximas.size() > 5 ? proximas.subList(0, 5) : proximas);
+        model.addAttribute("ventasDespachadas", ventaService.countByEstado(EstadoVenta.DESPACHADO));
+        model.addAttribute("ventasPendientes",  ventaService.countByEstado(EstadoVenta.PENDIENTE));
+        model.addAttribute("ventasIngresos",    ventaService.sumIngresosDespachados());
+        model.addAttribute("ventasClientes",    ventaService.countClientesUnicos());
         return "dashboard";
     }
 }

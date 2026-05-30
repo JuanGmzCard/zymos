@@ -68,6 +68,10 @@
                     <span>Gráficas</span>
                 </label></li>
                 <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
+                    <input type="checkbox" class="form-check-input dash-toggle" data-seccion="ventas" checked>
+                    <span>Ventas y Despacho</span>
+                </label></li>
+                <li><label class="dropdown-item d-flex align-items-center gap-2 py-1">
                     <input type="checkbox" class="form-check-input dash-toggle" data-seccion="finanzas" checked>
                     <span>Finanzas y Últimos Lotes</span>
                 </label></li>
@@ -356,6 +360,67 @@
         </div>
     </div>
 
+    <!-- Ventas y Despacho -->
+    <div id="dash-ventas" class="dash-section mb-4">
+        <div class="dash-handle" title="Arrastrar para mover sección">
+            <i class="bi bi-grip-horizontal"></i>
+        </div>
+        <div class="row g-3">
+            <div class="col-6 col-md-3">
+                <a th:href="@{/ventas(estado='DESPACHADO')}" class="stat-card-link">
+                    <div class="stat-card success">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${ventasDespachadas}">0</div>
+                                <div class="stat-label">Despachadas</div>
+                            </div>
+                            <i class="bi bi-bag-check stat-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a th:href="@{/ventas(estado='PENDIENTE')}" class="stat-card-link">
+                    <div class="stat-card warning">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${ventasPendientes}">0</div>
+                                <div class="stat-label">Pendientes</div>
+                            </div>
+                            <i class="bi bi-hourglass-split stat-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a th:href="@{/ventas}" class="stat-card-link">
+                    <div class="stat-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(ventasIngresos,1,'COMMA',0,'POINT')}">$0</div>
+                                <div class="stat-label">Ingresos</div>
+                            </div>
+                            <i class="bi bi-currency-dollar stat-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-3">
+                <a th:href="@{/ventas}" class="stat-card-link">
+                    <div class="stat-card info">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="stat-number" th:text="${ventasClientes}">0</div>
+                                <div class="stat-label">Clientes Únicos</div>
+                            </div>
+                            <i class="bi bi-people stat-icon"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- Finanzas + Últimos Lotes -->
     <div id="dash-finanzas" class="dash-section mb-4">
         <div class="dash-handle" title="Arrastrar para mover sección">
@@ -462,7 +527,7 @@
 // ── Claves localStorage ───────────────────────────────────────────
 const DASH_VIS_KEY   = 'zymos-dashboard-secciones';
 const DASH_ORDEN_KEY = 'zymos-dashboard-orden';
-const TODAS_SECCIONES = ['stats-lotes','stats-inventario','alertas','elaboraciones','charts','finanzas'];
+const TODAS_SECCIONES = ['stats-lotes','stats-inventario','alertas','elaboraciones','charts','ventas','finanzas'];
 
 // ── Orden ─────────────────────────────────────────────────────────
 function guardarOrden() {

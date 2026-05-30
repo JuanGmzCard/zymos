@@ -91,6 +91,22 @@ public class VentaService {
                 }).toList();
     }
 
+    // ── Export / Reporte ─────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<Venta> listarParaExport(EstadoVenta estado, LocalDate desde, LocalDate hasta) {
+        var lista = ventaRepo.findByPeriodo(desde, hasta);
+        if (estado != null) {
+            return lista.stream().filter(v -> v.getEstado() == estado).toList();
+        }
+        return lista;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Venta> listarPorPeriodo(LocalDate desde, LocalDate hasta) {
+        return ventaRepo.findByPeriodo(desde, hasta);
+    }
+
     // ── Stats ─────────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)

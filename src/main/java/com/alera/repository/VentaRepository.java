@@ -40,4 +40,11 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
            "LOWER(COALESCE(v.codigoLote,'')) LIKE LOWER(CONCAT('%',:q,'%')) " +
            "ORDER BY v.fechaDespacho DESC NULLS LAST")
     List<Venta> search(@Param("q") String q, Pageable pageable);
+
+    @Query("SELECT v FROM Venta v WHERE " +
+           "(:desde IS NULL OR v.fechaDespacho >= :desde) AND " +
+           "(:hasta IS NULL OR v.fechaDespacho <= :hasta) " +
+           "ORDER BY v.fechaDespacho DESC NULLS LAST, v.id DESC")
+    List<Venta> findByPeriodo(@Param("desde") LocalDate desde,
+                              @Param("hasta") LocalDate hasta);
 }

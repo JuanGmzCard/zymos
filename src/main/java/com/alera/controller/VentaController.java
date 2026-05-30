@@ -1,12 +1,18 @@
 package com.alera.controller;
 
+import com.alera.config.ExportBranding;
 import com.alera.dto.VentaFormDto;
+import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoVenta;
+import com.alera.service.ExcelExportService;
 import com.alera.service.TrazabilidadService;
 import com.alera.service.VentaService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -23,10 +29,14 @@ public class VentaController {
 
     private final VentaService service;
     private final TrazabilidadService trazabilidadService;
+    private final ExcelExportService excelExportService;
 
-    public VentaController(VentaService service, TrazabilidadService trazabilidadService) {
+    public VentaController(VentaService service,
+                           TrazabilidadService trazabilidadService,
+                           ExcelExportService excelExportService) {
         this.service = service;
         this.trazabilidadService = trazabilidadService;
+        this.excelExportService = excelExportService;
     }
 
     @GetMapping
@@ -156,6 +166,27 @@ public class VentaController {
         ra.addFlashAttribute("mensaje", "Estado actualizado a " + estado.getDisplayName());
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/ventas/ver/" + id;
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request) {
+
+        var ventas = service.listarParaExport(estado, desde, hasta);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+
+        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding);
+        String filename = "ventas-" + LocalDate.now() + ".xlsx";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(excel);
     }
 
     @GetMapping(value = "/suggest", produces = MediaType.APPLICATION_JSON_VALUE)
