@@ -197,6 +197,7 @@ templates/
 - `V33__factura_iva_incluido.sql` — `ALTER TABLE facturas_proveedor ADD COLUMN IF NOT EXISTS iva_incluido BOOLEAN NOT NULL DEFAULT FALSE` — flag que indica si los precios unitarios de los ítems ya incluyen IVA. Facturas existentes quedan en `false` (modo estándar sin IVA incluido).
 - `V34__indices_performance.sql` — índices adicionales de performance sobre columnas de filtrado frecuente.
 - `V35__carbonatacion_avanzada.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN IF NOT EXISTS` 10 columnas para carbonatación avanzada: `carb_metodo VARCHAR(20)`, `carb_co2_objetivo DECIMAL(4,2)`, `carb_co2_real DECIMAL(4,2)`, `carb_azucar_tipo VARCHAR(100)`, `carb_azucar_gramos DECIMAL(10,2)`, `carb_presion_psi DECIMAL(6,2)`, `carb_tiempo_horas INTEGER`, `carb_tecnica VARCHAR(50)`, `carb_validacion VARCHAR(50)`, `carb_destino VARCHAR(300)`. Todas nullable. **CRÍTICO**: `carb_co2_objetivo` y `carb_co2_real` usan underscore entre `co2` y el sufijo — la `SpringPhysicalNamingStrategy` NO inserta underscore entre dígito y mayúscula, por lo que los campos Java `carbCo2Objetivo`/`carbCo2Real` requieren `@Column(name="carb_co2_objetivo")`/`@Column(name="carb_co2_real")` explícitos.
+- `V37__ventas.sql` — tabla `ventas(id BIGSERIAL PK, tenant_id VARCHAR(100), lote_id FK REFERENCES lotes_cerveza ON DELETE SET NULL, codigo_lote VARCHAR(50), cliente VARCHAR(200) NOT NULL, fecha_despacho DATE NOT NULL, cantidad DECIMAL(10,3) NOT NULL, unidad VARCHAR(50), precio_unitario DECIMAL(12,2) NOT NULL, descuento_pct DECIMAL(5,2) DEFAULT 0, notas VARCHAR(500), estado VARCHAR(20) DEFAULT 'PENDIENTE', created_at, created_by, last_modified_at, last_modified_by)` + CHECK constraints en `estado` (PENDIENTE/DESPACHADO/CANCELADO) y `descuento_pct` (0–100) + índices en tenant_id, fecha, lote_id, estado, LOWER(cliente).
 
 ---
 
@@ -373,6 +374,19 @@ Registro de importaciones de datos por tenant. Tabla `migracion_log`. **Sin `@Te
 - Factory: `MigracionLog.of(tenantId, modulo, archivo, procesadas, exitosas, conErrores, estado, detalles, usuario)`
 - Solo getters (sin setters) — inmutable tras creación
 
+### Venta
+Registro de ventas/despachos de lote a clientes. Tabla `ventas`. Tiene `@TenantId`. **No extiende `AuditableEntity`** — gestiona su propia auditoría con `@PrePersist`/`@PreUpdate`.
+- `id`, `tenantId` (@TenantId), `@ManyToOne lote → LoteCerveza` (LAZY, nullable — ON DELETE SET NULL)
+- `codigoLote` (VARCHAR 50) — desnormalizado para preservar referencia histórica si el lote se elimina
+- `cliente` (VARCHAR 200, NOT NULL), `fechaDespacho` (DATE, NOT NULL)
+- `cantidad` (DECIMAL 10,3, NOT NULL), `unidad` (VARCHAR 50, nullable)
+- `precioUnitario` (DECIMAL 12,2, NOT NULL), `descuentoPct` (DECIMAL 5,2, default 0)
+- `notas` (VARCHAR 500, nullable)
+- `@Enumerated(EnumType.STRING) estado → EstadoVenta` — default PENDIENTE
+- `createdAt`, `createdBy`, `lastModifiedAt`, `lastModifiedBy` — auditoría propia
+- `getValorTotal()` — `cantidad × precioUnitario × (1 - descuentoPct/100)`, escala 2
+- **EstadoVenta** (`com.alera.model.enums`): `PENDIENTE("Pendiente", "bg-warning text-dark")`, `DESPACHADO("Despachado", "bg-success")`, `CANCELADO("Cancelado", "bg-secondary")`. Cada valor tiene `getDisplayName()` y `getBadgeClass()`.
+
 ### Usuario
 No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist createdAt`. Campos:
 - `id`, `tenantId` (@TenantId — usuarios aislados por tenant), `username` (unique por tenant)
@@ -443,6 +457,14 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### MigracionLogRepository
 - `findByTenantIdOrderByFechaDesc(tenantId)` — historial de importaciones del tenant, orden cronológico inverso. Query JPQL sin `@TenantId` — consulta por el campo `tenantId` directamente (Hibernate NO añade filtro automático porque la entidad no tiene `@TenantId`).
 - `countByTenantId(tenantId)` — conteo de importaciones del tenant.
+
+### VentaRepository
+- `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR v.estado = :estado`, rango de fechas en `fechaDespacho`. Orden `fechaDespacho DESC NULLS LAST, id DESC`.
+- `findByLoteIdOrderByFechaDespachoDesc(loteId)` — ventas de un lote, orden cronológico inverso. Usado en `TrazabilidadController.ver()` para la sección "Ventas y Despacho".
+- `countByEstado(EstadoVenta)` — conteo por estado; usado en stat-cards.
+- `countClientesUnicos()` — `COUNT(DISTINCT v.cliente)` — para stat-card de clientes únicos.
+- `sumIngresosDespachados()` — `SUM(cantidad × precioUnitario × (1 - descuentoPct/100))` solo para `estado = DESPACHADO`; retorna null si no hay ventas (el servicio normaliza a ZERO).
+- `search(q, Pageable)` — LIKE en `LOWER(cliente)` y `LOWER(COALESCE(codigoLote,''))`, orden `fechaDespacho DESC NULLS LAST`.
 
 ### ElaboracionPlanificadaRepository
 - `findProximas(desde)` — elaboraciones con `fechaPlaneada >= :desde`, `LEFT JOIN FETCH receta`, orden ASC
@@ -680,6 +702,16 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `cambiarEstado(id, nuevoEstado)` — busca el plan por ID y actualiza el estado
 - `eliminar(id)` — `repo.deleteById(id)`
 
+### VentaService
+- `listarPaginado(estado, desde, hasta, page)` — paginado con filtros opcionales; todos los parámetros son nullable.
+- `buscarPorId(id)` — `Optional<Venta>`
+- `listarPorLote(loteId)` — `List<Venta>` ordenadas por `fechaDespacho DESC`; usado por `TrazabilidadController.ver()` para mostrar las ventas del lote en `detalle.html`.
+- `guardar(dto)` / `actualizar(id, dto)` / `eliminar(id)` — CRUD básico; `mapearDto()` vincula el lote via `loteRepo.findById` si `dto.getLoteId() != null`.
+- `cambiarEstado(id, EstadoVenta)` — actualiza estado y guarda; no-op si no existe.
+- `suggest(q)` — `@Transactional(readOnly=true)`, query corta (< 2 chars) retorna lista vacía; busca via `repo.search()` (limit 6); retorna `[{titulo, sub, fecha, url}]`.
+- `countTotal()`, `countByEstado(EstadoVenta)`, `countClientesUnicos()`, `sumIngresosDespachados()` — stats para las 4 stat-cards de la lista.
+- `pageSize` inyectado via `@Value("${app.page-size:15}")`.
+
 ### LecturaFermentacionService
 - `listarPorLote(loteId)` — `@Transactional(readOnly=true)`, delega a `findByLoteIdOrdenadas` (orden fecha ASC, id ASC)
 - `agregar(loteId, fecha, densidad, temperatura, notas)` — crea `LecturaFermentacion`, vincula al lote via `loteRepo.findById`. `densidad` y `temperatura` son opcionales (null permitido). `notas` se normaliza a null si está en blanco.
@@ -854,6 +886,19 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /admin/migracion/{subdomain}/importar/{modulo}` — procesa la importación. Rechaza archivos vacíos con flash warning. Delega a `MigracionService.importar*()` según módulo. Flash success/warning/danger con resumen: filas procesadas, exitosas, errores y primeros 3 mensajes de error. Siempre redirige a `GET /admin/migracion/{subdomain}`.
 - Accesible desde el botón "Migración" en cada card de `/admin/tenants`.
 - Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
+
+### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
+- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote.
+- `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. Typeahead de lote usa `GET /suggest?q=` (TrazabilidadController). Preview de total en tiempo real.
+- `POST /ventas/guardar` — crea venta, redirige a `/ventas/ver/{id}` con flash success.
+- `GET /ventas/ver/{id}` — detalle con datos, total calculado, panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN).
+- `GET /ventas/editar/{id}` — formulario de edición con datos pre-llenados.
+- `POST /ventas/actualizar/{id}` — actualiza, redirige a `/ventas/ver/{id}`.
+- `POST /ventas/{id}/eliminar` — elimina y redirige a `/ventas`.
+- `POST /ventas/{id}/estado` — cambia `EstadoVenta`, redirige a `/ventas/ver/{id}`.
+- `GET /ventas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{titulo, sub, fecha, url}]`.
+- **Integración con detalle de lote**: `TrazabilidadController.ver()` pasa `ventasLote` al modelo; `detalle.html` muestra la sección "Ventas y Despacho" con botón "Registrar Venta" (link a `/ventas/nuevo?loteId={id}`) solo para ADMIN/FACTURACION/SUPERADMIN.
+- **`@WebMvcTest`**: `@MockBean VentaService ventaService` + `@MockBean TrazabilidadService trazabilidadService`.
 
 ### ProveedorController ("/proveedores")
 - CRUD + acceso ADMIN y FACTURACION
