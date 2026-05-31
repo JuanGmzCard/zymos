@@ -17,6 +17,8 @@
         html.dark-mode .items-table th { background: var(--dm-verde-bg); color: var(--dm-text); }
         .lote-buscador { cursor: pointer; }
         .lote-buscador:focus { cursor: text; }
+        .lote-empaque-badge { font-size: 0.7rem; max-width: 160px; overflow: hidden;
+                              text-overflow: ellipsis; white-space: nowrap; color: var(--dorado); }
     </style>
 </head>
 <body>
@@ -108,16 +110,19 @@
                                             <!-- Lote typeahead -->
                                             <td>
                                                 <div class="position-relative">
-                                                    <input type="text" class="form-control form-control-sm lote-buscador"
-                                                           th:name="'items[' + ${iStat.index} + '].codigoLoteBuscador'"
-                                                           th:value="${item.codigoLoteBuscador}"
-                                                           placeholder="Buscar lote…" autocomplete="off">
+                                                    <div class="input-group input-group-sm">
+                                                        <input type="text" class="form-control lote-buscador"
+                                                               th:name="'items[' + ${iStat.index} + '].codigoLoteBuscador'"
+                                                               th:value="${item.codigoLoteBuscador}"
+                                                               placeholder="Click para seleccionar…" autocomplete="off">
+                                                        <span class="lote-empaque-badge input-group-text"
+                                                              style="display:none;" title=""></span>
+                                                    </div>
                                                     <div class="search-suggest lote-suggest" style="display:none;"></div>
                                                 </div>
                                                 <input type="hidden" class="lote-id-hidden"
                                                        th:name="'items[' + ${iStat.index} + '].loteId'"
                                                        th:value="${item.loteId}">
-                                                <div class="lote-empaque-badge mt-1" style="display:none;"></div>
                                             </td>
                                             <!-- Descripción -->
                                             <td>
@@ -271,12 +276,14 @@ var UNIT_OPTIONS = `
 function crearFilaHTML(idx) {
     return `<td>
         <div class="position-relative">
-            <input type="text" class="form-control form-control-sm lote-buscador"
-                   name="items[${idx}].codigoLoteBuscador" placeholder="Buscar lote…" autocomplete="off">
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control lote-buscador"
+                       name="items[${idx}].codigoLoteBuscador" placeholder="Click para seleccionar…" autocomplete="off">
+                <span class="lote-empaque-badge input-group-text" style="display:none;" title=""></span>
+            </div>
             <div class="search-suggest lote-suggest" style="display:none;"></div>
         </div>
         <input type="hidden" class="lote-id-hidden" name="items[${idx}].loteId" value="">
-        <div class="lote-empaque-badge mt-1" style="display:none;"></div>
     </td>
     <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="Opcional"></td>
     <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" required></td>
@@ -394,7 +401,7 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         var hidden  = cell.querySelector('.lote-id-hidden');
         hidden.value = '';
         var badge = cell.querySelector('.lote-empaque-badge');
-        if (badge) badge.style.display = 'none';
+        if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
         clearTimeout(loteTimer);
         var q = input.value.trim();
         loteTimer = setTimeout(function() { fetchLotes(suggest, q); }, 260);
@@ -443,19 +450,19 @@ function seleccionarLote(el, cell) {
             }
         }
     }
-    // Show empaque badge
+    // Show empaque badge (inline input-group-text)
     var badge = cell.querySelector('.lote-empaque-badge');
     if (badge) {
         var cdFull = el.dataset.carbDestinoFull || '';
         var litros = el.dataset.litros || '';
         if (cdFull || litros) {
-            var parts = [];
-            if (cdFull) parts.push('<i class="bi bi-box-seam me-1"></i>' + cdFull);
-            if (litros) parts.push('<i class="bi bi-droplet me-1"></i>' + litros + ' L disponibles');
-            badge.innerHTML = '<small class="text-muted">' + parts.join(' &nbsp;·&nbsp; ') + '</small>';
+            var text = cdFull + (litros ? ' · ' + litros + ' L' : '');
+            badge.textContent = text;
+            badge.title = text;
             badge.style.display = '';
         } else {
             badge.style.display = 'none';
+            badge.textContent = '';
         }
     }
 }
