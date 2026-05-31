@@ -355,14 +355,14 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         var q = input.value.trim();
         if (q.length < 2) { suggest.style.display = 'none'; return; }
         loteTimer = setTimeout(function() {
-            fetch('/suggest?q=' + encodeURIComponent(q))
+            fetch('/ventas/suggest-lotes?q=' + encodeURIComponent(q))
                 .then(function(r) { return r.json(); })
                 .then(function(items) {
                     if (!items.length) { suggest.style.display = 'none'; return; }
                     suggest.innerHTML = items.map(function(i) {
                         var cdFull = (i.carbDestino || '').trim();
                         var cd = cdFull.replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
-                        var litros = i.litrosFinales || '';
+                        var litros = i.litrosDisponibles || i.litrosFinales || '';
                         return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
                                '" data-codigo="' + (i.codigoLote||'') +
                                '" data-carb-destino="' + cd + '"' +
@@ -371,7 +371,7 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
                                ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
                                '<i class="bi bi-clipboard-data ss-icon"></i>' +
                                '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
-                               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L' : '') + '</span>' +
+                               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L disp.' : '') + '</span>' +
                                '</a>';
                     }).join('');
                     suggest.style.display = 'block';
@@ -430,7 +430,7 @@ function seleccionarLote(el, cell) {
         if (cdFull || litros) {
             var parts = [];
             if (cdFull) parts.push('<i class="bi bi-box-seam me-1"></i>' + cdFull);
-            if (litros) parts.push('<i class="bi bi-droplet me-1"></i>' + litros + ' L producidos');
+            if (litros) parts.push('<i class="bi bi-droplet me-1"></i>' + litros + ' L disponibles');
             badge.innerHTML = '<small class="text-muted">' + parts.join(' &nbsp;·&nbsp; ') + '</small>';
             badge.style.display = '';
         } else {

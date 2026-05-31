@@ -237,4 +237,10 @@ public class VentaController {
     public List<Map<String, Object>> suggest(@RequestParam(defaultValue = "") String q) {
         return service.suggest(q);
     }
+
+    @GetMapping(value = "/suggest-lotes", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> suggestLotes(@RequestParam(defaultValue = "") String q) {
+        return service.suggestLotesParaVenta(q);
+    }
 }

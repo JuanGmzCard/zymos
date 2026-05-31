@@ -47,6 +47,12 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
            "ORDER BY l.createdAt DESC")
     List<LoteCerveza> search(@Param("q") String q, Pageable pageable);
 
+    @Query("SELECT l FROM LoteCerveza l WHERE l.carbFechaFinal IS NOT NULL AND " +
+           "(LOWER(l.codigoLote) LIKE LOWER(CONCAT('%', :q, '%')) OR " +
+           "LOWER(l.estilo) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+           "ORDER BY l.carbFechaFinal DESC")
+    List<LoteCerveza> searchCompletados(@Param("q") String q, Pageable pageable);
+
     @Query("SELECT l FROM LoteCerveza l LEFT JOIN FETCH l.ingredientes WHERE l.id = :id")
     Optional<LoteCerveza> findByIdWithIngredientes(@Param("id") Long id);
 

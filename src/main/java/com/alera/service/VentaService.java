@@ -146,6 +146,30 @@ public class VentaService {
     }
 
     @Transactional(readOnly = true)
+    public List<Map<String, Object>> suggestLotesParaVenta(String q) {
+        if (q == null || q.trim().length() < 2) return List.of();
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (var l : loteRepo.searchCompletados(q.trim(), PageRequest.of(0, 20))) {
+            BigDecimal disponible = null;
+            if (l.getLitrosFinales() != null) {
+                BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
+                disponible = l.getLitrosFinales().subtract(vendido);
+                if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
+            }
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id",                l.getId());
+            m.put("codigoLote",        l.getCodigoLote());
+            m.put("estilo",            l.getEstilo());
+            m.put("carbDestino",       l.getCarbDestino()   != null ? l.getCarbDestino()   : "");
+            m.put("litrosFinales",     l.getLitrosFinales() != null ? l.getLitrosFinales() : "");
+            m.put("litrosDisponibles", disponible != null ? disponible.stripTrailingZeros().toPlainString() : "");
+            result.add(m);
+            if (result.size() >= 6) break;
+        }
+        return result;
+    }
+
+    @Transactional(readOnly = true)
     public List<Map<String, Object>> suggest(String q) {
         if (q == null || q.trim().length() < 2) return List.of();
         return ventaRepo.search(q.trim(), PageRequest.of(0, 6)).stream()
