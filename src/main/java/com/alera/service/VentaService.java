@@ -2,12 +2,15 @@ package com.alera.service;
 
 import com.alera.config.TenantContext;
 import com.alera.dto.VentaFormDto;
+import com.alera.dto.VentaItemFormDto;
 import com.alera.model.Venta;
 import com.alera.model.VentaHistorialEstado;
+import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
+import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -29,6 +32,7 @@ import java.util.Optional;
 public class VentaService {
 
     private final VentaRepository ventaRepo;
+    private final VentaItemRepository ventaItemRepo;
     private final LoteCervezaRepository loteRepo;
     private final VentaHistorialEstadoRepository historialRepo;
     private final NotificacionService notificacionService;
@@ -37,12 +41,14 @@ public class VentaService {
     private int pageSize;
 
     public VentaService(VentaRepository ventaRepo,
+                        VentaItemRepository ventaItemRepo,
                         LoteCervezaRepository loteRepo,
                         VentaHistorialEstadoRepository historialRepo,
                         NotificacionService notificacionService) {
-        this.ventaRepo         = ventaRepo;
-        this.loteRepo          = loteRepo;
-        this.historialRepo     = historialRepo;
+        this.ventaRepo           = ventaRepo;
+        this.ventaItemRepo       = ventaItemRepo;
+        this.loteRepo            = loteRepo;
+        this.historialRepo       = historialRepo;
         this.notificacionService = notificacionService;
     }
 
@@ -60,7 +66,7 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Venta> listarPorLote(Long loteId) {
-        return ventaRepo.findByLoteIdOrderByFechaDespachoDesc(loteId);
+        return ventaItemRepo.findVentasByLoteId(loteId);
     }
 
     @Transactional(readOnly = true)
@@ -69,25 +75,19 @@ public class VentaService {
     }
 
     /**
-     * Verifica si la cantidad de la nueva venta supera el disponible en el lote.
+     * Valida la cantidad disponible por lote para todos los ítems del DTO.
      * Retorna un mensaje de advertencia o null si todo está bien.
      */
     @Transactional(readOnly = true)
-    public String validarCantidadDisponible(Long loteId, BigDecimal nuevaCantidad, Long excludeVentaId) {
-        if (loteId == null || nuevaCantidad == null) return null;
-        return loteRepo.findById(loteId).map(lote -> {
-            if (lote.getLitrosFinales() == null) return null;
-            BigDecimal disponible = lote.getLitrosFinales();
-            BigDecimal yaVendido = ventaRepo.sumCantidadActivaByLote(loteId, excludeVentaId);
-            BigDecimal total = yaVendido.add(nuevaCantidad);
-            if (total.compareTo(disponible) > 0) {
-                return String.format(
-                    "Advertencia: la cantidad total vendida del lote %s sería %.2f L, " +
-                    "superando los %.0f L producidos.",
-                    lote.getCodigoLote(), total, disponible);
-            }
-            return null;
-        }).orElse(null);
+    public String validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId) {
+        if (items == null || items.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (VentaItemFormDto item : items) {
+            if (item.getLoteId() == null || item.getCantidad() == null) continue;
+            String warn = validarItemCantidad(item.getLoteId(), item.getCantidad(), excludeVentaId);
+            if (warn != null) sb.append(warn).append(" ");
+        }
+        return sb.length() > 0 ? sb.toString().trim() : null;
     }
 
     @Transactional(readOnly = true)
@@ -152,7 +152,7 @@ public class VentaService {
                 .map(v -> {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("titulo", v.getCliente());
-                    m.put("sub",    v.getCodigoLote() != null ? v.getCodigoLote() : "Sin lote");
+                    m.put("sub",    v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "Sin lote");
                     m.put("fecha",  v.getFechaDespacho() != null ? v.getFechaDespacho().toString() : "");
                     m.put("url",    "/ventas/ver/" + v.getId());
                     return m;
@@ -192,39 +192,67 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public BigDecimal sumIngresosDespachados() {
-        BigDecimal v = ventaRepo.sumIngresosDespachados();
+        BigDecimal v = ventaItemRepo.sumIngresosDespachados();
         return v != null ? v : BigDecimal.ZERO;
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private void mapearDto(VentaFormDto dto, Venta v) {
-        if (dto.getLoteId() != null) {
-            loteRepo.findById(dto.getLoteId()).ifPresent(lote -> {
-                v.setLote(lote);
-                v.setCodigoLote(lote.getCodigoLote());
-            });
-        } else {
-            v.setLote(null);
-            v.setCodigoLote(null);
-        }
         v.setCliente(dto.getCliente());
         v.setFechaDespacho(dto.getFechaDespacho());
-        v.setCantidad(dto.getCantidad());
-        v.setUnidad(dto.getUnidad());
-        v.setPrecioUnitario(dto.getPrecioUnitario());
-        v.setDescuentoPct(dto.getDescuentoPct());
         v.setNotas(dto.getNotas() != null && dto.getNotas().isBlank() ? null : dto.getNotas());
         v.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoVenta.PENDIENTE);
+
+        v.getItems().clear();
+        if (dto.getItems() != null) {
+            for (VentaItemFormDto d : dto.getItems()) {
+                if (d.getCantidad() == null || d.getPrecioUnitario() == null) continue;
+                VentaItem item = new VentaItem();
+                item.setVenta(v);
+                if (d.getLoteId() != null) {
+                    loteRepo.findById(d.getLoteId()).ifPresent(lote -> {
+                        item.setLote(lote);
+                        item.setCodigoLote(lote.getCodigoLote());
+                    });
+                }
+                item.setDescripcion(d.getDescripcion() != null && !d.getDescripcion().isBlank()
+                        ? d.getDescripcion() : null);
+                item.setCantidad(d.getCantidad());
+                item.setUnidad(d.getUnidad() != null && !d.getUnidad().isBlank() ? d.getUnidad() : null);
+                item.setPrecioUnitario(d.getPrecioUnitario());
+                item.setDescuentoPct(d.getDescuentoPct());
+                v.getItems().add(item);
+            }
+        }
+    }
+
+    private String validarItemCantidad(Long loteId, BigDecimal nuevaCantidad, Long excludeVentaId) {
+        return loteRepo.findById(loteId).map(lote -> {
+            if (lote.getLitrosFinales() == null) return null;
+            BigDecimal disponible = lote.getLitrosFinales();
+            BigDecimal yaVendido = ventaItemRepo.sumCantidadActivaByLote(loteId, excludeVentaId);
+            BigDecimal total = yaVendido.add(nuevaCantidad);
+            if (total.compareTo(disponible) > 0) {
+                return String.format(
+                    "Advertencia: la cantidad total vendida del lote %s sería %.2f, " +
+                    "superando los %.0f L producidos.",
+                    lote.getCodigoLote(), total, disponible);
+            }
+            return null;
+        }).orElse(null);
     }
 
     private void crearNotificacionDespacho(Venta v) {
-        String loteRef = v.getCodigoLote() != null ? " (lote " + v.getCodigoLote() + ")" : "";
+        String primer = v.getPrimerCodigoLote();
+        String loteRef = primer != null ? " (lote " + primer + ")" : "";
+        int numItems = v.getItems() != null ? v.getItems().size() : 0;
+        String detalle = v.getCliente() + loteRef + " despachado"
+                + (numItems > 1 ? " (" + numItems + " ítems)" : ".");
         notificacionService.crear(
                 TipoNotificacion.SISTEMA,
                 "Venta despachada — " + v.getCliente(),
-                v.getCliente() + loteRef + " despachado" + (v.getUnidad() != null
-                        ? ": " + v.getCantidad() + " " + v.getUnidad() : "."),
+                detalle,
                 "/ventas/ver/" + v.getId());
     }
 

@@ -2,13 +2,15 @@ package com.alera.model;
 
 import com.alera.model.enums.EstadoVenta;
 import jakarta.persistence.*;
+import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "ventas")
@@ -23,30 +25,11 @@ public class Venta {
     @Column(name = "tenant_id", length = 100)
     private String tenantId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lote_id")
-    private LoteCerveza lote;
-
-    @Column(name = "codigo_lote", length = 50)
-    private String codigoLote;
-
     @Column(nullable = false, length = 200)
     private String cliente;
 
     @Column(name = "fecha_despacho", nullable = false)
     private LocalDate fechaDespacho;
-
-    @Column(nullable = false, precision = 10, scale = 3)
-    private BigDecimal cantidad;
-
-    @Column(length = 50)
-    private String unidad;
-
-    @Column(name = "precio_unitario", nullable = false, precision = 12, scale = 2)
-    private BigDecimal precioUnitario;
-
-    @Column(name = "descuento_pct", nullable = false, precision = 5, scale = 2)
-    private BigDecimal descuentoPct = BigDecimal.ZERO;
 
     @Column(length = 500)
     private String notas;
@@ -54,6 +37,17 @@ public class Venta {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private EstadoVenta estado = EstadoVenta.PENDIENTE;
+
+    @OneToMany(mappedBy = "venta", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<VentaItem> items = new ArrayList<>();
+
+    @Formula("(SELECT COALESCE(SUM(vi.cantidad * vi.precio_unitario * (1 - vi.descuento_pct / 100.0)), 0) " +
+             "FROM venta_items vi WHERE vi.venta_id = id)")
+    private BigDecimal valorTotal;
+
+    @Formula("(SELECT vi.codigo_lote FROM venta_items vi " +
+             "WHERE vi.venta_id = id AND vi.codigo_lote IS NOT NULL ORDER BY vi.id LIMIT 1)")
+    private String primerCodigoLote;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -68,7 +62,7 @@ public class Venta {
     private String lastModifiedBy;
 
     @Column(name = "deleted_at")
-    private java.time.LocalDateTime deletedAt;
+    private LocalDateTime deletedAt;
 
     @PrePersist
     protected void onCreate() {
@@ -82,45 +76,33 @@ public class Venta {
     }
 
     public BigDecimal getValorTotal() {
-        if (cantidad == null || precioUnitario == null) return BigDecimal.ZERO;
-        BigDecimal base = cantidad.multiply(precioUnitario);
-        if (descuentoPct != null && descuentoPct.compareTo(BigDecimal.ZERO) > 0) {
-            base = base.multiply(BigDecimal.ONE.subtract(
-                    descuentoPct.divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP)));
-        }
-        return base.setScale(2, RoundingMode.HALF_UP);
+        return valorTotal != null ? valorTotal : BigDecimal.ZERO;
+    }
+
+    public String getPrimerCodigoLote() {
+        return primerCodigoLote;
     }
 
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTenantId() { return tenantId; }
-    public LoteCerveza getLote() { return lote; }
-    public void setLote(LoteCerveza lote) { this.lote = lote; }
-    public String getCodigoLote() { return codigoLote; }
-    public void setCodigoLote(String codigoLote) { this.codigoLote = codigoLote; }
     public String getCliente() { return cliente; }
     public void setCliente(String cliente) { this.cliente = cliente; }
     public LocalDate getFechaDespacho() { return fechaDespacho; }
     public void setFechaDespacho(LocalDate fechaDespacho) { this.fechaDespacho = fechaDespacho; }
-    public BigDecimal getCantidad() { return cantidad; }
-    public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
-    public String getUnidad() { return unidad; }
-    public void setUnidad(String unidad) { this.unidad = unidad; }
-    public BigDecimal getPrecioUnitario() { return precioUnitario; }
-    public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
-    public BigDecimal getDescuentoPct() { return descuentoPct; }
-    public void setDescuentoPct(BigDecimal descuentoPct) { this.descuentoPct = descuentoPct != null ? descuentoPct : BigDecimal.ZERO; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
     public EstadoVenta getEstado() { return estado; }
     public void setEstado(EstadoVenta estado) { this.estado = estado; }
+    public List<VentaItem> getItems() { return items; }
+    public void setItems(List<VentaItem> items) { this.items = items; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
     public LocalDateTime getLastModifiedAt() { return lastModifiedAt; }
     public String getLastModifiedBy() { return lastModifiedBy; }
     public void setLastModifiedBy(String lastModifiedBy) { this.lastModifiedBy = lastModifiedBy; }
-    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
-    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

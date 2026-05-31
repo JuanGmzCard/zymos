@@ -10,6 +10,7 @@ import com.alera.model.LoteItemFactura;
 import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.Venta;
+import com.alera.model.VentaItem;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -1312,21 +1313,21 @@ public class PdfExportService {
             par(datos, "Fecha de Despacho",
                 venta.getFechaDespacho() != null ? venta.getFechaDespacho().format(FMT_FECHA) : "—",
                 fLbl, fVal, pal);
-            par(datos, "Lote",
-                venta.getCodigoLote() != null ? venta.getCodigoLote() : "Sin lote",
+            String primerLote = venta.getPrimerCodigoLote();
+            par(datos, "Lote",   primerLote != null ? primerLote : "Sin lote",
                 fLbl, fVal, pal);
             par(datos, "Estado", venta.getEstado().getDisplayName(), fLbl, fVal, pal);
             doc.add(datos);
 
-            // ── Tabla de la venta ─────────────────────────────────────
+            // ── Tabla de ítems ────────────────────────────────────────
             addTituloPdf(doc, "DETALLE DE LA VENTA", pal);
 
-            PdfPTable tabla = new PdfPTable(new float[]{2.5f, 1.5f, 2f, 1.5f, 2f});
+            PdfPTable tabla = new PdfPTable(new float[]{1.8f, 2.2f, 1.2f, 1.8f, 1.2f, 1.8f});
             tabla.setWidthPercentage(100);
-            tabla.setSpacingAfter(14f);
+            tabla.setSpacingAfter(8f);
 
             Font fTh = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
-            for (String h : new String[]{"Descripción", "Cantidad", "Precio Unitario", "Descuento", "Total"}) {
+            for (String h : new String[]{"Lote", "Descripción", "Cantidad", "Precio Unit.", "Desc.%", "Total"}) {
                 PdfPCell c = new PdfPCell(new Phrase(h, fTh));
                 c.setBackgroundColor(pal.verde());
                 c.setBorderColor(C_BORDE);
@@ -1334,29 +1335,47 @@ public class PdfExportService {
                 tabla.addCell(c);
             }
 
-            String desc = venta.getCodigoLote() != null
-                    ? "Cerveza artesanal — Lote " + venta.getCodigoLote()
-                    : "Cerveza artesanal";
-            String cantStr = venta.getCantidad() != null
-                    ? String.format("%,.3f", venta.getCantidad()) + (venta.getUnidad() != null ? " " + venta.getUnidad() : "")
-                    : "—";
-            String precioStr = venta.getPrecioUnitario() != null
-                    ? "$" + String.format("%,.2f", venta.getPrecioUnitario()) : "—";
-            String descStr = venta.getDescuentoPct() != null && venta.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
-                    ? venta.getDescuentoPct() + "%" : "—";
-            String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
+            Font fTd     = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            Font fTdBold = new Font(Font.HELVETICA, 9, Font.BOLD,   pal.verde());
+            Font fTdMono = new Font(Font.HELVETICA, 9, Font.NORMAL, pal.verde());
 
-            Font fTd = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
-            Font fTdBold = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
+            java.util.List<VentaItem> itemsVenta = venta.getItems();
+            if (itemsVenta == null || itemsVenta.isEmpty()) {
+                PdfPCell emptyCell = new PdfPCell(new Phrase("Sin ítems registrados", fTd));
+                emptyCell.setColspan(6);
+                emptyCell.setPadding(6);
+                emptyCell.setBorderColor(C_BORDE);
+                emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                tabla.addCell(emptyCell);
+            } else {
+                for (VentaItem item : itemsVenta) {
+                    String loteCol = item.getCodigoLote() != null ? item.getCodigoLote() : "—";
+                    String descCol = item.getDescripcion() != null && !item.getDescripcion().isBlank()
+                            ? item.getDescripcion() : "—";
+                    String cantCol = item.getCantidad() != null
+                            ? String.format("%,.3f", item.getCantidad())
+                              + (item.getUnidad() != null ? " " + item.getUnidad() : "")
+                            : "—";
+                    String precCol = item.getPrecioUnitario() != null
+                            ? "$" + String.format("%,.2f", item.getPrecioUnitario()) : "—";
+                    String descPctCol = item.getDescuentoPct() != null
+                            && item.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
+                            ? item.getDescuentoPct() + "%" : "—";
+                    String linTotCol = "$" + String.format("%,.0f", item.getValorLinea());
 
-            tableCell(tabla, desc,     fTd,     Color.WHITE, Element.ALIGN_LEFT);
-            tableCell(tabla, cantStr,  fTd,     Color.WHITE, Element.ALIGN_CENTER);
-            tableCell(tabla, precioStr,fTd,     Color.WHITE, Element.ALIGN_RIGHT);
-            tableCell(tabla, descStr,  fTd,     Color.WHITE, Element.ALIGN_CENTER);
-            tableCell(tabla, totalStr, fTdBold, Color.WHITE, Element.ALIGN_RIGHT);
+                    tableCell(tabla, loteCol,    fTdMono, Color.WHITE, Element.ALIGN_LEFT);
+                    tableCell(tabla, descCol,    fTd,     Color.WHITE, Element.ALIGN_LEFT);
+                    tableCell(tabla, cantCol,    fTd,     Color.WHITE, Element.ALIGN_CENTER);
+                    tableCell(tabla, precCol,    fTd,     Color.WHITE, Element.ALIGN_RIGHT);
+                    tableCell(tabla, descPctCol, fTd,     Color.WHITE, Element.ALIGN_CENTER);
+                    tableCell(tabla, linTotCol,  fTdBold, Color.WHITE, Element.ALIGN_RIGHT);
+                }
+            }
             doc.add(tabla);
 
             // ── Total destacado ───────────────────────────────────────
+            String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
+
             PdfPTable totBox = new PdfPTable(new float[]{3f, 1f});
             totBox.setWidthPercentage(50);
             totBox.setHorizontalAlignment(Element.ALIGN_RIGHT);

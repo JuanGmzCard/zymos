@@ -1,12 +1,15 @@
 package com.alera.service;
 
 import com.alera.dto.VentaFormDto;
+import com.alera.dto.VentaItemFormDto;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Venta;
 import com.alera.model.VentaHistorialEstado;
+import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
+import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +38,7 @@ import static org.mockito.Mockito.*;
 class VentaServiceTest {
 
     @Mock private VentaRepository                  ventaRepo;
+    @Mock private VentaItemRepository              ventaItemRepo;
     @Mock private LoteCervezaRepository            loteRepo;
     @Mock private VentaHistorialEstadoRepository   historialRepo;
     @Mock private NotificacionService              notificacionService;
@@ -52,18 +56,20 @@ class VentaServiceTest {
         VentaFormDto dto = new VentaFormDto();
         dto.setCliente(cliente);
         dto.setFechaDespacho(LocalDate.now());
-        dto.setCantidad(cantidad);
-        dto.setUnidad("L");
-        dto.setPrecioUnitario(precio);
-        dto.setDescuentoPct(BigDecimal.ZERO);
         dto.setEstado(EstadoVenta.PENDIENTE);
+        VentaItemFormDto item = new VentaItemFormDto();
+        item.setCantidad(cantidad);
+        item.setUnidad("L");
+        item.setPrecioUnitario(precio);
+        item.setDescuentoPct(BigDecimal.ZERO);
+        dto.getItems().add(item);
         return dto;
     }
 
     // ── guardar ───────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("guardar — persiste venta con campos básicos")
+    @DisplayName("guardar — persiste venta con campos básicos e ítem")
     void guardar_persisteVenta() {
         VentaFormDto dto = buildDto("Cervecería Prueba", BigDecimal.TEN, new BigDecimal("5000"));
         Venta saved = new Venta();
@@ -77,9 +83,10 @@ class VentaServiceTest {
         verify(ventaRepo).save(captor.capture());
         Venta captured = captor.getValue();
         assertThat(captured.getCliente()).isEqualTo("Cervecería Prueba");
-        assertThat(captured.getCantidad()).isEqualByComparingTo(BigDecimal.TEN);
-        assertThat(captured.getPrecioUnitario()).isEqualByComparingTo(new BigDecimal("5000"));
         assertThat(captured.getEstado()).isEqualTo(EstadoVenta.PENDIENTE);
+        assertThat(captured.getItems()).hasSize(1);
+        assertThat(captured.getItems().get(0).getCantidad()).isEqualByComparingTo(BigDecimal.TEN);
+        assertThat(captured.getItems().get(0).getPrecioUnitario()).isEqualByComparingTo(new BigDecimal("5000"));
     }
 
     @Test
@@ -99,7 +106,7 @@ class VentaServiceTest {
     }
 
     @Test
-    @DisplayName("guardar — vincula lote cuando loteId existe")
+    @DisplayName("guardar — vincula lote al ítem cuando loteId existe")
     void guardar_vinculaLote() {
         LoteCerveza lote = new LoteCerveza();
         lote.setCodigoLote("IPA-001");
@@ -109,17 +116,18 @@ class VentaServiceTest {
         when(ventaRepo.save(any())).thenReturn(saved);
 
         VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
-        dto.setLoteId(1L);
+        dto.getItems().get(0).setLoteId(1L);
         service.guardar(dto);
 
         ArgumentCaptor<Venta> captor = ArgumentCaptor.forClass(Venta.class);
         verify(ventaRepo).save(captor.capture());
-        assertThat(captor.getValue().getLote()).isEqualTo(lote);
-        assertThat(captor.getValue().getCodigoLote()).isEqualTo("IPA-001");
+        VentaItem item0 = captor.getValue().getItems().get(0);
+        assertThat(item0.getLote()).isEqualTo(lote);
+        assertThat(item0.getCodigoLote()).isEqualTo("IPA-001");
     }
 
     @Test
-    @DisplayName("guardar — loteId null deja lote en null")
+    @DisplayName("guardar — loteId null deja lote en null en el ítem")
     void guardar_sinLote() {
         Venta saved = new Venta();
         saved.setEstado(EstadoVenta.PENDIENTE);
@@ -130,8 +138,9 @@ class VentaServiceTest {
 
         ArgumentCaptor<Venta> captor = ArgumentCaptor.forClass(Venta.class);
         verify(ventaRepo).save(captor.capture());
-        assertThat(captor.getValue().getLote()).isNull();
-        assertThat(captor.getValue().getCodigoLote()).isNull();
+        VentaItem item0 = captor.getValue().getItems().get(0);
+        assertThat(item0.getLote()).isNull();
+        assertThat(item0.getCodigoLote()).isNull();
     }
 
     @Test
@@ -277,9 +286,6 @@ class VentaServiceTest {
         Venta v = new Venta();
         v.setEstado(EstadoVenta.PENDIENTE);
         v.setCliente("Bar La Espuma");
-        v.setCodigoLote("IPA-001");
-        v.setCantidad(new BigDecimal("20"));
-        v.setUnidad("L");
         when(ventaRepo.findById(1L)).thenReturn(Optional.of(v));
         when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -291,9 +297,17 @@ class VentaServiceTest {
     // ── validarCantidadDisponible ─────────────────────────────────────
 
     @Test
-    @DisplayName("validarCantidadDisponible — retorna null si no hay lote")
-    void validarCantidad_sinLote_retornaNull() {
-        assertThat(service.validarCantidadDisponible(null, BigDecimal.TEN, null)).isNull();
+    @DisplayName("validarCantidadDisponible — lista null retorna null")
+    void validarCantidad_listaNull_retornaNull() {
+        assertThat(service.validarCantidadDisponible(null, null)).isNull();
+    }
+
+    @Test
+    @DisplayName("validarCantidadDisponible — ítem sin loteId es ignorado")
+    void validarCantidad_sinLoteId_retornaNull() {
+        VentaItemFormDto item = new VentaItemFormDto();
+        item.setCantidad(BigDecimal.TEN);
+        assertThat(service.validarCantidadDisponible(List.of(item), null)).isNull();
     }
 
     @Test
@@ -303,9 +317,13 @@ class VentaServiceTest {
         lote.setCodigoLote("IPA-001");
         lote.setLitrosFinales(new BigDecimal("100"));
         when(loteRepo.findById(1L)).thenReturn(Optional.of(lote));
-        when(ventaRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("50"));
+        when(ventaItemRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("50"));
 
-        assertThat(service.validarCantidadDisponible(1L, new BigDecimal("30"), null)).isNull();
+        VentaItemFormDto item = new VentaItemFormDto();
+        item.setLoteId(1L);
+        item.setCantidad(new BigDecimal("30"));
+
+        assertThat(service.validarCantidadDisponible(List.of(item), null)).isNull();
     }
 
     @Test
@@ -315,9 +333,13 @@ class VentaServiceTest {
         lote.setCodigoLote("IPA-001");
         lote.setLitrosFinales(new BigDecimal("100"));
         when(loteRepo.findById(1L)).thenReturn(Optional.of(lote));
-        when(ventaRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("80"));
+        when(ventaItemRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("80"));
 
-        String advertencia = service.validarCantidadDisponible(1L, new BigDecimal("30"), null);
+        VentaItemFormDto item = new VentaItemFormDto();
+        item.setLoteId(1L);
+        item.setCantidad(new BigDecimal("30"));
+
+        String advertencia = service.validarCantidadDisponible(List.of(item), null);
 
         assertThat(advertencia).isNotNull();
         assertThat(advertencia).contains("IPA-001");
@@ -352,10 +374,8 @@ class VentaServiceTest {
     void suggest_retornaEstructura() {
         Venta v = new Venta();
         v.setCliente("Distribuidora Norte");
-        v.setCodigoLote("IPA-001");
         v.setFechaDespacho(LocalDate.of(2025, 6, 1));
-        v.setId(5L);
-
+        // primerCodigoLote is a @Formula field — null in unit tests (no DB)
         when(ventaRepo.search(anyString(), any(Pageable.class)))
                 .thenReturn(List.of(v));
 
@@ -386,7 +406,7 @@ class VentaServiceTest {
     @Test
     @DisplayName("sumIngresosDespachados — retorna ZERO si repo devuelve null")
     void sumIngresos_nullRetornaZero() {
-        when(ventaRepo.sumIngresosDespachados()).thenReturn(null);
+        when(ventaItemRepo.sumIngresosDespachados()).thenReturn(null);
         assertThat(service.sumIngresosDespachados()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 

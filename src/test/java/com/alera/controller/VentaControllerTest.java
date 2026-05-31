@@ -102,9 +102,6 @@ class VentaControllerTest {
         Venta v = new Venta();
         v.setCliente("Cliente Test");
         v.setEstado(EstadoVenta.PENDIENTE);
-        v.setCantidad(new BigDecimal("10"));
-        v.setPrecioUnitario(new BigDecimal("5000"));
-        v.setDescuentoPct(BigDecimal.ZERO);
         when(ventaService.buscarPorId(1L)).thenReturn(Optional.of(v));
 
         mockMvc.perform(get("/ventas/ver/1"))
@@ -129,9 +126,6 @@ class VentaControllerTest {
         Venta v = new Venta();
         v.setCliente("Cliente Test");
         v.setEstado(EstadoVenta.DESPACHADO);
-        v.setCantidad(BigDecimal.TEN);
-        v.setPrecioUnitario(new BigDecimal("5000"));
-        v.setDescuentoPct(BigDecimal.ZERO);
         when(ventaService.buscarPorId(1L)).thenReturn(Optional.of(v));
         when(pdfExportService.generarPdfVenta(any(), any())).thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
 

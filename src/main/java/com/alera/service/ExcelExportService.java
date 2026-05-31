@@ -6,6 +6,7 @@ import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Venta;
+import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.model.enums.TipoInsumo;
@@ -571,6 +572,7 @@ public class ExcelExportService {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (XSSFWorkbook wb = new XSSFWorkbook()) {
             construirSheetVentas(wb, ventas, estadoFiltro, desde, hasta, branding.name(), pal);
+            construirSheetVentasItems(wb, ventas, branding.name(), pal);
             construirSheetVentasPorCliente(wb, ventas, branding.name(), pal);
             construirSheetVentasPorEstado(wb, ventas, branding.name(), pal);
             wb.write(baos);
@@ -603,7 +605,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(brandName + " — Ventas y Despacho");
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
 
         // Fila período / filtros
         String periodoStr = "Período: "
@@ -615,7 +617,7 @@ public class ExcelExportService {
         Cell cP = fP.createCell(0);
         cP.setCellValue(periodoStr);
         cP.setCellStyle(stPeriodo);
-        sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 10));
+        sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 8));
 
         // Resumen
         long totalVentas = ventas.size();
@@ -633,15 +635,14 @@ public class ExcelExportService {
         r++; // fila en blanco
         sheet.createRow(r++);
 
-        // Encabezado
+        // Encabezado — columnas simplificadas (los detalles de ítem están en la hoja Ítems)
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
-        String[] headers = {"Cliente", "Lote", "Fecha Despacho", "Estado",
-                            "Cantidad", "Unidad", "Precio Unitario", "Descuento %",
+        String[] headers = {"Cliente", "Primer Lote", "Fecha Despacho", "Estado",
                             "Valor Total", "Notas", "Creado por"};
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        int[] widths = {28, 14, 14, 13, 12, 9, 16, 13, 16, 25, 16};
+        int[] widths = {30, 16, 14, 14, 16, 30, 18};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         // Datos
@@ -653,20 +654,73 @@ public class ExcelExportService {
             XSSFCellStyle sN = alt ? stNumAlt  : stNum;
 
             celda(fila, 0, v.getCliente(), sD);
-            celda(fila, 1, v.getCodigoLote() != null ? v.getCodigoLote() : "", sD);
+            celda(fila, 1, v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "", sD);
             celda(fila, 2, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "", sD);
             celda(fila, 3, v.getEstado() != null ? v.getEstado().getDisplayName() : "", sD);
-            celdaNum(fila, 4, toDouble(v.getCantidad()), sN);
-            celda(fila, 5, v.getUnidad() != null ? v.getUnidad() : "", sD);
-            celdaNum(fila, 6, toDouble(v.getPrecioUnitario()), sN);
-            celdaNum(fila, 7, toDouble(v.getDescuentoPct()), sN);
-            celdaNum(fila, 8, toDouble(v.getValorTotal()), sN);
-            celda(fila, 9, v.getNotas() != null ? v.getNotas() : "", sD);
-            celda(fila, 10, v.getCreatedBy() != null ? v.getCreatedBy() : "", sD);
+            celdaNum(fila, 4, toDouble(v.getValorTotal()), sN);
+            celda(fila, 5, v.getNotas() != null ? v.getNotas() : "", sD);
+            celda(fila, 6, v.getCreatedBy() != null ? v.getCreatedBy() : "", sD);
         }
 
         if (!ventas.isEmpty()) {
             sheet.setAutoFilter(new CellRangeAddress(r - ventas.size() - 1, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetVentasItems(XSSFWorkbook wb, List<Venta> ventas,
+                                            String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet("Ítems");
+        sheet.setDefaultColumnWidth(14);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(brandName + " — Detalle de Ítems de Venta");
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
+
+        r++;
+        Row fHead = sheet.createRow(r++);
+        fHead.setHeight((short) (16 * 20));
+        String[] headers = {"Venta ID", "Cliente", "Fecha Despacho", "Estado Venta",
+                            "Lote", "Descripción", "Cantidad", "Unidad", "Precio Unit.", "Desc.%", "Total Línea"};
+        for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
+        int[] widths = {10, 26, 14, 13, 14, 22, 12, 10, 15, 10, 15};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        int rowCount = 0;
+        for (Venta v : ventas) {
+            for (VentaItem item : v.getItems()) {
+                boolean alt = rowCount % 2 != 0;
+                Row fila = sheet.createRow(r++);
+                XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+                XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+                celda(fila, 0, String.valueOf(v.getId()), sD);
+                celda(fila, 1, v.getCliente(), sD);
+                celda(fila, 2, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "", sD);
+                celda(fila, 3, v.getEstado() != null ? v.getEstado().getDisplayName() : "", sD);
+                celda(fila, 4, item.getCodigoLote() != null ? item.getCodigoLote() : "", sD);
+                celda(fila, 5, item.getDescripcion() != null ? item.getDescripcion() : "", sD);
+                celdaNum(fila, 6, toDouble(item.getCantidad()), sN);
+                celda(fila, 7, item.getUnidad() != null ? item.getUnidad() : "", sD);
+                celdaNum(fila, 8, toDouble(item.getPrecioUnitario()), sN);
+                celdaNum(fila, 9, toDouble(item.getDescuentoPct()), sN);
+                celdaNum(fila, 10, toDouble(item.getValorLinea()), sN);
+                rowCount++;
+            }
+        }
+
+        if (rowCount > 0) {
+            sheet.setAutoFilter(new CellRangeAddress(2, r - 1, 0, headers.length - 1));
         }
     }
 

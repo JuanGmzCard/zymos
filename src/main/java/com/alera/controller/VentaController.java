@@ -2,7 +2,9 @@ package com.alera.controller;
 
 import com.alera.config.ExportBranding;
 import com.alera.dto.VentaFormDto;
+import com.alera.dto.VentaItemFormDto;
 import com.alera.model.Tenant;
+import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
@@ -69,11 +71,13 @@ public class VentaController {
     @GetMapping("/nuevo")
     public String nuevo(@RequestParam(required = false) Long loteId, Model model) {
         VentaFormDto dto = new VentaFormDto();
+        VentaItemFormDto primerItem = new VentaItemFormDto();
         if (loteId != null) {
-            dto.setLoteId(loteId);
+            primerItem.setLoteId(loteId);
             trazabilidadService.buscarPorIdOpcional(loteId).ifPresent(lote ->
-                dto.setCodigoLoteBuscador(lote.getCodigoLote()));
+                primerItem.setCodigoLoteBuscador(lote.getCodigoLote()));
         }
+        dto.getItems().add(primerItem);
         model.addAttribute("ventaForm", dto);
         model.addAttribute("estados", EstadoVenta.values());
         return "ventas/formulario";
@@ -87,8 +91,7 @@ public class VentaController {
             return "ventas/formulario";
         }
         try {
-            String advertencia = service.validarCantidadDisponible(
-                    dto.getLoteId(), dto.getCantidad(), null);
+            String advertencia = service.validarCantidadDisponible(dto.getItems(), null);
             var venta = service.guardar(dto);
             if (advertencia != null) {
                 ra.addFlashAttribute("mensaje", advertencia);
@@ -121,16 +124,24 @@ public class VentaController {
                 .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
         VentaFormDto dto = new VentaFormDto();
         dto.setId(venta.getId());
-        dto.setLoteId(venta.getLote() != null ? venta.getLote().getId() : null);
-        dto.setCodigoLoteBuscador(venta.getCodigoLote());
         dto.setCliente(venta.getCliente());
         dto.setFechaDespacho(venta.getFechaDespacho());
-        dto.setCantidad(venta.getCantidad());
-        dto.setUnidad(venta.getUnidad());
-        dto.setPrecioUnitario(venta.getPrecioUnitario());
-        dto.setDescuentoPct(venta.getDescuentoPct());
         dto.setNotas(venta.getNotas());
         dto.setEstado(venta.getEstado());
+        for (VentaItem item : venta.getItems()) {
+            VentaItemFormDto itemDto = new VentaItemFormDto();
+            itemDto.setLoteId(item.getLote() != null ? item.getLote().getId() : null);
+            itemDto.setCodigoLoteBuscador(item.getCodigoLote());
+            itemDto.setDescripcion(item.getDescripcion());
+            itemDto.setCantidad(item.getCantidad());
+            itemDto.setUnidad(item.getUnidad());
+            itemDto.setPrecioUnitario(item.getPrecioUnitario());
+            itemDto.setDescuentoPct(item.getDescuentoPct());
+            dto.getItems().add(itemDto);
+        }
+        if (dto.getItems().isEmpty()) {
+            dto.getItems().add(new VentaItemFormDto());
+        }
         model.addAttribute("ventaForm", dto);
         model.addAttribute("ventaId", id);
         model.addAttribute("estados", EstadoVenta.values());
@@ -147,8 +158,7 @@ public class VentaController {
             return "ventas/formulario";
         }
         try {
-            String advertencia = service.validarCantidadDisponible(
-                    dto.getLoteId(), dto.getCantidad(), id);
+            String advertencia = service.validarCantidadDisponible(dto.getItems(), id);
             service.actualizar(id, dto);
             if (advertencia != null) {
                 ra.addFlashAttribute("mensaje", advertencia);
