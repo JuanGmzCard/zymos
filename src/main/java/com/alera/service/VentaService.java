@@ -48,7 +48,9 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public Page<Venta> listarPaginado(EstadoVenta estado, LocalDate desde, LocalDate hasta, int page) {
-        return ventaRepo.findAllFiltered(estado, desde, hasta, PageRequest.of(page, pageSize));
+        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
+        return ventaRepo.findAllFiltered(estado, d, h, PageRequest.of(page, pageSize));
     }
 
     @Transactional(readOnly = true)
@@ -161,7 +163,9 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Venta> listarParaExport(EstadoVenta estado, LocalDate desde, LocalDate hasta) {
-        var lista = ventaRepo.findByPeriodo(desde, hasta);
+        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
+        var lista = ventaRepo.findByPeriodo(d, h);
         if (estado != null) {
             return lista.stream().filter(v -> v.getEstado() == estado).toList();
         }
@@ -170,7 +174,9 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Venta> listarPorPeriodo(LocalDate desde, LocalDate hasta) {
-        return ventaRepo.findByPeriodo(desde, hasta);
+        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
+        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
+        return ventaRepo.findByPeriodo(d, h);
     }
 
     // ── Stats ─────────────────────────────────────────────────────────────────

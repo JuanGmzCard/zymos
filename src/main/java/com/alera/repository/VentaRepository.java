@@ -17,8 +17,8 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     @Query("SELECT v FROM Venta v WHERE " +
            "(:estado IS NULL OR v.estado = :estado) AND " +
-           "(:desde IS NULL OR v.fechaDespacho >= :desde) AND " +
-           "(:hasta IS NULL OR v.fechaDespacho <= :hasta) " +
+           "v.fechaDespacho >= :desde AND " +
+           "v.fechaDespacho <= :hasta " +
            "ORDER BY v.fechaDespacho DESC NULLS LAST, v.id DESC")
     Page<Venta> findAllFiltered(@Param("estado") EstadoVenta estado,
                                 @Param("desde")  LocalDate desde,
@@ -43,8 +43,8 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     List<Venta> search(@Param("q") String q, Pageable pageable);
 
     @Query("SELECT v FROM Venta v WHERE " +
-           "(:desde IS NULL OR v.fechaDespacho >= :desde) AND " +
-           "(:hasta IS NULL OR v.fechaDespacho <= :hasta) " +
+           "v.fechaDespacho >= :desde AND " +
+           "v.fechaDespacho <= :hasta " +
            "ORDER BY v.fechaDespacho DESC NULLS LAST, v.id DESC")
     List<Venta> findByPeriodo(@Param("desde") LocalDate desde,
                               @Param("hasta") LocalDate hasta);
