@@ -147,9 +147,15 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> suggestLotesParaVenta(String q) {
-        if (q == null || q.trim().length() < 2) return List.of();
+        String trimmed = q != null ? q.trim() : "";
+        boolean sinFiltro = trimmed.isEmpty();
+        int preload = sinFiltro ? 50 : 20;
+        int limit   = sinFiltro ? 20 : 6;
+        var candidatos = sinFiltro
+                ? loteRepo.findAllCompletados(PageRequest.of(0, preload))
+                : loteRepo.searchCompletados(trimmed, PageRequest.of(0, preload));
         List<Map<String, Object>> result = new java.util.ArrayList<>();
-        for (var l : loteRepo.searchCompletados(q.trim(), PageRequest.of(0, 20))) {
+        for (var l : candidatos) {
             BigDecimal disponible = null;
             if (l.getLitrosFinales() != null) {
                 BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
@@ -164,7 +170,7 @@ public class VentaService {
             m.put("litrosFinales",     l.getLitrosFinales() != null ? l.getLitrosFinales() : "");
             m.put("litrosDisponibles", disponible != null ? disponible.stripTrailingZeros().toPlainString() : "");
             result.add(m);
-            if (result.size() >= 6) break;
+            if (result.size() >= limit) break;
         }
         return result;
     }

@@ -53,6 +53,10 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
            "ORDER BY l.carbFechaFinal DESC")
     List<LoteCerveza> searchCompletados(@Param("q") String q, Pageable pageable);
 
+    @Query("SELECT l FROM LoteCerveza l WHERE l.carbFechaFinal IS NOT NULL " +
+           "ORDER BY l.carbFechaFinal DESC")
+    List<LoteCerveza> findAllCompletados(Pageable pageable);
+
     @Query("SELECT l FROM LoteCerveza l LEFT JOIN FETCH l.ingredientes WHERE l.id = :id")
     Optional<LoteCerveza> findByIdWithIngredientes(@Param("id") Long id);
 

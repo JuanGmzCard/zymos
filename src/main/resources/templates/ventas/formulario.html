@@ -15,6 +15,8 @@
         .items-table td { vertical-align: middle; padding: 4px 6px; }
         .items-table .item-total { font-weight: 600; color: var(--dorado); font-size: 0.9rem; min-width: 80px; }
         html.dark-mode .items-table th { background: var(--dm-verde-bg); color: var(--dm-text); }
+        .lote-buscador { cursor: pointer; }
+        .lote-buscador:focus { cursor: text; }
     </style>
 </head>
 <body>
@@ -340,8 +342,50 @@ function fmtNum(n) {
     return n.toLocaleString('es-CO', {minimumFractionDigits: 0, maximumFractionDigits: 0});
 }
 
-// ── Typeahead de lote (delegado) ──────────────────────────────────────────────
+// ── Selector de lote (click abre lista completa, typing filtra) ──────────────
 var loteTimer;
+
+function renderLotes(items, suggest) {
+    if (!items.length) {
+        suggest.innerHTML = '<div class="ss-empty">Sin lotes completados disponibles</div>';
+        suggest.style.display = 'block';
+        return;
+    }
+    suggest.innerHTML = items.map(function(i) {
+        var cdFull = (i.carbDestino || '').trim();
+        var cd = cdFull.replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
+        var litros = i.litrosDisponibles || i.litrosFinales || '';
+        return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
+               '" data-codigo="' + (i.codigoLote||'') +
+               '" data-carb-destino="' + cd + '"' +
+               '" data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;') + '"' +
+               '" data-litros="' + litros + '"' +
+               ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
+               '<i class="bi bi-clipboard-data ss-icon"></i>' +
+               '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
+               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L disp.' : '') + '</span>' +
+               '</a>';
+    }).join('');
+    suggest.style.display = 'block';
+}
+
+function fetchLotes(suggest, q) {
+    fetch('/ventas/suggest-lotes?q=' + encodeURIComponent(q || ''))
+        .then(function(r) { return r.json(); })
+        .then(function(items) { renderLotes(items, suggest); });
+}
+
+// Abrir lista al hacer click/focus
+document.getElementById('itemsBody').addEventListener('focusin', function(e) {
+    if (e.target.classList.contains('lote-buscador')) {
+        var cell    = e.target.closest('td');
+        var suggest = cell.querySelector('.lote-suggest');
+        if (suggest.style.display === 'block') return;
+        fetchLotes(suggest, e.target.value.trim());
+    }
+});
+
+// Filtrar mientras escribe
 document.getElementById('itemsBody').addEventListener('input', function(e) {
     if (e.target.classList.contains('lote-buscador')) {
         var input   = e.target;
@@ -353,30 +397,7 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         if (badge) badge.style.display = 'none';
         clearTimeout(loteTimer);
         var q = input.value.trim();
-        if (q.length < 2) { suggest.style.display = 'none'; return; }
-        loteTimer = setTimeout(function() {
-            fetch('/ventas/suggest-lotes?q=' + encodeURIComponent(q))
-                .then(function(r) { return r.json(); })
-                .then(function(items) {
-                    if (!items.length) { suggest.style.display = 'none'; return; }
-                    suggest.innerHTML = items.map(function(i) {
-                        var cdFull = (i.carbDestino || '').trim();
-                        var cd = cdFull.replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
-                        var litros = i.litrosDisponibles || i.litrosFinales || '';
-                        return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
-                               '" data-codigo="' + (i.codigoLote||'') +
-                               '" data-carb-destino="' + cd + '"' +
-                               '" data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;') + '"' +
-                               '" data-litros="' + litros + '"' +
-                               ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
-                               '<i class="bi bi-clipboard-data ss-icon"></i>' +
-                               '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
-                               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L disp.' : '') + '</span>' +
-                               '</a>';
-                    }).join('');
-                    suggest.style.display = 'block';
-                });
-        }, 260);
+        loteTimer = setTimeout(function() { fetchLotes(suggest, q); }, 260);
     }
     if (e.target.classList.contains('item-cantidad') ||
         e.target.classList.contains('item-precio')   ||
