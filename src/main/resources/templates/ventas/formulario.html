@@ -115,6 +115,7 @@
                                                 <input type="hidden" class="lote-id-hidden"
                                                        th:name="'items[' + ${iStat.index} + '].loteId'"
                                                        th:value="${item.loteId}">
+                                                <div class="lote-empaque-badge mt-1" style="display:none;"></div>
                                             </td>
                                             <!-- Descripción -->
                                             <td>
@@ -273,6 +274,7 @@ function crearFilaHTML(idx) {
             <div class="search-suggest lote-suggest" style="display:none;"></div>
         </div>
         <input type="hidden" class="lote-id-hidden" name="items[${idx}].loteId" value="">
+        <div class="lote-empaque-badge mt-1" style="display:none;"></div>
     </td>
     <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="Opcional"></td>
     <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" required></td>
@@ -347,6 +349,8 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         var suggest = cell.querySelector('.lote-suggest');
         var hidden  = cell.querySelector('.lote-id-hidden');
         hidden.value = '';
+        var badge = cell.querySelector('.lote-empaque-badge');
+        if (badge) badge.style.display = 'none';
         clearTimeout(loteTimer);
         var q = input.value.trim();
         if (q.length < 2) { suggest.style.display = 'none'; return; }
@@ -356,14 +360,18 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
                 .then(function(items) {
                     if (!items.length) { suggest.style.display = 'none'; return; }
                     suggest.innerHTML = items.map(function(i) {
-                        var cd = (i.carbDestino || '').replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
+                        var cdFull = (i.carbDestino || '').trim();
+                        var cd = cdFull.replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
+                        var litros = i.litrosFinales || '';
                         return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
                                '" data-codigo="' + (i.codigoLote||'') +
                                '" data-carb-destino="' + cd + '"' +
+                               '" data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;') + '"' +
+                               '" data-litros="' + litros + '"' +
                                ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
                                '<i class="bi bi-clipboard-data ss-icon"></i>' +
                                '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
-                               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + '</span>' +
+                               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L' : '') + '</span>' +
                                '</a>';
                     }).join('');
                     suggest.style.display = 'block';
@@ -412,6 +420,21 @@ function seleccionarLote(el, cell) {
                     break;
                 }
             }
+        }
+    }
+    // Show empaque badge
+    var badge = cell.querySelector('.lote-empaque-badge');
+    if (badge) {
+        var cdFull = el.dataset.carbDestinoFull || '';
+        var litros = el.dataset.litros || '';
+        if (cdFull || litros) {
+            var parts = [];
+            if (cdFull) parts.push('<i class="bi bi-box-seam me-1"></i>' + cdFull);
+            if (litros) parts.push('<i class="bi bi-droplet me-1"></i>' + litros + ' L producidos');
+            badge.innerHTML = '<small class="text-muted">' + parts.join(' &nbsp;·&nbsp; ') + '</small>';
+            badge.style.display = '';
+        } else {
+            badge.style.display = 'none';
         }
     }
 }

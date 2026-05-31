@@ -392,7 +392,8 @@ public class TrazabilidadService {
                 m.put("fase",       l.isCompletado() ? "Completado" : l.getFaseActual());
                 m.put("completado", l.isCompletado());
                 m.put("url",        "/ver/" + l.getId());
-                m.put("carbDestino", l.getCarbDestino() != null ? l.getCarbDestino() : "");
+                m.put("carbDestino",  l.getCarbDestino()   != null ? l.getCarbDestino()   : "");
+                m.put("litrosFinales", l.getLitrosFinales() != null ? l.getLitrosFinales() : "");
                 return m;
             }).toList();
     }
