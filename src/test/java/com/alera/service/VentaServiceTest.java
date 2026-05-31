@@ -3,8 +3,10 @@ package com.alera.service;
 import com.alera.dto.VentaFormDto;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Venta;
+import com.alera.model.VentaHistorialEstado;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.VentaHistorialEstadoRepository;
 import com.alera.repository.VentaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -31,8 +34,10 @@ import static org.mockito.Mockito.*;
 @DisplayName("VentaService")
 class VentaServiceTest {
 
-    @Mock private VentaRepository         ventaRepo;
-    @Mock private LoteCervezaRepository   loteRepo;
+    @Mock private VentaRepository                  ventaRepo;
+    @Mock private LoteCervezaRepository            loteRepo;
+    @Mock private VentaHistorialEstadoRepository   historialRepo;
+    @Mock private NotificacionService              notificacionService;
 
     @InjectMocks
     private VentaService service;
@@ -40,6 +45,7 @@ class VentaServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(service, "pageSize", 15);
+        lenient().when(historialRepo.save(any())).thenReturn(new VentaHistorialEstado());
     }
 
     private VentaFormDto buildDto(String cliente, BigDecimal cantidad, BigDecimal precio) {
@@ -62,9 +68,10 @@ class VentaServiceTest {
         VentaFormDto dto = buildDto("Cervecería Prueba", BigDecimal.TEN, new BigDecimal("5000"));
         Venta saved = new Venta();
         saved.setCliente("Cervecería Prueba");
+        saved.setEstado(EstadoVenta.PENDIENTE);
         when(ventaRepo.save(any())).thenReturn(saved);
 
-        Venta result = service.guardar(dto);
+        service.guardar(dto);
 
         ArgumentCaptor<Venta> captor = ArgumentCaptor.forClass(Venta.class);
         verify(ventaRepo).save(captor.capture());
@@ -76,12 +83,30 @@ class VentaServiceTest {
     }
 
     @Test
+    @DisplayName("guardar — registra historial con estadoAnterior null")
+    void guardar_registraHistorial() {
+        VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
+        Venta saved = new Venta();
+        saved.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.save(any())).thenReturn(saved);
+
+        service.guardar(dto);
+
+        ArgumentCaptor<VentaHistorialEstado> captor = ArgumentCaptor.forClass(VentaHistorialEstado.class);
+        verify(historialRepo).save(captor.capture());
+        assertThat(captor.getValue().getEstadoAnterior()).isNull();
+        assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoVenta.PENDIENTE);
+    }
+
+    @Test
     @DisplayName("guardar — vincula lote cuando loteId existe")
     void guardar_vinculaLote() {
         LoteCerveza lote = new LoteCerveza();
         lote.setCodigoLote("IPA-001");
         when(loteRepo.findById(1L)).thenReturn(Optional.of(lote));
-        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Venta saved = new Venta();
+        saved.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.save(any())).thenReturn(saved);
 
         VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
         dto.setLoteId(1L);
@@ -96,7 +121,10 @@ class VentaServiceTest {
     @Test
     @DisplayName("guardar — loteId null deja lote en null")
     void guardar_sinLote() {
-        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Venta saved = new Venta();
+        saved.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.save(any())).thenReturn(saved);
+
         VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
         service.guardar(dto);
 
@@ -109,7 +137,10 @@ class VentaServiceTest {
     @Test
     @DisplayName("guardar — estado null usa PENDIENTE como default")
     void guardar_estadoNullDefaultPendiente() {
-        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        Venta saved = new Venta();
+        saved.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.save(any())).thenReturn(saved);
+
         VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
         dto.setEstado(null);
         service.guardar(dto);
@@ -139,6 +170,39 @@ class VentaServiceTest {
     }
 
     @Test
+    @DisplayName("actualizar — registra historial cuando cambia el estado")
+    void actualizar_registraHistorialAlCambiarEstado() {
+        Venta existente = new Venta();
+        existente.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.findById(1L)).thenReturn(Optional.of(existente));
+        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
+        dto.setEstado(EstadoVenta.DESPACHADO);
+        service.actualizar(1L, dto);
+
+        ArgumentCaptor<VentaHistorialEstado> captor = ArgumentCaptor.forClass(VentaHistorialEstado.class);
+        verify(historialRepo).save(captor.capture());
+        assertThat(captor.getValue().getEstadoAnterior()).isEqualTo(EstadoVenta.PENDIENTE);
+        assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoVenta.DESPACHADO);
+    }
+
+    @Test
+    @DisplayName("actualizar — no registra historial si el estado no cambia")
+    void actualizar_noRegistraHistorialSinCambioEstado() {
+        Venta existente = new Venta();
+        existente.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.findById(1L)).thenReturn(Optional.of(existente));
+        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        VentaFormDto dto = buildDto("Cliente", BigDecimal.ONE, BigDecimal.ONE);
+        dto.setEstado(EstadoVenta.PENDIENTE);
+        service.actualizar(1L, dto);
+
+        verify(historialRepo, never()).save(any());
+    }
+
+    @Test
     @DisplayName("actualizar — lanza excepcion si no existe")
     void actualizar_noExiste_lanzaExcepcion() {
         when(ventaRepo.findById(99L)).thenReturn(Optional.empty());
@@ -147,19 +211,37 @@ class VentaServiceTest {
                 () -> service.actualizar(99L, dto));
     }
 
-    // ── eliminar ──────────────────────────────────────────────────────
+    // ── eliminar (soft delete) ────────────────────────────────────────
 
     @Test
-    @DisplayName("eliminar — llama deleteById")
-    void eliminar_llamaDeleteById() {
+    @DisplayName("eliminar — soft delete: setea deletedAt, no borra físicamente")
+    void eliminar_softDelete() {
+        Venta v = new Venta();
+        v.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
         service.eliminar(1L);
-        verify(ventaRepo).deleteById(1L);
+
+        verify(ventaRepo, never()).deleteById(any());
+        ArgumentCaptor<Venta> captor = ArgumentCaptor.forClass(Venta.class);
+        verify(ventaRepo).save(captor.capture());
+        assertThat(captor.getValue().getDeletedAt()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("eliminar — no-op si no existe")
+    void eliminar_noExiste_noOp() {
+        when(ventaRepo.findById(99L)).thenReturn(Optional.empty());
+        service.eliminar(99L);
+        verify(ventaRepo, never()).save(any());
+        verify(ventaRepo, never()).deleteById(any());
     }
 
     // ── cambiarEstado ─────────────────────────────────────────────────
 
     @Test
-    @DisplayName("cambiarEstado — actualiza y persiste estado")
+    @DisplayName("cambiarEstado — actualiza estado y persiste")
     void cambiarEstado_actualizaEstado() {
         Venta v = new Venta();
         v.setEstado(EstadoVenta.PENDIENTE);
@@ -171,6 +253,88 @@ class VentaServiceTest {
         ArgumentCaptor<Venta> captor = ArgumentCaptor.forClass(Venta.class);
         verify(ventaRepo).save(captor.capture());
         assertThat(captor.getValue().getEstado()).isEqualTo(EstadoVenta.DESPACHADO);
+    }
+
+    @Test
+    @DisplayName("cambiarEstado — registra historial de transición")
+    void cambiarEstado_registraHistorial() {
+        Venta v = new Venta();
+        v.setEstado(EstadoVenta.PENDIENTE);
+        when(ventaRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.cambiarEstado(1L, EstadoVenta.CANCELADO);
+
+        ArgumentCaptor<VentaHistorialEstado> captor = ArgumentCaptor.forClass(VentaHistorialEstado.class);
+        verify(historialRepo).save(captor.capture());
+        assertThat(captor.getValue().getEstadoAnterior()).isEqualTo(EstadoVenta.PENDIENTE);
+        assertThat(captor.getValue().getEstadoNuevo()).isEqualTo(EstadoVenta.CANCELADO);
+    }
+
+    @Test
+    @DisplayName("cambiarEstado — crea notificacion al despachar")
+    void cambiarEstado_despachado_creaNotificacion() {
+        Venta v = new Venta();
+        v.setEstado(EstadoVenta.PENDIENTE);
+        v.setCliente("Bar La Espuma");
+        v.setCodigoLote("IPA-001");
+        v.setCantidad(new BigDecimal("20"));
+        v.setUnidad("L");
+        when(ventaRepo.findById(1L)).thenReturn(Optional.of(v));
+        when(ventaRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.cambiarEstado(1L, EstadoVenta.DESPACHADO);
+
+        verify(notificacionService).crear(any(), contains("Bar La Espuma"), any(), any());
+    }
+
+    // ── validarCantidadDisponible ─────────────────────────────────────
+
+    @Test
+    @DisplayName("validarCantidadDisponible — retorna null si no hay lote")
+    void validarCantidad_sinLote_retornaNull() {
+        assertThat(service.validarCantidadDisponible(null, BigDecimal.TEN, null)).isNull();
+    }
+
+    @Test
+    @DisplayName("validarCantidadDisponible — retorna null si no supera litros")
+    void validarCantidad_dentroDelLimite_retornaNull() {
+        LoteCerveza lote = new LoteCerveza();
+        lote.setCodigoLote("IPA-001");
+        lote.setLitrosFinales(new BigDecimal("100"));
+        when(loteRepo.findById(1L)).thenReturn(Optional.of(lote));
+        when(ventaRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("50"));
+
+        assertThat(service.validarCantidadDisponible(1L, new BigDecimal("30"), null)).isNull();
+    }
+
+    @Test
+    @DisplayName("validarCantidadDisponible — retorna advertencia al superar litros")
+    void validarCantidad_superaLimite_retornaAdvertencia() {
+        LoteCerveza lote = new LoteCerveza();
+        lote.setCodigoLote("IPA-001");
+        lote.setLitrosFinales(new BigDecimal("100"));
+        when(loteRepo.findById(1L)).thenReturn(Optional.of(lote));
+        when(ventaRepo.sumCantidadActivaByLote(1L, null)).thenReturn(new BigDecimal("80"));
+
+        String advertencia = service.validarCantidadDisponible(1L, new BigDecimal("30"), null);
+
+        assertThat(advertencia).isNotNull();
+        assertThat(advertencia).contains("IPA-001");
+    }
+
+    // ── listarHistorial ───────────────────────────────────────────────
+
+    @Test
+    @DisplayName("listarHistorial — delega a repo ordenado por fecha desc")
+    void listarHistorial_delegaARepo() {
+        var h1 = new VentaHistorialEstado();
+        when(historialRepo.findByVentaIdOrderByFechaDesc(5L)).thenReturn(List.of(h1));
+
+        var result = service.listarHistorial(5L);
+
+        assertThat(result).hasSize(1);
+        verify(historialRepo).findByVentaIdOrderByFechaDesc(5L);
     }
 
     // ── suggest ───────────────────────────────────────────────────────

@@ -5,6 +5,7 @@ import com.alera.dto.VentaFormDto;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.service.ExcelExportService;
+import com.alera.service.PdfExportService;
 import com.alera.service.TrazabilidadService;
 import com.alera.service.VentaService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -30,13 +31,16 @@ public class VentaController {
     private final VentaService service;
     private final TrazabilidadService trazabilidadService;
     private final ExcelExportService excelExportService;
+    private final PdfExportService pdfExportService;
 
     public VentaController(VentaService service,
                            TrazabilidadService trazabilidadService,
-                           ExcelExportService excelExportService) {
-        this.service = service;
-        this.trazabilidadService = trazabilidadService;
-        this.excelExportService = excelExportService;
+                           ExcelExportService excelExportService,
+                           PdfExportService pdfExportService) {
+        this.service              = service;
+        this.trazabilidadService  = trazabilidadService;
+        this.excelExportService   = excelExportService;
+        this.pdfExportService     = pdfExportService;
     }
 
     @GetMapping
@@ -46,18 +50,19 @@ public class VentaController {
                         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
                         Model model) {
         var pagina = service.listarPaginado(estado, desde, hasta, page);
-        model.addAttribute("ventas",        pagina.getContent());
-        model.addAttribute("paginaActual",  page);
-        model.addAttribute("totalPaginas",  pagina.getTotalPages());
-        model.addAttribute("totalVentas",   pagina.getTotalElements());
-        model.addAttribute("estadoFiltro",  estado);
-        model.addAttribute("desde",         desde);
-        model.addAttribute("hasta",         hasta);
-        model.addAttribute("estados",       EstadoVenta.values());
-        model.addAttribute("statsTotal",    service.countTotal());
+        model.addAttribute("ventas",          pagina.getContent());
+        model.addAttribute("paginaActual",    page);
+        model.addAttribute("totalPaginas",    pagina.getTotalPages());
+        model.addAttribute("totalVentas",     pagina.getTotalElements());
+        model.addAttribute("estadoFiltro",    estado);
+        model.addAttribute("desde",           desde);
+        model.addAttribute("hasta",           hasta);
+        model.addAttribute("estados",         EstadoVenta.values());
+        model.addAttribute("statsTotal",      service.countTotal());
         model.addAttribute("statsPendientes", service.countByEstado(EstadoVenta.PENDIENTE));
-        model.addAttribute("statsClientes", service.countClientesUnicos());
-        model.addAttribute("statsIngresos", service.sumIngresosDespachados());
+        model.addAttribute("statsClientes",   service.countClientesUnicos());
+        model.addAttribute("statsIngresos",   service.sumIngresosDespachados());
+        model.addAttribute("topClientes",     service.topClientes());
         return "ventas/lista";
     }
 
@@ -66,9 +71,8 @@ public class VentaController {
         VentaFormDto dto = new VentaFormDto();
         if (loteId != null) {
             dto.setLoteId(loteId);
-            trazabilidadService.buscarPorIdOpcional(loteId).ifPresent(lote -> {
-                dto.setCodigoLoteBuscador(lote.getCodigoLote());
-            });
+            trazabilidadService.buscarPorIdOpcional(loteId).ifPresent(lote ->
+                dto.setCodigoLoteBuscador(lote.getCodigoLote()));
         }
         model.addAttribute("ventaForm", dto);
         model.addAttribute("estados", EstadoVenta.values());
@@ -83,9 +87,16 @@ public class VentaController {
             return "ventas/formulario";
         }
         try {
+            String advertencia = service.validarCantidadDisponible(
+                    dto.getLoteId(), dto.getCantidad(), null);
             var venta = service.guardar(dto);
-            ra.addFlashAttribute("mensaje", "Venta registrada correctamente");
-            ra.addFlashAttribute("tipoMensaje", "success");
+            if (advertencia != null) {
+                ra.addFlashAttribute("mensaje", advertencia);
+                ra.addFlashAttribute("tipoMensaje", "warning");
+            } else {
+                ra.addFlashAttribute("mensaje", "Venta registrada correctamente");
+                ra.addFlashAttribute("tipoMensaje", "success");
+            }
             return "redirect:/ventas/ver/" + venta.getId();
         } catch (Exception e) {
             ra.addFlashAttribute("mensaje", "Error al registrar la venta: " + e.getMessage());
@@ -98,8 +109,9 @@ public class VentaController {
     public String ver(@PathVariable Long id, Model model) {
         var venta = service.buscarPorId(id)
                 .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
-        model.addAttribute("venta", venta);
-        model.addAttribute("estados", EstadoVenta.values());
+        model.addAttribute("venta",    venta);
+        model.addAttribute("estados",  EstadoVenta.values());
+        model.addAttribute("historial", service.listarHistorial(id));
         return "ventas/detalle";
     }
 
@@ -135,9 +147,16 @@ public class VentaController {
             return "ventas/formulario";
         }
         try {
+            String advertencia = service.validarCantidadDisponible(
+                    dto.getLoteId(), dto.getCantidad(), id);
             service.actualizar(id, dto);
-            ra.addFlashAttribute("mensaje", "Venta actualizada correctamente");
-            ra.addFlashAttribute("tipoMensaje", "success");
+            if (advertencia != null) {
+                ra.addFlashAttribute("mensaje", advertencia);
+                ra.addFlashAttribute("tipoMensaje", "warning");
+            } else {
+                ra.addFlashAttribute("mensaje", "Venta actualizada correctamente");
+                ra.addFlashAttribute("tipoMensaje", "success");
+            }
         } catch (Exception e) {
             ra.addFlashAttribute("mensaje", "Error al actualizar: " + e.getMessage());
             ra.addFlashAttribute("tipoMensaje", "danger");
@@ -166,6 +185,20 @@ public class VentaController {
         ra.addFlashAttribute("mensaje", "Estado actualizado a " + estado.getDisplayName());
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/ventas/ver/" + id;
+    }
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
+        var venta = service.buscarPorId(id)
+                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+        byte[] bytes = pdfExportService.generarPdfVenta(venta, branding);
+        String filename = "remision-venta-" + id + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(bytes);
     }
 
     @GetMapping("/export")

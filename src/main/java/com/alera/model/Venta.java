@@ -2,6 +2,7 @@ package com.alera.model;
 
 import com.alera.model.enums.EstadoVenta;
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.TenantId;
 
 import java.math.BigDecimal;
@@ -11,6 +12,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "ventas")
+@SQLRestriction("deleted_at IS NULL")
 public class Venta {
 
     @Id
@@ -65,6 +67,9 @@ public class Venta {
     @Column(name = "last_modified_by")
     private String lastModifiedBy;
 
+    @Column(name = "deleted_at")
+    private java.time.LocalDateTime deletedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -116,4 +121,6 @@ public class Venta {
     public LocalDateTime getLastModifiedAt() { return lastModifiedAt; }
     public String getLastModifiedBy() { return lastModifiedBy; }
     public void setLastModifiedBy(String lastModifiedBy) { this.lastModifiedBy = lastModifiedBy; }
+    public java.time.LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(java.time.LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
 }

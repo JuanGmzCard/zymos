@@ -42,6 +42,8 @@ class VentaControllerTest {
     @MockBean JwtService                jwtService;
     @MockBean VentaService              ventaService;
     @MockBean TrazabilidadService       trazabilidadService;
+    @MockBean ExcelExportService        excelExportService;
+    @MockBean PdfExportService          pdfExportService;
 
     @BeforeEach
     void setUp() {
@@ -53,6 +55,8 @@ class VentaControllerTest {
         when(ventaService.countClientesUnicos()).thenReturn(0L);
         when(ventaService.sumIngresosDespachados()).thenReturn(BigDecimal.ZERO);
         when(ventaService.suggest(anyString())).thenReturn(List.of());
+        when(ventaService.topClientes()).thenReturn(List.of());
+        when(ventaService.listarHistorial(anyLong())).thenReturn(List.of());
     }
 
     @Test
@@ -93,7 +97,7 @@ class VentaControllerTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    @DisplayName("GET /ventas/ver/{id} retorna detalle")
+    @DisplayName("GET /ventas/ver/{id} retorna detalle con historial")
     void ver_retornaDetalle() throws Exception {
         Venta v = new Venta();
         v.setCliente("Cliente Test");
@@ -105,7 +109,8 @@ class VentaControllerTest {
 
         mockMvc.perform(get("/ventas/ver/1"))
                 .andExpect(status().isOk())
-                .andExpect(view().name("ventas/detalle"));
+                .andExpect(view().name("ventas/detalle"))
+                .andExpect(model().attributeExists("historial"));
     }
 
     @Test
@@ -115,5 +120,23 @@ class VentaControllerTest {
         mockMvc.perform(get("/ventas/nuevo"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("ventas/formulario"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /ventas/{id}/pdf retorna PDF con Content-Disposition")
+    void pdf_retornaPdf() throws Exception {
+        Venta v = new Venta();
+        v.setCliente("Cliente Test");
+        v.setEstado(EstadoVenta.DESPACHADO);
+        v.setCantidad(BigDecimal.TEN);
+        v.setPrecioUnitario(new BigDecimal("5000"));
+        v.setDescuentoPct(BigDecimal.ZERO);
+        when(ventaService.buscarPorId(1L)).thenReturn(Optional.of(v));
+        when(pdfExportService.generarPdfVenta(any(), any())).thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
+
+        mockMvc.perform(get("/ventas/1/pdf"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("remision-venta-1.pdf")));
     }
 }

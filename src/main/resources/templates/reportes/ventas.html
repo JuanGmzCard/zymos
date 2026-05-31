@@ -53,15 +53,21 @@
                 </div>
             </form>
             <!-- Atajos de período -->
-            <div class="mt-2 d-flex gap-2 flex-wrap">
+            <div class="mt-2 d-flex gap-2 flex-wrap"
+                 th:with="hoy=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')},
+                          primMes=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1),'yyyy-MM-dd')},
+                          primMesAnt=${#temporals.format(T(java.time.LocalDate).now().minusMonths(1).withDayOfMonth(1),'yyyy-MM-dd')},
+                          finMesAnt=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1).minusDays(1),'yyyy-MM-dd')},
+                          hace3m=${#temporals.format(T(java.time.LocalDate).now().minusMonths(3),'yyyy-MM-dd')},
+                          primAnio=${#temporals.format(T(java.time.LocalDate).now().withDayOfYear(1),'yyyy-MM-dd')}">
                 <span class="text-muted small me-1">Atajos:</span>
-                <a th:href="@{/reportes/ventas(desde=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1),'yyyy-MM-dd'),hasta=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')})}"
+                <a th:href="@{/reportes/ventas(desde=${primMes},hasta=${hoy})}"
                    class="btn btn-sm btn-outline-secondary">Este mes</a>
-                <a th:href="@{/reportes/ventas(desde=${#temporals.format(T(java.time.LocalDate).now().minusMonths(1).withDayOfMonth(1),'yyyy-MM-dd'),hasta=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1).minusDays(1),'yyyy-MM-dd')})}"
+                <a th:href="@{/reportes/ventas(desde=${primMesAnt},hasta=${finMesAnt})}"
                    class="btn btn-sm btn-outline-secondary">Mes anterior</a>
-                <a th:href="@{/reportes/ventas(desde=${#temporals.format(T(java.time.LocalDate).now().minusMonths(3),'yyyy-MM-dd'),hasta=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')})}"
+                <a th:href="@{/reportes/ventas(desde=${hace3m},hasta=${hoy})}"
                    class="btn btn-sm btn-outline-secondary">3 meses</a>
-                <a th:href="@{/reportes/ventas(desde=${#temporals.format(T(java.time.LocalDate).now().withDayOfYear(1),'yyyy-MM-dd'),hasta=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')})}"
+                <a th:href="@{/reportes/ventas(desde=${primAnio},hasta=${hoy})}"
                    class="btn btn-sm btn-outline-secondary">Este año</a>
             </div>
         </div>

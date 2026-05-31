@@ -198,6 +198,8 @@ templates/
 - `V34__indices_performance.sql` — índices adicionales de performance sobre columnas de filtrado frecuente.
 - `V35__carbonatacion_avanzada.sql` — `ALTER TABLE lotes_cerveza ADD COLUMN IF NOT EXISTS` 10 columnas para carbonatación avanzada: `carb_metodo VARCHAR(20)`, `carb_co2_objetivo DECIMAL(4,2)`, `carb_co2_real DECIMAL(4,2)`, `carb_azucar_tipo VARCHAR(100)`, `carb_azucar_gramos DECIMAL(10,2)`, `carb_presion_psi DECIMAL(6,2)`, `carb_tiempo_horas INTEGER`, `carb_tecnica VARCHAR(50)`, `carb_validacion VARCHAR(50)`, `carb_destino VARCHAR(300)`. Todas nullable. **CRÍTICO**: `carb_co2_objetivo` y `carb_co2_real` usan underscore entre `co2` y el sufijo — la `SpringPhysicalNamingStrategy` NO inserta underscore entre dígito y mayúscula, por lo que los campos Java `carbCo2Objetivo`/`carbCo2Real` requieren `@Column(name="carb_co2_objetivo")`/`@Column(name="carb_co2_real")` explícitos.
 - `V37__ventas.sql` — tabla `ventas(id BIGSERIAL PK, tenant_id VARCHAR(100), lote_id FK REFERENCES lotes_cerveza ON DELETE SET NULL, codigo_lote VARCHAR(50), cliente VARCHAR(200) NOT NULL, fecha_despacho DATE NOT NULL, cantidad DECIMAL(10,3) NOT NULL, unidad VARCHAR(50), precio_unitario DECIMAL(12,2) NOT NULL, descuento_pct DECIMAL(5,2) DEFAULT 0, notas VARCHAR(500), estado VARCHAR(20) DEFAULT 'PENDIENTE', created_at, created_by, last_modified_at, last_modified_by)` + CHECK constraints en `estado` (PENDIENTE/DESPACHADO/CANCELADO) y `descuento_pct` (0–100) + índices en tenant_id, fecha, lote_id, estado, LOWER(cliente).
+- `V38__venta_historial_estado.sql` — tabla `venta_historial_estado(id BIGSERIAL PK, tenant_id VARCHAR(100), venta_id BIGINT NOT NULL, estado_anterior VARCHAR(20), estado_nuevo VARCHAR(20) NOT NULL, usuario VARCHAR(100), fecha TIMESTAMP NOT NULL DEFAULT NOW())` + índices en `venta_id` y `tenant_id`. Sin FK a `ventas` — preserva historial si se elimina la venta. Con `@TenantId` — filtrada por tenant.
+- `V39__ventas_soft_delete.sql` — `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en `Venta`. `VentaService.eliminar()` setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente). Índice parcial `idx_ventas_deleted ON ventas (deleted_at) WHERE deleted_at IS NULL`.
 
 ---
 
@@ -384,8 +386,19 @@ Registro de ventas/despachos de lote a clientes. Tabla `ventas`. Tiene `@TenantI
 - `notas` (VARCHAR 500, nullable)
 - `@Enumerated(EnumType.STRING) estado → EstadoVenta` — default PENDIENTE
 - `createdAt`, `createdBy`, `lastModifiedAt`, `lastModifiedBy` — auditoría propia
+- `deletedAt` (TIMESTAMP, nullable) — soft delete: `@SQLRestriction("deleted_at IS NULL")`. `VentaService.eliminar()` setea `deletedAt` y guarda (no borra físicamente).
 - `getValorTotal()` — `cantidad × precioUnitario × (1 - descuentoPct/100)`, escala 2
 - **EstadoVenta** (`com.alera.model.enums`): `PENDIENTE("Pendiente", "bg-warning text-dark")`, `DESPACHADO("Despachado", "bg-success")`, `CANCELADO("Cancelado", "bg-secondary")`. Cada valor tiene `getDisplayName()` y `getBadgeClass()`.
+
+### VentaHistorialEstado
+Auditoría de cambios de estado de ventas. Tabla `venta_historial_estado`. Tiene `@TenantId`. **No extiende `AuditableEntity`.**
+- `id`, `tenantId` (@TenantId), `ventaId` (BIGINT, sin FK — preserva historial si se elimina la venta)
+- `@Enumerated(EnumType.STRING) estadoAnterior → EstadoVenta` — nullable (null = creación inicial)
+- `@Enumerated(EnumType.STRING) estadoNuevo → EstadoVenta` (NOT NULL)
+- `usuario` (VARCHAR 100) — nombre del usuario autenticado; `"sistema"` si no hay sesión
+- `fecha` (TIMESTAMP, NOT NULL, seteado por `@PrePersist`)
+- Factory: `VentaHistorialEstado.of(ventaId, estadoAnterior, estadoNuevo, usuario)`
+- Se crea en `VentaService.guardar()` (estado inicial, `estadoAnterior=null`), en `actualizar()` (solo si el estado cambió), y en `cambiarEstado()`
 
 ### Usuario
 No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist createdAt`. Campos:
@@ -465,6 +478,11 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `countClientesUnicos()` — `COUNT(DISTINCT v.cliente)` — para stat-card de clientes únicos.
 - `sumIngresosDespachados()` — `SUM(cantidad × precioUnitario × (1 - descuentoPct/100))` solo para `estado = DESPACHADO`; retorna null si no hay ventas (el servicio normaliza a ZERO).
 - `search(q, Pageable)` — LIKE en `LOWER(cliente)` y `LOWER(COALESCE(codigoLote,''))`, orden `fechaDespacho DESC NULLS LAST`.
+- `sumCantidadActivaByLote(loteId, excludeId)` — `COALESCE(SUM(cantidad), 0)` de ventas no canceladas del lote, excluyendo la venta `excludeId` (para edición). Usado por `VentaService.validarCantidadDisponible()`.
+- `findTopClientes(tenantId)` — `nativeQuery=true`, top 5 clientes por ingresos despachados (`estado='DESPACHADO'`), agrupados con `COUNT` y `SUM`. Requiere `tenantId` explícito y filtra `deleted_at IS NULL` manualmente (native query).
+
+### VentaHistorialEstadoRepository
+- `findByVentaIdOrderByFechaDesc(ventaId)` — historial de cambios de estado de una venta. Hibernate filtra automáticamente por tenant activo via `@TenantId`.
 
 ### ElaboracionPlanificadaRepository
 - `findProximas(desde)` — elaboraciones con `fechaPlaneada >= :desde`, `LEFT JOIN FETCH receta`, orden ASC
@@ -619,9 +637,10 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `generarPdfLote(LoteCerveza, ExportBranding, List<LecturaFermentacion>)` → `byte[]` — genera PDF A4 con OpenPDF usando la paleta de colores del tenant. Secciones: encabezado, info del lote, parámetros/métricas, ingredientes, fases, **carbonatación — detalle** (si `carbMetodo`, `carbCo2Objetivo` o `carbDestino` no es null — via `addDetalleCarbonacion()`), **curva de fermentación** (si hay lecturas), **comparativa receta vs lote** (si tiene receta con OG/FG objetivo), costos, observaciones/notas de cata, pie de página. `addDetalleCarbonacion()`: tabla 4 cols (método, CO₂ objetivo→real, validación, destino) + fila condicional con parámetros del método (Natural: azúcar tipo + gramos; Forzada: presión PSI + tiempo + técnica). La curva usa **Java2D** (BufferedImage 2x → PNG → bytes → `Image.getInstance(bytes)`), evitando los problemas de tipo de `PdfTemplate` con OpenPDF. El gráfico muestra: eje Y izquierdo dorado (densidad) + eje Y derecho azul (temperatura °C, aparece solo si hay lecturas con temperatura), línea dorada sólida de densidad, línea azul sólida de temperatura, puntos de colores en cada lectura, línea verde punteada de FG real, etiquetas X de fecha (dd/MM), leyenda con ambas series. El margen derecho se expande automáticamente (8pt → 40pt) cuando hay temperatura. El X axis usa el rango de TODAS las lecturas (no solo las de densidad). Bajo el gráfico: tabla con columnas adaptativas (temperatura y notas solo aparecen si alguna lectura las tiene). La sección "COMPARATIVA RECETA VS LOTE" muestra tabla OG/FG/ABV objetivo vs real con diferencia en verde (positivo) o rojo (negativo). Métrica FG muestra `densidadFinalFecha` como subtítulo cuando está presente.
 - `generarPdfReceta(Receta receta, ExportBranding)` → `byte[]` — genera PDF A4 con OpenPDF usando paleta del tenant. Secciones: cabecera (nombre de receta + estilo), información general (nombre, estilo, estado, versión, hervor, vol. base, agua macerado/sparge, **pH agua si no es null**), **descripción** (si no está en blanco — párrafo texto libre), parámetros objetivo (OG/FG/ABV estimado si ambos están presentes), ingredientes agrupados por tipo (maltas/lúpulos/levaduras/clarificantes), escalones de macerado, adiciones de hervor, notas técnicas, pie de página. Reutiliza helpers `addTituloPdf`, `par`, `metricaCell`, `tableCell`.
 - `generarPdfReporteProduccion(lotes, desde, hasta, estiloFiltro, ExportBranding)` → `byte[]` — genera PDF **landscape A4** con OpenPDF. Secciones: cabecera con período y filtro de estilo activo, resumen estadístico (8 métricas en tabla 8 cols), tabla de lotes (9 cols: Código, Estilo, Receta, Fecha, Litros, OG, ABV, Eficiencia, Estado) con filas alternas y código en color del tenant, y resumen por estilo (solo si hay >1 estilo). Helper privado `tablaCelda(t, text, font, bg)` para celdas con color de fila alterno.
+- `generarPdfVenta(Venta, ExportBranding)` → `byte[]` — genera PDF A4 de remisión/nota de despacho. Secciones: cabecera (nombre del tenant + "REMISIÓN / NOTA DE DESPACHO" + ref. venta), datos del despacho (cliente, fecha, lote, estado), detalle de la venta (tabla: descripción, cantidad, precio unitario, descuento, total), pie de página. Usa helpers `addTituloPdf`, `par`. Descargado por `GET /ventas/{id}/pdf` como `remision-venta-{id}.pdf`.
 - Colores neutros fijos (no cambian con branding): `C_GRIS`, `C_BORDE`. El resto usa `Pal` record interno calculado desde `ExportBranding`.
 - Solo importa `com.lowagie.text.*` — sin colisión con POI.
-- Inyectado en `TrazabilidadController`, `RecetaController` y `ReporteController`.
+- Inyectado en `TrazabilidadController`, `RecetaController`, `ReporteController` y `VentaController`.
 
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, **2 filas de resumen estadístico** (fila 1: total lotes, litros, estilos, completados+%; fila 2: prom/lote, ABV promedio, eficiencia promedio, costo total), datos de lotes con autofilter — **18 columnas** incluyendo al final: `Método Carb.` (Natural/Forzada), `CO₂ Obj. (vol)`, `CO₂ Real (vol)`, `Destino / Empaque`; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
@@ -706,10 +725,16 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `listarPaginado(estado, desde, hasta, page)` — paginado con filtros opcionales; todos los parámetros son nullable.
 - `buscarPorId(id)` — `Optional<Venta>`
 - `listarPorLote(loteId)` — `List<Venta>` ordenadas por `fechaDespacho DESC`; usado por `TrazabilidadController.ver()` para mostrar las ventas del lote en `detalle.html`.
-- `guardar(dto)` / `actualizar(id, dto)` / `eliminar(id)` — CRUD básico; `mapearDto()` vincula el lote via `loteRepo.findById` si `dto.getLoteId() != null`.
-- `cambiarEstado(id, EstadoVenta)` — actualiza estado y guarda; no-op si no existe.
+- `listarHistorial(ventaId)` — `@Transactional(readOnly=true)`, delega a `historialRepo.findByVentaIdOrderByFechaDesc`. Usado por `VentaController.ver()`.
+- `guardar(dto)` — persiste la venta y registra `VentaHistorialEstado` con `estadoAnterior=null` (creación inicial).
+- `actualizar(id, dto)` — actualiza la venta; registra historial y crea notificación in-app SOLO si el estado cambió.
+- `eliminar(id)` — **soft delete**: setea `deletedAt = LocalDateTime.now()` y guarda. No llama `deleteById`. No-op si no existe.
+- `cambiarEstado(id, EstadoVenta)` — actualiza estado, persiste historial de transición; si `nuevoEstado = DESPACHADO` crea notificación in-app vía `NotificacionService`. No-op si no existe.
+- `validarCantidadDisponible(loteId, cantidad, excludeVentaId)` — `@Transactional(readOnly=true)`. Comprueba si `yaVendido + nuevaCantidad > lote.litrosFinales`. Retorna mensaje de advertencia String o null si OK. `excludeVentaId` excluye la venta en edición. No bloquea — solo informa.
+- `topClientes()` — `@Transactional(readOnly=true)`, delega a `repo.findTopClientes(tenantId)`. Retorna `List<Map>` con top 5 clientes por ingresos despachados. Usado en `lista.html`.
 - `suggest(q)` — `@Transactional(readOnly=true)`, query corta (< 2 chars) retorna lista vacía; busca via `repo.search()` (limit 6); retorna `[{titulo, sub, fecha, url}]`.
 - `countTotal()`, `countByEstado(EstadoVenta)`, `countClientesUnicos()`, `sumIngresosDespachados()` — stats para las 4 stat-cards de la lista.
+- Inyecta `VentaHistorialEstadoRepository historialRepo` y `NotificacionService notificacionService`.
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`.
 
 ### LecturaFermentacionService
@@ -888,17 +913,18 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
 
 ### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
-- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote.
+- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos).
 - `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. Typeahead de lote usa `GET /suggest?q=` (TrazabilidadController). Preview de total en tiempo real.
-- `POST /ventas/guardar` — crea venta, redirige a `/ventas/ver/{id}` con flash success.
-- `GET /ventas/ver/{id}` — detalle con datos, total calculado, panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN).
+- `POST /ventas/guardar` — llama `validarCantidadDisponible()` antes de guardar; flash warning si supera litros del lote, success si todo OK.
+- `GET /ventas/ver/{id}` — detalle con datos, total calculado, **historial de cambios de estado** (card con tabla), panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN).
 - `GET /ventas/editar/{id}` — formulario de edición con datos pre-llenados.
-- `POST /ventas/actualizar/{id}` — actualiza, redirige a `/ventas/ver/{id}`.
-- `POST /ventas/{id}/eliminar` — elimina y redirige a `/ventas`.
+- `POST /ventas/actualizar/{id}` — llama `validarCantidadDisponible()` antes de actualizar; flash warning/success según resultado.
+- `POST /ventas/{id}/eliminar` — soft delete, redirige a `/ventas`.
 - `POST /ventas/{id}/estado` — cambia `EstadoVenta`, redirige a `/ventas/ver/{id}`.
+- `GET /ventas/{id}/pdf` — descarga remisión PDF. Construye `ExportBranding.from(tenant)`. Delega a `PdfExportService.generarPdfVenta()`. Nombre: `remision-venta-{id}.pdf`.
 - `GET /ventas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{titulo, sub, fecha, url}]`.
 - **Integración con detalle de lote**: `TrazabilidadController.ver()` pasa `ventasLote` al modelo; `detalle.html` muestra la sección "Ventas y Despacho" con botón "Registrar Venta" (link a `/ventas/nuevo?loteId={id}`) solo para ADMIN/FACTURACION/SUPERADMIN.
-- **`@WebMvcTest`**: `@MockBean VentaService ventaService` + `@MockBean TrazabilidadService trazabilidadService`.
+- **`@WebMvcTest`**: `@MockBean VentaService ventaService` + `@MockBean TrazabilidadService trazabilidadService` + `@MockBean ExcelExportService excelExportService` + `@MockBean PdfExportService pdfExportService`. Stubs adicionales en `@BeforeEach`: `ventaService.topClientes()` → `List.of()`, `ventaService.listarHistorial(anyLong())` → `List.of()`.
 
 ### ProveedorController ("/proveedores")
 - CRUD + acceso ADMIN y FACTURACION
@@ -1193,6 +1219,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `TipoCervezaServiceTest` — 11 tests: `listarActivos/Todos`, `buscarPorId`, `existePorNombre`, `guardar`, `eliminar`, `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op).
 - `ProveedorServiceTest` — 15 tests: `listarActivos/Todos`, `buscarPorId`, `suggest` (null/corta, filtro nombre, filtro NIT, límite 6, estructura mapa con url, NIT null → string vacío), `guardar`, `eliminar`, `contarFacturas`, `totalFacturas`.
 - `MantenimientoEquipoServiceTest` — 9 tests: `listarPorEquipo` (vacío y con resultados), `registrar` (campos del DTO en MantenimientoEquipo, actualiza `fechaUltimoMantenimiento`, actualiza/no-actualiza `proximoMantenimiento` según null, equipo no existe → RuntimeException, retorna guardado), `eliminar`.
+- `VentaServiceTest` — 24 tests: `guardar` (campos básicos, registra historial con estadoAnterior=null, vincula lote, sin lote, estado null→PENDIENTE), `actualizar` (modifica campos, registra historial al cambiar estado, NO registra historial si estado igual, lanza excepción si no existe), `eliminar` (soft delete setea deletedAt — no llama deleteById, no-op si no existe), `cambiarEstado` (actualiza estado, registra historial de transición, crea notificación al despachar), `validarCantidadDisponible` (null retorna null, dentro del límite retorna null, supera límite retorna advertencia con código de lote), `listarHistorial` (delega a repo), `suggest` (query corta, estructura correcta), stats (countTotal, countByEstado, sumIngresos null→ZERO, listarPaginado). Requiere `@Mock VentaHistorialEstadoRepository historialRepo` y `@Mock NotificacionService notificacionService`. `@BeforeEach` hace `lenient().when(historialRepo.save(any())).thenReturn(new VentaHistorialEstado())`.
 - `PdfExportServiceTest` — 8 smoke tests: verifica magic bytes `%PDF`, lote mínimo sin lecturas, lote completo (densidades, fases, obs), lecturas con densidad+temp, solo densidad, solo temperatura, lecturas null, tamaño >1KB, PDFs distintos para lotes distintos. Instancia `PdfExportService` directamente (sin Spring context — no tiene dependencias). Usa `private static final ExportBranding BRANDING = ExportBranding.defaults("Alera")` como constante de test.
 - `ExcelExportServiceTest` — 8 smoke tests: verifica magic bytes `PK` (ZIP/XLSX), listas vacías, lote mínimo, lotes con métricas, resumen por estilos, 50 lotes sin excepción, contenido distinto para lotes distintos. Usa `ExportBranding.defaults("Alera")` como constante de test. **Bug descubierto**: fechas `null` en `desde`/`hasta` → `RuntimeException` (NPE interno al formatear) — el test lo documenta y verifica el comportamiento real. **NOTA**: `List.of(Object[])` causa ambigüedad de tipos en Java 26 — usar `new ArrayList<>()` para listas de `Object[]`.
 
@@ -1220,6 +1247,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
+- `VentaControllerTest` — 7 tests: 401 sin auth, 200 ADMIN y FACTURACION, suggest JSON, ver/{id} retorna modelo con `historial`, nuevo retorna formulario, `GET /ventas/{id}/pdf` retorna PDF con Content-Disposition. Requiere `@MockBean ExcelExportService` y `@MockBean PdfExportService`. Stubs: `topClientes()` → `List.of()`, `listarHistorial(anyLong())` → `List.of()`.
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context
 
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
@@ -1237,7 +1265,7 @@ APP_BRAND_FONT_BODY=Roboto
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V33 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V39 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
@@ -1253,7 +1281,7 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 362 tests, BUILD SUCCESS
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 395 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
 
 ---

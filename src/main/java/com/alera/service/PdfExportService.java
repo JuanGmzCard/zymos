@@ -9,6 +9,7 @@ import com.alera.model.LoteCerveza;
 import com.alera.model.LoteItemFactura;
 import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
+import com.alera.model.Venta;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -1255,5 +1256,153 @@ public class PdfExportService {
     private boolean notBlank(String s) { return s != null && !s.isBlank(); }
     private String fmt2(BigDecimal n)  {
         return n != null ? String.format("%,.0f", n.doubleValue()) : "—";
+    }
+
+    // ── PDF Venta (Remisión) ─────────────────────────────────────────
+
+    public byte[] generarPdfVenta(Venta venta, ExportBranding branding) {
+        Pal pal = Pal.of(branding);
+        String brandName = branding.name();
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+        try {
+            PdfWriter.getInstance(doc, baos);
+            doc.open();
+
+            // ── Cabecera ─────────────────────────────────────────────
+            Font fBrand  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal.verde());
+            Font fSub    = new Font(Font.HELVETICA,  9, Font.NORMAL, C_GRIS);
+            Font fTitulo = new Font(Font.HELVETICA, 13, Font.BOLD,  pal.verde());
+
+            Paragraph cabBrand = new Paragraph(brandName.toUpperCase(), fBrand);
+            cabBrand.setAlignment(Element.ALIGN_LEFT);
+            doc.add(cabBrand);
+
+            Paragraph cabTipo = new Paragraph("REMISIÓN / NOTA DE DESPACHO", fTitulo);
+            cabTipo.setAlignment(Element.ALIGN_LEFT);
+            doc.add(cabTipo);
+
+            Paragraph cabNum = new Paragraph("Ref. Venta #" + venta.getId(), fSub);
+            cabNum.setAlignment(Element.ALIGN_LEFT);
+            doc.add(cabNum);
+
+            // línea divisora
+            PdfPTable linea = new PdfPTable(1);
+            linea.setWidthPercentage(100);
+            linea.setSpacingBefore(8f);
+            linea.setSpacingAfter(12f);
+            PdfPCell lineaCell = new PdfPCell(new Phrase(""));
+            lineaCell.setBackgroundColor(pal.verde());
+            lineaCell.setBorder(PdfPCell.NO_BORDER);
+            lineaCell.setFixedHeight(2f);
+            linea.addCell(lineaCell);
+            doc.add(linea);
+
+            // ── Datos del cliente y despacho ─────────────────────────
+            addTituloPdf(doc, "DATOS DEL DESPACHO", pal);
+
+            PdfPTable datos = new PdfPTable(new float[]{2f, 3f, 2f, 3f});
+            datos.setWidthPercentage(100);
+            datos.setSpacingAfter(12f);
+
+            Font fLbl = new Font(Font.HELVETICA, 8, Font.BOLD, C_GRIS);
+            Font fVal = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+
+            par(datos, "Cliente",         venta.getCliente(), fLbl, fVal, pal);
+            par(datos, "Fecha de Despacho",
+                venta.getFechaDespacho() != null ? venta.getFechaDespacho().format(FMT_FECHA) : "—",
+                fLbl, fVal, pal);
+            par(datos, "Lote",
+                venta.getCodigoLote() != null ? venta.getCodigoLote() : "Sin lote",
+                fLbl, fVal, pal);
+            par(datos, "Estado", venta.getEstado().getDisplayName(), fLbl, fVal, pal);
+            doc.add(datos);
+
+            // ── Tabla de la venta ─────────────────────────────────────
+            addTituloPdf(doc, "DETALLE DE LA VENTA", pal);
+
+            PdfPTable tabla = new PdfPTable(new float[]{2.5f, 1.5f, 2f, 1.5f, 2f});
+            tabla.setWidthPercentage(100);
+            tabla.setSpacingAfter(14f);
+
+            Font fTh = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
+            for (String h : new String[]{"Descripción", "Cantidad", "Precio Unitario", "Descuento", "Total"}) {
+                PdfPCell c = new PdfPCell(new Phrase(h, fTh));
+                c.setBackgroundColor(pal.verde());
+                c.setBorderColor(C_BORDE);
+                c.setPadding(5);
+                tabla.addCell(c);
+            }
+
+            String desc = venta.getCodigoLote() != null
+                    ? "Cerveza artesanal — Lote " + venta.getCodigoLote()
+                    : "Cerveza artesanal";
+            String cantStr = venta.getCantidad() != null
+                    ? String.format("%,.3f", venta.getCantidad()) + (venta.getUnidad() != null ? " " + venta.getUnidad() : "")
+                    : "—";
+            String precioStr = venta.getPrecioUnitario() != null
+                    ? "$" + String.format("%,.2f", venta.getPrecioUnitario()) : "—";
+            String descStr = venta.getDescuentoPct() != null && venta.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
+                    ? venta.getDescuentoPct() + "%" : "—";
+            String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
+
+            Font fTd = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            Font fTdBold = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
+
+            tableCell(tabla, desc,     fTd,     Color.WHITE, Element.ALIGN_LEFT);
+            tableCell(tabla, cantStr,  fTd,     Color.WHITE, Element.ALIGN_CENTER);
+            tableCell(tabla, precioStr,fTd,     Color.WHITE, Element.ALIGN_RIGHT);
+            tableCell(tabla, descStr,  fTd,     Color.WHITE, Element.ALIGN_CENTER);
+            tableCell(tabla, totalStr, fTdBold, Color.WHITE, Element.ALIGN_RIGHT);
+            doc.add(tabla);
+
+            // ── Total destacado ───────────────────────────────────────
+            PdfPTable totBox = new PdfPTable(new float[]{3f, 1f});
+            totBox.setWidthPercentage(50);
+            totBox.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            totBox.setSpacingAfter(14f);
+
+            Font fTotLbl = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
+            Font fTotVal = new Font(Font.HELVETICA, 11, Font.BOLD, pal.verde());
+
+            PdfPCell lblCell = new PdfPCell(new Phrase("TOTAL A COBRAR", fTotLbl));
+            lblCell.setBackgroundColor(pal.fondo()); lblCell.setBorderColor(C_BORDE); lblCell.setPadding(6);
+            totBox.addCell(lblCell);
+
+            PdfPCell valCell = new PdfPCell(new Phrase(totalStr, fTotVal));
+            valCell.setBackgroundColor(pal.fondo()); valCell.setBorderColor(C_BORDE);
+            valCell.setPadding(6); valCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+            totBox.addCell(valCell);
+            doc.add(totBox);
+
+            // ── Notas ─────────────────────────────────────────────────
+            if (venta.getNotas() != null && !venta.getNotas().isBlank()) {
+                addTituloPdf(doc, "NOTAS", pal);
+                Paragraph notaP = new Paragraph(venta.getNotas(),
+                        new Font(Font.HELVETICA, 9, Font.ITALIC, C_GRIS));
+                notaP.setSpacingAfter(12f);
+                doc.add(notaP);
+            }
+
+            // ── Pie ───────────────────────────────────────────────────
+            doc.add(new Paragraph("\n"));
+            Paragraph pie = new Paragraph(
+                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
+                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+            pie.setAlignment(Element.ALIGN_RIGHT);
+            doc.add(pie);
+
+            doc.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando PDF de venta #" + venta.getId(), e);
+        }
+        return baos.toByteArray();
+    }
+
+    private void tableCell(PdfPTable t, String text, Font font, Color bg, int align) {
+        PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        c.setBackgroundColor(bg); c.setBorderColor(C_BORDE);
+        c.setPadding(5); c.setHorizontalAlignment(align);
+        t.addCell(c);
     }
 }
