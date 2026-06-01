@@ -33,8 +33,7 @@
                 </small>
             </div>
             <div class="d-flex gap-2 align-self-center flex-wrap" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
-                <a th:href="@{/ventas/nuevo}" class="btn btn-outline-crema"
-                   th:href="@{/ventas/nuevo}">
+                <a th:href="@{/ventas/nuevo}" class="btn btn-outline-crema">
                     <i class="bi bi-bag-plus me-1"></i>Nueva Venta
                 </a>
                 <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-zymos">

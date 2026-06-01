@@ -1346,7 +1346,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
 - `VentaControllerTest` — 7 tests: 401 sin auth, 200 ADMIN y FACTURACION, suggest JSON, ver/{id} retorna modelo con `historial`, nuevo retorna formulario, `GET /ventas/{id}/pdf` retorna PDF con Content-Disposition. Requiere `@MockBean ExcelExportService`, `@MockBean PdfExportService` y `@MockBean ClienteService` (parámetro de constructor del controller). Stubs: `topClientes()` → `List.of()`, `listarHistorial(anyLong())` → `List.of()`. **Nota**: en tests de `ver_retornaDetalle` y `pdf_retornaPdf`, NO setear `v.setCantidad`, `v.setPrecioUnitario`, `v.setDescuentoPct` — esos campos ya no existen en `Venta`. `valorTotal` es `@Formula` (null en tests sin BD = ZERO via `getValorTotal()`).
-- `ClienteControllerTest` — **pendiente de crear**. El controller existe pero no tiene tests `@WebMvcTest`. Mocks mínimos: `ClienteService` (ya `@MockBean` en VentaControllerTest). Casos mínimos: 401, 200 ADMIN/FACTURACION, suggest JSON, formulario nuevo, guardar con NIT duplicado redirige con error.
+- `ClienteControllerTest` — 8 tests: 401 sin auth, 200 ADMIN (vista clientes/lista + atributos), 200 FACTURACION, suggest JSON, GET /nuevo retorna formulario con `listasPrecio`+`regimenes`, GET /ver/{id} retorna clientes/detalle, POST /guardar con NIT duplicado redirige a /clientes con flash danger, POST /{id}/toggle redirige a /clientes. Solo requiere `@MockBean ClienteService`.
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context
 
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
@@ -1380,7 +1380,7 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 396 tests, BUILD SUCCESS
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 404 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
 
 ---
