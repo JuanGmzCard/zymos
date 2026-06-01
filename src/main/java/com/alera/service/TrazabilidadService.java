@@ -133,16 +133,41 @@ public class TrazabilidadService {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
         log.info("Actualizando lote: {}", lote.getCodigoLote());
-        restaurarInventario(lote.getIngredientes(), lote.getCodigoLote());
+
+        // Copia la lista vieja ANTES de limpiarla para poder comparar luego.
+        List<Ingrediente> ingredientesAntes = new ArrayList<>(lote.getIngredientes());
+
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "EDITADO", currentUser(), null));
-        List<String> advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
+
+        // Solo ajusta inventario si los ingredientes cambiaron efectivamente.
+        // Si el usuario editó fechas, notas u otros campos sin tocar ingredientes,
+        // no se generan movimientos innecesarios en movimientos_inventario.
+        List<String> advertencias = List.of();
+        if (ingredientesModificados(ingredientesAntes, lote.getIngredientes())) {
+            restaurarInventario(ingredientesAntes, lote.getCodigoLote());
+            advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
+        }
+
         log.info("Lote actualizado: {}", lote.getCodigoLote());
         return new LoteGuardadoResult(lote, advertencias);
+    }
+
+    private boolean ingredientesModificados(List<Ingrediente> antes, List<Ingrediente> despues) {
+        if (antes.size() != despues.size()) return true;
+        List<String> keysBefore = antes.stream()
+                .map(i -> i.getNombre() + "|" + i.getCantidad())
+                .sorted()
+                .toList();
+        List<String> keysAfter = despues.stream()
+                .map(i -> i.getNombre() + "|" + i.getCantidad())
+                .sorted()
+                .toList();
+        return !keysBefore.equals(keysAfter);
     }
 
     @CacheEvict(value = "dashboard-stats", allEntries = true)
