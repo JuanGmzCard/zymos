@@ -33,7 +33,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/facturas")
@@ -276,19 +275,31 @@ public class FacturaProveedorController {
         model.addAttribute("estados",     EstadoFactura.values());
         model.addAttribute("proveedoresActivos", proveedorService.listarActivos());
 
-        // Agrupados por tipo para el datalist dinámico en el JS del formulario
-        Map<String, List<String>> insumosPorTipo = insumoRepo.findAllByOrderByNombreAsc()
-                .stream()
-                .filter(i -> i.getTipo() != null)
-                .collect(Collectors.groupingBy(
-                        InsumoInventario::getTipo,
-                        Collectors.mapping(InsumoInventario::getNombre, Collectors.toList())));
-        Map<String, List<String>> equiposPorTipo = equipoRepo.findAll()
-                .stream()
-                .filter(e -> e.getTipo() != null)
-                .collect(Collectors.groupingBy(
-                        Equipo::getTipo,
-                        Collectors.mapping(Equipo::getNombre, Collectors.toList())));
+        // Agrupados por nombre de enum (clave usada en el JS) mapeando display name → enum name.
+        // InsumoInventario.tipo y Equipo.tipo guardan display names tras V45 ("Malta", "Fermentador"),
+        // pero el select de categoría usa values = enum name (MALTA, FERMENTADOR). Al iterar los enums
+        // garantizamos que todas las categorías aparezcan como claves aunque estén vacías.
+        List<InsumoInventario> todosInsumos = insumoRepo.findAllByOrderByNombreAsc();
+        Map<String, List<String>> insumosPorTipo = new LinkedHashMap<>();
+        for (TipoInsumo tipo : TipoInsumo.values()) {
+            String dn = tipo.getDisplayName();
+            List<String> nombres = todosInsumos.stream()
+                    .filter(i -> dn.equals(i.getTipo()))
+                    .map(InsumoInventario::getNombre)
+                    .toList();
+            insumosPorTipo.put(tipo.name(), nombres);
+        }
+
+        List<Equipo> todosEquipos = equipoRepo.findAll();
+        Map<String, List<String>> equiposPorTipo = new LinkedHashMap<>();
+        for (TipoEquipo tipo : TipoEquipo.values()) {
+            String dn = tipo.getDisplayName();
+            List<String> nombres = todosEquipos.stream()
+                    .filter(e -> dn.equals(e.getTipo()))
+                    .map(Equipo::getNombre)
+                    .toList();
+            equiposPorTipo.put(tipo.name(), nombres);
+        }
         model.addAttribute("insumosPorTipo", insumosPorTipo);
         model.addAttribute("equiposPorTipo", equiposPorTipo);
     }

@@ -1,15 +1,23 @@
--- Convierte valores de enum a nombres de display en insumos_inventario y equipos
--- El schema no cambia (ya es VARCHAR por @Enumerated(EnumType.STRING))
+-- Convierte valores de enum a nombres de display en insumos_inventario y equipos.
+-- El schema no cambia (ya es VARCHAR por @Enumerated(EnumType.STRING)).
+-- Primero elimina el CHECK constraint de V36 que solo permite nombres de enum uppercase,
+-- ya que los nuevos valores display (Malta, Lúpulo...) lo violarían.
 
-UPDATE insumos_inventario SET tipo = 'Malta'                  WHERE tipo = 'MALTA';
-UPDATE insumos_inventario SET tipo = 'Lúpulo'                 WHERE tipo = 'LUPULO';
-UPDATE insumos_inventario SET tipo = 'Levadura'               WHERE tipo = 'LEVADURA';
-UPDATE insumos_inventario SET tipo = 'Clarificante'           WHERE tipo = 'CLARIFICANTE';
+ALTER TABLE insumos_inventario
+    DROP CONSTRAINT IF EXISTS insumos_inventario_tipo_check;
+
+ALTER TABLE equipos
+    DROP CONSTRAINT IF EXISTS equipos_tipo_check;
+
+UPDATE insumos_inventario SET tipo = 'Malta'                   WHERE tipo = 'MALTA';
+UPDATE insumos_inventario SET tipo = 'Lúpulo'                  WHERE tipo = 'LUPULO';
+UPDATE insumos_inventario SET tipo = 'Levadura'                WHERE tipo = 'LEVADURA';
+UPDATE insumos_inventario SET tipo = 'Clarificante'            WHERE tipo = 'CLARIFICANTE';
 UPDATE insumos_inventario SET tipo = 'Agente de Carbonatación' WHERE tipo = 'AGENTE_CARBONATACION';
-UPDATE insumos_inventario SET tipo = 'Agua'                   WHERE tipo = 'AGUA';
-UPDATE insumos_inventario SET tipo = 'Químico'                WHERE tipo = 'QUIMICO';
-UPDATE insumos_inventario SET tipo = 'Envase'                 WHERE tipo = 'ENVASE';
-UPDATE insumos_inventario SET tipo = 'Otro'                   WHERE tipo = 'OTRO';
+UPDATE insumos_inventario SET tipo = 'Agua'                    WHERE tipo = 'AGUA';
+UPDATE insumos_inventario SET tipo = 'Químico'                 WHERE tipo = 'QUIMICO';
+UPDATE insumos_inventario SET tipo = 'Envase'                  WHERE tipo = 'ENVASE';
+UPDATE insumos_inventario SET tipo = 'Otro'                    WHERE tipo = 'OTRO';
 
 UPDATE equipos SET tipo = 'Fermentador'      WHERE tipo = 'FERMENTADOR';
 UPDATE equipos SET tipo = 'Olla de Macerado' WHERE tipo = 'OLLA_MACERADO';
