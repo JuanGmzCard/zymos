@@ -151,7 +151,7 @@ public class ApiController {
         Map<String, Object> res = new LinkedHashMap<>();
         res.put("bajoStock", insumoService.listarBajoStock().stream().map(i -> Map.of(
                 "nombre", i.getNombre(),
-                "tipo",   i.getTipo().name(),
+                "tipo",   i.getTipo() != null ? i.getTipo() : "",
                 "stock",  i.getCantidad(),
                 "minimo", i.getStockMinimo(),
                 "unidad", Objects.requireNonNullElse(i.getUnidad(), "")

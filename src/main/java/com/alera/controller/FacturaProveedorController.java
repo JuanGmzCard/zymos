@@ -213,7 +213,7 @@ public class FacturaProveedorController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> guardarInsumoRapido(
             @RequestParam String nombre,
-            @RequestParam TipoInsumo tipo,
+            @RequestParam(defaultValue = "Otro") String tipo,
             @RequestParam(defaultValue = "gr") String unidad) {
         Map<String, Object> resp = new LinkedHashMap<>();
         try {
@@ -225,7 +225,7 @@ public class FacturaProveedorController {
             }
             InsumoInventario ins = new InsumoInventario();
             ins.setNombre(nombreTrim);
-            ins.setTipo(tipo);
+            ins.setTipo(tipo.isBlank() ? "Otro" : tipo);
             ins.setUnidad(unidad);
             ins.setCantidad(BigDecimal.ZERO);
             ins.setStockMinimo(BigDecimal.ZERO);
@@ -233,7 +233,7 @@ public class FacturaProveedorController {
             resp.put("success", true);
             resp.put("id", saved.getId());
             resp.put("nombre", saved.getNombre());
-            resp.put("tipo", saved.getTipo().name());
+            resp.put("tipo", saved.getTipo());
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             resp.put("success", false);
@@ -246,19 +246,19 @@ public class FacturaProveedorController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> guardarEquipoRapido(
             @RequestParam String nombre,
-            @RequestParam TipoEquipo tipo) {
+            @RequestParam(defaultValue = "Otro") String tipo) {
         Map<String, Object> resp = new LinkedHashMap<>();
         try {
             String nombreTrim = nombre.trim();
             Equipo eq = new Equipo();
             eq.setNombre(nombreTrim);
-            eq.setTipo(tipo);
+            eq.setTipo(tipo.isBlank() ? "Otro" : tipo);
             eq.setEstado(EstadoEquipo.OPERATIVO);
             Equipo saved = equipoService.guardar(eq);
             resp.put("success", true);
             resp.put("id", saved.getId());
             resp.put("nombre", saved.getNombre());
-            resp.put("tipo", saved.getTipo().name());
+            resp.put("tipo", saved.getTipo());
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             resp.put("success", false);
@@ -279,13 +279,15 @@ public class FacturaProveedorController {
         // Agrupados por tipo para el datalist dinámico en el JS del formulario
         Map<String, List<String>> insumosPorTipo = insumoRepo.findAllByOrderByNombreAsc()
                 .stream()
+                .filter(i -> i.getTipo() != null)
                 .collect(Collectors.groupingBy(
-                        i -> i.getTipo().name(),
+                        InsumoInventario::getTipo,
                         Collectors.mapping(InsumoInventario::getNombre, Collectors.toList())));
         Map<String, List<String>> equiposPorTipo = equipoRepo.findAll()
                 .stream()
+                .filter(e -> e.getTipo() != null)
                 .collect(Collectors.groupingBy(
-                        e -> e.getTipo().name(),
+                        Equipo::getTipo,
                         Collectors.mapping(Equipo::getNombre, Collectors.toList())));
         model.addAttribute("insumosPorTipo", insumosPorTipo);
         model.addAttribute("equiposPorTipo", equiposPorTipo);

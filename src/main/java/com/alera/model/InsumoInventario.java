@@ -1,6 +1,5 @@
 package com.alera.model;
 
-import com.alera.model.enums.TipoInsumo;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -16,9 +15,8 @@ public class InsumoInventario extends AuditableEntity {
     @Column(nullable = false)
     private String nombre;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TipoInsumo tipo;
+    private String tipo;
 
     @Column(precision = 10, scale = 3)
     private BigDecimal cantidad = BigDecimal.ZERO;
@@ -78,15 +76,15 @@ public class InsumoInventario extends AuditableEntity {
     public String getColorTipo() {
         if (tipo == null) return "secondary";
         return switch (tipo) {
-            case MALTA -> "warning";
-            case LUPULO -> "success";
-            case LEVADURA -> "info";
-            case CLARIFICANTE -> "primary";
-            case AGENTE_CARBONATACION -> "warning";
-            case AGUA -> "info";
-            case QUIMICO -> "danger";
-            case ENVASE -> "secondary";
-            case OTRO -> "dark";
+            case "Malta"                   -> "warning";
+            case "Lúpulo"                  -> "success";
+            case "Levadura"                -> "info";
+            case "Clarificante"            -> "primary";
+            case "Agente de Carbonatación" -> "warning";
+            case "Agua"                    -> "info";
+            case "Químico"                 -> "danger";
+            case "Envase"                  -> "secondary";
+            default                        -> "dark";
         };
     }
 
@@ -95,8 +93,8 @@ public class InsumoInventario extends AuditableEntity {
     public void setId(Long id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-    public TipoInsumo getTipo() { return tipo; }
-    public void setTipo(TipoInsumo tipo) { this.tipo = tipo; }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
     public BigDecimal getCantidad() { return cantidad; }
     public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
     public String getUnidad() { return unidad; }

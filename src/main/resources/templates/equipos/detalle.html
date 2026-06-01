@@ -17,7 +17,7 @@
         <div>
             <h1 th:text="${equipo.nombre}">Equipo</h1>
             <p>
-                <span th:text="${equipo.tipo.displayName}">Tipo</span>
+                <span th:text="${equipo.tipo}">Tipo</span>
                 <span class="badge ms-2"
                       th:classappend="'bg-' + ${equipo.colorEstado}"
                       th:text="${equipo.estado.displayName}">Estado</span>
@@ -100,7 +100,7 @@
                     </div>
                     <div class="mb-3">
                         <div class="detail-label">Tipo</div>
-                        <div class="detail-value" th:text="${equipo.tipo.displayName}">—</div>
+                        <div class="detail-value" th:text="${equipo.tipo}">—</div>
                     </div>
                     <div class="mb-3">
                         <div class="detail-label">Estado</div>

@@ -1,7 +1,6 @@
 package com.alera.repository;
 
 import com.alera.model.InsumoInventario;
-import com.alera.model.enums.TipoInsumo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,7 +15,6 @@ public interface InsumoInventarioRepository extends JpaRepository<InsumoInventar
     @Query("SELECT i FROM InsumoInventario i WHERE i.cantidad <= i.stockMinimo ORDER BY i.nombre")
     List<InsumoInventario> findBajoStock();
 
-    // COUNT — no carga registros completos
     @Query("SELECT COUNT(i) FROM InsumoInventario i WHERE i.cantidad <= i.stockMinimo")
     long countBajoStock();
 
@@ -26,7 +24,6 @@ public interface InsumoInventarioRepository extends JpaRepository<InsumoInventar
     @Query("SELECT i FROM InsumoInventario i WHERE i.fechaVencimiento <= :fecha ORDER BY i.fechaVencimiento ASC")
     List<InsumoInventario> findProximosAVencer(@Param("fecha") LocalDate fecha);
 
-    // COUNT — no carga registros completos
     @Query("SELECT COUNT(i) FROM InsumoInventario i WHERE i.fechaVencimiento IS NOT NULL AND i.fechaVencimiento <= :fecha")
     long countProximosAVencer(@Param("fecha") LocalDate fecha);
 
@@ -34,9 +31,9 @@ public interface InsumoInventarioRepository extends JpaRepository<InsumoInventar
 
     @Query("SELECT i FROM InsumoInventario i WHERE " +
            "(:nombre = '' OR LOWER(i.nombre) LIKE LOWER(CONCAT('%', :nombre, '%'))) " +
-           "AND (:#{#tipo == null ? 'TODOS' : #tipo.name()} = 'TODOS' OR i.tipo = :tipo) " +
+           "AND (:tipo IS NULL OR i.tipo = :tipo) " +
            "ORDER BY i.nombre ASC")
     Page<InsumoInventario> findByFiltros(@Param("nombre") String nombre,
-                                          @Param("tipo") TipoInsumo tipo,
+                                          @Param("tipo") String tipo,
                                           Pageable pageable);
 }

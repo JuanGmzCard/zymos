@@ -48,13 +48,12 @@
         </div>
         <div>
             <label class="form-label mb-1" style="font-size:0.75rem;font-weight:600;color:#6c757d;text-transform:uppercase;">Tipo</label>
-            <select name="tipo" class="form-select form-select-sm" style="width:160px;">
-                <option value="">Todos los tipos</option>
-                <option th:each="t : ${tiposInsumo}"
-                        th:value="${t}"
-                        th:selected="${tipoFiltro == t}"
-                        th:text="${t.displayName}">-</option>
-            </select>
+            <input type="text" name="tipo" class="form-control form-control-sm" style="width:160px;"
+                   list="listaTiposFiltro" placeholder="Todos los tipos" autocomplete="off"
+                   th:value="${tipoFiltro}">
+            <datalist id="listaTiposFiltro">
+                <option th:each="t : ${tiposInsumo}" th:value="${t}"></option>
+            </datalist>
         </div>
         <div class="d-flex gap-2 align-items-end">
             <button type="submit" class="btn btn-zymos btn-sm px-3">
@@ -151,7 +150,7 @@
                             <span th:text="${ins.nombre}">-</span>
                             <i th:if="${ins.bajoStock}" class="bi bi-exclamation-triangle text-danger ms-1" title="Bajo stock"></i>
                         </td>
-                        <td><span class="badge" th:classappend="'bg-' + ${ins.colorTipo}" th:text="${ins.tipo.displayName}">-</span></td>
+                        <td><span class="badge" th:classappend="'bg-' + ${ins.colorTipo}" th:text="${ins.tipo}">-</span></td>
                         <td th:text="${ins.cantidad} + ' ' + (${ins.unidad} != null ? ${ins.unidad} : '')">-</td>
                         <td th:text="${ins.stockMinimo} + ' ' + (${ins.unidad} != null ? ${ins.unidad} : '')">-</td>
                         <td>

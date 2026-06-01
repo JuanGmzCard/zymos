@@ -2,7 +2,6 @@ package com.alera.service;
 
 import com.alera.model.InsumoInventario;
 import com.alera.model.MovimientoInventario;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.MovimientoInventarioRepository;
@@ -43,9 +42,10 @@ public class InsumoInventarioService {
         return repo.findAllByOrderByNombreAsc();
     }
 
-    public Page<InsumoInventario> listarPaginado(String nombre, TipoInsumo tipo, int page) {
+    public Page<InsumoInventario> listarPaginado(String nombre, String tipo, int page) {
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre.trim() : "";
-        return repo.findByFiltros(nombreParam, tipo, PageRequest.of(page, pageSize));
+        String tipoParam = (tipo != null && !tipo.isBlank()) ? tipo : null;
+        return repo.findByFiltros(nombreParam, tipoParam, PageRequest.of(page, pageSize));
     }
 
     public Optional<InsumoInventario> buscarPorId(Long id) {
@@ -161,17 +161,17 @@ public class InsumoInventarioService {
         }
     }
 
-    public TipoInsumo detectarTipo(String nombre) {
-        if (nombre == null) return TipoInsumo.OTRO;
+    public String detectarTipo(String nombre) {
+        if (nombre == null) return "Otro";
         String n = nombre.toLowerCase();
-        if (n.contains("malta") || n.contains("pilsner") || n.contains("malt")) return TipoInsumo.MALTA;
-        if (n.contains("lupulo") || n.contains("lúpulo") || n.contains("hop"))  return TipoInsumo.LUPULO;
-        if (n.contains("levadura") || n.contains("yeast"))                       return TipoInsumo.LEVADURA;
-        if (n.contains("clarific") || n.contains("gelatin") || n.contains("irish")) return TipoInsumo.CLARIFICANTE;
+        if (n.contains("malta") || n.contains("pilsner") || n.contains("malt")) return "Malta";
+        if (n.contains("lupulo") || n.contains("lúpulo") || n.contains("hop"))  return "Lúpulo";
+        if (n.contains("levadura") || n.contains("yeast"))                       return "Levadura";
+        if (n.contains("clarific") || n.contains("gelatin") || n.contains("irish")) return "Clarificante";
         if (n.contains("dextrosa") || n.contains("sacarosa") || n.contains("priming")
-                || n.contains("carbonat") || n.contains("extracto de malta"))     return TipoInsumo.AGENTE_CARBONATACION;
-        if (n.contains("envase") || n.contains("botell") || n.contains("lata"))  return TipoInsumo.ENVASE;
-        return TipoInsumo.OTRO;
+                || n.contains("carbonat") || n.contains("extracto de malta"))     return "Agente de Carbonatación";
+        if (n.contains("envase") || n.contains("botell") || n.contains("lata"))  return "Envase";
+        return "Otro";
     }
 
     private void registrarMovimiento(Long insumoId, String nombre, TipoMovimiento tipo,

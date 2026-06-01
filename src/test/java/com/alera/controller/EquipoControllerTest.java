@@ -90,7 +90,7 @@ class EquipoControllerTest {
         com.alera.model.Equipo equipo = new com.alera.model.Equipo();
         equipo.setId(1L);
         equipo.setNombre("Fermentador A");
-        equipo.setTipo(com.alera.model.enums.TipoEquipo.FERMENTADOR);
+        equipo.setTipo("Fermentador");
         equipo.setEstado(com.alera.model.enums.EstadoEquipo.OPERATIVO);
         when(equipoService.buscarPorId(1L)).thenReturn(Optional.of(equipo));
         when(mantenimientoService.listarPorEquipo(1L)).thenReturn(List.of());

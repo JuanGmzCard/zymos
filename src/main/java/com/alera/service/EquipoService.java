@@ -3,7 +3,6 @@ package com.alera.service;
 import com.alera.exception.EquipoEnUsoException;
 import com.alera.model.Equipo;
 import com.alera.model.enums.EstadoEquipo;
-import com.alera.model.enums.TipoEquipo;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.LoteCervezaRepository;
 import org.springframework.stereotype.Service;
@@ -56,7 +55,7 @@ public class EquipoService {
             .map(e -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("nombre",     e.getNombre());
-                m.put("tipo",       e.getTipo() != null ? e.getTipo().getDisplayName() : "");
+                m.put("tipo",       e.getTipo() != null ? e.getTipo() : "");
                 m.put("estado",     e.getEstado() != null ? e.getEstado().getDisplayName() : "");
                 m.put("colorEstado",e.getColorEstado());
                 m.put("pendiente",  e.isMantenimientoPendiente());
@@ -89,7 +88,7 @@ public class EquipoService {
     }
 
     public List<Equipo> listarFermentadoresDisponibles() {
-        return repo.findFermentadoresDisponibles(TipoEquipo.FERMENTADOR, EstadoEquipo.OPERATIVO);
+        return repo.findFermentadoresDisponibles("Fermentador", EstadoEquipo.OPERATIVO);
     }
 
     public List<Equipo> listarMantenimientoPendiente() {

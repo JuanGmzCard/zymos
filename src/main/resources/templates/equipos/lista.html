@@ -127,7 +127,7 @@
                             <span class="fw-600" th:text="${equipo.nombre}">—</span>
                         </td>
                         <td>
-                            <span class="badge equipo-tipo-badge" th:text="${equipo.tipo.displayName}">—</span>
+                            <span class="badge equipo-tipo-badge" th:text="${equipo.tipo}">—</span>
                         </td>
                         <td>
                             <form th:action="@{/equipos/{id}/estado(id=${equipo.id})}" method="post" class="d-inline">

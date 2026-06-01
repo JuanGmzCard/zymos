@@ -2,7 +2,6 @@ package com.alera.controller;
 
 import com.alera.model.FacturaItem;
 import com.alera.model.InsumoInventario;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.service.ExcelExportService;
@@ -27,6 +26,10 @@ import java.util.stream.Collectors;
 @RequestMapping("/inventario")
 public class InsumoInventarioController {
 
+    static final List<String> TIPOS_INSUMO = List.of(
+            "Malta", "Lúpulo", "Levadura", "Clarificante",
+            "Agente de Carbonatación", "Agua", "Químico", "Envase", "Otro");
+
     private final InsumoInventarioService service;
     private final FacturaItemRepository facturaItemRepo;
     private final ExcelExportService excelService;
@@ -45,7 +48,7 @@ public class InsumoInventarioController {
     @GetMapping
     public String lista(
             @RequestParam(defaultValue = "") String nombre,
-            @RequestParam(required = false) TipoInsumo tipo,
+            @RequestParam(required = false) String tipo,
             @RequestParam(defaultValue = "false") boolean filtroBajoStock,
             @RequestParam(defaultValue = "false") boolean filtroPorVencer,
             @RequestParam(defaultValue = "0") int page,
@@ -78,7 +81,7 @@ public class InsumoInventarioController {
         model.addAttribute("totalInsumos",     totalInsumos);
         model.addAttribute("nombreFiltro",     nombre);
         model.addAttribute("tipoFiltro",       tipo);
-        model.addAttribute("tiposInsumo",      TipoInsumo.values());
+        model.addAttribute("tiposInsumo",      TIPOS_INSUMO);
         model.addAttribute("bajoStock",        service.listarBajoStock());
         model.addAttribute("proximosVencer",   service.listarProximosAVencer(30));
         model.addAttribute("filtroBajoStock",  filtroBajoStock);
@@ -90,7 +93,7 @@ public class InsumoInventarioController {
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("insumo", new InsumoInventario());
-        model.addAttribute("tiposInsumo", TipoInsumo.values());
+        model.addAttribute("tiposInsumo", TIPOS_INSUMO);
         model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }
@@ -113,7 +116,7 @@ public class InsumoInventarioController {
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
-        model.addAttribute("tiposInsumo", TipoInsumo.values());
+        model.addAttribute("tiposInsumo", TIPOS_INSUMO);
         model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }
@@ -137,7 +140,7 @@ public class InsumoInventarioController {
     @ResponseBody
     public List<Map<String, Object>> suggest(
             @RequestParam(defaultValue = "") String nombre,
-            @RequestParam(required = false) TipoInsumo tipo) {
+            @RequestParam(required = false) String tipo) {
         if (nombre.isBlank() || nombre.trim().length() < 2) return List.of();
         return service.listarPaginado(nombre.trim(), tipo, 0)
             .getContent().stream()
@@ -146,7 +149,7 @@ public class InsumoInventarioController {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("id",        i.getId());
                 m.put("nombre",    i.getNombre());
-                m.put("tipoNombre",i.getTipo() != null ? i.getTipo().getDisplayName() : "");
+                m.put("tipoNombre",i.getTipo() != null ? i.getTipo() : "");
                 m.put("colorTipo", i.getColorTipo());
                 m.put("bajoStock", i.isBajoStock());
                 m.put("url",       "/inventario/editar/" + i.getId());
@@ -158,7 +161,7 @@ public class InsumoInventarioController {
     @ResponseBody
     public ResponseEntity<Map<String, Object>> guardarRapido(
             @RequestParam String nombre,
-            @RequestParam TipoInsumo tipo,
+            @RequestParam(defaultValue = "Otro") String tipo,
             @RequestParam(defaultValue = "gr") String unidad) {
         Map<String, Object> resp = new LinkedHashMap<>();
         try {
@@ -169,7 +172,7 @@ public class InsumoInventarioController {
             }
             InsumoInventario ins = new InsumoInventario();
             ins.setNombre(nombre.trim());
-            ins.setTipo(tipo);
+            ins.setTipo(tipo.isBlank() ? "Otro" : tipo);
             ins.setUnidad(unidad);
             ins.setCantidad(BigDecimal.ZERO);
             ins.setStockMinimo(BigDecimal.ZERO);
@@ -199,7 +202,7 @@ public class InsumoInventarioController {
     @GetMapping("/export")
     public ResponseEntity<byte[]> export(
             @RequestParam(defaultValue = "") String nombre,
-            @RequestParam(required = false) TipoInsumo tipo,
+            @RequestParam(required = false) String tipo,
             @RequestParam(defaultValue = "false") boolean filtroBajoStock,
             @RequestParam(defaultValue = "false") boolean filtroPorVencer,
             HttpServletRequest request) {
@@ -209,7 +212,7 @@ public class InsumoInventarioController {
         } else if (filtroPorVencer) {
             insumos = service.listarProximosAVencer(30);
         } else {
-            insumos = (nombre.isBlank() && tipo == null)
+            insumos = (nombre.isBlank() && (tipo == null || tipo.isBlank()))
                     ? service.listarTodos()
                     : service.listarPaginado(nombre, tipo, 0).getContent();
         }

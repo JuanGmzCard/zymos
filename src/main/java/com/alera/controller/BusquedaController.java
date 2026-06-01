@@ -71,7 +71,7 @@ public class BusquedaController {
             .map(i -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("titulo", i.getNombre());
-                m.put("sub",    i.getTipo() != null ? i.getTipo().name() : "");
+                m.put("sub",    i.getTipo() != null ? i.getTipo() : "");
                 m.put("url",    "/inventario/editar/" + i.getId());
                 return m;
             }).toList();
@@ -89,7 +89,7 @@ public class BusquedaController {
             .map(e -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("titulo", e.getNombre());
-                m.put("sub",    e.getTipo() != null ? e.getTipo().getDisplayName() : "");
+                m.put("sub",    e.getTipo() != null ? e.getTipo() : "");
                 m.put("url",    "/equipos/ver/" + e.getId());
                 return m;
             }).toList();

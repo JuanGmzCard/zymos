@@ -1,7 +1,6 @@
 package com.alera.model;
 
 import com.alera.model.enums.EstadoEquipo;
-import com.alera.model.enums.TipoEquipo;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,9 +16,8 @@ public class Equipo extends AuditableEntity {
     @Column(nullable = false)
     private String nombre;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TipoEquipo tipo;
+    private String tipo;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,7 +49,7 @@ public class Equipo extends AuditableEntity {
     }
 
     public String getNombreTipo() {
-        return tipo != null ? tipo.getDisplayName() : "";
+        return tipo != null ? tipo : "";
     }
 
     public boolean isEnMantenimiento() {
@@ -63,8 +61,8 @@ public class Equipo extends AuditableEntity {
     public void setId(Long id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-    public TipoEquipo getTipo() { return tipo; }
-    public void setTipo(TipoEquipo tipo) { this.tipo = tipo; }
+    public String getTipo() { return tipo; }
+    public void setTipo(String tipo) { this.tipo = tipo; }
     public EstadoEquipo getEstado() { return estado; }
     public void setEstado(EstadoEquipo estado) { this.estado = estado; }
     public BigDecimal getCapacidad() { return capacidad; }

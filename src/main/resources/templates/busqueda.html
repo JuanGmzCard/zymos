@@ -115,7 +115,7 @@
                        class="list-group-item list-group-item-action py-2 px-3">
                         <div class="fw-600" th:text="${ins.nombre}">—</div>
                         <div class="d-flex justify-content-between">
-                            <span class="badge equipo-tipo-badge" th:text="${ins.tipo.displayName}">—</span>
+                            <span class="badge equipo-tipo-badge" th:text="${ins.tipo}">—</span>
                             <span class="small fw-bold"
                                   th:classappend="${ins.bajoStock} ? 'text-danger' : 'text-muted'"
                                   th:text="${ins.cantidad} + ' ' + ${ins.unidad}">—</span>
@@ -171,7 +171,7 @@
                        class="list-group-item list-group-item-action py-2 px-3">
                         <div class="fw-600" th:text="${eq.nombre}">—</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge equipo-tipo-badge" th:text="${eq.tipo.displayName}">—</span>
+                            <span class="badge equipo-tipo-badge" th:text="${eq.tipo}">—</span>
                             <span class="small" th:text="${eq.estado.displayName}"
                                   th:style="${eq.estado.name() == 'OPERATIVO'} ? 'color:var(--dorado);font-weight:600;' : 'color:#6c757d;'">—</span>
                         </div>

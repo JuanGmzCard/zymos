@@ -2,7 +2,6 @@ package com.alera.controller;
 
 import com.alera.model.Equipo;
 import com.alera.model.enums.EstadoEquipo;
-import com.alera.model.enums.TipoEquipo;
 import com.alera.service.EquipoService;
 import com.alera.service.MantenimientoEquipoService;
 import org.springframework.http.MediaType;
@@ -17,6 +16,10 @@ import java.util.Map;
 @Controller
 @RequestMapping("/equipos")
 public class EquipoController {
+
+    static final List<String> TIPOS_EQUIPO = List.of(
+            "Fermentador", "Olla de Macerado", "Olla de Hervor", "Enfriador",
+            "Bomba", "Filtro", "Medidor de pH", "Densímetro", "Báscula", "Compresor", "Otro");
 
     private final EquipoService service;
     private final MantenimientoEquipoService mantenimientoService;
@@ -38,7 +41,7 @@ public class EquipoController {
         model.addAttribute("estadoFiltro",      estado);
         model.addAttribute("baseUrl",           "/equipos");
         model.addAttribute("extraParams",       estado != null ? "&estado=" + estado.name() : "");
-        model.addAttribute("tiposEquipo",       TipoEquipo.values());
+        model.addAttribute("tiposEquipo",       TIPOS_EQUIPO);
         model.addAttribute("estadosEquipo",     EstadoEquipo.values());
         // stat-cards
         model.addAttribute("statsTotal",        service.countTotal());
@@ -87,7 +90,7 @@ public class EquipoController {
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("equipo", new Equipo());
-        model.addAttribute("tiposEquipo", TipoEquipo.values());
+        model.addAttribute("tiposEquipo", TIPOS_EQUIPO);
         model.addAttribute("estadosEquipo", EstadoEquipo.values());
         return "equipos/formulario";
     }
@@ -111,7 +114,7 @@ public class EquipoController {
     public String editar(@PathVariable Long id, Model model) {
         var equipo = service.buscarPorId(id).orElseThrow();
         model.addAttribute("equipo", equipo);
-        model.addAttribute("tiposEquipo", TipoEquipo.values());
+        model.addAttribute("tiposEquipo", TIPOS_EQUIPO);
         model.addAttribute("estadosEquipo", EstadoEquipo.values());
         return "equipos/formulario";
     }

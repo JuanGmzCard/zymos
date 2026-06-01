@@ -3,7 +3,6 @@ package com.alera.service;
 import com.alera.exception.EquipoEnUsoException;
 import com.alera.model.Equipo;
 import com.alera.model.enums.EstadoEquipo;
-import com.alera.model.enums.TipoEquipo;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.LoteCervezaRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -175,12 +174,12 @@ class EquipoServiceTest {
     @Test
     @DisplayName("listarFermentadoresDisponibles pasa FERMENTADOR y OPERATIVO al repositorio")
     void listarFermentadoresDisponibles_pasaParametrosCorrectos() {
-        when(repo.findFermentadoresDisponibles(TipoEquipo.FERMENTADOR, EstadoEquipo.OPERATIVO))
+        when(repo.findFermentadoresDisponibles("Fermentador", EstadoEquipo.OPERATIVO))
                 .thenReturn(List.of());
 
         service.listarFermentadoresDisponibles();
 
-        verify(repo).findFermentadoresDisponibles(TipoEquipo.FERMENTADOR, EstadoEquipo.OPERATIVO);
+        verify(repo).findFermentadoresDisponibles("Fermentador", EstadoEquipo.OPERATIVO);
     }
 
     // ── listarMantenimientoPendiente ──────────────────────────────────
@@ -210,7 +209,7 @@ class EquipoServiceTest {
         Equipo equipo = new Equipo();
         equipo.setId(1L);
         equipo.setNombre("Tank A");
-        equipo.setTipo(TipoEquipo.FERMENTADOR);
+        equipo.setTipo("Fermentador");
         equipo.setEstado(EstadoEquipo.OPERATIVO);
         when(repo.findById(1L)).thenReturn(Optional.of(equipo));
         when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));

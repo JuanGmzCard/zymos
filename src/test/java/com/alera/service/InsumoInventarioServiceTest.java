@@ -38,7 +38,7 @@ class InsumoInventarioServiceTest {
     void setUp() {
         insumoConStock = new InsumoInventario();
         insumoConStock.setNombre("Swaen Ale");
-        insumoConStock.setTipo(TipoInsumo.MALTA);
+        insumoConStock.setTipo("Malta");
         insumoConStock.setCantidad(new BigDecimal("5000"));
         insumoConStock.setUnidad("gr");
         insumoConStock.setStockMinimo(new BigDecimal("500"));
@@ -146,20 +146,20 @@ class InsumoInventarioServiceTest {
     @Test
     @DisplayName("detectarTipo identifica malta correctamente")
     void detectarTipo_malta() {
-        assertThat(service.detectarTipo("Malta Pilsen")).isEqualTo(TipoInsumo.MALTA);
-        assertThat(service.detectarTipo("Swaen Malt")).isEqualTo(TipoInsumo.MALTA);
+        assertThat(service.detectarTipo("Malta Pilsen")).isEqualTo("Malta");
+        assertThat(service.detectarTipo("Swaen Malt")).isEqualTo("Malta");
     }
 
     @Test
     @DisplayName("detectarTipo identifica lúpulo correctamente")
     void detectarTipo_lupulo() {
-        assertThat(service.detectarTipo("Lupulo Citra")).isEqualTo(TipoInsumo.LUPULO);
-        assertThat(service.detectarTipo("Warrior Hop")).isEqualTo(TipoInsumo.LUPULO);
+        assertThat(service.detectarTipo("Lupulo Citra")).isEqualTo("Lúpulo");
+        assertThat(service.detectarTipo("Warrior Hop")).isEqualTo("Lúpulo");
     }
 
     @Test
-    @DisplayName("detectarTipo retorna OTRO para nombre desconocido")
+    @DisplayName("detectarTipo retorna Otro para nombre desconocido")
     void detectarTipo_desconocido() {
-        assertThat(service.detectarTipo("Producto X")).isEqualTo(TipoInsumo.OTRO);
+        assertThat(service.detectarTipo("Producto X")).isEqualTo("Otro");
     }
 }

@@ -9,7 +9,6 @@ import com.alera.model.Venta;
 import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.EstadoVenta;
-import com.alera.model.enums.TipoInsumo;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -106,7 +105,7 @@ public class ExcelExportService {
             XSSFCellStyle sN = alt ? stNumAlt  : stNum;
 
             celda(fila, 0, ins.getNombre(), sD);
-            celda(fila, 1, ins.getTipo() != null ? ins.getTipo().getDisplayName() : "", sD);
+            celda(fila, 1, ins.getTipo() != null ? ins.getTipo() : "", sD);
             celdaNum(fila, 2, ins.getCantidad() != null ? ins.getCantidad().doubleValue() : null, sN);
             celda(fila, 3, ins.getUnidad() != null ? ins.getUnidad() : "", sD);
             celdaNum(fila, 4, ins.getStockMinimo() != null ? ins.getStockMinimo().doubleValue() : null, sN);
@@ -147,22 +146,20 @@ public class ExcelExportService {
         String[] headers = {"Tipo", "Cantidad de items", "Items bajo stock", "% bajo stock"};
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        java.util.EnumMap<TipoInsumo, long[]> grouped = new java.util.EnumMap<>(TipoInsumo.class);
-        for (TipoInsumo t : TipoInsumo.values()) grouped.put(t, new long[]{0, 0});
+        java.util.LinkedHashMap<String, long[]> grouped = new java.util.LinkedHashMap<>();
         for (InsumoInventario ins : insumos) {
-            if (ins.getTipo() != null) {
-                grouped.get(ins.getTipo())[0]++;
-                if (ins.isBajoStock()) grouped.get(ins.getTipo())[1]++;
-            }
+            String t = ins.getTipo() != null ? ins.getTipo() : "Otro";
+            grouped.computeIfAbsent(t, k -> new long[]{0, 0});
+            grouped.get(t)[0]++;
+            if (ins.isBajoStock()) grouped.get(t)[1]++;
         }
 
         int idx = 0;
-        for (Map.Entry<TipoInsumo, long[]> entry : grouped.entrySet()) {
-            if (entry.getValue()[0] == 0) continue;
+        for (Map.Entry<String, long[]> entry : grouped.entrySet()) {
             boolean alt = idx % 2 != 0;
             Row fila = sheet.createRow(r++);
             long total = entry.getValue()[0], bajo = entry.getValue()[1];
-            celda(fila, 0, entry.getKey().getDisplayName(), alt ? stDatoAlt : stDato);
+            celda(fila, 0, entry.getKey(), alt ? stDatoAlt : stDato);
             celdaNum(fila, 1, (double) total, alt ? stNumAlt : stNum);
             celdaNum(fila, 2, (double) bajo,  alt ? stNumAlt : stNum);
             celdaNum(fila, 3, total > 0 ? (bajo * 100.0 / total) : 0.0, alt ? stNumAlt : stNum);

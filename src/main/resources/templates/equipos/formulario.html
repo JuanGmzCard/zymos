@@ -31,10 +31,11 @@
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="tipo">Tipo *</label>
-                    <select th:field="*{tipo}" class="form-select" required>
-                        <option value="">-- Seleccionar --</option>
-                        <option th:each="t : ${tiposEquipo}" th:value="${t}" th:text="${t.displayName}"></option>
-                    </select>
+                    <input type="text" th:field="*{tipo}" class="form-control" list="listaTiposEquipo"
+                           placeholder="Ej: Fermentador, Bomba…" required autocomplete="off">
+                    <datalist id="listaTiposEquipo">
+                        <option th:each="t : ${tiposEquipo}" th:value="${t}"></option>
+                    </datalist>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label" for="estado">Estado *</label>

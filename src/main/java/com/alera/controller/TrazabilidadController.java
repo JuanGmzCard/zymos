@@ -352,19 +352,19 @@ public class TrazabilidadController {
     private void agregarInventarioAlModelo(Model model) {
         var todosInsumos = insumoRepo.findAll();
         model.addAttribute("maltasInventario", todosInsumos.stream()
-                .filter(i -> i.getTipo() == TipoInsumo.MALTA).toList());
+                .filter(i -> "Malta".equals(i.getTipo())).toList());
         model.addAttribute("lupulosInventario", todosInsumos.stream()
-                .filter(i -> i.getTipo() == TipoInsumo.LUPULO).toList());
+                .filter(i -> "Lúpulo".equals(i.getTipo())).toList());
         model.addAttribute("levaduraInventario", todosInsumos.stream()
-                .filter(i -> i.getTipo() == TipoInsumo.LEVADURA).toList());
+                .filter(i -> "Levadura".equals(i.getTipo())).toList());
         model.addAttribute("clarificantesInventario", todosInsumos.stream()
-                .filter(i -> i.getTipo() == TipoInsumo.CLARIFICANTE).toList());
+                .filter(i -> "Clarificante".equals(i.getTipo())).toList());
         model.addAttribute("agentesCarbonatacion", todosInsumos.stream()
-                .filter(i -> i.getTipo() == TipoInsumo.AGENTE_CARBONATACION).toList());
+                .filter(i -> "Agente de Carbonatación".equals(i.getTipo())).toList());
         var stockList = todosInsumos.stream().map(i -> {
             var ms = new java.util.LinkedHashMap<String, Object>();
             ms.put("nombre", i.getNombre() != null ? i.getNombre().toLowerCase().trim() : "");
-            ms.put("tipo", i.getTipo() != null ? i.getTipo().name() : null);
+            ms.put("tipo", i.getTipo());
             ms.put("cantidad", i.getCantidad());
             ms.put("unidad", i.getUnidad());
             return ms;

@@ -3,7 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.model.Equipo;
 import com.alera.model.enums.EstadoEquipo;
-import com.alera.model.enums.TipoEquipo;
+
 import com.alera.repository.TenantRepository;
 import com.alera.service.EquipoService;
 import com.alera.service.JwtService;
@@ -51,7 +51,7 @@ class MantenimientoEquipoControllerTest {
         Equipo equipo = new Equipo();
         equipo.setId(1L);
         equipo.setNombre("Fermentador 1");
-        equipo.setTipo(TipoEquipo.FERMENTADOR);
+        equipo.setTipo("Fermentador");
         equipo.setEstado(EstadoEquipo.OPERATIVO);
         when(equipoService.buscarPorId(1L)).thenReturn(Optional.of(equipo));
         when(mantenimientoService.listarPorEquipo(1L)).thenReturn(List.of());
