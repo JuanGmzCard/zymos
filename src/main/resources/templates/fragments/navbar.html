@@ -31,7 +31,7 @@
         left: 0;
         min-width: 300px;
         background: #fff;
-        border: 1px solid rgba(201,160,40,.35);
+        border: 1px solid color-mix(in srgb, var(--dorado) 35%, transparent);
         border-radius: .5rem;
         box-shadow: 0 6px 20px rgba(0,0,0,.18);
         z-index: 1100;
@@ -58,7 +58,7 @@
         font-size: .87rem;
         transition: background .1s;
     }
-    .search-suggest a.ss-item:hover, .search-suggest a.ss-item.ss-active { background: rgba(201,160,40,.12); }
+    .search-suggest a.ss-item:hover, .search-suggest a.ss-item.ss-active { background: color-mix(in srgb, var(--dorado) 12%, transparent); }
     .search-suggest .ss-icon { color: var(--dorado); flex-shrink: 0; }
     .search-suggest .ss-title { flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .search-suggest .ss-sub { font-size: .75rem; color: #888; white-space: nowrap; }
@@ -92,7 +92,7 @@
             flex-direction: row !important;
             flex-wrap: wrap;
             gap: 0.25rem !important;
-            border-top: 1px solid rgba(201,160,40,0.2);
+            border-top: 1px solid color-mix(in srgb, var(--dorado) 20%, transparent);
             padding-top: 0.5rem;
             margin-top: 0.25rem;
             padding-bottom: 0.25rem;
@@ -304,8 +304,8 @@
                 <div class="input-group input-group-sm w-100">
                     <input type="search" name="q" id="navSearchInput" class="form-control navbar-search"
                            placeholder="Buscar…" aria-label="Buscar" autocomplete="off"
-                           style="min-width:180px;max-width:280px;background:rgba(255,255,255,0.1);border-color:rgba(201,160,40,0.4);color:var(--crema);">
-                    <button type="submit" class="btn btn-sm" style="background:rgba(201,160,40,0.2);border-color:rgba(201,160,40,0.4);color:var(--crema);">
+                           style="min-width:180px;max-width:280px;background:rgba(255,255,255,0.1);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
+                    <button type="submit" class="btn btn-sm" style="background:color-mix(in srgb,var(--dorado) 20%,transparent);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
@@ -325,7 +325,7 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link px-2 py-1 d-flex align-items-center gap-1" href="#"
                        data-bs-toggle="dropdown" aria-expanded="false"
-                       style="border:1px solid rgba(201,160,40,0.55);border-radius:6px;color:var(--dorado);font-size:0.82rem;font-weight:600;line-height:1.4;">
+                       style="border:1px solid color-mix(in srgb,var(--dorado) 55%,transparent);border-radius:6px;color:var(--dorado);font-size:0.82rem;font-weight:600;line-height:1.4;">
                         <i class="bi bi-plus-lg" style="font-size:0.85rem;"></i> Nuevo
                     </a>
                     <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:220px;">

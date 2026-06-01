@@ -54,9 +54,7 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public Page<Venta> listarPaginado(EstadoVenta estado, LocalDate desde, LocalDate hasta, int page) {
-        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
-        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
-        return ventaRepo.findAllFiltered(estado, d, h, PageRequest.of(page, pageSize));
+        return ventaRepo.findAllFiltered(estado, desde, hasta, PageRequest.of(page, pageSize));
     }
 
     @Transactional(readOnly = true)
@@ -84,7 +82,7 @@ public class VentaService {
         StringBuilder sb = new StringBuilder();
         for (VentaItemFormDto item : items) {
             if (item.getLoteId() == null || item.getCantidad() == null) continue;
-            String warn = validarItemCantidad(item.getLoteId(), item.getCantidad(), excludeVentaId);
+            String warn = validarItemCantidad(item.getLoteId(), item.getCantidad(), item.getUnidad(), excludeVentaId);
             if (warn != null) sb.append(warn).append(" ");
         }
         return sb.length() > 0 ? sb.toString().trim() : null;
@@ -156,23 +154,47 @@ public class VentaService {
                 : loteRepo.searchCompletados(trimmed, PageRequest.of(0, preload));
         List<Map<String, Object>> result = new java.util.ArrayList<>();
         for (var l : candidatos) {
+            BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
             BigDecimal disponible = null;
-            if (l.getLitrosFinales() != null) {
-                BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
+            String unidadDisponible = "L";
+
+            // Prioridad: usar N° unidades del empaque ("48 × Botella 330ml")
+            String carbDestino = l.getCarbDestino();
+            if (carbDestino != null && !carbDestino.isBlank()) {
+                java.util.regex.Matcher mat = DESTINO_PATTERN.matcher(carbDestino.trim());
+                if (mat.matches()) {
+                    BigDecimal totalUnidades = new BigDecimal(mat.group(1).replace(',', '.'));
+                    unidadDisponible = mat.group(2).trim();
+                    disponible = totalUnidades.subtract(vendido);
+                    if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
+                }
+            }
+
+            // Fallback: usar litrosFinales
+            if (disponible == null && l.getLitrosFinales() != null) {
                 disponible = l.getLitrosFinales().subtract(vendido);
                 if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
             }
+
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id",                l.getId());
             m.put("codigoLote",        l.getCodigoLote());
             m.put("estilo",            l.getEstilo());
-            m.put("carbDestino",       l.getCarbDestino()   != null ? l.getCarbDestino()   : "");
+            m.put("carbDestino",       carbDestino != null ? carbDestino : "");
             m.put("litrosFinales",     l.getLitrosFinales() != null ? l.getLitrosFinales() : "");
-            m.put("litrosDisponibles", disponible != null ? disponible.stripTrailingZeros().toPlainString() : "");
+            m.put("litrosDisponibles", disponible != null
+                    ? disponible.stripTrailingZeros().toPlainString() + " " + unidadDisponible
+                    : "");
             result.add(m);
             if (result.size() >= limit) break;
         }
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<String> suggestClientes(String q) {
+        if (q == null || q.trim().length() < 1) return List.of();
+        return ventaRepo.findClientesSuggestions(q.trim(), PageRequest.of(0, 8));
     }
 
     @Transactional(readOnly = true)
@@ -193,9 +215,7 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Venta> listarParaExport(EstadoVenta estado, LocalDate desde, LocalDate hasta) {
-        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
-        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
-        var lista = ventaRepo.findByPeriodo(d, h);
+        var lista = ventaRepo.findByPeriodo(desde, hasta);
         if (estado != null) {
             return lista.stream().filter(v -> v.getEstado() == estado).toList();
         }
@@ -204,9 +224,7 @@ public class VentaService {
 
     @Transactional(readOnly = true)
     public List<Venta> listarPorPeriodo(LocalDate desde, LocalDate hasta) {
-        LocalDate d = desde != null ? desde : LocalDate.of(1900, 1, 1);
-        LocalDate h = hasta != null ? hasta : LocalDate.of(2100, 1, 1);
-        return ventaRepo.findByPeriodo(d, h);
+        return ventaRepo.findByPeriodo(desde, hasta);
     }
 
     // ── Stats ─────────────────────────────────────────────────────────────────
@@ -257,17 +275,55 @@ public class VentaService {
         }
     }
 
-    private String validarItemCantidad(Long loteId, BigDecimal nuevaCantidad, Long excludeVentaId) {
+    private static final java.util.regex.Pattern DESTINO_PATTERN =
+        java.util.regex.Pattern.compile("^(\\d+(?:[.,]\\d+)?)\\s*[×x]\\s*(.+)$",
+            java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    private String validarItemCantidad(Long loteId, BigDecimal nuevaCantidad, String unidad, Long excludeVentaId) {
         return loteRepo.findById(loteId).map(lote -> {
-            if (lote.getLitrosFinales() == null) return null;
-            BigDecimal disponible = lote.getLitrosFinales();
+            // Advertencia de unidades mezcladas (antes de comparar cantidades)
+            if (unidad != null && !unidad.isBlank()) {
+                var previas = ventaItemRepo.findUnidadesActivasByLote(loteId, excludeVentaId);
+                if (!previas.isEmpty() && previas.stream().anyMatch(u -> !u.equals(unidad))) {
+                    return String.format(
+                        "Advertencia: el lote %s ya tiene ventas registradas en %s. " +
+                        "Verifica que mezclar unidades sea intencional.",
+                        lote.getCodigoLote(), String.join(", ", previas));
+                }
+            }
+
             BigDecimal yaVendido = ventaItemRepo.sumCantidadActivaByLote(loteId, excludeVentaId);
             BigDecimal total = yaVendido.add(nuevaCantidad);
-            if (total.compareTo(disponible) > 0) {
+
+            // Prioridad 1: comparar contra N° unidades del carbDestino ("48 × Botella 330ml")
+            String carbDestino = lote.getCarbDestino();
+            if (carbDestino != null && !carbDestino.isBlank()) {
+                java.util.regex.Matcher m = DESTINO_PATTERN.matcher(carbDestino.trim());
+                if (m.matches()) {
+                    BigDecimal totalUnidades = new BigDecimal(m.group(1).replace(',', '.'));
+                    String tipoEnvase = m.group(2).trim();
+                    if (unidad == null || unidad.isBlank() || unidad.equals(tipoEnvase)) {
+                        if (total.compareTo(totalUnidades) > 0) {
+                            return String.format(
+                                "Advertencia: la cantidad vendida del lote %s sería %.0f, " +
+                                "superando las %.0f %s envasadas.",
+                                lote.getCodigoLote(), total, totalUnidades, tipoEnvase);
+                        }
+                        return null;
+                    }
+                }
+            }
+
+            // Prioridad 2: comparar litros solo cuando la unidad es volumétrica (L o A granel)
+            if (unidad != null && !unidad.isBlank() && !unidad.equals("L") && !unidad.equals("A granel")) {
+                return null;
+            }
+            if (lote.getLitrosFinales() == null) return null;
+            if (total.compareTo(lote.getLitrosFinales()) > 0) {
                 return String.format(
-                    "Advertencia: la cantidad total vendida del lote %s sería %.2f, " +
+                    "Advertencia: la cantidad total vendida del lote %s sería %.2f L, " +
                     "superando los %.0f L producidos.",
-                    lote.getCodigoLote(), total, disponible);
+                    lote.getCodigoLote(), total, lote.getLitrosFinales());
             }
             return null;
         }).orElse(null);

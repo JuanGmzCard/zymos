@@ -52,6 +52,10 @@
                     <i class="bi bi-file-earmark-pdf me-1"></i>PDF
                 </a>
                 <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')" class="d-flex gap-2">
+                    <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-outline-crema"
+                       title="Duplicar esta venta con los mismos ítems">
+                        <i class="bi bi-copy me-1"></i>Duplicar
+                    </a>
                     <a th:href="@{/ventas/editar/{id}(id=${venta.id})}" class="btn btn-zymos">
                         <i class="bi bi-pencil me-1"></i>Editar
                     </a>

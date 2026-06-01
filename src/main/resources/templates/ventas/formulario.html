@@ -17,8 +17,24 @@
         html.dark-mode .items-table th { background: var(--dm-verde-bg); color: var(--dm-text); }
         .lote-buscador { cursor: pointer; }
         .lote-buscador:focus { cursor: text; }
-        .lote-empaque-badge { font-size: 0.7rem; max-width: 160px; overflow: hidden;
-                              text-overflow: ellipsis; white-space: nowrap; color: var(--dorado); }
+        .lote-empaque-badge { font-size: 0.68rem; color: var(--dorado);
+                              max-width: 120px; white-space: nowrap; overflow: hidden;
+                              text-overflow: ellipsis; cursor: help; }
+        .input-group:not(.has-lote-badge) .lote-buscador {
+            border-top-right-radius: var(--bs-border-radius-sm) !important;
+            border-bottom-right-radius: var(--bs-border-radius-sm) !important;
+        }
+        html.dark-mode .lote-empaque-badge { background: var(--dm-input); border-color: var(--dm-border-med); }
+        .cliente-suggest { position: absolute; top: 100%; left: 0; right: 0; z-index: 1050;
+                           background: #fff; border: 1px solid #dee2e6; border-radius: 6px;
+                           box-shadow: 0 4px 16px rgba(0,0,0,.12); max-height: 220px;
+                           overflow-y: auto; display: none; }
+        .cliente-suggest .cs-item { display: block; padding: 7px 12px; font-size: 0.88rem;
+                                    cursor: pointer; color: inherit; text-decoration: none; }
+        .cliente-suggest .cs-item:hover, .cliente-suggest .cs-item.active
+                                       { background: var(--verde-alera); color: var(--crema); }
+        html.dark-mode .cliente-suggest { background: var(--dm-card); border-color: var(--dm-border-med); }
+        html.dark-mode .cliente-suggest .cs-item:hover { background: var(--dm-verde-bg); }
     </style>
 </head>
 <body>
@@ -46,6 +62,13 @@
                     <h5><i class="bi bi-pencil-square me-2"></i>Datos de la Venta</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Aviso duplicado -->
+                    <div th:if="${duplicadoDe != null}" class="alert alert-info py-2 mb-3">
+                        <i class="bi bi-copy me-1"></i>
+                        Duplicado de la venta <strong th:text="'#' + ${duplicadoDe}"></strong> —
+                        ajusta la fecha y guarda para crear una nueva venta.
+                    </div>
+
                     <form th:action="${ventaId != null} ? @{/ventas/actualizar/{id}(id=${ventaId})} : @{/ventas/guardar}"
                           th:object="${ventaForm}" method="post" novalidate id="ventaForm">
 
@@ -60,10 +83,13 @@
                         <div class="row g-3 mb-4">
                             <div class="col-md-5">
                                 <label for="cliente" class="form-label detail-label">Cliente *</label>
-                                <input type="text" id="cliente" th:field="*{cliente}"
-                                       class="form-control"
-                                       th:classappend="${#fields.hasErrors('cliente')} ? 'is-invalid' : ''"
-                                       placeholder="Nombre del cliente o empresa">
+                                <div class="position-relative">
+                                    <input type="text" id="cliente" th:field="*{cliente}"
+                                           class="form-control" autocomplete="off"
+                                           th:classappend="${#fields.hasErrors('cliente')} ? 'is-invalid' : ''"
+                                           placeholder="Nombre del cliente o empresa">
+                                    <div id="clienteSuggest" class="cliente-suggest"></div>
+                                </div>
                                 <div class="invalid-feedback" th:errors="*{cliente}">—</div>
                             </div>
                             <div class="col-md-4">
@@ -87,7 +113,7 @@
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <label class="form-label detail-label mb-0">Ítems de la venta *</label>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarFila()">
+                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="agregarFilaYOcultarMsg()">
                                     <i class="bi bi-plus-lg me-1"></i>Agregar ítem
                                 </button>
                             </div>
@@ -97,7 +123,7 @@
                                         <tr>
                                             <th style="min-width:180px;">Lote</th>
                                             <th style="min-width:130px;">Descripción</th>
-                                            <th style="min-width:90px;">Cantidad *</th>
+                                            <th style="min-width:110px;">Cantidad *</th>
                                             <th style="min-width:140px;">Unidad</th>
                                             <th style="min-width:110px;">Precio Unit. *</th>
                                             <th style="min-width:80px;">Desc. %</th>
@@ -106,16 +132,21 @@
                                         </tr>
                                     </thead>
                                     <tbody id="itemsBody">
+                                        <tr id="sinItemsMsg" th:style="${#lists.isEmpty(ventaForm.items)} ? '' : 'display:none'">
+                                            <td colspan="8" class="text-center text-muted py-3" style="font-size:0.88rem;">
+                                                <i class="bi bi-inbox me-1"></i>Sin ítems — haz click en <strong>Agregar ítem</strong>
+                                            </td>
+                                        </tr>
                                         <tr th:each="item, iStat : *{items}" class="item-row">
                                             <!-- Lote typeahead -->
                                             <td>
                                                 <div class="position-relative">
                                                     <div class="input-group input-group-sm">
-                                                        <input type="text" class="form-control lote-buscador"
+                                                        <input type="text" class="form-control form-control-sm lote-buscador"
                                                                th:name="'items[' + ${iStat.index} + '].codigoLoteBuscador'"
                                                                th:value="${item.codigoLoteBuscador}"
                                                                placeholder="Click para seleccionar…" autocomplete="off">
-                                                        <span class="lote-empaque-badge input-group-text"
+                                                        <span class="input-group-text lote-empaque-badge"
                                                               style="display:none;" title=""></span>
                                                     </div>
                                                     <div class="search-suggest lote-suggest" style="display:none;"></div>
@@ -224,9 +255,15 @@
                                       placeholder="Observaciones, número de pedido, condiciones de entrega…"></textarea>
                         </div>
 
+                        <!-- Error inline: sin ítems -->
+                        <div id="alertaSinItems" class="alert alert-danger py-2 mb-3" style="display:none;">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Debes agregar al menos un ítem antes de guardar.
+                        </div>
+
                         <div class="d-flex gap-2 justify-content-end">
                             <a th:href="@{/ventas}" class="btn btn-outline-secondary">Cancelar</a>
-                            <button type="submit" class="btn btn-zymos">
+                            <button type="submit" id="btnGuardar" class="btn btn-zymos">
                                 <i class="bi bi-check-lg me-1"></i>
                                 <span th:text="${ventaId != null} ? 'Actualizar' : 'Registrar Venta'">Guardar</span>
                             </button>
@@ -277,16 +314,16 @@ function crearFilaHTML(idx) {
     return `<td>
         <div class="position-relative">
             <div class="input-group input-group-sm">
-                <input type="text" class="form-control lote-buscador"
+                <input type="text" class="form-control form-control-sm lote-buscador"
                        name="items[${idx}].codigoLoteBuscador" placeholder="Click para seleccionar…" autocomplete="off">
-                <span class="lote-empaque-badge input-group-text" style="display:none;" title=""></span>
+                <span class="input-group-text lote-empaque-badge" style="display:none;" title=""></span>
             </div>
             <div class="search-suggest lote-suggest" style="display:none;"></div>
         </div>
         <input type="hidden" class="lote-id-hidden" name="items[${idx}].loteId" value="">
     </td>
     <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="Opcional"></td>
-    <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" required></td>
+    <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" placeholder="Cantidad" required></td>
     <td><select class="form-select form-select-sm item-unidad" name="items[${idx}].unidad">${UNIT_OPTIONS}</select></td>
     <td><div class="input-group input-group-sm"><span class="input-group-text">$</span>
         <input type="number" class="form-control form-control-sm item-precio" name="items[${idx}].precioUnitario" step="0.01" min="0" required placeholder="0.00">
@@ -309,11 +346,16 @@ function agregarFila() {
 }
 
 function eliminarFila(btn) {
-    var rows = document.querySelectorAll('#itemsBody .item-row');
-    if (rows.length <= 1) return;
     btn.closest('tr').remove();
     reindexarFilas();
     actualizarTotales();
+    var rows = document.querySelectorAll('#itemsBody .item-row');
+    document.getElementById('sinItemsMsg').style.display = rows.length === 0 ? '' : 'none';
+}
+
+function agregarFilaYOcultarMsg() {
+    document.getElementById('sinItemsMsg').style.display = 'none';
+    agregarFila();
 }
 
 function reindexarFilas() {
@@ -322,9 +364,11 @@ function reindexarFilas() {
         row.querySelectorAll('[name*="items["]').forEach(function(el) {
             el.name = el.name.replace(/items\[\d+\]/, 'items[' + idx + ']');
         });
-        // Also update id from th:field-generated selects
+        // Update id from th:field-generated selects (handles items[0].field and items0.field)
         row.querySelectorAll('[id*="items"]').forEach(function(el) {
-            el.id = el.id.replace(/items\d+/, 'items' + idx);
+            el.id = el.id
+                .replace(/items\[\d+\]/, 'items[' + idx + ']')
+                .replace(/items(?!\[)\d+/, 'items' + idx);
         });
     });
     rowCount = rows.length;
@@ -360,17 +404,20 @@ function renderLotes(items, suggest) {
     }
     suggest.innerHTML = items.map(function(i) {
         var cdFull = (i.carbDestino || '').trim();
-        var cd = cdFull.replace(/^\s*\d+\s*[×x]\s*/i, '').trim();
+        var qtyMatch = cdFull.match(/^\s*(\d+(?:[.,]\d+)?)\s*[×x]/i);
+        var cdQty = qtyMatch ? qtyMatch[1] : '';
+        var cd = cdFull.replace(/^\s*\d+(?:[.,]\d+)?\s*[×x]\s*/i, '').trim();
         var litros = i.litrosDisponibles || i.litrosFinales || '';
         return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
                '" data-codigo="' + (i.codigoLote||'') +
                '" data-carb-destino="' + cd + '"' +
                '" data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;') + '"' +
+               '" data-carb-cantidad="' + cdQty + '"' +
                '" data-litros="' + litros + '"' +
                ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
                '<i class="bi bi-clipboard-data ss-icon"></i>' +
                '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
-               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' L disp.' : '') + '</span>' +
+               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' disp.' : '') + '</span>' +
                '</a>';
     }).join('');
     suggest.style.display = 'block';
@@ -401,7 +448,13 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         var hidden  = cell.querySelector('.lote-id-hidden');
         hidden.value = '';
         var badge = cell.querySelector('.lote-empaque-badge');
-        if (badge) { badge.style.display = 'none'; badge.textContent = ''; }
+        if (badge) {
+            badge.style.display = 'none';
+            badge.textContent = '';
+            badge.title = '';
+            var grp = badge.closest('.input-group');
+            if (grp) grp.classList.remove('has-lote-badge');
+        }
         clearTimeout(loteTimer);
         var q = input.value.trim();
         loteTimer = setTimeout(function() { fetchLotes(suggest, q); }, 260);
@@ -413,7 +466,32 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
     }
 });
 
+// ── Step adaptativo según unidad ─────────────────────────────────────────────
+function stepParaUnidad(unidad) {
+    if (!unidad) return { step: '0.001', min: '0.001' };
+    if (/^(Botella|Lata|Barril|Growler)/i.test(unidad.trim()) || unidad.trim() === 'und') {
+        return { step: '1', min: '1' };
+    }
+    return { step: '0.001', min: '0.001' };
+}
+
+function aplicarStep(row) {
+    var sel = row.querySelector('.item-unidad');
+    var inp = row.querySelector('.item-cantidad');
+    if (!sel || !inp) return;
+    var cfg = stepParaUnidad(sel.value);
+    inp.step = cfg.step;
+    inp.min  = cfg.min;
+    // Si hay un valor entero grabado y el step cambia a 1, redondearlo
+    if (cfg.step === '1' && inp.value && !Number.isInteger(parseFloat(inp.value))) {
+        inp.value = Math.round(parseFloat(inp.value));
+    }
+}
+
 document.getElementById('itemsBody').addEventListener('change', function(e) {
+    if (e.target.classList.contains('item-unidad')) {
+        aplicarStep(e.target.closest('tr'));
+    }
     if (e.target.classList.contains('item-unidad') ||
         e.target.classList.contains('item-cantidad') ||
         e.target.classList.contains('item-precio')  ||
@@ -450,25 +528,119 @@ function seleccionarLote(el, cell) {
             }
         }
     }
-    // Show empaque badge (inline input-group-text)
+    // Aplicar step según unidad auto-llenada
+    if (row) aplicarStep(row);
+    // Mostrar disponibilidad como placeholder (sugerencia, no valor pre-llenado)
+    var cantInput = row ? row.querySelector('.item-cantidad') : null;
+    if (cantInput) {
+        var disp = el.dataset.litros || '';
+        cantInput.placeholder = disp ? 'Disp: ' + disp : 'Cantidad';
+    }
+    // Show empaque badge as input-group-text (no afecta height de la fila)
     var badge = cell.querySelector('.lote-empaque-badge');
     if (badge) {
         var cdFull = el.dataset.carbDestinoFull || '';
         var litros = el.dataset.litros || '';
+        var grp = badge.closest('.input-group');
         if (cdFull || litros) {
-            var text = cdFull + (litros ? ' · ' + litros + ' L' : '');
-            badge.textContent = text;
-            badge.title = text;
+            badge.textContent = litros || cdFull;
+            badge.title = cdFull + (litros ? ' · Disp: ' + litros : '');
             badge.style.display = '';
+            if (grp) grp.classList.add('has-lote-badge');
         } else {
             badge.style.display = 'none';
             badge.textContent = '';
+            badge.title = '';
+            if (grp) grp.classList.remove('has-lote-badge');
         }
     }
+    actualizarTotales();
 }
 
-// Calcular totales al cargar (para edición)
+// ── Validación antes de enviar ────────────────────────────────────────────────
+document.getElementById('ventaForm').addEventListener('submit', function(e) {
+    var rows   = document.querySelectorAll('#itemsBody .item-row');
+    var alerta = document.getElementById('alertaSinItems');
+    if (rows.length === 0) {
+        e.preventDefault();
+        alerta.style.display = 'block';
+        alerta.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+    }
+    alerta.style.display = 'none';
+    // Deshabilitar botón para evitar doble envío
+    var btn = document.getElementById('btnGuardar');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
+    }
+});
+
+// Aplicar step y calcular totales al cargar (modo edición)
+document.querySelectorAll('#itemsBody .item-row').forEach(aplicarStep);
 actualizarTotales();
+
+// ── Typeahead de cliente ──────────────────────────────────────────────────────
+(function () {
+    var input   = document.getElementById('cliente');
+    var suggest = document.getElementById('clienteSuggest');
+    if (!input || !suggest) return;
+    var timer, activeIdx = -1;
+
+    function cerrar() { suggest.style.display = 'none'; activeIdx = -1; }
+
+    function mostrar(clientes) {
+        if (!clientes.length) { cerrar(); return; }
+        suggest.innerHTML = clientes.map(function(c) {
+            return '<a href="#" class="cs-item">' + c.replace(/</g,'&lt;') + '</a>';
+        }).join('');
+        suggest.querySelectorAll('.cs-item').forEach(function(el) {
+            el.addEventListener('mousedown', function(e) {
+                e.preventDefault();
+                input.value = el.textContent;
+                cerrar();
+            });
+        });
+        suggest.style.display = 'block';
+        activeIdx = -1;
+    }
+
+    input.addEventListener('input', function() {
+        clearTimeout(timer);
+        var q = input.value.trim();
+        if (q.length < 1) { cerrar(); return; }
+        timer = setTimeout(function() {
+            fetch('/ventas/suggest-clientes?q=' + encodeURIComponent(q))
+                .then(function(r) { return r.json(); })
+                .then(mostrar);
+        }, 220);
+    });
+
+    // Navegación con flechas + Enter
+    input.addEventListener('keydown', function(e) {
+        var items = suggest.querySelectorAll('.cs-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIdx = Math.min(activeIdx + 1, items.length - 1);
+            items.forEach(function(el, i) { el.classList.toggle('active', i === activeIdx); });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIdx = Math.max(activeIdx - 1, 0);
+            items.forEach(function(el, i) { el.classList.toggle('active', i === activeIdx); });
+        } else if (e.key === 'Enter' && activeIdx >= 0) {
+            e.preventDefault();
+            input.value = items[activeIdx].textContent;
+            cerrar();
+        } else if (e.key === 'Escape') {
+            cerrar();
+        }
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!input.contains(e.target) && !suggest.contains(e.target)) cerrar();
+    });
+})();
 </script>
 </body>
 </html>

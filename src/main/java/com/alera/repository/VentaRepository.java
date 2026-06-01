@@ -16,8 +16,8 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     @Query("SELECT v FROM Venta v WHERE " +
            "(:estado IS NULL OR v.estado = :estado) AND " +
-           "v.fechaDespacho >= :desde AND " +
-           "v.fechaDespacho <= :hasta " +
+           "(:desde IS NULL OR v.fechaDespacho >= :desde) AND " +
+           "(:hasta IS NULL OR v.fechaDespacho <= :hasta) " +
            "ORDER BY v.fechaDespacho DESC NULLS LAST, v.id DESC")
     Page<Venta> findAllFiltered(@Param("estado") EstadoVenta estado,
                                 @Param("desde")  LocalDate desde,
@@ -37,11 +37,16 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
     List<Venta> search(@Param("q") String q, Pageable pageable);
 
     @Query("SELECT v FROM Venta v WHERE " +
-           "v.fechaDespacho >= :desde AND " +
-           "v.fechaDespacho <= :hasta " +
+           "(:desde IS NULL OR v.fechaDespacho >= :desde) AND " +
+           "(:hasta IS NULL OR v.fechaDespacho <= :hasta) " +
            "ORDER BY v.fechaDespacho DESC NULLS LAST, v.id DESC")
     List<Venta> findByPeriodo(@Param("desde") LocalDate desde,
                               @Param("hasta") LocalDate hasta);
+
+    @Query("SELECT DISTINCT v.cliente FROM Venta v " +
+           "WHERE LOWER(v.cliente) LIKE LOWER(CONCAT('%', :q, '%')) " +
+           "ORDER BY v.cliente ASC")
+    List<String> findClientesSuggestions(@Param("q") String q, Pageable pageable);
 
     // Top 5 clientes por ingresos despachados (native — necesita tenantId explícito)
     @Query(nativeQuery = true, value =

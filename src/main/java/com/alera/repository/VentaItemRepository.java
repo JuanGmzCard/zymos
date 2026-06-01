@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
 
@@ -26,6 +27,15 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
            "AND (:excludeVentaId IS NULL OR i.venta.id != :excludeVentaId)")
     BigDecimal sumCantidadActivaByLote(@Param("loteId") Long loteId,
                                        @Param("excludeVentaId") Long excludeVentaId);
+
+    // Unidades distintas usadas en ventas activas de un lote (excluye la venta en edición)
+    @Query("SELECT DISTINCT i.unidad FROM VentaItem i " +
+           "WHERE i.lote.id = :loteId " +
+           "AND i.venta.estado != com.alera.model.enums.EstadoVenta.CANCELADO " +
+           "AND (:excludeVentaId IS NULL OR i.venta.id != :excludeVentaId) " +
+           "AND i.unidad IS NOT NULL AND i.unidad <> ''")
+    Set<String> findUnidadesActivasByLote(@Param("loteId") Long loteId,
+                                          @Param("excludeVentaId") Long excludeVentaId);
 
     // Suma de ingresos de ventas despachadas (para stat-card)
     @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +

@@ -49,6 +49,9 @@ public class Venta {
              "WHERE vi.venta_id = id AND vi.codigo_lote IS NOT NULL ORDER BY vi.id LIMIT 1)")
     private String primerCodigoLote;
 
+    @Formula("(SELECT COUNT(*) FROM venta_items vi WHERE vi.venta_id = id)")
+    private Integer itemsCount;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -81,6 +84,10 @@ public class Venta {
 
     public String getPrimerCodigoLote() {
         return primerCodigoLote;
+    }
+
+    public int getItemsCount() {
+        return itemsCount != null ? itemsCount : 0;
     }
 
     // Getters & Setters

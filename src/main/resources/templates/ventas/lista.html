@@ -135,7 +135,7 @@
                             <th>Fecha</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end pe-3">Valor Total</th>
-                            <th style="width:80px;"></th>
+                            <th style="width:140px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -149,10 +149,13 @@
                             <td class="ps-3 fw-semibold" th:text="${v.cliente}">—</td>
                             <td>
                                 <span th:if="${v.primerCodigoLote != null}"
-                                      th:text="${v.primerCodigoLote}"
-                                      class="text-decoration-none fw-semibold"
-                                      style="color:var(--dorado);">—</span>
+                                      class="fw-semibold" style="color:var(--dorado);"
+                                      th:text="${v.primerCodigoLote}">—</span>
                                 <span th:if="${v.primerCodigoLote == null}" class="text-muted">Sin lote</span>
+                                <span th:if="${v.itemsCount > 1}"
+                                      class="badge bg-secondary ms-1"
+                                      style="font-size:0.68rem;"
+                                      th:text="'+' + (${v.itemsCount} - 1) + ' más'">+1 más</span>
                             </td>
                             <td th:text="${v.fechaDespacho != null} ? ${#temporals.format(v.fechaDespacho,'dd/MM/yyyy')} : '—'">—</td>
                             <td class="text-center">
@@ -161,12 +164,40 @@
                             </td>
                             <td class="text-end pe-3 fw-bold"
                                 th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
-                            <td>
+                            <td class="text-nowrap">
                                 <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
                                    class="btn btn-sm btn-outline-secondary py-0 px-2"
                                    title="Ver detalle">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <a th:href="@{/ventas/{id}/pdf(id=${v.id})}"
+                                   class="btn btn-sm btn-outline-secondary py-0 px-2 ms-1"
+                                   title="Descargar PDF">
+                                    <i class="bi bi-file-earmark-pdf"></i>
+                                </a>
+                                <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                                   th:href="@{/ventas/editar/{id}(id=${v.id})}"
+                                   class="btn btn-sm btn-outline-primary py-0 px-2 ms-1"
+                                   title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                                        th:if="${v.estado.name() == 'PENDIENTE'}"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-success py-0 px-2 ms-1 btn-despachar"
+                                        th:attr="data-id=${v.id}"
+                                        title="Marcar como despachado">
+                                    <i class="bi bi-check-lg"></i>
+                                </button>
+                                <form sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                                      th:action="@{/ventas/{id}/eliminar(id=${v.id})}" method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('¿Eliminar esta venta?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 ms-1"
+                                            title="Eliminar">
+                                        <i class="bi bi-trash3"></i>
+                                    </button>
+                                </form>
                             </td>
                         </tr>
                     </tbody>
@@ -248,6 +279,41 @@
     });
     document.addEventListener('click', e => {
         if (!input.contains(e.target)) box.style.display = 'none';
+    });
+})();
+
+// ── Despacho rápido ───────────────────────────────────────────────────────────
+(function () {
+    const csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+    document.querySelectorAll('.btn-despachar').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            if (!confirm('¿Marcar esta venta como Despachada?')) return;
+            var id  = btn.dataset.id;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+            fetch('/ventas/' + id + '/despachar', {
+                method: 'POST',
+                headers: { [csrfHeader]: csrf }
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.success) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-check-lg"></i>'; return; }
+                var row   = btn.closest('tr');
+                var badge = row.querySelector('.badge');
+                if (badge) {
+                    badge.className = 'badge ' + data.badgeClass;
+                    badge.textContent = data.displayName;
+                }
+                btn.remove();
+            })
+            .catch(function() {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-lg"></i>';
+            });
+        });
     });
 })();
 </script>

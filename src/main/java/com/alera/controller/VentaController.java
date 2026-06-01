@@ -118,6 +118,36 @@ public class VentaController {
         return "ventas/detalle";
     }
 
+    @GetMapping("/duplicar/{id}")
+    public String duplicar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var venta = service.buscarPorId(id).orElse(null);
+        if (venta == null) {
+            ra.addFlashAttribute("mensaje", "Venta no encontrada");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/ventas";
+        }
+        VentaFormDto dto = new VentaFormDto();
+        dto.setCliente(venta.getCliente());
+        dto.setNotas(venta.getNotas());
+        dto.setEstado(EstadoVenta.PENDIENTE);
+        for (VentaItem item : venta.getItems()) {
+            VentaItemFormDto itemDto = new VentaItemFormDto();
+            itemDto.setLoteId(item.getLote() != null ? item.getLote().getId() : null);
+            itemDto.setCodigoLoteBuscador(item.getCodigoLote());
+            itemDto.setDescripcion(item.getDescripcion());
+            itemDto.setCantidad(item.getCantidad());
+            itemDto.setUnidad(item.getUnidad());
+            itemDto.setPrecioUnitario(item.getPrecioUnitario());
+            itemDto.setDescuentoPct(item.getDescuentoPct());
+            dto.getItems().add(itemDto);
+        }
+        if (dto.getItems().isEmpty()) dto.getItems().add(new VentaItemFormDto());
+        model.addAttribute("ventaForm", dto);
+        model.addAttribute("estados",   EstadoVenta.values());
+        model.addAttribute("duplicadoDe", id);
+        return "ventas/formulario";
+    }
+
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         var venta = service.buscarPorId(id)
@@ -242,5 +272,26 @@ public class VentaController {
     @ResponseBody
     public List<Map<String, Object>> suggestLotes(@RequestParam(defaultValue = "") String q) {
         return service.suggestLotesParaVenta(q);
+    }
+
+    @GetMapping(value = "/suggest-clientes", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<String> suggestClientes(@RequestParam(defaultValue = "") String q) {
+        return service.suggestClientes(q);
+    }
+
+    @PostMapping(value = "/{id}/despachar", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> despacharRapido(@PathVariable Long id) {
+        try {
+            service.cambiarEstado(id, EstadoVenta.DESPACHADO);
+            return Map.of(
+                "success",     true,
+                "displayName", EstadoVenta.DESPACHADO.getDisplayName(),
+                "badgeClass",  EstadoVenta.DESPACHADO.getBadgeClass()
+            );
+        } catch (Exception e) {
+            return Map.of("success", false, "error", e.getMessage());
+        }
     }
 }
