@@ -220,6 +220,7 @@ templates/
 - `V43__venta_estado_cotizacion.sql` — Recrea CHECK constraint del campo `estado` en `ventas` para incluir los nuevos estados: `CHECK (estado IN ('COTIZACION','PENDIENTE','DESPACHADO','CANCELADO','EXPIRADO'))`. Se hace via ALTER TABLE DROP/ADD CONSTRAINT.
 - `V44__cotizacion_scheduler_index.sql` — Índice parcial de performance `idx_ventas_cotizacion_vencida ON ventas (cotizacion_expira_en) WHERE estado = 'COTIZACION' AND deleted_at IS NULL` — optimiza la query del scheduler `expirarCotizaciones()` que busca cotizaciones vencidas diariamente.
 - `V45__tipo_libre.sql` — Pure DML migration: convierte los valores de `tipo` de nombre de enum (ej: `MALTA`) a nombre de display (ej: `Malta`) en las tablas `insumos_inventario` y `equipos`. No DDL — la columna ya era VARCHAR. Necesario porque `TipoInsumo` y `TipoEquipo` pasaron de `@Enumerated(EnumType.STRING)` a `String` libre con valores display en lugar de enum names.
+- `V46__fix_tipo_libre_constraint.sql` — DDL + DML fix: elimina el CHECK constraint `insumos_inventario_tipo_check` creado en V36 que solo permitía valores enum uppercase (MALTA, LUPULO...). Tras V45, `insumos_inventario.tipo` es texto libre; el constraint bloqueaba inserts de display names (Malta, Lúpulo...). Repite los UPDATEs de V45 de forma idempotente para cubrir DBs donde V45 no pudo ejecutarse por el constraint activo. El constraint `factura_items_tipo_insumo_check` NO se modifica — `FacturaItem.tipoInsumo` sigue siendo enum.
 
 ---
 
@@ -1397,11 +1398,19 @@ Generados con `generar_pruebas.py` (requiere `openpyxl`). Estructura idéntica a
 
 | Archivo | Módulo | Contenido |
 |---|---|---|
-| `prueba_almacen.xlsx` | Almacén | 25 insumos: maltas, lúpulos, levaduras, clarificantes, agentes carbonatación, envases, químicos |
-| `prueba_equipos.xlsx` | Equipos | 16 equipos: fermentadores, ollas, enfriadores, bombas, filtro, medidores, báscula, compresor |
-| `prueba_comercial.xlsx` | Comercial | 7 proveedores · 10 facturas (2024–2025, estados mixtos) · 22 ítems con IVA 19% |
-| `prueba_produccion.xlsx` | Producción | 6 recetas completas (ingredientes, escalones, adiciones) · 9 lotes con carbonatación natural y forzada |
+| `prueba_almacen.xlsx` | Almacén | 25 insumos: maltas, lúpulos, levaduras, clarificantes, agentes de carbonatación, envases, agua, químicos |
+| `prueba_equipos.xlsx` | Equipos | 16 equipos: fermentadores, ollas de macerado/hervor, enfriadores, bombas, filtro, medidores de pH, densímetros, báscula, compresor |
+| `prueba_comercial.xlsx` | Comercial | 7 proveedores · 10 facturas (2024–2025, estados mixtos RECIBIDA/VERIFICADA/PAGADA) · 22 ítems con IVA 19% |
+| `prueba_produccion.xlsx` | Producción | 6 recetas completas con escalones de macerado y adiciones de hervor · 9 lotes con carbonatación natural y forzada |
 
-**Dependencias entre módulos**: los lotes en `prueba_produccion.xlsx` referencian las recetas del mismo archivo (se resuelven por nombre en el orden de hojas). Las facturas en `prueba_comercial.xlsx` referencian los proveedores de la hoja "Proveedores" — se procesan en orden. Importar siempre primero `prueba_almacen.xlsx` si se necesita el inventario para validar insumos.
+**Formato del campo `tipo` en cada módulo**:
+- **Almacén** (`prueba_almacen.xlsx`): la columna `tipo` usa nombres de enum uppercase: `MALTA`, `LUPULO`, `LEVADURA`, `CLARIFICANTE`, `AGENTE_CARBONATACION`, `AGUA`, `QUIMICO`, `ENVASE`, `OTRO`. `MigracionService.importarAlmacen()` valida el enum y convierte automáticamente al nombre display ("Lúpulo", "Malta"...) antes de insertar en BD.
+- **Equipos** (`prueba_equipos.xlsx`): la columna `tipo` usa nombres de enum uppercase: `FERMENTADOR`, `OLLA_MACERADO`, `OLLA_HERVOR`, `ENFRIADOR`, `BOMBA`, `FILTRO`, `MEDIDOR_PH`, `DENSIMETRO`, `BASCULA`, `COMPRESOR`, `OTRO`. `MigracionService.importarEquipos()` convierte a display name antes de insertar.
+- **Comercial** (`prueba_comercial.xlsx`): la columna `tipo_insumo` en la hoja `Factura_Items` usa nombres de enum uppercase (`MALTA`, `LUPULO`...) — estos van a `factura_items.tipo_insumo` que sigue siendo enum, por lo que los valores uppercase son correctos y no se convierten.
+- **Producción** (`prueba_produccion.xlsx`): la columna `tipo` en `Receta_Ingredientes` y `Lote_Ingredientes` usa nombres de enum upstream de `TipoIngrediente` — se almacenan tal cual.
+
+**Dependencias entre módulos**: los lotes en `prueba_produccion.xlsx` referencian las recetas del mismo archivo (se resuelven por nombre en el orden de hojas). Las facturas en `prueba_comercial.xlsx` referencian los proveedores de la hoja "Proveedores" — se procesan en orden. Importar siempre `prueba_almacen.xlsx` antes si se necesita inventario para validar insumos.
 
 **Casos borde incluidos**: un equipo en estado `MANTENIMIENTO`, una receta inactiva (Imperial Stout), un lote con carbonatación `SOBRECARBONATADA`, lotes con y sin receta asociada, facturas en todos los estados (RECIBIDA/VERIFICADA/PAGADA).
+
+**Notas sobre `generar_pruebas.py`**: el archivo `generar_pruebas.py` (29/05/2026) genera los archivos de prueba. `generar_pruebas1.py` (27/05/2026) es la versión anterior. Ambos requieren `pip install openpyxl`. Ejecutar desde el directorio `C:\Users\Juancho\IdeaProjects\BD\Migracion\`.

@@ -1,6 +1,8 @@
 package com.alera.service;
 
 import com.alera.model.MigracionLog;
+import com.alera.model.enums.TipoEquipo;
+import com.alera.model.enums.TipoInsumo;
 import com.alera.repository.MigracionLogRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -65,12 +67,13 @@ public class MigracionService {
 
                     if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                     validarEnum(tipo, "tipo", "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
+                    String tipoDisplay = TipoInsumo.valueOf(tipo).getDisplayName();
 
                     jdbc.update("INSERT INTO insumos_inventario " +
                             "(nombre,tipo,cantidad,unidad,stock_minimo,proveedor,fecha_vencimiento,observaciones," +
                             "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
                             "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
-                            nombre, tipo,
+                            nombre, tipoDisplay,
                             cantidad != null ? cantidad : BigDecimal.ZERO,
                             unidadNula(unidad), stockMin != null ? stockMin : BigDecimal.ZERO, proveedorNulo(proveedor),
                             fecVenc, obsNula(obs), tenantId, usuario, usuario);
@@ -114,12 +117,13 @@ public class MigracionService {
                             "FERMENTADOR","OLLA_MACERADO","OLLA_HERVOR","ENFRIADOR","BOMBA",
                             "FILTRO","MEDIDOR_PH","DENSIMETRO","BASCULA","COMPRESOR","OTRO");
                     validarEnum(estado, "estado", "OPERATIVO","MANTENIMIENTO","INACTIVO");
+                    String tipoDisplay = TipoEquipo.valueOf(tipo).getDisplayName();
 
                     jdbc.update("INSERT INTO equipos " +
                             "(nombre,tipo,estado,capacidad,unidad_capacidad,fecha_adquisicion,proximo_mantenimiento,observaciones," +
                             "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
                             "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
-                            nombre, tipo, estado, cap, unidadNula(unidCap),
+                            nombre, tipoDisplay, estado, cap, unidadNula(unidCap),
                             fecAdq, fecProx, obsNula(obs), tenantId, usuario, usuario);
                     ok++;
                 } catch (Exception e) {
