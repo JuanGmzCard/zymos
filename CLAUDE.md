@@ -60,7 +60,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Dark mode: fondo `#111606`, cards `#1c2410`, texto crema — activado con clase `html.dark-mode`. Variables centralizadas `--dm-*` en `style.css` (bloque `:root`): `--dm-bg`, `--dm-card`, `--dm-input`, `--dm-text`, `--dm-text-muted`, `--dm-text-dim`, `--dm-text-dimmer`, `--dm-border-faint`, `--dm-border-light`, `--dm-border-med`, `--dm-border-heavy`, `--dm-hover`, `--dm-verde-bg`, `--dm-verde-border`, `--dm-verde-faint`. Los templates con `<style>` inline propio incluyen también un bloque `html.dark-mode` local al final de ese `<style>`, usando las vars `--dm-*`.
 - Componentes clave: `.card-zymos`, `.hero-section`, `.stat-card`, `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`, `.badge-role` (pill dorado para rol de usuario en navbar — reemplaza inline styles), `.fase-pill` (6 variantes en `trazabilidad/index.html` con dark mode), `.kanban-col-header` (dark mode por columna con colores de fase usando `!important` sobre inline styles), `.wz-tab.done` (tab wizard completado — círculo verde con ✓ via CSS `::after { content:'✓' }`)
 - **Multi-tenant**: el navbar fragment inyecta `<style th:inline="text">:root { --verde-oscuro: [[${branding.colorNavbar}]]; --verde-zymos: [[${branding.colorPrimary}]]; --verde-alera: [[${branding.colorPrimary}]]; ... }</style>` que sobrescribe las variables CSS del archivo. `login.html` hace lo mismo en su `<head>`. Los templates NO cambian — siguen usando `${branding.*}` y las CSS vars son transparentes. **CRÍTICO**: `--verde-alera` y `--verde-zymos` apuntan ambas a `branding.colorPrimary` — los encabezados de tabla (`<thead style="background:var(--verde-alera)">`) toman automáticamente el color primario del tenant.
-- **Colores hardcodeados — regla**: NUNCA usar hex fijos (`#364318`, `#F5EDD0`, `#C9A028`, etc.) en templates HTML. Usar siempre las CSS vars: `var(--verde-alera)`, `var(--crema)`, `var(--dorado)`, `var(--dorado-claro)`, `var(--verde-oscuro)`. Excepción: `emails/alertas.html` (clientes de email no soportan CSS vars) y fallbacks de JS del patrón `getComputedStyle(...) || '#hex'`. Las `rgba(...)` tampoco pueden usar CSS vars directamente — dejarlas hardcodeadas.
+- **Colores hardcodeados — regla**: NUNCA usar hex fijos (`#364318`, `#F5EDD0`, `#C9A028`, etc.) en templates HTML. Usar siempre las CSS vars: `var(--verde-alera)`, `var(--crema)`, `var(--dorado)`, `var(--dorado-claro)`, `var(--verde-oscuro)`. Excepción: `emails/alertas.html` (clientes de email no soportan CSS vars) y fallbacks de JS del patrón `getComputedStyle(...) || '#hex'`. Las `rgba(...)` tampoco pueden usar CSS vars directamente — usar `color-mix(in srgb, var(--dorado) XX%, transparent)` como alternativa moderna que sí acepta CSS vars y genera el equivalente a `rgba(C9A028, XX%)`. Soportado en Chrome 111+, Firefox 113+, Safari 16.2+. Ejemplo en `navbar.html`: `border: 1px solid color-mix(in srgb, var(--dorado) 35%, transparent)`.
 
 ---
 
@@ -486,17 +486,19 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `countByTenantId(tenantId)` — conteo de importaciones del tenant.
 
 ### VentaRepository
-- `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR v.estado = :estado`, rango de fechas en `fechaDespacho`. Orden `fechaDespacho DESC NULLS LAST, id DESC`.
+- `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR v.estado = :estado`, `:desde IS NULL OR v.fechaDespacho >= :desde`, `:hasta IS NULL OR v.fechaDespacho <= :hasta`. Orden `fechaDespacho DESC NULLS LAST, id DESC`. **Patrón IS NULL OR** — no usa valores centinela (1900/2100).
 - `countByEstado(EstadoVenta)` — conteo por estado; usado en stat-cards.
 - `countClientesUnicos()` — `COUNT(DISTINCT v.cliente)` — para stat-card de clientes únicos.
 - `search(q, Pageable)` — LIKE en `LOWER(v.cliente)` y subquery `EXISTS (SELECT 1 FROM VentaItem i WHERE i.venta = v AND LOWER(COALESCE(i.codigoLote,'')) LIKE ...)`. Orden `fechaDespacho DESC NULLS LAST`.
-- `findByPeriodo(desde, hasta)` — `List<Venta>` para export; rango de fechas en `fechaDespacho`.
+- `findByPeriodo(desde, hasta)` — `List<Venta>` para export; `:desde IS NULL OR v.fechaDespacho >= :desde` y `:hasta IS NULL OR v.fechaDespacho <= :hasta`. Ambos parámetros nullable.
 - `findTopClientes(tenantId)` — `nativeQuery=true`, JOIN con `venta_items`. Top 5 clientes por ingresos despachados (`estado='DESPACHADO'`), agrupados con `COUNT(DISTINCT v.id)` y `SUM(vi.cantidad × vi.precio_unitario × (1 - vi.descuento_pct/100))`. Requiere `tenantId` explícito y filtra `deleted_at IS NULL` manualmente (native query).
+- `findClientesSuggestions(q, Pageable)` — `SELECT DISTINCT v.cliente` con `LOWER(v.cliente) LIKE LOWER(:q||'%')`, orden alfabético. Usado por `VentaService.suggestClientes()` → `GET /ventas/suggest-clientes`.
 
 ### VentaItemRepository
 - `findByVentaId(Long ventaId)` — `List<VentaItem>` para una venta concreta.
 - `findVentasByLoteId(loteId)` — `SELECT DISTINCT i.venta FROM VentaItem i WHERE i.lote.id = :loteId ORDER BY i.venta.fechaDespacho DESC`. Reemplaza el anterior `VentaRepository.findByLoteIdOrderByFechaDespachoDesc`. Usado por `VentaService.listarPorLote()` y `TrazabilidadController.ver()`.
 - `sumCantidadActivaByLote(loteId, excludeVentaId)` — `COALESCE(SUM(i.cantidad), 0)` de ítems cuya `venta.estado != CANCELADO`, excluyendo los de la venta `excludeVentaId` (para edición). Usado por `VentaService.validarItemCantidad()`.
+- `findUnidadesActivasByLote(loteId, excludeVentaId)` — `SELECT DISTINCT i.unidad` de ítems activos del lote, filtrando `i.unidad IS NOT NULL AND i.unidad <> ''`. Retorna `Set<String>`. Usado por `VentaService.validarItemCantidad()` para detectar mezcla de unidades.
 - `sumIngresosDespachados()` — `COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct/100.0)), 0)` donde `i.venta.estado = DESPACHADO`. Retorna null si no hay ítems (el servicio normaliza a ZERO). Usado por `VentaService.sumIngresosDespachados()`.
 
 ### VentaHistorialEstadoRepository
@@ -741,7 +743,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `eliminar(id)` — `repo.deleteById(id)`
 
 ### VentaService
-- `listarPaginado(estado, desde, hasta, page)` — paginado con filtros opcionales; todos los parámetros son nullable.
+- `listarPaginado(estado, desde, hasta, page)` — paginado con filtros opcionales; todos los parámetros son nullable. Delega a `ventaRepo.findAllFiltered` con patrón `:param IS NULL OR` — sin valores centinela de fecha.
 - `buscarPorId(id)` — `Optional<Venta>`
 - `listarPorLote(loteId)` — `List<Venta>` ordenadas por `fechaDespacho DESC`; delega a `ventaItemRepo.findVentasByLoteId()`. Usado por `TrazabilidadController.ver()`.
 - `listarHistorial(ventaId)` — `@Transactional(readOnly=true)`, delega a `historialRepo.findByVentaIdOrderByFechaDesc`. Usado por `VentaController.ver()`.
@@ -749,11 +751,14 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `actualizar(id, dto)` — llama `v.getItems().clear()` + `mapearDto()` para reemplazar ítems. Registra historial y crea notificación in-app SOLO si el estado cambió.
 - `eliminar(id)` — **soft delete**: setea `deletedAt = LocalDateTime.now()` y guarda. No llama `deleteById`. No-op si no existe.
 - `cambiarEstado(id, EstadoVenta)` — actualiza estado, persiste historial de transición; si `nuevoEstado = DESPACHADO` crea notificación in-app vía `NotificacionService`. No-op si no existe.
-- `validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId)` — `@Transactional(readOnly=true)`. Itera los ítems del DTO; para cada uno con `loteId` no null llama `validarItemCantidad()`. Retorna mensaje concatenado de advertencias o null si todo OK. No bloquea — solo informa. **Firma cambió** — ya no recibe un solo `loteId/cantidad` sino la lista completa de ítems.
+- `validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId)` — `@Transactional(readOnly=true)`. Itera los ítems del DTO; para cada uno con `loteId` no null llama `validarItemCantidad()`. Retorna mensaje concatenado de advertencias o null si todo OK. No bloquea — solo informa.
+- `validarItemCantidad(loteId, cantidad, unidad, excludeVentaId)` — (privado) primero verifica mezcla de unidades via `findUnidadesActivasByLote`; si el lote ya tiene ventas en una unidad distinta, retorna advertencia. Luego compara cantidad total vs capacidad del lote (carbDestino o litrosFinales).
+- `suggestClientes(q)` — `@Transactional(readOnly=true)`, mínimo 1 char; delega a `ventaRepo.findClientesSuggestions(q, PageRequest.of(0, 8))`. Retorna `List<String>` con nombres de clientes. Usado por `GET /ventas/suggest-clientes`.
+- `suggestLotesParaVenta(q)` — `@Transactional(readOnly=true)`. Sin filtro: carga hasta 50 lotes completados y devuelve los 20 con disponibilidad > 0. Con query: hasta 20 candidatos, devuelve 6. Calcula disponibilidad parseando `carbDestino` ("48 × Botella 330ml") o usando `litrosFinales`. Retorna `[{id, codigoLote, estilo, carbDestino, litrosFinales, litrosDisponibles}]`. Usado por `GET /ventas/suggest-lotes`.
 - `topClientes()` — `@Transactional(readOnly=true)`, delega a `ventaRepo.findTopClientes(tenantId)`. Retorna `List<Map>` con top 5 clientes por ingresos despachados. Usado en `lista.html`.
 - `suggest(q)` — `@Transactional(readOnly=true)`, query corta (< 2 chars) retorna lista vacía; busca via `ventaRepo.search()` (limit 6); retorna `[{titulo, sub, fecha, url}]`. `sub` usa `getPrimerCodigoLote()` (@Formula).
 - `countTotal()`, `countByEstado(EstadoVenta)`, `countClientesUnicos()` — delegan a `ventaRepo`. `sumIngresosDespachados()` — delega a `ventaItemRepo.sumIngresosDespachados()` (no ventaRepo). Stats para las 4 stat-cards de la lista.
-- `listarParaExport(estado, desde, hasta)` y `listarPorPeriodo(desde, hasta)` — `@Transactional(readOnly=true)`, usan `ventaRepo.findByPeriodo()`. `open-in-view=true` permite acceso lazy a `items` en los servicios de export.
+- `listarParaExport(estado, desde, hasta)` y `listarPorPeriodo(desde, hasta)` — `@Transactional(readOnly=true)`, usan `ventaRepo.findByPeriodo()` (nullable). `open-in-view=true` permite acceso lazy a `items` en los servicios de export.
 - Inyecta `VentaRepository ventaRepo`, `VentaItemRepository ventaItemRepo`, `LoteCervezaRepository loteRepo`, `VentaHistorialEstadoRepository historialRepo`, `NotificacionService notificacionService`.
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`.
 
@@ -933,18 +938,22 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
 
 ### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
-- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos).
-- `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems (un ítem = un lote + cantidad + precio). Typeahead de lote por ítem usa `GET /suggest?q=` (TrazabilidadController). Preview de total en tiempo real.
+- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos). Fila de la lista incluye: badge `+N` cuando la venta tiene más de 1 ítem, botón PDF directo, y botón "Despachar" (visible solo cuando `estado == PENDIENTE`).
+- `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems. Typeahead de lote usa `GET /ventas/suggest-lotes?q=`. Typeahead de cliente usa `GET /ventas/suggest-clientes?q=`. Preview de total en tiempo real. `step` del campo cantidad se adapta automáticamente: entero para envases (Botella/Lata/Barril/Growler/und), decimal (0.001) para volumen.
 - `POST /ventas/guardar` — llama `validarCantidadDisponible(dto.getItems(), null)` antes de guardar; flash warning si supera litros de algún lote, success si todo OK.
 - `GET /ventas/ver/{id}` — detalle con tabla de ítems (lote, descripción, cantidad, precio, descuento, total línea), total general calculado con `venta.getValorTotal()`, **historial de cambios de estado** (card con tabla), panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN).
 - `GET /ventas/editar/{id}` — formulario de edición con datos pre-llenados.
 - `POST /ventas/actualizar/{id}` — llama `validarCantidadDisponible(dto.getItems(), id)` antes de actualizar; flash warning/success según resultado.
 - `POST /ventas/{id}/eliminar` — soft delete, redirige a `/ventas`.
 - `POST /ventas/{id}/estado` — cambia `EstadoVenta`, redirige a `/ventas/ver/{id}`.
+- `GET /ventas/duplicar/{id}` — carga la venta, limpia id/fecha, retorna formulario pre-llenado. Modelo incluye `duplicadoDe` para mostrar aviso informativo.
 - `GET /ventas/{id}/pdf` — descarga remisión PDF. Construye `ExportBranding.from(tenant)`. Delega a `PdfExportService.generarPdfVenta()`. Nombre: `remision-venta-{id}.pdf`.
 - `GET /ventas/export?estado=&desde=&hasta=` — descarga `ventas-YYYY-MM-DD.xlsx`. Filtros opcionales. Lee branding del tenant. Delega a `ExcelExportService.generarExcelVentas()` con 4 hojas (Ventas, Ítems, Por Cliente, Por Estado).
 - `GET /ventas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{titulo, sub, fecha, url}]`.
+- `GET /ventas/suggest-lotes?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggestLotesParaVenta(q)`. Sin query devuelve los 20 lotes con mayor disponibilidad; con query filtra y devuelve 6. Devuelve `[{id, codigoLote, estilo, carbDestino, litrosFinales, litrosDisponibles}]`.
+- `GET /ventas/suggest-clientes?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggestClientes(q)`. Devuelve `List<String>` con nombres de clientes únicos que hacen LIKE. Mínimo 1 char.
 - **Integración con detalle de lote**: `TrazabilidadController.ver()` pasa `ventasLote` al modelo; `detalle.html` muestra la sección "Ventas y Despacho" con botón "Registrar Venta" (link a `/ventas/nuevo?loteId={id}`) solo para ADMIN/FACTURACION/SUPERADMIN.
+- **formulario.html — badge de empaque**: al seleccionar un lote, el badge de disponibilidad/empaque aparece como `input-group-text` (addon a la derecha del buscador), NO como bloque debajo — esto mantiene la alineación de la fila. El texto se trunca a 120px con `text-overflow: ellipsis`; el texto completo aparece en `title` (hover). Clase CSS `.has-lote-badge` en el `input-group` controla el `border-radius` del input adyacente.
 - **`@WebMvcTest`**: `@MockBean VentaService ventaService` + `@MockBean TrazabilidadService trazabilidadService` + `@MockBean ExcelExportService excelExportService` + `@MockBean PdfExportService pdfExportService`. Stubs adicionales en `@BeforeEach`: `ventaService.topClientes()` → `List.of()`, `ventaService.listarHistorial(anyLong())` → `List.of()`.
 
 ### ProveedorController ("/proveedores")
