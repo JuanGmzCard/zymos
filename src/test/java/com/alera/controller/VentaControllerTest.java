@@ -44,6 +44,7 @@ class VentaControllerTest {
     @MockBean TrazabilidadService       trazabilidadService;
     @MockBean ExcelExportService        excelExportService;
     @MockBean PdfExportService          pdfExportService;
+    @MockBean ClienteService            clienteService;
 
     @BeforeEach
     void setUp() {

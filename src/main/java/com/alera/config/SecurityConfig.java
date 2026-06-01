@@ -143,6 +143,7 @@ public class SecurityConfig {
 
                 .requestMatchers("/facturas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
                 .requestMatchers("/ventas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
+                .requestMatchers("/clientes/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
                 .requestMatchers("/proveedores/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
                 .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
                 .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")

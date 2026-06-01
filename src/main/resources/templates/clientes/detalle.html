@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - ' + ${cliente.nombre}">Alera - Cliente</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- Hero -->
+<div class="hero-section">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
+                    <h1 class="mb-0" th:text="${cliente.nombre}">Cliente</h1>
+                    <span th:if="${cliente.activo}" class="badge bg-success rounded-pill fs-6">Activo</span>
+                    <span th:if="${!cliente.activo}" class="badge bg-secondary rounded-pill fs-6">Inactivo</span>
+                    <span th:if="${cliente.listaPrecio != null}"
+                          class="badge bg-light text-dark border rounded-pill fs-6"
+                          th:text="${cliente.listaPrecio.displayName}">—</span>
+                </div>
+                <p class="mb-1" th:if="${cliente.razonSocial != null and !cliente.razonSocial.isBlank()}"
+                   th:text="${cliente.razonSocial}"></p>
+                <small class="hero-meta" th:if="${cliente.nit != null}">
+                    <i class="bi bi-card-text me-1"></i>NIT: <span th:text="${cliente.nit}"></span>
+                </small>
+            </div>
+            <div class="d-flex gap-2 align-self-center flex-wrap" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                <a th:href="@{/ventas/nuevo}" class="btn btn-outline-crema"
+                   th:href="@{/ventas/nuevo}">
+                    <i class="bi bi-bag-plus me-1"></i>Nueva Venta
+                </a>
+                <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-zymos">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                </a>
+                <a th:href="@{/clientes}" class="btn btn-outline-crema">
+                    <i class="bi bi-arrow-left me-1"></i>Volver
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4 py-4">
+
+    <div class="row g-4">
+        <!-- Datos principales -->
+        <div class="col-lg-8">
+            <!-- Identificación -->
+            <div class="card-zymos mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-building me-2"></i>Identificación Fiscal</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="detail-label">Nombre comercial</div>
+                            <div class="detail-value fw-bold" th:text="${cliente.nombre}">—</div>
+                        </div>
+                        <div th:if="${cliente.razonSocial != null and !cliente.razonSocial.isBlank()}"
+                             class="col-md-6">
+                            <div class="detail-label">Razón Social</div>
+                            <div class="detail-value" th:text="${cliente.razonSocial}">—</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">NIT / Cédula</div>
+                            <div class="detail-value" th:text="${cliente.nit ?: '—'}">—</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Régimen Tributario</div>
+                            <div class="detail-value"
+                                 th:text="${cliente.regimenTributario != null} ? ${cliente.regimenTributario.displayName} : '—'">—</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="detail-label">Lista de Precio</div>
+                            <div class="detail-value">
+                                <span th:if="${cliente.listaPrecio != null}"
+                                      class="badge bg-light text-dark border"
+                                      th:text="${cliente.listaPrecio.displayName}">—</span>
+                                <span th:if="${cliente.listaPrecio == null}" class="text-muted">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contacto -->
+            <div class="card-zymos mb-4">
+                <div class="card-header">
+                    <h5><i class="bi bi-envelope me-2"></i>Contacto y Ubicación</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6" th:if="${cliente.email != null and !cliente.email.isBlank()}">
+                            <div class="detail-label">Email</div>
+                            <div class="detail-value">
+                                <a th:href="'mailto:' + ${cliente.email}" th:text="${cliente.email}"
+                                   style="color:var(--dorado);text-decoration:none;">—</a>
+                            </div>
+                        </div>
+                        <div class="col-md-6" th:if="${cliente.telefono != null and !cliente.telefono.isBlank()}">
+                            <div class="detail-label">Teléfono</div>
+                            <div class="detail-value" th:text="${cliente.telefono}">—</div>
+                        </div>
+                        <div class="col-md-8"
+                             th:if="${cliente.direccionDespacho != null and !cliente.direccionDespacho.isBlank()}">
+                            <div class="detail-label">Dirección de Despacho</div>
+                            <div class="detail-value" th:text="${cliente.direccionDespacho}">—</div>
+                        </div>
+                        <div class="col-md-4"
+                             th:if="${cliente.ciudad != null or cliente.departamento != null}">
+                            <div class="detail-label">Ciudad / Departamento</div>
+                            <div class="detail-value">
+                                <span th:if="${cliente.ciudad != null}" th:text="${cliente.ciudad}"></span>
+                                <span th:if="${cliente.ciudad != null and cliente.departamento != null}">, </span>
+                                <span th:if="${cliente.departamento != null}" th:text="${cliente.departamento}"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notas -->
+            <div class="card-zymos mb-4"
+                 th:if="${cliente.notas != null and !cliente.notas.isBlank()}">
+                <div class="card-header">
+                    <h5><i class="bi bi-sticky me-2"></i>Notas Internas</h5>
+                </div>
+                <div class="card-body">
+                    <p class="observaciones-texto mb-0" th:text="${cliente.notas}">—</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div class="col-lg-4">
+            <!-- Acciones -->
+            <div class="card-zymos mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                <div class="card-header"><h5><i class="bi bi-gear me-2"></i>Acciones</h5></div>
+                <div class="card-body d-flex flex-column gap-2">
+                    <a th:href="@{/ventas/nuevo}" class="btn btn-zymos">
+                        <i class="bi bi-bag-plus me-1"></i>Registrar Venta
+                    </a>
+                    <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-1"></i>Editar datos
+                    </a>
+                    <form th:action="@{/clientes/{id}/toggle(id=${cliente.id})}" method="post">
+                        <button type="submit" class="btn w-100"
+                                th:classappend="${cliente.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                th:text="${cliente.activo} ? 'Desactivar cliente' : 'Activar cliente'">—</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Metadatos -->
+            <div class="card-zymos">
+                <div class="card-header"><h5><i class="bi bi-clock-history me-2"></i>Registro</h5></div>
+                <div class="card-body">
+                    <div th:if="${cliente.createdAt != null}" class="mb-2">
+                        <div class="detail-label">Creado por</div>
+                        <div class="detail-value small">
+                            <span th:text="${cliente.createdBy ?: 'sistema'}"></span>
+                            el <span th:text="${#temporals.format(cliente.createdAt,'dd/MM/yyyy')}"></span>
+                        </div>
+                    </div>
+                    <div th:if="${cliente.lastModifiedAt != null}">
+                        <div class="detail-label">Última modificación</div>
+                        <div class="detail-value small">
+                            <span th:text="${cliente.lastModifiedBy ?: 'sistema'}"></span>
+                            el <span th:text="${#temporals.format(cliente.lastModifiedAt,'dd/MM/yyyy')}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.Formula;
 import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.TenantId;
+import java.time.LocalDate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +28,16 @@ public class Venta {
 
     @Column(nullable = false, length = 200)
     private String cliente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id")
+    private Cliente clienteRef;
+
+    @Column(name = "remision_numero", length = 20)
+    private String remisionNumero;
+
+    @Column(name = "cotizacion_expira_en")
+    private LocalDate cotizacionExpiraEn;
 
     @Column(name = "fecha_despacho", nullable = false)
     private LocalDate fechaDespacho;
@@ -91,11 +102,20 @@ public class Venta {
     }
 
     // Getters & Setters
+    public boolean esCotizacion() { return estado == EstadoVenta.COTIZACION; }
+
+    // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTenantId() { return tenantId; }
     public String getCliente() { return cliente; }
     public void setCliente(String cliente) { this.cliente = cliente; }
+    public Cliente getClienteRef() { return clienteRef; }
+    public void setClienteRef(Cliente clienteRef) { this.clienteRef = clienteRef; }
+    public String getRemisionNumero() { return remisionNumero; }
+    public void setRemisionNumero(String remisionNumero) { this.remisionNumero = remisionNumero; }
+    public LocalDate getCotizacionExpiraEn() { return cotizacionExpiraEn; }
+    public void setCotizacionExpiraEn(LocalDate cotizacionExpiraEn) { this.cotizacionExpiraEn = cotizacionExpiraEn; }
     public LocalDate getFechaDespacho() { return fechaDespacho; }
     public void setFechaDespacho(LocalDate fechaDespacho) { this.fechaDespacho = fechaDespacho; }
     public String getNotas() { return notas; }

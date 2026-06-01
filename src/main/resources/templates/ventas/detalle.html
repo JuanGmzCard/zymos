@@ -25,6 +25,9 @@
                     <span class="badge rounded-pill fs-6"
                           th:classappend="${venta.estado.badgeClass}"
                           th:text="${venta.estado.displayName}">Estado</span>
+                    <span th:if="${venta.remisionNumero != null}"
+                          class="badge bg-dark rounded-pill fs-6"
+                          th:text="${venta.remisionNumero}">REM-001</span>
                 </div>
                 <p class="mb-1">
                     <span th:if="${!#lists.isEmpty(venta.items)}">
@@ -87,6 +90,19 @@
                         <div class="col-md-6">
                             <div class="detail-label">Cliente</div>
                             <div class="detail-value fw-bold" th:text="${venta.cliente}">—</div>
+                            <div th:if="${venta.clienteRef != null}" class="mt-1 d-flex flex-wrap gap-2">
+                                <span th:if="${venta.clienteRef.nit != null}" class="text-muted small">
+                                    NIT: <span th:text="${venta.clienteRef.nit}"></span>
+                                </span>
+                                <span th:if="${venta.clienteRef.listaPrecio != null}"
+                                      class="badge bg-light text-dark border"
+                                      style="font-size:0.72rem;"
+                                      th:text="${venta.clienteRef.listaPrecio.displayName}">—</span>
+                                <a th:href="@{/clientes/ver/{id}(id=${venta.clienteRef.id})}"
+                                   class="text-muted small text-decoration-none">
+                                    <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i> Ver ficha
+                                </a>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <div class="detail-label">Fecha de Despacho</div>
@@ -98,7 +114,16 @@
                             <div class="detail-value">
                                 <span class="badge" th:classappend="${venta.estado.badgeClass}"
                                       th:text="${venta.estado.displayName}">—</span>
+                                <span th:if="${venta.remisionNumero != null}"
+                                      class="badge bg-dark ms-2"
+                                      th:text="${venta.remisionNumero}">—</span>
                             </div>
+                        </div>
+                        <div th:if="${venta.estado.name() == 'COTIZACION' or venta.estado.name() == 'EXPIRADO'}"
+                             class="col-md-6">
+                            <div class="detail-label">Vencimiento Cotización</div>
+                            <div class="detail-value"
+                                 th:text="${venta.cotizacionExpiraEn != null} ? ${#temporals.format(venta.cotizacionExpiraEn,'dd/MM/yyyy')} : 'No definido'">—</div>
                         </div>
                         <div class="col-12" th:if="${venta.notas != null and !venta.notas.isBlank()}">
                             <div class="detail-label">Notas</div>

@@ -7,10 +7,13 @@ import com.alera.model.Venta;
 import com.alera.model.VentaHistorialEstado;
 import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
+import com.alera.repository.ClienteRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
 import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,10 @@ class VentaServiceTest {
     @Mock private LoteCervezaRepository            loteRepo;
     @Mock private VentaHistorialEstadoRepository   historialRepo;
     @Mock private NotificacionService              notificacionService;
+    @Mock private ClienteRepository                clienteRepo;
+    @Mock private InsumoInventarioService          insumoService;
+    @Mock private EntityManager                    em;
+    @Mock private Query                            nativeQuery;
 
     @InjectMocks
     private VentaService service;
@@ -49,7 +56,13 @@ class VentaServiceTest {
     @BeforeEach
     void setUp() {
         ReflectionTestUtils.setField(service, "pageSize", 15);
+        ReflectionTestUtils.setField(service, "expiracionDias", 15);
+        ReflectionTestUtils.setField(service, "em", em);
         lenient().when(historialRepo.save(any())).thenReturn(new VentaHistorialEstado());
+        lenient().when(em.createNativeQuery(anyString())).thenReturn(nativeQuery);
+        lenient().when(nativeQuery.setParameter(anyString(), any())).thenReturn(nativeQuery);
+        lenient().when(nativeQuery.getSingleResult()).thenReturn(0);
+        lenient().when(ventaItemRepo.findItemsConEnvase(anyLong())).thenReturn(List.of());
     }
 
     private VentaFormDto buildDto(String cliente, BigDecimal cantidad, BigDecimal precio) {

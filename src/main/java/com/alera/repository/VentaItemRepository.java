@@ -37,6 +37,13 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
     Set<String> findUnidadesActivasByLote(@Param("loteId") Long loteId,
                                           @Param("excludeVentaId") Long excludeVentaId);
 
+    // Ítems con unidad tipo envase (para descuento automático de inventario al despachar)
+    @Query("SELECT i FROM VentaItem i WHERE i.venta.id = :ventaId AND i.unidad IS NOT NULL AND (" +
+           "LOWER(i.unidad) LIKE 'botella%' OR LOWER(i.unidad) LIKE 'lata%' OR " +
+           "LOWER(i.unidad) LIKE 'barril%' OR LOWER(i.unidad) LIKE 'growler%' OR " +
+           "i.unidad = 'und')")
+    List<VentaItem> findItemsConEnvase(@Param("ventaId") Long ventaId);
+
     // Suma de ingresos de ventas despachadas (para stat-card)
     @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +
            "FROM VentaItem i WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO")

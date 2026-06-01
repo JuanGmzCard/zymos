@@ -219,7 +219,7 @@
                 <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes'))} ? 'active' : ''">
                         <i class="bi bi-receipt"></i> Comercial
                     </a>
                     <ul class="dropdown-menu">
@@ -227,6 +227,12 @@
                             <a class="dropdown-item" th:href="@{/ventas}"
                                th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? 'active' : ''">
                                 <i class="bi bi-bag-check me-2"></i>Ventas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/clientes}"
+                               th:classappend="${currentUri != null and currentUri.contains('/clientes')} ? 'active' : ''">
+                                <i class="bi bi-people me-2"></i>Clientes
                             </a>
                         </li>
                         <li>

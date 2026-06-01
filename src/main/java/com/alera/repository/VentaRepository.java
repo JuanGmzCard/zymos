@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface VentaRepository extends JpaRepository<Venta, Long> {
 
@@ -47,6 +48,11 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
            "WHERE LOWER(v.cliente) LIKE LOWER(CONCAT('%', :q, '%')) " +
            "ORDER BY v.cliente ASC")
     List<String> findClientesSuggestions(@Param("q") String q, Pageable pageable);
+
+    // Cotizaciones vencidas para el job diario (respeta @SQLRestriction y @TenantId)
+    @Query("SELECT v FROM Venta v WHERE v.estado = com.alera.model.enums.EstadoVenta.COTIZACION " +
+           "AND v.cotizacionExpiraEn < :hoy")
+    List<Venta> findCotizacionesVencidas(@Param("hoy") LocalDate hoy);
 
     // Top 5 clientes por ingresos despachados (native — necesita tenantId explícito)
     @Query(nativeQuery = true, value =

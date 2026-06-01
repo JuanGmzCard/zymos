@@ -6,6 +6,7 @@ import com.alera.dto.VentaItemFormDto;
 import com.alera.model.Tenant;
 import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
+import com.alera.service.ClienteService;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
 import com.alera.service.TrazabilidadService;
@@ -34,15 +35,18 @@ public class VentaController {
     private final TrazabilidadService trazabilidadService;
     private final ExcelExportService excelExportService;
     private final PdfExportService pdfExportService;
+    private final ClienteService clienteService;
 
     public VentaController(VentaService service,
                            TrazabilidadService trazabilidadService,
                            ExcelExportService excelExportService,
-                           PdfExportService pdfExportService) {
+                           PdfExportService pdfExportService,
+                           ClienteService clienteService) {
         this.service              = service;
         this.trazabilidadService  = trazabilidadService;
         this.excelExportService   = excelExportService;
         this.pdfExportService     = pdfExportService;
+        this.clienteService       = clienteService;
     }
 
     @GetMapping
@@ -128,6 +132,7 @@ public class VentaController {
         }
         VentaFormDto dto = new VentaFormDto();
         dto.setCliente(venta.getCliente());
+        dto.setClienteId(venta.getClienteRef() != null ? venta.getClienteRef().getId() : null);
         dto.setNotas(venta.getNotas());
         dto.setEstado(EstadoVenta.PENDIENTE);
         for (VentaItem item : venta.getItems()) {
@@ -155,7 +160,9 @@ public class VentaController {
         VentaFormDto dto = new VentaFormDto();
         dto.setId(venta.getId());
         dto.setCliente(venta.getCliente());
+        dto.setClienteId(venta.getClienteRef() != null ? venta.getClienteRef().getId() : null);
         dto.setFechaDespacho(venta.getFechaDespacho());
+        dto.setCotizacionExpiraEn(venta.getCotizacionExpiraEn());
         dto.setNotas(venta.getNotas());
         dto.setEstado(venta.getEstado());
         for (VentaItem item : venta.getItems()) {

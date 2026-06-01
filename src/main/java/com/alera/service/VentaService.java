@@ -3,15 +3,21 @@ package com.alera.service;
 import com.alera.config.TenantContext;
 import com.alera.dto.VentaFormDto;
 import com.alera.dto.VentaItemFormDto;
+import com.alera.model.Cliente;
 import com.alera.model.Venta;
 import com.alera.model.VentaHistorialEstado;
 import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.model.enums.TipoNotificacion;
+import com.alera.repository.ClienteRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
 import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,35 +28,56 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @Transactional
 public class VentaService {
 
-    private final VentaRepository ventaRepo;
-    private final VentaItemRepository ventaItemRepo;
-    private final LoteCervezaRepository loteRepo;
+    private static final Logger log = LoggerFactory.getLogger(VentaService.class);
+
+    private static final Map<EstadoVenta, Set<EstadoVenta>> TRANSICIONES_VALIDAS = Map.of(
+        EstadoVenta.COTIZACION, Set.of(EstadoVenta.PENDIENTE, EstadoVenta.CANCELADO),
+        EstadoVenta.PENDIENTE,  Set.of(EstadoVenta.DESPACHADO, EstadoVenta.CANCELADO),
+        EstadoVenta.DESPACHADO, Set.of(),
+        EstadoVenta.CANCELADO,  Set.of(),
+        EstadoVenta.EXPIRADO,   Set.of()
+    );
+
+    private final VentaRepository             ventaRepo;
+    private final VentaItemRepository         ventaItemRepo;
+    private final LoteCervezaRepository       loteRepo;
     private final VentaHistorialEstadoRepository historialRepo;
-    private final NotificacionService notificacionService;
+    private final NotificacionService         notificacionService;
+    private final ClienteRepository           clienteRepo;
+    private final InsumoInventarioService     insumoService;
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Value("${app.page-size:15}")
     private int pageSize;
+
+    @Value("${app.cotizacion.expiracion-dias:15}")
+    private int expiracionDias;
 
     public VentaService(VentaRepository ventaRepo,
                         VentaItemRepository ventaItemRepo,
                         LoteCervezaRepository loteRepo,
                         VentaHistorialEstadoRepository historialRepo,
-                        NotificacionService notificacionService) {
+                        NotificacionService notificacionService,
+                        ClienteRepository clienteRepo,
+                        InsumoInventarioService insumoService) {
         this.ventaRepo           = ventaRepo;
         this.ventaItemRepo       = ventaItemRepo;
         this.loteRepo            = loteRepo;
         this.historialRepo       = historialRepo;
         this.notificacionService = notificacionService;
+        this.clienteRepo         = clienteRepo;
+        this.insumoService       = insumoService;
     }
+
+    // ── Consultas ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public Page<Venta> listarPaginado(EstadoVenta estado, LocalDate desde, LocalDate hasta, int page) {
@@ -72,27 +99,13 @@ public class VentaService {
         return historialRepo.findByVentaIdOrderByFechaDesc(ventaId);
     }
 
-    /**
-     * Valida la cantidad disponible por lote para todos los ítems del DTO.
-     * Retorna un mensaje de advertencia o null si todo está bien.
-     */
-    @Transactional(readOnly = true)
-    public String validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId) {
-        if (items == null || items.isEmpty()) return null;
-        StringBuilder sb = new StringBuilder();
-        for (VentaItemFormDto item : items) {
-            if (item.getLoteId() == null || item.getCantidad() == null) continue;
-            String warn = validarItemCantidad(item.getLoteId(), item.getCantidad(), item.getUnidad(), excludeVentaId);
-            if (warn != null) sb.append(warn).append(" ");
-        }
-        return sb.length() > 0 ? sb.toString().trim() : null;
-    }
-
     @Transactional(readOnly = true)
     public List<Map<String, Object>> topClientes() {
         String tenantId = TenantContext.getCurrentTenant();
         return ventaRepo.findTopClientes(tenantId);
     }
+
+    // ── CRUD ──────────────────────────────────────────────────────────────────
 
     public Venta guardar(VentaFormDto dto) {
         Venta v = new Venta();
@@ -116,6 +129,8 @@ public class VentaService {
             historialRepo.save(VentaHistorialEstado.of(
                     saved.getId(), estadoAnterior, saved.getEstado(), usuarioActual()));
             if (saved.getEstado() == EstadoVenta.DESPACHADO) {
+                generarRemisionNumero(saved);
+                descontarEnvases(saved);
                 crearNotificacionDespacho(saved);
             }
         }
@@ -133,15 +148,56 @@ public class VentaService {
     public void cambiarEstado(Long id, EstadoVenta nuevoEstado) {
         ventaRepo.findById(id).ifPresent(v -> {
             EstadoVenta anterior = v.getEstado();
+            Set<EstadoVenta> permitidos = TRANSICIONES_VALIDAS.getOrDefault(anterior, Set.of());
+            if (!permitidos.contains(nuevoEstado)) {
+                throw new RuntimeException("Transición de estado no válida: " + anterior + " → " + nuevoEstado);
+            }
             v.setEstado(nuevoEstado);
             v.setLastModifiedBy(usuarioActual());
             ventaRepo.save(v);
             historialRepo.save(VentaHistorialEstado.of(id, anterior, nuevoEstado, usuarioActual()));
             if (nuevoEstado == EstadoVenta.DESPACHADO) {
+                generarRemisionNumero(v);
+                descontarEnvases(v);
                 crearNotificacionDespacho(v);
             }
         });
     }
+
+    // ── Expiración de cotizaciones (llamado por AlertaScheduler) ─────────────
+
+    public int expirarCotizaciones() {
+        List<Venta> vencidas = ventaRepo.findCotizacionesVencidas(LocalDate.now());
+        for (Venta v : vencidas) {
+            EstadoVenta anterior = v.getEstado();
+            v.setEstado(EstadoVenta.EXPIRADO);
+            v.setLastModifiedBy("sistema");
+            ventaRepo.save(v);
+            historialRepo.save(VentaHistorialEstado.of(v.getId(), anterior, EstadoVenta.EXPIRADO, "sistema"));
+            notificacionService.crear(
+                    TipoNotificacion.SISTEMA,
+                    "Cotización expirada — " + v.getCliente(),
+                    "La cotización venció el " + v.getCotizacionExpiraEn(),
+                    "/ventas/ver/" + v.getId());
+        }
+        return vencidas.size();
+    }
+
+    // ── Validación de disponibilidad ──────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public String validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId) {
+        if (items == null || items.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        for (VentaItemFormDto item : items) {
+            if (item.getLoteId() == null || item.getCantidad() == null) continue;
+            String warn = validarItemCantidad(item.getLoteId(), item.getCantidad(), item.getUnidad(), excludeVentaId);
+            if (warn != null) sb.append(warn).append(" ");
+        }
+        return sb.length() > 0 ? sb.toString().trim() : null;
+    }
+
+    // ── Suggest / Export ──────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> suggestLotesParaVenta(String q) {
@@ -152,13 +208,12 @@ public class VentaService {
         var candidatos = sinFiltro
                 ? loteRepo.findAllCompletados(PageRequest.of(0, preload))
                 : loteRepo.searchCompletados(trimmed, PageRequest.of(0, preload));
-        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        List<Map<String, Object>> result = new ArrayList<>();
         for (var l : candidatos) {
             BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
             BigDecimal disponible = null;
             String unidadDisponible = "L";
 
-            // Prioridad: usar N° unidades del empaque ("48 × Botella 330ml")
             String carbDestino = l.getCarbDestino();
             if (carbDestino != null && !carbDestino.isBlank()) {
                 java.util.regex.Matcher mat = DESTINO_PATTERN.matcher(carbDestino.trim());
@@ -170,7 +225,6 @@ public class VentaService {
                 }
             }
 
-            // Fallback: usar litrosFinales
             if (disponible == null && l.getLitrosFinales() != null) {
                 disponible = l.getLitrosFinales().subtract(vendido);
                 if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
@@ -194,7 +248,8 @@ public class VentaService {
     @Transactional(readOnly = true)
     public List<String> suggestClientes(String q) {
         if (q == null || q.trim().length() < 1) return List.of();
-        return ventaRepo.findClientesSuggestions(q.trim(), PageRequest.of(0, 8));
+        return clienteRepo.searchActivos(q.trim(), PageRequest.of(0, 8))
+                .stream().map(Cliente::getNombre).toList();
     }
 
     @Transactional(readOnly = true)
@@ -210,8 +265,6 @@ public class VentaService {
                     return m;
                 }).toList();
     }
-
-    // ── Export / Reporte ─────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<Venta> listarParaExport(EstadoVenta estado, LocalDate desde, LocalDate hasta) {
@@ -244,13 +297,39 @@ public class VentaService {
         return v != null ? v : BigDecimal.ZERO;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────────────
+    // ── Helpers privados ──────────────────────────────────────────────────────
 
     private void mapearDto(VentaFormDto dto, Venta v) {
-        v.setCliente(dto.getCliente());
+        // Cliente registrado (obligatorio en nuevas ventas)
+        if (dto.getClienteId() != null) {
+            clienteRepo.findById(dto.getClienteId()).ifPresent(c -> {
+                v.setClienteRef(c);
+                v.setCliente(c.getNombre());
+            });
+        } else if (dto.getCliente() != null && !dto.getCliente().isBlank()) {
+            // Retrocompatibilidad: ventas sin clienteId (datos pre-migración)
+            v.setCliente(dto.getCliente());
+        }
+
         v.setFechaDespacho(dto.getFechaDespacho());
         v.setNotas(dto.getNotas() != null && dto.getNotas().isBlank() ? null : dto.getNotas());
-        v.setEstado(dto.getEstado() != null ? dto.getEstado() : EstadoVenta.PENDIENTE);
+
+        EstadoVenta estado = dto.getEstado() != null ? dto.getEstado() : EstadoVenta.PENDIENTE;
+        v.setEstado(estado);
+
+        // Fecha de expiración para cotizaciones
+        if (estado == EstadoVenta.COTIZACION) {
+            if (dto.getCotizacionExpiraEn() != null) {
+                v.setCotizacionExpiraEn(dto.getCotizacionExpiraEn());
+            } else if (v.getCotizacionExpiraEn() == null) {
+                v.setCotizacionExpiraEn(LocalDate.now().plusDays(expiracionDias));
+            }
+        } else {
+            // Limpiar fecha de expiración si cambia a otro estado
+            if (v.getCotizacionExpiraEn() != null && v.getId() == null) {
+                v.setCotizacionExpiraEn(null);
+            }
+        }
 
         v.getItems().clear();
         if (dto.getItems() != null) {
@@ -275,13 +354,39 @@ public class VentaService {
         }
     }
 
+    private void generarRemisionNumero(Venta v) {
+        if (v.getRemisionNumero() != null) return;
+        em.flush();
+        String tenantId = TenantContext.getCurrentTenant();
+        Object maxObj = em.createNativeQuery(
+                "SELECT COALESCE(MAX(CAST(SUBSTRING(remision_numero FROM 5) AS INTEGER)), 0) " +
+                "FROM ventas WHERE tenant_id = :tid AND remision_numero IS NOT NULL AND deleted_at IS NULL")
+                .setParameter("tid", tenantId)
+                .getSingleResult();
+        int siguiente = ((Number) maxObj).intValue() + 1;
+        v.setRemisionNumero(String.format("REM-%03d", siguiente));
+    }
+
+    private void descontarEnvases(Venta v) {
+        if (v.getId() == null) return;
+        List<VentaItem> itemsEnvase = ventaItemRepo.findItemsConEnvase(v.getId());
+        for (VentaItem item : itemsEnvase) {
+            String insuficiente = insumoService.descontarIngrediente(
+                    item.getUnidad(),
+                    item.getCantidad().toPlainString(),
+                    "DESPACHO-" + v.getId());
+            if (insuficiente != null) {
+                log.warn("Stock insuficiente al descontar envase en despacho {}: {}", v.getId(), insuficiente);
+            }
+        }
+    }
+
     private static final java.util.regex.Pattern DESTINO_PATTERN =
         java.util.regex.Pattern.compile("^(\\d+(?:[.,]\\d+)?)\\s*[×x]\\s*(.+)$",
             java.util.regex.Pattern.CASE_INSENSITIVE);
 
     private String validarItemCantidad(Long loteId, BigDecimal nuevaCantidad, String unidad, Long excludeVentaId) {
         return loteRepo.findById(loteId).map(lote -> {
-            // Advertencia de unidades mezcladas (antes de comparar cantidades)
             if (unidad != null && !unidad.isBlank()) {
                 var previas = ventaItemRepo.findUnidadesActivasByLote(loteId, excludeVentaId);
                 if (!previas.isEmpty() && previas.stream().anyMatch(u -> !u.equals(unidad))) {
@@ -295,7 +400,6 @@ public class VentaService {
             BigDecimal yaVendido = ventaItemRepo.sumCantidadActivaByLote(loteId, excludeVentaId);
             BigDecimal total = yaVendido.add(nuevaCantidad);
 
-            // Prioridad 1: comparar contra N° unidades del carbDestino ("48 × Botella 330ml")
             String carbDestino = lote.getCarbDestino();
             if (carbDestino != null && !carbDestino.isBlank()) {
                 java.util.regex.Matcher m = DESTINO_PATTERN.matcher(carbDestino.trim());
@@ -314,7 +418,6 @@ public class VentaService {
                 }
             }
 
-            // Prioridad 2: comparar litros solo cuando la unidad es volumétrica (L o A granel)
             if (unidad != null && !unidad.isBlank() && !unidad.equals("L") && !unidad.equals("A granel")) {
                 return null;
             }
@@ -332,13 +435,11 @@ public class VentaService {
     private void crearNotificacionDespacho(Venta v) {
         String primer = v.getPrimerCodigoLote();
         String loteRef = primer != null ? " (lote " + primer + ")" : "";
-        int numItems = v.getItems() != null ? v.getItems().size() : 0;
-        String detalle = v.getCliente() + loteRef + " despachado"
-                + (numItems > 1 ? " (" + numItems + " ítems)" : ".");
+        String remision = v.getRemisionNumero() != null ? " [" + v.getRemisionNumero() + "]" : "";
         notificacionService.crear(
                 TipoNotificacion.SISTEMA,
-                "Venta despachada — " + v.getCliente(),
-                detalle,
+                "Venta despachada — " + v.getCliente() + remision,
+                v.getCliente() + loteRef + " despachado.",
                 "/ventas/ver/" + v.getId());
     }
 

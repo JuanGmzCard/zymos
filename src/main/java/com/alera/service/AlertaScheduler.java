@@ -29,6 +29,7 @@ public class AlertaScheduler {
     private final TenantService            tenantService;
     private final NotificacionService      notificacionService;
     private final FacturaProveedorService  facturaService;
+    private final VentaService             ventaService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -42,7 +43,8 @@ public class AlertaScheduler {
                             EmailService emailService,
                             TenantService tenantService,
                             NotificacionService notificacionService,
-                            FacturaProveedorService facturaService) {
+                            FacturaProveedorService facturaService,
+                            VentaService ventaService) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -50,6 +52,7 @@ public class AlertaScheduler {
         this.tenantService       = tenantService;
         this.notificacionService = notificacionService;
         this.facturaService      = facturaService;
+        this.ventaService        = ventaService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -82,6 +85,12 @@ public class AlertaScheduler {
 
                 List<FacturaProveedor> sinProcesar = facturaService.listarSinProcesar(facturaAlertaDias);
                 notificacionService.crearAlertaFacturas(sinProcesar, facturaAlertaDias);
+
+                // Expirar cotizaciones vencidas
+                int expiradas = ventaService.expirarCotizaciones();
+                if (expiradas > 0) {
+                    log.info("Tenant '{}': {} cotización(es) expirada(s)", tenant.getSubdomain(), expiradas);
+                }
 
                 // Email — solo si SMTP configurado y tenant tiene email
                 boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();

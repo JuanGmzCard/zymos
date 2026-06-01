@@ -32,7 +32,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `PRODUCCION_USERNAME/PASSWORD`, `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V40). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V44). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
@@ -43,6 +43,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zymos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL` (def: vacío — muestra ícono de gota), `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
 - **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
+- **Cotizaciones**: `app.cotizacion.expiracion-dias=${COTIZACION_EXPIRACION_DIAS:15}` — días de validez por defecto al crear una cotización (si no se especifica fecha explícita)
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **Rate limiting API**: `app.api.rate-limit=${API_RATE_LIMIT:100}` — máximo de peticiones a `/api/**` por IP en ventana fija de 1 minuto. Implementado en `ApiRateLimitFilter` con Caffeine (`expireAfterWrite`). Devuelve HTTP 429 con `{error:"Rate limit exceeded"}` al excederse.
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
@@ -94,15 +95,17 @@ com.alera/
 │               PlanificacionController, PerfilController, NotificacionController,
 │               MigracionController (/admin/migracion — plantillas + importación por módulo),
 │               AuthController (POST /api/auth/login — obtención de token JWT),
-│               CustomErrorController (GET /error — intercepta el endpoint de error de Spring Boot)
+│               CustomErrorController (GET /error — intercepta el endpoint de error de Spring Boot),
+│               ClienteController (/clientes — CRUD + suggest; ADMIN/FACTURACION/SUPERADMIN)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
 │               UsuarioService (implements UserDetailsService — integración Spring Security),
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
 │               EmailService, AlertaScheduler, NotificacionService, MigracionTemplateService, MigracionService,
+│               ClienteService,
 │               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
-├── model/      24 entidades:
+├── model/      25 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
 │               LoteCerveza, Ingrediente, Receta, RecetaIngrediente, EscalonMacerado,
@@ -113,23 +116,28 @@ com.alera/
 │               Notificacion (tabla notificaciones — notificaciones in-app persistentes por tenant),
 │               FacturaHistorialEstado (tabla factura_historial_estado — auditoría de cambios de estado por factura),
 │               MigracionLog (tabla migracion_log — historial de importaciones por tenant, sin @TenantId),
-│               VentaItem (tabla venta_items — ítems de venta, multi-lote por venta)
-│               + 10 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
+│               VentaItem (tabla venta_items — ítems de venta, multi-lote por venta),
+│               Cliente (tabla clientes — datos fiscales y de contacto del cliente; extiende AuditableEntity)
+│               + 12 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
+│               EstadoVenta: COTIZACION, PENDIENTE, DESPACHADO, CANCELADO, EXPIRADO;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA;
-│               TipoInsumo: MALTA, LUPULO, LEVADURA, CLARIFICANTE, AGENTE_CARBONATACION, AGUA, QUIMICO, ENVASE, OTRO)
+│               TipoInsumo: MALTA, LUPULO, LEVADURA, CLARIFICANTE, AGENTE_CARBONATACION, AGUA, QUIMICO, ENVASE, OTRO;
+│               ListaPrecio: VENTA_DIRECTA, DISTRIBUIDOR, BAR, MAYORISTA, EXPORTACION, EMPLEADO;
+│               RegimenTributario: SIMPLIFICADO, RESPONSABLE_IVA)
 ├── repository/ 15 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
 │               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository,
-│               MigracionLogRepository, VentaItemRepository)
+│               MigracionLogRepository, VentaItemRepository, ClienteRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto, MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
 │               AlertaContadores (bajoStock, vencimientos, mantenimiento + getTotal() — devuelto por AlertaController),
 │               AuthRequest (@NotBlank username + password — body de POST /api/auth/login),
 │               AuthResponse (token, tipo="Bearer", expiresIn, username, rol — respuesta del login JWT),
-│               VentaFormDto (cliente, fechaDespacho, estado, notas, List<VentaItemFormDto> items),
-│               VentaItemFormDto (loteId, descripcion, cantidad, unidad, precioUnitario, descuentoPct)
+│               VentaFormDto (@NotNull Long clienteId, String cliente (sin @NotBlank — retrocompat.), fechaDespacho, estado, cotizacionExpiraEn (@DateTimeFormat ISO DATE), notas, List<VentaItemFormDto> items),
+│               VentaItemFormDto (loteId, descripcion, cantidad, unidad, precioUnitario, descuentoPct),
+│               ClienteFormDto (@NotBlank nombre, razonSocial, nit, regimenTributario, @Email email, telefono, direccionDespacho, ciudad, departamento, listaPrecio, activo, notas)
 └── mapper/     LoteMapper (MapStruct — LoteCerveza → LoteFormDto),
                 MantenimientoMapper (MapStruct — MantenimientoDto → MantenimientoEquipo, ignora `id` y `equipo`)
 
@@ -156,6 +164,9 @@ templates/
 │               — dateClick → modal nuevo con fecha pre-llenada; eventClick → modal editar con extendedProps
 │               — botón Editar en tabla usa `data-*` attrs (`th:attr`) + `onclick="abrirModalEditarDesdeBtn(this)"` para pasar strings sin violar restricción Thymeleaf 3.1 (regla 8c)
 ├── notificaciones/ index.html (historial paginado con badges por tipo, marcar leída por fila, marcar todas, paginación)
+├── clientes/   lista.html (stat-card totalClientes, filtros nombre+activo con tabs Activos/Inactivos, typeahead `/clientes/suggest`, tabla: nombre/razón social, NIT, ciudad/dpto, listaPrecio badge, activo badge, botones ver/editar/toggle), formulario.html (secciones: Identificación — nombre*, razón social, NIT, régimen tributario select, lista de precio select; Contacto — email, teléfono; Dirección de despacho — dirección, ciudad, departamento; Notas), detalle.html (hero con nombre+badges activo+listaPrecio+NIT, cards: Identificación fiscal, Contacto y Ubicación, Notas Internas; panel lateral: Acciones — Registrar Venta / Editar / Toggle activo; Registro — auditoría AuditableEntity)
+│               ventas/  formulario.html — cliente seleccionado via typeahead (`/clientes/suggest?q=`) que llena hidden `clienteId` y chip de nombre+NIT; campo "Válida hasta" (`cotizacionExpiraEn`) visible/oculto con JS `toggleCotizacionField()` según estado COTIZACION; estado select filtra EXPIRADO (`th:if="${est.name() != 'EXPIRADO'}"`); `estadoInicial` inyectado como Thymeleaf inline JS para mostrar/ocultar campo en carga inicial.
+│               ventas/  detalle.html — hero muestra badge remisionNumero si `venta.remisionNumero != null`; card "Info General" muestra NIT, lista de precio y link "Ver ficha" desde `venta.clienteRef` (lazy, open-in-view); muestra `cotizacionExpiraEn` cuando estado es COTIZACION o EXPIRADO.
 └── admin/      logs.html, tenants.html (lista de tenants con cards + franja de colores + botón "Limpiar cache" → `POST /admin/tenants/cache/evict` + botón "Usuarios" por card → `/admin/tenants/{subdomain}/usuarios` + botón "Migración" → `/admin/migracion/{subdomain}`),
                 tenant-formulario.html (crear/editar tenant con color pickers y preview en vivo del navbar + selectores de tipografía con preview en vivo — `fontHeadings` y `fontBody`; campo `logoUrl` es `type="text"` para aceptar rutas relativas `/img/` además de URLs externas),
                 tenant-usuarios.html (gestión de usuarios por tenant: tabla con toggle activo/inactivo, cambiar contraseña, cambiar rol, eliminar + modal "Nuevo Usuario"; todas las queries usan SQL nativo explícito — ver regla 40),
@@ -204,6 +215,10 @@ templates/
 - `V38__venta_historial_estado.sql` — tabla `venta_historial_estado(id BIGSERIAL PK, tenant_id VARCHAR(100), venta_id BIGINT NOT NULL, estado_anterior VARCHAR(20), estado_nuevo VARCHAR(20) NOT NULL, usuario VARCHAR(100), fecha TIMESTAMP NOT NULL DEFAULT NOW())` + índices en `venta_id` y `tenant_id`. Sin FK a `ventas` — preserva historial si se elimina la venta. Con `@TenantId` — filtrada por tenant.
 - `V39__ventas_soft_delete.sql` — `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP` — soft delete: `@SQLRestriction("deleted_at IS NULL")` en `Venta`. `VentaService.eliminar()` setea `deletedAt = LocalDateTime.now()` y guarda (no borra físicamente). Índice parcial `idx_ventas_deleted ON ventas (deleted_at) WHERE deleted_at IS NULL`.
 - `V40__venta_items.sql` — Convierte ventas al modelo multi-ítem (multi-lote por venta). (1) Crea tabla `venta_items(id BIGSERIAL PK, tenant_id, venta_id BIGINT NOT NULL FK→ventas ON DELETE CASCADE, lote_id FK→lotes_cerveza ON DELETE SET NULL, codigo_lote VARCHAR(50), descripcion VARCHAR(200), cantidad DECIMAL(10,3) NOT NULL CHECK >0, unidad VARCHAR(50), precio_unitario DECIMAL(12,2) NOT NULL, descuento_pct DECIMAL(5,2) DEFAULT 0 BETWEEN 0–100)` + índices en `venta_id`, `tenant_id`, `lote_id` (parcial WHERE NOT NULL). (2) Migra datos existentes: inserta un ítem por cada venta activa, copiando `lote_id`, `codigo_lote`, `cantidad`, `unidad`, `precio_unitario`, `descuento_pct`. (3) Elimina las 5 columnas de la tabla `ventas`: `lote_id`, `codigo_lote`, `cantidad`, `unidad`, `precio_unitario`, `descuento_pct`.
+- `V41__clientes.sql` — tabla `clientes(id BIGSERIAL PK, tenant_id VARCHAR(100), nombre VARCHAR(200) NOT NULL, razon_social VARCHAR(200), nit VARCHAR(50), regimen_tributario VARCHAR(30), email VARCHAR(200), telefono VARCHAR(50), direccion_despacho VARCHAR(300), ciudad VARCHAR(100), departamento VARCHAR(100), lista_precio VARCHAR(30), activo BOOLEAN NOT NULL DEFAULT TRUE, notas VARCHAR(500), created_at, created_by, last_modified_at, last_modified_by)` + índices en `tenant_id` y `LOWER(nombre)` + índice único parcial `ux_clientes_nit_tenant ON clientes (tenant_id, nit) WHERE nit IS NOT NULL`. Con `@TenantId` — filtrada por tenant. Extiende `AuditableEntity`.
+- `V42__venta_cliente_fk.sql` — `ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_id BIGINT REFERENCES clientes(id) ON DELETE SET NULL`, `ADD COLUMN IF NOT EXISTS remision_numero VARCHAR(20)`, `ADD COLUMN IF NOT EXISTS cotizacion_expira_en DATE`. FK nullable — retrocompatibilidad con ventas existentes sin cliente registrado. Índice parcial `idx_ventas_remision ON ventas (remision_numero) WHERE remision_numero IS NOT NULL`.
+- `V43__venta_estado_cotizacion.sql` — Recrea CHECK constraint del campo `estado` en `ventas` para incluir los nuevos estados: `CHECK (estado IN ('COTIZACION','PENDIENTE','DESPACHADO','CANCELADO','EXPIRADO'))`. Se hace via ALTER TABLE DROP/ADD CONSTRAINT.
+- `V44__cotizacion_scheduler_index.sql` — Índice parcial de performance `idx_ventas_cotizacion_vencida ON ventas (cotizacion_expira_en) WHERE estado = 'COTIZACION' AND deleted_at IS NULL` — optimiza la query del scheduler `expirarCotizaciones()` que busca cotizaciones vencidas diariamente.
 
 ---
 
@@ -380,9 +395,25 @@ Registro de importaciones de datos por tenant. Tabla `migracion_log`. **Sin `@Te
 - Factory: `MigracionLog.of(tenantId, modulo, archivo, procesadas, exitosas, conErrores, estado, detalles, usuario)`
 - Solo getters (sin setters) — inmutable tras creación
 
+### Cliente
+Datos fiscales y de contacto del cliente. Tabla `clientes`. Tiene `@TenantId`. **Extiende `AuditableEntity`** (auditoría JPA automática).
+- `id`, `nombre` (VARCHAR 200, NOT NULL), `razonSocial` (VARCHAR 200, nullable)
+- `nit` (VARCHAR 50, nullable) — unique por tenant (índice parcial `WHERE nit IS NOT NULL`)
+- `@Enumerated(EnumType.STRING) regimenTributario → RegimenTributario` — nullable (SIMPLIFICADO, RESPONSABLE_IVA). Cada valor tiene `getDisplayName()`.
+- `email` (VARCHAR 200, nullable), `telefono` (VARCHAR 50, nullable)
+- `direccionDespacho` (VARCHAR 300, nullable), `ciudad` (VARCHAR 100, nullable), `departamento` (VARCHAR 100, nullable)
+- `@Enumerated(EnumType.STRING) listaPrecio → ListaPrecio` — nullable. Valores: VENTA_DIRECTA, DISTRIBUIDOR, BAR, MAYORISTA, EXPORTACION, EMPLEADO. Cada valor tiene `getDisplayName()`.
+- `activo` (boolean, default true), `notas` (VARCHAR 500, nullable)
+- Los 4 campos de auditoría vienen de `AuditableEntity` (`createdAt`, `createdBy`, `lastModifiedAt`, `lastModifiedBy`)
+- **ListaPrecio** (`com.alera.model.enums`): `VENTA_DIRECTA("Venta directa")`, `DISTRIBUIDOR("Distribuidor")`, `BAR("Bar / Restaurante")`, `MAYORISTA("Mayorista")`, `EXPORTACION("Exportación")`, `EMPLEADO("Empleado")`.
+- **RegimenTributario** (`com.alera.model.enums`): `SIMPLIFICADO("Régimen simplificado")`, `RESPONSABLE_IVA("Responsable de IVA")`.
+
 ### Venta
 Registro de ventas/despachos a clientes. Puede incluir múltiples lotes/ítems. Tabla `ventas`. Tiene `@TenantId`. **No extiende `AuditableEntity`** — gestiona su propia auditoría con `@PrePersist`/`@PreUpdate`.
-- `id`, `tenantId` (@TenantId), `cliente` (VARCHAR 200, NOT NULL), `fechaDespacho` (DATE, NOT NULL)
+- `id`, `tenantId` (@TenantId), `cliente` (VARCHAR 200, NOT NULL — desnormalizado de `clienteRef.nombre`), `fechaDespacho` (DATE, NOT NULL)
+- `@ManyToOne(LAZY) Cliente clienteRef` — `@JoinColumn(name="cliente_id")`, nullable (retrocompatibilidad con ventas sin cliente registrado). `open-in-view=true` permite acceder a `clienteRef` en templates sin LazyInitializationException.
+- `remisionNumero` (VARCHAR 20, nullable) — generado automáticamente al cambiar estado a DESPACHADO. Formato `REM-NNN` (ej: `REM-001`). Thread-safe: `generarRemisionNumero()` hace `em.flush()` antes de `MAX(CAST(SUBSTRING(remision_numero FROM 5) AS INTEGER))` nativa.
+- `cotizacionExpiraEn` (DATE, nullable) — solo relevante cuando `estado = COTIZACION`. Si no se especifica al crear la cotización, se calcula como `LocalDate.now().plusDays(expiracionDias)`.
 - `notas` (VARCHAR 500, nullable)
 - `@Enumerated(EnumType.STRING) estado → EstadoVenta` — default PENDIENTE
 - `@OneToMany(mappedBy="venta", cascade=ALL, orphanRemoval=true, fetch=LAZY) items → List<VentaItem>` — inicializado como `new ArrayList<>()`
@@ -391,7 +422,9 @@ Registro de ventas/despachos a clientes. Puede incluir múltiples lotes/ítems. 
 - `createdAt`, `createdBy`, `lastModifiedAt`, `lastModifiedBy` — auditoría propia
 - `deletedAt` (TIMESTAMP, nullable) — soft delete: `@SQLRestriction("deleted_at IS NULL")`. `VentaService.eliminar()` setea `deletedAt` y guarda (no borra físicamente).
 - **CRÍTICO — N+1 en lista**: los campos `@Formula` se calculan en SQL inline en cada SELECT de `Venta`. No iterar `items` en métodos usados por la lista; usar siempre `getValorTotal()` y `getPrimerCodigoLote()`.
-- **EstadoVenta** (`com.alera.model.enums`): `PENDIENTE("Pendiente", "bg-warning text-dark")`, `DESPACHADO("Despachado", "bg-success")`, `CANCELADO("Cancelado", "bg-secondary")`. Cada valor tiene `getDisplayName()` y `getBadgeClass()`.
+- **EstadoVenta** (`com.alera.model.enums`): `COTIZACION("Cotización", "bg-info text-dark")`, `PENDIENTE("Pendiente", "bg-warning text-dark")`, `DESPACHADO("Despachado", "bg-success")`, `CANCELADO("Cancelado", "bg-secondary")`, `EXPIRADO("Expirado", "bg-dark")`. Cada valor tiene `getDisplayName()` y `getBadgeClass()`.
+- **Transiciones de estado válidas** (mapa `TRANSICIONES_VALIDAS` en `VentaService`): COTIZACION → {PENDIENTE, CANCELADO}; PENDIENTE → {DESPACHADO, CANCELADO}; DESPACHADO → {}; CANCELADO → {}; EXPIRADO → {}. Transición inválida lanza `RuntimeException` en `cambiarEstado()`.
+- **Descuento automático de envases** (al despachar): `descontarEnvases()` busca ítems de la venta cuya `unidad` sea un tipo de empaque reconocido (Botella, Lata, Barril, Growler, etc.) via `VentaItemRepository.findItemsConEnvase()`, y descuenta del inventario de insumos usando `InsumoInventarioService.descontarIngrediente()`. Si hay stock insuficiente, solo registra WARN (no bloquea el despacho).
 
 ### VentaItem
 Línea de ítem dentro de una venta (lote + cantidad + precio). Tabla `venta_items`. Tiene `@TenantId`. **No extiende `AuditableEntity`.**
@@ -485,6 +518,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findByTenantIdOrderByFechaDesc(tenantId)` — historial de importaciones del tenant, orden cronológico inverso. Query JPQL sin `@TenantId` — consulta por el campo `tenantId` directamente (Hibernate NO añade filtro automático porque la entidad no tiene `@TenantId`).
 - `countByTenantId(tenantId)` — conteo de importaciones del tenant.
 
+### ClienteRepository
+- `findAllByActivoTrueOrderByNombreAsc()` — clientes activos para selects y dropdown
+- `findAllByOrderByNombreAsc()` — todos los clientes sin filtro de estado
+- `findByNit(String nit)` — `Optional<Cliente>` — usado por `ClienteService` para validar unicidad de NIT antes de guardar
+- `findAllFiltered(nombre, activo, Pageable)` — paginado con filtros opcionales: `:nombre IS NULL OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:nombre,'%'))` y `:activo IS NULL OR c.activo = :activo`. Orden `c.nombre ASC`.
+- `searchActivos(q, Pageable)` — busca solo entre clientes activos por nombre o NIT con LIKE. Usado por `ClienteService.suggest()` (limit 6) y por `VentaService.suggestClientes()` (retorna solo el nombre).
+
 ### VentaRepository
 - `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR v.estado = :estado`, `:desde IS NULL OR v.fechaDespacho >= :desde`, `:hasta IS NULL OR v.fechaDespacho <= :hasta`. Orden `fechaDespacho DESC NULLS LAST, id DESC`. **Patrón IS NULL OR** — no usa valores centinela (1900/2100).
 - `countByEstado(EstadoVenta)` — conteo por estado; usado en stat-cards.
@@ -493,6 +533,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findByPeriodo(desde, hasta)` — `List<Venta>` para export; `:desde IS NULL OR v.fechaDespacho >= :desde` y `:hasta IS NULL OR v.fechaDespacho <= :hasta`. Ambos parámetros nullable.
 - `findTopClientes(tenantId)` — `nativeQuery=true`, JOIN con `venta_items`. Top 5 clientes por ingresos despachados (`estado='DESPACHADO'`), agrupados con `COUNT(DISTINCT v.id)` y `SUM(vi.cantidad × vi.precio_unitario × (1 - vi.descuento_pct/100))`. Requiere `tenantId` explícito y filtra `deleted_at IS NULL` manualmente (native query).
 - `findClientesSuggestions(q, Pageable)` — `SELECT DISTINCT v.cliente` con `LOWER(v.cliente) LIKE LOWER(:q||'%')`, orden alfabético. Usado por `VentaService.suggestClientes()` → `GET /ventas/suggest-clientes`.
+- `findCotizacionesVencidas(hoy)` — `List<Venta>` con `estado = COTIZACION AND cotizacion_expira_en < :hoy`. Sin paginación — el scheduler procesa todas de una vez. Hibernate añade filtro de tenant automáticamente via `@TenantId`.
 
 ### VentaItemRepository
 - `findByVentaId(Long ventaId)` — `List<VentaItem>` para una venta concreta.
@@ -500,6 +541,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `sumCantidadActivaByLote(loteId, excludeVentaId)` — `COALESCE(SUM(i.cantidad), 0)` de ítems cuya `venta.estado != CANCELADO`, excluyendo los de la venta `excludeVentaId` (para edición). Usado por `VentaService.validarItemCantidad()`.
 - `findUnidadesActivasByLote(loteId, excludeVentaId)` — `SELECT DISTINCT i.unidad` de ítems activos del lote, filtrando `i.unidad IS NOT NULL AND i.unidad <> ''`. Retorna `Set<String>`. Usado por `VentaService.validarItemCantidad()` para detectar mezcla de unidades.
 - `sumIngresosDespachados()` — `COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct/100.0)), 0)` donde `i.venta.estado = DESPACHADO`. Retorna null si no hay ítems (el servicio normaliza a ZERO). Usado por `VentaService.sumIngresosDespachados()`.
+- `findItemsConEnvase(ventaId)` — `List<VentaItem>` donde `LOWER(i.unidad) LIKE '%botella%' OR LIKE '%lata%' OR LIKE '%barril%' OR LIKE '%growler%' OR LIKE '%und%'`. Usado por `VentaService.descontarEnvases()` al despachar para descontar stock de packaging del inventario.
 
 ### VentaHistorialEstadoRepository
 - `findByVentaIdOrderByFechaDesc(ventaId)` — historial de cambios de estado de una venta. Hibernate filtra automáticamente por tenant activo via `@TenantId`.
@@ -717,8 +759,9 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **Tracking de fallos**: solo aplica al canal email. Si `enviarAlertasDiarias()` lanza excepción, llama `TenantService.registrarEnvioFallido()`. Si exitoso, `registrarEnvioExitoso()`. Las notifs in-app no afectan el tracking.
 - **WARN escalado**: si `alertasIntentosFallidos >= UMBRAL_WARN (3)`, loggea WARN antes de cada intento de email.
 - **EmailService**: `enviarAlertasDiarias()` relanza excepción SMTP como `RuntimeException` para que el scheduler pueda trackearla.
+- **Expiración de cotizaciones**: por cada tenant activo, después de procesar alertas de inventario/equipos/facturas, llama `ventaService.expirarCotizaciones()`. Las cotizaciones con `cotizacion_expira_en < today` y `estado = COTIZACION` pasan automáticamente a EXPIRADO.
 - Loggea resumen: "N notificación(es) in-app creada(s), M email(s) enviado(s) de K tenant(s)"
-- Inyecta `NotificacionService` y `FacturaProveedorService`.
+- Inyecta `NotificacionService`, `FacturaProveedorService` y `VentaService`.
 
 ### NotificacionService
 - `crear(tipo, titulo, mensaje, urlAccion)` — persiste una `Notificacion` para el tenant activo
@@ -742,6 +785,17 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `cambiarEstado(id, nuevoEstado)` — busca el plan por ID y actualiza el estado
 - `eliminar(id)` — `repo.deleteById(id)`
 
+### ClienteService
+- `listarActivos()` — `findAllByActivoTrueOrderByNombreAsc()` — para selects y dropdown en el formulario de venta
+- `listarTodos()` — todos incluyendo inactivos
+- `listarPaginado(nombre, activo, page)` — paginado con filtros opcionales (null=todos)
+- `buscarPorId(id)` — `Optional<Cliente>`
+- `guardar(dto)` — valida unicidad de NIT antes de crear; lanza `RuntimeException` si ya existe otro cliente con el mismo NIT
+- `actualizar(id, dto)` — valida unicidad de NIT excluyendo el propio registro
+- `toggleActivo(id)` — invierte `activo` y guarda
+- `suggest(q)` — mínimo 1 char; delega a `repo.searchActivos(q, PageRequest.of(0, 8))`, retorna hasta 6 mapas `{id, nombre, nit, listaPrecio, ciudad}`. Usado por `GET /clientes/suggest` para el typeahead del formulario de venta.
+- `mapearDto(dto, cliente)` — helper privado: normaliza blancos a null con `blank(s)`, copia todos los campos incluyendo enums nullable
+
 ### VentaService
 - `listarPaginado(estado, desde, hasta, page)` — paginado con filtros opcionales; todos los parámetros son nullable. Delega a `ventaRepo.findAllFiltered` con patrón `:param IS NULL OR` — sin valores centinela de fecha.
 - `buscarPorId(id)` — `Optional<Venta>`
@@ -750,17 +804,20 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `guardar(dto)` — `mapearDto()` crea los `VentaItem` y los añade a `venta.getItems()`. Registra `VentaHistorialEstado` con `estadoAnterior=null` (creación inicial).
 - `actualizar(id, dto)` — llama `v.getItems().clear()` + `mapearDto()` para reemplazar ítems. Registra historial y crea notificación in-app SOLO si el estado cambió.
 - `eliminar(id)` — **soft delete**: setea `deletedAt = LocalDateTime.now()` y guarda. No llama `deleteById`. No-op si no existe.
-- `cambiarEstado(id, EstadoVenta)` — actualiza estado, persiste historial de transición; si `nuevoEstado = DESPACHADO` crea notificación in-app vía `NotificacionService`. No-op si no existe.
+- `cambiarEstado(id, EstadoVenta)` — valida transición via `TRANSICIONES_VALIDAS`; lanza `RuntimeException` si es inválida. Al despachar: `generarRemisionNumero()` + `descontarEnvases()` + `crearNotificacionDespacho()`.
+- `expirarCotizaciones()` — llama `ventaRepo.findCotizacionesVencidas(LocalDate.now())` y transiciona cada venta a EXPIRADO; registra historial y crea notificación SISTEMA. Llamado por `AlertaScheduler` en el loop per-tenant. `@Transactional` — el filtro `@TenantId` aplica automáticamente.
 - `validarCantidadDisponible(List<VentaItemFormDto> items, Long excludeVentaId)` — `@Transactional(readOnly=true)`. Itera los ítems del DTO; para cada uno con `loteId` no null llama `validarItemCantidad()`. Retorna mensaje concatenado de advertencias o null si todo OK. No bloquea — solo informa.
 - `validarItemCantidad(loteId, cantidad, unidad, excludeVentaId)` — (privado) primero verifica mezcla de unidades via `findUnidadesActivasByLote`; si el lote ya tiene ventas en una unidad distinta, retorna advertencia. Luego compara cantidad total vs capacidad del lote (carbDestino o litrosFinales).
-- `suggestClientes(q)` — `@Transactional(readOnly=true)`, mínimo 1 char; delega a `ventaRepo.findClientesSuggestions(q, PageRequest.of(0, 8))`. Retorna `List<String>` con nombres de clientes. Usado por `GET /ventas/suggest-clientes`.
+- `generarRemisionNumero(venta)` — (privado) si la venta aún no tiene remisionNumero: `em.flush()` luego native `MAX(CAST(SUBSTRING(remision_numero FROM 5) AS INTEGER))` filtrando por tenant. Formatea `REM-%03d`. Thread-safe por el flush previo.
+- `descontarEnvases(venta)` — (privado) busca ítems de packaging via `findItemsConEnvase()` y descuenta stock via `InsumoInventarioService.descontarIngrediente()`. Fallo de stock solo registra WARN (no bloquea).
+- `suggestClientes(q)` — `@Transactional(readOnly=true)`, mínimo 1 char; delega a `clienteRepo.searchActivos()`. Retorna `List<String>` con nombres de clientes activos. Usado por `GET /ventas/suggest-clientes`.
 - `suggestLotesParaVenta(q)` — `@Transactional(readOnly=true)`. Sin filtro: carga hasta 50 lotes completados y devuelve los 20 con disponibilidad > 0. Con query: hasta 20 candidatos, devuelve 6. Calcula disponibilidad parseando `carbDestino` ("48 × Botella 330ml") o usando `litrosFinales`. Retorna `[{id, codigoLote, estilo, carbDestino, litrosFinales, litrosDisponibles}]`. Usado por `GET /ventas/suggest-lotes`.
 - `topClientes()` — `@Transactional(readOnly=true)`, delega a `ventaRepo.findTopClientes(tenantId)`. Retorna `List<Map>` con top 5 clientes por ingresos despachados. Usado en `lista.html`.
 - `suggest(q)` — `@Transactional(readOnly=true)`, query corta (< 2 chars) retorna lista vacía; busca via `ventaRepo.search()` (limit 6); retorna `[{titulo, sub, fecha, url}]`. `sub` usa `getPrimerCodigoLote()` (@Formula).
 - `countTotal()`, `countByEstado(EstadoVenta)`, `countClientesUnicos()` — delegan a `ventaRepo`. `sumIngresosDespachados()` — delega a `ventaItemRepo.sumIngresosDespachados()` (no ventaRepo). Stats para las 4 stat-cards de la lista.
 - `listarParaExport(estado, desde, hasta)` y `listarPorPeriodo(desde, hasta)` — `@Transactional(readOnly=true)`, usan `ventaRepo.findByPeriodo()` (nullable). `open-in-view=true` permite acceso lazy a `items` en los servicios de export.
-- Inyecta `VentaRepository ventaRepo`, `VentaItemRepository ventaItemRepo`, `LoteCervezaRepository loteRepo`, `VentaHistorialEstadoRepository historialRepo`, `NotificacionService notificacionService`.
-- `pageSize` inyectado via `@Value("${app.page-size:15}")`.
+- Inyecta `VentaRepository ventaRepo`, `VentaItemRepository ventaItemRepo`, `LoteCervezaRepository loteRepo`, `VentaHistorialEstadoRepository historialRepo`, `NotificacionService notificacionService`, `ClienteRepository clienteRepo`, `InsumoInventarioService insumoService`, `EntityManager em`.
+- `pageSize` inyectado via `@Value("${app.page-size:15}")`. `expiracionDias` via `@Value("${app.cotizacion.expiracion-dias:15}")`.
 
 ### LecturaFermentacionService
 - `listarPorLote(loteId)` — `@Transactional(readOnly=true)`, delega a `findByLoteIdOrdenadas` (orden fecha ASC, id ASC)
@@ -937,21 +994,31 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Accesible desde el botón "Migración" en cada card de `/admin/tenants`.
 - Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
 
+### ClienteController ("/clientes") — ADMIN, FACTURACION, SUPERADMIN
+- `GET /clientes?nombre=&activo=true|false&page=` — lista paginada con 1 stat-card (totalClientes). Filtros: nombre/NIT (texto), tabs Activos/Inactivos. Typeahead en card-header llama `/clientes/suggest?q=`.
+- `GET /clientes/nuevo` — formulario de creación. Modelo: `cliente` (ClienteFormDto vacío), `listasPrecio` (ListaPrecio.values()), `regimenes` (RegimenTributario.values()).
+- `POST /clientes/guardar` — bean validation + NIT unique check. Flash success o error (NIT duplicado).
+- `GET /clientes/editar/{id}` — formulario de edición con datos pre-llenados via `toFormDto()`.
+- `POST /clientes/actualizar/{id}` — misma validación que guardar, excluye el propio registro en la verificación de NIT.
+- `GET /clientes/ver/{id}` — página de detalle: Identificación fiscal, Contacto y Ubicación, Notas Internas, panel lateral de Acciones y Registro.
+- `POST /clientes/{id}/toggle` — invierte el flag `activo`. Flash success.
+- `GET /clientes/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{id, nombre, nit, listaPrecio, ciudad}]`. Usado por el typeahead del formulario de venta.
+
 ### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
-- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos). Fila de la lista incluye: badge `+N` cuando la venta tiene más de 1 ítem, botón PDF directo, y botón "Despachar" (visible solo cuando `estado == PENDIENTE`).
-- `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems. Typeahead de lote usa `GET /ventas/suggest-lotes?q=`. Typeahead de cliente usa `GET /ventas/suggest-clientes?q=`. Preview de total en tiempo real. `step` del campo cantidad se adapta automáticamente: entero para envases (Botella/Lata/Barril/Growler/und), decimal (0.001) para volumen.
+- `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos). Fila de la lista incluye: badge `+N` cuando la venta tiene más de 1 ítem, botón PDF directo, y botón "Despachar" (visible solo cuando `estado == PENDIENTE`). Los nuevos estados COTIZACION y EXPIRADO aparecen automáticamente en el select de filtro (usa `EstadoVenta.values()`).
+- `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems. Campo cliente: input de búsqueda con typeahead que llama `GET /clientes/suggest?q=`; selección carga chip con nombre+NIT y setea el hidden `clienteId`. Typeahead de lote usa `GET /ventas/suggest-lotes?q=`. Preview de total en tiempo real. `step` del campo cantidad se adapta automáticamente: entero para envases (Botella/Lata/Barril/Growler/und), decimal (0.001) para volumen. Campo "Válida hasta" visible solo cuando estado=COTIZACION.
 - `POST /ventas/guardar` — llama `validarCantidadDisponible(dto.getItems(), null)` antes de guardar; flash warning si supera litros de algún lote, success si todo OK.
-- `GET /ventas/ver/{id}` — detalle con tabla de ítems (lote, descripción, cantidad, precio, descuento, total línea), total general calculado con `venta.getValorTotal()`, **historial de cambios de estado** (card con tabla), panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN).
-- `GET /ventas/editar/{id}` — formulario de edición con datos pre-llenados.
+- `GET /ventas/ver/{id}` — detalle con tabla de ítems, total general, datos del cliente (NIT, lista de precio, link a ficha si `clienteRef != null`), número de remisión (si existe), fecha de expiración (si COTIZACION/EXPIRADO), **historial de cambios de estado**, panel cambio de estado y botón eliminar (solo ADMIN/SUPERADMIN). El select de cambio de estado filtra EXPIRADO (no seleccionable manualmente).
+- `GET /ventas/editar/{id}` — formulario de edición con datos pre-llenados. Setea `dto.clienteId` desde `venta.getClienteRef()` (lazy, open-in-view) y `dto.cotizacionExpiraEn`.
 - `POST /ventas/actualizar/{id}` — llama `validarCantidadDisponible(dto.getItems(), id)` antes de actualizar; flash warning/success según resultado.
 - `POST /ventas/{id}/eliminar` — soft delete, redirige a `/ventas`.
-- `POST /ventas/{id}/estado` — cambia `EstadoVenta`, redirige a `/ventas/ver/{id}`.
-- `GET /ventas/duplicar/{id}` — carga la venta, limpia id/fecha, retorna formulario pre-llenado. Modelo incluye `duplicadoDe` para mostrar aviso informativo.
+- `POST /ventas/{id}/estado` — cambia `EstadoVenta`. Si la transición es inválida (ej: DESPACHADO → PENDIENTE), el servicio lanza `RuntimeException` → flash danger. Redirige a `/ventas/ver/{id}`.
+- `GET /ventas/duplicar/{id}` — carga la venta, limpia id/fecha, retorna formulario pre-llenado. Setea `dto.clienteId` desde `venta.getClienteRef()`. Modelo incluye `duplicadoDe` para mostrar aviso informativo.
 - `GET /ventas/{id}/pdf` — descarga remisión PDF. Construye `ExportBranding.from(tenant)`. Delega a `PdfExportService.generarPdfVenta()`. Nombre: `remision-venta-{id}.pdf`.
 - `GET /ventas/export?estado=&desde=&hasta=` — descarga `ventas-YYYY-MM-DD.xlsx`. Filtros opcionales. Lee branding del tenant. Delega a `ExcelExportService.generarExcelVentas()` con 4 hojas (Ventas, Ítems, Por Cliente, Por Estado).
 - `GET /ventas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{titulo, sub, fecha, url}]`.
 - `GET /ventas/suggest-lotes?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggestLotesParaVenta(q)`. Sin query devuelve los 20 lotes con mayor disponibilidad; con query filtra y devuelve 6. Devuelve `[{id, codigoLote, estilo, carbDestino, litrosFinales, litrosDisponibles}]`.
-- `GET /ventas/suggest-clientes?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggestClientes(q)`. Devuelve `List<String>` con nombres de clientes únicos que hacen LIKE. Mínimo 1 char.
+- `GET /ventas/suggest-clientes?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggestClientes(q)`. Devuelve `List<String>` con nombres de clientes activos que hacen LIKE. Mínimo 1 char.
 - **Integración con detalle de lote**: `TrazabilidadController.ver()` pasa `ventasLote` al modelo; `detalle.html` muestra la sección "Ventas y Despacho" con botón "Registrar Venta" (link a `/ventas/nuevo?loteId={id}`) solo para ADMIN/FACTURACION/SUPERADMIN.
 - **formulario.html — badge de empaque**: al seleccionar un lote, el badge de disponibilidad/empaque aparece como `input-group-text` (addon a la derecha del buscador), NO como bloque debajo — esto mantiene la alineación de la fila. El texto se trunca a 120px con `text-overflow: ellipsis`; el texto completo aparece en `title` (hover). Clase CSS `.has-lote-badge` en el `input-group` controla el `border-radius` del input adyacente.
 - **`@WebMvcTest`**: `@MockBean VentaService ventaService` + `@MockBean TrazabilidadService trazabilidadService` + `@MockBean ExcelExportService excelExportService` + `@MockBean PdfExportService pdfExportService`. Stubs adicionales en `@BeforeEach`: `ventaService.topClientes()` → `List.of()`, `ventaService.listarHistorial(anyLong())` → `List.of()`.
@@ -1014,7 +1081,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `/admin/**`, `/usuarios/**`, `/tipos-cerveza/**` → solo ADMIN
   - `/actuator/**` → ADMIN (excepto `/actuator/health` que es público)
   - `POST /guardar`, `POST /actualizar/**`, `POST /eliminar/**`, `POST /duplicar/**`, `GET /nuevo`, `GET /editar/**` → ADMIN, SUPERADMIN, PRODUCCION (escritura de trazabilidad y planificación). Recetas/inventario/equipos usan `@PreAuthorize` a nivel de método para bloquear PRODUCCION en esos módulos.
-  - `/facturas/**`, `/proveedores/**` → ADMIN, FACTURACION
+  - `/facturas/**`, `/proveedores/**`, `/clientes/**`, `/ventas/**` → ADMIN, FACTURACION, SUPERADMIN
   - `/inventario/**`, `/recetas/**` → ADMIN, INVENTARIO, PRODUCCION (lectura+escritura para INVENTARIO; solo lectura para PRODUCCION — write bloqueado por `@PreAuthorize`)
   - `/equipos/**` → ADMIN, EQUIPOS, PRODUCCION (lectura para PRODUCCION; write bloqueado por `@PreAuthorize`)
   - `/api/auth/**` → público (sin autenticación — endpoint de login JWT)
@@ -1026,7 +1093,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **HTTP Security Headers** (configurados en `SecurityConfig.filterChain()` via `.headers()`): HSTS (`max-age=31536000; includeSubDomains`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`. CSP explícitamente omitido — el app usa múltiples CDNs y Thymeleaf inline JS que requieren `'unsafe-inline'`, lo cual vacía el beneficio de CSP.
 - **CSRF en AJAX**: todos los endpoints `@ResponseBody POST` requieren el token CSRF. Los templates que los usan incluyen `<meta name="_csrf" th:content="${_csrf.token}"/>` y `<meta name="_csrf_header" th:content="${_csrf.headerName}"/>`. El JS lee estos metas y los envía como header en el `fetch()`.
 - **JPA Auditing**: `JpaConfig` con `@EnableJpaAuditing(auditorAwareRef="auditorAwareImpl")`, `AuditorAwareImpl` lee usuario de SecurityContext. Fallback a `"sistema"` si no hay sesión activa.
-- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas; **Comercial** (ADMIN/FACTURACION): Facturas, Proveedores; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`.
+- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas; **Comercial** (ADMIN/FACTURACION/SUPERADMIN): Ventas, Clientes, Facturas, Proveedores; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`. El `active` check del dropdown Comercial incluye `/clientes` además de `/ventas`, `/facturas`, `/proveedores`.
 - **Campana de notificaciones** (`<li id="alertaBellItem">`): siempre visible en el DOM (antes tenía `style="display:none"` y se revelaba via JS). Al cargar la página hace `fetch('/notificaciones/recientes')`. Si hay notificaciones no leídas, muestra el badge rojo; si no las hay, el badge se oculta (`badge.style.display='none'`) pero la campana permanece visible. `notifMarcarLeida()` también solo oculta el badge (no el elemento `<li>`) cuando `noLeidas` llega a 0.
 - **`/perfil/**`** cae en `anyRequest().authenticated()` — accesible a todos los roles. Sin regla explícita en `SecurityConfig`.
 - **Multi-tenant — TenantFilter** (`OncePerRequestFilter`):
@@ -1249,7 +1316,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `TipoCervezaServiceTest` — 11 tests: `listarActivos/Todos`, `buscarPorId`, `existePorNombre`, `guardar`, `eliminar`, `toggleActivo` (activo→inactivo, inactivo→activo, no existe no-op).
 - `ProveedorServiceTest` — 15 tests: `listarActivos/Todos`, `buscarPorId`, `suggest` (null/corta, filtro nombre, filtro NIT, límite 6, estructura mapa con url, NIT null → string vacío), `guardar`, `eliminar`, `contarFacturas`, `totalFacturas`.
 - `MantenimientoEquipoServiceTest` — 9 tests: `listarPorEquipo` (vacío y con resultados), `registrar` (campos del DTO en MantenimientoEquipo, actualiza `fechaUltimoMantenimiento`, actualiza/no-actualiza `proximoMantenimiento` según null, equipo no existe → RuntimeException, retorna guardado), `eliminar`.
-- `VentaServiceTest` — 25 tests: `guardar` (campos básicos, registra historial con estadoAnterior=null, vincula lote via `VentaItemFormDto.setLoteId()`, sin lote, estado null→PENDIENTE), `actualizar` (modifica campos, registra historial al cambiar estado, NO registra historial si estado igual, lanza excepción si no existe), `eliminar` (soft delete setea deletedAt — no llama deleteById, no-op si no existe), `cambiarEstado` (actualiza estado, registra historial de transición, crea notificación al despachar), `validarCantidadDisponible` (null/vacío retorna null, dentro del límite retorna null, supera límite retorna advertencia), `listarHistorial` (delega a repo), `suggest` (query corta, estructura correcta — `sub` usa `getPrimerCodigoLote()` que es null en tests), stats (countTotal, countByEstado, sumIngresos delega a `ventaItemRepo` no `ventaRepo`, listarPaginado). Requiere `@Mock VentaItemRepository ventaItemRepo`, `@Mock VentaHistorialEstadoRepository historialRepo`, `@Mock NotificacionService notificacionService`. `@BeforeEach` hace `lenient().when(historialRepo.save(any())).thenReturn(new VentaHistorialEstado())`. Helper `buildDto(cliente, cantidad, precio)` crea `VentaFormDto` con un `VentaItemFormDto` ya añadido en `dto.getItems()`.
+- `VentaServiceTest` — 25 tests: `guardar` (campos básicos, registra historial con estadoAnterior=null, vincula lote via `VentaItemFormDto.setLoteId()`, sin lote, estado null→PENDIENTE), `actualizar` (modifica campos, registra historial al cambiar estado, NO registra historial si estado igual, lanza excepción si no existe), `eliminar` (soft delete setea deletedAt — no llama deleteById, no-op si no existe), `cambiarEstado` (actualiza estado, registra historial de transición, crea notificación al despachar), `validarCantidadDisponible` (null/vacío retorna null, dentro del límite retorna null, supera límite retorna advertencia), `listarHistorial` (delega a repo), `suggest` (query corta, estructura correcta — `sub` usa `getPrimerCodigoLote()` que es null en tests), stats (countTotal, countByEstado, sumIngresos delega a `ventaItemRepo` no `ventaRepo`, listarPaginado). Requiere `@Mock VentaItemRepository ventaItemRepo`, `@Mock VentaHistorialEstadoRepository historialRepo`, `@Mock NotificacionService notificacionService`, `@Mock ClienteRepository clienteRepo`, `@Mock InsumoInventarioService insumoService`, `@Mock EntityManager em`, `@Mock Query nativeQuery`. `em` se inyecta vía `ReflectionTestUtils.setField(service, "em", em)` — es `@PersistenceContext` no constructor. `@BeforeEach` hace `lenient()` stubs: `historialRepo.save → VentaHistorialEstado`, `em.createNativeQuery → nativeQuery`, `nativeQuery.setParameter → nativeQuery`, `nativeQuery.getSingleResult → 0`, `ventaItemRepo.findItemsConEnvase → List.of()`. Helper `buildDto(cliente, cantidad, precio)` crea `VentaFormDto` con un `VentaItemFormDto` ya añadido en `dto.getItems()`.
 - `PdfExportServiceTest` — 8 smoke tests: verifica magic bytes `%PDF`, lote mínimo sin lecturas, lote completo (densidades, fases, obs), lecturas con densidad+temp, solo densidad, solo temperatura, lecturas null, tamaño >1KB, PDFs distintos para lotes distintos. Instancia `PdfExportService` directamente (sin Spring context — no tiene dependencias). Usa `private static final ExportBranding BRANDING = ExportBranding.defaults("Alera")` como constante de test.
 - `ExcelExportServiceTest` — 8 smoke tests: verifica magic bytes `PK` (ZIP/XLSX), listas vacías, lote mínimo, lotes con métricas, resumen por estilos, 50 lotes sin excepción, contenido distinto para lotes distintos. Usa `ExportBranding.defaults("Alera")` como constante de test. **Bug descubierto**: fechas `null` en `desde`/`hasta` → `RuntimeException` (NPE interno al formatear) — el test lo documenta y verifica el comportamiento real. **NOTA**: `List.of(Object[])` causa ambigüedad de tipos en Java 26 — usar `new ArrayList<>()` para listas de `Object[]`.
 
@@ -1277,7 +1344,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
-- `VentaControllerTest` — 7 tests: 401 sin auth, 200 ADMIN y FACTURACION, suggest JSON, ver/{id} retorna modelo con `historial`, nuevo retorna formulario, `GET /ventas/{id}/pdf` retorna PDF con Content-Disposition. Requiere `@MockBean ExcelExportService` y `@MockBean PdfExportService`. Stubs: `topClientes()` → `List.of()`, `listarHistorial(anyLong())` → `List.of()`. **Nota**: en tests de `ver_retornaDetalle` y `pdf_retornaPdf`, NO setear `v.setCantidad`, `v.setPrecioUnitario`, `v.setDescuentoPct` — esos campos ya no existen en `Venta`. `valorTotal` es `@Formula` (null en tests sin BD = ZERO via `getValorTotal()`).
+- `VentaControllerTest` — 7 tests: 401 sin auth, 200 ADMIN y FACTURACION, suggest JSON, ver/{id} retorna modelo con `historial`, nuevo retorna formulario, `GET /ventas/{id}/pdf` retorna PDF con Content-Disposition. Requiere `@MockBean ExcelExportService`, `@MockBean PdfExportService` y `@MockBean ClienteService` (parámetro de constructor del controller). Stubs: `topClientes()` → `List.of()`, `listarHistorial(anyLong())` → `List.of()`. **Nota**: en tests de `ver_retornaDetalle` y `pdf_retornaPdf`, NO setear `v.setCantidad`, `v.setPrecioUnitario`, `v.setDescuentoPct` — esos campos ya no existen en `Venta`. `valorTotal` es `@Formula` (null en tests sin BD = ZERO via `getValorTotal()`).
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context
 
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
@@ -1295,7 +1362,7 @@ APP_BRAND_FONT_BODY=Roboto
 
 **Integración** (`src/test/java/com/alera/`) — Testcontainers + `postgres:16-alpine`:
 - `AbstractIntegrationTest` — base con `@ServiceConnection` (Spring Boot 3.4). **NO usa `@Testcontainers` ni `@Container`** — en su lugar arranca el contenedor en un `static { POSTGRES.start(); }`. Esto evita que Testcontainers detenga y reinicie el contenedor entre clases de test, lo que causaría que el contexto Spring Boot cacheado intentara reconectar a un puerto que ya no existe. Perfil `test` con credenciales dummy (`DB_PASSWORD=test`).
-- `FlywayMigrationIntegrationTest` — verifica V1–V40 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
+- `FlywayMigrationIntegrationTest` — verifica V1–V44 sin errores ni migraciones pendientes; también verifica que haya ≥29 migraciones aplicadas
 - `LoteCervezaRepositoryIntegrationTest` — valida queries clave con BD real + rollback automático
 - `TrazabilidadServiceIntegrationTest` — guardar, código consecutivo, ingredientes, eliminar, historial. Requiere `@BeforeEach TenantContext.setCurrentTenant("default")` y `@AfterEach TenantContext.clear()` — sin esto `generarCodigo()` pasa `null` a la native query de secuencia y todos los lotes del test colisionan con el mismo código. `@BeforeTransaction` limpia lotes de tests anteriores por prefijo de código (`IND-%`, `STO-%`, etc.) antes de que la transacción del test comience.
 - `PlanificacionServiceIntegrationTest` — 8 tests: guardar (estado, volumen, duplicados), cambiar estado (EN_PROCESO, flujo completo, cancelar), listarProximas (excluye pasados), listarPorRango, eliminar
@@ -1311,7 +1378,7 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 395 tests, BUILD SUCCESS
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 396 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
 
 ---
