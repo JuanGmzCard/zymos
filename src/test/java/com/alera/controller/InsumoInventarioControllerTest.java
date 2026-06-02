@@ -4,6 +4,7 @@ import com.alera.config.*;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.ExcelExportService;
+import com.alera.service.CategoriaInsumoService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
@@ -43,6 +44,7 @@ class InsumoInventarioControllerTest {
     @MockBean LoginAttemptService        loginAttemptService;
     @MockBean JwtService                 jwtService;
     @MockBean InsumoInventarioService    insumoService;
+    @MockBean CategoriaInsumoService     categoriaInsumoService;
     @MockBean FacturaItemRepository      facturaItemRepo;
     @MockBean ExcelExportService         excelService;
     @MockBean ProveedorService           proveedorService;
@@ -55,6 +57,7 @@ class InsumoInventarioControllerTest {
         when(insumoService.listarProximosAVencer(anyInt())).thenReturn(List.of());
         when(facturaItemRepo.findNombresDistintos()).thenReturn(List.of());
         when(proveedorService.listarActivos()).thenReturn(List.of());
+        when(categoriaInsumoService.listarNombresActivos()).thenReturn(List.of());
     }
 
     @Test

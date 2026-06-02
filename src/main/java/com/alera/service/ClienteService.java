@@ -39,7 +39,7 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public Page<Cliente> listarPaginado(String nombre, Boolean activo, int page) {
-        String q = (nombre != null && !nombre.isBlank()) ? nombre.trim() : null;
+        String q = (nombre != null && !nombre.isBlank()) ? nombre.trim() : "";
         return repo.findAllFiltered(q, activo, PageRequest.of(page, pageSize));
     }
 

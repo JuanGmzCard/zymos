@@ -533,7 +533,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `findAllByActivoTrueOrderByNombreAsc()` — clientes activos para selects y dropdown
 - `findAllByOrderByNombreAsc()` — todos los clientes sin filtro de estado
 - `findByNit(String nit)` — `Optional<Cliente>` — usado por `ClienteService` para validar unicidad de NIT antes de guardar
-- `findAllFiltered(nombre, activo, Pageable)` — paginado con filtros opcionales: `:nombre IS NULL OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:nombre,'%'))` y `:activo IS NULL OR c.activo = :activo`. Orden `c.nombre ASC`.
+- `findAllFiltered(nombre, activo, Pageable)` — paginado con filtros opcionales: `:nombre = '' OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:nombre,'%'))` y `:activo IS NULL OR c.activo = :activo`. Orden `c.nombre ASC`. **CRÍTICO**: usa `:nombre = ''` (no `:nombre IS NULL`) para evitar el error `lower(bytea)` de Hibernate 6 — `ClienteService.listarPaginado()` pasa `""` cuando no hay filtro de nombre (regla 9).
 - `searchActivos(q, Pageable)` — busca solo entre clientes activos por nombre o NIT con LIKE. Usado por `ClienteService.suggest()` (limit 6) y por `VentaService.suggestClientes()` (retorna solo el nombre).
 
 ### VentaRepository

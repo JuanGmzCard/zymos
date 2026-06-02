@@ -19,7 +19,7 @@ public interface ClienteRepository extends JpaRepository<Cliente, Long> {
     Optional<Cliente> findByNit(String nit);
 
     @Query("SELECT c FROM Cliente c WHERE " +
-           "(:nombre IS NULL OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:nombre,'%'))) AND " +
+           "(:nombre = '' OR LOWER(c.nombre) LIKE LOWER(CONCAT('%',:nombre,'%'))) AND " +
            "(:activo IS NULL OR c.activo = :activo) " +
            "ORDER BY c.nombre ASC")
     Page<Cliente> findAllFiltered(@Param("nombre") String nombre,

@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.*;
 import com.alera.repository.TenantRepository;
+import com.alera.service.CategoriaEquipoService;
 import com.alera.service.EquipoService;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
@@ -45,6 +46,7 @@ class EquipoControllerTest {
     @MockBean JwtService                 jwtService;
     @MockBean EquipoService              equipoService;
     @MockBean MantenimientoEquipoService mantenimientoService;
+    @MockBean CategoriaEquipoService     categoriaEquipoService;
 
     @BeforeEach
     void setUp() {
@@ -56,6 +58,7 @@ class EquipoControllerTest {
         when(equipoService.countTotal()).thenReturn(0L);
         when(equipoService.countByEstado(any())).thenReturn(0L);
         when(equipoService.countMantenimientoPendiente()).thenReturn(0L);
+        when(categoriaEquipoService.listarNombresActivos()).thenReturn(List.of());
     }
 
     @Test

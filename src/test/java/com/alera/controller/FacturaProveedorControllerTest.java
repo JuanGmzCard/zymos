@@ -5,6 +5,8 @@ import com.alera.repository.EquipoRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.*;
+import com.alera.service.CategoriaInsumoService;
+import com.alera.service.CategoriaEquipoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,8 @@ class FacturaProveedorControllerTest {
     @MockBean InsumoInventarioService       insumoService;
     @MockBean EquipoService                 equipoService;
     @MockBean ExcelExportService            excelService;
+    @MockBean CategoriaInsumoService        categoriaInsumoService;
+    @MockBean CategoriaEquipoService        categoriaEquipoService;
 
     @BeforeEach
     void setUp() {
@@ -58,6 +62,8 @@ class FacturaProveedorControllerTest {
         when(proveedorService.listarActivos()).thenReturn(List.of());
         when(insumoRepo.findAll()).thenReturn(List.of());
         when(equipoRepo.findAll()).thenReturn(List.of());
+        when(categoriaInsumoService.listarNombresActivos()).thenReturn(List.of());
+        when(categoriaEquipoService.listarNombresActivos()).thenReturn(List.of());
     }
 
     @Test
