@@ -629,12 +629,13 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### InsumoInventarioService
 - `buscarPorId(id)` — `Optional<InsumoInventario>`
 - `buscarPorNombreExacto(nombre)` — delega a `repo.findByNombreExacto()`, usado para validar duplicados en quick-create
-- `descontarIngrediente(nombre, cantidadTexto)` — retorna nombre si stock insuficiente, null si OK
-- `restaurarIngrediente(nombre, cantidadTexto)` — suma cantidad de vuelta al inventario
+- `descontarIngrediente(nombre, cantidadTexto)` / `descontarIngrediente(nombre, cantidadTexto, referencia)` — retorna nombre si stock insuficiente, null si OK. `referencia` = codigoLote (se registra en `movimientos_inventario`).
+- `restaurarIngrediente(nombre, cantidadTexto)` / `restaurarIngrediente(nombre, cantidadTexto, referencia)` — suma cantidad de vuelta al inventario; ídem con `referencia`.
 - `listarBajoStock()`, `listarProximosAVencer(dias)`
 - `listarPaginado(nombre, tipo, page)` — paginado con filtros opcionales; usado también por `/inventario/suggest`
 - `detectarTipo(nombre)` — infiere `TipoInsumo` del nombre por palabras clave: malta/pilsner/malt → MALTA; lupulo/lúpulo/hop → LUPULO; levadura/yeast → LEVADURA; clarific/gelatin/irish → CLARIFICANTE; dextrosa/sacarosa/priming/carbonat/extracto de malta → AGENTE_CARBONATACION; envase/botell/lata → ENVASE; resto → OTRO
-- `parsearCantidad(texto)` — extrae BigDecimal del texto "5000 gr" → 5000
+- `parsearCantidad(texto)` — toma SOLO el primer token numérico del texto, ignora el sufijo de unidad. `"150 gr"` → 150, `"3800 gr"` → 3800. Es seguro ignorar la unidad porque `normalizarParaAlmacenamiento` ya convirtió a base (gr/mL) al guardar el ingrediente — el string almacenado en `Ingrediente.cantidad` siempre está en unidad base.
+- **CRÍTICO — `movimientos_inventario` duplicados**: `RESTAURACION_LOTE` + `DESCUENTO_LOTE` consecutivos con la misma `referencia` y el mismo `cantidad` son pares espurios. Ocurrían cuando el código anterior corría `restaurarInventario` + `descontarInventario` en cada edición de lote independientemente de si los ingredientes cambiaron. El fix es `ingredientesModificados()` en `actualizar()` — solo ajusta inventario cuando el conjunto de ingredientes (nombre|cantidad ordenado) difiere entre antes y después.
 
 ### ProveedorService / FacturaProveedorService
 - `ProveedorService.contarFacturas/totalFacturas` — estadísticas para vista edición
