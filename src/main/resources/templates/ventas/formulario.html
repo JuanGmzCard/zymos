@@ -593,7 +593,7 @@ function seleccionarLote(el, cell) {
             var html = '<option value="">— seleccionar —</option>';
             entries.forEach(function(e) {
                 html += '<option value="' + e.formato.replace(/"/g,'&quot;') + '">'
-                      + (e.cantidad ? e.cantidad + ' × ' : '') + e.formato
+                      + e.formato
                       + '</option>';
             });
             selUnidad.innerHTML = html;
