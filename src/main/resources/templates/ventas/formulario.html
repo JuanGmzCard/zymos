@@ -343,6 +343,20 @@ var UNIT_OPTIONS = `
         <option value="und">Unidad</option>
     </optgroup>`;
 
+// Parsea "48 × Botella 330ml | 2 × Barril 20L" → [{cantidad:48, formato:"Botella 330ml"}, ...]
+function parseDestinoJS(cdFull) {
+    if (!cdFull) return [];
+    var entries = [];
+    cdFull.split(/\s*\|\s*/).forEach(function(parte) {
+        parte = parte.trim();
+        if (!parte) return;
+        var m = parte.match(/^(\d+(?:[.,]\d+)?)\s*[×x]\s*(.+)$/i);
+        if (m) entries.push({ cantidad: parseFloat(m[1].replace(',','.')), formato: m[2].trim() });
+        else   entries.push({ cantidad: null, formato: parte });
+    });
+    return entries;
+}
+
 function crearFilaHTML(idx) {
     return `<td>
         <div class="position-relative">
@@ -452,22 +466,24 @@ function renderLotes(items, suggest) {
         return;
     }
     suggest.innerHTML = items.map(function(i) {
-        var cdFull = (i.carbDestino || '').trim();
-        var qtyMatch = cdFull.match(/^\s*(\d+(?:[.,]\d+)?)\s*[×x]/i);
-        var cdQty = qtyMatch ? qtyMatch[1] : '';
-        var cd = cdFull.replace(/^\s*\d+(?:[.,]\d+)?\s*[×x]\s*/i, '').trim();
-        var litros = i.litrosDisponibles || i.litrosFinales || '';
-        return '<a href="#" class="ss-item" data-lote-id="' + (i.id||'') +
-               '" data-codigo="' + (i.codigoLote||'') +
-               '" data-carb-destino="' + cd + '"' +
-               '" data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;') + '"' +
-               '" data-carb-cantidad="' + cdQty + '"' +
-               '" data-litros="' + litros + '"' +
-               ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">' +
-               '<i class="bi bi-clipboard-data ss-icon"></i>' +
-               '<span class="ss-title">' + (i.codigoLote||'') + '</span>' +
-               '<span class="ss-sub">' + (i.estilo||'') + (cd ? ' · ' + cd : '') + (litros ? ' · ' + litros + ' disp.' : '') + '</span>' +
-               '</a>';
+        var cdFull   = (i.carbDestino || '').trim();
+        var entries  = parseDestinoJS(cdFull);
+        var litros   = i.litrosDisponibles != null ? i.litrosDisponibles : (i.litrosFinales || '');
+        var formatosLabel = entries.length > 0
+            ? entries.map(function(e) { return (e.cantidad ? e.cantidad + ' × ' : '') + e.formato; }).join(' | ')
+            : '';
+        return '<a href="#" class="ss-item"'
+            + ' data-lote-id="'           + (i.id||'')                           + '"'
+            + ' data-codigo="'            + (i.codigoLote||'')                   + '"'
+            + ' data-carb-destino-full="' + cdFull.replace(/"/g,'&quot;')        + '"'
+            + ' data-litros="'            + litros                               + '"'
+            + ' onclick="seleccionarLote(this, event.target.closest(\'td\'));return false;">'
+            + '<i class="bi bi-clipboard-data ss-icon"></i>'
+            + '<span class="ss-title">' + (i.codigoLote||'') + '</span>'
+            + '<span class="ss-sub">'   + (i.estilo||'')
+                + (formatosLabel ? ' · ' + formatosLabel : '')
+                + (litros !== '' ? ' · Disp: ' + litros : '')
+            + '</span></a>';
     }).join('');
     suggest.style.display = 'block';
 }
@@ -502,6 +518,10 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
             var grp = badge.closest('.input-group');
             if (grp) grp.classList.remove('has-lote-badge');
         }
+        // Restaurar opciones completas al limpiar el lote
+        var row = input.closest('tr');
+        var selUnidad = row ? row.querySelector('.item-unidad') : null;
+        if (selUnidad) selUnidad.innerHTML = UNIT_OPTIONS;
         clearTimeout(loteTimer);
         var q = input.value.trim();
         loteTimer = setTimeout(function() { fetchLotes(suggest, q); }, 260);
@@ -554,45 +574,63 @@ document.addEventListener('click', function(e) {
 
 function seleccionarLote(el, cell) {
     if (!cell) cell = el.closest('td');
-    var suggest = cell.querySelector('.lote-suggest');
-    var hidden  = cell.querySelector('.lote-id-hidden');
+    var suggest  = cell.querySelector('.lote-suggest');
+    var hidden   = cell.querySelector('.lote-id-hidden');
     var buscador = cell.querySelector('.lote-buscador');
-    var row = cell.closest('tr');
+    var row      = cell.closest('tr');
     if (buscador) buscador.value = el.dataset.codigo;
     if (hidden)   hidden.value   = el.dataset.loteId;
     if (suggest)  suggest.style.display = 'none';
-    var cd = el.dataset.carbDestino || '';
-    if (cd && row) {
-        var selUnidad = row.querySelector('.item-unidad');
-        if (selUnidad && cd) {
-            for (var i = 0; i < selUnidad.options.length; i++) {
-                if (selUnidad.options[i].value === cd) {
-                    selUnidad.value = cd;
-                    break;
-                }
-            }
+
+    var cdFull  = el.dataset.carbDestinoFull || '';
+    var entries = parseDestinoJS(cdFull);
+    var litros  = el.dataset.litros !== undefined ? el.dataset.litros : '';
+
+    // ── Unidad: reemplazar con solo los formatos del lote ────────────────────
+    var selUnidad = row ? row.querySelector('.item-unidad') : null;
+    if (selUnidad) {
+        if (entries.length > 0) {
+            var html = '<option value="">— seleccionar —</option>';
+            entries.forEach(function(e) {
+                html += '<option value="' + e.formato.replace(/"/g,'&quot;') + '">'
+                      + (e.cantidad ? e.cantidad + ' × ' : '') + e.formato
+                      + '</option>';
+            });
+            selUnidad.innerHTML = html;
+            if (entries.length === 1) selUnidad.value = entries[0].formato;
+        } else {
+            selUnidad.innerHTML = UNIT_OPTIONS;
         }
     }
     if (row) aplicarStep(row);
+
+    // ── Placeholder de cantidad ──────────────────────────────────────────────
     var cantInput = row ? row.querySelector('.item-cantidad') : null;
     if (cantInput) {
-        var disp = el.dataset.litros || '';
-        cantInput.placeholder = disp ? 'Disp: ' + disp : 'Cantidad';
+        cantInput.placeholder = litros !== '' ? 'Disp: ' + litros : 'Cantidad';
     }
+
+    // ── Badge: muestra los formatos reales del lote ──────────────────────────
     var badge = cell.querySelector('.lote-empaque-badge');
     if (badge) {
-        var cdFull = el.dataset.carbDestinoFull || '';
-        var litros = el.dataset.litros || '';
         var grp = badge.closest('.input-group');
-        if (cdFull || litros) {
-            badge.textContent = litros || cdFull;
-            badge.title = cdFull + (litros ? ' · Disp: ' + litros : '');
+        if (entries.length > 0) {
+            var badgeText = entries.map(function(e) {
+                return (e.cantidad ? e.cantidad + ' × ' : '') + e.formato;
+            }).join(' | ');
+            badge.textContent = badgeText;
+            badge.title       = badgeText + (litros !== '' ? ' · Disp: ' + litros : '');
+            badge.style.display = '';
+            if (grp) grp.classList.add('has-lote-badge');
+        } else if (litros !== '') {
+            badge.textContent = 'Disp: ' + litros + ' L';
+            badge.title       = 'Disponible: ' + litros + ' L';
             badge.style.display = '';
             if (grp) grp.classList.add('has-lote-badge');
         } else {
             badge.style.display = 'none';
-            badge.textContent = '';
-            badge.title = '';
+            badge.textContent   = '';
+            badge.title         = '';
             if (grp) grp.classList.remove('has-lote-badge');
         }
     }
