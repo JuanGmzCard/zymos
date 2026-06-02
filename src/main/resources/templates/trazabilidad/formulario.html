@@ -852,47 +852,11 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Destino y Empaque del Lote</label>
-                        <div class="row g-1">
-                            <div class="col-7">
-                                <label class="form-label small mb-1" for="carbFormatoSel">Tipo de envase</label>
-                                <select id="carbFormatoSel" class="form-select" onchange="componerDestino()">
-                                    <option value="">-- Tipo de envase --</option>
-                                    <optgroup label="Botellas">
-                                        <option value="Botella 330ml">Botella 330ml</option>
-                                        <option value="Botella 500ml">Botella 500ml</option>
-                                        <option value="Botella 750ml">Botella 750ml</option>
-                                        <option value="Botella 1000ml">Botella 1000ml</option>
-                                    </optgroup>
-                                    <optgroup label="Latas">
-                                        <option value="Lata 330ml">Lata 330ml</option>
-                                        <option value="Lata 355ml">Lata 355ml</option>
-                                        <option value="Lata 473ml">Lata 473ml</option>
-                                    </optgroup>
-                                    <optgroup label="Barriles / Kegs">
-                                        <option value="Barril 10L">Barril 10L</option>
-                                        <option value="Barril 20L">Barril 20L</option>
-                                        <option value="Barril 30L">Barril 30L</option>
-                                        <option value="Barril 50L">Barril 50L</option>
-                                    </optgroup>
-                                    <optgroup label="Growlers">
-                                        <option value="Growler 1L">Growler 1L</option>
-                                        <option value="Growler 2L">Growler 2L</option>
-                                        <option value="Growler 3.8L">Growler 3.8L</option>
-                                    </optgroup>
-                                    <option value="A granel">A granel</option>
-                                    <option value="__otro__">Otro (personalizado)...</option>
-                                </select>
-                            </div>
-                            <div class="col-5" id="cantDestinoWrap">
-                                <label class="form-label small mb-1" for="carbCantidadSel">N° unidades</label>
-                                <input type="number" id="carbCantidadSel" class="form-control"
-                                       placeholder="Ej: 48" min="1" oninput="componerDestino()">
-                            </div>
-                        </div>
-                        <div class="mt-1" id="otroDestinoWrap" style="display:none">
-                            <input type="text" id="carbOtroSel" class="form-control form-control-sm"
-                                   placeholder="Describe el destino..." oninput="componerDestino()">
-                        </div>
+                        <div id="destinoList" class="mb-2"></div>
+                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                onclick="addDestinoRow()">
+                            <i class="bi bi-plus me-1"></i>Agregar formato
+                        </button>
                         <input type="hidden" th:field="*{carbDestino}" id="carbDestino">
                     </div>
                 </div>
@@ -991,49 +955,106 @@
                         if (btnCosto) btnCosto.classList.toggle('d-none', parseFloat(gramos) <= 0 || !tipoAzucar);
                     }
 
+                    var DESTINO_OPTS = '<option value="">-- Tipo de envase --</option>'
+                        + '<optgroup label="Botellas">'
+                        + '<option value="Botella 330ml">Botella 330ml</option>'
+                        + '<option value="Botella 500ml">Botella 500ml</option>'
+                        + '<option value="Botella 750ml">Botella 750ml</option>'
+                        + '<option value="Botella 1000ml">Botella 1000ml</option>'
+                        + '</optgroup>'
+                        + '<optgroup label="Latas">'
+                        + '<option value="Lata 330ml">Lata 330ml</option>'
+                        + '<option value="Lata 355ml">Lata 355ml</option>'
+                        + '<option value="Lata 473ml">Lata 473ml</option>'
+                        + '</optgroup>'
+                        + '<optgroup label="Barriles / Kegs">'
+                        + '<option value="Barril 10L">Barril 10L</option>'
+                        + '<option value="Barril 20L">Barril 20L</option>'
+                        + '<option value="Barril 30L">Barril 30L</option>'
+                        + '<option value="Barril 50L">Barril 50L</option>'
+                        + '</optgroup>'
+                        + '<optgroup label="Growlers">'
+                        + '<option value="Growler 1L">Growler 1L</option>'
+                        + '<option value="Growler 2L">Growler 2L</option>'
+                        + '<option value="Growler 3.8L">Growler 3.8L</option>'
+                        + '</optgroup>'
+                        + '<option value="A granel">A granel</option>'
+                        + '<option value="__otro__">Otro (personalizado)...</option>';
+
+                    function addDestinoRow(formato, cantidad) {
+                        var row = document.createElement('div');
+                        row.className = 'destino-row d-flex gap-1 mb-1 align-items-center flex-wrap';
+                        row.innerHTML =
+                            '<select class="form-select form-select-sm destino-formato" style="max-width:175px" onchange="onDestinoRowChange(this)">'
+                            + DESTINO_OPTS + '</select>'
+                            + '<input type="number" class="form-control form-control-sm destino-cantidad" style="width:75px;display:none" placeholder="Uds" min="1" oninput="componerDestino()">'
+                            + '<input type="text" class="form-control form-control-sm destino-otro" style="display:none;max-width:160px" placeholder="Personalizado..." oninput="componerDestino()">'
+                            + '<button type="button" class="btn btn-sm btn-outline-danger px-1" onclick="removeDestinoRow(this)"><i class="bi bi-x"></i></button>';
+                        document.getElementById('destinoList').appendChild(row);
+                        if (formato != null) {
+                            var sel       = row.querySelector('.destino-formato');
+                            var cantInput = row.querySelector('.destino-cantidad');
+                            var otroInput = row.querySelector('.destino-otro');
+                            sel.value = formato;
+                            if (sel.value === '' && formato !== '') {
+                                sel.value = '__otro__';
+                                otroInput.style.display = '';
+                                otroInput.value = formato;
+                            } else if (formato === 'A granel') {
+                                /* sin cantidad */
+                            } else if (sel.value !== '' && sel.value !== '__otro__') {
+                                cantInput.style.display = '';
+                                if (cantidad) cantInput.value = cantidad;
+                            }
+                        }
+                        componerDestino();
+                    }
+
+                    function removeDestinoRow(btn) {
+                        btn.closest('.destino-row').remove();
+                        componerDestino();
+                    }
+
+                    function onDestinoRowChange(sel) {
+                        var row       = sel.closest('.destino-row');
+                        var cantInput = row.querySelector('.destino-cantidad');
+                        var otroInput = row.querySelector('.destino-otro');
+                        if (sel.value === '__otro__') {
+                            cantInput.style.display = 'none';
+                            otroInput.style.display = '';
+                        } else if (sel.value === '' || sel.value === 'A granel') {
+                            cantInput.style.display = 'none';
+                            otroInput.style.display = 'none';
+                        } else {
+                            cantInput.style.display = '';
+                            otroInput.style.display = 'none';
+                        }
+                        componerDestino();
+                    }
+
                     function componerDestino() {
-                        var formato  = document.getElementById('carbFormatoSel').value;
-                        var cantidad = parseInt(document.getElementById('carbCantidadSel').value) || 0;
-                        var otro     = (document.getElementById('carbOtroSel').value || '').trim();
-                        var cantWrap = document.getElementById('cantDestinoWrap');
-                        var otroWrap = document.getElementById('otroDestinoWrap');
-                        var hidden   = document.getElementById('carbDestino');
-                        if (formato === '__otro__') {
-                            cantWrap.style.display = 'none';
-                            otroWrap.style.display = '';
-                            hidden.value = otro;
-                            return;
-                        }
-                        otroWrap.style.display = 'none';
-                        if (!formato || formato === 'A granel') {
-                            cantWrap.style.display = 'none';
-                            hidden.value = formato;
-                            return;
-                        }
-                        cantWrap.style.display = '';
-                        hidden.value = cantidad > 0 ? (cantidad + ' × ' + formato) : formato;
+                        var partes = [];
+                        document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
+                            var formato  = row.querySelector('.destino-formato').value;
+                            var cantidad = parseInt(row.querySelector('.destino-cantidad').value) || 0;
+                            var otro     = (row.querySelector('.destino-otro').value || '').trim();
+                            if (formato === '__otro__') { if (otro) partes.push(otro); }
+                            else if (formato === 'A granel') { partes.push('A granel'); }
+                            else if (formato) { partes.push(cantidad > 0 ? (cantidad + ' × ' + formato) : formato); }
+                        });
+                        document.getElementById('carbDestino').value = partes.join(' | ');
                     }
 
                     function initDestino() {
                         var existente = document.getElementById('carbDestino').value;
-                        if (!existente) return;
-                        var sel = document.getElementById('carbFormatoSel');
-                        var match = existente.match(/^(\d+)\s*[x×]\s*(.+)$/i);
-                        var formato  = match ? match[2].trim() : existente;
-                        var cantidad = match ? match[1] : '';
-                        for (var i = 0; i < sel.options.length; i++) {
-                            if (sel.options[i].value === formato) {
-                                sel.value = formato;
-                                if (cantidad) document.getElementById('carbCantidadSel').value = cantidad;
-                                componerDestino();
-                                return;
-                            }
-                        }
-                        // Valor libre — usar "Otro"
-                        sel.value = '__otro__';
-                        document.getElementById('otroDestinoWrap').style.display = '';
-                        document.getElementById('cantDestinoWrap').style.display = 'none';
-                        document.getElementById('carbOtroSel').value = existente;
+                        if (!existente || existente.trim() === '') { addDestinoRow(); return; }
+                        existente.split(/\s*\|\s*/).forEach(function(entrada) {
+                            entrada = entrada.trim();
+                            if (!entrada) return;
+                            var match = entrada.match(/^(\d+(?:[.,]\d+)?)\s*[×x]\s*(.+)$/i);
+                            if (match) { addDestinoRow(match[2].trim(), match[1]); }
+                            else { addDestinoRow(entrada); }
+                        });
                     }
 
                     function agregarAgenteCostoSugerido() {

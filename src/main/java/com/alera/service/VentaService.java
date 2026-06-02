@@ -215,14 +215,13 @@ public class VentaService {
             String unidadDisponible = "L";
 
             String carbDestino = l.getCarbDestino();
-            if (carbDestino != null && !carbDestino.isBlank()) {
-                java.util.regex.Matcher mat = DESTINO_PATTERN.matcher(carbDestino.trim());
-                if (mat.matches()) {
-                    BigDecimal totalUnidades = new BigDecimal(mat.group(1).replace(',', '.'));
-                    unidadDisponible = mat.group(2).trim();
-                    disponible = totalUnidades.subtract(vendido);
-                    if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
-                }
+            List<DestinoEntry> entradas = parseDestino(carbDestino);
+            if (!entradas.isEmpty()) {
+                BigDecimal totalCapacidad = entradas.stream()
+                    .map(DestinoEntry::cantidad).reduce(BigDecimal.ZERO, BigDecimal::add);
+                disponible = totalCapacidad.subtract(vendido);
+                if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
+                unidadDisponible = entradas.size() == 1 ? entradas.get(0).formato() : "uds";
             }
 
             if (disponible == null && l.getLitrosFinales() != null) {
@@ -385,6 +384,21 @@ public class VentaService {
         java.util.regex.Pattern.compile("^(\\d+(?:[.,]\\d+)?)\\s*[×x]\\s*(.+)$",
             java.util.regex.Pattern.CASE_INSENSITIVE);
 
+    private record DestinoEntry(BigDecimal cantidad, String formato) {}
+
+    private List<DestinoEntry> parseDestino(String carbDestino) {
+        if (carbDestino == null || carbDestino.isBlank()) return List.of();
+        var result = new ArrayList<DestinoEntry>();
+        for (var parte : carbDestino.split("\\s*\\|\\s*")) {
+            parte = parte.trim();
+            if (parte.isEmpty()) continue;
+            var m = DESTINO_PATTERN.matcher(parte);
+            if (m.matches()) result.add(new DestinoEntry(
+                new BigDecimal(m.group(1).replace(',', '.')), m.group(2).trim()));
+        }
+        return result;
+    }
+
     private String validarItemCantidad(Long loteId, BigDecimal nuevaCantidad, String unidad, Long excludeVentaId) {
         return loteRepo.findById(loteId).map(lote -> {
             if (unidad != null && !unidad.isBlank()) {
@@ -401,20 +415,23 @@ public class VentaService {
             BigDecimal total = yaVendido.add(nuevaCantidad);
 
             String carbDestino = lote.getCarbDestino();
-            if (carbDestino != null && !carbDestino.isBlank()) {
-                java.util.regex.Matcher m = DESTINO_PATTERN.matcher(carbDestino.trim());
-                if (m.matches()) {
-                    BigDecimal totalUnidades = new BigDecimal(m.group(1).replace(',', '.'));
-                    String tipoEnvase = m.group(2).trim();
-                    if (unidad == null || unidad.isBlank() || unidad.equals(tipoEnvase)) {
-                        if (total.compareTo(totalUnidades) > 0) {
-                            return String.format(
-                                "Advertencia: la cantidad vendida del lote %s sería %.0f, " +
-                                "superando las %.0f %s envasadas.",
-                                lote.getCodigoLote(), total, totalUnidades, tipoEnvase);
-                        }
-                        return null;
+            List<DestinoEntry> entradas = parseDestino(carbDestino);
+            if (!entradas.isEmpty()) {
+                var matchingEntrada = entradas.stream()
+                    .filter(e -> unidad == null || unidad.isBlank() || unidad.equalsIgnoreCase(e.formato()))
+                    .findFirst();
+                if (matchingEntrada.isPresent()) {
+                    var entrada = matchingEntrada.get();
+                    BigDecimal vendidoFormato = ventaItemRepo.sumCantidadActivaByLoteAndUnidad(
+                        loteId, entrada.formato(), excludeVentaId);
+                    BigDecimal totalFormato = vendidoFormato.add(nuevaCantidad);
+                    if (totalFormato.compareTo(entrada.cantidad()) > 0) {
+                        return String.format(
+                            "Advertencia: la cantidad vendida del lote %s en %s sería %.0f, " +
+                            "superando las %.0f envasadas.",
+                            lote.getCodigoLote(), entrada.formato(), totalFormato, entrada.cantidad());
                     }
+                    return null;
                 }
             }
 

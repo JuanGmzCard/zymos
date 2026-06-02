@@ -28,6 +28,16 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
     BigDecimal sumCantidadActivaByLote(@Param("loteId") Long loteId,
                                        @Param("excludeVentaId") Long excludeVentaId);
 
+    // Suma de cantidad vendida por formato específico (para validación multi-empaque)
+    @Query("SELECT COALESCE(SUM(i.cantidad), 0) FROM VentaItem i " +
+           "WHERE i.lote.id = :loteId " +
+           "AND i.venta.estado != com.alera.model.enums.EstadoVenta.CANCELADO " +
+           "AND (:excludeVentaId IS NULL OR i.venta.id != :excludeVentaId) " +
+           "AND LOWER(COALESCE(i.unidad, '')) = LOWER(:unidad)")
+    BigDecimal sumCantidadActivaByLoteAndUnidad(@Param("loteId") Long loteId,
+                                                @Param("unidad") String unidad,
+                                                @Param("excludeVentaId") Long excludeVentaId);
+
     // Unidades distintas usadas en ventas activas de un lote (excluye la venta en edición)
     @Query("SELECT DISTINCT i.unidad FROM VentaItem i " +
            "WHERE i.lote.id = :loteId " +

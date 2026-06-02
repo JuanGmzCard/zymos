@@ -626,7 +626,9 @@ public class PdfExportService {
             default                   -> lote.getCarbValidacion();
         };
         par(t1, "Validación organoléptica", validacion, lbl, val, pal);
-        par(t1, "Destino / empaque", lote.getCarbDestino() != null ? lote.getCarbDestino() : "—", lbl, val, pal);
+        String destinoPdf = lote.getCarbDestino() == null ? "—"
+                : lote.getCarbDestino().replace(" | ", "\n");
+        par(t1, "Destino / empaque", destinoPdf, lbl, val, pal);
         doc.add(t1);
 
         // Fila 2: parámetros específicos del método
