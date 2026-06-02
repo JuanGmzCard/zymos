@@ -6,7 +6,6 @@ import com.alera.model.LoteCerveza;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoPlanificacion;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.service.PdfExportService;
 import com.alera.service.PlanificacionService;
 import com.alera.service.VentaService;
@@ -384,7 +383,7 @@ public class TrazabilidadController {
                 var m = new java.util.LinkedHashMap<String, Object>();
                 m.put("id", item.getId());
                 m.put("nombre", item.getNombre());
-                m.put("tipoInsumo", item.getTipoInsumo() != null ? item.getTipoInsumo().name() : null);
+                m.put("tipoInsumo", item.getTipoInsumo());
                 m.put("unidad", item.getUnidad());
                 m.put("cantidad", item.getCantidad());
                 m.put("valorLinea", item.getValorLinea());

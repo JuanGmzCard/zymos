@@ -1,8 +1,6 @@
 package com.alera.service;
 
 import com.alera.model.MigracionLog;
-import com.alera.model.enums.TipoEquipo;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.repository.MigracionLogRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -22,6 +20,31 @@ import java.util.*;
 
 @Service
 public class MigracionService {
+
+    private static final Map<String, String> TIPO_INSUMO_DISPLAY = Map.of(
+            "MALTA", "Malta",
+            "LUPULO", "Lúpulo",
+            "LEVADURA", "Levadura",
+            "CLARIFICANTE", "Clarificante",
+            "AGENTE_CARBONATACION", "Agente de Carbonatación",
+            "AGUA", "Agua",
+            "QUIMICO", "Químico",
+            "ENVASE", "Envase",
+            "OTRO", "Otro"
+    );
+
+    private static final Map<String, String> TIPO_EQUIPO_DISPLAY = Map.of(
+            "FERMENTADOR", "Fermentador",
+            "OLLA_MACERADO", "Olla de Macerado",
+            "OLLA_HERVOR", "Olla de Hervor",
+            "ENFRIADOR", "Enfriador",
+            "BOMBA", "Bomba",
+            "FILTRO", "Filtro",
+            "MEDIDOR_PH", "Medidor de pH",
+            "DENSIMETRO", "Densímetro",
+            "BASCULA", "Báscula",
+            "COMPRESOR", "Compresor"
+    );
 
     private final JdbcTemplate jdbc;
     private final MigracionLogRepository logRepo;
@@ -67,7 +90,7 @@ public class MigracionService {
 
                     if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                     validarEnum(tipo, "tipo", "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
-                    String tipoDisplay = TipoInsumo.valueOf(tipo).getDisplayName();
+                    String tipoDisplay = TIPO_INSUMO_DISPLAY.getOrDefault(tipo, "Otro");
 
                     jdbc.update("INSERT INTO insumos_inventario " +
                             "(nombre,tipo,cantidad,unidad,stock_minimo,proveedor,fecha_vencimiento,observaciones," +
@@ -117,7 +140,7 @@ public class MigracionService {
                             "FERMENTADOR","OLLA_MACERADO","OLLA_HERVOR","ENFRIADOR","BOMBA",
                             "FILTRO","MEDIDOR_PH","DENSIMETRO","BASCULA","COMPRESOR","OTRO");
                     validarEnum(estado, "estado", "OPERATIVO","MANTENIMIENTO","INACTIVO");
-                    String tipoDisplay = TipoEquipo.valueOf(tipo).getDisplayName();
+                    String tipoDisplay = TIPO_EQUIPO_DISPLAY.getOrDefault(tipo, tipo);
 
                     jdbc.update("INSERT INTO equipos " +
                             "(nombre,tipo,estado,capacidad,unidad_capacidad,fecha_adquisicion,proximo_mantenimiento,observaciones," +

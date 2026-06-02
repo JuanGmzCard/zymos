@@ -4,6 +4,7 @@ import com.alera.model.FacturaItem;
 import com.alera.model.InsumoInventario;
 import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
+import com.alera.service.CategoriaInsumoService;
 import com.alera.service.ExcelExportService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.ProveedorService;
@@ -26,23 +27,22 @@ import java.util.stream.Collectors;
 @RequestMapping("/inventario")
 public class InsumoInventarioController {
 
-    static final List<String> TIPOS_INSUMO = List.of(
-            "Malta", "Lúpulo", "Levadura", "Clarificante",
-            "Agente de Carbonatación", "Agua", "Químico", "Envase", "Otro");
-
     private final InsumoInventarioService service;
     private final FacturaItemRepository facturaItemRepo;
     private final ExcelExportService excelService;
     private final ProveedorService proveedorService;
+    private final CategoriaInsumoService categoriaInsumoService;
 
     public InsumoInventarioController(InsumoInventarioService service,
                                        FacturaItemRepository facturaItemRepo,
                                        ExcelExportService excelService,
-                                       ProveedorService proveedorService) {
-        this.service          = service;
-        this.facturaItemRepo  = facturaItemRepo;
-        this.excelService     = excelService;
-        this.proveedorService = proveedorService;
+                                       ProveedorService proveedorService,
+                                       CategoriaInsumoService categoriaInsumoService) {
+        this.service                = service;
+        this.facturaItemRepo        = facturaItemRepo;
+        this.excelService           = excelService;
+        this.proveedorService       = proveedorService;
+        this.categoriaInsumoService = categoriaInsumoService;
     }
 
     @GetMapping
@@ -81,7 +81,7 @@ public class InsumoInventarioController {
         model.addAttribute("totalInsumos",     totalInsumos);
         model.addAttribute("nombreFiltro",     nombre);
         model.addAttribute("tipoFiltro",       tipo);
-        model.addAttribute("tiposInsumo",      TIPOS_INSUMO);
+        model.addAttribute("tiposInsumo",      categoriaInsumoService.listarNombresActivos());
         model.addAttribute("bajoStock",        service.listarBajoStock());
         model.addAttribute("proximosVencer",   service.listarProximosAVencer(30));
         model.addAttribute("filtroBajoStock",  filtroBajoStock);
@@ -93,7 +93,7 @@ public class InsumoInventarioController {
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("insumo", new InsumoInventario());
-        model.addAttribute("tiposInsumo", TIPOS_INSUMO);
+        model.addAttribute("tiposInsumo", categoriaInsumoService.listarNombresActivos());
         model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }
@@ -116,7 +116,7 @@ public class InsumoInventarioController {
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
-        model.addAttribute("tiposInsumo", TIPOS_INSUMO);
+        model.addAttribute("tiposInsumo", categoriaInsumoService.listarNombresActivos());
         model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
     }

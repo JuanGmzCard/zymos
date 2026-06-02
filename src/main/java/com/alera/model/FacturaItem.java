@@ -1,7 +1,5 @@
 package com.alera.model;
 
-import com.alera.model.enums.TipoEquipo;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoItemFactura;
 import jakarta.persistence.*;
 import org.hibernate.annotations.TenantId;
@@ -25,11 +23,9 @@ public class FacturaItem {
 
     private String nombre;
 
-    @Enumerated(EnumType.STRING)
-    private TipoInsumo tipoInsumo;
+    private String tipoInsumo;
 
-    @Enumerated(EnumType.STRING)
-    private TipoEquipo tipoEquipo;
+    private String tipoEquipo;
 
     @Column(precision = 10, scale = 3)
     private BigDecimal cantidad = BigDecimal.ONE;
@@ -91,10 +87,10 @@ public class FacturaItem {
     public void setTipoItem(TipoItemFactura tipoItem) { this.tipoItem = tipoItem; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
-    public TipoInsumo getTipoInsumo() { return tipoInsumo; }
-    public void setTipoInsumo(TipoInsumo tipoInsumo) { this.tipoInsumo = tipoInsumo; }
-    public TipoEquipo getTipoEquipo() { return tipoEquipo; }
-    public void setTipoEquipo(TipoEquipo tipoEquipo) { this.tipoEquipo = tipoEquipo; }
+    public String getTipoInsumo() { return tipoInsumo; }
+    public void setTipoInsumo(String tipoInsumo) { this.tipoInsumo = tipoInsumo; }
+    public String getTipoEquipo() { return tipoEquipo; }
+    public void setTipoEquipo(String tipoEquipo) { this.tipoEquipo = tipoEquipo; }
     public BigDecimal getCantidad() { return cantidad; }
     public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
     public String getUnidad() { return unidad; }

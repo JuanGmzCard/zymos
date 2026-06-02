@@ -2,7 +2,6 @@ package com.alera.service;
 
 import com.alera.model.InsumoInventario;
 import com.alera.model.MovimientoInventario;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.MovimientoInventarioRepository;
 import org.junit.jupiter.api.BeforeEach;

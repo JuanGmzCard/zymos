@@ -6,7 +6,6 @@ import com.alera.dto.FacturaItemDto;
 import com.alera.model.*;
 import com.alera.model.enums.EstadoEquipo;
 import com.alera.model.enums.EstadoFactura;
-import com.alera.model.enums.TipoEquipo;
 import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.*;
 import com.alera.model.Proveedor;
@@ -247,7 +246,7 @@ public class FacturaProveedorService {
                 } else {
                     InsumoInventario nuevo = new InsumoInventario();
                     nuevo.setNombre(item.getNombre());
-                    nuevo.setTipo(item.getTipoInsumo() != null ? item.getTipoInsumo().getDisplayName() : insumoService.detectarTipo(item.getNombre()));
+                    nuevo.setTipo(item.getTipoInsumo() != null ? item.getTipoInsumo() : insumoService.detectarTipo(item.getNombre()));
                     nuevo.setCantidad(cantNorm);
                     nuevo.setUnidad(unidadNorm);
                     nuevo.setStockMinimo(BigDecimal.ZERO);
@@ -265,7 +264,7 @@ public class FacturaProveedorService {
                 } else {
                     Equipo nuevo = new Equipo();
                     nuevo.setNombre(item.getNombre());
-                    nuevo.setTipo(item.getTipoEquipo() != null ? item.getTipoEquipo().getDisplayName() : "Otro");
+                    nuevo.setTipo(item.getTipoEquipo() != null ? item.getTipoEquipo() : "Otro");
                     nuevo.setEstado(EstadoEquipo.OPERATIVO);
                     nuevo.setFechaAdquisicion(fecha);
                     nuevo.setObservaciones("Comprado el " + fecha + " a " + proveedor);

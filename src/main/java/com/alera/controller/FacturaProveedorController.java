@@ -7,11 +7,11 @@ import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoEquipo;
 import com.alera.model.enums.EstadoFactura;
-import com.alera.model.enums.TipoEquipo;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.service.CategoriaEquipoService;
+import com.alera.service.CategoriaInsumoService;
 import com.alera.service.EquipoService;
 import com.alera.service.ExcelExportService;
 import com.alera.service.FacturaProveedorService;
@@ -45,6 +45,8 @@ public class FacturaProveedorController {
     private final InsumoInventarioService insumoService;
     private final EquipoService equipoService;
     private final ExcelExportService excelService;
+    private final CategoriaInsumoService categoriaInsumoService;
+    private final CategoriaEquipoService categoriaEquipoService;
 
     public FacturaProveedorController(FacturaProveedorService service,
                                        ProveedorService proveedorService,
@@ -52,7 +54,9 @@ public class FacturaProveedorController {
                                        EquipoRepository equipoRepo,
                                        InsumoInventarioService insumoService,
                                        EquipoService equipoService,
-                                       ExcelExportService excelService) {
+                                       ExcelExportService excelService,
+                                       CategoriaInsumoService categoriaInsumoService,
+                                       CategoriaEquipoService categoriaEquipoService) {
         this.service = service;
         this.proveedorService = proveedorService;
         this.insumoRepo = insumoRepo;
@@ -60,6 +64,8 @@ public class FacturaProveedorController {
         this.insumoService = insumoService;
         this.equipoService = equipoService;
         this.excelService = excelService;
+        this.categoriaInsumoService = categoriaInsumoService;
+        this.categoriaEquipoService = categoriaEquipoService;
     }
 
     @GetMapping
@@ -269,36 +275,33 @@ public class FacturaProveedorController {
     // ────────────────────────────────────────────────────────────────────────
 
     private void agregarDatosFormulario(Model model) {
-        model.addAttribute("tiposInsumo", TipoInsumo.values());
-        model.addAttribute("tiposEquipo", TipoEquipo.values());
+        List<String> tiposInsumo = categoriaInsumoService.listarNombresActivos();
+        List<String> tiposEquipo = categoriaEquipoService.listarNombresActivos();
+        model.addAttribute("tiposInsumo", tiposInsumo);
+        model.addAttribute("tiposEquipo", tiposEquipo);
         model.addAttribute("tiposItem",   TipoItemFactura.values());
         model.addAttribute("estados",     EstadoFactura.values());
         model.addAttribute("proveedoresActivos", proveedorService.listarActivos());
 
-        // Agrupados por nombre de enum (clave usada en el JS) mapeando display name → enum name.
-        // InsumoInventario.tipo y Equipo.tipo guardan display names tras V45 ("Malta", "Fermentador"),
-        // pero el select de categoría usa values = enum name (MALTA, FERMENTADOR). Al iterar los enums
-        // garantizamos que todas las categorías aparezcan como claves aunque estén vacías.
+        // Clave = nombre de categoría (String), valor = lista de nombres de insumos/equipos de esa categoría
         List<InsumoInventario> todosInsumos = insumoRepo.findAllByOrderByNombreAsc();
         Map<String, List<String>> insumosPorTipo = new LinkedHashMap<>();
-        for (TipoInsumo tipo : TipoInsumo.values()) {
-            String dn = tipo.getDisplayName();
+        for (String tipo : tiposInsumo) {
             List<String> nombres = todosInsumos.stream()
-                    .filter(i -> dn.equals(i.getTipo()))
+                    .filter(i -> tipo.equals(i.getTipo()))
                     .map(InsumoInventario::getNombre)
                     .toList();
-            insumosPorTipo.put(tipo.name(), nombres);
+            insumosPorTipo.put(tipo, nombres);
         }
 
         List<Equipo> todosEquipos = equipoRepo.findAll();
         Map<String, List<String>> equiposPorTipo = new LinkedHashMap<>();
-        for (TipoEquipo tipo : TipoEquipo.values()) {
-            String dn = tipo.getDisplayName();
+        for (String tipo : tiposEquipo) {
             List<String> nombres = todosEquipos.stream()
-                    .filter(e -> dn.equals(e.getTipo()))
+                    .filter(e -> tipo.equals(e.getTipo()))
                     .map(Equipo::getNombre)
                     .toList();
-            equiposPorTipo.put(tipo.name(), nombres);
+            equiposPorTipo.put(tipo, nombres);
         }
         model.addAttribute("insumosPorTipo", insumosPorTipo);
         model.addAttribute("equiposPorTipo", equiposPorTipo);

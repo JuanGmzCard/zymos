@@ -1,7 +1,5 @@
 package com.alera.dto;
 
-import com.alera.model.enums.TipoEquipo;
-import com.alera.model.enums.TipoInsumo;
 import com.alera.model.enums.TipoItemFactura;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -15,8 +13,8 @@ public class FacturaItemDto {
 
     private TipoItemFactura tipoItem;
     private String nombre;
-    private TipoInsumo tipoInsumo;
-    private TipoEquipo tipoEquipo;
+    private String tipoInsumo;
+    private String tipoEquipo;
 
     @DecimalMin(value = "0.001", message = "La cantidad debe ser mayor a 0")
     private BigDecimal cantidad = BigDecimal.ONE;

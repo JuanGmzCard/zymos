@@ -154,7 +154,7 @@
                                 <option th:each="tins : ${tiposInsumo}"
                                         th:value="${tins}"
                                         th:selected="${itemF.tipoInsumo == tins}"
-                                        th:text="${tins.displayName}">-</option>
+                                        th:text="${tins}">-</option>
                             </select>
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'EQUIPO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoEquipo'"
@@ -164,7 +164,7 @@
                                 <option th:each="teq : ${tiposEquipo}"
                                         th:value="${teq}"
                                         th:selected="${itemF.tipoEquipo == teq}"
-                                        th:text="${teq.displayName}">-</option>
+                                        th:text="${teq}">-</option>
                             </select>
                         </div>
 
@@ -282,15 +282,7 @@
                 <div class="mb-3">
                     <label class="form-label">Categoría</label>
                     <select id="nuevoInsumoTipoF" class="form-select">
-                        <option value="MALTA">Malta</option>
-                        <option value="LUPULO">Lúpulo</option>
-                        <option value="LEVADURA">Levadura</option>
-                        <option value="CLARIFICANTE">Clarificante</option>
-                        <option value="AGENTE_CARBONATACION">Agente de Carbonatación</option>
-                        <option value="AGUA">Agua</option>
-                        <option value="QUIMICO">Químico</option>
-                        <option value="ENVASE">Envase</option>
-                        <option value="OTRO">Otro</option>
+                        <option th:each="tins : ${tiposInsumo}" th:value="${tins}" th:text="${tins}">-</option>
                     </select>
                 </div>
                 <div class="mb-3">
@@ -332,17 +324,7 @@
                 <div class="mb-3">
                     <label class="form-label">Tipo</label>
                     <select id="nuevoEquipoTipoF" class="form-select">
-                        <option value="FERMENTADOR">Fermentador</option>
-                        <option value="OLLA_MACERADO">Olla de Macerado</option>
-                        <option value="OLLA_HERVOR">Olla de Hervor</option>
-                        <option value="ENFRIADOR">Enfriador</option>
-                        <option value="BOMBA">Bomba</option>
-                        <option value="FILTRO">Filtro</option>
-                        <option value="MEDIDOR_PH">Medidor de pH</option>
-                        <option value="DENSIMETRO">Densímetro</option>
-                        <option value="BASCULA">Báscula</option>
-                        <option value="COMPRESOR">Compresor</option>
-                        <option value="OTRO">Otro</option>
+                        <option th:each="teq : ${tiposEquipo}" th:value="${teq}" th:text="${teq}">-</option>
                     </select>
                 </div>
                 <div id="errorEquipoF" class="alert alert-danger py-2 d-none"></div>
@@ -361,23 +343,13 @@
 <script th:inline="javascript">
 const INSUMOS_POR_TIPO = /*[[${insumosPorTipo}]]*/ {};
 const EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
+const TIPOS_INSUMO = /*[[${tiposInsumo}]]*/ [];
+const TIPOS_EQUIPO = /*[[${tiposEquipo}]]*/ [];
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-// Mapas de displayName para los selects generados por JS
-const INSUMO_NAMES = {
-    MALTA:'Malta', LUPULO:'Lúpulo', LEVADURA:'Levadura',
-    CLARIFICANTE:'Clarificante', AGENTE_CARBONATACION:'Agente de Carbonatación', AGUA:'Agua', QUIMICO:'Químico',
-    ENVASE:'Envase', OTRO:'Otro'
-};
-const EQUIPO_NAMES = {
-    FERMENTADOR:'Fermentador', OLLA_MACERADO:'Olla de Macerado',
-    OLLA_HERVOR:'Olla de Hervor', ENFRIADOR:'Enfriador',
-    BOMBA:'Bomba', FILTRO:'Filtro', MEDIDOR_PH:'Medidor de pH',
-    DENSIMETRO:'Densímetro', BASCULA:'Báscula',
-    COMPRESOR:'Compresor', OTRO:'Otro'
-};
+// Listas de categorías inyectadas desde el servidor (display names)
 
 // ── Datalist dinámico ─────────────────────────────────────────────────────
 
@@ -431,8 +403,8 @@ function onTipoChange(tipoSelect) {
 function renderSubtipoField(container, tipo, idx) {
     if (tipo === 'INSUMO') {
         let opts = '<option value="">-- Categoría --</option>';
-        Object.entries(INSUMO_NAMES).forEach(([val, label]) => {
-            opts += `<option value="${val}">${label}</option>`;
+        TIPOS_INSUMO.forEach(cat => {
+            opts += `<option value="${cat}">${cat}</option>`;
         });
         container.innerHTML =
             `<select name="items[${idx}].tipoInsumo"
@@ -440,8 +412,8 @@ function renderSubtipoField(container, tipo, idx) {
                      onchange="onCategoryChange(this)">${opts}</select>`;
     } else if (tipo === 'EQUIPO') {
         let opts = '<option value="">-- Categoría --</option>';
-        Object.entries(EQUIPO_NAMES).forEach(([val, label]) => {
-            opts += `<option value="${val}">${label}</option>`;
+        TIPOS_EQUIPO.forEach(cat => {
+            opts += `<option value="${cat}">${cat}</option>`;
         });
         container.innerHTML =
             `<select name="items[${idx}].tipoEquipo"

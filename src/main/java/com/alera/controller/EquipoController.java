@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.model.Equipo;
 import com.alera.model.enums.EstadoEquipo;
+import com.alera.service.CategoriaEquipoService;
 import com.alera.service.EquipoService;
 import com.alera.service.MantenimientoEquipoService;
 import org.springframework.http.MediaType;
@@ -17,16 +18,16 @@ import java.util.Map;
 @RequestMapping("/equipos")
 public class EquipoController {
 
-    static final List<String> TIPOS_EQUIPO = List.of(
-            "Fermentador", "Olla de Macerado", "Olla de Hervor", "Enfriador",
-            "Bomba", "Filtro", "Medidor de pH", "Densímetro", "Báscula", "Compresor", "Otro");
-
     private final EquipoService service;
     private final MantenimientoEquipoService mantenimientoService;
+    private final CategoriaEquipoService categoriaEquipoService;
 
-    public EquipoController(EquipoService service, MantenimientoEquipoService mantenimientoService) {
+    public EquipoController(EquipoService service,
+                             MantenimientoEquipoService mantenimientoService,
+                             CategoriaEquipoService categoriaEquipoService) {
         this.service = service;
         this.mantenimientoService = mantenimientoService;
+        this.categoriaEquipoService = categoriaEquipoService;
     }
 
     @GetMapping
@@ -41,7 +42,7 @@ public class EquipoController {
         model.addAttribute("estadoFiltro",      estado);
         model.addAttribute("baseUrl",           "/equipos");
         model.addAttribute("extraParams",       estado != null ? "&estado=" + estado.name() : "");
-        model.addAttribute("tiposEquipo",       TIPOS_EQUIPO);
+        model.addAttribute("tiposEquipo",       categoriaEquipoService.listarNombresActivos());
         model.addAttribute("estadosEquipo",     EstadoEquipo.values());
         // stat-cards
         model.addAttribute("statsTotal",        service.countTotal());
@@ -90,7 +91,7 @@ public class EquipoController {
     @GetMapping("/nuevo")
     public String nuevo(Model model) {
         model.addAttribute("equipo", new Equipo());
-        model.addAttribute("tiposEquipo", TIPOS_EQUIPO);
+        model.addAttribute("tiposEquipo", categoriaEquipoService.listarNombresActivos());
         model.addAttribute("estadosEquipo", EstadoEquipo.values());
         return "equipos/formulario";
     }
@@ -114,7 +115,7 @@ public class EquipoController {
     public String editar(@PathVariable Long id, Model model) {
         var equipo = service.buscarPorId(id).orElseThrow();
         model.addAttribute("equipo", equipo);
-        model.addAttribute("tiposEquipo", TIPOS_EQUIPO);
+        model.addAttribute("tiposEquipo", categoriaEquipoService.listarNombresActivos());
         model.addAttribute("estadosEquipo", EstadoEquipo.values());
         return "equipos/formulario";
     }

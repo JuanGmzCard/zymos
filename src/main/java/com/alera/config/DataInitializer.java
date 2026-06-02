@@ -1,10 +1,14 @@
 package com.alera.config;
 
+import com.alera.model.CategoriaEquipo;
+import com.alera.model.CategoriaInsumo;
 import com.alera.model.SuperAdmin;
 import com.alera.model.Tenant;
 import com.alera.model.TipoCerveza;
 import com.alera.model.Usuario;
 import com.alera.model.enums.RolUsuario;
+import com.alera.repository.CategoriaEquipoRepository;
+import com.alera.repository.CategoriaInsumoRepository;
 import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.TipoCervezaRepository;
@@ -28,6 +32,8 @@ public class DataInitializer implements CommandLineRunner {
     private final BrandingProperties branding;
     private final PasswordEncoder encoder;
     private final SuperAdminRepository superAdminRepo;
+    private final CategoriaInsumoRepository categoriaInsumoRepo;
+    private final CategoriaEquipoRepository categoriaEquipoRepo;
 
     @Value("${app.default-subdomain:default}")
     private String defaultSubdomain;
@@ -51,13 +57,17 @@ public class DataInitializer implements CommandLineRunner {
                             TenantRepository tenantRepo,
                             BrandingProperties branding,
                             PasswordEncoder encoder,
-                            SuperAdminRepository superAdminRepo) {
-        this.usuarioRepo     = usuarioRepo;
-        this.tipoCervezaRepo = tipoCervezaRepo;
-        this.tenantRepo      = tenantRepo;
-        this.branding        = branding;
-        this.encoder         = encoder;
-        this.superAdminRepo  = superAdminRepo;
+                            SuperAdminRepository superAdminRepo,
+                            CategoriaInsumoRepository categoriaInsumoRepo,
+                            CategoriaEquipoRepository categoriaEquipoRepo) {
+        this.usuarioRepo         = usuarioRepo;
+        this.tipoCervezaRepo     = tipoCervezaRepo;
+        this.tenantRepo          = tenantRepo;
+        this.branding            = branding;
+        this.encoder             = encoder;
+        this.superAdminRepo      = superAdminRepo;
+        this.categoriaInsumoRepo = categoriaInsumoRepo;
+        this.categoriaEquipoRepo = categoriaEquipoRepo;
     }
 
     @Override
@@ -72,6 +82,7 @@ public class DataInitializer implements CommandLineRunner {
             try {
                 crearUsuariosSiNoTiene(tenant.getSubdomain());
                 crearTiposCerveza(tenant.getSubdomain());
+                crearCategoriasSiNoTiene(tenant.getSubdomain());
             } finally {
                 TenantContext.clear();
             }
@@ -144,5 +155,34 @@ public class DataInitializer implements CommandLineRunner {
             }
         }
         if (creados > 0) log.info("{} tipos de cerveza inicializados en tenant '{}'", creados, subdomain);
+    }
+
+    private void crearCategoriasSiNoTiene(String subdomain) {
+        if (categoriaInsumoRepo.findAllByOrderByNombreAsc().isEmpty()) {
+            String[] insumoCats = {
+                "Malta", "Lúpulo", "Levadura", "Clarificante",
+                "Agente de Carbonatación", "Agua", "Químico", "Envase", "Otro"
+            };
+            for (String nombre : insumoCats) {
+                CategoriaInsumo cat = new CategoriaInsumo();
+                cat.setNombre(nombre);
+                cat.setActivo(true);
+                categoriaInsumoRepo.save(cat);
+            }
+            log.info("{} categorías de insumo inicializadas en tenant '{}'", insumoCats.length, subdomain);
+        }
+        if (categoriaEquipoRepo.findAllByOrderByNombreAsc().isEmpty()) {
+            String[] equipoCats = {
+                "Fermentador", "Olla de Macerado", "Olla de Hervor", "Enfriador",
+                "Bomba", "Filtro", "Medidor de pH", "Densímetro", "Báscula", "Compresor", "Otro"
+            };
+            for (String nombre : equipoCats) {
+                CategoriaEquipo cat = new CategoriaEquipo();
+                cat.setNombre(nombre);
+                cat.setActivo(true);
+                categoriaEquipoRepo.save(cat);
+            }
+            log.info("{} categorías de equipo inicializadas en tenant '{}'", equipoCats.length, subdomain);
+        }
     }
 }

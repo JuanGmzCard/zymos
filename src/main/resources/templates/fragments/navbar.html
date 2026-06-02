@@ -280,6 +280,12 @@
                                 <i class="bi bi-tag me-2"></i>Tipos de Cerveza
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/admin/categorias}"
+                               th:classappend="${currentUri != null and currentUri.contains('/admin/categorias')} ? 'active' : ''">
+                                <i class="bi bi-collection me-2"></i>Categorías
+                            </a>
+                        </li>
                         <!-- Sistema -->
                         <li><hr class="dropdown-divider mb-0"></li>
                         <li class="px-3 pt-2 pb-1">
