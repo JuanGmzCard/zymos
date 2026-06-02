@@ -85,7 +85,7 @@ com.alera/
 │               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component),
 │               ApiRateLimitFilter (OncePerRequestFilter — rate limiting /api/** por IP; ventana fija 1 min via Caffeine; creado como @Bean en SecurityConfig, no @Component)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
-├── controller/ 25 controladores:
+├── controller/ 26 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
 │               FacturaProveedorController, InsumoInventarioController,
 │               RecetaController, ProveedorController, CalendarioController,
@@ -97,6 +97,7 @@ com.alera/
 │               AuthController (POST /api/auth/login — obtención de token JWT),
 │               CustomErrorController (GET /error — intercepta el endpoint de error de Spring Boot),
 │               ClienteController (/clientes — CRUD + suggest; ADMIN/FACTURACION/SUPERADMIN)
+│               CategoriaController (/admin/categorias — CRUD categorías de insumo y equipo; ADMIN/SUPERADMIN)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
@@ -104,8 +105,9 @@ com.alera/
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
 │               EmailService, AlertaScheduler, NotificacionService, MigracionTemplateService, MigracionService,
 │               ClienteService,
+│               CategoriaInsumoService, CategoriaEquipoService,
 │               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
-├── model/      25 entidades:
+├── model/      27 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
 │               LoteCerveza, Ingrediente, Receta, RecetaIngrediente, EscalonMacerado,
@@ -118,15 +120,16 @@ com.alera/
 │               MigracionLog (tabla migracion_log — historial de importaciones por tenant, sin @TenantId),
 │               VentaItem (tabla venta_items — ítems de venta, multi-lote por venta),
 │               Cliente (tabla clientes — datos fiscales y de contacto del cliente; extiende AuditableEntity)
-│               + 12 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
+│               CategoriaInsumo (tabla tipos_insumo — categorías de insumo por tenant; @TenantId),
+│               CategoriaEquipo (tabla tipos_equipo — categorías de equipo por tenant; @TenantId)
+│               + 11 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               EstadoVenta: COTIZACION, PENDIENTE, DESPACHADO, CANCELADO, EXPIRADO;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA;
-│               TipoInsumo: MALTA, LUPULO, LEVADURA, CLARIFICANTE, AGENTE_CARBONATACION, AGUA, QUIMICO, ENVASE, OTRO;
 │               ListaPrecio: VENTA_DIRECTA, DISTRIBUIDOR, BAR, MAYORISTA, EXPORTACION, EMPLEADO;
 │               RegimenTributario: SIMPLIFICADO, RESPONSABLE_IVA)
-├── repository/ 15 repositorios JPA (+ TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
+├── repository/ 15 repositorios JPA (+ CategoriaInsumoRepository, CategoriaEquipoRepository, TenantRepository, FacturaItemRepository, LecturaFermentacionRepository,
 │               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository,
 │               MigracionLogRepository, VentaItemRepository, ClienteRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
@@ -173,6 +176,7 @@ templates/
                 tenant-historial.html (auditoría de cambios del tenant: tabla fecha/acción/usuario/detalles; badges de color por tipo de acción),
                 tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo,
                 migracion/detalle.html (página de migración por tenant: instrucciones generales, 4 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores)
+│               categorias.html (gestión de categorías de insumo y equipo: dos tabs con tabla CRUD + formulario de creación por tipo)
 ```
 
 ### Migraciones Flyway
@@ -221,6 +225,7 @@ templates/
 - `V44__cotizacion_scheduler_index.sql` — Índice parcial de performance `idx_ventas_cotizacion_vencida ON ventas (cotizacion_expira_en) WHERE estado = 'COTIZACION' AND deleted_at IS NULL` — optimiza la query del scheduler `expirarCotizaciones()` que busca cotizaciones vencidas diariamente.
 - `V45__tipo_libre.sql` — DDL + DML migration: primero elimina el CHECK constraint `insumos_inventario_tipo_check` de V36 (que solo permitía enum names uppercase y bloqueaba los UPDATEs), luego convierte los valores de `tipo` de nombre de enum (ej: `MALTA`) a nombre de display (ej: `Malta`) en las tablas `insumos_inventario` y `equipos`. Necesario porque `TipoInsumo` y `TipoEquipo` pasaron de `@Enumerated(EnumType.STRING)` a `String` libre con valores display en lugar de enum names.
 - `V46__fix_tipo_libre_constraint.sql` — DDL + DML fix: elimina el CHECK constraint `insumos_inventario_tipo_check` creado en V36 que solo permitía valores enum uppercase (MALTA, LUPULO...). Tras V45, `insumos_inventario.tipo` es texto libre; el constraint bloqueaba inserts de display names (Malta, Lúpulo...). Repite los UPDATEs de V45 de forma idempotente para cubrir DBs donde V45 no pudo ejecutarse por el constraint activo. El constraint `factura_items_tipo_insumo_check` NO se modifica — `FacturaItem.tipoInsumo` sigue siendo enum.
+- `V47__categorias_tipo.sql` — Crea tablas `tipos_insumo` y `tipos_equipo` (id BIGSERIAL PK, tenant_id VARCHAR(100), nombre VARCHAR(100), activo BOOLEAN DEFAULT TRUE; UNIQUE (tenant_id, nombre)) con índices en tenant_id. Puebla con los 9 valores de insumo (Malta, Lúpulo, Levadura, Clarificante, Agente de Carbonatación, Agua, Químico, Envase, Otro) y 11 valores de equipo (Fermentador, Olla de Macerado, Olla de Hervor, Enfriador, Bomba, Filtro, Medidor de pH, Densímetro, Báscula, Compresor, Otro) para cada tenant existente via CROSS JOIN. Elimina CHECK constraints `factura_items_tipo_insumo_check` y `factura_items_tipo_equipo_check`. Convierte `factura_items.tipo_insumo` y `tipo_equipo` de enum-name a display name ("MALTA" → "Malta", etc.).
 
 ---
 
@@ -305,7 +310,7 @@ Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es 
 - `alertasIntentosFallidos` (INTEGER, NOT NULL, default 0) — contador de fallos SMTP consecutivos. Se incrementa en cada fallo, se resetea a 0 al enviar exitosamente. Visible en `/admin/tenants` como badge amarillo.
 - `alertasUltimoIntento` (TIMESTAMP, nullable) — fecha/hora del último intento de envío (exitoso o fallido).
 - `alertasUltimoExito` (TIMESTAMP, nullable) — fecha/hora del último envío exitoso.
-- Creado por `DataInitializer` al arrancar. Al inicio, itera **todos los tenants** existentes en BD y crea usuarios/tipos de cerveza para los que no tengan ninguno. Si un tenant ya tiene usuarios, no se modifica.
+- Creado por `DataInitializer` al arrancar. Al inicio, itera **todos los tenants** existentes en BD y crea usuarios/tipos de cerveza/categorías de insumo y equipo para los que no tengan ninguno. Si un tenant ya tiene usuarios, no se modifica.
 - `GlobalControllerAdvice` lo expone como `${branding}` — los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. sin cambios
 
 ### LoteItemFactura
@@ -370,9 +375,9 @@ Extiende `AuditableEntity`. Campos propios:
 
 ### Equipo / InsumoInventario / FacturaProveedor
 Todos extienden `AuditableEntity` — los 4 campos de auditoría vienen del padre.
-- **Campo `tipo` en `Equipo`**: `String` (no enum). Valores sugeridos via datalist: "Fermentador", "Olla de Macerado", "Olla de Hervor", "Enfriador", "Bomba", "Filtro", "Medidor de pH", "Densímetro", "Báscula", "Compresor", "Otro". El usuario puede ingresar cualquier texto libre. Formulario HTML usa `<input>` + `<datalist>`. `EquipoController.TIPOS_EQUIPO` — `static final List<String>` con los sugeridos.
-- **Campo `tipo` en `InsumoInventario`**: `String` (no enum). Valores sugeridos: "Malta", "Lúpulo", "Levadura", "Clarificante", "Agente de Carbonatación", "Agua", "Químico", "Envase", "Otro". Texto libre. `InsumoInventarioController.TIPOS_INSUMO` — `static final List<String>`. `InsumoInventarioService.detectarTipo()` retorna estos mismos strings. `getColorTipo()` en la entidad usa switch sobre el String.
-- **CRÍTICO**: `FacturaItem.tipoInsumo` y `FacturaItem.tipoEquipo` siguen siendo enums (`TipoInsumo`, `TipoEquipo`) — la selección en el formulario de facturas es enum. La conversión enum→String ocurre en `FacturaProveedorService` via `.getDisplayName()` al crear `InsumoInventario` o `Equipo` automáticamente. `FacturaProveedorController.agregarDatosFormulario()` sigue pasando `TipoInsumo.values()` y `TipoEquipo.values()` al modelo (para el formulario de facturas).
+- **Campo `tipo` en `Equipo`**: `String` (no enum). Valores cargados desde `CategoriaEquipo` (BD, por tenant). El formulario HTML usa `<select>` poblado desde `categoriaEquipoService.listarNombresActivos()`. `EquipoController` ya no tiene `TIPOS_EQUIPO` estático.
+- **Campo `tipo` en `InsumoInventario`**: `String` (no enum). Valores cargados desde `CategoriaInsumo` (BD, por tenant). `InsumoInventarioController` ya no tiene `TIPOS_INSUMO` estático. `InsumoInventarioService.detectarTipo()` retorna los mismos strings display. `getColorTipo()` en la entidad usa switch sobre el String.
+- **`FacturaItem.tipoInsumo` y `FacturaItem.tipoEquipo`**: `String` (antes enums `TipoInsumo`/`TipoEquipo`). Almacenan el display name directamente ("Malta", "Fermentador"). V47 convirtió los valores históricos de enum-name a display name. `FacturaProveedorController.agregarDatosFormulario()` construye `insumosPorTipo` y `equiposPorTipo` con el display name como clave (no el enum name) — coincide con el valor que envía el select del formulario JS.
 - **Filtro en repositorios**: `InsumoInventarioRepository.findByFiltros()` recibe `String tipo` (no enum). `EquipoRepository.findFermentadoresDisponibles()` recibe `String tipo` — llamado con `"Fermentador"` en `EquipoService`.
 - `FacturaProveedor`: `proveedor` (String original) + `@ManyToOne proveedorRef → Proveedor` (LAZY, nullable) — coexisten para compat. histórica. V10 backfill vincula automáticamente donde los nombres coincidan.
 - **Campo `estado` en `FacturaProveedor`**: `@Enumerated(EnumType.STRING) EstadoFactura estado` — default `RECIBIDA`. Valores: `RECIBIDA` (badge gris), `VERIFICADA` (badge amarillo), `PAGADA` (badge verde). Cada valor tiene `getDisplayName()` y `getBadgeClass()` (clase Bootstrap). Se puede cambiar desde el detalle via `POST /facturas/{id}/estado` o desde el formulario de edición via select.
@@ -633,7 +638,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `restaurarIngrediente(nombre, cantidadTexto)` / `restaurarIngrediente(nombre, cantidadTexto, referencia)` — suma cantidad de vuelta al inventario; ídem con `referencia`.
 - `listarBajoStock()`, `listarProximosAVencer(dias)`
 - `listarPaginado(nombre, tipo, page)` — paginado con filtros opcionales; usado también por `/inventario/suggest`
-- `detectarTipo(nombre)` — infiere `TipoInsumo` del nombre por palabras clave: malta/pilsner/malt → MALTA; lupulo/lúpulo/hop → LUPULO; levadura/yeast → LEVADURA; clarific/gelatin/irish → CLARIFICANTE; dextrosa/sacarosa/priming/carbonat/extracto de malta → AGENTE_CARBONATACION; envase/botell/lata → ENVASE; resto → OTRO
+- `detectarTipo(nombre)` — infiere el tipo del nombre por palabras clave: malta/pilsner/malt → "Malta"; lupulo/lúpulo/hop → "Lúpulo"; levadura/yeast → "Levadura"; clarific/gelatin/irish → "Clarificante"; dextrosa/sacarosa/priming/carbonat/extracto de malta → "Agente de Carbonatación"; envase/botell/lata → "Envase"; resto → "Otro". Retorna String display name, no enum.
 - `parsearCantidad(texto)` — toma SOLO el primer token numérico del texto, ignora el sufijo de unidad. `"150 gr"` → 150, `"3800 gr"` → 3800. Es seguro ignorar la unidad porque `normalizarParaAlmacenamiento` ya convirtió a base (gr/mL) al guardar el ingrediente — el string almacenado en `Ingrediente.cantidad` siempre está en unidad base.
 - **CRÍTICO — `movimientos_inventario` duplicados**: `RESTAURACION_LOTE` + `DESCUENTO_LOTE` consecutivos con la misma `referencia` y el mismo `cantidad` son pares espurios. Ocurrían cuando el código anterior corría `restaurarInventario` + `descontarInventario` en cada edición de lote independientemente de si los ingredientes cambiaron. El fix es `ingredientesModificados()` en `actualizar()` — solo ajusta inventario cuando el conjunto de ingredientes (nombre|cantidad ordenado) difiere entre antes y después.
 
@@ -685,6 +690,17 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `guardar(tipo)` / `eliminar(id)` — CRUD básico
 - `toggleActivo(id)` — invierte el flag `activo` sin borrar el tipo
 
+### CategoriaInsumoService
+- `listarNombresActivos()` — `List<String>` de nombres activos ordenados por nombre ASC. Usado por `InsumoInventarioController`, `EquipoController` (no — ver Equipo), `FacturaProveedorController` para poblar selects y construir `insumosPorTipo`.
+- `listarTodos()` — `List<CategoriaInsumo>` incluyendo inactivas. Usado por `CategoriaController`.
+- `guardar(nombre)` — valida unicidad por tenant (`existsByNombreIgnoreCase`), crea y persiste. Lanza `RuntimeException` si ya existe.
+- `toggleActivo(id)` — invierte `activo` y guarda.
+- `eliminar(id)` — `repo.deleteById(id)`.
+
+### CategoriaEquipoService
+- Misma estructura que `CategoriaInsumoService`, opera sobre `CategoriaEquipo` / `tipos_equipo`.
+- `listarNombresActivos()` — usado por `EquipoController` y `FacturaProveedorController`.
+
 ### UsuarioService
 - Implementa `UserDetailsService` — usado por `SecurityConfig` via `DaoAuthenticationProvider`
 - `loadUserByUsername(username)` — busca usuario activo y construye `UserDetails` con `ROLE_{rol.name()}`. Lanza `UsernameNotFoundException` si el usuario no existe o está inactivo.
@@ -715,14 +731,14 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### ExcelExportService
 - `generarExcelReporteProduccion(lotes, resumen, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` con Apache POI. Dos hojas: hoja 1 con título, período, **2 filas de resumen estadístico** (fila 1: total lotes, litros, estilos, completados+%; fila 2: prom/lote, ABV promedio, eficiencia promedio, costo total), datos de lotes con autofilter — **18 columnas** incluyendo al final: `Método Carb.` (Natural/Forzada), `CO₂ Obj. (vol)`, `CO₂ Real (vol)`, `Destino / Empaque`; hoja 2 con producción agrupada por estilo. Filas alternas con fondo crema.
 - `generarExcelFacturas(facturas, estadoFiltro, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` de facturas. **3 hojas**: Hoja 1 "Facturas": título, fila de filtros activos (estado + período), fila de resumen (count, subtotal, IVA, total general), **12 columnas** con autofilter (N° factura, proveedor, fecha, estado, ítems, subtotal, IVA, envío, total, **IVA incluido**, descripción, creado por). Hoja 2 "Por Proveedor": resumen agrupado por nombre de proveedor (count de facturas + total comprado). Hoja 3 **"Ítems"**: detalle de todas las líneas de factura exportadas — 12 columnas (N° Factura, Proveedor, Fecha, Tipo, Nombre, Cantidad, Unidad, V. Unitario, Desc.%, IVA%, Valor IVA, Total Línea) con autofilter. Filas alternas con fondo crema. Inyectado también en `FacturaProveedorController`.
-- `generarExcelInventario(insumos, ExportBranding)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por `TipoInsumo` (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
+- `generarExcelInventario(insumos, ExportBranding)` → `byte[]` — genera `.xlsx` de inventario. Hoja 1 "Inventario": 8 columnas (Nombre, Tipo, Cantidad, Unidad, Stock Mínimo, Estado, Vencimiento, Proveedor), autofilter, filas alternas crema. Hoja 2 "Por Tipo": resumen agrupado por tipo de insumo String (count, bajo stock, % bajo stock). Inyectado en `InsumoInventarioController`.
 - `generarExcelVentas(ventas, estadoFiltro, desde, hasta, ExportBranding)` → `byte[]` — genera `.xlsx` de ventas. **4 hojas**: Hoja 1 "Ventas": 7 columnas (Cliente, Primer Lote, Fecha Despacho, Estado, Valor Total, Notas, Creado por), usa `v.getPrimerCodigoLote()` y `v.getValorTotal()` (@Formula — no N+1). Hoja 2 "Ítems": 11 columnas por fila (Venta ID, Cliente, Fecha Despacho, Estado Venta, Lote, Descripción, Cantidad, Unidad, Precio Unit., Desc.%, Total Línea) — itera `v.getItems()` por cada venta (`open-in-view=true`). Hoja 3 "Por Cliente": agrupado por cliente (count ventas + total ingresos). Hoja 4 "Por Estado": agrupado por estado (count + total). Descargado por `GET /ventas/export`. Inyectado en `VentaController`.
 - Solo importa `org.apache.poi.*` — sin colisión con OpenPDF. Usa `XSSFFont` con cast `(XSSFFont) wb.createFont()`.
 - Inyectado en `ReporteController` y `VentaController`.
 
 ### MigracionTemplateService
-- `plantillaAlmacen()` → `byte[]` — genera `plantilla-almacen.xlsx` (1 hoja: Insumos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown TipoInsumo: MALTA/LUPULO/LEVADURA/CLARIFICANTE/AGENTE_CARBONATACION/AGUA/QUIMICO/ENVASE/OTRO), cantidad, unidad (dropdown: gr/kg/mL/L/gal/und), stockMinimo, descripcion, proveedor.
-- `plantillaEquipos()` → `byte[]` — genera `plantilla-equipos.xlsx` (1 hoja: Equipos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown TipoEquipo), descripcion, ubicacion, fechaAdquisicion, proximoMantenimiento, estado (dropdown EstadoEquipo, default OPERATIVO).
+- `plantillaAlmacen()` → `byte[]` — genera `plantilla-almacen.xlsx` (1 hoja: Insumos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown de enum-names uppercase: MALTA/LUPULO/LEVADURA/CLARIFICANTE/AGENTE_CARBONATACION/AGUA/QUIMICO/ENVASE/OTRO — `MigracionService` convierte al display name antes de insertar), cantidad, unidad (dropdown: gr/kg/mL/L/gal/und), stockMinimo, descripcion, proveedor.
+- `plantillaEquipos()` → `byte[]` — genera `plantilla-equipos.xlsx` (1 hoja: Equipos + hoja Instrucciones). Columnas: nombre*, tipo* (dropdown de enum-names uppercase: FERMENTADOR/OLLA_MACERADO/... — `MigracionService` convierte al display name antes de insertar), descripcion, ubicacion, fechaAdquisicion, proximoMantenimiento, estado (dropdown EstadoEquipo, default OPERATIVO).
 - `plantillaComercial()` → `byte[]` — genera `plantilla-comercial.xlsx` (3 hojas en orden: Proveedores, Facturas, Factura_Items + hoja Instrucciones). Relación: Facturas.proveedor → Proveedores.nombre; Factura_Items.numeroFactura → Facturas.numeroFactura.
 - `plantillaProduccion()` → `byte[]` — genera `plantilla-produccion.xlsx` (6 hojas en orden: Recetas, Receta_Ingredientes, Receta_Escalones, Receta_Adiciones, Lotes, Lote_Ingredientes + hoja Instrucciones). Relaciones: Ingredientes/Escalones/Adiciones.receta → Recetas.nombre; Lotes.receta → Recetas.nombre (opcional); Lote_Ingredientes.codigoLote → Lotes.codigoLote.
 - **Estructura de cada hoja**: row 0 = cabeceras (verde oscuro=obligatorio, gris=opcional) con sufijo " *" en requeridas; row 1 = leyenda " * = obligatorio"; row 2 = fila de ejemplo en gris/italic; row 3+ = datos del usuario. El parser en `MigracionService` salta filas `rowNum < 3`.
@@ -730,7 +746,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **CRÍTICO**: `Row.createCell()` devuelve `Cell` (interfaz), NO `XSSFCell` — declarar como `Cell` en todos los helpers que reciban `Row` como parámetro.
 
 ### MigracionService
-- `importarAlmacen(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Insumos", valida tipo (`TipoInsumo` enum — incluye AGENTE_CARBONATACION), inserta en `insumos_inventario` via `JdbcTemplate` con `tenant_id` explícito. Idempotente: salta duplicados si `LOWER(nombre) + tenant_id` ya existe.
+- `importarAlmacen(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Insumos", valida tipo (uppercase enum name via mapa estático `TIPO_INSUMO_DISPLAY` — incluye AGENTE_CARBONATACION; convierte al display name antes de insertar), inserta en `insumos_inventario` via `JdbcTemplate` con `tenant_id` explícito. Idempotente: salta duplicados si `LOWER(nombre) + tenant_id` ya existe.
 - `importarEquipos(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Equipos", defaults `estado` a `"OPERATIVO"`, inserta en `equipos`.
 - `importarComercial(archivo, tenantId, usuario)` → `Resultado` — 3 hojas en orden:
   1. "Proveedores" → inserta en `proveedores`, salta duplicados por nombre
@@ -884,7 +900,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### InsumoInventarioController ("/inventario")
 - CRUD estándar
 - `GET /inventario?filtroBajoStock=true` — activa el filtro "Bajo Stock": llama `service.listarBajoStock()`, devuelve lista completa sin paginar (totalPaginas=1). `?filtroPorVencer=true` — activa el filtro "Por Vencer": llama `service.listarProximosAVencer(30)`. Sin filtro especial: paginación normal. Los botones "Todos / Bajo Stock / Por Vencer" en `inventario/lista.html` aplican el filtro y muestran un badge con el conteo. La paginación y el botón "Excel" preservan el filtro activo via query params.
-- `GET /inventario/suggest?nombre=&tipo=` — `@ResponseBody`, `produces=JSON`. Delega a `service.listarPaginado(nombre, tipo, 0)` (limit 6). El parámetro `tipo` es opcional (`TipoInsumo` enum). Devuelve `[{id, nombre, tipoNombre, colorTipo, bajoStock, url}]`. La template pasa el tipo seleccionado via `data-activa` para respetar el filtro activo.
+- `GET /inventario/suggest?nombre=&tipo=` — `@ResponseBody`, `produces=JSON`. Delega a `service.listarPaginado(nombre, tipo, 0)` (limit 6). El parámetro `tipo` es opcional (`String` (display name)). Devuelve `[{id, nombre, tipoNombre, colorTipo, bajoStock, url}]`. La template pasa el tipo seleccionado via `data-activa` para respetar el filtro activo.
 - `POST /inventario/guardar-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0 sin redirigir. Devuelve `{success, id, nombre}`. Accesible: ADMIN, INVENTARIO. Usado desde formularios de receta y factura vía AJAX + CSRF header.
 - `GET /inventario/export?nombre=&tipo=&filtroBajoStock=&filtroPorVencer=` — descarga `inventario-YYYY-MM-DD.xlsx`. Respeta todos los filtros de la lista (incluyendo `filtroBajoStock` y `filtroPorVencer`). Sin filtros exporta todo (via `listarTodos()`). Lee branding del request. Delega a `ExcelExportService.generarExcelInventario()`.
 - `POST /inventario/{id}/ajuste` — ajuste rápido de stock. `@RequestParam TipoMovimiento tipo, BigDecimal cantidad, String motivo`. Delega a `service.ajustar()`. Flash success/danger. Solo ADMIN/INVENTARIO (hereda de `/inventario/**`).
@@ -897,6 +913,14 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - CRUD + toggle activo
 - `POST /tipos-cerveza/guardar-rapido` — `@ResponseBody` JSON. Crea tipo de cerveza si no existe (valida con `existePorNombre`). Devuelve `{success, id, nombre}`. Usado desde formulario de receta vía AJAX.
 
+### CategoriaController ("/admin/categorias") — solo ADMIN/SUPERADMIN (hereda de `/admin/**`)
+- `GET /admin/categorias` — página con dos tabs: Tipos de Insumo y Tipos de Equipo. Modelo: `categoriasInsumo` (List<CategoriaInsumo>), `categoriasEquipo` (List<CategoriaEquipo>).
+- `POST /admin/categorias/insumo/guardar` — crea categoría de insumo. Flash success o danger si nombre duplicado.
+- `POST /admin/categorias/insumo/{id}/toggle` — activa/desactiva categoría de insumo.
+- `POST /admin/categorias/insumo/{id}/eliminar` — elimina categoría de insumo.
+- `POST /admin/categorias/insumo/guardar-rapido` — `@ResponseBody` JSON `{success, id, nombre}` — creación inline desde formularios de inventario y facturas.
+- Mismos 4 endpoints para equipo: `/admin/categorias/equipo/...`
+
 ### FacturaProveedorController ("/facturas")
 - CRUD + `GET /ver/{id}`
 - `GET /facturas?estado=RECIBIDA|VERIFICADA|PAGADA&desde=yyyy-MM-dd&hasta=yyyy-MM-dd` — filtros opcionales por estado y rango de fechas. Pasa `estadoFiltro`, `desde`, `hasta`, `estados` (enum values) y `extraParams` al modelo para que paginación, tabs y Excel respeten todos los filtros activos. El card principal permanece visible cuando cualquier filtro está activo (permite limpiar incluso sin resultados).
@@ -905,10 +929,11 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `GET /facturas/duplicar/{id}` — pre-llena el formulario de nueva factura con los datos de la factura original (mismo proveedor, ítems, descripción, envío) pero sin número ni fecha, y estado RECIBIDA. Usa `service.duplicarComoFormDto(id)`. No pasa `facturaId` al modelo — el submit va a `POST /facturas/guardar` (crea nueva, no edita).
 - `GET /facturas/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Busca por N° factura o proveedor. Devuelve `[{titulo, proveedor, fecha, total, url}]`.
 - `agregarDatosFormulario()` construye:
-  - `insumosPorTipo` — `Map<String, List<String>>` con clave `TipoInsumo.name()` (MALTA, LUPULO…) y lista de nombres de insumos del inventario que tengan ese display name como `tipo`. Se itera `TipoInsumo.values()` y se filtra `InsumoInventario.getTipo()` por `tipo.getDisplayName()` — garantiza que todas las categorías aparezcan como claves aunque estén vacías y que la clave del mapa coincida con el `value` del select de categoría en el formulario.
-  - `equiposPorTipo` — ídem con `TipoEquipo.name()` (FERMENTADOR, OLLA_MACERADO…) filtrando `Equipo.getTipo()` por `tipo.getDisplayName()`.
-  - **CRÍTICO**: `InsumoInventario.tipo` y `Equipo.tipo` almacenan display names ("Malta", "Fermentador") tras V45. El select de categoría envía el nombre del enum ("MALTA") como value. Si el mapa se construye con `getTipo()` como clave, `INSUMOS_POR_TIPO["MALTA"]` en JS retorna `undefined` y el datalist de nombre queda vacío.
-  - `estados` — `EstadoFactura.values()` para el select en el formulario de edición y las tabs de la lista
+  - `tiposInsumo` — `List<String>` desde `categoriaInsumoService.listarNombresActivos()` — display names activos del tenant.
+  - `tiposEquipo` — `List<String>` desde `categoriaEquipoService.listarNombresActivos()`.
+  - `insumosPorTipo` — `Map<String, List<String>>` con display name como clave ("Malta", "Lúpulo"…) y lista de nombres de insumos que coinciden. El select de categoría del formulario usa el display name como `value` — clave y valor ya son el mismo string. `INSUMOS_POR_TIPO["Malta"]` en JS retorna la lista correcta.
+  - `equiposPorTipo` — ídem con display names de equipo.
+  - `estados` — `EstadoFactura.values()` para el select en el formulario de edición y las tabs de la lista.
 - `lista()` pasa al modelo `statsTotal` (monto total filtrado), `statsPendiente` (monto RECIBIDA+VERIFICADA), `statsCountPend` (cantidad pendiente) — usados por las 4 stat-cards en `lista.html`
 - `POST /facturas/guardar-insumo-rapido` — `@ResponseBody` JSON. Crea insumo con stock 0. Accesible: ADMIN, FACTURACION.
 - `POST /facturas/guardar-equipo-rapido` — `@ResponseBody` JSON. Crea equipo en estado OPERATIVO. Accesible: ADMIN, FACTURACION.
@@ -1352,7 +1377,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `InsumoInventarioControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON con filtro nombre. Requiere `@MockBean ExcelExportService excelService` y `@MockBean ProveedorService proveedorService` — ambos inyectados en el constructor del controller. Stubear `proveedorService.listarActivos()` → `List.of()` en `@BeforeEach`.
 - `FacturaProveedorControllerTest` — 3 tests: 401, 200 ADMIN, suggest JSON. `@MockBean InsumoInventarioRepository`, `EquipoRepository` y `ExcelExportService` adicionales. **Nota**: stub usa `listarPaginado(any(), any(), any(), anyInt())`. El `@BeforeEach` también stubea `sumTotal(any(),any(),any()) → BigDecimal.ZERO`, `sumPendiente(any(),any()) → BigDecimal.ZERO`, `countPendiente(any(),any()) → 0L` — necesarios porque `lista()` los pasa al modelo y el template los renderiza en las stat-cards.
 - `ReporteControllerTest` — 6 tests: 401, 200 con rango de fechas, 200 sin filtros, excel retorna descarga, pdf retorna descarga con `Content-Disposition` que contiene "reporte-produccion", filtro por estilo. Requiere `@MockBean PdfExportService pdfService` y stub `pdfService.generarPdfReporteProduccion(any(),any(),any(),any(),any())` en `@BeforeEach`.
-- `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`TipoEquipo.FERMENTADOR`, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo.displayName` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
+- `MantenimientoEquipoControllerTest` — 2 tests: 401, 200 ADMIN. **Nota**: el equipo mock debe tener `tipo` y `estado` seteados (`"Fermentador"` como String, `EstadoEquipo.OPERATIVO`) — el template accede a `equipo.tipo` directamente sin null-check. Stubs adicionales: `sumCostoPorEquipo(1L)` → `BigDecimal.ZERO`, `countPorEquipo(1L)` → 0L.
 - `TenantAdminControllerTest` — 4 tests: 401, 200 lista ADMIN, formulario nuevo, config JSON. Requiere `@MockBean PasswordEncoder` (inyectado en constructor del controller). **CRÍTICO**: NO agregar `@MockBean ObjectMapper` — mockear Jackson rompe la autoconfiguración de Spring (`routerFunctionMapping` falla al crear porque `objectMapper.reader()` retorna null en el mock)
 - `ComparativaControllerTest` — 3 tests: 401, 200 autenticado, resultado con <2 ids redirige
 - `VentaControllerTest` — 7 tests. `@MockBean` adicionales a los estándar: `VentaService ventaService`, `TrazabilidadService trazabilidadService`, `ExcelExportService excelExportService`, `PdfExportService pdfExportService`, `ClienteService clienteService`. `@BeforeEach` stubs: `listarPaginado(any,any,any,anyInt)` → `PageImpl(List.of())`, `countTotal()` → 0L, `countByEstado(any)` → 0L, `countClientesUnicos()` → 0L, `sumIngresosDespachados()` → ZERO, `suggest(anyString)` → `List.of()`, `topClientes()` → `List.of()`, `listarHistorial(anyLong)` → `List.of()`. Tests: (1) `lista_sinAuth_retorna401` — GET /ventas sin auth → 401; (2) `lista_conAdmin_retorna200` — ADMIN → 200, view "ventas/lista"; (3) `lista_conFacturacion_retorna200` — FACTURACION → 200; (4) `suggest_retornaJson` — ADMIN, GET /ventas/suggest?q=norte; stubs `ventaService.suggest("norte")` con `Map.of("titulo","Distribuidora Norte","sub","IPA-001","url","/ventas/ver/1")`; verifica `jsonPath("$[0].titulo").value("Distribuidora Norte")`; (5) `ver_retornaDetalle` — ADMIN, GET /ventas/ver/1; venta con cliente "Cliente Test" y estado PENDIENTE; verifica 200, view "ventas/detalle", `model().attributeExists("historial")`; **NO** setear campos que ya no existen en `Venta` (`cantidad`, `precioUnitario`, `descuentoPct`) — `valorTotal` es `@Formula` (null sin BD = ZERO vía `getValorTotal()`); (6) `nuevo_retornaFormulario` — ADMIN, GET /ventas/nuevo → 200, view "ventas/formulario"; (7) `pdf_retornaPdf` — ADMIN, GET /ventas/1/pdf; venta con estado DESPACHADO; `pdfExportService.generarPdfVenta(any,any)` devuelve bytes `{0x25,0x50,0x44,0x46}` (magic bytes `%PDF`); verifica `header("Content-Disposition")` contiene "remision-venta-1.pdf".
