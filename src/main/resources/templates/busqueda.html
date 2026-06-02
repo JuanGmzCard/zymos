@@ -118,7 +118,7 @@
                             <span class="badge equipo-tipo-badge" th:text="${ins.tipo}">—</span>
                             <span class="small fw-bold"
                                   th:classappend="${ins.bajoStock} ? 'text-danger' : 'text-muted'"
-                                  th:text="${ins.cantidad} + ' ' + ${ins.unidad}">—</span>
+                                  th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</span>
                         </div>
                     </a>
                 </div>

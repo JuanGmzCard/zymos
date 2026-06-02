@@ -136,7 +136,7 @@
                         <i class="bi bi-box me-1"></i><span th:text="${lote.equipoFermentador.nombre}"></span>
                     </div>
                     <div class="kanban-meta" th:if="${lote.fermTemperatura != null}">
-                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.fermTemperatura} + ' °C'"></span>
+                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
@@ -163,7 +163,7 @@
                     </div>
                     <div class="kanban-estilo" th:text="${lote.estilo}">-</div>
                     <div class="kanban-meta" th:if="${lote.acondTemperatura != null}">
-                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.acondTemperatura} + ' °C'"></span>
+                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
@@ -190,7 +190,7 @@
                     </div>
                     <div class="kanban-estilo" th:text="${lote.estilo}">-</div>
                     <div class="kanban-meta" th:if="${lote.madurTemperatura != null}">
-                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.madurTemperatura} + ' °C'"></span>
+                        <i class="bi bi-thermometer me-1"></i><span th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
@@ -218,7 +218,7 @@
                     <div class="kanban-estilo" th:text="${lote.estilo}">-</div>
                     <div class="kanban-meta" th:if="${lote.abv != null}">
                         <i class="bi bi-droplet me-1"></i>ABV
-                        <span th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'"></span>
+                        <span th:text="${lote.abv.stripTrailingZeros().toPlainString()} + '%'"></span>
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
@@ -241,8 +241,8 @@
                     <div class="kanban-code" th:text="${lote.codigoLote}">-</div>
                     <div class="kanban-estilo" th:text="${lote.estilo}">-</div>
                     <div class="kanban-meta" th:if="${lote.abv != null}">
-                        ABV <span th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'"></span>
-                        <span th:if="${lote.litrosFinales != null}"> · <span th:text="${lote.litrosFinales} + ' L'"></span></span>
+                        ABV <span th:text="${lote.abv.stripTrailingZeros().toPlainString()} + '%'"></span>
+                        <span th:if="${lote.litrosFinales != null}"> · <span th:text="${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L'"></span></span>
                     </div>
                     <div class="mt-2">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>

@@ -692,13 +692,17 @@ function addEscalon() {
         </div>`);
 }
 
+function fmtNum(n, maxDec) {
+    return parseFloat((+n).toFixed(maxDec)).toString();
+}
+
 // ABV en vivo
 function calcAbv() {
     const og = parseFloat(document.querySelector('[name="ogObjetivo"]')?.value);
     const fg = parseFloat(document.querySelector('[name="fgObjetivo"]')?.value);
     const el = document.getElementById('abvEstimado');
     if (!isNaN(og) && !isNaN(fg) && og > fg) {
-        el.textContent = ((og - fg) * 0.13125).toFixed(2) + ' %';
+        el.textContent = fmtNum((og - fg) * 0.13125, 2) + ' %';
     } else {
         el.textContent = '—';
     }

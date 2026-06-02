@@ -230,9 +230,9 @@
                             <tr th:each="ins : ${alertasBajoStock}">
                                 <td class="ps-3 py-2 fw-600" th:text="${ins.nombre}">—</td>
                                 <td class="py-2 text-danger fw-bold"
-                                    th:text="${ins.cantidad} + ' ' + ${ins.unidad}">—</td>
+                                    th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</td>
                                 <td class="py-2 text-muted small"
-                                    th:text="'Mín: ' + ${ins.stockMinimo} + ' ' + ${ins.unidad}">—</td>
+                                    th:text="'Mín: ' + ${ins.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</td>
                                 <td class="py-2 pe-3 text-end">
                                     <a th:href="@{/inventario}" class="btn btn-xs btn-outline-warning"
                                        style="font-size:0.7rem;padding:1px 6px;">

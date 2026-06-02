@@ -765,7 +765,7 @@
                                         <optgroup label="📦 Del inventario">
                                             <option th:each="ag : ${agentesCarbonatacion}"
                                                     th:value="${ag.nombre}"
-                                                    th:text="${ag.nombre} + ' (' + ${ag.cantidad} + ' ' + ${ag.unidad} + ')'">
+                                                    th:text="${ag.nombre} + ' (' + ${ag.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ag.unidad} + ')'">
                                             </option>
                                         </optgroup>
                                         <optgroup label="Otro">
@@ -878,6 +878,10 @@
                 </div>
 
                 <script>
+                    function fmtNum(n, maxDec) {
+                        return parseFloat((+n).toFixed(maxDec)).toString();
+                    }
+
                     // Rangos de CO₂ por estilo (volúmenes)
                     const CO2_RANGOS = {
                         stout: [1.7, 2.3], porter: [1.7, 2.5], schwarzbier: [1.7, 2.3],
@@ -947,7 +951,7 @@
                         const co2Extra = Math.max(0, co2Obj - co2Residual);
                         const factorBase = factorParaAgente(tipoAzucar);
                         // 4 g de dextrosa por litro por volumen de CO₂
-                        const gramos = (co2Extra * litros * 4 * factorBase).toFixed(1);
+                        const gramos = fmtNum(co2Extra * litros * 4 * factorBase, 1);
 
                         card.classList.remove('d-none');
                         document.getElementById('gramosCalculados').textContent = gramos;

@@ -99,9 +99,9 @@
                             <td class="text-end font-monospace"
                                 th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'">—</td>
                             <td class="text-end"
-                                th:text="${lote.abv != null} ? ${lote.abv} + '%' : '—'">—</td>
+                                th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + '%' : '—'">—</td>
                             <td class="text-end"
-                                th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'">—</td>
+                                th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
                         </tr>
                     </tbody>
                 </table>

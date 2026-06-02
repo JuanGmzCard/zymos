@@ -175,7 +175,7 @@
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['litros'] != null and mejores['litros'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.litrosFinales != null}">
-                                <span th:text="${lote.litrosFinales} + ' L'">—</span>
+                                <span th:text="${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L'">—</span>
                                 <i th:if="${mejores['litros'] != null and mejores['litros'] == lote.id}"
                                    class="bi bi-star-fill ms-1" style="font-size:.7em;"></i>
                             </span>
@@ -185,7 +185,7 @@
                     <tr>
                         <td class="detail-label">Agua utilizada</td>
                         <td class="valor-celda text-muted" th:each="lote : ${lotes}"
-                            th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada} + ' L' : '—'">—</td>
+                            th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
                     </tr>
                     <tr>
                         <td class="detail-label">pH agua</td>
@@ -207,7 +207,7 @@
                     <tr>
                         <td class="detail-label">Temperatura ferm.</td>
                         <td class="valor-celda text-muted" th:each="lote : ${lotes}"
-                            th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura} + ' °C' : '—'">—</td>
+                            th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
                     </tr>
                     <tr>
                         <td class="detail-label">Inicio fermentación</td>

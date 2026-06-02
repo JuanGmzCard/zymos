@@ -181,7 +181,7 @@
                                       th:text="${item.tipoItem != null} ? ${item.tipoItem.displayName} : '-'">-</span>
                             </td>
                             <td th:text="${item.nombre}">-</td>
-                            <td th:text="${item.cantidad} + ' ' + (${item.unidad} != null ? ${item.unidad} : '')">-</td>
+                            <td th:text="${item.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${item.unidad} != null ? ${item.unidad} : '')">-</td>
                             <td th:text="'$' + ${#numbers.formatDecimal(item.valorUnitario,1,'COMMA',2,'POINT')}">-</td>
                             <td th:if="${factura.ivaIncluido}"
                                 class="text-muted small"

@@ -100,7 +100,7 @@
                     <div>
                         <div class="stat-label">Alcohol (ABV)</div>
                         <div class="stat-number mt-1"
-                             th:text="${lote.abv != null} ? ${#numbers.formatDecimal(lote.abv, 1, 2)} + ' %' : '—'">—</div>
+                             th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
                         <div class="text-muted small mt-1" th:if="${lote.abv == null}">Pendiente densidad final</div>
                     </div>
                     <i class="bi bi-droplet-half stat-icon"></i>
@@ -113,7 +113,7 @@
                     <div>
                         <div class="stat-label">Atenuación Aparente</div>
                         <div class="stat-number mt-1"
-                             th:text="${lote.atenuacionAparente != null} ? ${#numbers.formatDecimal(lote.atenuacionAparente, 1, 1)} + ' %' : '—'">—</div>
+                             th:text="${lote.atenuacionAparente != null} ? ${lote.atenuacionAparente.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
                         <div class="text-muted small mt-1" th:if="${lote.atenuacionAparente == null}">Pendiente densidad final</div>
                     </div>
                     <i class="bi bi-activity stat-icon"></i>
@@ -126,7 +126,7 @@
                     <div>
                         <div class="stat-label">Eficiencia de Macerado</div>
                         <div class="stat-number mt-1"
-                             th:text="${lote.eficienciaMacerado != null} ? ${#numbers.formatDecimal(lote.eficienciaMacerado, 1, 1)} + ' %' : '—'">—</div>
+                             th:text="${lote.eficienciaMacerado != null} ? ${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
                         <div class="text-muted small mt-1" th:if="${lote.eficienciaMacerado == null}">Sin maltas registradas</div>
                     </div>
                     <i class="bi bi-speedometer2 stat-icon"></i>
@@ -176,7 +176,7 @@
                         <div class="col-4">
                             <div class="detail-label">Agua</div>
                             <div class="detail-value"
-                                 th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada} + ' L' : '—'">—</div>
+                                 th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</div>
                         </div>
                         <div class="col-4">
                             <div class="detail-label">pH Agua</div>
@@ -186,7 +186,7 @@
                         <div class="col-4">
                             <div class="detail-label">Vol. Final</div>
                             <div class="detail-value"
-                                 th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'">—</div>
+                                 th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</div>
                         </div>
                         <div class="col-6" th:if="${lote.densidadInicial != null}">
                             <div class="densidad-box">
@@ -295,7 +295,7 @@
                     </div>
                     <div class="fase-dato" th:if="${lote.fermTemperatura != null}">
                         <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.fermTemperatura} + ' °C'"></span>
+                        <span class="fase-dato-val" th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
                 </div>
@@ -320,7 +320,7 @@
                     </div>
                     <div class="fase-dato" th:if="${lote.acondTemperatura != null}">
                         <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.acondTemperatura} + ' °C'"></span>
+                        <span class="fase-dato-val" th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
                 </div>
@@ -345,7 +345,7 @@
                     </div>
                     <div class="fase-dato" th:if="${lote.madurTemperatura != null}">
                         <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.madurTemperatura} + ' °C'"></span>
+                        <span class="fase-dato-val" th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
                 </div>
@@ -370,7 +370,7 @@
                     </div>
                     <div class="fase-dato" th:if="${lote.carbTemperatura != null}">
                         <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.carbTemperatura} + ' °C'"></span>
+                        <span class="fase-dato-val" th:text="${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                     </div>
                     <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
                 </div>
@@ -413,12 +413,12 @@
                             <td class="text-center">
                                 <span th:if="${lec.densidad != null and lote.densidadInicial != null and lec.densidad < lote.densidadInicial}"
                                       style="color:var(--verde-zymos);font-weight:600;"
-                                      th:text="${#numbers.formatDecimal(lec.getAbvParcial(lote.densidadInicial), 1, 2)} + '%'">—</span>
+                                      th:text="${lec.getAbvParcial(lote.densidadInicial).stripTrailingZeros().toPlainString()} + '%'">—</span>
                                 <span th:unless="${lec.densidad != null and lote.densidadInicial != null and lec.densidad < lote.densidadInicial}"
                                       class="text-muted">—</span>
                             </td>
                             <td class="text-center"
-                                th:text="${lec.temperatura != null} ? ${lec.temperatura} + ' °C' : '—'">—</td>
+                                th:text="${lec.temperatura != null} ? ${lec.temperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
                             <td class="text-muted small" th:text="${lec.notas ?: '—'}">—</td>
                             <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
@@ -626,9 +626,9 @@
                     <div class="comparativa-box">
                         <div class="detail-label">ABV Objetivo</div>
                         <div class="comparativa-objetivo"
-                             th:text="${#numbers.formatDecimal((lote.receta.ogObjetivo - lote.receta.fgObjetivo) * 0.13125, 1, 2)} + ' %'">—</div>
+                             th:text="${T(java.math.BigDecimal).valueOf((lote.receta.ogObjetivo - lote.receta.fgObjetivo) * 0.13125).stripTrailingZeros().toPlainString()} + ' %'">—</div>
                         <div class="comparativa-real" th:if="${lote.abv != null}">
-                            Real: <strong th:text="${#numbers.formatDecimal(lote.abv, 1, 2)} + ' %'"></strong>
+                            Real: <strong th:text="${lote.abv.stripTrailingZeros().toPlainString()} + ' %'"></strong>
                         </div>
                         <div class="text-muted small" th:if="${lote.abv == null}">Pendiente</div>
                     </div>
@@ -709,7 +709,7 @@
                         </td>
                         <td th:text="${asig.item.factura.proveedor}">—</td>
                         <td th:text="${asig.item.nombre}">—</td>
-                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? 'Costo total' : ${#numbers.formatDecimal(asig.cantidadAsignada,1,3)} + ' ' + (${asig.item.unidad ?: ''})">—</td>
+                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? 'Costo total' : ${asig.cantidadAsignada.stripTrailingZeros().toPlainString()} + ' ' + (${asig.item.unidad ?: ''})">—</td>
                         <td class="text-end pe-3 fw-bold"
                             th:text="'$' + ${#numbers.formatDecimal(asig.valorAsignado,1,'COMMA',0,'POINT')}">—</td>
                     </tr>
@@ -747,8 +747,8 @@
                         <td class="ps-3 fw-semibold" th:text="${v.cliente}">—</td>
                         <td class="text-muted"
                             th:text="${v.fechaDespacho != null} ? ${#temporals.format(v.fechaDespacho,'dd/MM/yyyy')} : '—'">—</td>
-                        <td class="text-center"
-                            th:text="${#numbers.formatDecimal(v.cantidad,1,3)} + ' ' + (${v.unidad ?: ''})">—</td>
+                        <td class="text-center text-muted small"
+                            th:text="${#lists.size(v.items)} + ' ítem(s)'">—</td>
                         <td class="text-center">
                             <span class="badge" th:classappend="${v.estado.badgeClass}"
                                   th:text="${v.estado.displayName}">—</span>

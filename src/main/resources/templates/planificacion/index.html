@@ -83,7 +83,7 @@
                                      th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</div>
                                 <div class="text-muted" style="font-size:.75rem;"
                                      th:if="${p.volumenEstimado != null}"
-                                     th:text="${p.volumenEstimado} + ' L estimados'">—</div>
+                                     th:text="${p.volumenEstimado.stripTrailingZeros().toPlainString()} + ' L estimados'">—</div>
                             </div>
                             <span class="plan-badge"
                                   th:style="'background:' + ${p.estado.color} + ';color:' + ${p.estado.colorTexto}"
@@ -131,7 +131,7 @@
                             <span th:unless="${p.receta != null}" class="fst-italic">Sin receta</span>
                         </td>
                         <td class="text-center"
-                            th:text="${p.volumenEstimado != null} ? ${p.volumenEstimado} + ' L' : '—'">—</td>
+                            th:text="${p.volumenEstimado != null} ? ${p.volumenEstimado.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
                         <td class="text-center">
                             <span class="plan-badge"
                                   th:style="'background:' + ${p.estado.color} + ';color:' + ${p.estado.colorTexto}"

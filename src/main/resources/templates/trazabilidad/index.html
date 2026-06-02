@@ -368,9 +368,9 @@
                                 <span th:if="${lote.clarificante != null and !lote.clarificante.isBlank()}" class="ing-chip clar" th:text="${lote.clarificante}">-</span>
                                 <span th:if="${#lists.isEmpty(lote.clarificantes) and (lote.clarificante == null or lote.clarificante.isBlank())}" class="f-none">—</span>
                             </td>
-                            <td th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada} : '—'" th:classappend="${lote.aguaUtilizada == null} ? 'f-none' : ''">-</td>
-                            <td th:text="${lote.phAgua != null} ? ${lote.phAgua} : '—'" th:classappend="${lote.phAgua == null} ? 'f-none' : ''">-</td>
-                            <td class="fw-semibold" th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'" th:classappend="${lote.litrosFinales == null} ? 'f-none' : ''">-</td>
+                            <td th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} : '—'" th:classappend="${lote.aguaUtilizada == null} ? 'f-none' : ''">-</td>
+                            <td th:text="${lote.phAgua != null} ? ${lote.phAgua.stripTrailingZeros().toPlainString()} : '—'" th:classappend="${lote.phAgua == null} ? 'f-none' : ''">-</td>
+                            <td class="fw-semibold" th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'" th:classappend="${lote.litrosFinales == null} ? 'f-none' : ''">-</td>
                         </tr>
                         </tbody>
                     </table>
@@ -401,7 +401,7 @@
                             </td>
                             <td class="f-date" th:classappend="${lote.fermFechaInicial == null} ? 'f-none' : ''" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.fermFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.fermFechaFinalIdeal != null} ? ${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
-                            <td th:classappend="${lote.fermTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura} + ' °C' : '—'">-</td>
+                            <td th:classappend="${lote.fermTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.fermFechaFinal == null} ? 'f-none' : ''" th:text="${lote.fermFechaFinal != null} ? ${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
                         </tr>
                         </tbody>
@@ -433,7 +433,7 @@
                             </td>
                             <td class="f-date" th:classappend="${lote.acondFechaInicial == null} ? 'f-none' : ''" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.acondFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.acondFechaFinalIdeal != null} ? ${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
-                            <td th:classappend="${lote.acondTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.acondTemperatura != null} ? ${lote.acondTemperatura} + ' °C' : '—'">-</td>
+                            <td th:classappend="${lote.acondTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.acondTemperatura != null} ? ${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.acondFechaFinal == null} ? 'f-none' : ''" th:text="${lote.acondFechaFinal != null} ? ${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
                         </tr>
                         </tbody>
@@ -465,7 +465,7 @@
                             </td>
                             <td class="f-date" th:classappend="${lote.madurFechaInicial == null} ? 'f-none' : ''" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.madurFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.madurFechaFinalIdeal != null} ? ${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
-                            <td th:classappend="${lote.madurTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.madurTemperatura != null} ? ${lote.madurTemperatura} + ' °C' : '—'">-</td>
+                            <td th:classappend="${lote.madurTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.madurTemperatura != null} ? ${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.madurFechaFinal == null} ? 'f-none' : ''" th:text="${lote.madurFechaFinal != null} ? ${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
                         </tr>
                         </tbody>
@@ -500,7 +500,7 @@
                             </td>
                             <td class="f-date" th:classappend="${lote.carbFechaInicial == null} ? 'f-none' : ''" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.carbFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinalIdeal != null} ? ${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
-                            <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura} + ' °C' : '—'">-</td>
+                            <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.carbFechaFinal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinal != null} ? ${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="d-none d-lg-table-cell">
                                 <span th:if="${lote.carbMetodo == 'NATURAL'}" class="badge rounded-pill" style="background:rgba(39,174,96,0.15);color:#1a6e3e;font-size:0.75rem;">Natural</span>

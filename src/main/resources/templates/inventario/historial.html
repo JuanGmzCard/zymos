@@ -16,7 +16,7 @@
     <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
         <div>
             <h1><i class="bi bi-clock-history me-2"></i>Movimientos de Stock</h1>
-            <p th:text="${insumo.nombre} + ' — ' + ${insumo.cantidad} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">Insumo</p>
+            <p th:text="${insumo.nombre} + ' — ' + ${insumo.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">Insumo</p>
         </div>
         <a th:href="@{/inventario}" class="btn btn-zymos-outline">
             <i class="bi bi-arrow-left me-1"></i>Volver al Inventario
@@ -37,11 +37,11 @@
             <div>
                 <div class="detail-label">Stock actual</div>
                 <div class="detail-value fw-semibold"
-                     th:text="${insumo.cantidad} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</div>
+                     th:text="${insumo.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</div>
             </div>
             <div>
                 <div class="detail-label">Stock mínimo</div>
-                <div class="detail-value" th:text="${insumo.stockMinimo} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</div>
+                <div class="detail-value" th:text="${insumo.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</div>
             </div>
             <div th:if="${insumo.bajoStock}" class="align-self-center">
                 <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i>Bajo stock</span>
@@ -82,11 +82,11 @@
                                   th:text="${mov.tipo.displayName}">—</span>
                         </td>
                         <td class="fw-semibold"
-                            th:text="${mov.cantidad} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</td>
+                            th:text="${mov.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</td>
                         <td class="text-muted small"
-                            th:text="${mov.cantidadAnterior != null ? mov.cantidadAnterior : '—'}">—</td>
+                            th:text="${mov.cantidadAnterior != null ? mov.cantidadAnterior.stripTrailingZeros().toPlainString() : '—'}">—</td>
                         <td class="text-muted small"
-                            th:text="${mov.cantidadPosterior != null ? mov.cantidadPosterior : '—'}">—</td>
+                            th:text="${mov.cantidadPosterior != null ? mov.cantidadPosterior.stripTrailingZeros().toPlainString() : '—'}">—</td>
                         <td>
                             <span th:if="${mov.referencia != null}"
                                   class="badge badge-neutral me-1" th:text="${mov.referencia}">—</span>

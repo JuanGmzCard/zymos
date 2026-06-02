@@ -93,27 +93,27 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card success">
-                <div class="stat-number" th:text="${#numbers.formatDecimal(totalLitros,1,1)} + ' L'">0 L</div>
+                <div class="stat-number" th:text="${totalLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
                 <div class="stat-label">Litros Producidos</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card info">
-                <div class="stat-number" th:text="${#numbers.formatDecimal(avgLitros,1,1)} + ' L'">0 L</div>
+                <div class="stat-number" th:text="${avgLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
                 <div class="stat-label">Prom. por Lote</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card warning">
                 <div class="stat-number"
-                     th:text="${avgAbv != null} ? ${#numbers.formatDecimal(avgAbv,1,2)} + '%' : '—'">—</div>
+                     th:text="${avgAbv != null} ? ${avgAbv.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
                 <div class="stat-label">ABV Promedio</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card success">
                 <div class="stat-number"
-                     th:text="${avgEficiencia != null} ? ${#numbers.formatDecimal(avgEficiencia,1,1)} + '%' : '—'">—</div>
+                     th:text="${avgEficiencia != null} ? ${avgEficiencia.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
                 <div class="stat-label">Eficiencia Prom.</div>
             </div>
         </div>
@@ -229,17 +229,17 @@
                                 </td>
                                 <td class="text-muted"
                                     th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yy')} : '—'">-</td>
-                                <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales} + ' L' : '—'">-</td>
+                                <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">-</td>
                                 <td>
                                     <span th:if="${lote.abv != null}"
                                           style="font-weight:700;color:var(--dorado);"
-                                          th:text="${#numbers.formatDecimal(lote.abv,1,2)} + '%'">-</span>
+                                          th:text="${lote.abv.stripTrailingZeros().toPlainString()} + '%'">-</span>
                                     <span th:unless="${lote.abv != null}" class="text-muted">—</span>
                                 </td>
                                 <td>
                                     <span th:if="${lote.eficienciaMacerado != null}"
                                           th:style="${lote.eficienciaMacerado >= 75} ? 'color:#198754;font-weight:600;' : (${lote.eficienciaMacerado >= 60} ? 'color:var(--dorado);font-weight:600;' : 'color:#dc3545;font-weight:600;')"
-                                          th:text="${#numbers.formatDecimal(lote.eficienciaMacerado,1,1)} + '%'">-</span>
+                                          th:text="${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + '%'">-</span>
                                     <span th:unless="${lote.eficienciaMacerado != null}" class="text-muted">—</span>
                                 </td>
                                 <td>
@@ -271,7 +271,7 @@
                             <span class="fw-semibold" style="font-size:0.85rem;" th:text="${r.estilo}">—</span>
                             <span class="text-muted" style="font-size:0.75rem;">
                                 <span th:text="${r.cantidad}">0</span> lote(s) ·
-                                <span th:text="${#numbers.formatDecimal(r.litros,1,1)}">0</span> L
+                                <span th:text="${r.litros.stripTrailingZeros().toPlainString()}">0</span> L
                             </span>
                         </div>
                         <div class="progress" style="height:6px; border-radius:3px;">
