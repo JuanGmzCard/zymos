@@ -44,6 +44,8 @@
                         border-radius: 20px; padding: 2px 10px; font-size: 0.82rem; margin-top: 4px; }
         .cliente-chip .bi { font-size: 0.8rem; color: var(--verde-alera); }
         html.dark-mode .cliente-chip { background: var(--dm-verde-bg); border-color: var(--dm-verde-border); color: var(--dm-text); }
+        /* Escapa el overflow del table-responsive usando fixed positioning vía JS */
+        .lote-suggest { position: fixed !important; overflow-y: auto !important; overflow-x: hidden; }
     </style>
 </head>
 <body>
@@ -459,10 +461,21 @@ function toggleCotizacionField() {
 // ── Selector de lote ─────────────────────────────────────────────────────────
 var loteTimer;
 
+function positionLoteSuggest(suggest, input) {
+    var container = input.closest('.position-relative') || input;
+    var rect = container.getBoundingClientRect();
+    suggest.style.left   = rect.left + 'px';
+    suggest.style.top    = (rect.bottom + 2) + 'px';
+    suggest.style.width  = rect.width + 'px';
+    var spaceBelow = window.innerHeight - rect.bottom - 8;
+    suggest.style.maxHeight = Math.min(260, Math.max(80, spaceBelow)) + 'px';
+}
+
 function renderLotes(items, suggest) {
     if (!items.length) {
         suggest.innerHTML = '<div class="ss-empty">Sin lotes completados disponibles</div>';
         suggest.style.display = 'block';
+        if (suggest._inputRef) positionLoteSuggest(suggest, suggest._inputRef);
         return;
     }
     suggest.innerHTML = items.map(function(i) {
@@ -486,6 +499,7 @@ function renderLotes(items, suggest) {
             + '</span></a>';
     }).join('');
     suggest.style.display = 'block';
+    if (suggest._inputRef) positionLoteSuggest(suggest, suggest._inputRef);
 }
 
 function fetchLotes(suggest, q) {
@@ -498,6 +512,7 @@ document.getElementById('itemsBody').addEventListener('focusin', function(e) {
     if (e.target.classList.contains('lote-buscador')) {
         var cell    = e.target.closest('td');
         var suggest = cell.querySelector('.lote-suggest');
+        suggest._inputRef = e.target;
         if (suggest.style.display === 'block') return;
         fetchLotes(suggest, e.target.value.trim());
     }
@@ -522,6 +537,7 @@ document.getElementById('itemsBody').addEventListener('input', function(e) {
         var row = input.closest('tr');
         var selUnidad = row ? row.querySelector('.item-unidad') : null;
         if (selUnidad) selUnidad.innerHTML = UNIT_OPTIONS;
+        suggest._inputRef = input;
         clearTimeout(loteTimer);
         var q = input.value.trim();
         loteTimer = setTimeout(function() { fetchLotes(suggest, q); }, 260);
@@ -756,6 +772,18 @@ actualizarTotales();
         if (!displayInput.contains(e.target) && !suggest.contains(e.target)) cerrar();
     });
 })();
+
+// ── Reposicionar lote-suggest al hacer scroll o resize ───────────────────────
+window.addEventListener('scroll', function() {
+    document.querySelectorAll('.lote-suggest').forEach(function(s) {
+        if (s.style.display === 'block' && s._inputRef) positionLoteSuggest(s, s._inputRef);
+    });
+}, { passive: true });
+window.addEventListener('resize', function() {
+    document.querySelectorAll('.lote-suggest').forEach(function(s) {
+        if (s.style.display === 'block' && s._inputRef) positionLoteSuggest(s, s._inputRef);
+    });
+}, { passive: true });
 </script>
 </body>
 </html>
