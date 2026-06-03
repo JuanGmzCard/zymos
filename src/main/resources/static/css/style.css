@@ -68,7 +68,7 @@ h1, h2, h3, h4, h5, .brand-font {
 .navbar-zymos .nav-link:hover,
 .navbar-zymos .nav-link.active {
     color: var(--dorado) !important;
-    background-color: rgba(201, 160, 40, 0.12);
+    background-color: color-mix(in srgb, var(--dorado) 12%, transparent);
 }
 
 .navbar-zymos .nav-link i {
@@ -87,12 +87,12 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .navbar-zymos .dropdown-item:hover {
-    background-color: rgba(201, 160, 40, 0.2);
+    background-color: color-mix(in srgb, var(--dorado) 20%, transparent);
     color: var(--dorado-claro);
 }
 
 .navbar-zymos .dropdown-divider {
-    border-color: rgba(201, 160, 40, 0.3);
+    border-color: color-mix(in srgb, var(--dorado) 30%, transparent);
 }
 
 /* ============================================================
@@ -136,7 +136,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .section-header .text-muted {
-    color: rgba(245, 237, 208, 0.7) !important;
+    color: color-mix(in srgb, var(--crema) 70%, transparent) !important;
     font-size: 0.8rem;
 }
 
@@ -271,8 +271,8 @@ h1, h2, h3, h4, h5, .brand-font {
 .ingrediente-chip {
     display: inline-flex;
     align-items: center;
-    background: rgba(54, 67, 24, 0.1);
-    border: 1px solid rgba(54, 67, 24, 0.25);
+    background: color-mix(in srgb, var(--verde-alera) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 25%, transparent);
     border-radius: 20px;
     padding: 3px 10px;
     font-size: 0.78rem;
@@ -281,7 +281,7 @@ h1, h2, h3, h4, h5, .brand-font {
     font-weight: 500;
 }
 
-.ingrediente-chip.malta { background: rgba(201, 160, 40, 0.12); border-color: rgba(201, 160, 40, 0.4); color: #7a5c00; }
+.ingrediente-chip.malta { background: color-mix(in srgb, var(--dorado) 12%, transparent); border-color: color-mix(in srgb, var(--dorado) 40%, transparent); color: #7a5c00; }
 .ingrediente-chip.lupulo { background: rgba(39, 174, 96, 0.1); border-color: rgba(39, 174, 96, 0.35); color: #1a6e3e; }
 .ingrediente-chip.levadura { background: rgba(52, 152, 219, 0.1); border-color: rgba(52, 152, 219, 0.35); color: #1a5276; }
 .ingrediente-chip.clarificante { background: rgba(142, 68, 173, 0.1); border-color: rgba(142, 68, 173, 0.3); color: #6c3483; }
@@ -338,10 +338,10 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .phase-step.active .phase-step-label { color: var(--dorado); }
-.phase-step.active .phase-step-date { color: rgba(245,237,208,0.8); }
+.phase-step.active .phase-step-date { color: color-mix(in srgb, var(--crema) 80%, transparent); }
 
 .phase-step.completed {
-    background: rgba(54, 67, 24, 0.08);
+    background: color-mix(in srgb, var(--verde-alera) 8%, transparent);
 }
 
 .phase-step-number {
@@ -380,7 +380,7 @@ h1, h2, h3, h4, h5, .brand-font {
 }
 
 .table-zymos tbody tr:hover {
-    background-color: rgba(201, 160, 40, 0.06);
+    background-color: color-mix(in srgb, var(--dorado) 6%, transparent);
 }
 
 /* ============================================================
@@ -412,7 +412,7 @@ h1, h2, h3, h4, h5, .brand-font {
 
 .form-control:focus, .form-select:focus {
     border-color: var(--dorado);
-    box-shadow: 0 0 0 0.2rem rgba(201, 160, 40, 0.2);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--dorado) 20%, transparent);
 }
 
 /* ============================================================
@@ -537,7 +537,7 @@ h1, h2, h3, h4, h5, .brand-font {
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(201, 160, 40, 0.4);
+    box-shadow: 0 5px 15px color-mix(in srgb, var(--dorado) 40%, transparent);
     background: linear-gradient(90deg, var(--dorado-claro), var(--dorado));
     color: var(--verde-oscuro);
 }
@@ -611,22 +611,22 @@ h1, h2, h3, h4, h5, .brand-font {
 
 /* Badge neutral — reemplaza bg-secondary de Bootstrap con paleta Zymos */
 .badge-neutral {
-    background-color: rgba(54, 67, 24, 0.1) !important;
+    background-color: color-mix(in srgb, var(--verde-alera) 10%, transparent) !important;
     color: var(--verde-zymos) !important;
-    border: 1px solid rgba(54, 67, 24, 0.2);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 20%, transparent);
 }
 
 /* Badge rol — navbar user dropdown */
 .badge-role {
-    background: rgba(201, 160, 40, 0.15);
+    background: color-mix(in srgb, var(--dorado) 15%, transparent);
     color: var(--dorado);
     font-size: 0.7rem;
-    border: 1px solid rgba(201, 160, 40, 0.3);
+    border: 1px solid color-mix(in srgb, var(--dorado) 30%, transparent);
 }
 html.dark-mode .badge-role {
-    background: rgba(201, 160, 40, 0.2) !important;
+    background: color-mix(in srgb, var(--dorado) 20%, transparent) !important;
     color: var(--dorado-claro) !important;
-    border-color: rgba(201, 160, 40, 0.4) !important;
+    border-color: color-mix(in srgb, var(--dorado) 40%, transparent) !important;
 }
 
 /* ============================================================
@@ -710,16 +710,16 @@ html.dark-mode .form-select:focus {
 /* Navbar search — preserva el look de vidrio sobre el fondo oscuro del navbar */
 html.dark-mode .navbar-search {
     background: rgba(255,255,255,0.08) !important;
-    border-color: rgba(201,160,40,0.45) !important;
+    border-color: color-mix(in srgb, var(--dorado) 45%, transparent) !important;
     color: var(--crema) !important;
 }
 html.dark-mode .navbar-search:focus {
     background: rgba(255,255,255,0.14) !important;
     border-color: var(--dorado) !important;
-    box-shadow: 0 0 0 0.2rem rgba(201,160,40,0.2) !important;
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--dorado) 20%, transparent) !important;
     color: var(--crema) !important;
 }
-html.dark-mode .navbar-search::placeholder { color: rgba(245,237,208,0.45) !important; }
+html.dark-mode .navbar-search::placeholder { color: color-mix(in srgb, var(--crema) 45%, transparent) !important; }
 
 /* Tablas */
 html.dark-mode .table,
@@ -797,12 +797,12 @@ html.dark-mode .hero-section {
 }
 html.dark-mode .hero-section p,
 html.dark-mode .hero-section small {
-    color: rgba(245,237,208,0.85) !important;
+    color: color-mix(in srgb, var(--crema) 85%, transparent) !important;
     opacity: 1 !important;
 }
 html.dark-mode .hero-section .text-muted,
 html.dark-mode .hero-section code {
-    color: rgba(245,237,208,0.55) !important;
+    color: color-mix(in srgb, var(--crema) 55%, transparent) !important;
 }
 
 /* Alerts */
@@ -839,7 +839,7 @@ html.dark-mode .card-header {
     color: var(--dm-text) !important;
 }
 html.dark-mode .card-zymos .card-header {
-    background: linear-gradient(90deg, rgba(36,46,13,0.95), rgba(17,22,6,0.98)) !important;
+    background: linear-gradient(90deg, color-mix(in srgb, var(--verde-oscuro) 95%, transparent), color-mix(in srgb, var(--dm-bg) 98%, transparent)) !important;
     color: var(--crema) !important;
     border-color: var(--dm-border-med) !important;
 }
@@ -848,14 +848,14 @@ html.dark-mode .card-zymos .card-header h4 { color: var(--dorado) !important; }
 
 /* Badge neutral en dark mode */
 html.dark-mode .badge-neutral {
-    background-color: rgba(201,160,40,0.22) !important;
+    background-color: color-mix(in srgb, var(--dorado) 22%, transparent) !important;
     color: var(--dorado-claro) !important;
     border-color: var(--dm-border-med) !important;
 }
 
 /* Ingrediente chips en dark mode */
 html.dark-mode .ingrediente-chip { background: var(--dm-verde-bg) !important; border-color: var(--dm-verde-border) !important; color: var(--dorado-claro) !important; }
-html.dark-mode .ingrediente-chip.malta { background: rgba(201,160,40,0.2) !important; border-color: rgba(201,160,40,0.4) !important; color: var(--dorado-claro) !important; }
+html.dark-mode .ingrediente-chip.malta { background: color-mix(in srgb, var(--dorado) 20%, transparent) !important; border-color: color-mix(in srgb, var(--dorado) 40%, transparent) !important; color: var(--dorado-claro) !important; }
 html.dark-mode .ingrediente-chip.lupulo { background: rgba(39,174,96,0.2) !important; border-color: rgba(39,174,96,0.4) !important; color: #6ee6a0 !important; }
 html.dark-mode .ingrediente-chip.levadura { background: rgba(52,152,219,0.2) !important; border-color: rgba(52,152,219,0.4) !important; color: #80c8f0 !important; }
 html.dark-mode .ingrediente-chip.clarificante { background: rgba(142,68,173,0.2) !important; border-color: rgba(142,68,173,0.4) !important; color: #c890e8 !important; }
@@ -863,7 +863,7 @@ html.dark-mode .ingrediente-chip.clarificante { background: rgba(142,68,173,0.2)
 /* Phase badges (kanban, detalle, comparativa) en dark mode */
 html.dark-mode .phase-badge.fermentacion    { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
 html.dark-mode .phase-badge.acondicionamiento { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
-html.dark-mode .phase-badge.maduracion      { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+html.dark-mode .phase-badge.maduracion      { background: color-mix(in srgb, var(--dorado) 20%, transparent) !important; color: var(--dorado-claro) !important; }
 html.dark-mode .phase-badge.carbonatacion   { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
 html.dark-mode .phase-badge.completado      { background: rgba(142,68,173,0.2)  !important; color: #c890e8 !important; }
 html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-med) !important; }
@@ -872,18 +872,18 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
    RECETAS
    ============================================================ */
 .equipo-tipo-badge {
-    background: rgba(54, 67, 24, 0.1);
+    background: color-mix(in srgb, var(--verde-alera) 10%, transparent);
     color: var(--verde-zymos);
-    border: 1px solid rgba(54, 67, 24, 0.2);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 20%, transparent);
     font-size: 0.7rem;
     font-weight: 600;
     letter-spacing: 0.3px;
 }
 
 .receta-estilo-badge {
-    background: rgba(54, 67, 24, 0.12);
+    background: color-mix(in srgb, var(--verde-alera) 12%, transparent);
     color: var(--verde-zymos);
-    border: 1px solid rgba(54, 67, 24, 0.25);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 25%, transparent);
     font-size: 0.72rem;
     font-weight: 600;
     letter-spacing: 0.3px;
@@ -896,8 +896,8 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
 .receta-inactiva { opacity: 0.6; }
 
 .receta-loader-box {
-    background: rgba(201, 160, 40, 0.08);
-    border: 1px solid rgba(201, 160, 40, 0.3);
+    background: color-mix(in srgb, var(--dorado) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--dorado) 30%, transparent);
     border-radius: 8px;
     padding: 0.8rem 1rem;
 }
@@ -906,23 +906,23 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
    DETALLE LOTE — HERO
    ============================================================ */
 .hero-meta {
-    color: rgba(245, 237, 208, 0.75);
+    color: color-mix(in srgb, var(--crema) 75%, transparent);
     font-size: 0.82rem;
 }
 
-.navbar-search::placeholder { color: rgba(245,237,208,0.5) !important; }
+.navbar-search::placeholder { color: color-mix(in srgb, var(--crema) 50%, transparent) !important; }
 .navbar-search:focus { background: rgba(255,255,255,0.15) !important; color: var(--crema) !important; box-shadow: none !important; border-color: var(--dorado) !important; }
 
 .btn-outline-crema {
     background: transparent;
-    border: 2px solid rgba(245, 237, 208, 0.6);
+    border: 2px solid color-mix(in srgb, var(--crema) 60%, transparent);
     color: var(--crema);
     font-weight: 600;
     transition: all 0.2s;
 }
 
 .btn-outline-crema:hover {
-    background: rgba(245, 237, 208, 0.15);
+    background: color-mix(in srgb, var(--crema) 15%, transparent);
     border-color: var(--crema);
     color: var(--crema);
 }
@@ -931,16 +931,16 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
    DETALLE LOTE — DENSIDADES
    ============================================================ */
 .densidad-box {
-    background: rgba(54, 67, 24, 0.06);
-    border: 1px solid rgba(54, 67, 24, 0.18);
+    background: color-mix(in srgb, var(--verde-alera) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 18%, transparent);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     text-align: center;
 }
 
 .densidad-box.densidad-final {
-    background: rgba(201, 160, 40, 0.08);
-    border-color: rgba(201, 160, 40, 0.3);
+    background: color-mix(in srgb, var(--dorado) 8%, transparent);
+    border-color: color-mix(in srgb, var(--dorado) 30%, transparent);
 }
 
 .densidad-tag {
@@ -997,12 +997,12 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
 }
 
 .fase-col.fase-activa {
-    background: linear-gradient(180deg, rgba(54, 67, 24, 0.07) 0%, transparent 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--verde-alera) 7%, transparent) 0%, transparent 100%);
     border-top: 3px solid var(--verde-zymos);
 }
 
 .fase-col.fase-completada {
-    background: rgba(201, 160, 40, 0.05);
+    background: color-mix(in srgb, var(--dorado) 5%, transparent);
     border-top: 3px solid var(--dorado);
 }
 
@@ -1078,7 +1078,7 @@ html.dark-mode .phase-badge.inicio          { background: rgba(255,255,255,0.07)
    AUDITORÍA — metadatos de creación/modificación
    ============================================================ */
 .audit-meta {
-    border-top: 1px dashed rgba(54,67,24,0.15);
+    border-top: 1px dashed color-mix(in srgb, var(--verde-alera) 15%, transparent);
     padding-top: 0.5rem;
     font-size: 0.75rem;
     color: #6c757d;
@@ -1090,8 +1090,8 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
    COMPARATIVA RECETA VS LOTE
    ============================================================ */
 .comparativa-box {
-    background: rgba(54, 67, 24, 0.05);
-    border: 1px solid rgba(54, 67, 24, 0.15);
+    background: color-mix(in srgb, var(--verde-alera) 5%, transparent);
+    border: 1px solid color-mix(in srgb, var(--verde-alera) 15%, transparent);
     border-radius: 10px;
     padding: 1rem;
 }
