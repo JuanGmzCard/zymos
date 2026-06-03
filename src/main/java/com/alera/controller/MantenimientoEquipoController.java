@@ -22,8 +22,13 @@ public class MantenimientoEquipoController {
     }
 
     @GetMapping
-    public String lista(@PathVariable Long equipoId, Model model) {
-        var equipo = equipoService.buscarPorId(equipoId).orElseThrow();
+    public String lista(@PathVariable Long equipoId, Model model, RedirectAttributes ra) {
+        var equipo = equipoService.buscarPorId(equipoId).orElse(null);
+        if (equipo == null) {
+            ra.addFlashAttribute("mensaje", "El equipo no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/equipos";
+        }
         model.addAttribute("equipo",              equipo);
         model.addAttribute("mantenimientos",      service.listarPorEquipo(equipoId));
         model.addAttribute("costoTotal",          service.sumCostoPorEquipo(equipoId));

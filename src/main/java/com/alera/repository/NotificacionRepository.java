@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,7 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Long
     Page<Notificacion> findAllOrdenadas(Pageable pageable);
 
     @Modifying
+    @Transactional
     @Query("UPDATE Notificacion n SET n.leida = true WHERE n.leida = false")
     void marcarTodasLeidas();
 

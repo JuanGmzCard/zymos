@@ -53,8 +53,14 @@ public class ProveedorController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        model.addAttribute("proveedor", service.buscarPorId(id).orElseThrow());
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var proveedor = service.buscarPorId(id).orElse(null);
+        if (proveedor == null) {
+            ra.addFlashAttribute("mensaje", "El proveedor no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/proveedores";
+        }
+        model.addAttribute("proveedor", proveedor);
         model.addAttribute("proveedorId", id);
         model.addAttribute("totalFacturas", service.totalFacturas(id));
         model.addAttribute("countFacturas", service.contarFacturas(id));

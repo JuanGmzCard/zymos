@@ -114,8 +114,14 @@ public class InsumoInventarioController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        model.addAttribute("insumo", service.buscarPorId(id).orElseThrow());
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var insumo = service.buscarPorId(id).orElse(null);
+        if (insumo == null) {
+            ra.addFlashAttribute("mensaje", "El insumo no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/inventario";
+        }
+        model.addAttribute("insumo", insumo);
         model.addAttribute("tiposInsumo", categoriaInsumoService.listarNombresActivos());
         model.addAttribute("proveedores", proveedorService.listarActivos());
         return "inventario/formulario";
@@ -252,8 +258,13 @@ public class InsumoInventarioController {
     @GetMapping("/{id}/historial")
     public String historialMovimientos(@PathVariable Long id,
                                         @RequestParam(defaultValue = "0") int page,
-                                        Model model) {
-        InsumoInventario insumo = service.buscarPorId(id).orElseThrow();
+                                        Model model, RedirectAttributes ra) {
+        InsumoInventario insumo = service.buscarPorId(id).orElse(null);
+        if (insumo == null) {
+            ra.addFlashAttribute("mensaje", "El insumo no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/inventario";
+        }
         var pagina = service.listarMovimientos(id, page);
         model.addAttribute("insumo",       insumo);
         model.addAttribute("movimientos",  pagina.getContent());

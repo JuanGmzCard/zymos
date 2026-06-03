@@ -69,8 +69,13 @@ public class EquipoController {
     }
 
     @GetMapping("/ver/{id}")
-    public String ver(@PathVariable Long id, Model model) {
-        var equipo = service.buscarPorId(id).orElseThrow();
+    public String ver(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var equipo = service.buscarPorId(id).orElse(null);
+        if (equipo == null) {
+            ra.addFlashAttribute("mensaje", "El equipo no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/equipos";
+        }
         model.addAttribute("equipo",               equipo);
         model.addAttribute("mantenimientos",        mantenimientoService.listarPorEquipo(id));
         model.addAttribute("costoTotal",            mantenimientoService.sumCostoPorEquipo(id));
@@ -112,8 +117,13 @@ public class EquipoController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'EQUIPOS', 'SUPERADMIN')")
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        var equipo = service.buscarPorId(id).orElseThrow();
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var equipo = service.buscarPorId(id).orElse(null);
+        if (equipo == null) {
+            ra.addFlashAttribute("mensaje", "El equipo no existe o fue eliminado");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/equipos";
+        }
         model.addAttribute("equipo", equipo);
         model.addAttribute("tiposEquipo", categoriaEquipoService.listarNombresActivos());
         model.addAttribute("estadosEquipo", EstadoEquipo.values());

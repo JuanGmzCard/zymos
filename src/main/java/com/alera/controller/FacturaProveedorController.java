@@ -166,8 +166,14 @@ public class FacturaProveedorController {
     }
 
     @GetMapping("/ver/{id}")
-    public String ver(@PathVariable Long id, Model model) {
-        model.addAttribute("factura",   service.buscarPorId(id).orElseThrow());
+    public String ver(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var factura = service.buscarPorId(id).orElse(null);
+        if (factura == null) {
+            ra.addFlashAttribute("mensaje", "La factura no existe o fue eliminada");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/facturas";
+        }
+        model.addAttribute("factura",   factura);
         model.addAttribute("historial", service.listarHistorial(id));
         return "facturas/detalle";
     }
@@ -180,8 +186,13 @@ public class FacturaProveedorController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        var factura = service.buscarPorId(id).orElseThrow();
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var factura = service.buscarPorId(id).orElse(null);
+        if (factura == null) {
+            ra.addFlashAttribute("mensaje", "La factura no existe o fue eliminada");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/facturas";
+        }
         model.addAttribute("facturaForm", service.toFormDto(factura));
         model.addAttribute("facturaId", id);
         agregarDatosFormulario(model);
