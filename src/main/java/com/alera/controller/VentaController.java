@@ -113,9 +113,13 @@ public class VentaController {
     }
 
     @GetMapping("/ver/{id}")
-    public String ver(@PathVariable Long id, Model model) {
-        var venta = service.buscarPorId(id)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
+    public String ver(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var venta = service.buscarPorId(id).orElse(null);
+        if (venta == null) {
+            ra.addFlashAttribute("mensaje", "La venta no existe o fue eliminada");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/ventas";
+        }
         model.addAttribute("venta",    venta);
         model.addAttribute("estados",  EstadoVenta.values());
         model.addAttribute("historial", service.listarHistorial(id));
@@ -154,9 +158,13 @@ public class VentaController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
-        var venta = service.buscarPorId(id)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
+    public String editar(@PathVariable Long id, Model model, RedirectAttributes ra) {
+        var venta = service.buscarPorId(id).orElse(null);
+        if (venta == null) {
+            ra.addFlashAttribute("mensaje", "La venta no existe o fue eliminada");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/ventas";
+        }
         VentaFormDto dto = new VentaFormDto();
         dto.setId(venta.getId());
         dto.setCliente(venta.getCliente());
@@ -236,8 +244,8 @@ public class VentaController {
 
     @GetMapping("/{id}/pdf")
     public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
-        var venta = service.buscarPorId(id)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada: " + id));
+        var venta = service.buscarPorId(id).orElse(null);
+        if (venta == null) return ResponseEntity.notFound().build();
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
         byte[] bytes = pdfExportService.generarPdfVenta(venta, branding);
