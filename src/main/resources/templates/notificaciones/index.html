@@ -13,7 +13,7 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
         .notif-row { transition: background .15s; }
-        .notif-row:hover { background: rgba(201,160,40,.06); }
+        .notif-row:hover { background: color-mix(in srgb, var(--dorado) 6%, transparent); }
         .notif-row.leida { opacity: .6; }
         .notif-icono { font-size: 1.15rem; }
         .notif-tiempo { font-size: .75rem; color: #888; }
@@ -24,8 +24,14 @@
             font-size: .72rem;
             font-weight: 600;
         }
-        html.dark-mode .notif-row:hover { background: rgba(201,160,40,.1); }
+        .tipo-badge-vencimiento { background: rgba(13,110,253,.12); color: #0d6efd; }
+        .tipo-badge-mantenimiento { background: rgba(13,202,240,.12); color: #0dcaf0; }
+        .tipo-badge-sistema { background: rgba(13,110,253,.12); color: #0d6efd; }
+        html.dark-mode .notif-row:hover { background: color-mix(in srgb, var(--dorado) 10%, transparent); }
         html.dark-mode .notif-tiempo { color: #aaa; }
+        html.dark-mode .tipo-badge-vencimiento { background: rgba(13,110,253,.2); color: #6ea8fe; }
+        html.dark-mode .tipo-badge-mantenimiento { background: rgba(13,202,240,.2); color: #6edff6; }
+        html.dark-mode .tipo-badge-sistema { background: rgba(13,110,253,.2); color: #6ea8fe; }
     </style>
 </head>
 <body>
@@ -78,14 +84,11 @@
                             <span class="fw-600" th:text="${n.titulo}"></span>
                             <span class="badge rounded-pill bg-warning text-dark tipo-badge"
                                   th:if="${n.tipo.name() == 'BAJO_STOCK'}">Bajo stock</span>
-                            <span class="badge rounded-pill tipo-badge"
-                                  style="background:rgba(13,110,253,.12);color:#0d6efd;"
+                            <span class="badge rounded-pill tipo-badge tipo-badge-vencimiento"
                                   th:if="${n.tipo.name() == 'VENCIMIENTO'}">Vencimiento</span>
-                            <span class="badge rounded-pill tipo-badge"
-                                  style="background:rgba(13,202,240,.12);color:#0dcaf0;"
+                            <span class="badge rounded-pill tipo-badge tipo-badge-mantenimiento"
                                   th:if="${n.tipo.name() == 'MANTENIMIENTO'}">Mantenimiento</span>
-                            <span class="badge rounded-pill tipo-badge"
-                                  style="background:rgba(13,110,253,.12);color:#0d6efd;"
+                            <span class="badge rounded-pill tipo-badge tipo-badge-sistema"
                                   th:if="${n.tipo.name() == 'SISTEMA'}">Sistema</span>
                             <span th:unless="${n.leida}"
                                   class="badge rounded-pill bg-danger"

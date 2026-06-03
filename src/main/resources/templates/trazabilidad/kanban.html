@@ -17,7 +17,7 @@
         html.dark-mode .kanban-col { background: #1c2410; }
         .kanban-col-header { padding: 0.75rem 1rem; font-family: 'Cinzel', serif; font-size: 0.82rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
         .kanban-col-body { padding: 0.6rem; min-height: 120px; transition: background 0.15s; }
-        .kanban-col-body.drag-over { background: rgba(201,160,40,0.08); border-radius: 6px; }
+        .kanban-col-body.drag-over { background: color-mix(in srgb, var(--dorado) 8%, transparent); border-radius: 6px; }
         .kanban-card { background: #fafaf6; border: 1px solid #e9ecef; border-radius: 8px; padding: 0.75rem; margin-bottom: 0.5rem; transition: box-shadow 0.2s, opacity 0.2s; }
         .kanban-card:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.1); }
         .kanban-card.draggable { cursor: grab; }
@@ -25,7 +25,7 @@
         .kanban-card.saving { opacity: 0.45; pointer-events: none; }
         .kanban-ghost { opacity: 0.3; border: 2px dashed var(--dorado) !important; }
         .kanban-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important; transform: rotate(1.5deg); }
-        html.dark-mode .kanban-card { background: #242e12; border-color: rgba(201,160,40,0.15); }
+        html.dark-mode .kanban-card { background: #242e12; border-color: color-mix(in srgb, var(--dorado) 15%, transparent); }
         .kanban-code { font-family: 'Cinzel', serif; font-size: 0.88rem; font-weight: 700; color: var(--verde-zymos); }
         html.dark-mode .kanban-code { color: var(--dorado-claro); }
         .kanban-estilo { font-size: 0.78rem; color: #6c757d; }
@@ -50,13 +50,13 @@
         html.dark-mode .col-inicio    .kanban-col-header { background: rgba(255,255,255,0.06) !important; color: var(--dm-text-muted) !important; }
         html.dark-mode .col-ferm      .kanban-col-header { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
         html.dark-mode .col-acond     .kanban-col-header { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
-        html.dark-mode .col-madur     .kanban-col-header { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+        html.dark-mode .col-madur     .kanban-col-header { background: color-mix(in srgb, var(--dorado) 20%, transparent) !important; color: var(--dorado-claro) !important; }
         html.dark-mode .col-carbon    .kanban-col-header { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
         html.dark-mode .col-completado .kanban-col-header { background: rgba(142,68,173,0.2) !important; color: #c890e8 !important; }
         html.dark-mode .col-inicio    .kanban-dias { background: rgba(255,255,255,0.08) !important; color: var(--dm-text-muted) !important; }
         html.dark-mode .col-ferm      .kanban-dias { background: rgba(39,174,96,0.2)   !important; color: #6ee6a0 !important; }
         html.dark-mode .col-acond     .kanban-dias { background: rgba(13,202,240,0.15) !important; color: #7fd8e8 !important; }
-        html.dark-mode .col-madur     .kanban-dias { background: rgba(201,160,40,0.2)  !important; color: var(--dorado-claro) !important; }
+        html.dark-mode .col-madur     .kanban-dias { background: color-mix(in srgb, var(--dorado) 20%, transparent) !important; color: var(--dorado-claro) !important; }
         html.dark-mode .col-carbon    .kanban-dias { background: rgba(52,152,219,0.2)  !important; color: #80c8f0 !important; }
         html.dark-mode .col-completado .kanban-dias { background: rgba(142,68,173,0.2) !important; color: #c890e8 !important; }
     </style>

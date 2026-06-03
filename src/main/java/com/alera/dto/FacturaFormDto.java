@@ -2,6 +2,7 @@ package com.alera.dto;
 
 import com.alera.model.enums.EstadoFactura;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ public class FacturaFormDto {
     @NotBlank(message = "El proveedor es obligatorio")
     private String proveedor;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaFactura;
     private String descripcion;
     private BigDecimal porcentajeIva = BigDecimal.valueOf(19);

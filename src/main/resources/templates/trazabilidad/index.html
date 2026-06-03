@@ -25,7 +25,7 @@
         .filter-bar .form-control,
         .filter-bar .form-select { font-size: 0.82rem; border-radius: 6px; }
         .filter-bar .form-control:focus,
-        .filter-bar .form-select:focus { border-color: var(--dorado); box-shadow: 0 0 0 0.15rem rgba(201,160,40,0.2); }
+        .filter-bar .form-select:focus { border-color: var(--dorado); box-shadow: 0 0 0 0.15rem color-mix(in srgb, var(--dorado) 20%, transparent); }
 
         /* ══ TABS ══════════════════════════════════════════ */
         .nav-tabs-zymos {
@@ -73,7 +73,7 @@
             white-space: nowrap; color: var(--crema); border: none;
         }
         .traza-table tbody td { padding: 7px 10px; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
-        .traza-table tbody tr:hover td { background: rgba(201,160,40,0.06); }
+        .traza-table tbody tr:hover td { background: color-mix(in srgb, var(--dorado) 6%, transparent); }
         .traza-table tbody tr:last-child td { border-bottom: none; }
 
         .th-general { background: #1e4976; }
@@ -92,7 +92,7 @@
         .lote-actions .btn { font-size: 0.7rem; }
 
         .ing-chip { display: inline-block; border-radius: 10px; padding: 1px 8px; font-size: 0.68rem; margin: 1px; white-space: nowrap; }
-        .ing-chip.malta    { background:rgba(201,160,40,0.15); color:#7a5c00; border:1px solid rgba(201,160,40,0.4); }
+        .ing-chip.malta    { background:color-mix(in srgb, var(--dorado) 15%, transparent); color:#7a5c00; border:1px solid color-mix(in srgb, var(--dorado) 40%, transparent); }
         .ing-chip.lupulo   { background:rgba(39,174,96,0.12);  color:#1a6e3e; border:1px solid rgba(39,174,96,0.4); }
         .ing-chip.levadura { background:rgba(52,152,219,0.12); color:#1a5276; border:1px solid rgba(52,152,219,0.4); }
         .ing-chip.clar     { background:rgba(142,68,173,0.1);  color:#6c3483; border:1px solid rgba(142,68,173,0.35); }
@@ -112,7 +112,7 @@
         .fase-progress { display:flex; gap:3px; align-items:center; }
         .fase-dot { width:9px; height:9px; border-radius:50%; background:#dee2e6; flex-shrink:0; }
         .fase-dot.done   { background:#27ae60; }
-        .fase-dot.active { background:var(--dorado); box-shadow:0 0 0 2px rgba(201,160,40,0.35); }
+        .fase-dot.active { background:var(--dorado); box-shadow:0 0 0 2px color-mix(in srgb, var(--dorado) 35%, transparent); }
 
         .empty-state { text-align:center; padding:3rem; color:#6c757d; }
         .empty-state i { font-size:3rem; opacity:.25; color:var(--verde-alera); display:block; margin-bottom:.8rem; }
@@ -128,7 +128,7 @@
             border-color: var(--verde-alera);
             color: var(--crema);
         }
-        .pagination .page-link:hover { background: rgba(201,160,40,0.12); color: var(--verde-alera); }
+        .pagination .page-link:hover { background: color-mix(in srgb, var(--dorado) 12%, transparent); color: var(--verde-alera); }
 
         /* ══ DARK MODE ═════════════════════════════════════ */
         html.dark-mode .filter-bar { background: var(--dm-card) !important; }
@@ -142,7 +142,7 @@
         html.dark-mode .f-temp { color: var(--dorado-claro) !important; }
         html.dark-mode .nav-tabs-zymos .nav-link { background: #1e2810; color: var(--dm-text-muted); }
         html.dark-mode .nav-tabs-zymos .nav-link:hover { background: #252e14; color: var(--dorado-claro); }
-        html.dark-mode .ing-chip.malta    { background:rgba(201,160,40,0.2) !important; color:var(--dorado-claro) !important; border-color:rgba(201,160,40,0.4) !important; }
+        html.dark-mode .ing-chip.malta    { background:color-mix(in srgb, var(--dorado) 20%, transparent) !important; color:var(--dorado-claro) !important; border-color:color-mix(in srgb, var(--dorado) 40%, transparent) !important; }
         html.dark-mode .ing-chip.lupulo   { background:rgba(39,174,96,0.2)  !important; color:#6ee6a0 !important; border-color:rgba(39,174,96,0.4) !important; }
         html.dark-mode .ing-chip.levadura { background:rgba(52,152,219,0.2) !important; color:#80c8f0 !important; border-color:rgba(52,152,219,0.4) !important; }
         html.dark-mode .ing-chip.clar     { background:rgba(142,68,173,0.2) !important; color:#c890e8 !important; border-color:rgba(142,68,173,0.4) !important; }
@@ -151,7 +151,7 @@
         html.dark-mode .pagination .page-link:hover { background: var(--dm-hover) !important; color: var(--dorado-claro) !important; }
         html.dark-mode .fase-pill.ferm   { background:rgba(39,174,96,0.2)   !important; color:#6ee6a0 !important; }
         html.dark-mode .fase-pill.acond  { background:rgba(13,202,240,0.15) !important; color:#7fd8e8 !important; }
-        html.dark-mode .fase-pill.madur  { background:rgba(201,160,40,0.2)  !important; color:var(--dorado-claro) !important; }
+        html.dark-mode .fase-pill.madur  { background:color-mix(in srgb, var(--dorado) 20%, transparent) !important; color:var(--dorado-claro) !important; }
         html.dark-mode .fase-pill.carbon { background:rgba(52,152,219,0.2)  !important; color:#80c8f0 !important; }
         html.dark-mode .fase-pill.done   { background:rgba(142,68,173,0.2)  !important; color:#c890e8 !important; }
         html.dark-mode .fase-pill.inicio { background:rgba(255,255,255,0.07) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-med) !important; }
