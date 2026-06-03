@@ -1424,7 +1424,7 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 461 tests, BUILD SUCCESS
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 457 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
 
 ---
