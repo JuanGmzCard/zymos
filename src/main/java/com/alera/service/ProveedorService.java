@@ -4,6 +4,7 @@ import com.alera.model.Proveedor;
 import com.alera.repository.ProveedorRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -42,11 +43,7 @@ public class ProveedorService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> suggest(String q) {
         if (q == null || q.isBlank() || q.trim().length() < 2) return List.of();
-        String lower = q.trim().toLowerCase();
-        return repo.findAllByOrderByNombreAsc().stream()
-            .filter(p -> p.getNombre().toLowerCase().contains(lower)
-                      || (p.getNit() != null && p.getNit().toLowerCase().contains(lower)))
-            .limit(6)
+        return repo.search(q.trim(), PageRequest.of(0, 6)).stream()
             .map(p -> {
                 Map<String, Object> m = new LinkedHashMap<>();
                 m.put("nombre", p.getNombre());

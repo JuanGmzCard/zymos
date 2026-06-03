@@ -8,13 +8,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -97,11 +100,21 @@ class ProveedorServiceTest {
     }
 
     @Test
-    @DisplayName("suggest filtra por nombre de forma case-insensitive")
-    void suggest_filtraPorNombre() {
-        when(repo.findAllByOrderByNombreAsc()).thenReturn(List.of(
+    @DisplayName("suggest delega a repo.search con la query recortada")
+    void suggest_delegaASearch() {
+        when(repo.search(eq("malt"), any(Pageable.class)))
+                .thenReturn(List.of(proveedor("MaltaCo", "900", true)));
+
+        service.suggest("malt");
+
+        verify(repo).search(eq("malt"), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("suggest retorna los resultados del repositorio")
+    void suggest_retornaResultadosDelRepo() {
+        when(repo.search(eq("malt"), any(Pageable.class))).thenReturn(List.of(
                 proveedor("MaltaCo", "900", true),
-                proveedor("LúpuloCo", "800", true),
                 proveedor("Malta Sur", "700", false)));
 
         List<Map<String, Object>> resultado = service.suggest("malt");
@@ -112,25 +125,12 @@ class ProveedorServiceTest {
     }
 
     @Test
-    @DisplayName("suggest filtra por NIT cuando no coincide el nombre")
-    void suggest_filtraPorNit() {
-        when(repo.findAllByOrderByNombreAsc()).thenReturn(List.of(
-                proveedor("MaltaCo",  "900123", true),
-                proveedor("LúpuloCo", "800456", true)));
-
-        List<Map<String, Object>> resultado = service.suggest("900");
-
-        assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).get("nombre")).isEqualTo("MaltaCo");
-    }
-
-    @Test
-    @DisplayName("suggest retorna máximo 6 resultados")
+    @DisplayName("suggest retorna máximo 6 resultados (limitado en el Pageable)")
     void suggest_limiteSeisResultados() {
-        List<Proveedor> muchos = java.util.stream.IntStream.rangeClosed(1, 10)
+        List<Proveedor> seis = IntStream.rangeClosed(1, 6)
                 .mapToObj(i -> proveedor("Proveedor " + i, "NIT" + i, true))
                 .toList();
-        when(repo.findAllByOrderByNombreAsc()).thenReturn(muchos);
+        when(repo.search(anyString(), any(Pageable.class))).thenReturn(seis);
 
         assertThat(service.suggest("Proveedor")).hasSize(6);
     }
@@ -138,7 +138,7 @@ class ProveedorServiceTest {
     @Test
     @DisplayName("suggest incluye nombre, nit, activo y url en cada resultado")
     void suggest_estructuraDelMapa() {
-        when(repo.findAllByOrderByNombreAsc()).thenReturn(List.of(
+        when(repo.search(eq("malt"), any(Pageable.class))).thenReturn(List.of(
                 proveedor("MaltaCo", "900123", true)));
 
         Map<String, Object> item = service.suggest("malt").get(0);
@@ -153,7 +153,7 @@ class ProveedorServiceTest {
     @Test
     @DisplayName("suggest usa string vacío como nit cuando el proveedor no tiene NIT")
     void suggest_nitNull_usaStringVacio() {
-        when(repo.findAllByOrderByNombreAsc()).thenReturn(List.of(
+        when(repo.search(anyString(), any(Pageable.class))).thenReturn(List.of(
                 proveedor("SinNit", null, true)));
 
         Map<String, Object> item = service.suggest("SinNit").get(0);
