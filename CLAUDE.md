@@ -228,6 +228,7 @@ templates/
 - `V46__fix_tipo_libre_constraint.sql` — DDL + DML fix: elimina el CHECK constraint `insumos_inventario_tipo_check` creado en V36 que solo permitía valores enum uppercase (MALTA, LUPULO...). Tras V45, `insumos_inventario.tipo` es texto libre; el constraint bloqueaba inserts de display names (Malta, Lúpulo...). Repite los UPDATEs de V45 de forma idempotente para cubrir DBs donde V45 no pudo ejecutarse por el constraint activo. El constraint `factura_items_tipo_insumo_check` NO se modifica — `FacturaItem.tipoInsumo` sigue siendo enum.
 - `V47__categorias_tipo.sql` — Crea tablas `tipos_insumo` y `tipos_equipo` (id BIGSERIAL PK, tenant_id VARCHAR(100), nombre VARCHAR(100), activo BOOLEAN DEFAULT TRUE; UNIQUE (tenant_id, nombre)) con índices en tenant_id. Puebla con los 9 valores de insumo (Malta, Lúpulo, Levadura, Clarificante, Agente de Carbonatación, Agua, Químico, Envase, Otro) y 11 valores de equipo (Fermentador, Olla de Macerado, Olla de Hervor, Enfriador, Bomba, Filtro, Medidor de pH, Densímetro, Báscula, Compresor, Otro) para cada tenant existente via CROSS JOIN. Elimina CHECK constraints `factura_items_tipo_insumo_check` y `factura_items_tipo_equipo_check`. Convierte `factura_items.tipo_insumo` y `tipo_equipo` de enum-name a display name ("MALTA" → "Malta", etc.).
 - `V49__indices_busqueda_texto.sql` — Índices compuestos `(tenant_id, LOWER(nombre))` para búsquedas de texto filtradas por tenant: `idx_recetas_tenant_nombre` (parcial `WHERE deleted_at IS NULL`), `idx_proveedores_tenant_nombre`, `idx_proveedores_tenant_nit` (parcial `WHERE nit IS NOT NULL`), `idx_insumos_tenant_nombre`. Complementa `idx_insumos_nombre` de V1 (solo LOWER(nombre), sin tenant) con una variante compuesta para queries multi-tenant.
+- `V50__plan_limits.sql` — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS max_lotes INTEGER` y `ADD COLUMN IF NOT EXISTS max_usuarios INTEGER`. Ambas nullable — `NULL` = sin límite (ilimitado). Permite configurar cuotas de plan por tenant: `TrazabilidadService.guardar()` lanza `RuntimeException` si `loteRepo.count() >= maxLotes`; `TenantAdminController.guardarUsuario()` retorna flash danger si `usuariosExistentes.size() >= maxUsuarios`. Los límites se configuran en `/admin/tenants/editar/{subdomain}` y se visualizan con barras de progreso en `/admin/tenants/{subdomain}/metricas`.
 
 ---
 
@@ -312,6 +313,8 @@ Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es 
 - `alertasIntentosFallidos` (INTEGER, NOT NULL, default 0) — contador de fallos SMTP consecutivos. Se incrementa en cada fallo, se resetea a 0 al enviar exitosamente. Visible en `/admin/tenants` como badge amarillo.
 - `alertasUltimoIntento` (TIMESTAMP, nullable) — fecha/hora del último intento de envío (exitoso o fallido).
 - `alertasUltimoExito` (TIMESTAMP, nullable) — fecha/hora del último envío exitoso.
+- `maxLotes` (INTEGER, nullable) — límite de lotes por plan. `NULL` = sin límite. `TrazabilidadService.guardar()` lanza `RuntimeException` al alcanzarlo.
+- `maxUsuarios` (INTEGER, nullable) — límite de usuarios por plan. `NULL` = sin límite. `TenantAdminController.guardarUsuario()` bloquea la creación con flash danger al alcanzarlo.
 - Creado por `DataInitializer` al arrancar. Al inicio, itera **todos los tenants** existentes en BD y crea usuarios/tipos de cerveza/categorías de insumo y equipo para los que no tengan ninguno. Si un tenant ya tiene usuarios, no se modifica.
 - `GlobalControllerAdvice` lo expone como `${branding}` — los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. sin cambios
 
@@ -1426,7 +1429,7 @@ APP_BRAND_FONT_BODY=Roboto
 - Se activa en `~/.testcontainers.properties`: `docker.client.strategy=com.alera.WindowsDockerStrategy`
 - Docker Desktop debe tener habilitado: **Settings → General → Expose daemon on tcp://localhost:2375 without TLS**
 
-Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 465 tests, BUILD SUCCESS
+Ejecutar: `mvn test` (requiere Docker Desktop corriendo con daemon TCP habilitado) — 467 tests, BUILD SUCCESS
 Perfil test: `src/test/resources/application-test.properties` (credenciales dummy + flags de test)
 
 ---
