@@ -5,6 +5,7 @@ import com.alera.model.Tenant;
 import com.alera.model.enums.RolUsuario;
 import com.alera.repository.UsuarioRepository;
 import com.alera.service.EmailService;
+import com.alera.service.TenantMetricsService;
 import com.alera.service.TenantService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ContentDisposition;
@@ -32,15 +33,18 @@ public class TenantAdminController {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
+    private final TenantMetricsService metricsService;
 
     public TenantAdminController(TenantService tenantService,
                                   UsuarioRepository usuarioRepo, PasswordEncoder passwordEncoder,
-                                  EmailService emailService, ObjectMapper objectMapper) {
+                                  EmailService emailService, ObjectMapper objectMapper,
+                                  TenantMetricsService metricsService) {
         this.tenantService   = tenantService;
         this.usuarioRepo     = usuarioRepo;
         this.passwordEncoder = passwordEncoder;
         this.emailService    = emailService;
         this.objectMapper    = objectMapper;
+        this.metricsService  = metricsService;
     }
 
     @GetMapping
@@ -320,5 +324,20 @@ public class TenantAdminController {
         ra.addFlashAttribute("mensaje", "Usuario eliminado");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/admin/tenants/" + subdomain + "/usuarios";
+    }
+
+    // ── Métricas por tenant ───────────────────────────────────────────
+
+    @GetMapping("/{subdomain}/metricas")
+    public String metricas(@PathVariable String subdomain, Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
+        model.addAttribute("tenant", tenant);
+        model.addAttribute("metricas", metricsService.obtener(subdomain));
+        return "admin/tenant-metricas";
     }
 }

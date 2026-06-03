@@ -41,6 +41,7 @@ class TenantAdminControllerTest {
     @MockBean UsuarioRepository          usuarioRepository;
     @MockBean EmailService               emailService;
     @MockBean PasswordEncoder            passwordEncoder;
+    @MockBean TenantMetricsService       metricsService;
 
     @BeforeEach
     void setUp() {
@@ -136,5 +137,40 @@ class TenantAdminControllerTest {
 
         mockMvc.perform(get("/admin/tenants/noexiste/config"))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/{sub}/metricas retorna panel de métricas")
+    void metricas_conAdmin_retorna200() throws Exception {
+        com.alera.model.Tenant tenant = new com.alera.model.Tenant();
+        tenant.setSubdomain("mosto"); tenant.setName("Mosto Cervecería");
+        tenant.setActive(true);
+        tenant.setColorNavbar("#242E0D"); tenant.setColorAccent("#C9A028");
+        when(tenantService.buscarPorSubdomain("mosto")).thenReturn(Optional.of(tenant));
+        when(metricsService.obtener("mosto")).thenReturn(
+                new com.alera.service.TenantMetricsService.TenantMetrics(
+                        5L, 2L, 3L, java.math.BigDecimal.valueOf(300),
+                        10L, java.math.BigDecimal.valueOf(5000000), 8L,
+                        4L, java.math.BigDecimal.valueOf(1200000),
+                        20L, 2L, 5L,
+                        3L, null));
+
+        mockMvc.perform(get("/admin/tenants/mosto/metricas"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("admin/tenant-metricas"))
+                .andExpect(model().attributeExists("tenant", "metricas"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/{sub}/metricas con subdomain inexistente redirige con mensaje de error")
+    void metricas_noExiste_redirige() throws Exception {
+        when(tenantService.buscarPorSubdomain("noexiste")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/admin/tenants/noexiste/metricas"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/tenants"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
     }
 }
