@@ -528,9 +528,9 @@
                     <div class="detail-label">Destino y Empaque</div>
                     <div class="detail-value">
                         <i class="bi bi-box-seam me-1 text-muted"></i>
-                        <span th:each="entrada : ${#strings.split(lote.carbDestino, '|')}"
+                        <span th:each="entrada : ${lote.carbDestino.split(' \\| ')}"
                               class="badge bg-light text-dark border fw-normal me-1"
-                              th:text="${#strings.trim(entrada)}"></span>
+                              th:text="${entrada.trim()}"></span>
                     </div>
                 </div>
             </div>
