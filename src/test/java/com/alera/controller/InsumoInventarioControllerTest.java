@@ -22,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -84,5 +85,29 @@ class InsumoInventarioControllerTest {
         mockMvc.perform(get("/inventario/suggest").param("nombre", "ma"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /inventario/editar/{id} con id inexistente redirige con mensaje de error")
+    void editar_noExiste_redirige() throws Exception {
+        when(insumoService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/inventario/editar/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /inventario/{id}/historial con id inexistente redirige con mensaje de error")
+    void historial_noExiste_redirige() throws Exception {
+        when(insumoService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/inventario/99/historial"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
     }
 }

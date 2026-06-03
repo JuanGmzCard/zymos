@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -70,5 +71,17 @@ class ProveedorControllerTest {
         mockMvc.perform(get("/proveedores/suggest").param("q", "ma"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /proveedores/editar/{id} con id inexistente redirige con mensaje de error")
+    void editar_noExiste_redirige() throws Exception {
+        when(proveedorService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/proveedores/editar/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/proveedores"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
     }
 }

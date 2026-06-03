@@ -104,4 +104,28 @@ class EquipoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("equipos/detalle"));
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /equipos/ver/{id} con id inexistente redirige con mensaje de error")
+    void ver_noExiste_redirige() throws Exception {
+        when(equipoService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/equipos/ver/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /equipos/editar/{id} con id inexistente redirige con mensaje de error")
+    void editar_noExiste_redirige() throws Exception {
+        when(equipoService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/equipos/editar/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
 }

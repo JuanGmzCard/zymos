@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.*;
 import com.alera.repository.EquipoRepository;
+import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.*;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
@@ -50,6 +52,7 @@ class FacturaProveedorControllerTest {
     @MockBean ExcelExportService            excelService;
     @MockBean CategoriaInsumoService        categoriaInsumoService;
     @MockBean CategoriaEquipoService        categoriaEquipoService;
+    @MockBean FacturaItemRepository         facturaItemRepo;
 
     @BeforeEach
     void setUp() {
@@ -89,5 +92,29 @@ class FacturaProveedorControllerTest {
         mockMvc.perform(get("/facturas/suggest").param("q", "001"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /facturas/ver/{id} con id inexistente redirige con mensaje de error")
+    void ver_noExiste_redirige() throws Exception {
+        when(facturaService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/facturas/ver/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/facturas"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /facturas/editar/{id} con id inexistente redirige con mensaje de error")
+    void editar_noExiste_redirige() throws Exception {
+        when(facturaService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/facturas/editar/99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/facturas"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
     }
 }

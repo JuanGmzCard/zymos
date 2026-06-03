@@ -74,4 +74,16 @@ class MantenimientoEquipoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("equipos/mantenimientos"));
     }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /equipos/{id}/mantenimientos con equipo inexistente redirige con mensaje de error")
+    void lista_equipoNoExiste_redirige() throws Exception {
+        when(equipoService.buscarPorId(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/equipos/99/mantenimientos"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/equipos"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
 }
