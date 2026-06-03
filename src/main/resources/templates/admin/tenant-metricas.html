@@ -58,6 +58,17 @@
             <div class="card-zymos p-3 text-center h-100">
                 <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalLotes}">0</div>
                 <div class="small text-muted">Lotes totales</div>
+                <div th:if="${tenant.maxLotes != null}" class="mt-1">
+                    <div class="progress" style="height:5px;" title="Uso del plan">
+                        <div class="progress-bar"
+                             th:classappend="${metricas.totalLotes >= tenant.maxLotes} ? 'bg-danger' : (${metricas.totalLotes >= tenant.maxLotes * 0.8} ? 'bg-warning' : 'bg-success')"
+                             role="progressbar"
+                             th:style="'width:' + ${T(java.lang.Math).min(metricas.totalLotes * 100 / tenant.maxLotes, 100)} + '%'">
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-1"
+                         th:text="${metricas.totalLotes} + ' / ' + ${tenant.maxLotes}"></div>
+                </div>
             </div>
         </div>
         <div class="col-6 col-md-3">
@@ -159,6 +170,17 @@
             <div class="card-zymos p-3 text-center h-100">
                 <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalUsuarios}">0</div>
                 <div class="small text-muted">Usuarios activos</div>
+                <div th:if="${tenant.maxUsuarios != null}" class="mt-1">
+                    <div class="progress" style="height:5px;" title="Uso del plan">
+                        <div class="progress-bar"
+                             th:classappend="${metricas.totalUsuarios >= tenant.maxUsuarios} ? 'bg-danger' : (${metricas.totalUsuarios >= tenant.maxUsuarios * 0.8} ? 'bg-warning' : 'bg-success')"
+                             role="progressbar"
+                             th:style="'width:' + ${T(java.lang.Math).min(metricas.totalUsuarios * 100 / tenant.maxUsuarios, 100)} + '%'">
+                        </div>
+                    </div>
+                    <div class="small text-muted mt-1"
+                         th:text="${metricas.totalUsuarios} + ' / ' + ${tenant.maxUsuarios}"></div>
+                </div>
             </div>
         </div>
     </div>

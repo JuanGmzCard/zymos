@@ -58,6 +58,12 @@ public class Tenant {
     @Column(name = "alertas_ultimo_exito")
     private LocalDateTime alertasUltimoExito;
 
+    @Column(name = "max_lotes")
+    private Integer maxLotes;
+
+    @Column(name = "max_usuarios")
+    private Integer maxUsuarios;
+
     public String getSubdomain()            { return subdomain; }
     public void   setSubdomain(String v)    { this.subdomain = v; }
     public String getName()                 { return name; }
@@ -92,4 +98,8 @@ public class Tenant {
     public void setAlertasUltimoIntento(LocalDateTime v){ this.alertasUltimoIntento = v; }
     public LocalDateTime getAlertasUltimoExito()        { return alertasUltimoExito; }
     public void setAlertasUltimoExito(LocalDateTime v)  { this.alertasUltimoExito = v; }
+    public Integer getMaxLotes()                        { return maxLotes; }
+    public void setMaxLotes(Integer v)                  { this.maxLotes = v; }
+    public Integer getMaxUsuarios()                     { return maxUsuarios; }
+    public void setMaxUsuarios(Integer v)               { this.maxUsuarios = v; }
 }

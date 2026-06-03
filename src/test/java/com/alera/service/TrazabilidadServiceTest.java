@@ -10,6 +10,7 @@ import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.HistorialLoteRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.RecetaRepository;
+import com.alera.repository.TenantRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -38,6 +40,7 @@ class TrazabilidadServiceTest {
     @Mock private InsumoInventarioService insumoService;
     @Mock private LoteMapper loteMapper;
     @Mock private EntityManager em;
+    @Mock private TenantRepository tenantRepo;
 
     @InjectMocks
     private TrazabilidadService service;
@@ -54,6 +57,9 @@ class TrazabilidadServiceTest {
         loteFormBasico.setLupulos(List.of());
         loteFormBasico.setLevaduras(List.of());
         loteFormBasico.setClarificantes(List.of());
+
+        // por defecto, sin límite de plan
+        lenient().when(tenantRepo.findById(any())).thenReturn(Optional.empty());
     }
 
     // ── Generación de código ────────────────────────────────────────
@@ -175,6 +181,38 @@ class TrazabilidadServiceTest {
         verify(loteRepo, never()).delete(any());
         verify(loteRepo, atLeast(2)).save(argThat(l ->
                 l == res.getLote() && l.getDeletedAt() != null));
+    }
+
+    // ── Límites del plan ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("guardar lanza excepción cuando se alcanza el límite de lotes del plan")
+    void guardar_limiteLotesAlcanzado_lanzaExcepcion() {
+        com.alera.model.Tenant tenant = new com.alera.model.Tenant();
+        tenant.setSubdomain("test");
+        tenant.setMaxLotes(5);
+        when(tenantRepo.findById(any())).thenReturn(Optional.of(tenant));
+        when(loteRepo.count()).thenReturn(5L);
+
+        assertThatThrownBy(() -> service.guardar(loteFormBasico))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Límite de lotes")
+                .hasMessageContaining("5");
+    }
+
+    @Test
+    @DisplayName("guardar no lanza excepción cuando hay espacio en el plan")
+    void guardar_conEspacioEnPlan_noLanzaExcepcion() {
+        com.alera.model.Tenant tenant = new com.alera.model.Tenant();
+        tenant.setSubdomain("test");
+        tenant.setMaxLotes(10);
+        when(tenantRepo.findById(any())).thenReturn(Optional.of(tenant));
+        when(loteRepo.count()).thenReturn(5L);
+        when(loteRepo.findMaxConsecutivoPorPrefix(any(), any())).thenReturn(null);
+        when(loteRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(insumoService.descontarIngrediente(any(), any(), any())).thenReturn(null);
+
+        assertThatCode(() -> service.guardar(loteFormBasico)).doesNotThrowAnyException();
     }
 
     @Test

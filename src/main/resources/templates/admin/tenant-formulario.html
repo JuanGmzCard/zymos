@@ -79,6 +79,25 @@
                         bajo stock, vencimientos próximos y mantenimientos. Requiere SMTP configurado en el servidor.
                     </div>
                 </div>
+                <!-- Límites de plan -->
+                <div class="col-12">
+                    <hr class="my-1">
+                    <div class="detail-label mb-2">Límites del plan</div>
+                    <div class="row g-2">
+                        <div class="col-sm-6">
+                            <label class="form-label small text-muted" for="maxLotes">Máx. lotes activos</label>
+                            <input type="number" th:field="*{maxLotes}" id="maxLotes"
+                                   class="form-control form-control-sm" min="1" placeholder="Sin límite">
+                            <div class="form-text">Dejar vacío para ilimitado.</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small text-muted" for="maxUsuarios">Máx. usuarios</label>
+                            <input type="number" th:field="*{maxUsuarios}" id="maxUsuarios"
+                                   class="form-control form-control-sm" min="1" placeholder="Sin límite">
+                            <div class="form-text">Dejar vacío para ilimitado.</div>
+                        </div>
+                    </div>
+                </div>
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" th:field="*{active}">

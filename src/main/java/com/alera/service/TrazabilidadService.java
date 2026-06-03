@@ -42,6 +42,7 @@ public class TrazabilidadService {
     private final InsumoInventarioService insumoService;
     private final LoteMapper loteMapper;
     private final EntityManager em;
+    private final com.alera.repository.TenantRepository tenantRepo;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -50,7 +51,8 @@ public class TrazabilidadService {
                                 HistorialLoteRepository historialRepo,
                                 InsumoInventarioService insumoService,
                                 LoteMapper loteMapper,
-                                EntityManager em) {
+                                EntityManager em,
+                                com.alera.repository.TenantRepository tenantRepo) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -59,6 +61,7 @@ public class TrazabilidadService {
         this.insumoService = insumoService;
         this.loteMapper = loteMapper;
         this.em = em;
+        this.tenantRepo = tenantRepo;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -106,6 +109,7 @@ public class TrazabilidadService {
         @CacheEvict(value = "dashboard-estilos",    allEntries = true)
     })
     public LoteGuardadoResult guardar(LoteFormDto dto) {
+        verificarLimiteLotes();
         LoteCerveza lote = new LoteCerveza();
         mapearDto(lote, dto);
         lote.setCodigoLote(generarCodigo(dto.getEstilo()));
@@ -430,5 +434,16 @@ public class TrazabilidadService {
         } catch (Exception e) {
             return "sistema";
         }
+    }
+
+    private void verificarLimiteLotes() {
+        String tenantId = TenantContext.getCurrentTenant();
+        tenantRepo.findById(tenantId).ifPresent(t -> {
+            if (t.getMaxLotes() != null && loteRepo.count() >= t.getMaxLotes()) {
+                throw new RuntimeException(
+                    "Límite de lotes alcanzado para este plan (" + t.getMaxLotes() + " máx.). " +
+                    "Contacta al administrador para ampliar tu plan.");
+            }
+        });
     }
 }

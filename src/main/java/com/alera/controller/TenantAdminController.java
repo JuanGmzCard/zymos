@@ -21,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -261,7 +262,16 @@ public class TenantAdminController {
             ra.addFlashAttribute("tipoMensaje", "danger");
             return redirect;
         }
-        boolean esPrimerUsuario = usuarioRepo.findAllByTenantId(subdomain).isEmpty();
+        List<com.alera.model.Usuario> usuariosExistentes = usuarioRepo.findAllByTenantId(subdomain);
+        Tenant tenantActual = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenantActual != null && tenantActual.getMaxUsuarios() != null
+                && usuariosExistentes.size() >= tenantActual.getMaxUsuarios()) {
+            ra.addFlashAttribute("mensaje",
+                "Límite de " + tenantActual.getMaxUsuarios() + " usuario(s) alcanzado para este plan");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        boolean esPrimerUsuario = usuariosExistentes.isEmpty();
         usuarioRepo.insertarConTenant(username, passwordEncoder.encode(password), rol.name(), subdomain);
         tenantService.registrarAccion(subdomain, "USUARIO_CREADO", username + " (" + rol.getDisplayName() + ")");
         if (esPrimerUsuario) {
