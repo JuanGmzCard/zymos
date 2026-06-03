@@ -16,6 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -84,10 +85,56 @@ class TenantAdminControllerTest {
         tenant.setColorAccent("#C9A028"); tenant.setColorAccentHover("#E0B840");
         tenant.setColorCream("#F5EDD0"); tenant.setColorBodyBg("#F0EDE2");
         when(tenantService.buscarPorSubdomain("mosto"))
-                .thenReturn(java.util.Optional.of(tenant));
+                .thenReturn(Optional.of(tenant));
 
         mockMvc.perform(get("/admin/tenants/mosto/config"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/editar/{sub} con subdomain inexistente redirige con mensaje de error")
+    void formularioEditar_noExiste_redirige() throws Exception {
+        when(tenantService.buscarPorSubdomain("noexiste")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/admin/tenants/editar/noexiste"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/tenants"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/{sub}/historial con subdomain inexistente redirige con mensaje de error")
+    void historial_noExiste_redirige() throws Exception {
+        when(tenantService.buscarPorSubdomain("noexiste")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/admin/tenants/noexiste/historial"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/tenants"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/{sub}/usuarios con subdomain inexistente redirige con mensaje de error")
+    void usuarios_noExiste_redirige() throws Exception {
+        when(tenantService.buscarPorSubdomain("noexiste")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/admin/tenants/noexiste/usuarios"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/tenants"))
+                .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /admin/tenants/{sub}/config con subdomain inexistente retorna 404")
+    void config_noExiste_retorna404() throws Exception {
+        when(tenantService.buscarPorSubdomain("noexiste")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/admin/tenants/noexiste/config"))
+                .andExpect(status().isNotFound());
     }
 }
