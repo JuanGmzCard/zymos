@@ -391,14 +391,27 @@
                             <th class="th-ferm">Fin Real</th>
                         </tr></thead>
                         <tbody>
-                        <tr th:each="lote : ${lotes}">
-                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
-                            <td th:text="${lote.estilo}">-</td>
-                            <td>
-                                <span th:if="${lote.fermFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
-                                <span th:if="${lote.fermFechaInicial != null and lote.fermFechaFinal == null}" class="fase-pill ferm"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
-                                <span th:if="${lote.fermFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                        <tr th:each="lote : ${lotes}"
+                            th:if="${lote.faseActual == 'Fermentación' and !lote.completado}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto.')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
+                                    </form>
+                                </div>
                             </td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td><span class="fase-pill ferm"><i class="bi bi-arrow-repeat me-1"></i>En curso</span></td>
                             <td class="f-date" th:classappend="${lote.fermFechaInicial == null} ? 'f-none' : ''" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.fermFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.fermFechaFinalIdeal != null} ? ${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.fermTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
@@ -423,14 +436,27 @@
                             <th class="th-acond">Fin Real</th>
                         </tr></thead>
                         <tbody>
-                        <tr th:each="lote : ${lotes}">
-                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
-                            <td th:text="${lote.estilo}">-</td>
-                            <td>
-                                <span th:if="${lote.acondFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
-                                <span th:if="${lote.acondFechaInicial != null and lote.acondFechaFinal == null}" class="fase-pill acond"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
-                                <span th:if="${lote.acondFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                        <tr th:each="lote : ${lotes}"
+                            th:if="${lote.faseActual == 'Acondicionamiento' and !lote.completado}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto.')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
+                                    </form>
+                                </div>
                             </td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td><span class="fase-pill acond"><i class="bi bi-arrow-repeat me-1"></i>En curso</span></td>
                             <td class="f-date" th:classappend="${lote.acondFechaInicial == null} ? 'f-none' : ''" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.acondFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.acondFechaFinalIdeal != null} ? ${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.acondTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.acondTemperatura != null} ? ${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
@@ -455,14 +481,27 @@
                             <th class="th-madur">Fin Real</th>
                         </tr></thead>
                         <tbody>
-                        <tr th:each="lote : ${lotes}">
-                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
-                            <td th:text="${lote.estilo}">-</td>
-                            <td>
-                                <span th:if="${lote.madurFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
-                                <span th:if="${lote.madurFechaInicial != null and lote.madurFechaFinal == null}" class="fase-pill madur"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
-                                <span th:if="${lote.madurFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                        <tr th:each="lote : ${lotes}"
+                            th:if="${lote.faseActual == 'Maduración' and !lote.completado}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto.')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
+                                    </form>
+                                </div>
                             </td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td><span class="fase-pill madur"><i class="bi bi-arrow-repeat me-1"></i>En curso</span></td>
                             <td class="f-date" th:classappend="${lote.madurFechaInicial == null} ? 'f-none' : ''" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.madurFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.madurFechaFinalIdeal != null} ? ${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.madurTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.madurTemperatura != null} ? ${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
@@ -490,14 +529,27 @@
                             <th class="th-carbon d-none d-lg-table-cell">CO₂ Real</th>
                         </tr></thead>
                         <tbody>
-                        <tr th:each="lote : ${lotes}">
-                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
-                            <td th:text="${lote.estilo}">-</td>
-                            <td>
-                                <span th:if="${lote.carbFechaFinal != null}" class="fase-pill done"><i class="bi bi-check-circle me-1"></i>Completada</span>
-                                <span th:if="${lote.carbFechaInicial != null and lote.carbFechaFinal == null}" class="fase-pill carbon"><i class="bi bi-arrow-repeat me-1"></i>En curso</span>
-                                <span th:if="${lote.carbFechaInicial == null}" class="fase-pill inicio">Pendiente</span>
+                        <tr th:each="lote : ${lotes}"
+                            th:if="${lote.faseActual == 'Carbonatación' and !lote.completado}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto.')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
+                                    </form>
+                                </div>
                             </td>
+                            <td th:text="${lote.estilo}">-</td>
+                            <td><span class="fase-pill carbon"><i class="bi bi-arrow-repeat me-1"></i>En curso</span></td>
                             <td class="f-date" th:classappend="${lote.carbFechaInicial == null} ? 'f-none' : ''" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.carbFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinalIdeal != null} ? ${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
@@ -531,8 +583,24 @@
                             <th class="th-density" style="min-width:280px;">Observaciones</th>
                         </tr></thead>
                         <tbody>
-                        <tr th:each="lote : ${lotes}">
-                            <td class="col-lote"><div class="lote-code" th:text="${lote.codigoLote}">-</div></td>
+                        <tr th:each="lote : ${lotes}" th:if="${!lote.completado}">
+                            <td class="col-lote">
+                                <div class="lote-code" th:text="${lote.codigoLote}">-</div>
+                                <div class="lote-actions">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <button type="button"
+                                            class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
+                                            th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
+                                            title="Marcar como completado">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                    <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline"
+                                          onsubmit="return confirm('¿Archivar este lote? El inventario se restaurará y el lote quedará oculto.')">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"><i class="bi bi-archive"></i></button>
+                                    </form>
+                                </div>
+                            </td>
                             <td th:text="${lote.estilo}">-</td>
                             <td class="fw-semibold" th:text="${lote.densidadInicial != null} ? ${lote.densidadInicial} : '—'" th:classappend="${lote.densidadInicial == null} ? 'f-none' : ''">-</td>
                             <td class="fw-semibold" th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'" th:classappend="${lote.densidadFinal == null} ? 'f-none' : ''">-</td>
@@ -684,6 +752,24 @@
     tabs.forEach(t => t.addEventListener('shown.bs.tab', e => {
         localStorage.setItem('trazaTab', e.target.dataset.bsTarget);
     }));
+
+    // Empty state para tabs de fase (tbody vacío cuando no hay lotes en esa fase)
+    (function() {
+        var phaseConfig = [
+            { id: 'tab-ferm',    cols: 7, label: 'No hay lotes en fermentación activa',     icon: 'bi-thermometer' },
+            { id: 'tab-acond',   cols: 7, label: 'No hay lotes en acondicionamiento activo', icon: 'bi-droplet-half' },
+            { id: 'tab-madur',   cols: 7, label: 'No hay lotes en maduración activa',        icon: 'bi-hourglass-split' },
+            { id: 'tab-carbon',  cols: 10, label: 'No hay lotes en carbonatación activa',    icon: 'bi-wind' },
+            { id: 'tab-density', cols: 7,  label: 'No hay lotes activos con datos de densidad', icon: 'bi-activity' }
+        ];
+        phaseConfig.forEach(function(cfg) {
+            var tbody = document.querySelector('#' + cfg.id + ' tbody');
+            if (!tbody || tbody.querySelectorAll('tr').length > 0) return;
+            tbody.innerHTML = '<tr><td colspan="' + cfg.cols + '" class="text-center py-5 text-muted">' +
+                '<i class="bi ' + cfg.icon + '" style="font-size:2.2rem;opacity:.25;display:block;margin-bottom:.6rem;"></i>' +
+                '<span style="font-size:.85rem;">' + cfg.label + '</span></td></tr>';
+        });
+    })();
 
     // Botón "Completar lote" — llama al endpoint AJAX y recarga en éxito
     document.querySelectorAll('.btn-completar-lote').forEach(btn => {
