@@ -206,6 +206,67 @@ class EmailServiceTest {
         ));
     }
 
+    // ── enviarBienvenida ──────────────────────────────────────────────
+
+    @Test
+    @DisplayName("enviarBienvenida retorna false cuando SMTP no está configurado")
+    void enviarBienvenida_sinSmtp_retornaFalse() {
+        assertThat(serviceSinSmtp.enviarBienvenida(tenant("admin@mosto.com"), "admin", "pass123")).isFalse();
+        verifyNoInteractions(mailSender);
+    }
+
+    @Test
+    @DisplayName("enviarBienvenida retorna false cuando emailAdmin es null")
+    void enviarBienvenida_emailAdminNull_retornaFalse() {
+        assertThat(service.enviarBienvenida(tenant(null), "admin", "pass123")).isFalse();
+        verifyNoInteractions(mailSender);
+    }
+
+    @Test
+    @DisplayName("enviarBienvenida retorna false cuando emailAdmin está vacío")
+    void enviarBienvenida_emailAdminVacio_retornaFalse() {
+        assertThat(service.enviarBienvenida(tenant("  "), "admin", "pass123")).isFalse();
+        verifyNoInteractions(mailSender);
+    }
+
+    @Test
+    @DisplayName("enviarBienvenida envía email y retorna true cuando todo está configurado")
+    void enviarBienvenida_exitoso_enviaYRetornaTrue() throws Exception {
+        when(templateEngine.process(eq("emails/bienvenida"), any())).thenReturn("<html>bienvenida</html>");
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessageReal());
+
+        boolean resultado = service.enviarBienvenida(tenant("admin@mosto.com"), "admin", "Pass1234");
+
+        assertThat(resultado).isTrue();
+        verify(mailSender).send(any(MimeMessage.class));
+    }
+
+    @Test
+    @DisplayName("enviarBienvenida pasa username, password y tenant al templateEngine")
+    void enviarBienvenida_pasaVariablesAlTemplate() throws Exception {
+        when(templateEngine.process(eq("emails/bienvenida"), any())).thenReturn("<html>ok</html>");
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessageReal());
+
+        service.enviarBienvenida(tenant("admin@mosto.com"), "juancho", "MiPass1");
+
+        verify(templateEngine).process(eq("emails/bienvenida"), argThat(ctx ->
+                ctx.containsVariable("tenant") &&
+                ctx.containsVariable("username") &&
+                ctx.containsVariable("password") &&
+                ctx.containsVariable("appUrl")
+        ));
+    }
+
+    @Test
+    @DisplayName("enviarBienvenida retorna false (no lanza) cuando falla el envío SMTP")
+    void enviarBienvenida_falloSmtp_retornaFalse() throws Exception {
+        when(templateEngine.process(eq("emails/bienvenida"), any())).thenReturn("<html>ok</html>");
+        when(mailSender.createMimeMessage()).thenReturn(mimeMessageReal());
+        doThrow(new MailSendException("Timeout")).when(mailSender).send(any(MimeMessage.class));
+
+        assertThat(service.enviarBienvenida(tenant("admin@mosto.com"), "admin", "pass123")).isFalse();
+    }
+
     // ── enviarEmailPrueba ─────────────────────────────────────────────
 
     @Test

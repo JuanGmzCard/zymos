@@ -109,6 +109,40 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envía el email de bienvenida al crear el primer usuario de un tenant.
+     * @return true si se envió, false si SMTP no está configurado o falta emailAdmin.
+     */
+    public boolean enviarBienvenida(Tenant tenant, String username, String password) {
+        if (mailSender == null) return false;
+        if (tenant.getEmailAdmin() == null || tenant.getEmailAdmin().isBlank()) return false;
+
+        try {
+            Context ctx = new Context();
+            ctx.setVariable("tenant",   tenant);
+            ctx.setVariable("username", username);
+            ctx.setVariable("password", password);
+            ctx.setVariable("appUrl",   baseUrl);
+
+            String html = templateEngine.process("emails/bienvenida", ctx);
+
+            MimeMessage msg = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
+            helper.setFrom(fromAddress);
+            helper.setTo(tenant.getEmailAdmin());
+            helper.setSubject("¡Bienvenido a " + tenant.getName() + "! — Tus credenciales de acceso");
+            helper.setText(html, true);
+            mailSender.send(msg);
+
+            log.info("Email de bienvenida enviado a {} para tenant '{}'", tenant.getEmailAdmin(), tenant.getSubdomain());
+            return true;
+
+        } catch (Exception e) {
+            log.error("Error al enviar bienvenida al tenant '{}': {}", tenant.getSubdomain(), e.getMessage());
+            return false;
+        }
+    }
+
     /** Formatea días restantes hasta una fecha de vencimiento. */
     public static long diasHasta(LocalDate fecha) {
         return ChronoUnit.DAYS.between(LocalDate.now(), fecha);

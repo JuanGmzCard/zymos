@@ -257,8 +257,13 @@ public class TenantAdminController {
             ra.addFlashAttribute("tipoMensaje", "danger");
             return redirect;
         }
+        boolean esPrimerUsuario = usuarioRepo.findAllByTenantId(subdomain).isEmpty();
         usuarioRepo.insertarConTenant(username, passwordEncoder.encode(password), rol.name(), subdomain);
         tenantService.registrarAccion(subdomain, "USUARIO_CREADO", username + " (" + rol.getDisplayName() + ")");
+        if (esPrimerUsuario) {
+            tenantService.buscarPorSubdomain(subdomain).ifPresent(t ->
+                emailService.enviarBienvenida(t, username, password));
+        }
         ra.addFlashAttribute("mensaje", "Usuario '" + username + "' creado correctamente");
         ra.addFlashAttribute("tipoMensaje", "success");
         return redirect;

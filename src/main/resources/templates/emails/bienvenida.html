@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'¡Bienvenido a ' + ${tenant.name} + '!'">¡Bienvenido!</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F0EDE2;font-family:'Segoe UI',Arial,sans-serif;color:#333;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0EDE2;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- ENCABEZADO -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:32px;'"
+              style="background-color:#242E0D;padding:32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <div th:style="'font-family:Georgia,serif;font-size:24px;font-weight:700;color:' + ${tenant.colorAccent} + ';'"
+                       style="font-family:Georgia,serif;font-size:24px;font-weight:700;color:#C9A028;"
+                       th:text="${tenant.name}">Zymos</div>
+                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;">Sistema de Trazabilidad Cervecera</div>
+                </td>
+                <td align="right">
+                  <div style="font-size:28px;">🍺</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- SALUDO -->
+        <tr>
+          <td style="padding:32px 32px 0;">
+            <h1 style="margin:0 0 8px;font-size:22px;color:#1a1a1a;">¡Tu cuenta está lista!</h1>
+            <p style="margin:0;font-size:15px;color:#555;line-height:1.6;">
+              Hola <strong th:text="${username}">admin</strong>, tu acceso a
+              <strong th:text="${tenant.name}">Zymos</strong> ha sido configurado.
+              A continuación encontrarás tus credenciales de ingreso.
+            </p>
+          </td>
+        </tr>
+
+        <!-- CREDENCIALES -->
+        <tr>
+          <td style="padding:24px 32px 0;">
+            <div style="background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;padding:20px 24px;">
+              <div style="font-size:12px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.5px;margin-bottom:14px;">
+                Credenciales de acceso
+              </div>
+              <table cellpadding="0" cellspacing="0" border="0" style="font-size:14px;">
+                <tr>
+                  <td style="padding:4px 0;color:#666;width:120px;">URL de acceso</td>
+                  <td style="padding:4px 0;">
+                    <a th:href="${appUrl}" th:text="${appUrl}"
+                       style="color:#2563eb;font-weight:600;word-break:break-all;">http://localhost:8080</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;color:#666;">Usuario</td>
+                  <td style="padding:4px 0;font-weight:700;font-family:monospace;font-size:15px;"
+                      th:text="${username}">admin</td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 0;color:#666;">Contraseña</td>
+                  <td style="padding:4px 0;font-weight:700;font-family:monospace;font-size:15px;"
+                      th:text="${password}">••••••••</td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+
+        <!-- AVISO SEGURIDAD -->
+        <tr>
+          <td style="padding:12px 32px 0;">
+            <div style="background:#fff3cd;border-left:4px solid #ffc107;border-radius:0 6px 6px 0;padding:10px 14px;font-size:13px;color:#856404;">
+              Por seguridad, te recomendamos cambiar tu contraseña en el primer ingreso desde
+              <strong>Perfil → Cambiar contraseña</strong>.
+            </div>
+          </td>
+        </tr>
+
+        <!-- PASOS PARA EMPEZAR -->
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:14px;">Para empezar:</div>
+            <table cellpadding="0" cellspacing="0" border="0" style="font-size:13px;color:#555;width:100%;">
+              <tr>
+                <td style="padding:5px 0;vertical-align:top;">
+                  <span th:style="'display:inline-block;width:22px;height:22px;background:' + ${tenant.colorAccent} + ';border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;'"
+                        style="display:inline-block;width:22px;height:22px;background:#C9A028;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;">1</span>
+                  Ingresa con tus credenciales y cambia tu contraseña.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;vertical-align:top;">
+                  <span th:style="'display:inline-block;width:22px;height:22px;background:' + ${tenant.colorAccent} + ';border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;'"
+                        style="display:inline-block;width:22px;height:22px;background:#C9A028;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;">2</span>
+                  Carga tu inventario de insumos desde <strong>Almacén → Inventario</strong>.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;vertical-align:top;">
+                  <span th:style="'display:inline-block;width:22px;height:22px;background:' + ${tenant.colorAccent} + ';border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;'"
+                        style="display:inline-block;width:22px;height:22px;background:#C9A028;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;">3</span>
+                  Crea tus primeras recetas desde <strong>Almacén → Recetas</strong>.
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:5px 0;vertical-align:top;">
+                  <span th:style="'display:inline-block;width:22px;height:22px;background:' + ${tenant.colorAccent} + ';border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;'"
+                        style="display:inline-block;width:22px;height:22px;background:#C9A028;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;color:#242E0D;margin-right:10px;">4</span>
+                  Registra tu primer lote desde <strong>Producción → Trazabilidad</strong>.
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- BOTÓN CTA -->
+        <tr>
+          <td style="padding:32px;" align="center">
+            <a th:href="${appUrl}"
+               th:style="'background-color:' + ${tenant.colorAccent} + ';color:' + ${tenant.colorNavbar} + ';padding:14px 32px;border-radius:6px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block;'"
+               style="background-color:#C9A028;color:#242E0D;padding:14px 32px;border-radius:6px;font-weight:700;font-size:15px;text-decoration:none;display:inline-block;">
+              Ingresar a la aplicación →
+            </a>
+          </td>
+        </tr>
+
+        <!-- PIE DE PÁGINA -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:18px 32px;'"
+              style="background-color:#242E0D;padding:18px 32px;">
+            <div style="font-size:11px;color:#909080;text-align:center;">
+              Este email fue generado automáticamente por
+              <span th:text="${tenant.name}" style="color:#c0c0a0;">Zymos</span>.
+              Si no esperabas este mensaje, puedes ignorarlo.
+            </div>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
