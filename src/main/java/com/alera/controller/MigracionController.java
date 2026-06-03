@@ -42,9 +42,13 @@ public class MigracionController {
     // ── Página de detalle por tenant ──────────────────────────────────────────
 
     @GetMapping("/{subdomain}")
-    public String detalle(@PathVariable String subdomain, Model model) {
-        Tenant tenant = tenantRepo.findById(subdomain)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant no encontrado: " + subdomain));
+    public String detalle(@PathVariable String subdomain, Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantRepo.findById(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
         List<MigracionLog> historial = migracionService.historial(subdomain);
         model.addAttribute("tenant",   tenant);
         model.addAttribute("historial", historial);

@@ -57,9 +57,13 @@ public class TenantAdminController {
     }
 
     @GetMapping("/editar/{subdomain}")
-    public String formularioEditar(@PathVariable String subdomain, Model model) {
-        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+    public String formularioEditar(@PathVariable String subdomain, Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
         model.addAttribute("tenant", tenant);
         model.addAttribute("esNuevo", false);
         model.addAttribute("otrosTenants", tenantService.listarTodos().stream()
@@ -89,9 +93,13 @@ public class TenantAdminController {
     @GetMapping("/{subdomain}/historial")
     public String historial(@PathVariable String subdomain,
                              @RequestParam(defaultValue = "0") int page,
-                             Model model) {
-        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+                             Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
         var pagina = tenantService.listarHistorialPaginado(subdomain, page);
         model.addAttribute("tenant", tenant);
         model.addAttribute("historial", pagina.getContent());
@@ -114,16 +122,16 @@ public class TenantAdminController {
 
     @GetMapping("/{subdomain}/config")
     @ResponseBody
-    public Map<String, Object> getConfig(@PathVariable String subdomain) {
-        Tenant t = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
-        return buildConfigMap(t);
+    public ResponseEntity<Map<String, Object>> getConfig(@PathVariable String subdomain) {
+        Tenant t = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(buildConfigMap(t));
     }
 
     @GetMapping("/{subdomain}/export")
     public ResponseEntity<byte[]> exportConfig(@PathVariable String subdomain) throws Exception {
-        Tenant t = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        Tenant t = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (t == null) return ResponseEntity.notFound().build();
         byte[] json = objectMapper.writerWithDefaultPrettyPrinter()
                 .writeValueAsBytes(buildConfigMap(t));
         return ResponseEntity.ok()
@@ -144,8 +152,8 @@ public class TenantAdminController {
             if (file.isEmpty()) return Map.of("ok", false, "message", "El archivo está vacío.");
             @SuppressWarnings("unchecked")
             Map<String, String> config = objectMapper.readValue(file.getInputStream(), Map.class);
-            Tenant t = tenantService.buscarPorSubdomain(subdomain)
-                    .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+            Tenant t = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+            if (t == null) return Map.of("ok", false, "message", "Tenant no encontrado: " + subdomain);
             applyConfig(t, config);
             tenantService.guardar(t);
             tenantService.registrarAccion(subdomain, "CONFIG_IMPORTADA", file.getOriginalFilename());
@@ -199,8 +207,8 @@ public class TenantAdminController {
     @ResponseBody
     public Map<String, Object> testEmail(@PathVariable String subdomain,
                                           @RequestParam String email) {
-        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) return Map.of("ok", false, "mensaje", "Tenant no encontrado: " + subdomain);
         String error = emailService.enviarEmailPrueba(email, tenant.getName());
         if (error == null) {
             return Map.of("ok", true, "mensaje", "Email enviado correctamente a " + email);
@@ -211,9 +219,13 @@ public class TenantAdminController {
     // ── Gestión de usuarios por tenant ───────────────────────────────
 
     @GetMapping("/{subdomain}/usuarios")
-    public String usuarios(@PathVariable String subdomain, Model model) {
-        Tenant tenant = tenantService.buscarPorSubdomain(subdomain)
-                .orElseThrow(() -> new RuntimeException("Tenant no encontrado: " + subdomain));
+    public String usuarios(@PathVariable String subdomain, Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
         model.addAttribute("usuarios", usuarioRepo.findAllByTenantId(subdomain));
         model.addAttribute("tenant", tenant);
         model.addAttribute("roles", RolUsuario.values());
