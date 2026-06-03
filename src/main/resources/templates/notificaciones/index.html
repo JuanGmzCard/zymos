@@ -68,9 +68,9 @@
 
             <div th:unless="${notificaciones.isEmpty()}">
                 <div th:each="n, iStat : ${notificaciones}"
-                     class="notif-row d-flex align-items-start gap-3 p-3"
+                     class="notif-row d-flex align-items-start gap-3 p-3 border-bottom"
                      th:classappend="${n.leida} ? ' leida' : ''"
-                     th:style="${!iStat.last} ? 'border-bottom:1px solid rgba(0,0,0,.07)' : ''">
+                     style="border-color:rgba(0,0,0,.07)!important">
 
                     <!-- Icono tipo -->
                     <div class="pt-1">
