@@ -3,12 +3,14 @@ package com.alera.controller;
 import com.alera.dto.FacturaFormDto;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaHistorialEstado;
+import com.alera.model.FacturaItem;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoEquipo;
 import com.alera.model.enums.EstadoFactura;
 import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.EquipoRepository;
+import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.service.CategoriaEquipoService;
 import com.alera.service.CategoriaInsumoService;
@@ -47,6 +49,7 @@ public class FacturaProveedorController {
     private final ExcelExportService excelService;
     private final CategoriaInsumoService categoriaInsumoService;
     private final CategoriaEquipoService categoriaEquipoService;
+    private final FacturaItemRepository facturaItemRepo;
 
     public FacturaProveedorController(FacturaProveedorService service,
                                        ProveedorService proveedorService,
@@ -56,7 +59,8 @@ public class FacturaProveedorController {
                                        EquipoService equipoService,
                                        ExcelExportService excelService,
                                        CategoriaInsumoService categoriaInsumoService,
-                                       CategoriaEquipoService categoriaEquipoService) {
+                                       CategoriaEquipoService categoriaEquipoService,
+                                       FacturaItemRepository facturaItemRepo) {
         this.service = service;
         this.proveedorService = proveedorService;
         this.insumoRepo = insumoRepo;
@@ -66,6 +70,7 @@ public class FacturaProveedorController {
         this.excelService = excelService;
         this.categoriaInsumoService = categoriaInsumoService;
         this.categoriaEquipoService = categoriaEquipoService;
+        this.facturaItemRepo = facturaItemRepo;
     }
 
     @GetMapping
@@ -119,6 +124,20 @@ public class FacturaProveedorController {
     @ResponseBody
     public List<Map<String, Object>> suggest(@RequestParam(defaultValue = "") String q) {
         return service.suggest(q);
+    }
+
+    @GetMapping(value = "/ultimo-precio", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> ultimoPrecio(@RequestParam String nombre) {
+        if (nombre == null || nombre.isBlank()) return Map.of();
+        List<FacturaItem> items = facturaItemRepo.findHistorialPreciosPorNombre(nombre.trim());
+        if (items.isEmpty()) return Map.of();
+        FacturaItem item = items.get(0);
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("valorUnitario", item.getValorUnitario());
+        result.put("unidad", item.getUnidad());
+        result.put("iva", item.getPorcentajeIvaItem());
+        return result;
     }
 
     @GetMapping("/nueva")

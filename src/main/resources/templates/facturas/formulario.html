@@ -483,6 +483,41 @@ window.addEventListener('DOMContentLoaded', () => {
     recalcularTodo();
 });
 
+// ── Auto-completar último precio al ingresar nombre ───────────────────────
+
+async function buscarUltimoPrecio(nombreInput) {
+    const nombre = nombreInput.value.trim();
+    if (!nombre) return;
+    try {
+        const r = await fetch('/facturas/ultimo-precio?nombre=' + encodeURIComponent(nombre));
+        if (!r.ok) return;
+        const data = await r.json();
+        if (!data.valorUnitario) return;
+        const row          = nombreInput.closest('.ingrediente-row');
+        const unitarioInput = row.querySelector('input[name*=".valorUnitario"]');
+        const unidadSelect  = row.querySelector('select[name*=".unidad"]');
+        const ivaInput      = row.querySelector('input[name*=".porcentajeIvaItem"]');
+        if (unitarioInput) {
+            unitarioInput.value = data.valorUnitario;
+            unitarioInput.dispatchEvent(new Event('input'));
+        }
+        if (unidadSelect && data.unidad && !unidadSelect.value) {
+            unidadSelect.value = data.unidad;
+        }
+        if (ivaInput && data.iva != null && (!ivaInput.value || parseFloat(ivaInput.value) === 0)) {
+            ivaInput.value = data.iva;
+        }
+        if (unitarioInput) calcularTotalFila(unitarioInput);
+    } catch { /* silencioso */ }
+}
+
+// Delegación en el contenedor: cubre filas existentes y las agregadas con addItem()
+document.getElementById('items-container').addEventListener('change', e => {
+    if (e.target.classList.contains('nombre-item')) {
+        buscarUltimoPrecio(e.target);
+    }
+});
+
 // ── Selección de proveedor ────────────────────────────────────────────────
 
 function seleccionarProveedor(sel) {
