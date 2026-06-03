@@ -236,9 +236,14 @@ public class VentaController {
     public String cambiarEstado(@PathVariable Long id,
                                 @RequestParam EstadoVenta estado,
                                 RedirectAttributes ra) {
-        service.cambiarEstado(id, estado);
-        ra.addFlashAttribute("mensaje", "Estado actualizado a " + estado.getDisplayName());
-        ra.addFlashAttribute("tipoMensaje", "success");
+        try {
+            service.cambiarEstado(id, estado);
+            ra.addFlashAttribute("mensaje", "Estado actualizado a " + estado.getDisplayName());
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (RuntimeException e) {
+            ra.addFlashAttribute("mensaje", e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
         return "redirect:/ventas/ver/" + id;
     }
 
