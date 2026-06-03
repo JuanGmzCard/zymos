@@ -1,7 +1,9 @@
 package com.alera.dto;
 
 import com.alera.model.enums.EstadoFactura;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.format.annotation.DateTimeFormat;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -10,6 +12,7 @@ import java.util.List;
 
 public class FacturaFormDto {
 
+    @NotBlank(message = "El número de factura es obligatorio")
     private String numeroFactura;
     private EstadoFactura estado = EstadoFactura.RECIBIDA;
     private Long proveedorId;
@@ -17,6 +20,7 @@ public class FacturaFormDto {
     @NotBlank(message = "El proveedor es obligatorio")
     private String proveedor;
 
+    @NotNull(message = "La fecha de factura es obligatoria")
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaFactura;
     private String descripcion;
@@ -24,6 +28,7 @@ public class FacturaFormDto {
     private BigDecimal costoEnvio = BigDecimal.ZERO;
     private boolean ivaIncluido = false;
 
+    @Valid
     private List<FacturaItemDto> items = new ArrayList<>();
 
     public static FacturaFormDto empty() {
