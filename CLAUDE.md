@@ -176,7 +176,7 @@ templates/
                 tenant-usuarios.html (gestión de usuarios por tenant: tabla con toggle activo/inactivo, cambiar contraseña, cambiar rol, eliminar + modal "Nuevo Usuario"; todas las queries usan SQL nativo explícito — ver regla 40),
                 tenant-historial.html (auditoría de cambios del tenant: tabla fecha/acción/usuario/detalles; badges de color por tipo de acción),
                 tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo,
-                migracion/detalle.html (página de migración por tenant: instrucciones generales, 5 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores; módulos: almacen, equipos, comercial, produccion, clientes)
+                migracion/detalle.html (página de migración por tenant: instrucciones generales, 6 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores; módulos: almacen, equipos, comercial, produccion, clientes, ventas)
 │               categorias.html (gestión de categorías de insumo y equipo: dos tabs con tabla CRUD + formulario de creación por tipo)
 ```
 
@@ -748,6 +748,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `plantillaComercial()` → `byte[]` — genera `plantilla-comercial.xlsx` (3 hojas en orden: Proveedores, Facturas, Factura_Items + hoja Instrucciones). Relación: Facturas.proveedor → Proveedores.nombre; Factura_Items.numeroFactura → Facturas.numeroFactura.
 - `plantillaProduccion()` → `byte[]` — genera `plantilla-produccion.xlsx` (6 hojas en orden: Recetas, Receta_Ingredientes, Receta_Escalones, Receta_Adiciones, Lotes, Lote_Ingredientes + hoja Instrucciones). Relaciones: Ingredientes/Escalones/Adiciones.receta → Recetas.nombre; Lotes.receta → Recetas.nombre (opcional); Lote_Ingredientes.codigoLote → Lotes.codigoLote.
 - `plantillaClientes()` → `byte[]` — genera `plantilla-clientes.xlsx` (1 hoja: Clientes + hoja Instrucciones). Columnas: nombre*, razon_social, nit (idempotencia: skip si ya existe para el tenant), regimen_tributario (dropdown: SIMPLIFICADO/RESPONSABLE_IVA), email, telefono, direccion_despacho, ciudad, departamento, lista_precio (dropdown: VENTA_DIRECTA/DISTRIBUIDOR/BAR/MAYORISTA/EXPORTACION/EMPLEADO), activo (dropdown: TRUE/FALSE, default TRUE), notas.
+- `plantillaVentas()` → `byte[]` — genera `plantilla-ventas.xlsx` (2 hojas: Ventas + Venta_Items + hoja Instrucciones). Hoja "Ventas": referencia_venta* (clave de cruce), cliente_nombre*, cliente_nit, fecha_despacho*, estado (dropdown: COTIZACION/PENDIENTE/DESPACHADO/CANCELADO; default DESPACHADO), notas, remision_numero. Hoja "Venta_Items": referencia_venta* (debe coincidir con Ventas), codigo_lote, descripcion, cantidad*, unidad (dropdown: und/L/mL/Botella 330ml/etc.), precio_unitario*, descuento_pct. La `referencia_venta` es la clave de cruce definida por el usuario (no autogenerada).
 - **Estructura de cada hoja**: row 0 = cabeceras (verde oscuro=obligatorio, gris=opcional) con sufijo " *" en requeridas; row 1 = leyenda " * = obligatorio"; row 2 = fila de ejemplo en gris/italic; row 3+ = datos del usuario. El parser en `MigracionService` salta filas `rowNum < 3`.
 - **Helpers privados**: `estilos(wb)` — record `Estilos(req, opt, example, data, instrTitle, instrBody)` con los 6 `XSSFCellStyle`; `cabecera(sh, estilos, cols[][])` — row 0 + row 1 legend; `ejemplo(sh, estilos, valores[])` — row 2; `fila(Row, estilo, valores[])` — rellena fila (`Cell` no `XSSFCell` porque `Row` es interfaz); `dropdown(sh, firstRow, lastRow, col, opciones...)` — `XSSFDataValidationHelper` lista explícita; `anchos(sh, chars...)` — anchos de columna; `hojaInstrucciones(wb, estilos, modulo, reglas[][])` — hoja primera con tabla de reglas.
 - **CRÍTICO**: `Row.createCell()` devuelve `Cell` (interfaz), NO `XSSFCell` — declarar como `Cell` en todos los helpers que reciban `Row` como parámetro.
@@ -760,6 +761,12 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   2. "Facturas" → inserta en `facturas_proveedor`, resuelve `proveedor_id` por nombre, construye `Map<String, Long> facturaIds`
   3. "Factura_Items" → inserta en `factura_items` usando `facturaIds`, recalcula `subtotal`/`valor_total` de la factura; **`tipo_insumo`/`tipo_equipo` se convierten de enum-name a display name** vía `TIPO_INSUMO_DISPLAY`/`TIPO_EQUIPO_DISPLAY` antes de insertar (V47 — almacenan display names)
 - `importarClientes(archivo, tenantId, usuario)` → `Resultado` — lee hoja "Clientes". Valida enum `regimen_tributario` (SIMPLIFICADO/RESPONSABLE_IVA) y `lista_precio` (VENTA_DIRECTA/DISTRIBUIDOR/BAR/MAYORISTA/EXPORTACION/EMPLEADO). **Idempotencia por NIT**: cuando el campo `nit` no está en blanco, salta el insert si ya existe `(nit, tenant_id)`. Permite nombres duplicados cuando NIT es null (sin constraint de unicidad en `nombre`). Almacena enum names directamente en BD (no convierte a display name — `clientes.regimen_tributario` y `lista_precio` son `@Enumerated(EnumType.STRING)`). Helper `textoODefault(row, col, default)` para campo `activo` (default "TRUE"). Campos de auditoría `created_at/created_by/last_modified_at/last_modified_by` se poblan con `NOW()`/`usuario`.
+- `importarVentas(archivo, tenantId, usuario)` → `Resultado` — 2 hojas en orden:
+  1. "Ventas" → inserta en `ventas`, resuelve `cliente_id` por NIT primero, nombre como fallback; construye `Map<String, Long> ventaIds` keyed por `referencia_venta`.
+  2. "Venta_Items" → inserta en `venta_items` usando `ventaIds`; resuelve `lote_id` por `codigo_lote` (tolerante: deja null si no existe — útil para datos históricos donde el lote fue eliminado). La columna `deleted_at IS NULL` se respeta en la búsqueda de lotes.
+  - **Sin idempotencia**: ventas no tienen clave de negocio natural única; diseñado para importación única de histórico.
+  - `referencia_venta` es la clave de cruce definida por el usuario — debe ser única dentro del archivo.
+  - `estado` default: DESPACHADO. Valores válidos: COTIZACION, PENDIENTE, DESPACHADO, CANCELADO (no EXPIRADO — es auto-generado por el scheduler).
 - `importarProduccion(archivo, tenantId, usuario)` → `Resultado` — 6 hojas en orden:
   1. "Recetas" → inserta en `recetas`, construye `Map<String, Long> recetaIds`
   2. "Receta_Ingredientes" → inserta en `receta_ingredientes` (cantidad como String "5000 gr")
@@ -1036,7 +1043,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### MigracionController ("/admin/migracion") — solo ADMIN (hereda de `/admin/**`)
 - `GET /admin/migracion/{subdomain}` — página de migración del tenant. Carga el tenant por subdomain, lista el historial via `migracionService.historial(subdomain)`. Modelo: `tenant`, `historial`. Template: `admin/migracion/detalle.html`.
-- `GET /admin/migracion/{subdomain}/plantilla/{modulo}` — descarga plantilla Excel. `modulo` ∈ {almacen, equipos, comercial, produccion, **clientes**}. Delega a `MigracionTemplateService`. Nombre de archivo: `plantilla-{modulo}-{subdomain}.xlsx`. Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
+- `GET /admin/migracion/{subdomain}/plantilla/{modulo}` — descarga plantilla Excel. `modulo` ∈ {almacen, equipos, comercial, produccion, **clientes**, **ventas**}. Delega a `MigracionTemplateService`. Nombre de archivo: `plantilla-{modulo}-{subdomain}.xlsx`. Content-Type: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
 - `POST /admin/migracion/{subdomain}/importar/{modulo}` — procesa la importación. Rechaza archivos vacíos con flash warning. Delega a `MigracionService.importar*()` según módulo. Flash success/warning/danger con resumen: filas procesadas, exitosas, errores y primeros 3 mensajes de error. Siempre redirige a `GET /admin/migracion/{subdomain}`.
 - Accesible desde el botón "Migración" en cada card de `/admin/tenants`.
 - Inyecta `MigracionTemplateService`, `MigracionService`, `TenantRepository`.
@@ -1443,7 +1450,7 @@ Perfil test: `src/test/resources/application-test.properties` (credenciales dumm
 ## ARCHIVOS DE PRUEBA — MIGRACIÓN
 
 Archivos Excel listos para subir en `/admin/migracion/{subdomain}`. Ubicación: `C:\Users\Juancho\IdeaProjects\BD\Migracion\`
-Generados con `generar_pruebas.py` (requiere `openpyxl`). Estructura idéntica a las plantillas (fila 0=cabecera, 1=leyenda, 2=ejemplo, 3+=datos).
+Generados con `generar_pruebas3.py` (requiere `openpyxl`). Estructura idéntica a las plantillas (fila 0=cabecera, 1=leyenda, 2=ejemplo, 3+=datos).
 
 | Archivo | Módulo | Contenido |
 |---|---|---|
@@ -1451,15 +1458,27 @@ Generados con `generar_pruebas.py` (requiere `openpyxl`). Estructura idéntica a
 | `prueba_equipos.xlsx` | Equipos | 16 equipos: fermentadores, ollas de macerado/hervor, enfriadores, bombas, filtro, medidores de pH, densímetros, báscula, compresor |
 | `prueba_comercial.xlsx` | Comercial | 7 proveedores · 10 facturas (2024–2025, estados mixtos RECIBIDA/VERIFICADA/PAGADA) · 22 ítems con IVA 19% |
 | `prueba_produccion.xlsx` | Producción | 6 recetas completas con escalones de macerado y adiciones de hervor · 9 lotes con carbonatación natural y forzada |
+| `prueba_clientes.xlsx` | Clientes | 10 clientes: bares, distribuidoras, tiendas, restaurantes, exportación — con NITs que coinciden con los usados en `prueba_ventas.xlsx` |
+| `prueba_ventas.xlsx` | Ventas | 12 ventas (DESPACHADO/PENDIENTE) · 16 ítems en 2 hojas (Ventas + Venta_Items) — códigos de lote coinciden con `prueba_produccion.xlsx` |
+
+**Orden de importación recomendado** (respetar dependencias entre módulos):
+1. `prueba_almacen.xlsx` → `/importar/almacen`
+2. `prueba_equipos.xlsx` → `/importar/equipos`
+3. `prueba_comercial.xlsx` → `/importar/comercial`
+4. `prueba_produccion.xlsx` → `/importar/produccion` (crea los lotes referenciados en ventas)
+5. `prueba_clientes.xlsx` → `/importar/clientes` (crea los NITs que resuelven las ventas)
+6. `prueba_ventas.xlsx` → `/importar/ventas`
 
 **Formato del campo `tipo` en cada módulo**:
 - **Almacén** (`prueba_almacen.xlsx`): la columna `tipo` usa nombres de enum uppercase: `MALTA`, `LUPULO`, `LEVADURA`, `CLARIFICANTE`, `AGENTE_CARBONATACION`, `AGUA`, `QUIMICO`, `ENVASE`, `OTRO`. `MigracionService.importarAlmacen()` valida el enum y convierte automáticamente al nombre display ("Lúpulo", "Malta"...) antes de insertar en BD.
 - **Equipos** (`prueba_equipos.xlsx`): la columna `tipo` usa nombres de enum uppercase: `FERMENTADOR`, `OLLA_MACERADO`, `OLLA_HERVOR`, `ENFRIADOR`, `BOMBA`, `FILTRO`, `MEDIDOR_PH`, `DENSIMETRO`, `BASCULA`, `COMPRESOR`, `OTRO`. `MigracionService.importarEquipos()` convierte a display name antes de insertar.
 - **Comercial** (`prueba_comercial.xlsx`): la columna `tipo_insumo` en la hoja `Factura_Items` usa nombres de enum uppercase (`MALTA`, `LUPULO`...). `MigracionService.importarComercial()` los convierte automáticamente al display name ("Malta", "Lúpulo"...) vía `TIPO_INSUMO_DISPLAY`/`TIPO_EQUIPO_DISPLAY` antes de insertar en BD (alineado con V47 que migró `factura_items.tipo_insumo/tipo_equipo` a display names).
 - **Producción** (`prueba_produccion.xlsx`): la columna `tipo` en `Receta_Ingredientes` y `Lote_Ingredientes` usa nombres de enum upstream de `TipoIngrediente` — se almacenan tal cual.
+- **Clientes** (`prueba_clientes.xlsx`): `regimen_tributario` usa enum names (`SIMPLIFICADO`/`RESPONSABLE_IVA`) y `lista_precio` usa enum names (`BAR`, `DISTRIBUIDOR`, `MAYORISTA`, etc.) — almacenados directamente en BD via `@Enumerated(EnumType.STRING)`.
+- **Ventas** (`prueba_ventas.xlsx`): `estado` usa valores del enum `EstadoVenta` (`DESPACHADO`, `PENDIENTE`, `COTIZACION`, `CANCELADO`). `cliente_nit` se resuelve a `cliente_id` primero; si no encuentra, cae a `cliente_nombre` como fallback. `codigo_lote` en `Venta_Items` se resuelve a `lote_id` de forma tolerante (deja null si el lote no existe).
 
-**Dependencias entre módulos**: los lotes en `prueba_produccion.xlsx` referencian las recetas del mismo archivo (se resuelven por nombre en el orden de hojas). Las facturas en `prueba_comercial.xlsx` referencian los proveedores de la hoja "Proveedores" — se procesan en orden. Importar siempre `prueba_almacen.xlsx` antes si se necesita inventario para validar insumos.
+**Dependencias entre módulos**: los lotes en `prueba_produccion.xlsx` referencian las recetas del mismo archivo (se resuelven por nombre en el orden de hojas). Las facturas en `prueba_comercial.xlsx` referencian los proveedores de la hoja "Proveedores" — se procesan en orden. Los ítems de `prueba_ventas.xlsx` referencian los códigos de lote de `prueba_produccion.xlsx` y los NITs de `prueba_clientes.xlsx`.
 
-**Casos borde incluidos**: un equipo en estado `MANTENIMIENTO`, una receta inactiva (Imperial Stout), un lote con carbonatación `SOBRECARBONATADA`, lotes con y sin receta asociada, facturas en todos los estados (RECIBIDA/VERIFICADA/PAGADA).
+**Casos borde incluidos**: un equipo en estado `MANTENIMIENTO`, una receta inactiva (Imperial Stout), un lote con carbonatación `SOBRECARBONATADA`, lotes con y sin receta asociada, facturas en todos los estados (RECIBIDA/VERIFICADA/PAGADA), ventas con descuento, una venta en estado PENDIENTE, un cliente persona natural (sin NIT — resolución por nombre).
 
-**Notas sobre `generar_pruebas.py`**: el archivo `generar_pruebas.py` (29/05/2026) genera los archivos de prueba. `generar_pruebas1.py` (27/05/2026) es la versión anterior. Ambos requieren `pip install openpyxl`. Ejecutar desde el directorio `C:\Users\Juancho\IdeaProjects\BD\Migracion\`.
+**Notas sobre `generar_pruebas3.py`**: versión actual (2026-06-04), genera los 6 archivos de prueba para todos los módulos. Versiones anteriores: `generar_pruebas2.py` (29/05/2026), `generar_pruebas1.py` (27/05/2026). Requiere `pip install openpyxl`. Ejecutar desde el directorio `C:\Users\Juancho\IdeaProjects\BD\Migracion\`.
