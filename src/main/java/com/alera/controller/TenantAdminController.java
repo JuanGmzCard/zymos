@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,7 @@ public class TenantAdminController {
     public String guardar(@ModelAttribute Tenant tenant,
                           @RequestParam(defaultValue = "false") boolean esNuevo,
                           RedirectAttributes ra) {
+        calcularPlanFin(tenant);
         tenantService.guardar(tenant);
         String accion = esNuevo ? "creado" : "actualizado";
         ra.addFlashAttribute("mensaje", "Tenant '" + tenant.getSubdomain() + "' " + accion + " correctamente");
@@ -349,5 +351,28 @@ public class TenantAdminController {
         model.addAttribute("tenant", tenant);
         model.addAttribute("metricas", metricsService.obtener(subdomain));
         return "admin/tenant-metricas";
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────
+
+    private void calcularPlanFin(Tenant tenant) {
+        String tipo = tenant.getPlanTipo();
+        if (tipo == null || tipo.isBlank()) {
+            tenant.setPlanTipo(null);
+            tenant.setPlanInicio(null);
+            tenant.setPlanFin(null);
+            return;
+        }
+        LocalDate inicio = tenant.getPlanInicio() != null ? tenant.getPlanInicio() : LocalDate.now();
+        tenant.setPlanInicio(inicio);
+        int meses = switch (tipo) {
+            case "MENSUAL"     -> 1;
+            case "TRIMESTRAL"  -> 3;
+            case "SEMESTRAL"   -> 6;
+            case "ANUAL"       -> 12;
+            case "BIANUAL"     -> 24;
+            default            -> 0;
+        };
+        tenant.setPlanFin(meses > 0 ? inicio.plusMonths(meses) : null);
     }
 }

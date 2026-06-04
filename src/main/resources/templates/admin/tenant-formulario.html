@@ -83,6 +83,36 @@
                 <div class="col-12">
                     <hr class="my-1">
                     <div class="detail-label mb-2">Límites del plan</div>
+
+                    <!-- Período de vigencia -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-sm-4">
+                            <label class="form-label small text-muted" for="planTipo">Período del plan</label>
+                            <select th:field="*{planTipo}" id="planTipo"
+                                    class="form-select form-select-sm" onchange="onPlanTipoChange()">
+                                <option value="">Sin vencimiento (ilimitado)</option>
+                                <option value="MENSUAL">Mensual — 1 mes</option>
+                                <option value="TRIMESTRAL">Trimestral — 3 meses</option>
+                                <option value="SEMESTRAL">Semestral — 6 meses</option>
+                                <option value="ANUAL">Anual — 1 año</option>
+                                <option value="BIANUAL">Bianual — 2 años</option>
+                            </select>
+                        </div>
+                        <div class="col-sm-4" id="planInicioGroup" style="display:none">
+                            <label class="form-label small text-muted" for="planInicio">Fecha de inicio</label>
+                            <input type="date" th:field="*{planInicio}" id="planInicio"
+                                   class="form-control form-control-sm" onchange="actualizarPlanFin()">
+                        </div>
+                        <div class="col-sm-4" id="planFinGroup" style="display:none">
+                            <label class="form-label small text-muted">Fecha de vencimiento</label>
+                            <input type="text" id="planFinDisplay" class="form-control form-control-sm"
+                                   readonly placeholder="— calculado automáticamente —"
+                                   style="background:var(--bs-secondary-bg)">
+                            <div class="form-text" id="planFinEstado"></div>
+                        </div>
+                    </div>
+
+                    <!-- Límites numéricos -->
                     <div class="row g-2">
                         <div class="col-sm-6">
                             <label class="form-label small text-muted" for="maxLotes">Máx. lotes activos</label>
@@ -560,6 +590,86 @@
     updatePreview();
     updateLoginPreview();
     updateFontPreview();
+})();
+</script>
+<script th:inline="javascript">
+(function() {
+    var MESES_POR_TIPO = { MENSUAL:1, TRIMESTRAL:3, SEMESTRAL:6, ANUAL:12, BIANUAL:24 };
+    var LABEL_TIPO     = { MENSUAL:'1 mes', TRIMESTRAL:'3 meses', SEMESTRAL:'6 meses', ANUAL:'1 año', BIANUAL:'2 años' };
+
+    /* Fecha de fin guardada (edición de tenant existente) */
+    var planFinGuardado = /*[[${tenant.planFin}]]*/ null;
+
+    function addMonths(date, n) {
+        var d = new Date(date);
+        d.setMonth(d.getMonth() + n);
+        return d;
+    }
+    function fmtDate(d) {
+        return d.toISOString().slice(0, 10);
+    }
+    function fmtDisplay(d) {
+        return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'long', year: 'numeric' });
+    }
+
+    window.onPlanTipoChange = function() {
+        var tipo = document.getElementById('planTipo').value;
+        var showFecha = tipo !== '';
+        document.getElementById('planInicioGroup').style.display = showFecha ? '' : 'none';
+        document.getElementById('planFinGroup').style.display   = showFecha ? '' : 'none';
+        if (!showFecha) return;
+        /* Si no hay fecha inicio puesta, sugerir hoy */
+        var inicioEl = document.getElementById('planInicio');
+        if (!inicioEl.value) inicioEl.value = fmtDate(new Date());
+        actualizarPlanFin();
+    };
+
+    window.actualizarPlanFin = function() {
+        var tipo   = document.getElementById('planTipo').value;
+        var inicio = document.getElementById('planInicio').value;
+        if (!tipo || !inicio) return;
+        var meses  = MESES_POR_TIPO[tipo] || 0;
+        if (!meses) return;
+        var fin    = addMonths(inicio + 'T00:00:00', meses);
+        var hoy    = new Date(); hoy.setHours(0,0,0,0);
+        var display = document.getElementById('planFinDisplay');
+        var estado  = document.getElementById('planFinEstado');
+        display.value = fmtDisplay(fin);
+        if (fin < hoy) {
+            estado.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Plan vencido</span>';
+        } else {
+            var diff = Math.ceil((fin - hoy) / 86400000);
+            estado.innerHTML = diff <= 7
+                ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Vence en ' + diff + ' día(s)</span>'
+                : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Vigente — ' + LABEL_TIPO[tipo] + '</span>';
+        }
+    };
+
+    /* Inicializar al cargar (en modo edición con plan ya guardado) */
+    (function init() {
+        var tipo = document.getElementById('planTipo').value;
+        if (!tipo) return;
+        document.getElementById('planInicioGroup').style.display = '';
+        document.getElementById('planFinGroup').style.display   = '';
+        if (planFinGuardado) {
+            /* Mostrar la fecha guardada mientras no cambie */
+            var fin = new Date(planFinGuardado + 'T00:00:00');
+            var hoy = new Date(); hoy.setHours(0,0,0,0);
+            var display = document.getElementById('planFinDisplay');
+            var estado  = document.getElementById('planFinEstado');
+            display.value = fmtDisplay(fin);
+            if (fin < hoy) {
+                estado.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Plan vencido</span>';
+            } else {
+                var diff = Math.ceil((fin - hoy) / 86400000);
+                estado.innerHTML = diff <= 7
+                    ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Vence en ' + diff + ' día(s)</span>'
+                    : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Vigente — ' + LABEL_TIPO[tipo] + '</span>';
+            }
+        } else {
+            actualizarPlanFin();
+        }
+    })();
 })();
 </script>
 </body>

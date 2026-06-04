@@ -67,7 +67,7 @@
                 <div class="p-3">
                     <!-- Subdomain + estado -->
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
                             <code class="text-muted small" th:text="${t.subdomain}">default</code>
                             <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;">Activo</span>
                             <span th:unless="${t.active}" class="badge badge-neutral" style="font-size:.65rem;">Inactivo</span>
@@ -76,6 +76,24 @@
                                   style="font-size:.65rem; cursor:default;"
                                   th:title="${'Email: ' + t.alertasIntentosFallidos + ' fallo(s) consecutivo(s)' + (t.alertasUltimoIntento != null ? ' · Último: ' + #temporals.format(t.alertasUltimoIntento, 'dd/MM HH:mm') : '')}">
                                 <i class="bi bi-envelope-exclamation me-1"></i><span th:text="${t.alertasIntentosFallidos}"></span>
+                            </span>
+                            <!-- Badge plan vencido -->
+                            <span th:if="${t.planFin != null and t.planVencido}"
+                                  class="badge bg-danger" style="font-size:.65rem;"
+                                  th:title="${'Plan vencido desde ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                                <i class="bi bi-calendar-x me-1"></i>Vencido
+                            </span>
+                            <!-- Badge plan por vencer (próximos 7 días) -->
+                            <span th:if="${t.planFin != null and !t.planVencido and t.planPorVencer}"
+                                  class="badge bg-warning text-dark" style="font-size:.65rem;"
+                                  th:title="${'Plan vence: ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                                <i class="bi bi-calendar-exclamation me-1"></i>Por vencer
+                            </span>
+                            <!-- Badge plan vigente con fecha -->
+                            <span th:if="${t.planFin != null and !t.planVencido and !t.planPorVencer}"
+                                  class="badge bg-info text-dark" style="font-size:.65rem;"
+                                  th:title="${'Plan vigente hasta ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                                <i class="bi bi-calendar-check me-1"></i><span th:text="${#temporals.format(t.planFin,'dd/MM/yy')}"></span>
                             </span>
                         </div>
                         <i th:if="${!#strings.isEmpty(t.logoUrl)}"

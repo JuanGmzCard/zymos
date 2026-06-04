@@ -1,6 +1,7 @@
 package com.alera.model;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -64,6 +65,31 @@ public class Tenant {
     @Column(name = "max_usuarios")
     private Integer maxUsuarios;
 
+    /** "MENSUAL","TRIMESTRAL","SEMESTRAL","ANUAL","BIANUAL" — null = sin vencimiento */
+    @Column(name = "plan_tipo", length = 20)
+    private String planTipo;
+
+    @Column(name = "plan_inicio")
+    private LocalDate planInicio;
+
+    @Column(name = "plan_fin")
+    private LocalDate planFin;
+
+    public boolean isPlanVencido() {
+        return planFin != null && planFin.isBefore(LocalDate.now());
+    }
+
+    public boolean isPlanPorVencer() {
+        return planFin != null && !isPlanVencido() && planFin.isBefore(LocalDate.now().plusDays(7));
+    }
+
+    public String getPlanFinTexto() {
+        if (planFin == null) return null;
+        if (isPlanVencido()) return "Vencido";
+        if (isPlanPorVencer()) return "Por vencer";
+        return null;
+    }
+
     public String getSubdomain()            { return subdomain; }
     public void   setSubdomain(String v)    { this.subdomain = v; }
     public String getName()                 { return name; }
@@ -102,4 +128,10 @@ public class Tenant {
     public void setMaxLotes(Integer v)                  { this.maxLotes = v; }
     public Integer getMaxUsuarios()                     { return maxUsuarios; }
     public void setMaxUsuarios(Integer v)               { this.maxUsuarios = v; }
+    public String getPlanTipo()                         { return planTipo; }
+    public void setPlanTipo(String v)                   { this.planTipo = v; }
+    public LocalDate getPlanInicio()                    { return planInicio; }
+    public void setPlanInicio(LocalDate v)              { this.planInicio = v; }
+    public LocalDate getPlanFin()                       { return planFin; }
+    public void setPlanFin(LocalDate v)                 { this.planFin = v; }
 }
