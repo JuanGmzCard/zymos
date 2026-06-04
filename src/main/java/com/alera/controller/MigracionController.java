@@ -66,6 +66,7 @@ public class MigracionController {
             case "comercial"  -> templateService.plantillaComercial();
             case "produccion" -> templateService.plantillaProduccion();
             case "clientes"   -> templateService.plantillaClientes();
+            case "ventas"     -> templateService.plantillaVentas();
             default -> throw new IllegalArgumentException("Módulo desconocido: " + modulo);
         };
         String filename = "plantilla-" + modulo + "-" + subdomain + ".xlsx";
@@ -97,6 +98,7 @@ public class MigracionController {
                 case "comercial"  -> migracionService.importarComercial(archivo, subdomain, usuario);
                 case "produccion" -> migracionService.importarProduccion(archivo, subdomain, usuario);
                 case "clientes"   -> migracionService.importarClientes(archivo, subdomain, usuario);
+                case "ventas"     -> migracionService.importarVentas(archivo, subdomain, usuario);
                 default -> throw new IllegalArgumentException("Módulo desconocido: " + modulo);
             };
             String tipo = switch (res.estado()) {

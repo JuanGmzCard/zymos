@@ -51,6 +51,7 @@
                 <li>Los campos marcados con <strong>*</strong> en la plantilla son obligatorios.</li>
                 <li>Para el módulo Comercial, llene en orden: Proveedores → Facturas → Factura_Items.</li>
                 <li>Para el módulo Producción, llene en orden: Recetas → Ingredientes → Escalones → Adiciones → Lotes → Lote_Ingredientes.</li>
+                <li>Para el módulo Ventas, llene en orden: Ventas → Venta_Items (use la misma <code>referencia_venta</code> en ambas hojas).</li>
             </ol>
         </div>
     </div>
@@ -227,6 +228,40 @@
                 </div>
             </div>
         </div>
+
+        <!-- Ventas -->
+        <div class="col-xl-6">
+            <div class="card-zymos h-100">
+                <div class="p-3 border-bottom d-flex align-items-center gap-2"
+                     style="background:color-mix(in srgb, var(--verde-alera) 7%, transparent);">
+                    <i class="bi bi-bag-check fs-4" style="color:var(--verde-alera)"></i>
+                    <div>
+                        <h5 class="mb-0">Ventas</h5>
+                        <small class="text-muted">Ventas y despachos históricos con ítems por lote</small>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <div class="mb-3 d-flex gap-2 align-items-center">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/ventas(s=${tenant.subdomain})}"
+                           class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                        </a>
+                        <span class="text-muted small">plantilla-ventas.xlsx (2 hojas)</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/ventas(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-zymos" type="submit">
+                                <i class="bi bi-upload me-1"></i>Importar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Historial de migraciones -->
@@ -266,6 +301,7 @@
                                                    log.modulo == 'equipos'    ? 'bg-primary' :
                                                    log.modulo == 'comercial'  ? 'bg-warning text-dark' :
                                                    log.modulo == 'clientes'   ? 'bg-secondary' :
+                                                   log.modulo == 'ventas'     ? 'bg-dark' :
                                                                                 'bg-info text-dark'}"
                                   th:text="${log.modulo}">mod</span>
                         </td>

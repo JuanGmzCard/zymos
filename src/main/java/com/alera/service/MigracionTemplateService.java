@@ -79,6 +79,26 @@ public class MigracionTemplateService {
         return bytes(wb);
     }
 
+    public byte[] plantillaVentas() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Ventas",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"Orden de llenado", "1) Ventas  →  2) Venta_Items"},
+                {"referencia_venta", "Clave de cruce entre hojas. Debe ser única en Ventas y coincidir exactamente en Venta_Items (ej: V001, V002…)"},
+                {"cliente_nit", "NIT del cliente registrado en el sistema. Si coincide, vincula automáticamente al cliente. Si no, se usa cliente_nombre como texto libre"},
+                {"estado", "COTIZACION | PENDIENTE | DESPACHADO | CANCELADO  (default: DESPACHADO)"},
+                {"fecha_despacho", "Formato: YYYY-MM-DD"},
+                {"valores monetarios", "Número decimal sin separadores de miles (ej: 35000.50)"},
+                {"descuento_pct", "Porcentaje como número (ej: 10 para 10%)"},
+                {"Sin validación de stock", "La importación es histórica: no se verifica disponibilidad de litros por lote"}
+            });
+        hojaVentas(wb, es);
+        hojaVentaItems(wb, es);
+        return bytes(wb);
+    }
+
     public byte[] plantillaProduccion() throws IOException {
         XSSFWorkbook wb = new XSSFWorkbook();
         Estilos es = estilos(wb);
@@ -111,6 +131,50 @@ public class MigracionTemplateService {
     }
 
     // ── Sheet builders ────────────────────────────────────────────────────────
+
+    private void hojaVentas(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Ventas");
+        wb.setSheetOrder("Ventas", 1);
+        String[][] cols = {
+            {"referencia_venta", "req"},
+            {"cliente_nombre",   "req"},
+            {"cliente_nit",      "opt"},
+            {"fecha_despacho",   "req"},
+            {"estado",           "opt"},
+            {"notas",            "opt"},
+            {"remision_numero",  "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"V001","Cervecería El Mosto","900123456-1","2024-03-15","DESPACHADO","Despacho mensual","REM-001"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"V002","Bar La Espuma","","2024-03-20","DESPACHADO","",""});
+        dropdown(sh, 1, 9999, 4, "COTIZACION","PENDIENTE","DESPACHADO","CANCELADO");
+        anchos(sh, 170, 230, 170, 160, 150, 280, 160);
+    }
+
+    private void hojaVentaItems(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Venta_Items");
+        String[][] cols = {
+            {"referencia_venta", "req"},
+            {"codigo_lote",      "opt"},
+            {"descripcion",      "opt"},
+            {"cantidad",         "req"},
+            {"unidad",           "opt"},
+            {"precio_unitario",  "req"},
+            {"descuento_pct",    "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"V001","IPA-001","Botella 330ml",48,"Botella 330ml",8500,0});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"V002","STOUT-003","Barril 20L",2,"Barril 20L",185000,5});
+        dropdown(sh, 1, 9999, 4,
+                "und","L","mL",
+                "Botella 330ml","Botella 500ml","Botella 750ml",
+                "Lata 330ml","Lata 473ml",
+                "Barril 20L","Barril 30L","Barril 50L",
+                "Growler","A granel");
+        anchos(sh, 170, 140, 230, 110, 160, 160, 130);
+    }
 
     private void hojaInsumos(XSSFWorkbook wb, Estilos es) {
         XSSFSheet sh = wb.createSheet("Insumos");

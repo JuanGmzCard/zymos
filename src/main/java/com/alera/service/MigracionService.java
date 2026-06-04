@@ -632,6 +632,121 @@ public class MigracionService {
                           total, ok, errores, usuario);
     }
 
+    // ── Ventas ────────────────────────────────────────────────────────────────
+
+    public Resultado importarVentas(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+
+            // 1) Ventas — mapa referencia → id generado
+            Map<String, Long> ventaIds = new HashMap<>();
+            Sheet shVentas = wb.getSheet("Ventas");
+            if (shVentas != null) {
+                for (Row row : shVentas) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String refVenta      = texto(row, 0);
+                        String clienteNombre = texto(row, 1);
+                        String clienteNit    = texto(row, 2);
+                        LocalDate fechaDesp  = fecha(row, 3);
+                        String estado        = textoODefault(row, 4, "DESPACHADO").toUpperCase();
+                        String notas         = texto(row, 5);
+                        String remisionNum   = texto(row, 6);
+
+                        if (refVenta.isBlank())       throw new IllegalArgumentException("referencia_venta es obligatorio");
+                        if (clienteNombre.isBlank())  throw new IllegalArgumentException("cliente_nombre es obligatorio");
+                        if (fechaDesp == null)        throw new IllegalArgumentException("fecha_despacho es obligatoria");
+                        validarEnum(estado, "estado", "COTIZACION","PENDIENTE","DESPACHADO","CANCELADO");
+
+                        // Resolver cliente_id — NIT primero, nombre como fallback
+                        Long clienteId = null;
+                        String nitNulo = nulaSiBlank(clienteNit);
+                        if (nitNulo != null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM clientes WHERE nit=? AND tenant_id=? LIMIT 1",
+                                    Long.class, nitNulo, tenantId);
+                            if (!ids.isEmpty()) clienteId = ids.get(0);
+                        }
+                        if (clienteId == null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM clientes WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
+                                    Long.class, clienteNombre, tenantId);
+                            if (!ids.isEmpty()) clienteId = ids.get(0);
+                        }
+
+                        long ventaId = insertarYRetornarId(
+                                "INSERT INTO ventas " +
+                                "(cliente,cliente_id,fecha_despacho,estado,notas,remision_numero," +
+                                "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
+                                "VALUES (?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                clienteNombre, clienteId, fechaDesp, estado,
+                                nulaSiBlank(notas), nulaSiBlank(remisionNum),
+                                tenantId, usuario, usuario);
+
+                        ventaIds.put(refVenta, ventaId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Ventas fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 2) Venta_Items
+            Sheet shItems = wb.getSheet("Venta_Items");
+            if (shItems != null) {
+                for (Row row : shItems) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String refVenta    = texto(row, 0);
+                        String codigoLote  = texto(row, 1);
+                        String descripcion = texto(row, 2);
+                        BigDecimal cantidad  = decimal(row, 3);
+                        String unidad        = texto(row, 4);
+                        BigDecimal precioU   = decimal(row, 5);
+                        BigDecimal descPct   = decimal(row, 6);
+
+                        if (refVenta.isBlank()) throw new IllegalArgumentException("referencia_venta es obligatorio");
+                        if (cantidad == null)   throw new IllegalArgumentException("cantidad es obligatoria");
+                        if (precioU == null)    throw new IllegalArgumentException("precio_unitario es obligatorio");
+
+                        Long ventaId = ventaIds.get(refVenta);
+                        if (ventaId == null)
+                            throw new IllegalArgumentException("referencia_venta '" + refVenta + "' no encontrada en la hoja Ventas");
+
+                        // Resolver lote — tolerante: si no existe deja lote_id null
+                        Long loteId = null;
+                        String codigoLoteNulo = nulaSiBlank(codigoLote);
+                        if (codigoLoteNulo != null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                    Long.class, codigoLoteNulo, tenantId);
+                            if (!ids.isEmpty()) loteId = ids.get(0);
+                        }
+
+                        jdbc.update("INSERT INTO venta_items " +
+                                "(venta_id,lote_id,codigo_lote,descripcion,cantidad,unidad,precio_unitario,descuento_pct,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?,?,?,?)",
+                                ventaId, loteId, codigoLoteNulo,
+                                nulaSiBlank(descripcion),
+                                cantidad, nulaSiBlank(unidad),
+                                precioU, descPct != null ? descPct : BigDecimal.ZERO,
+                                tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Venta_Items fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return guardarLog(tenantId, "ventas", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
     // ── Log ───────────────────────────────────────────────────────────────────
 
     public List<MigracionLog> historial(String tenantId) {
