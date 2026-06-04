@@ -168,6 +168,15 @@ public class TrazabilidadController {
         }
         try {
             var resultado = service.guardar(dto);
+            // Primer registro en curva de fermentación: OG + temperatura del tab de fermentación
+            if (dto.getDensidadInicial() != null) {
+                LocalDate fechaLectura = dto.getFermFechaInicial() != null
+                        ? dto.getFermFechaInicial() : dto.getFechaElaboracion();
+                if (fechaLectura != null) {
+                    lecturaService.agregar(resultado.getLote().getId(), fechaLectura,
+                            dto.getDensidadInicial(), dto.getFermTemperatura(), null);
+                }
+            }
             if (resultado.tieneAdvertencias()) {
                 ra.addFlashAttribute("mensaje", "Lote creado. ⚠️ " + resultado.getMensajeAdvertencias());
                 ra.addFlashAttribute("tipoMensaje", "warning");
