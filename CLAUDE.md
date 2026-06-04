@@ -1027,8 +1027,8 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 ### TenantAdminController ("/admin/tenants") — solo ADMIN
 - `GET /admin/tenants` — lista todos los tenants en grid de cards con franja de colores y mini-preview del navbar. Botones en el header: "Verificar alertas" (POST AJAX a `/alertas/ejecutar` con feedback spinner/confirmación) y "Limpiar cache" (`POST /admin/tenants/cache/evict`).
 - `GET /admin/tenants/nuevo` — formulario de creación (subdomain editable)
-- `GET /admin/tenants/editar/{subdomain}` — formulario de edición (subdomain readonly — es la PK). Secciones: info básica, paleta de colores (con preview en vivo), tipografías (con preview en vivo de heading + body).
-- `POST /admin/tenants/guardar` — crea o actualiza tenant; invalida cache de `TenantFilter` con `evictCache(subdomain)`
+- `GET /admin/tenants/editar/{subdomain}` — formulario de edición (subdomain readonly — es la PK). Secciones: info básica, paleta de colores (con preview en vivo), tipografías (con preview en vivo de heading + body), **Límites del plan** (selector `planTipo` + datepicker `planInicio` + display readonly de `planFin` calculado con indicador de estado verde/amarillo/rojo vía JS inline).
+- `POST /admin/tenants/guardar` — llama `calcularPlanFin(tenant)` antes de persistir (calcula `planFin` automáticamente según `planTipo`); invalida cache de `TenantFilter` con `evictCache(subdomain)`
 - `POST /admin/tenants/{subdomain}/toggle` — activa/desactiva tenant; invalida cache
 - `POST /admin/tenants/cache/evict` — limpia todo el cache en memoria de `TenantFilter` (`evictAll()`). Útil cuando se modifica un tenant directamente en BD sin pasar por la UI.
 - `GET /admin/tenants/{subdomain}/usuarios` — lista usuarios del tenant con `findAllByTenantId` (native SQL). Inyecta `UsuarioRepository` y `PasswordEncoder` directamente — no usa `UsuarioService` para evitar el filtro automático `@TenantId`.
