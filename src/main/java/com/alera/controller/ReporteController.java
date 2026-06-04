@@ -53,8 +53,7 @@ public class ReporteController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             Model model) {
 
-        if (desde == null) desde = LocalDate.now().minusMonths(3);
-        if (hasta == null) hasta = LocalDate.now();
+        // desde/hasta null = sin restricción (muestra todo el historial)
 
         var todosLotes = loteRepo.findByPeriodo(desde, hasta);
 
@@ -186,7 +185,7 @@ public class ReporteController {
         model.addAttribute("urlUltimoMes", "/reportes/produccion?desde=" + hoy.withDayOfMonth(1).minusMonths(1)
                 + "&hasta=" + hoy.withDayOfMonth(1).minusDays(1));
         model.addAttribute("urlEsteAnio",  "/reportes/produccion?desde=" + hoy.withDayOfYear(1) + "&hasta=" + hoy);
-        model.addAttribute("urlUltimos3",  "/reportes/produccion");
+        model.addAttribute("urlUltimos3",  "/reportes/produccion?desde=" + hoy.minusMonths(3) + "&hasta=" + hoy);
 
         model.addAttribute("lotes",              lotes);
         model.addAttribute("desde",              desde);
