@@ -483,7 +483,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `countDistinctEstilos()`, `countEnProceso()`, `countCompletados()`
 - `countLotesActivosByEquipo(equipoId)`
 - `findLitrosPorMes(desde, tenantId)` — nativeQuery, usa `CAST(EXTRACT(...) AS integer)` (NO `::int`); filtra por `tenant_id` y `deleted_at IS NULL` explícitamente (Hibernate no filtra queries nativas)
-- `findLotesPorEstilo(tenantId)`, `findParaKanban(limite)`, `findByPeriodo(desde, hasta)`
+- `findLotesPorEstilo(tenantId)`, `findParaKanban(limite)`, `findByPeriodo(desde, hasta)` — `:desde IS NULL OR l.fechaElaboracion >= :desde` y `:hasta IS NULL OR l.fechaElaboracion <= :hasta`. Ambos parámetros nullable — null = sin restricción (todo el historial). Usado por el reporte de producción y sus exports.
 - `findResumenPorEstilo(desde, hasta, tenantId)` — nativeQuery para reporte; filtra por `tenant_id` y `deleted_at IS NULL` explícitamente
 - `findByRecetaId(recetaId)` — lotes elaborados con una receta
 - `findByIds(List<Long> ids)` — `SELECT DISTINCT ... LEFT JOIN FETCH ingredientes WHERE id IN :ids` — para comparativa; DISTINCT evita filas duplicadas del join con colección
