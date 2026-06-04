@@ -317,6 +317,10 @@ Entidad de configuración por cliente. Tabla `tenants`. **Sin `@TenantId`** (es 
 - `alertasUltimoExito` (TIMESTAMP, nullable) — fecha/hora del último envío exitoso.
 - `maxLotes` (INTEGER, nullable) — límite de lotes por plan. `NULL` = sin límite. `TrazabilidadService.guardar()` lanza `RuntimeException` al alcanzarlo.
 - `maxUsuarios` (INTEGER, nullable) — límite de usuarios por plan. `NULL` = sin límite. `TenantAdminController.guardarUsuario()` bloquea la creación con flash danger al alcanzarlo.
+- `planTipo` (VARCHAR 20, nullable) — período de vigencia del plan: `"MENSUAL"` (1 mes), `"TRIMESTRAL"` (3 meses), `"SEMESTRAL"` (6 meses), `"ANUAL"` (12 meses), `"BIANUAL"` (24 meses). `null` = sin vencimiento (ilimitado).
+- `planInicio` (DATE, nullable) — fecha de inicio del período activo. Se setea al guardar el tenant cuando `planTipo != null`.
+- `planFin` (DATE, nullable) — fecha de vencimiento calculada automáticamente por `TenantAdminController.calcularPlanFin()` como `planInicio + meses(planTipo)`. Se limpia cuando `planTipo` es null.
+- Helpers: `isPlanVencido()` → `planFin < hoy`; `isPlanPorVencer()` → `planFin` entre hoy y hoy+7 días; `getPlanFinTexto()` → `"Vencido"` / `"Por vencer"` / null. Usados por los badges de la lista `/admin/tenants`.
 - Creado por `DataInitializer` al arrancar. Al inicio, itera **todos los tenants** existentes en BD y crea usuarios/tipos de cerveza/categorías de insumo y equipo para los que no tengan ninguno. Si un tenant ya tiene usuarios, no se modifica.
 - `GlobalControllerAdvice` lo expone como `${branding}` — los templates usan `${branding.name}`, `${branding.colorAccent}`, `${branding.fontHeadings}`, `${branding.fontBody}`, etc. sin cambios
 
@@ -1040,6 +1044,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /admin/tenants/{subdomain}/import` — multipart upload de JSON. Aplica solo campos conocidos (ignora desconocidos), guarda via `TenantService.guardar()`, registra `CONFIG_IMPORTADA` en historial.
 - `buildConfigMap(Tenant)` — helper privado que construye el `Map` de 11 campos de branding para export/config.
 - `applyConfig(Tenant, Map)` — helper privado que aplica campos del Map al Tenant, ignorando nulls y campos desconocidos.
+- `calcularPlanFin(Tenant)` — helper privado invocado en `POST /guardar`. Si `planTipo` es null/blank limpia `planInicio` y `planFin`; si no, calcula `planFin = planInicio + meses` según el tipo (MENSUAL=1, TRIMESTRAL=3, SEMESTRAL=6, ANUAL=12, BIANUAL=24). Si `planInicio` no está seteado usa `LocalDate.now()` como fallback.
 - Inyecta `ObjectMapper` (Jackson) para serialización/deserialización JSON.
 - `formularioEditar` pasa `otrosTenants` (todos los tenants excepto el actual) para el select "Copiar de...".
 - Hereda restricción `ADMIN` de `/admin/**` en `SecurityConfig`
