@@ -193,6 +193,40 @@
                 </div>
             </div>
         </div>
+
+        <!-- Clientes -->
+        <div class="col-xl-6">
+            <div class="card-zymos h-100">
+                <div class="p-3 border-bottom d-flex align-items-center gap-2"
+                     style="background:color-mix(in srgb, var(--verde-alera) 7%, transparent);">
+                    <i class="bi bi-people fs-4" style="color:var(--verde-alera)"></i>
+                    <div>
+                        <h5 class="mb-0">Clientes</h5>
+                        <small class="text-muted">Cartera de clientes con datos fiscales y de contacto</small>
+                    </div>
+                </div>
+                <div class="p-3">
+                    <div class="mb-3 d-flex gap-2 align-items-center">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/clientes(s=${tenant.subdomain})}"
+                           class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                        </a>
+                        <span class="text-muted small">plantilla-clientes.xlsx</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/clientes(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-zymos" type="submit">
+                                <i class="bi bi-upload me-1"></i>Importar
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Historial de migraciones -->
@@ -231,6 +265,7 @@
                                   th:classappend="${log.modulo == 'almacen'    ? 'bg-success' :
                                                    log.modulo == 'equipos'    ? 'bg-primary' :
                                                    log.modulo == 'comercial'  ? 'bg-warning text-dark' :
+                                                   log.modulo == 'clientes'   ? 'bg-secondary' :
                                                                                 'bg-info text-dark'}"
                                   th:text="${log.modulo}">mod</span>
                         </td>

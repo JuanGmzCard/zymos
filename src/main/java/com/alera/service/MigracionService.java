@@ -33,17 +33,18 @@ public class MigracionService {
             "OTRO", "Otro"
     );
 
-    private static final Map<String, String> TIPO_EQUIPO_DISPLAY = Map.of(
-            "FERMENTADOR", "Fermentador",
-            "OLLA_MACERADO", "Olla de Macerado",
-            "OLLA_HERVOR", "Olla de Hervor",
-            "ENFRIADOR", "Enfriador",
-            "BOMBA", "Bomba",
-            "FILTRO", "Filtro",
-            "MEDIDOR_PH", "Medidor de pH",
-            "DENSIMETRO", "Densímetro",
-            "BASCULA", "Báscula",
-            "COMPRESOR", "Compresor"
+    private static final Map<String, String> TIPO_EQUIPO_DISPLAY = Map.ofEntries(
+            Map.entry("FERMENTADOR",  "Fermentador"),
+            Map.entry("OLLA_MACERADO","Olla de Macerado"),
+            Map.entry("OLLA_HERVOR",  "Olla de Hervor"),
+            Map.entry("ENFRIADOR",    "Enfriador"),
+            Map.entry("BOMBA",        "Bomba"),
+            Map.entry("FILTRO",       "Filtro"),
+            Map.entry("MEDIDOR_PH",   "Medidor de pH"),
+            Map.entry("DENSIMETRO",   "Densímetro"),
+            Map.entry("BASCULA",      "Báscula"),
+            Map.entry("COMPRESOR",    "Compresor"),
+            Map.entry("OTRO",         "Otro")
     );
 
     private final JdbcTemplate jdbc;
@@ -267,6 +268,10 @@ public class MigracionService {
                         if (factId == null && !numFac.isBlank())
                             throw new IllegalArgumentException("numero_factura '" + numFac + "' no encontrado en la hoja Facturas");
 
+                        // factura_items.tipo_insumo/tipo_equipo almacenan display name (V47)
+                        String tipoInsDisplay = tipoIns.isBlank() ? null : TIPO_INSUMO_DISPLAY.getOrDefault(tipoIns, tipoIns);
+                        String tipoEqDisplay  = tipoEq.isBlank()  ? null : TIPO_EQUIPO_DISPLAY.getOrDefault(tipoEq, tipoEq);
+
                         BigDecimal cantidad = cant != null ? cant : BigDecimal.ONE;
                         BigDecimal descPct  = desc != null ? desc : BigDecimal.ZERO;
                         BigDecimal ivaPct   = iva  != null ? iva  : BigDecimal.ZERO;
@@ -282,7 +287,7 @@ public class MigracionService {
                                 "factura_id,tenant_id) " +
                                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                                 tipoItem, nombre,
-                                nulaSiBlank(tipoIns), nulaSiBlank(tipoEq),
+                                tipoInsDisplay, tipoEqDisplay,
                                 cantidad, unidadNula(unidad),
                                 valU, descPct, ivaPct, valLinea,
                                 factId, tenantId);
@@ -558,6 +563,72 @@ public class MigracionService {
             }
         }
         return guardarLog(tenantId, "produccion", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
+    // ── Clientes ──────────────────────────────────────────────────────────────
+
+    public Resultado importarClientes(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sh = wb.getSheet("Clientes");
+            if (sh == null) throw new IllegalArgumentException("No se encontró la hoja 'Clientes'");
+
+            for (Row row : sh) {
+                if (row.getRowNum() < 3) continue;
+                if (vacio(row, 0)) continue;
+                total++;
+                try {
+                    String nombre       = texto(row, 0);
+                    String razonSocial  = texto(row, 1);
+                    String nit          = texto(row, 2);
+                    String regimen      = texto(row, 3).toUpperCase();
+                    String email        = texto(row, 4);
+                    String telefono     = texto(row, 5);
+                    String direccion    = texto(row, 6);
+                    String ciudad       = texto(row, 7);
+                    String departamento = texto(row, 8);
+                    String listaPrecio  = texto(row, 9).toUpperCase();
+                    String activoStr    = textoODefault(row, 10, "TRUE").toUpperCase();
+                    String notas        = texto(row, 11);
+
+                    if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
+                    if (!regimen.isBlank())
+                        validarEnum(regimen, "regimen_tributario", "SIMPLIFICADO", "RESPONSABLE_IVA");
+                    if (!listaPrecio.isBlank())
+                        validarEnum(listaPrecio, "lista_precio",
+                                "VENTA_DIRECTA","DISTRIBUIDOR","BAR","MAYORISTA","EXPORTACION","EMPLEADO");
+                    boolean activo = !"FALSE".equals(activoStr) && !"NO".equals(activoStr);
+
+                    // Idempotencia por NIT cuando está presente
+                    String nitNulo = nulaSiBlank(nit);
+                    if (nitNulo != null) {
+                        long existe = jdbc.queryForObject(
+                                "SELECT COUNT(*) FROM clientes WHERE nit=? AND tenant_id=?",
+                                Long.class, nitNulo, tenantId);
+                        if (existe > 0) { ok++; continue; }
+                    }
+
+                    jdbc.update("INSERT INTO clientes " +
+                            "(nombre,razon_social,nit,regimen_tributario,email,telefono," +
+                            "direccion_despacho,ciudad,departamento,lista_precio,activo,notas," +
+                            "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                            nombre, nulaSiBlank(razonSocial), nitNulo,
+                            nulaSiBlank(regimen), nulaSiBlank(email), nulaSiBlank(telefono),
+                            nulaSiBlank(direccion), nulaSiBlank(ciudad), nulaSiBlank(departamento),
+                            nulaSiBlank(listaPrecio), activo, nulaSiBlank(notas),
+                            tenantId, usuario, usuario);
+                    ok++;
+                } catch (Exception e) {
+                    errores.add("Fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                }
+            }
+        }
+        return guardarLog(tenantId, "clientes", file.getOriginalFilename(),
                           total, ok, errores, usuario);
     }
 

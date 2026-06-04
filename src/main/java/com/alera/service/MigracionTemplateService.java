@@ -64,6 +64,21 @@ public class MigracionTemplateService {
         return bytes(wb);
     }
 
+    public byte[] plantillaClientes() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Clientes",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"regimen_tributario", "SIMPLIFICADO | RESPONSABLE_IVA"},
+                {"lista_precio", "VENTA_DIRECTA | DISTRIBUIDOR | BAR | MAYORISTA | EXPORTACION | EMPLEADO"},
+                {"activo", "TRUE | FALSE  (default: TRUE)"},
+                {"nit", "Si se ingresa, se usa como clave de idempotencia (skip si ya existe)"}
+            });
+        hojaClientes(wb, es);
+        return bytes(wb);
+    }
+
     public byte[] plantillaProduccion() throws IOException {
         XSSFWorkbook wb = new XSSFWorkbook();
         Estilos es = estilos(wb);
@@ -321,6 +336,31 @@ public class MigracionTemplateService {
         fila(ej2, es.example(), new Object[]{"IPA-001","LUPULO","Cascade","50 gr"});
         dropdown(sh, 1, 9999, 1, "MALTA","LUPULO","LEVADURA","CLARIFICANTE");
         anchos(sh, 160, 140, 220, 180);
+    }
+
+    private void hojaClientes(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Clientes");
+        wb.setSheetOrder("Clientes", 1);
+        String[][] cols = {
+            {"nombre",            "req"},
+            {"razon_social",      "opt"},
+            {"nit",               "opt"},
+            {"regimen_tributario","opt"},
+            {"email",             "opt"},
+            {"telefono",          "opt"},
+            {"direccion_despacho","opt"},
+            {"ciudad",            "opt"},
+            {"departamento",      "opt"},
+            {"lista_precio",      "opt"},
+            {"activo",            "opt"},
+            {"notas",             "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"Cervecería El Mosto","El Mosto SAS","900123456-1","RESPONSABLE_IVA","contacto@elmosto.co","3001234567","Calle 45 #12-34","Bogotá","Cundinamarca","DISTRIBUIDOR","TRUE",""});
+        dropdown(sh, 1, 9999, 3,  "SIMPLIFICADO","RESPONSABLE_IVA");
+        dropdown(sh, 1, 9999, 9,  "VENTA_DIRECTA","DISTRIBUIDOR","BAR","MAYORISTA","EXPORTACION","EMPLEADO");
+        dropdown(sh, 1, 9999, 10, "TRUE","FALSE");
+        anchos(sh, 220, 220, 160, 200, 220, 150, 280, 150, 160, 160, 100, 280);
     }
 
     private void hojaInstrucciones(XSSFWorkbook wb, Estilos es, String modulo, String[][] reglas) {
