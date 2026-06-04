@@ -112,8 +112,8 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     @Query("SELECT l FROM LoteCerveza l WHERE l.carbFechaFinal IS NULL OR l.carbFechaFinal >= :limite ORDER BY l.createdAt ASC")
     List<LoteCerveza> findParaKanban(@Param("limite") LocalDate limite);
 
-    // Reporte de producción por período
-    @Query("SELECT l FROM LoteCerveza l WHERE l.fechaElaboracion BETWEEN :desde AND :hasta ORDER BY l.fechaElaboracion DESC")
+    // Reporte de producción por período (desde/hasta nullable — null = sin restricción)
+    @Query("SELECT l FROM LoteCerveza l WHERE (:desde IS NULL OR l.fechaElaboracion >= :desde) AND (:hasta IS NULL OR l.fechaElaboracion <= :hasta) ORDER BY l.fechaElaboracion DESC")
     List<LoteCerveza> findByPeriodo(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 
     @Query(value = "SELECT estilo, COUNT(*) as cantidad, COALESCE(SUM(litros_finales),0) as litros " +
