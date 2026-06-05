@@ -9,7 +9,9 @@ import com.alera.model.enums.EstadoPlanificacion;
 import com.alera.service.PdfExportService;
 import com.alera.service.PlanificacionService;
 import com.alera.service.VentaService;
+import com.alera.model.EvaluacionSensorial;
 import com.alera.model.LecturaFermentacion;
+import com.alera.service.EvaluacionSensorialService;
 import com.alera.service.LecturaFermentacionService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
@@ -48,6 +50,7 @@ public class TrazabilidadController {
     private final FacturaProveedorRepository facturaRepo;
     private final PdfExportService pdfExportService;
     private final LecturaFermentacionService lecturaService;
+    private final EvaluacionSensorialService evaluacionService;
     private final PlanificacionService planificacionService;
     private final VentaService ventaService;
 
@@ -59,6 +62,7 @@ public class TrazabilidadController {
                                    FacturaProveedorRepository facturaRepo,
                                    PdfExportService pdfExportService,
                                    LecturaFermentacionService lecturaService,
+                                   EvaluacionSensorialService evaluacionService,
                                    PlanificacionService planificacionService,
                                    VentaService ventaService) {
         this.service = service;
@@ -69,6 +73,7 @@ public class TrazabilidadController {
         this.facturaRepo = facturaRepo;
         this.pdfExportService = pdfExportService;
         this.lecturaService = lecturaService;
+        this.evaluacionService = evaluacionService;
         this.planificacionService = planificacionService;
         this.ventaService = ventaService;
     }
@@ -248,6 +253,7 @@ public class TrazabilidadController {
     public String ver(@PathVariable Long id, Model model) {
         var lote     = service.buscarPorId(id);
         List<LecturaFermentacion> lecturas = lecturaService.listarPorLote(id);
+        List<EvaluacionSensorial> evaluaciones = evaluacionService.listarPorLote(id);
 
         // Datos para Chart.js — arrays paralelos de fecha, densidad y temperatura
         model.addAttribute("chartFechas",
@@ -260,6 +266,9 @@ public class TrazabilidadController {
         model.addAttribute("lote",     lote);
         model.addAttribute("historial", service.obtenerHistorial(id));
         model.addAttribute("lecturas",  lecturas);
+        model.addAttribute("evaluaciones", evaluaciones);
+        model.addAttribute("promedioEvaluacion",
+                evaluaciones.isEmpty() ? null : evaluacionService.calcularPromedio(evaluaciones));
         model.addAttribute("ventasLote", ventaService.listarPorLote(id));
         return "trazabilidad/detalle";
     }
@@ -286,6 +295,37 @@ public class TrazabilidadController {
                                    RedirectAttributes ra) {
         lecturaService.eliminar(lecturaId);
         ra.addFlashAttribute("mensaje", "Lectura eliminada");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/ver/" + id;
+    }
+
+    @PostMapping("/ver/{id}/evaluaciones/agregar")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public String agregarEvaluacion(
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            @RequestParam(required = false) String catador,
+            @RequestParam(required = false) Integer aroma,
+            @RequestParam(required = false) Integer apariencia,
+            @RequestParam(required = false) Integer sabor,
+            @RequestParam(required = false) Integer sensacionBoca,
+            @RequestParam(required = false) Integer impresionGeneral,
+            @RequestParam(required = false) String notas,
+            RedirectAttributes ra) {
+        evaluacionService.agregar(id, fecha, catador, aroma, apariencia, sabor,
+                sensacionBoca, impresionGeneral, notas);
+        ra.addFlashAttribute("mensaje", "Evaluación sensorial registrada");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/ver/" + id;
+    }
+
+    @PostMapping("/ver/{id}/evaluaciones/{evalId}/eliminar")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public String eliminarEvaluacion(@PathVariable Long id,
+                                      @PathVariable Long evalId,
+                                      RedirectAttributes ra) {
+        evaluacionService.eliminar(evalId);
+        ra.addFlashAttribute("mensaje", "Evaluación eliminada");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/ver/" + id;
     }

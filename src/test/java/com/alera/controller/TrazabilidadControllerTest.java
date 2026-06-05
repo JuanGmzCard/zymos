@@ -13,6 +13,7 @@ import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.service.*;
+import com.alera.service.EvaluacionSensorialService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,6 +58,7 @@ class TrazabilidadControllerTest {
     @MockBean ZymosAccessDeniedHandler     accessDeniedHandler;
     @MockBean PdfExportService             pdfExportService;
     @MockBean LecturaFermentacionService   lecturaService;
+    @MockBean EvaluacionSensorialService   evaluacionService;
     @MockBean PlanificacionService         planificacionService;
     @MockBean VentaService                 ventaService;
 
