@@ -148,6 +148,7 @@ public class SecurityConfig {
                 .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
                 .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
                 .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "PRODUCCION", "SUPERADMIN")
+                .requestMatchers("/barriles/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
 
                 .anyRequest().authenticated()
             )

@@ -189,7 +189,7 @@
                 <!-- Almacén (ADMIN / INVENTARIO / PRODUCCION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas') or currentUri.contains('/barriles'))} ? 'active' : ''">
                         <i class="bi bi-box-seam"></i> Almacén
                     </a>
                     <ul class="dropdown-menu">
@@ -203,6 +203,12 @@
                             <a class="dropdown-item" th:href="@{/recetas}"
                                th:classappend="${currentUri != null and currentUri.contains('/recetas')} ? 'active' : ''">
                                 <i class="bi bi-journal-bookmark me-2"></i>Recetas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/barriles}"
+                               th:classappend="${currentUri != null and currentUri.contains('/barriles')} ? 'active' : ''">
+                                <i class="bi bi-bucket me-2"></i>Barriles / Kegs
                             </a>
                         </li>
                     </ul>
