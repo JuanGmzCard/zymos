@@ -86,7 +86,7 @@ com.alera/
 │               JwtFilter (OncePerRequestFilter — valida Bearer tokens para /api/**; creado como @Bean en SecurityConfig, no @Component),
 │               ApiRateLimitFilter (OncePerRequestFilter — rate limiting /api/** por IP; ventana fija 1 min via Caffeine; creado como @Bean en SecurityConfig, no @Component)
 ├── exception/  EquipoEnUsoException, LoteNoEncontradoException
-├── controller/ 26 controladores:
+├── controller/ 27 controladores:
 │               TrazabilidadController, DashboardController, EquipoController,
 │               FacturaProveedorController, InsumoInventarioController,
 │               RecetaController, ProveedorController, CalendarioController,
@@ -99,6 +99,7 @@ com.alera/
 │               CustomErrorController (GET /error — intercepta el endpoint de error de Spring Boot),
 │               ClienteController (/clientes — CRUD + suggest; ADMIN/FACTURACION/SUPERADMIN)
 │               CategoriaController (/admin/categorias — CRUD categorías de insumo y equipo; ADMIN/SUPERADMIN)
+│               BarrilController (/barriles — CRUD + cambiar estado; ADMIN/INVENTARIO/PRODUCCION/SUPERADMIN)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
@@ -106,11 +107,12 @@ com.alera/
 │               TenantService, PdfExportService, ExcelExportService, LecturaFermentacionService, PlanificacionService,
 │               EmailService, AlertaScheduler, NotificacionService, MigracionTemplateService, MigracionService,
 │               EvaluacionSensorialService,
+│               BarrilService,
 │               TenantMetricsService (JdbcTemplate cross-tenant — 14 queries para producción/ventas/compras/inventario/equipos/usuarios/último acceso; inner record `TenantMetrics` con campos: `totalLotes`, `lotesEnProceso`, `lotesCompletados`, `litrosTotales` — producción; `totalVentas`, `ingresosVentas`, `totalClientes` — ventas; `totalFacturas`, `totalGastado` — compras; `totalInsumos`, `bajoStock`, `totalEquipos` — inventario; `totalUsuarios`, `ultimoAcceso` — sistema; método público `obtener(String tenantId) → TenantMetrics`),
 │               ClienteService,
 │               CategoriaInsumoService, CategoriaEquipoService,
 │               JwtService (generación/validación tokens HS256 — secret via @Value, claims: subject=username, tenant, rol)
-├── model/      28 entidades:
+├── model/      30 entidades:
 │               AuditableEntity (@MappedSuperclass — base de auditoría + @TenantId),
 │               Tenant (tabla tenants — subdomain PK + branding),
 │               LoteCerveza, Ingrediente, Receta, RecetaIngrediente, EscalonMacerado,
@@ -126,16 +128,20 @@ com.alera/
 │               CategoriaInsumo (tabla tipos_insumo — categorías de insumo por tenant; @TenantId),
 │               CategoriaEquipo (tabla tipos_equipo — categorías de equipo por tenant; @TenantId),
 │               EvaluacionSensorial (tabla evaluaciones_sensoriales — catas BJCP por lote; @TenantId)
-│               + 11 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
+│               Barril (tabla barriles — inventario de kegs/barriles; extiende AuditableEntity),
+│               MovimientoBarril (tabla movimientos_barriles — historial de cambios de estado; @TenantId directo, sin FK)
+│               + 13 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               EstadoVenta: COTIZACION, PENDIENTE, DESPACHADO, CANCELADO, EXPIRADO;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA;
 │               ListaPrecio: VENTA_DIRECTA, DISTRIBUIDOR, BAR, MAYORISTA, EXPORTACION, EMPLEADO;
-│               RegimenTributario: SIMPLIFICADO, RESPONSABLE_IVA)
+│               RegimenTributario: SIMPLIFICADO, RESPONSABLE_IVA;
+│               EstadoBarril: DISPONIBLE, LLENO, DESPACHADO, VACIO, LIMPIEZA, BAJA)
 ├── repository/ 15 repositorios JPA (+ CategoriaInsumoRepository, CategoriaEquipoRepository, TenantRepository, FacturaItemRepository, LecturaFermentacionRepository, EvaluacionSensorialRepository,
 │               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository,
-│               MigracionLogRepository, VentaItemRepository, ClienteRepository)
+│               MigracionLogRepository, VentaItemRepository, ClienteRepository,
+│               BarrilRepository, MovimientoBarrilRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto (campos numéricos `cantidad`, `valorUnitario`, `porcentajeDescuento`, `porcentajeIvaItem` sin valor por defecto — `null`; el servicio tiene fallbacks null-safe; el formulario muestra placeholder en lugar de 0), MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
@@ -181,6 +187,7 @@ templates/
                 tenant-formulario.html (edición) incluye sección "Importar / Exportar": botón Exportar JSON, form upload Importar JSON, select "Copiar de..." + botón AJAX que llama `/config` y rellena el form con previews en vivo,
                 migracion/detalle.html (página de migración por tenant: instrucciones generales, 6 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores; módulos: almacen, equipos, comercial, produccion, clientes, ventas)
 │               categorias.html (gestión de categorías de insumo y equipo: dos tabs con tabla CRUD + formulario de creación por tipo)
+├── barriles/   lista.html (4 stat-cards: Total/Disponibles/Llenos/Despachados + filtros codigo+estado + tabla con badges de estado), formulario.html (CRUD con campos: codigo, tipo, capacidadLitros, estado, codigoLote, clienteNombre, fechaDespacho, observaciones), detalle.html (hero con código+estado, historial de movimientos, panel cambiar estado, registro de auditoría, zona de peligro)
 ```
 
 ### Migraciones Flyway
@@ -235,6 +242,7 @@ templates/
 - `V51__backfill_lecturas_og_inicial.sql` — DML backfill: inserta la primera `LecturaFermentacion` (OG + temperatura de fermentación) para lotes existentes que tengan `densidad_inicial` pero ninguna lectura registrada. `fecha` = `COALESCE(ferm_fecha_inicial, fecha_elaboracion)`; `densidad` = `densidad_inicial`; `temperatura` = `ferm_temperatura` (nullable). Condición `NOT EXISTS` garantiza idempotencia. Complementa el comportamiento nuevo de `POST /guardar` (desde commit `5bebf06`) que crea este registro automáticamente en lotes nuevos.
 - `V52__plan_periodo.sql` — `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS plan_tipo VARCHAR(20)`, `ADD COLUMN IF NOT EXISTS plan_inicio DATE`, `ADD COLUMN IF NOT EXISTS plan_fin DATE`. Permiten configurar un período de vigencia por tenant: `plan_tipo` ∈ {`MENSUAL`, `TRIMESTRAL`, `SEMESTRAL`, `ANUAL`, `BIANUAL`} (null = sin vencimiento). `plan_fin` se calcula automáticamente en `TenantAdminController.calcularPlanFin()` al guardar (1/3/6/12/24 meses desde `plan_inicio`). `Tenant` expone `isPlanVencido()` y `isPlanPorVencer()` (≤7 días). La lista `/admin/tenants` muestra badges de estado (Vencido/Por vencer/fecha vigente). El formulario de creación/edición incluye selector de período + fecha de inicio + display calculado de vencimiento con indicador de estado.
 - `V53__evaluaciones_sensoriales.sql` — `CREATE TABLE evaluaciones_sensoriales(id BIGSERIAL PK, tenant_id VARCHAR(100) NOT NULL DEFAULT 'default', lote_id BIGINT NOT NULL REFERENCES lotes_cerveza(id) ON DELETE CASCADE, fecha DATE NOT NULL, catador VARCHAR(100), aroma INTEGER CHECK (0–12), apariencia INTEGER CHECK (0–3), sabor INTEGER CHECK (0–20), sensacion_boca INTEGER CHECK (0–5), impresion_general INTEGER CHECK (0–10), notas VARCHAR(1000), creado_at TIMESTAMP NOT NULL DEFAULT NOW())` + índices en `lote_id` y `tenant_id`. Con `@TenantId`. FK con CASCADE DELETE — si se elimina (soft-delete) el lote, las evaluaciones físicamente asociadas se borran en cascada.
+- `V54__barriles.sql` — Crea tabla `barriles(id BIGSERIAL PK, tenant_id VARCHAR(100) NOT NULL DEFAULT 'default', codigo VARCHAR(50) NOT NULL, tipo VARCHAR(50), capacidad_litros DECIMAL(8,2), estado VARCHAR(20) NOT NULL DEFAULT 'DISPONIBLE' CHECK IN (DISPONIBLE/LLENO/DESPACHADO/VACIO/LIMPIEZA/BAJA), lote_id BIGINT FK→lotes_cerveza ON DELETE SET NULL, codigo_lote VARCHAR(50), cliente_nombre VARCHAR(200), fecha_despacho DATE, observaciones VARCHAR(500), audit columns)` + tabla `movimientos_barriles(id BIGSERIAL PK, tenant_id VARCHAR(100) NOT NULL DEFAULT 'default', barril_id BIGINT NOT NULL — sin FK para preservar historial tras eliminación, estado_anterior VARCHAR(20), estado_nuevo VARCHAR(20) NOT NULL, usuario VARCHAR(100), notas VARCHAR(500), fecha TIMESTAMP NOT NULL DEFAULT NOW())`. Índices: `ux_barriles_codigo_tenant` (UNIQUE), `idx_barriles_tenant`, `idx_barriles_estado`, `idx_barriles_lote` (parcial WHERE NOT NULL), `idx_mov_barriles_barril`, `idx_mov_barriles_tenant`.
 
 ---
 
@@ -491,6 +499,32 @@ Registro de cata estructurada estilo BJCP por lote. Tabla `evaluaciones_sensoria
 - `getBadgeClass()` → clase Bootstrap según rango: Excepcional `"bg-warning text-dark"`, Excelente `"bg-success"`, Muy buena `"bg-info text-dark"`, Buena `"bg-primary"`, Aceptable `"bg-secondary"`, Deficiente/Inaceptable `"bg-danger"`. Retorna `"bg-secondary"` si `getPuntajeTotal()` es null.
 - **Mostrado en `detalle.html`**: card collapsible antes de Observaciones/Notas. Tabla con historial de evaluaciones (fecha, catador, columnas BJCP, total, badge de clasificación, botón eliminar). Formulario de nueva evaluación con sliders `form-range` y JS inline para total + badge en tiempo real.
 
+### Barril
+Inventario de kegs y barriles. Tabla `barriles`. Tiene `@TenantId` (heredado de `AuditableEntity`). **Extiende `AuditableEntity`.**
+- `id`, `codigo` (VARCHAR 50, NOT NULL, UNIQUE por tenant via `ux_barriles_codigo_tenant`)
+- `tipo` (VARCHAR 50, nullable) — tipo de barril; valores gestionados con lista estática en el controller ("Keg 20L", "Keg 30L", "Keg 50L", "Barril 30L", "Barril 60L", "Otro")
+- `capacidadLitros` (DECIMAL 8,2, nullable) — capacidad en litros
+- `@Enumerated(EnumType.STRING) estado → EstadoBarril` — default DISPONIBLE
+- `loteId` (Long, nullable, `@Column(name="lote_id")`) — FK lógica a `lotes_cerveza`; se limpia al pasar a estados "vacíos"
+- `codigoLote` (VARCHAR 50, nullable) — desnormalizado del lote asociado
+- `clienteNombre` (VARCHAR 200, nullable) — cliente/bar al que fue despachado
+- `fechaDespacho` (LocalDate, nullable) — fecha de despacho
+- `observaciones` (VARCHAR 500, nullable)
+- Helpers: `isDisponible()`, `isLleno()`, `isDespachado()`, `isEnBaja()`
+- Los 4 campos de auditoría vienen de `AuditableEntity`
+- **Delete físico** (no soft delete) — `BarrilService.eliminar()` llama `deleteById` directamente
+
+### MovimientoBarril
+Historial de cambios de estado de un barril. Tabla `movimientos_barriles`. Tiene `@TenantId` directo (no extiende `AuditableEntity`). **Sin FK a `barriles`** — preserva historial si el barril se elimina (mismo patrón que `VentaHistorialEstado`, `FacturaHistorialEstado`).
+- `id`, `tenantId` (@TenantId), `barrilId` (Long, NOT NULL, sin FK)
+- `@Enumerated(EnumType.STRING) estadoAnterior → EstadoBarril` — nullable (null = creación inicial del barril)
+- `@Enumerated(EnumType.STRING) estadoNuevo → EstadoBarril` (NOT NULL)
+- `usuario` (VARCHAR 100) — nombre del usuario autenticado (via `SecurityContextHolder`); `"sistema"` si no hay sesión
+- `notas` (VARCHAR 500, nullable) — notas del cambio; blank normalizado a null en el factory
+- `fecha` (TIMESTAMP, NOT NULL, seteado por `@PrePersist`)
+- Factory: `MovimientoBarril.of(barrilId, estadoAnterior, estadoNuevo, usuario, notas)` — crea instancia lista para persistir
+- **EstadoBarril** (`com.alera.model.enums`): `DISPONIBLE("Disponible","bg-success")`, `LLENO("Lleno","bg-primary")`, `DESPACHADO("Despachado","bg-warning text-dark")`, `VACIO("Vacío","bg-secondary")`, `LIMPIEZA("En limpieza","bg-info text-dark")`, `BAJA("Dado de baja","bg-danger")`. Cada valor tiene `getDisplayName()` y `getBadgeClass()`.
+
 ### Usuario
 No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist createdAt`. Campos:
 - `id`, `tenantId` (@TenantId — usuarios aislados por tenant), `username` (unique por tenant)
@@ -603,6 +637,15 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 
 ### EvaluacionSensorialRepository
 - `findByLoteIdOrdenadas(loteId)` — `@Query` JPQL `ORDER BY e.fecha DESC, e.id DESC` — evaluaciones más recientes primero. Hibernate filtra automáticamente por tenant activo vía `@TenantId`.
+
+### BarrilRepository
+- `findByFiltros(codigo, estado, Pageable)` — `@Query` JPQL con patrón `:codigo = '' OR LOWER(b.codigo) LIKE LOWER(CONCAT('%',:codigo,'%'))` (pasa `""` no `null` para evitar `lower(bytea)`) y `:estado IS NULL OR b.estado = :estado`. Orden `b.codigo ASC`.
+- `countByEstado(EstadoBarril estado)` — conteo por estado; para stat-cards.
+- `existsByCodigoIgnoreCase(String codigo)` — validación de unicidad en `guardar` (nuevo).
+- `existsByCodigoIgnoreCaseAndIdNot(String codigo, Long excludeId)` — validación de unicidad en `actualizar` (excluye el propio registro).
+
+### MovimientoBarrilRepository
+- `findByBarrilIdOrderByFechaDesc(Long barrilId)` — `List<MovimientoBarril>` ordenada por fecha DESC para el historial del detalle. Hibernate filtra automáticamente por tenant activo vía `@TenantId`.
 
 ### NotificacionRepository
 - `findTop5ByLeidaFalseOrderByCreatedAtDesc()` — últimas 5 no leídas para el dropdown del navbar
@@ -905,6 +948,18 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `calcularPromedio(List<EvaluacionSensorial> evaluaciones)` — acepta lista ya cargada (evita segunda query). Filtra evaluaciones con `getPuntajeTotal() != null`, calcula promedio como `Double`. Retorna `0.0` si lista vacía o todas sin puntaje. **No hace query a BD** — trabaja sobre la lista pasada como parámetro.
 - **Patrón de uso en controller**: `TrazabilidadController.ver()` carga la lista una sola vez y la pasa tanto para mostrar el historial (`"evaluaciones"`) como para calcular el promedio (`"promedioEvaluacion"`). `promedioEvaluacion` es `null` si la lista está vacía.
 
+### BarrilService
+- `listarPaginado(codigo, estado, page)` — pasa `""` cuando `codigo` es null (patrón `:codigo = '' OR LOWER(b.codigo) LIKE ...`; evita error `lower(bytea)` de PostgreSQL con null)
+- `buscarPorId(id)` — lanza `RuntimeException("Barril no encontrado: {id}")` si no existe
+- `listarMovimientos(barrilId)` — delega a `movimientoRepo.findByBarrilIdOrderByFechaDesc()`
+- `guardar(barril)` — valida unicidad de código (case-insensitive), normaliza blancos a null, guarda, crea `MovimientoBarril` inicial con `estadoAnterior=null`. Estado por defecto: DISPONIBLE.
+- `actualizar(id, barril)` — busca el existente, actualiza campos, solo verifica unicidad de código si cambió (`existsByCodigoIgnoreCaseAndIdNot`), guarda sin crear movimiento.
+- `cambiarEstado(id, nuevoEstado, notas)` — actualiza `estado`; si `nuevoEstado` ∈ {DISPONIBLE, VACIO, LIMPIEZA, BAJA} limpia `loteId`, `codigoLote`, `clienteNombre`, `fechaDespacho`; guarda; crea `MovimientoBarril` con estado anterior y nuevo.
+- `eliminar(id)` — **borrado físico** (no soft delete); lanza `RuntimeException` si no existe.
+- `countTotal()`, `countByEstado(EstadoBarril)` — delegan a `barrilRepo`. Para stat-cards.
+- Helpers privados: `normalizar(barril)` (blancos → null), `validarCodigoUnico(codigo, excludeId)`, `usuarioActual()` (SecurityContextHolder).
+- `pageSize` inyectado via `@Value("${app.page-size:15}")`.
+
 ### TenantService
 - `listarTodos()` — `@Transactional(readOnly=true)`, ordenados por subdomain
 - `buscarPorSubdomain(subdomain)` — `Optional<Tenant>` por PK
@@ -1100,6 +1155,17 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /clientes/{id}/toggle` — invierte el flag `activo`. Flash success.
 - `GET /clientes/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve `[{id, nombre, nit, listaPrecio, ciudad}]`. Usado por el typeahead del formulario de venta.
 
+### BarrilController ("/barriles") — ADMIN, INVENTARIO, PRODUCCION, SUPERADMIN
+- `GET /barriles?codigo=&estado=&page=` — lista paginada con 4 stat-cards (Total, Disponibles, Llenos, Despachados). Filtros: texto libre por código y select de `EstadoBarril`. Pasa `tiposBarril` (lista estática), `estados` (enum values), `statsTotal`/`statsDisponibles`/`statsLlenos`/`statsDespachados` al modelo.
+- `GET /barriles/nuevo` — formulario de creación. Modelo: `barril` (Barril vacío), `tiposBarril`, `estados`.
+- `POST /barriles/guardar` — valida `@Valid` + que `codigo` no esté en blanco. Si el servicio lanza `RuntimeException` (código duplicado), redirige con flash danger; si OK redirige a `/barriles` con flash success.
+- `GET /barriles/editar/{id}` — formulario de edición. Redirige a `/barriles` con flash danger si no existe.
+- `POST /barriles/actualizar/{id}` — misma validación que guardar; redirige a `/barriles` con success o danger.
+- `GET /barriles/ver/{id}` — detalle con info del barril + historial de movimientos. Redirige a `/barriles` con flash danger si no existe.
+- `POST /barriles/{id}/estado` — llama `service.cambiarEstado(id, estado, notas)`. Redirige a `/barriles/ver/{id}`.
+- `POST /barriles/eliminar/{id}` — borrado físico, redirige a `/barriles` con flash success.
+- `TIPOS_BARRIL` — lista estática en el controller: "Keg 20L", "Keg 30L", "Keg 50L", "Barril 30L", "Barril 60L", "Otro".
+
 ### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
 - `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos). Fila de la lista incluye: badge `+N` cuando la venta tiene más de 1 ítem, botón PDF directo, y botón "Despachar" (visible solo cuando `estado == PENDIENTE`). Los nuevos estados COTIZACION y EXPIRADO aparecen automáticamente en el select de filtro (usa `EstadoVenta.values()`).
 - `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems. Campo cliente: input de búsqueda con typeahead que llama `GET /clientes/suggest?q=`; selección carga chip con nombre+NIT y setea el hidden `clienteId`. Typeahead de lote usa `GET /ventas/suggest-lotes?q=`. Preview de total en tiempo real. `step` del campo cantidad se adapta automáticamente: entero para envases (Botella/Lata/Barril/Growler/und), decimal (0.001) para volumen. Campo "Válida hasta" visible solo cuando estado=COTIZACION.
@@ -1181,6 +1247,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `/facturas/**`, `/proveedores/**`, `/clientes/**`, `/ventas/**` → ADMIN, FACTURACION, SUPERADMIN
   - `/inventario/**`, `/recetas/**` → ADMIN, INVENTARIO, PRODUCCION (lectura+escritura para INVENTARIO; solo lectura para PRODUCCION — write bloqueado por `@PreAuthorize`)
   - `/equipos/**` → ADMIN, EQUIPOS, PRODUCCION (lectura para PRODUCCION; write bloqueado por `@PreAuthorize`)
+  - `/barriles/**` → ADMIN, INVENTARIO, PRODUCCION, SUPERADMIN
   - `/api/auth/**` → público (sin autenticación — endpoint de login JWT)
   - `/api/**` → cualquier usuario autenticado (HTTP Basic, sesión, o Bearer JWT)
   - Todo lo demás (incluido `/swagger-ui/**`, `/v3/api-docs/**`) → cualquier rol autenticado
@@ -1190,7 +1257,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **HTTP Security Headers** (configurados en `SecurityConfig.filterChain()` via `.headers()`): HSTS (`max-age=31536000; includeSubDomains`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`. CSP explícitamente omitido — el app usa múltiples CDNs y Thymeleaf inline JS que requieren `'unsafe-inline'`, lo cual vacía el beneficio de CSP.
 - **CSRF en AJAX**: todos los endpoints `@ResponseBody POST` requieren el token CSRF. Los templates que los usan incluyen `<meta name="_csrf" th:content="${_csrf.token}"/>` y `<meta name="_csrf_header" th:content="${_csrf.headerName}"/>`. El JS lee estos metas y los envía como header en el `fetch()`.
 - **JPA Auditing**: `JpaConfig` con `@EnableJpaAuditing(auditorAwareRef="auditorAwareImpl")`, `AuditorAwareImpl` lee usuario de SecurityContext. Fallback a `"sistema"` si no hay sesión activa.
-- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas; **Comercial** (ADMIN/FACTURACION/SUPERADMIN): Ventas, Clientes, Facturas, Proveedores; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`. El `active` check del dropdown Comercial incluye `/clientes` además de `/ventas`, `/facturas`, `/proveedores`.
+- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas, Barriles / Kegs (icono `bi-bucket`); **Comercial** (ADMIN/FACTURACION/SUPERADMIN): Ventas, Clientes, Facturas, Proveedores; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`. El `active` check del dropdown Comercial incluye `/clientes` además de `/ventas`, `/facturas`, `/proveedores`. El `active` check del dropdown Almacén incluye `/barriles`.
 - **Campana de notificaciones** (`<li id="alertaBellItem">`): siempre visible en el DOM (antes tenía `style="display:none"` y se revelaba via JS). Al cargar la página hace `fetch('/notificaciones/recientes')`. Si hay notificaciones no leídas, muestra el badge rojo; si no las hay, el badge se oculta (`badge.style.display='none'`) pero la campana permanece visible. `notifMarcarLeida()` también solo oculta el badge (no el elemento `<li>`) cuando `noLeidas` llega a 0.
 - **`/perfil/**`** cae en `anyRequest().authenticated()` — accesible a todos los roles. Sin regla explícita en `SecurityConfig`.
 - **Multi-tenant — TenantFilter** (`OncePerRequestFilter`):
@@ -1419,6 +1486,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `JwtServiceTest` — 9 tests: generarToken (incluye claims username/tenant/rol), validarToken (válido, expirado, firma inválida, subject correcto), extraerUsername, extraerTenant, extraerRol, ttl configurable. Instancia `JwtService` directamente con `ReflectionTestUtils.setField` para `secret` y `ttlHours`.
 - `VentaServiceTest` — 25 tests. Mocks: `@Mock VentaRepository ventaRepo`, `@Mock VentaItemRepository ventaItemRepo`, `@Mock LoteCervezaRepository loteRepo`, `@Mock VentaHistorialEstadoRepository historialRepo`, `@Mock NotificacionService notificacionService`, `@Mock ClienteRepository clienteRepo`, `@Mock InsumoInventarioService insumoService`, `@Mock EntityManager em`, `@Mock Query nativeQuery`. `em` se inyecta vía `ReflectionTestUtils.setField(service, "em", em)` — es `@PersistenceContext`, no constructor. `@BeforeEach` inyecta `pageSize=15`, `expiracionDias=15` vía `ReflectionTestUtils`, y hace `lenient()` stubs: `historialRepo.save → VentaHistorialEstado`, `em.createNativeQuery → nativeQuery`, `nativeQuery.setParameter → nativeQuery`, `nativeQuery.getSingleResult → 0`, `ventaItemRepo.findItemsConEnvase(anyLong()) → List.of()`. Helper `buildDto(cliente, cantidad, precio)` crea `VentaFormDto` con fecha hoy, estado PENDIENTE y un `VentaItemFormDto` (unidad "L", descuentoPct=0) añadido a `dto.getItems()`. Tests — guardar: (1) `guardar_persisteVenta` — "Cervecería Prueba", cantidad=10, precio=5000; `ArgumentCaptor` verifica cliente, estado PENDIENTE, `items.hasSize(1)`, cantidad y precio del ítem; (2) `guardar_registraHistorial` — captor en `historialRepo.save()` verifica `estadoAnterior=null` y `estadoNuevo=PENDIENTE`; (3) `guardar_vinculaLote` — `dto.getItems().get(0).setLoteId(1L)`, lote stub devuelve lote con `codigoLote="IPA-001"`; captor verifica `item0.getLote()=lote` y `item0.getCodigoLote()="IPA-001"`; (4) `guardar_sinLote` — sin loteId; captor verifica `item0.getLote()=null` y `item0.getCodigoLote()=null`; (5) `guardar_estadoNullDefaultPendiente` — `dto.setEstado(null)`; captor verifica estado=PENDIENTE. Actualizar: (6) `actualizar_modificaCampos` — existente cliente "Anterior", dto "Nuevo Cliente"; `thenAnswer(inv→inv.getArgument(0))` en save; captor verifica nuevo cliente; (7) `actualizar_registraHistorialAlCambiarEstado` — existente PENDIENTE, dto DESPACHADO; captor historial verifica `estadoAnterior=PENDIENTE`, `estadoNuevo=DESPACHADO`; (8) `actualizar_noRegistraHistorialSinCambioEstado` — PENDIENTE→PENDIENTE; `verify(historialRepo, never()).save(any())`; (9) `actualizar_noExiste_lanzaExcepcion` — id 99L, `Optional.empty()` → `assertThrows(RuntimeException.class)`. Eliminar (soft delete): (10) `eliminar_softDelete` — verifica `never().deleteById(any())`; captor verifica `getDeletedAt() != null`; (11) `eliminar_noExiste_noOp` — id 99L; verifica `never().save()` y `never().deleteById()`. Cambiar estado: (12) `cambiarEstado_actualizaEstado` — PENDIENTE→DESPACHADO; captor verifica estado=DESPACHADO; (13) `cambiarEstado_registraHistorial` — PENDIENTE→CANCELADO; captor historial verifica `estadoAnterior=PENDIENTE`, `estadoNuevo=CANCELADO`; (14) `cambiarEstado_despachado_creaNotificacion` — venta.cliente="Bar La Espuma"; verifica `notificacionService.crear(any(), contains("Bar La Espuma"), any(), any())`. Validar cantidad: (15) `validarCantidad_listaNull_retornaNull` — null → null; (16) `validarCantidad_sinLoteId_retornaNull` — ítem sin loteId → null; (17) `validarCantidad_dentroDelLimite_retornaNull` — lote litrosFinales=100, existente en BD=50, nuevo ítem=30 (50+30=80 ≤ 100) → null; (18) `validarCantidad_superaLimite_retornaAdvertencia` — existente=80, nuevo=30 (80+30=110 > 100) → advertencia no null que contiene "IPA-001". Historial: (19) `listarHistorial_delegaARepo` — id 5L; verifica `findByVentaIdOrderByFechaDesc(5L)` llamado, resultado hasSize(1). Suggest: (20) `suggest_queryCorta_retornaVacio` — "a", null y "  " retornan vacío; (21) `suggest_retornaEstructura` — "Distribu", venta.cliente="Distribuidora Norte"; resultado hasSize(1), contiene clave "titulo"="Distribuidora Norte" y "url" que contiene "/ventas/ver/" — `primerCodigoLote` es `@Formula`, null en tests sin BD. Stats: (22) `countTotal_delegaARepo` — `ventaRepo.count()=42L`; (23) `countByEstado_delegaARepo` — PENDIENTE→7L; (24) `sumIngresos_nullRetornaZero` — `ventaItemRepo.sumIngresosDespachados()=null` → ZERO (delega a `ventaItemRepo`, no `ventaRepo`); (25) `listarPaginado_delegaARepo` — verifica `findAllFiltered(eq(PENDIENTE), any(), any(), any())` llamado, resultado no null.
 - `EvaluacionSensorialServiceTest` — 15 tests. Mocks: `@Mock EvaluacionSensorialRepository repo`, `@Mock LoteCervezaRepository loteRepo`. Tests — `listarPorLote` (2): delega a `findByLoteIdOrdenadas`, lista vacía retorna vacía. `agregar` (4): persiste con todos los campos, catador en blanco → null, notas en blanco → null, lote no existe → RuntimeException con mensaje que contiene el id. `eliminar` (1): llama `deleteById`. `calcularPromedio` (3): promedio correcto con dos evaluaciones (44+35=39.5), lista vacía → 0.0, evaluación sin puntaje (todos null) excluida del cálculo. Métodos computados de entidad (5): `puntajeTotal` calcula correctamente (10+3+18+4+9=44), todos null → null, algunos null → suma los presentes, clasificación correcta por rango (Excepcional/Excelente/Muy buena/Buena/Aceptable/Deficiente/Inaceptable), badgeClass correcta por rango. Helpers: `evalConPuntajes(aroma,apariencia,sabor,boca,general)`, `evalConTotal(total)` — distribuye el total entre los 5 campos respetando los máximos BJCP.
+- `BarrilServiceTest` — 16 tests. Mocks: `@Mock BarrilRepository barrilRepo`, `@Mock MovimientoBarrilRepository movimientoRepo`. `@BeforeEach` inyecta `pageSize=15` via `ReflectionTestUtils`, `lenient().when(movimientoRepo.save(any())).thenAnswer(inv->inv.getArgument(0))`. Helper `barrilConId(id, codigo)`. Tests — `listarPaginado` (2): delega a `findByFiltros` con `""` cuando codigo null + filtro de estado; con filtros pasa correctamente. `buscarPorId` (2): encontrado → retorna barril; noExiste → lanza RuntimeException con "99". `guardar` (4): persiste con estado DISPONIBLE por defecto; codigo duplicado → lanza RuntimeException con código; crea MovimientoBarril inicial (estadoAnterior=null, estadoNuevo=DISPONIBLE); normaliza blancos (clienteNombre `"  "` → null, observaciones `"   "` → null). `actualizar` (2): modifica codigo, verifica save con id correcto; mismo codigo no llama `existsByCodigoIgnoreCaseAndIdNot`. `cambiarEstado` (4): actualiza estado y crea MovimientoBarril con notas; a DISPONIBLE limpia codigoLote/clienteNombre/fechaDespacho; noExiste → RuntimeException con "99". `eliminar` (2): llama `deleteById`; noExiste → RuntimeException, `never().deleteById()`. `countTotal` (1): delega a `repo.count()`. `countByEstado` (1): delega a `repo.countByEstado()`. `listarMovimientos` (1): delega a `movimientoRepo.findByBarrilIdOrderByFechaDesc()`.
 - `PdfExportServiceTest` — 8 smoke tests: verifica magic bytes `%PDF`, lote mínimo sin lecturas, lote completo (densidades, fases, obs), lecturas con densidad+temp, solo densidad, solo temperatura, lecturas null, tamaño >1KB, PDFs distintos para lotes distintos. Instancia `PdfExportService` directamente (sin Spring context — no tiene dependencias). Usa `private static final ExportBranding BRANDING = ExportBranding.defaults("Alera")` como constante de test.
 - `ExcelExportServiceTest` — 8 smoke tests: verifica magic bytes `PK` (ZIP/XLSX), listas vacías, lote mínimo, lotes con métricas, resumen por estilos, 50 lotes sin excepción, contenido distinto para lotes distintos. Usa `ExportBranding.defaults("Alera")` como constante de test. **Bug descubierto**: fechas `null` en `desde`/`hasta` → `RuntimeException` (NPE interno al formatear) — el test lo documenta y verifica el comportamiento real. **NOTA**: `List.of(Object[])` causa ambigüedad de tipos en Java 26 — usar `new ArrayList<>()` para listas de `Object[]`.
 
@@ -1452,6 +1520,7 @@ APP_BRAND_FONT_BODY=Roboto
 - `VentaControllerTest` — 7 tests. `@MockBean` adicionales a los estándar: `VentaService ventaService`, `TrazabilidadService trazabilidadService`, `ExcelExportService excelExportService`, `PdfExportService pdfExportService`, `ClienteService clienteService`. `@BeforeEach` stubs: `listarPaginado(any,any,any,anyInt)` → `PageImpl(List.of())`, `countTotal()` → 0L, `countByEstado(any)` → 0L, `countClientesUnicos()` → 0L, `sumIngresosDespachados()` → ZERO, `suggest(anyString)` → `List.of()`, `topClientes()` → `List.of()`, `listarHistorial(anyLong)` → `List.of()`. Tests: (1) `lista_sinAuth_retorna401` — GET /ventas sin auth → 401; (2) `lista_conAdmin_retorna200` — ADMIN → 200, view "ventas/lista"; (3) `lista_conFacturacion_retorna200` — FACTURACION → 200; (4) `suggest_retornaJson` — ADMIN, GET /ventas/suggest?q=norte; stubs `ventaService.suggest("norte")` con `Map.of("titulo","Distribuidora Norte","sub","IPA-001","url","/ventas/ver/1")`; verifica `jsonPath("$[0].titulo").value("Distribuidora Norte")`; (5) `ver_retornaDetalle` — ADMIN, GET /ventas/ver/1; venta con cliente "Cliente Test" y estado PENDIENTE; verifica 200, view "ventas/detalle", `model().attributeExists("historial")`; **NO** setear campos que ya no existen en `Venta` (`cantidad`, `precioUnitario`, `descuentoPct`) — `valorTotal` es `@Formula` (null sin BD = ZERO vía `getValorTotal()`); (6) `nuevo_retornaFormulario` — ADMIN, GET /ventas/nuevo → 200, view "ventas/formulario"; (7) `pdf_retornaPdf` — ADMIN, GET /ventas/1/pdf; venta con estado DESPACHADO; `pdfExportService.generarPdfVenta(any,any)` devuelve bytes `{0x25,0x50,0x44,0x46}` (magic bytes `%PDF`); verifica `header("Content-Disposition")` contiene "remision-venta-1.pdf".
 - `ClienteControllerTest` — 8 tests. Único `@MockBean` adicional al set estándar: `ClienteService clienteService`. `@BeforeEach` stubs: `listarPaginado(any,any,anyInt)` → `PageImpl(List.of())`, `suggest(anyString)` → `List.of()`. Tests: (1) `lista_sinAuth_retorna401` — GET /clientes sin auth → 401; (2) `lista_conAdmin_retorna200` — ADMIN → 200, view "clientes/lista", `model().attributeExists("clientes","totalClientes")`; (3) `lista_conFacturacion_retorna200` — FACTURACION → 200; (4) `suggest_retornaJson` — ADMIN, GET /clientes/suggest?q=mosto; stubs `suggest("mosto")` con `Map.of("id",1L,"nombre","Cervecería Mosto","nit","900-1","ciudad","Bogotá")`; verifica `jsonPath("$[0].nombre").value("Cervecería Mosto")`; (5) `nuevo_retornaFormulario` — ADMIN, GET /clientes/nuevo → 200, view "clientes/formulario", `model().attributeExists("cliente","listasPrecio","regimenes")`; (6) `ver_retornaDetalle` — ADMIN, GET /clientes/ver/1; `buscarPorId(1L)` devuelve cliente con nombre "Distribuidora Norte"; verifica 200, view "clientes/detalle", `model().attributeExists("cliente")`; (7) `guardar_nitDuplicado_redirige` — ADMIN, POST /clientes/guardar con CSRF y param `nombre="Cliente Test"`; `doThrow(RuntimeException("NIT ya registrado para otro cliente")).when(clienteService).guardar(any())`; verifica 3xx redirect a "/clientes" y `flash().attribute("tipoMensaje","danger")`; (8) `toggle_redirige` — ADMIN, POST /clientes/1/toggle con CSRF → 3xx redirect a "/clientes".
 - `MigracionControllerTest` — 3 tests: `detalle_sinAuth_retorna401` (GET /admin/migracion/mosto sin auth → 401), `detalle_tenantExiste_retorna200` (ADMIN + tenant existente → 200, view "admin/migracion/detalle"), `detalle_noExiste_redirige` (ADMIN + tenant inexistente → 3xx redirect a /admin/tenants + flash `tipoMensaje=danger`). `@MockBean MigracionTemplateService` y `@MockBean MigracionService` adicionales. Stub `@BeforeEach`: `migracionService.historial(anyString())` → `List.of()`.
+- `BarrilControllerTest` — 8 tests: `lista_sinAuth_retorna401` (GET /barriles sin auth → 401), `lista_conAdmin_retorna200` (ADMIN → 200, view "barriles/lista", model tiene `barriles`, `estados`, `statsTotal`), `lista_conInventario_retorna200` (INVENTARIO → 200), `nuevo_retornaFormulario` (GET /barriles/nuevo → 200, view "barriles/formulario", model tiene `barril`, `tiposBarril`, `estados`), `ver_retornaDetalle` (GET /barriles/ver/1 → 200, model tiene `barril`, `movimientos`, `estados`), `ver_noExiste_redirige` (GET /barriles/ver/99 → 3xx + flash danger), `guardar_codigoVacio_retornaFormulario` (POST codigo vacío → formulario), `cambiarEstado_redirigaAlDetalle` (POST /barriles/1/estado → redirect `/barriles/ver/1`). `@MockBean BarrilService` adicional. `@BeforeEach` stubs: `listarPaginado(any(),any(),anyInt())` → `PageImpl(List.of())`, `countTotal()` → 0L, `countByEstado(any())` → 0L.
 - `WebMvcTestHelper` — utilidad con `configureTenantMock(TenantRepository)` que configura el tenant "default" con colores válidos para que TenantFilter resuelva correctamente en el test context
 
 **@WebMvcTest — mocks requeridos** (todos los tests de controlador necesitan estos `@MockBean`):
