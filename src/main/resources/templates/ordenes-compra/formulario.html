@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title th:text="${branding.name} + (${ocId} != null ? ' - Editar OC' : ' - Nueva OC')">Zymos - Nueva OC</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
+    <style>
+        .item-row td { vertical-align: middle; }
+        .tipo-extra { display: none; }
+        html.dark-mode .card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .form-control, html.dark-mode .form-select { background: var(--dm-input); color: var(--dm-text); border-color: var(--dm-border-med); }
+        html.dark-mode .table { color: var(--dm-text); }
+        html.dark-mode .table thead { background: var(--verde-alera) !important; }
+        html.dark-mode tfoot td { background: var(--dm-card); color: var(--dm-text); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<main class="container-fluid py-4 px-4">
+
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a th:href="@{/ordenes-compra}">Órdenes de Compra</a></li>
+            <li class="breadcrumb-item active" th:text="${ocId} != null ? 'Editar OC' : 'Nueva OC'">Nueva OC</li>
+        </ol>
+    </nav>
+
+    <div class="card card-zymos">
+        <div class="card-header">
+            <span class="fw-bold">
+                <i class="bi bi-cart-check me-1"></i>
+                <span th:text="${ocId} != null ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'">Nueva Orden de Compra</span>
+            </span>
+        </div>
+        <div class="card-body">
+
+            <form th:action="${ocId} != null ? @{/ordenes-compra/actualizar/{id}(id=${ocId})} : @{/ordenes-compra/guardar}"
+                  th:object="${oc}" method="post">
+
+                <!-- SECCIÓN: Datos generales -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <h6 class="fw-bold" style="color:var(--verde-alera)">Datos Generales</h6>
+                        <hr class="mt-1"/>
+                    </div>
+
+                    <!-- Proveedor typeahead -->
+                    <div class="col-md-6">
+                        <label for="proveedorSearch" class="form-label">Proveedor</label>
+                        <div class="input-group">
+                            <input type="text" id="proveedorSearch" class="form-control"
+                                   placeholder="Buscar proveedor..."
+                                   th:value="${oc.proveedor}"
+                                   autocomplete="off"/>
+                            <input type="hidden" th:field="*{proveedorId}" id="proveedorId"/>
+                            <input type="hidden" th:field="*{proveedor}" id="proveedorNombre"/>
+                        </div>
+                        <div id="proveedorSuggest" class="list-group position-absolute" style="z-index:1000;width:auto;display:none"></div>
+                        <div th:if="${#fields.hasErrors('proveedor')}" class="text-danger small mt-1"
+                             th:errors="*{proveedor}"></div>
+                    </div>
+
+                    <!-- Fecha emisión -->
+                    <div class="col-md-3">
+                        <label for="fechaEmision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+                        <input type="date" id="fechaEmision" th:field="*{fechaEmision}"
+                               class="form-control" th:classappend="${#fields.hasErrors('fechaEmision')} ? 'is-invalid' : ''"/>
+                        <div class="invalid-feedback" th:errors="*{fechaEmision}"></div>
+                    </div>
+
+                    <!-- Fecha requerida -->
+                    <div class="col-md-3">
+                        <label for="fechaRequerida" class="form-label">Fecha Requerida</label>
+                        <input type="date" id="fechaRequerida" th:field="*{fechaRequerida}" class="form-control"/>
+                    </div>
+
+                    <!-- Notas -->
+                    <div class="col-12">
+                        <label for="notas" class="form-label">Notas / Observaciones</label>
+                        <textarea id="notas" th:field="*{notas}" class="form-control" rows="2"
+                                  placeholder="Condiciones de entrega, instrucciones especiales..."></textarea>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN: Ítems -->
+                <div class="mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h6 class="fw-bold mb-0" style="color:var(--verde-alera)">Ítems de la Orden</h6>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addItemRow()">
+                            <i class="bi bi-plus-lg me-1"></i>Agregar ítem
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="itemsTable">
+                            <thead style="background:var(--verde-alera); color:var(--crema);">
+                                <tr>
+                                    <th style="width:110px">Tipo</th>
+                                    <th style="width:130px">Categoría</th>
+                                    <th>Nombre / Descripción</th>
+                                    <th style="width:90px">Cantidad</th>
+                                    <th style="width:80px">Unidad</th>
+                                    <th style="width:130px">Precio Est.</th>
+                                    <th style="width:70px" class="text-center">IVA%</th>
+                                    <th style="width:50px"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="itemsBody">
+                                <!-- Filas existentes al editar -->
+                                <tr th:each="item,stat : ${oc.items}" class="item-row" th:id="'row-' + ${stat.index}">
+                                    <td>
+                                        <select class="form-select form-select-sm tipo-select"
+                                                th:name="'items[' + ${stat.index} + '].tipoItem'"
+                                                onchange="onTipoChange(this)">
+                                            <option th:each="t : ${tiposItem}" th:value="${t.name()}"
+                                                    th:text="${t.displayName}"
+                                                    th:selected="${item.tipoItem == t}"></option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <!-- tipoInsumo -->
+                                        <select class="form-select form-select-sm tipo-extra insumo-extra"
+                                                th:name="'items[' + ${stat.index} + '].tipoInsumo'"
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'">
+                                            <option value="">-- Categoría --</option>
+                                            <option th:each="ti : ${tiposInsumo}" th:value="${ti}"
+                                                    th:text="${ti}"
+                                                    th:selected="${item.tipoInsumo == ti}"></option>
+                                        </select>
+                                        <!-- tipoEquipo -->
+                                        <select class="form-select form-select-sm tipo-extra equipo-extra"
+                                                th:name="'items[' + ${stat.index} + '].tipoEquipo'"
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'">
+                                            <option value="">-- Categoría --</option>
+                                            <option th:each="te : ${tiposEquipo}" th:value="${te}"
+                                                    th:text="${te}"
+                                                    th:selected="${item.tipoEquipo == te}"></option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm item-nombre"
+                                               th:name="'items[' + ${stat.index} + '].nombre'"
+                                               th:value="${item.nombre}"
+                                               placeholder="Nombre del producto" required/>
+                                        <input type="text" class="form-control form-control-sm mt-1"
+                                               th:name="'items[' + ${stat.index} + '].descripcion'"
+                                               th:value="${item.descripcion}"
+                                               placeholder="Descripción (opcional)"/>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm item-cantidad"
+                                               th:name="'items[' + ${stat.index} + '].cantidad'"
+                                               th:value="${item.cantidad}"
+                                               min="0.001" step="any" required oninput="recalcular()"/>
+                                    </td>
+                                    <td>
+                                        <select class="form-select form-select-sm"
+                                                th:name="'items[' + ${stat.index} + '].unidad'">
+                                            <option value="">—</option>
+                                            <option th:each="u : ${ {'gr','kg','mL','L','gal','und','pkg','ton'} }"
+                                                    th:value="${u}" th:text="${u}"
+                                                    th:selected="${item.unidad == u}"></option>
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" class="form-control form-control-sm item-precio"
+                                               th:name="'items[' + ${stat.index} + '].precioUnitarioEstimado'"
+                                               th:value="${item.precioUnitarioEstimado}"
+                                               min="0" step="any" placeholder="0"
+                                               oninput="recalcular()"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <input type="number" class="form-control form-control-sm item-iva"
+                                               th:name="'items[' + ${stat.index} + '].porcentajeIvaItem'"
+                                               th:value="${item.porcentajeIvaItem}"
+                                               min="0" max="100" step="any" placeholder="0"
+                                               oninput="recalcular()"/>
+                                    </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                onclick="removeRow(this)" title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold text-muted small">Subtotal estimado:</td>
+                                    <td colspan="2" class="text-end fw-bold" id="subtotalDisplay">$0</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-end fw-bold text-muted small">Total estimado (con IVA):</td>
+                                    <td colspan="2" class="text-end fw-bold" id="totalDisplay" style="color:var(--verde-alera)">$0</td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div id="emptyMsg" class="text-center text-muted py-3" style="display:none">
+                        <i class="bi bi-cart-x me-1"></i> Agrega al menos un ítem a la orden.
+                    </div>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex gap-2 justify-content-end">
+                    <a th:href="@{/ordenes-compra}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-check-lg me-1"></i>
+                        <span th:text="${ocId} != null ? 'Guardar cambios' : 'Crear OC'">Crear OC</span>
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</main>
+
+<!-- Datos para JS -->
+<script th:inline="javascript">
+    var TIPOS_INSUMO = /*[[${tiposInsumo}]]*/ [];
+    var TIPOS_EQUIPO = /*[[${tiposEquipo}]]*/ [];
+    var rowCount     = /*[[${oc.items != null ? oc.items.size() : 0}]]*/ 0;
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── Typeahead proveedor ────────────────────────────────────────────────
+var provTimeout;
+document.getElementById('proveedorSearch').addEventListener('input', function() {
+    clearTimeout(provTimeout);
+    var q = this.value.trim();
+    if (q.length < 1) { hideSuggest(); return; }
+    provTimeout = setTimeout(function() {
+        fetch('/proveedores/suggest?q=' + encodeURIComponent(q))
+            .then(function(r){ return r.json(); })
+            .then(function(items) {
+                var box = document.getElementById('proveedorSuggest');
+                box.innerHTML = '';
+                if (!items || !items.length) { box.style.display='none'; return; }
+                items.forEach(function(p) {
+                    var a = document.createElement('a');
+                    a.href = '#';
+                    a.className = 'list-group-item list-group-item-action py-1';
+                    a.innerHTML = '<strong>' + p.nombre + '</strong>' + (p.nit ? ' <small class="text-muted">NIT: ' + p.nit + '</small>' : '');
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        document.getElementById('proveedorSearch').value = p.nombre;
+                        document.getElementById('proveedorNombre').value = p.nombre;
+                        document.getElementById('proveedorId').value = p.url ? p.url.split('/').pop() : '';
+                        hideSuggest();
+                    });
+                    box.appendChild(a);
+                });
+                box.style.display = 'block';
+            });
+    }, 260);
+});
+document.getElementById('proveedorSearch').addEventListener('blur', function() {
+    var nombre = this.value.trim();
+    document.getElementById('proveedorNombre').value = nombre;
+    setTimeout(hideSuggest, 200);
+});
+function hideSuggest() { document.getElementById('proveedorSuggest').style.display='none'; }
+
+// ── Filas dinámicas de ítems ──────────────────────────────────────────
+var UNIDADES = ['','gr','kg','mL','L','gal','und','pkg','ton'];
+var TIPO_ITEM_OPTS = [
+    {val:'INSUMO', label:'Insumo'},
+    {val:'EQUIPO', label:'Equipo'}
+];
+
+function buildUnidadOpts(selected) {
+    return UNIDADES.map(function(u) {
+        return '<option value="' + u + '"' + (u === selected ? ' selected' : '') + '>' + (u || '—') + '</option>';
+    }).join('');
+}
+
+function buildInsumoOpts() {
+    return '<option value="">-- Categoría --</option>' +
+        TIPOS_INSUMO.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+}
+function buildEquipoOpts() {
+    return '<option value="">-- Categoría --</option>' +
+        TIPOS_EQUIPO.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
+}
+
+function addItemRow() {
+    var idx = rowCount++;
+    var p   = 'items[' + idx + '].';
+    var row = document.createElement('tr');
+    row.className = 'item-row';
+    row.id = 'row-' + idx;
+    row.innerHTML =
+        '<td>' +
+          '<select class="form-select form-select-sm tipo-select" name="' + p + 'tipoItem" onchange="onTipoChange(this)">' +
+            TIPO_ITEM_OPTS.map(function(o){ return '<option value="'+o.val+'">'+o.label+'</option>'; }).join('') +
+          '</select>' +
+        '</td>' +
+        '<td>' +
+          '<select class="form-select form-select-sm tipo-extra insumo-extra" name="' + p + 'tipoInsumo" style="display:block">' +
+            buildInsumoOpts() +
+          '</select>' +
+          '<select class="form-select form-select-sm tipo-extra equipo-extra" name="' + p + 'tipoEquipo" style="display:none">' +
+            buildEquipoOpts() +
+          '</select>' +
+        '</td>' +
+        '<td>' +
+          '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" placeholder="Nombre del producto" required/>' +
+          '<input type="text" class="form-control form-control-sm mt-1" name="' + p + 'descripcion" placeholder="Descripción (opcional)"/>' +
+        '</td>' +
+        '<td><input type="number" class="form-control form-control-sm item-cantidad" name="' + p + 'cantidad" min="0.001" step="any" required oninput="recalcular()"/></td>' +
+        '<td><select class="form-select form-select-sm" name="' + p + 'unidad">' + buildUnidadOpts('') + '</select></td>' +
+        '<td><input type="number" class="form-control form-control-sm item-precio" name="' + p + 'precioUnitarioEstimado" min="0" step="any" placeholder="0" oninput="recalcular()"/></td>' +
+        '<td class="text-center"><input type="number" class="form-control form-control-sm item-iva" name="' + p + 'porcentajeIvaItem" min="0" max="100" step="any" placeholder="0" oninput="recalcular()"/></td>' +
+        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Eliminar"><i class="bi bi-trash"></i></button></td>';
+    document.getElementById('itemsBody').appendChild(row);
+    updateEmptyMsg();
+    recalcular();
+}
+
+function removeRow(btn) {
+    btn.closest('tr').remove();
+    updateEmptyMsg();
+    recalcular();
+}
+
+function onTipoChange(sel) {
+    var td = sel.closest('td').nextElementSibling;
+    var insumoSel = td.querySelector('.insumo-extra');
+    var equipoSel = td.querySelector('.equipo-extra');
+    if (sel.value === 'INSUMO') {
+        insumoSel.style.display = 'block';
+        equipoSel.style.display = 'none';
+    } else {
+        insumoSel.style.display = 'none';
+        equipoSel.style.display = 'block';
+    }
+}
+
+function updateEmptyMsg() {
+    var rows = document.querySelectorAll('#itemsBody .item-row');
+    document.getElementById('emptyMsg').style.display = rows.length === 0 ? 'block' : 'none';
+}
+
+// ── Recalcular totales ────────────────────────────────────────────────
+function recalcular() {
+    var rows = document.querySelectorAll('#itemsBody .item-row');
+    var subtotal = 0, total = 0;
+    rows.forEach(function(row) {
+        var cant  = parseFloat(row.querySelector('.item-cantidad')?.value) || 0;
+        var precio= parseFloat(row.querySelector('.item-precio')?.value)   || 0;
+        var iva   = parseFloat(row.querySelector('.item-iva')?.value)      || 0;
+        var linea = cant * precio;
+        subtotal += linea;
+        total    += linea * (1 + iva / 100);
+    });
+    document.getElementById('subtotalDisplay').textContent = '$' + fmtMoney(subtotal);
+    document.getElementById('totalDisplay').textContent    = '$' + fmtMoney(total);
+}
+
+function fmtMoney(n) {
+    return n.toLocaleString('es-CO', {minimumFractionDigits:0, maximumFractionDigits:0});
+}
+
+// Inicializar
+document.addEventListener('DOMContentLoaded', function() {
+    updateEmptyMsg();
+    recalcular();
+    // Si hay 0 ítems al cargar (nueva OC), agregar una fila vacía
+    if (document.querySelectorAll('#itemsBody .item-row').length === 0) {
+        addItemRow();
+    }
+});
+</script>
+</body>
+</html>

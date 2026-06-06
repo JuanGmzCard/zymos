@@ -330,4 +330,35 @@ public class FacturaProveedorService {
         dto.setItems(itemDtos);
         return dto;
     }
+
+    @CacheEvict(value = "dashboard-stats", allEntries = true)
+    public Long crearDesdeOrdenCompra(com.alera.model.OrdenCompra oc) {
+        FacturaProveedor factura = new FacturaProveedor();
+        factura.setProveedor(oc.getProveedor());
+        factura.setProveedorRef(oc.getProveedorRef());
+        factura.setFechaFactura(java.time.LocalDate.now());
+        factura.setEstado(EstadoFactura.RECIBIDA);
+        factura.setDescripcion("Generada desde OC " + oc.getNumeroOc());
+
+        for (com.alera.model.OrdenCompraItem ocItem : oc.getItems()) {
+            FacturaItem item = new FacturaItem();
+            item.setTipoItem(ocItem.getTipoItem());
+            item.setNombre(ocItem.getNombre());
+            item.setTipoInsumo(ocItem.getTipoInsumo());
+            item.setTipoEquipo(ocItem.getTipoEquipo());
+            item.setCantidad(ocItem.getCantidad() != null ? ocItem.getCantidad() : BigDecimal.ONE);
+            item.setUnidad(ocItem.getUnidad());
+            item.setValorUnitario(ocItem.getPrecioUnitarioEstimado() != null ? ocItem.getPrecioUnitarioEstimado() : BigDecimal.ZERO);
+            item.setPorcentajeDescuento(BigDecimal.ZERO);
+            item.setPorcentajeIvaItem(ocItem.getPorcentajeIvaItem() != null ? ocItem.getPorcentajeIvaItem() : BigDecimal.ZERO);
+            item.setFactura(factura);
+            factura.getItems().add(item);
+        }
+
+        calcularTotales(factura);
+        FacturaProveedor saved = repo.save(factura);
+        historialRepo.save(FacturaHistorialEstado.of(saved.getId(), null, saved.getEstado(), usuarioActual()));
+        log.info("Factura creada desde OC {}: id={}", oc.getNumeroOc(), saved.getId());
+        return saved.getId();
+    }
 }

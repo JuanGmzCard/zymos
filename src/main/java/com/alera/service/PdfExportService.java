@@ -1426,4 +1426,130 @@ public class PdfExportService {
         c.setPadding(5); c.setHorizontalAlignment(align);
         t.addCell(c);
     }
+
+    // ── PDF Orden de Compra ──────────────────────────────────────────────
+
+    public byte[] generarPdfOrdenCompra(com.alera.model.OrdenCompra oc, ExportBranding branding) {
+        Pal pal = Pal.of(branding);
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document doc = new Document(PageSize.A4, 40, 40, 50, 50);
+            PdfWriter.getInstance(doc, out);
+            doc.open();
+
+            Font fTitulo  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal.verde());
+            Font fSub     = new Font(Font.HELVETICA, 10, Font.NORMAL, C_GRIS);
+            Font fLabel   = new Font(Font.HELVETICA,  9, Font.BOLD,  pal.verdeOscuro());
+            Font fVal     = new Font(Font.HELVETICA,  9, Font.NORMAL, pal.verdeOscuro());
+            Font fHead    = new Font(Font.HELVETICA,  9, Font.BOLD,  Color.WHITE);
+            Font fData    = new Font(Font.HELVETICA,  8, Font.NORMAL, pal.verdeOscuro());
+            Font fTotal   = new Font(Font.HELVETICA, 10, Font.BOLD,  pal.verde());
+
+            // Cabecera
+            Paragraph titulo = new Paragraph("ORDEN DE COMPRA", fTitulo);
+            titulo.setAlignment(Element.ALIGN_CENTER);
+            doc.add(titulo);
+            Paragraph numOc = new Paragraph(
+                    (oc.getNumeroOc() != null ? oc.getNumeroOc() : "Sin número") + "  ·  " + branding.name(),
+                    fSub);
+            numOc.setAlignment(Element.ALIGN_CENTER);
+            numOc.setSpacingAfter(12);
+            doc.add(numOc);
+
+            // Info general
+            addTituloPdf(doc, "INFORMACIÓN GENERAL", pal);
+            PdfPTable info = new PdfPTable(4);
+            info.setWidthPercentage(100);
+            info.setWidths(new float[]{1.5f, 2f, 1.5f, 2f});
+            info.setSpacingAfter(10);
+            par(info, "Proveedor",      oc.getProveedor() != null ? oc.getProveedor() : "—", fLabel, fVal, pal);
+            par(info, "Estado",         oc.getEstado().getDisplayName(),                       fLabel, fVal, pal);
+            par(info, "F. Emisión",     fmt(oc.getFechaEmision()),                             fLabel, fVal, pal);
+            par(info, "F. Requerida",   oc.getFechaRequerida() != null ? fmt(oc.getFechaRequerida()) : "—", fLabel, fVal, pal);
+            doc.add(info);
+
+            // Tabla de ítems
+            if (!oc.getItems().isEmpty()) {
+                addTituloPdf(doc, "ÍTEMS DE LA ORDEN", pal);
+                boolean hayPrecio = oc.getItems().stream().anyMatch(i -> i.getPrecioUnitarioEstimado() != null);
+                int cols = hayPrecio ? 6 : 4;
+                PdfPTable items = new PdfPTable(cols);
+                items.setWidthPercentage(100);
+                if (hayPrecio) {
+                    items.setWidths(new float[]{1.5f, 3f, 1f, 1f, 1.5f, 1.5f});
+                } else {
+                    items.setWidths(new float[]{2f, 4f, 1.5f, 1.5f});
+                }
+                items.setSpacingAfter(10);
+
+                // Cabeceras
+                Color bg = pal.verde();
+                ocHead(items, "Tipo",       fHead, bg);
+                ocHead(items, "Nombre / Descripción", fHead, bg);
+                ocHead(items, "Cantidad",   fHead, bg);
+                ocHead(items, "Unidad",     fHead, bg);
+                if (hayPrecio) {
+                    ocHead(items, "P. Unit. Est.", fHead, bg);
+                    ocHead(items, "Total Est.",   fHead, bg);
+                }
+
+                Color bgPar = new Color(248, 249, 250);
+                int idx = 0;
+                for (com.alera.model.OrdenCompraItem item : oc.getItems()) {
+                    Color rowBg = (idx++ % 2 == 0) ? Color.WHITE : bgPar;
+                    String tipo = item.getTipoItem() != null ? item.getTipoItem().getDisplayName() : "—";
+                    String desc = item.getNombre()
+                            + (notBlank(item.getDescripcion()) ? "\n" + item.getDescripcion() : "");
+                    tableCell(items, tipo,   fData, rowBg, Element.ALIGN_CENTER);
+                    tableCell(items, desc,   fData, rowBg, Element.ALIGN_LEFT);
+                    tableCell(items, item.getCantidad() != null ? item.getCantidad().stripTrailingZeros().toPlainString() : "—", fData, rowBg, Element.ALIGN_RIGHT);
+                    tableCell(items, item.getUnidad() != null ? item.getUnidad() : "—", fData, rowBg, Element.ALIGN_CENTER);
+                    if (hayPrecio) {
+                        tableCell(items, item.getPrecioUnitarioEstimado() != null ? fmt2(item.getPrecioUnitarioEstimado()) : "—", fData, rowBg, Element.ALIGN_RIGHT);
+                        tableCell(items, fmt2(item.getValorLinea()), fData, rowBg, Element.ALIGN_RIGHT);
+                    }
+                }
+                doc.add(items);
+
+                // Totales
+                if (hayPrecio) {
+                    PdfPTable totales = new PdfPTable(2);
+                    totales.setWidthPercentage(40);
+                    totales.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                    totales.setWidths(new float[]{2f, 1.5f});
+                    totales.setSpacingAfter(12);
+                    par(totales, "Subtotal estimado:", fmt2(oc.getSubtotalEstimado()), fLabel, fVal, pal);
+                    par(totales, "Total estimado (con IVA):", fmt2(oc.getTotalEstimado()), fTotal, fTotal, pal);
+                    doc.add(totales);
+                }
+            }
+
+            // Notas
+            if (notBlank(oc.getNotas())) {
+                addTituloPdf(doc, "NOTAS", pal);
+                Paragraph nota = new Paragraph(oc.getNotas(), fVal);
+                nota.setSpacingAfter(10);
+                doc.add(nota);
+            }
+
+            // Pie de página
+            Paragraph pie = new Paragraph(
+                    "Generado por " + branding.name() + "  ·  " + LocalDateTime.now().format(FMT_DT),
+                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+            pie.setAlignment(Element.ALIGN_CENTER);
+            pie.setSpacingBefore(16);
+            doc.add(pie);
+
+            doc.close();
+            return out.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando PDF de OC", e);
+        }
+    }
+
+    private void ocHead(PdfPTable t, String text, Font font, Color bg) {
+        PdfPCell c = new PdfPCell(new Phrase(text, font));
+        c.setBackgroundColor(bg); c.setBorderColor(C_BORDE);
+        c.setPadding(5); c.setHorizontalAlignment(Element.ALIGN_CENTER);
+        t.addCell(c);
+    }
 }
