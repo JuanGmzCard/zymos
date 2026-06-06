@@ -149,14 +149,14 @@
                 </tr>
               </thead>
               <tbody>
-                <tr th:each="eq, stat : ${mantenimientoPendiente}"
+                <tr th:each="equipo, stat : ${mantenimientoPendiente}"
                     th:style="${stat.odd} ? 'background:#f0fafc;' : ''">
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;"
-                      th:text="${eq.nombre}">—</td>
+                      th:text="${equipo.nombre}">—</td>
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
-                      th:text="${eq.tipo != null} ? ${eq.tipo} : '—'">—</td>
+                      th:text="${equipo.tipo != null} ? ${equipo.tipo} : '—'">—</td>
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#0c5460;font-weight:600;"
-                      th:text="${eq.proximoMantenimiento != null} ? ${#temporals.format(eq.proximoMantenimiento,'dd/MM/yyyy')} : 'Sin fecha'">—</td>
+                      th:text="${equipo.proximoMantenimiento != null} ? ${#temporals.format(equipo.proximoMantenimiento,'dd/MM/yyyy')} : 'Sin fecha'">—</td>
                 </tr>
               </tbody>
             </table>
