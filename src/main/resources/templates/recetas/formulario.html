@@ -23,27 +23,27 @@
 <!-- Datalists de inventario (ocultos, usados por los inputs de ingredientes) -->
 <datalist id="datalist-maltas">
     <option th:each="ins : ${insumosInventario}"
-            th:if="${ins.tipo.name() == 'MALTA'}"
+            th:if="${ins.tipo == 'Malta'}"
             th:value="${ins.nombre}"></option>
 </datalist>
 <datalist id="datalist-lupulos">
     <option th:each="ins : ${insumosInventario}"
-            th:if="${ins.tipo.name() == 'LUPULO'}"
+            th:if="${ins.tipo == 'Lúpulo'}"
             th:value="${ins.nombre}"></option>
 </datalist>
 <datalist id="datalist-levaduras">
     <option th:each="ins : ${insumosInventario}"
-            th:if="${ins.tipo.name() == 'LEVADURA'}"
+            th:if="${ins.tipo == 'Levadura'}"
             th:value="${ins.nombre}"></option>
 </datalist>
 <datalist id="datalist-clarificantes">
     <option th:each="ins : ${insumosInventario}"
-            th:if="${ins.tipo.name() == 'CLARIFICANTE'}"
+            th:if="${ins.tipo == 'Clarificante'}"
             th:value="${ins.nombre}"></option>
 </datalist>
 <datalist id="datalist-hervor">
     <option th:each="ins : ${insumosInventario}"
-            th:if="${ins.tipo.name() == 'LUPULO' or ins.tipo.name() == 'CLARIFICANTE'}"
+            th:if="${ins.tipo == 'Lúpulo' or ins.tipo == 'Clarificante'}"
             th:value="${ins.nombre}"></option>
 </datalist>
 
