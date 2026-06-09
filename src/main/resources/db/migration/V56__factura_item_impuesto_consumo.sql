@@ -1,0 +1,2 @@
+ALTER TABLE factura_items
+    ADD COLUMN IF NOT EXISTS impuesto_consumo DECIMAL(15,2) NOT NULL DEFAULT 0;

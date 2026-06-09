@@ -208,6 +208,7 @@ public class FacturaProveedorService {
                 item.setValorUnitario(itemDto.getValorUnitario() != null ? itemDto.getValorUnitario() : BigDecimal.ZERO);
                 item.setPorcentajeDescuento(itemDto.getPorcentajeDescuento() != null ? itemDto.getPorcentajeDescuento() : BigDecimal.ZERO);
                 item.setPorcentajeIvaItem(itemDto.getPorcentajeIvaItem() != null ? itemDto.getPorcentajeIvaItem() : BigDecimal.ZERO);
+                item.setImpuestoConsumo(itemDto.getImpuestoConsumo() != null ? itemDto.getImpuestoConsumo() : BigDecimal.ZERO);
                 item.setFactura(factura);
                 factura.getItems().add(item);
             }
@@ -215,22 +216,25 @@ public class FacturaProveedorService {
     }
 
     private void calcularTotales(FacturaProveedor f) {
-        BigDecimal subtotal = BigDecimal.ZERO;
-        BigDecimal totalIva = BigDecimal.ZERO;
+        BigDecimal subtotal         = BigDecimal.ZERO;
+        BigDecimal totalIva         = BigDecimal.ZERO;
+        BigDecimal totalImpConsumo  = BigDecimal.ZERO;
 
         for (FacturaItem item : f.getItems()) {
             BigDecimal base    = item.getValorBase();
             BigDecimal ivaItem = item.getValorIvaItem();
-            subtotal = subtotal.add(base);
-            totalIva = totalIva.add(ivaItem);
-            item.setValorLinea(base.add(ivaItem));
+            BigDecimal ic      = item.getImpuestoConsumo() != null ? item.getImpuestoConsumo() : BigDecimal.ZERO;
+            subtotal        = subtotal.add(base);
+            totalIva        = totalIva.add(ivaItem);
+            totalImpConsumo = totalImpConsumo.add(ic);
+            item.setValorLinea(base.add(ivaItem).add(ic));
         }
 
         f.setSubtotal(subtotal);
         f.setPorcentajeIva(BigDecimal.ZERO);
         f.setValorIva(totalIva);
         BigDecimal envio = f.getCostoEnvio() != null ? f.getCostoEnvio() : BigDecimal.ZERO;
-        f.setValorTotal(subtotal.add(totalIva).add(envio));
+        f.setValorTotal(subtotal.add(totalIva).add(totalImpConsumo).add(envio));
     }
 
     private void procesarInventario(List<FacturaItem> items, String proveedor, java.time.LocalDate fecha) {
@@ -324,6 +328,7 @@ public class FacturaProveedorService {
             d.setValorUnitario(item.getValorUnitario());
             d.setPorcentajeDescuento(item.getPorcentajeDescuento());
             d.setPorcentajeIvaItem(item.getPorcentajeIvaItem());
+            d.setImpuestoConsumo(item.getImpuestoConsumo());
             return d;
         }).collect(java.util.stream.Collectors.toList());
         if (itemDtos.isEmpty()) itemDtos.add(new FacturaItemDto());

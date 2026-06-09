@@ -105,6 +105,14 @@
                         <span class="text-muted">IVA (por ítem)</span>
                         <span th:text="'$' + ${#numbers.formatDecimal(factura.valorIva,1,'COMMA',2,'POINT')}">-</span>
                     </div>
+                    <th:block th:with="envio=${factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO},
+                                       impConsumoTotal=${factura.valorTotal.subtract(factura.subtotal).subtract(factura.valorIva).subtract(factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO)}">
+                        <div class="d-flex justify-content-between mb-2"
+                             th:if="${impConsumoTotal.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
+                            <span class="text-muted">Imp. Consumo</span>
+                            <span th:text="'$' + ${#numbers.formatDecimal(impConsumoTotal,1,'COMMA',2,'POINT')}">-</span>
+                        </div>
+                    </th:block>
                     <div class="d-flex justify-content-between mb-2" th:if="${factura.costoEnvio != null and factura.costoEnvio.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
                         <span class="text-muted">Envío</span>
                         <span th:text="'$' + ${#numbers.formatDecimal(factura.costoEnvio,1,'COMMA',2,'POINT')}">-</span>
@@ -171,6 +179,7 @@
                             <th style="background:var(--verde-alera);color:var(--crema);">Desc.</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">IVA %</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Valor IVA</th>
+                            <th style="background:var(--verde-alera);color:var(--crema);">Imp. Consumo</th>
                             <th style="background:var(--verde-alera);color:var(--crema);">Total Línea</th>
                         </tr>
                         </thead>
@@ -190,6 +199,8 @@
                             <td th:text="${item.porcentajeIvaItem} + '%'">-</td>
                             <td class="text-muted small"
                                 th:text="'$' + ${#numbers.formatDecimal(item.valorIvaItem,1,'COMMA',2,'POINT')}">-</td>
+                            <td class="text-muted small"
+                                th:text="${item.impuestoConsumo != null and item.impuestoConsumo.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? '$' + ${#numbers.formatDecimal(item.impuestoConsumo,1,'COMMA',2,'POINT')} : '—'">—</td>
                             <td class="fw-semibold" th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',2,'POINT')}">-</td>
                         </tr>
                         </tbody>

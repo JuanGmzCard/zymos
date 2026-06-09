@@ -113,7 +113,7 @@
 
             <!-- Cabecera de columnas -->
             <div class="row g-2 mb-1 d-none d-md-flex">
-                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">TIPO ITEM</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">TIPO ITEM</span></div>
                 <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">CATEGORÍA</span></div>
                 <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">NOMBRE</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">CANTIDAD</span></div>
@@ -121,6 +121,7 @@
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" id="colUnitarioHeader">V. UNITARIO</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">DESC %</span></div>
                 <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IVA %</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IMP. CONSUMO</span></div>
                 <div class="col-md-1 text-end"><span class="text-muted" style="font-size:0.7rem;">TOTAL</span></div>
             </div>
 
@@ -129,7 +130,7 @@
                     <div class="row g-2 align-items-center">
 
                         <!-- TIPO ITEM -->
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <select th:name="'items[' + ${itemStat.index} + '].tipoItem'"
                                     class="form-select form-select-sm tipo-select"
                                     onchange="onTipoChange(this)">
@@ -236,6 +237,15 @@
                                    th:name="'items[' + ${itemStat.index} + '].porcentajeIvaItem'"
                                    th:value="${itemF.porcentajeIvaItem}"
                                    class="form-control form-control-sm" placeholder="0"
+                                   oninput="calcularTotalFila(this)">
+                        </div>
+
+                        <!-- IMP. CONSUMO -->
+                        <div class="col-md-1">
+                            <input type="number" step="0.01"
+                                   th:name="'items[' + ${itemStat.index} + '].impuestoConsumo'"
+                                   th:value="${itemF.impuestoConsumo}"
+                                   class="form-control form-control-sm" placeholder="0.00"
                                    oninput="calcularTotalFila(this)">
                         </div>
 
@@ -447,19 +457,20 @@ function renumberItems() {
 // ── Total por línea ───────────────────────────────────────────────────────
 
 function calcularTotalFila(input) {
-    const ivainc    = document.getElementById('ivaIncluido')?.checked;
-    const row       = input.closest('.ingrediente-row');
-    const cantidad  = parseFloat(row.querySelector('input[name*=".cantidad"]')?.value)            || 0;
-    const unitario  = parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)       || 0;
-    const descuento = parseFloat(row.querySelector('input[name*=".porcentajeDescuento"]')?.value) || 0;
-    const iva       = parseFloat(row.querySelector('input[name*=".porcentajeIvaItem"]')?.value)   || 0;
+    const ivainc     = document.getElementById('ivaIncluido')?.checked;
+    const row        = input.closest('.ingrediente-row');
+    const cantidad   = parseFloat(row.querySelector('input[name*=".cantidad"]')?.value)             || 0;
+    const unitario   = parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)        || 0;
+    const descuento  = parseFloat(row.querySelector('input[name*=".porcentajeDescuento"]')?.value)  || 0;
+    const iva        = parseFloat(row.querySelector('input[name*=".porcentajeIvaItem"]')?.value)    || 0;
+    const impConsumo = parseFloat(row.querySelector('input[name*=".impuestoConsumo"]')?.value)      || 0;
     let total;
     if (ivainc) {
-        // valorUnitario already includes IVA; total = cantidad * unitario * (1 - desc%)
-        total = cantidad * unitario * (1 - descuento / 100);
+        // valorUnitario already includes IVA; total = cantidad * unitario * (1 - desc%) + impConsumo
+        total = cantidad * unitario * (1 - descuento / 100) + impConsumo;
     } else {
         const base = cantidad * unitario * (1 - descuento / 100);
-        total = base * (1 + iva / 100);
+        total = base * (1 + iva / 100) + impConsumo;
     }
     const span = row.querySelector('.item-total');
     if (span) span.textContent = total > 0 ? formatCurrency(total) : '—';
@@ -539,7 +550,7 @@ function addItem() {
     row.className = 'ingrediente-row mb-2';
     row.innerHTML = `
         <div class="row g-2 align-items-center">
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <select name="items[${idx}].tipoItem" class="form-select form-select-sm tipo-select" onchange="onTipoChange(this)">
                     <option value="">-- Tipo --</option>
                     <option value="INSUMO">Insumo</option>
@@ -593,6 +604,11 @@ function addItem() {
             <div class="col-md-1">
                 <input type="number" step="0.01" name="items[${idx}].porcentajeIvaItem"
                        class="form-control form-control-sm" placeholder="0"
+                       oninput="calcularTotalFila(this)">
+            </div>
+            <div class="col-md-1">
+                <input type="number" step="0.01" name="items[${idx}].impuestoConsumo"
+                       class="form-control form-control-sm" placeholder="0.00"
                        oninput="calcularTotalFila(this)">
             </div>
             <div class="col-md-1 d-flex flex-column align-items-end gap-1">

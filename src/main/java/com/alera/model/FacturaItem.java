@@ -41,6 +41,9 @@ public class FacturaItem {
     @Column(precision = 5, scale = 2)
     private BigDecimal porcentajeIvaItem = BigDecimal.ZERO;
 
+    @Column(name = "impuesto_consumo", precision = 15, scale = 2)
+    private BigDecimal impuestoConsumo = BigDecimal.ZERO;
+
     @Column(precision = 15, scale = 2)
     private BigDecimal valorLinea = BigDecimal.ZERO;
 
@@ -77,7 +80,8 @@ public class FacturaItem {
     }
 
     public BigDecimal calcularValorLinea() {
-        return getValorBase().add(getValorIvaItem());
+        BigDecimal ic = impuestoConsumo != null ? impuestoConsumo : BigDecimal.ZERO;
+        return getValorBase().add(getValorIvaItem()).add(ic);
     }
 
     // Getters & Setters
@@ -101,6 +105,8 @@ public class FacturaItem {
     public void setPorcentajeDescuento(BigDecimal porcentajeDescuento) { this.porcentajeDescuento = porcentajeDescuento; }
     public BigDecimal getPorcentajeIvaItem() { return porcentajeIvaItem; }
     public void setPorcentajeIvaItem(BigDecimal porcentajeIvaItem) { this.porcentajeIvaItem = porcentajeIvaItem; }
+    public BigDecimal getImpuestoConsumo() { return impuestoConsumo; }
+    public void setImpuestoConsumo(BigDecimal impuestoConsumo) { this.impuestoConsumo = impuestoConsumo; }
     public BigDecimal getValorLinea() { return valorLinea; }
     public void setValorLinea(BigDecimal valorLinea) { this.valorLinea = valorLinea; }
     public FacturaProveedor getFactura() { return factura; }

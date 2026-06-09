@@ -342,7 +342,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(brandName + " — Detalle de Ítems");
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
 
         r++;
         Row fH = sheet.createRow(r++);
@@ -350,11 +350,11 @@ public class ExcelExportService {
         String[] headers = {
                 "N° Factura", "Proveedor", "Fecha", "Tipo",
                 "Nombre", "Cantidad", "Unidad", "V. Unitario",
-                "Desc. %", "IVA %", "Valor IVA", "Total Línea"
+                "Desc. %", "IVA %", "Valor IVA", "Imp. Consumo", "Total Línea"
         };
         for (int i = 0; i < headers.length; i++) celda(fH, i, headers[i], stHeader);
 
-        int[] widths = {14, 22, 12, 12, 28, 10, 9, 14, 9, 9, 14, 14};
+        int[] widths = {14, 22, 12, 12, 28, 10, 9, 14, 9, 9, 14, 14, 14};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         int rowIdx = 0;
@@ -382,7 +382,8 @@ public class ExcelExportService {
                 celdaNum(fila, 9, item.getPorcentajeIvaItem() != null
                         ? item.getPorcentajeIvaItem().doubleValue() : null, sN);
                 celdaNum(fila, 10, toDouble(item.getValorIvaItem()), sN);
-                celdaNum(fila, 11, toDouble(item.getValorLinea()), sN);
+                celdaNum(fila, 11, toDouble(item.getImpuestoConsumo()), sN);
+                celdaNum(fila, 12, toDouble(item.getValorLinea()), sN);
                 rowIdx++;
             }
         }

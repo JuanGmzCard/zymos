@@ -34,4 +34,7 @@ public class FacturaItemDto {
 
     @DecimalMin(value = "0.0", message = "El IVA no puede ser negativo")
     private BigDecimal porcentajeIvaItem;
+
+    @DecimalMin(value = "0.0", message = "El impuesto al consumo no puede ser negativo")
+    private BigDecimal impuestoConsumo;
 }
