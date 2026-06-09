@@ -100,6 +100,7 @@ com.alera/
 │               ClienteController (/clientes — CRUD + suggest; ADMIN/FACTURACION/SUPERADMIN)
 │               CategoriaController (/admin/categorias — CRUD categorías de insumo y equipo; ADMIN/SUPERADMIN)
 │               BarrilController (/barriles — CRUD + cambiar estado; ADMIN/INVENTARIO/PRODUCCION/SUPERADMIN)
+│               OrdenCompraController (/ordenes-compra — CRUD + cambiar estado + convertir a factura + PDF; ADMIN/FACTURACION/SUPERADMIN)
 ├── service/    TrazabilidadService, RecetaService, EquipoService, FacturaProveedorService,
 │               InsumoInventarioService, ProveedorService, LogAccesoService,
 │               DashboardService, MantenimientoEquipoService, TipoCervezaService,
@@ -108,6 +109,7 @@ com.alera/
 │               EmailService, AlertaScheduler, NotificacionService, MigracionTemplateService, MigracionService,
 │               EvaluacionSensorialService,
 │               BarrilService,
+│               OrdenCompraService,
 │               TenantMetricsService (JdbcTemplate cross-tenant — 14 queries para producción/ventas/compras/inventario/equipos/usuarios/último acceso; inner record `TenantMetrics` con campos: `totalLotes`, `lotesEnProceso`, `lotesCompletados`, `litrosTotales` — producción; `totalVentas`, `ingresosVentas`, `totalClientes` — ventas; `totalFacturas`, `totalGastado` — compras; `totalInsumos`, `bajoStock`, `totalEquipos` — inventario; `totalUsuarios`, `ultimoAcceso` — sistema; método público `obtener(String tenantId) → TenantMetrics`),
 │               ClienteService,
 │               CategoriaInsumoService, CategoriaEquipoService,
@@ -130,18 +132,22 @@ com.alera/
 │               EvaluacionSensorial (tabla evaluaciones_sensoriales — catas BJCP por lote; @TenantId)
 │               Barril (tabla barriles — inventario de kegs/barriles; extiende AuditableEntity),
 │               MovimientoBarril (tabla movimientos_barriles — historial de cambios de estado; @TenantId directo, sin FK)
-│               + 13 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
+│               OrdenCompra (tabla ordenes_compra — órdenes de compra a proveedores; @TenantId),
+│               OrdenCompraItem (tabla orden_compra_items — ítems de la OC; @TenantId)
+│               + 14 enums (incluye RolUsuario: ADMIN, PRODUCCION, INVENTARIO, FACTURACION, EQUIPOS;
 │               EstadoPlanificacion: PLANIFICADA, EN_PROCESO, COMPLETADA, CANCELADA;
 │               EstadoFactura: RECIBIDA, VERIFICADA, PAGADA;
 │               EstadoVenta: COTIZACION, PENDIENTE, DESPACHADO, CANCELADO, EXPIRADO;
 │               TipoNotificacion: BAJO_STOCK, VENCIMIENTO, MANTENIMIENTO, SISTEMA;
 │               ListaPrecio: VENTA_DIRECTA, DISTRIBUIDOR, BAR, MAYORISTA, EXPORTACION, EMPLEADO;
 │               RegimenTributario: SIMPLIFICADO, RESPONSABLE_IVA;
-│               EstadoBarril: DISPONIBLE, LLENO, DESPACHADO, VACIO, LIMPIEZA, BAJA)
+│               EstadoBarril: DISPONIBLE, LLENO, DESPACHADO, VACIO, LIMPIEZA, BAJA;
+│               EstadoOrdenCompra: BORRADOR, ENVIADA, RECIBIDA_PARCIAL, RECIBIDA, CANCELADA)
 ├── repository/ 15 repositorios JPA (+ CategoriaInsumoRepository, CategoriaEquipoRepository, TenantRepository, FacturaItemRepository, LecturaFermentacionRepository, EvaluacionSensorialRepository,
 │               ElaboracionPlanificadaRepository, NotificacionRepository, FacturaHistorialEstadoRepository,
 │               MigracionLogRepository, VentaItemRepository, ClienteRepository,
-│               BarrilRepository, MovimientoBarrilRepository)
+│               BarrilRepository, MovimientoBarrilRepository,
+│               OrdenCompraRepository, OrdenCompraItemRepository)
 ├── dto/        LoteFormDto, LoteGuardadoResult, InsumoDto, FacturaFormDto,
 │               FacturaItemDto (campos numéricos `cantidad`, `valorUnitario`, `porcentajeDescuento`, `porcentajeIvaItem`, `impuestoConsumo` sin valor por defecto — `null`; el servicio tiene fallbacks null-safe; el formulario muestra placeholder en lugar de 0), MantenimientoDto, DashboardStats,
 │               RecetaFormDto (incluye EscalonDto y AdicionHervorDto inner classes),
@@ -188,6 +194,7 @@ templates/
                 migracion/detalle.html (página de migración por tenant: instrucciones generales, 6 cards de módulo cada una con descarga de plantilla + formulario de carga, historial de importaciones con badge de estado y modal de errores; módulos: almacen, equipos, comercial, produccion, clientes, ventas)
 │               categorias.html (gestión de categorías de insumo y equipo: dos tabs con tabla CRUD + formulario de creación por tipo)
 ├── barriles/   lista.html (4 stat-cards: Total/Disponibles/Llenos/Despachados + filtros codigo+estado + tabla con badges de estado), formulario.html (CRUD con campos: codigo, tipo, capacidadLitros, estado, codigoLote, clienteNombre, fechaDespacho, observaciones), detalle.html (hero con código+estado, historial de movimientos, panel cambiar estado, registro de auditoría, zona de peligro)
+├── ordenes-compra/ lista.html (4 stat-cards: Total OC/Borrador/Enviadas/Recibidas + filtro por estado + tabla con N° OC/proveedor/fechas/estado/ítems/total estimado + botones ver/editar/PDF), formulario.html (datos generales: proveedor typeahead → `/proveedores/suggest`, fechaEmision, fechaRequerida, notas; tabla de ítems dinámica con Tipo select/Categoría select/**Nombre datalist sugiere insumos/equipos del inventario filtrados por categoría**/descripción/cantidad/unidad/precio/IVA%; total estimado en tiempo real; JS: `INSUMOS_POR_TIPO` y `EQUIPOS_POR_TIPO` serializados como JSON, `onTipoChange()`/`onCategoriaChange()`/`addItemRow()`/`removeRow()`/`recalcular()`), detalle.html (info general + estado + ítems + historial de estado + botones cambiar estado + convertir a factura + PDF)
 ```
 
 ### Migraciones Flyway
@@ -963,6 +970,19 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - Helpers privados: `normalizar(barril)` (blancos → null), `validarCodigoUnico(codigo, excludeId)`, `usuarioActual()` (SecurityContextHolder).
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`.
 
+### OrdenCompraService
+- `listarPaginado(estado, page)` — paginado con filtro opcional por `EstadoOrdenCompra`; orden `fechaEmision DESC NULLS LAST, id DESC`.
+- `buscarPorId(id)` — lanza `RuntimeException("Orden no encontrada: {id}")` si no existe.
+- `suggest(q)` — filtra por `numeroOc` o `proveedor`; retorna hasta 6 mapas `{titulo, proveedor, fecha, estado, url}`.
+- `guardar(dto)` — genera `numeroOc` auto en formato `OC-001`; vincula `proveedorRef` si `proveedorId != null`; estado inicial siempre `BORRADOR`.
+- `actualizar(id, dto)` — solo editable en estado BORRADOR; lanza `RuntimeException` si la OC no es editable.
+- `cambiarEstado(id, EstadoOrdenCompra)` — valida transiciones via `TRANSICIONES_VALIDAS`: BORRADOR → {ENVIADA, CANCELADA}, ENVIADA → {RECIBIDA_PARCIAL, RECIBIDA, CANCELADA}, RECIBIDA_PARCIAL → {RECIBIDA, CANCELADA}, RECIBIDA → {}, CANCELADA → {}.
+- `eliminar(id)` — solo en BORRADOR o CANCELADA; **borrado físico** (no soft delete).
+- `convertirAFactura(id, facturaService)` — crea `FacturaProveedor` desde la OC via `facturaService.crearDesdeOrdenCompra(oc)`; vincula `factura_id` en la OC. Retorna el `id` de la nueva factura para redireccionar al editor.
+- `transicionesValidas(estado)` — retorna `List<EstadoOrdenCompra>` de destinos válidos para el estado actual; usado en `detalle.html` para mostrar solo los botones de estado relevantes.
+- `countTotal()`, `countByEstado(EstadoOrdenCompra)` — delegan a `repo`. Para stat-cards.
+- `pageSize` inyectado via `@Value("${app.page-size:15}")`.
+
 ### TenantService
 - `listarTodos()` — `@Transactional(readOnly=true)`, ordenados por subdomain
 - `buscarPorSubdomain(subdomain)` — `Optional<Tenant>` por PK
@@ -1169,6 +1189,21 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - `POST /barriles/eliminar/{id}` — borrado físico, redirige a `/barriles` con flash success.
 - `TIPOS_BARRIL` — lista estática en el controller: "Keg 20L", "Keg 30L", "Keg 50L", "Barril 30L", "Barril 60L", "Otro".
 
+### OrdenCompraController ("/ordenes-compra") — ADMIN, FACTURACION, SUPERADMIN
+- `GET /ordenes-compra?estado=&page=` — lista paginada con 4 stat-cards (Total OC, Borrador, Enviadas, Recibidas). Filtro por `EstadoOrdenCompra`. Pasa `ordenes`, `estadoFiltro`, `estados`, `statsTotal`, `statsBorrador`, `statsEnviadas`, `statsRecibidas`, `paginaActual`, `baseUrl` al modelo.
+- `GET /ordenes-compra/nueva` — formulario de creación. Modelo: `oc` (OrdenCompraFormDto vacío) + datos de formulario.
+- `POST /ordenes-compra/guardar` — crea la OC; redirige a `/ordenes-compra/ver/{saved.id}` con flash success o a `/ordenes-compra` con flash danger si el servicio lanza excepción.
+- `GET /ordenes-compra/editar/{id}` — formulario de edición; solo si `oc.isEditable()` (estado BORRADOR). Si no es editable redirige a `/ordenes-compra/ver/{id}` con flash warning. Usa `toFormDto()` para pre-llenar el DTO desde la entidad.
+- `POST /ordenes-compra/actualizar/{id}` — actualiza la OC; redirige a `/ordenes-compra/ver/{id}`.
+- `GET /ordenes-compra/ver/{id}` — detalle con transiciones válidas. Modelo: `oc`, `estados`, `tiposItem`, `transicionesValidas`.
+- `POST /ordenes-compra/{id}/estado` — cambia estado según `EstadoOrdenCompra nuevoEstado`. Delega a `service.cambiarEstado(id, nuevoEstado)`.
+- `POST /ordenes-compra/{id}/convertir` — convierte la OC a factura; redirige a `/facturas/editar/{facturaId}` con flash success.
+- `POST /ordenes-compra/{id}/eliminar` — elimina la OC; redirige a `/ordenes-compra` con flash success.
+- `GET /ordenes-compra/{id}/pdf` — descarga PDF de la OC. Lee el tenant de `request.getAttribute("currentTenant")`, construye `ExportBranding.from(tenant)`. Nombre: `oc-{numeroOc}.pdf`.
+- `GET /ordenes-compra/suggest?q=` — `@ResponseBody`, `produces=JSON`. Delega a `service.suggest(q)`. Devuelve lista de mapas con `{titulo, proveedor, fecha, estado, url}`.
+- `agregarDatosFormulario()` construye: `proveedores` (List<Proveedor> activos), `tiposInsumo`/`tiposEquipo` (List<String> desde `CategoriaInsumoService`/`CategoriaEquipoService`), `tiposItem` (TipoItemFactura.values()), `insumosPorTipo` (Map<String, List<String>> nombres de insumos agrupados por categoría, para datalist en formulario JS), `equiposPorTipo` (ídem para equipos). Inyecta `InsumoInventarioRepository` y `EquipoRepository` directamente — mismo patrón que `FacturaProveedorController`.
+- `toFormDto(OrdenCompra)` — convierte la entidad a DTO para pre-llenar el formulario de edición: copia proveedor, proveedorId, fechas, notas y los ítems con todos sus campos.
+
 ### VentaController ("/ventas") — ADMIN, FACTURACION, SUPERADMIN
 - `GET /ventas?estado=&desde=&hasta=&page=` — lista paginada con 4 stat-cards (total ventas, pendientes, clientes únicos, ingresos despachados) + filtros opcionales por estado y rango de fechas. Typeahead en card-header busca por cliente o código de lote. Pasa `topClientes` al modelo (lista colapsable de top 5 por ingresos). Fila de la lista incluye: badge `+N` cuando la venta tiene más de 1 ítem, botón PDF directo, y botón "Despachar" (visible solo cuando `estado == PENDIENTE`). Los nuevos estados COTIZACION y EXPIRADO aparecen automáticamente en el select de filtro (usa `EstadoVenta.values()`).
 - `GET /ventas/nuevo?loteId=` — formulario nuevo con lote pre-seleccionado si `loteId` está presente. El formulario soporta múltiples ítems. Campo cliente: input de búsqueda con typeahead que llama `GET /clientes/suggest?q=`; selección carga chip con nombre+NIT y setea el hidden `clienteId`. Typeahead de lote usa `GET /ventas/suggest-lotes?q=`. Preview de total en tiempo real. `step` del campo cantidad se adapta automáticamente: entero para envases (Botella/Lata/Barril/Growler/und), decimal (0.001) para volumen. Campo "Válida hasta" visible solo cuando estado=COTIZACION.
@@ -1247,7 +1282,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
   - `/admin/**`, `/usuarios/**`, `/tipos-cerveza/**` → solo ADMIN
   - `/actuator/**` → ADMIN (excepto `/actuator/health` que es público)
   - `POST /guardar`, `POST /actualizar/**`, `POST /eliminar/**`, `POST /duplicar/**`, `GET /nuevo`, `GET /editar/**` → ADMIN, SUPERADMIN, PRODUCCION (escritura de trazabilidad y planificación). Recetas/inventario/equipos usan `@PreAuthorize` a nivel de método para bloquear PRODUCCION en esos módulos.
-  - `/facturas/**`, `/proveedores/**`, `/clientes/**`, `/ventas/**` → ADMIN, FACTURACION, SUPERADMIN
+  - `/facturas/**`, `/proveedores/**`, `/clientes/**`, `/ventas/**`, `/ordenes-compra/**` → ADMIN, FACTURACION, SUPERADMIN
   - `/inventario/**`, `/recetas/**` → ADMIN, INVENTARIO, PRODUCCION (lectura+escritura para INVENTARIO; solo lectura para PRODUCCION — write bloqueado por `@PreAuthorize`)
   - `/equipos/**` → ADMIN, EQUIPOS, PRODUCCION (lectura para PRODUCCION; write bloqueado por `@PreAuthorize`)
   - `/barriles/**` → ADMIN, INVENTARIO, PRODUCCION, SUPERADMIN
@@ -1260,7 +1295,7 @@ No extiende `AuditableEntity`. Gestiona su propia auditoría con `@PrePersist cr
 - **HTTP Security Headers** (configurados en `SecurityConfig.filterChain()` via `.headers()`): HSTS (`max-age=31536000; includeSubDomains`), `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()`. CSP explícitamente omitido — el app usa múltiples CDNs y Thymeleaf inline JS que requieren `'unsafe-inline'`, lo cual vacía el beneficio de CSP.
 - **CSRF en AJAX**: todos los endpoints `@ResponseBody POST` requieren el token CSRF. Los templates que los usan incluyen `<meta name="_csrf" th:content="${_csrf.token}"/>` y `<meta name="_csrf_header" th:content="${_csrf.headerName}"/>`. El JS lee estos metas y los envía como header en el `fetch()`.
 - **JPA Auditing**: `JpaConfig` con `@EnableJpaAuditing(auditorAwareRef="auditorAwareImpl")`, `AuditorAwareImpl` lee usuario de SecurityContext. Fallback a `"sistema"` si no hay sesión activa.
-- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas, Barriles / Kegs (icono `bi-bucket`); **Comercial** (ADMIN/FACTURACION/SUPERADMIN): Ventas, Clientes, Facturas, Proveedores; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`. El `active` check del dropdown Comercial incluye `/clientes` además de `/ventas`, `/facturas`, `/proveedores`. El `active` check del dropdown Almacén incluye `/barriles`.
+- **Navbar**: `sec:authorize` oculta links según rol. Los ítems están agrupados en dropdowns: **Producción** (todos los roles): Trazabilidad, Kanban, Planificación, Comparativa, Calendario, **Reportes** (divider antes de Reportes — accesible a todos los roles); **Almacén** (ADMIN/INVENTARIO/PRODUCCION): Inventario, Recetas, Barriles / Kegs (icono `bi-bucket`); **Comercial** (ADMIN/FACTURACION/SUPERADMIN): Ventas, Clientes, Facturas, Proveedores, Órdenes de Compra; **Admin** (ADMIN): dropdown con 3 secciones etiquetadas — *Gestión* (Usuarios, Tipos de Cerveza), *Sistema* (Log de Accesos), *Plataforma* (Tenants — solo SUPERADMIN). Notificaciones ya no está en Admin — accesibles a todos los roles vía la campana. Equipos queda como ítem standalone (ADMIN/EQUIPOS/PRODUCCION). El botón `+` muestra acciones rápidas filtradas por rol: "Lote de cerveza" visible a ADMIN/SUPERADMIN/PRODUCCION. El dropdown de usuario muestra nombre, badge de rol y link a `/perfil/password`. El `active` check del dropdown Comercial incluye `/clientes` y `/ordenes-compra` además de `/ventas`, `/facturas`, `/proveedores`. El `active` check del dropdown Almacén incluye `/barriles`.
 - **Campana de notificaciones** (`<li id="alertaBellItem">`): siempre visible en el DOM (antes tenía `style="display:none"` y se revelaba via JS). Al cargar la página hace `fetch('/notificaciones/recientes')`. Si hay notificaciones no leídas, muestra el badge rojo; si no las hay, el badge se oculta (`badge.style.display='none'`) pero la campana permanece visible. `notifMarcarLeida()` también solo oculta el badge (no el elemento `<li>`) cuando `noLeidas` llega a 0.
 - **`/perfil/**`** cae en `anyRequest().authenticated()` — accesible a todos los roles. Sin regla explícita en `SecurityConfig`.
 - **Multi-tenant — TenantFilter** (`OncePerRequestFilter`):
