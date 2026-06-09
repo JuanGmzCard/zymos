@@ -1,9 +1,13 @@
 package com.alera.controller;
 
 import com.alera.dto.OrdenCompraFormDto;
+import com.alera.model.Equipo;
+import com.alera.model.InsumoInventario;
 import com.alera.model.OrdenCompra;
 import com.alera.model.enums.EstadoOrdenCompra;
 import com.alera.model.enums.TipoItemFactura;
+import com.alera.repository.EquipoRepository;
+import com.alera.repository.InsumoInventarioRepository;
 import com.alera.service.*;
 import com.alera.config.ExportBranding;
 import com.alera.model.Tenant;
@@ -20,6 +24,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,19 +40,25 @@ public class OrdenCompraController {
     private final CategoriaInsumoService categoriaInsumoService;
     private final CategoriaEquipoService categoriaEquipoService;
     private final PdfExportService pdfExportService;
+    private final InsumoInventarioRepository insumoRepo;
+    private final EquipoRepository equipoRepo;
 
     public OrdenCompraController(OrdenCompraService service,
                                  FacturaProveedorService facturaService,
                                  ProveedorService proveedorService,
                                  CategoriaInsumoService categoriaInsumoService,
                                  CategoriaEquipoService categoriaEquipoService,
-                                 PdfExportService pdfExportService) {
-        this.service               = service;
-        this.facturaService        = facturaService;
-        this.proveedorService      = proveedorService;
+                                 PdfExportService pdfExportService,
+                                 InsumoInventarioRepository insumoRepo,
+                                 EquipoRepository equipoRepo) {
+        this.service                = service;
+        this.facturaService         = facturaService;
+        this.proveedorService       = proveedorService;
         this.categoriaInsumoService = categoriaInsumoService;
         this.categoriaEquipoService = categoriaEquipoService;
-        this.pdfExportService      = pdfExportService;
+        this.pdfExportService       = pdfExportService;
+        this.insumoRepo             = insumoRepo;
+        this.equipoRepo             = equipoRepo;
     }
 
     // ── Lista ──────────────────────────────────────────────────────────────
@@ -234,10 +245,32 @@ public class OrdenCompraController {
     // ── Helpers privados ──────────────────────────────────────────────────
 
     private void agregarDatosFormulario(Model model) {
+        List<String> tiposInsumo = categoriaInsumoService.listarNombresActivos();
+        List<String> tiposEquipo = categoriaEquipoService.listarNombresActivos();
         model.addAttribute("proveedores",  proveedorService.listarActivos());
-        model.addAttribute("tiposInsumo",  categoriaInsumoService.listarNombresActivos());
-        model.addAttribute("tiposEquipo",  categoriaEquipoService.listarNombresActivos());
+        model.addAttribute("tiposInsumo",  tiposInsumo);
+        model.addAttribute("tiposEquipo",  tiposEquipo);
         model.addAttribute("tiposItem",    TipoItemFactura.values());
+
+        List<InsumoInventario> todosInsumos = insumoRepo.findAllByOrderByNombreAsc();
+        Map<String, List<String>> insumosPorTipo = new LinkedHashMap<>();
+        for (String tipo : tiposInsumo) {
+            insumosPorTipo.put(tipo, todosInsumos.stream()
+                    .filter(i -> tipo.equals(i.getTipo()))
+                    .map(InsumoInventario::getNombre)
+                    .toList());
+        }
+
+        List<Equipo> todosEquipos = equipoRepo.findAll();
+        Map<String, List<String>> equiposPorTipo = new LinkedHashMap<>();
+        for (String tipo : tiposEquipo) {
+            equiposPorTipo.put(tipo, todosEquipos.stream()
+                    .filter(e -> tipo.equals(e.getTipo()))
+                    .map(Equipo::getNombre)
+                    .toList());
+        }
+        model.addAttribute("insumosPorTipo", insumosPorTipo);
+        model.addAttribute("equiposPorTipo", equiposPorTipo);
     }
 
     private OrdenCompraFormDto toFormDto(OrdenCompra oc) {

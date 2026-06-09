@@ -126,7 +126,8 @@
                                         <!-- tipoInsumo -->
                                         <select class="form-select form-select-sm tipo-extra insumo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoInsumo'"
-                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'">
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'"
+                                                onchange="onCategoriaChange(this)">
                                             <option value="">-- Categoría --</option>
                                             <option th:each="ti : ${tiposInsumo}" th:value="${ti}"
                                                     th:text="${ti}"
@@ -135,7 +136,8 @@
                                         <!-- tipoEquipo -->
                                         <select class="form-select form-select-sm tipo-extra equipo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoEquipo'"
-                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'">
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'"
+                                                onchange="onCategoriaChange(this)">
                                             <option value="">-- Categoría --</option>
                                             <option th:each="te : ${tiposEquipo}" th:value="${te}"
                                                     th:text="${te}"
@@ -146,6 +148,7 @@
                                         <input type="text" class="form-control form-control-sm item-nombre"
                                                th:name="'items[' + ${stat.index} + '].nombre'"
                                                th:value="${item.nombre}"
+                                               list="datalist-item-nombres"
                                                placeholder="Nombre del producto" required/>
                                         <input type="text" class="form-control form-control-sm mt-1"
                                                th:name="'items[' + ${stat.index} + '].descripcion'"
@@ -222,11 +225,16 @@
     </div>
 </main>
 
+<!-- Datalist compartido para sugerencias de nombre -->
+<datalist id="datalist-item-nombres"></datalist>
+
 <!-- Datos para JS -->
 <script th:inline="javascript">
-    var TIPOS_INSUMO = /*[[${tiposInsumo}]]*/ [];
-    var TIPOS_EQUIPO = /*[[${tiposEquipo}]]*/ [];
-    var rowCount     = /*[[${oc.items != null ? oc.items.size() : 0}]]*/ 0;
+    var TIPOS_INSUMO    = /*[[${tiposInsumo}]]*/ [];
+    var TIPOS_EQUIPO    = /*[[${tiposEquipo}]]*/ [];
+    var INSUMOS_POR_TIPO = /*[[${insumosPorTipo}]]*/ {};
+    var EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
+    var rowCount         = /*[[${oc.items != null ? oc.items.size() : 0}]]*/ 0;
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -291,6 +299,16 @@ function buildEquipoOpts() {
         TIPOS_EQUIPO.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
 }
 
+function onCategoriaChange(sel) {
+    var esInsumo = sel.classList.contains('insumo-extra');
+    var mapa     = esInsumo ? INSUMOS_POR_TIPO : EQUIPOS_POR_TIPO;
+    var nombres  = (sel.value && mapa[sel.value]) ? mapa[sel.value] : [];
+    var dl = document.getElementById('datalist-item-nombres');
+    dl.innerHTML = nombres.map(function(n){
+        return '<option value="' + n.replace(/"/g,'&quot;') + '">';
+    }).join('');
+}
+
 function addItemRow() {
     var idx = rowCount++;
     var p   = 'items[' + idx + '].';
@@ -304,15 +322,15 @@ function addItemRow() {
           '</select>' +
         '</td>' +
         '<td>' +
-          '<select class="form-select form-select-sm tipo-extra insumo-extra" name="' + p + 'tipoInsumo" style="display:block">' +
+          '<select class="form-select form-select-sm tipo-extra insumo-extra" name="' + p + 'tipoInsumo" style="display:block" onchange="onCategoriaChange(this)">' +
             buildInsumoOpts() +
           '</select>' +
-          '<select class="form-select form-select-sm tipo-extra equipo-extra" name="' + p + 'tipoEquipo" style="display:none">' +
+          '<select class="form-select form-select-sm tipo-extra equipo-extra" name="' + p + 'tipoEquipo" style="display:none" onchange="onCategoriaChange(this)">' +
             buildEquipoOpts() +
           '</select>' +
         '</td>' +
         '<td>' +
-          '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" placeholder="Nombre del producto" required/>' +
+          '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" list="datalist-item-nombres" placeholder="Nombre del producto" required/>' +
           '<input type="text" class="form-control form-control-sm mt-1" name="' + p + 'descripcion" placeholder="Descripción (opcional)"/>' +
         '</td>' +
         '<td><input type="number" class="form-control form-control-sm item-cantidad" name="' + p + 'cantidad" min="0.001" step="any" required oninput="recalcular()"/></td>' +
@@ -335,13 +353,19 @@ function onTipoChange(sel) {
     var td = sel.closest('td').nextElementSibling;
     var insumoSel = td.querySelector('.insumo-extra');
     var equipoSel = td.querySelector('.equipo-extra');
+    var visible;
     if (sel.value === 'INSUMO') {
         insumoSel.style.display = 'block';
         equipoSel.style.display = 'none';
+        insumoSel.value = '';
+        visible = insumoSel;
     } else {
         insumoSel.style.display = 'none';
         equipoSel.style.display = 'block';
+        equipoSel.value = '';
+        visible = equipoSel;
     }
+    onCategoriaChange(visible);
 }
 
 function updateEmptyMsg() {
