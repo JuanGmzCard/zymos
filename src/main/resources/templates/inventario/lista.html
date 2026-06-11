@@ -7,233 +7,336 @@
     <title th:text="${branding.name} + ' - Inventario'">Alera - Inventario</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            min-width: 130px;
+        }
+        .stat-card-simple .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card-simple .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1e293b;
+        }
+        .stat-card-simple .stat-value.warning { color: #f97316; }
+
+        .page-header {
+            padding: 1.75rem 0 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+            font-family: var(--font-body), sans-serif;
+        }
+        .page-header .subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        .action-link {
+            font-size: 0.8rem;
+            text-decoration: none;
+            padding: 0 0.25rem;
+        }
+        .action-link.view  { color: var(--verde-zymos, #2563eb); }
+        .action-link.edit  { color: #475569; }
+        .action-link.del   { color: #ef4444; }
+        .action-link:hover.view { color: var(--dorado, #1d4ed8); text-decoration: underline; }
+        .action-link:hover.edit { color: #1e293b; text-decoration: underline; }
+        .action-link:hover.del  { color: #b91c1c; text-decoration: underline; }
+        .action-sep { color: #cbd5e1; font-size: 0.75rem; margin: 0 0.1rem; }
+
+        .filter-tab {
+            display: inline-block;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+        .filter-tab.active  { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+
+        .pagination-simple {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination-simple a {
+            color: var(--verde-zymos, #2563eb);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .pagination-simple a.disabled {
+            color: #cbd5e1;
+            pointer-events: none;
+        }
+
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color: var(--dm-text); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+        html.dark-mode .pagination-simple { border-color: var(--dm-border-light); color: var(--dm-text-muted); }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera de página -->
+    <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-box-seam me-2"></i>Inventario de Insumos</h1>
-            <p>Control de materias primas y suministros</p>
+            <h1>Inventario</h1>
+            <p class="subtitle mb-0">Gestión de insumos</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 pt-1">
             <a th:href="@{/inventario/export(nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
-               class="btn btn-outline-crema" title="Exportar a Excel">
+               class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i>Excel
             </a>
             <a th:href="@{/inventario/nuevo}"
                sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-               class="btn btn-zymos">
-                <i class="bi bi-plus-lg me-1"></i>Nuevo Insumo
+               class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Nuevo insumo
             </a>
         </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
-    <div th:if="${mensaje}" class="alert" th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : 'alert-danger'">
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert mb-3"
+         th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : 'alert-danger'">
         <span th:text="${mensaje}"></span>
     </div>
 
-    <!-- Barra de filtros -->
-    <form th:action="@{/inventario}" method="get" class="d-flex gap-2 flex-wrap align-items-end mb-3 p-3 bg-white rounded shadow-sm">
-        <div class="position-relative">
-            <label class="form-label mb-1" style="font-size:0.75rem;font-weight:600;color:#6c757d;text-transform:uppercase;">Nombre</label>
-            <input type="text" name="nombre" id="insumoNombreInput" class="form-control form-control-sm" style="width:180px;"
-                   placeholder="Buscar por nombre..." th:value="${nombreFiltro}" autocomplete="off">
-            <div id="insumoSuggest" class="search-suggest" style="display:none;"></div>
+    <!-- Stat cards -->
+    <div class="d-flex gap-3 flex-wrap mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" th:text="${totalInsumos}">0</div>
         </div>
-        <div>
-            <label class="form-label mb-1" style="font-size:0.75rem;font-weight:600;color:#6c757d;text-transform:uppercase;">Tipo</label>
-            <input type="text" name="tipo" class="form-control form-control-sm" style="width:160px;"
-                   list="listaTiposFiltro" placeholder="Todos los tipos" autocomplete="off"
-                   th:value="${tipoFiltro}">
-            <datalist id="listaTiposFiltro">
-                <option th:each="t : ${tiposInsumo}" th:value="${t}"></option>
-            </datalist>
+        <div class="stat-card-simple">
+            <div class="stat-label">Bajo Stock</div>
+            <div class="stat-value warning" th:text="${#lists.size(bajoStock)}">0</div>
         </div>
-        <div class="d-flex gap-2 align-items-end">
-            <button type="submit" class="btn btn-zymos btn-sm px-3">
-                <i class="bi bi-search me-1"></i>Filtrar
-            </button>
-            <a th:href="@{/inventario}" class="btn btn-zymos-outline btn-sm px-3">
-                <i class="bi bi-x-lg me-1"></i>Limpiar
+        <div class="stat-card-simple">
+            <div class="stat-label">Por Vencer (30d)</div>
+            <div class="stat-value warning" th:text="${#lists.size(proximosVencer)}">0</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card">
+        <form th:action="@{/inventario}" method="get" class="d-flex gap-2 flex-wrap align-items-center mb-3">
+            <div class="position-relative">
+                <input type="text" name="nombre" id="insumoNombreInput" class="form-control form-control-sm"
+                       style="width:220px;" placeholder="Buscar por nombre..."
+                       th:value="${nombreFiltro}" autocomplete="off">
+                <div id="insumoSuggest" class="search-suggest" style="display:none;"></div>
+            </div>
+            <select name="tipo" class="form-select form-select-sm" style="width:180px;">
+                <option value="" th:selected="${tipoFiltro == null or tipoFiltro == ''}">Todos los tipos</option>
+                <option th:each="t : ${tiposInsumo}" th:value="${t}" th:text="${t}"
+                        th:selected="${tipoFiltro != null and tipoFiltro == t}"></option>
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+            <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm px-3">Limpiar</a>
+        </form>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a th:href="@{/inventario}"
+               th:classappend="${!filtroBajoStock and !filtroPorVencer} ? 'filter-tab active' : 'filter-tab inactive'">
+                Todos
+            </a>
+            <a th:href="@{/inventario(filtroBajoStock=true)}"
+               th:classappend="${filtroBajoStock} ? 'filter-tab active' : 'filter-tab inactive'">
+                Bajo stock
+                <span th:if="${!#lists.isEmpty(bajoStock)}"
+                      th:text="'(' + ${#lists.size(bajoStock)} + ')'"></span>
+            </a>
+            <a th:href="@{/inventario(filtroPorVencer=true)}"
+               th:classappend="${filtroPorVencer} ? 'filter-tab active' : 'filter-tab inactive'">
+                Por vencer
+                <span th:if="${!#lists.isEmpty(proximosVencer)}"
+                      th:text="'(' + ${#lists.size(proximosVencer)} + ')'"></span>
             </a>
         </div>
-        <div class="ms-auto align-self-center">
-            <span class="badge" style="background:var(--verde-alera);font-size:0.75rem;">
-                <span th:text="${totalInsumos}">0</span> insumos
-            </span>
-        </div>
-    </form>
-
-    <!-- Filtros rápidos -->
-    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-        <span class="text-muted small me-1">Filtros rápidos:</span>
-        <a th:href="@{/inventario}" class="btn btn-sm"
-           th:classappend="${!filtroBajoStock and !filtroPorVencer} ? 'btn-zymos' : 'btn-zymos-outline'">
-            <i class="bi bi-grid-3x3-gap me-1"></i>Todos
-        </a>
-        <a th:href="@{/inventario(filtroBajoStock=true)}" class="btn btn-sm"
-           th:classappend="${filtroBajoStock} ? 'btn-danger' : 'btn-outline-danger'">
-            <i class="bi bi-exclamation-triangle me-1"></i>Bajo Stock
-            <span th:if="${!#lists.isEmpty(bajoStock)}"
-                  class="badge ms-1"
-                  th:style="${filtroBajoStock} ? 'background:#fff;color:#dc3545;' : 'background:#dc3545;'"
-                  th:text="${#lists.size(bajoStock)}"></span>
-        </a>
-        <a th:href="@{/inventario(filtroPorVencer=true)}" class="btn btn-sm"
-           th:classappend="${filtroPorVencer} ? 'btn-warning text-dark' : 'btn-outline-warning'">
-            <i class="bi bi-calendar-x me-1"></i>Por Vencer
-            <span th:if="${!#lists.isEmpty(proximosVencer)}"
-                  class="badge ms-1"
-                  th:style="${filtroPorVencer} ? 'background:#212529;' : 'background:#ffc107;color:#212529;'"
-                  th:text="${#lists.size(proximosVencer)}"></span>
-        </a>
     </div>
 
-    <!-- Alertas -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-6" th:if="${!#lists.isEmpty(bajoStock)}">
-            <div class="card border-danger">
-                <div class="card-header bg-danger text-white"><i class="bi bi-exclamation-triangle me-2"></i>Bajo Stock (<span th:text="${#lists.size(bajoStock)}">0</span>)</div>
-                <div class="card-body p-2">
-                    <span th:each="ins : ${bajoStock}" class="badge bg-danger me-1 mb-1" th:text="${ins.nombre}">-</span>
-                </div>
-            </div>
+    <!-- Tabla -->
+    <div class="table-card mb-4">
+        <div class="table-count">
+            <span th:text="${totalInsumos}">0</span> insumos
         </div>
-        <div class="col-md-6" th:if="${!#lists.isEmpty(proximosVencer)}">
-            <div class="card border-warning">
-                <div class="card-header bg-warning"><i class="bi bi-calendar-x me-2"></i>Próximos a Vencer (<span th:text="${#lists.size(proximosVencer)}">0</span>)</div>
-                <div class="card-body p-2">
-                    <span th:each="ins : ${proximosVencer}" class="badge bg-warning text-dark me-1 mb-1" th:text="${ins.nombre}">-</span>
-                </div>
-            </div>
+        <div th:if="${#lists.isEmpty(insumos)}" class="empty-state py-5">
+            <i class="bi bi-box fs-1 text-muted d-block mb-2"></i>
+            <p class="text-muted">No hay insumos registrados</p>
         </div>
-    </div>
+        <div th:unless="${#lists.isEmpty(insumos)}" class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th style="padding-left:1.25rem;">Nombre</th>
+                    <th>Tipo</th>
+                    <th>Cantidad</th>
+                    <th>Stock Mín.</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="ins : ${insumos}">
+                    <td style="padding-left:1.25rem;" class="fw-semibold">
+                        <span th:text="${ins.nombre}">-</span>
+                    </td>
+                    <td>
+                        <span class="badge" th:classappend="'bg-' + ${ins.colorTipo}" th:text="${ins.tipo}">-</span>
+                    </td>
+                    <td>
+                        <span th:text="${ins.cantidad.stripTrailingZeros().toPlainString()}">0</span>
+                        <small class="text-muted" th:text="${ins.unidad != null ? ins.unidad : ''}"></small>
+                    </td>
+                    <td>
+                        <span th:text="${ins.stockMinimo.stripTrailingZeros().toPlainString()}">0</span>
+                        <small class="text-muted" th:text="${ins.unidad != null ? ins.unidad : ''}"></small>
+                    </td>
+                    <td>
+                        <span th:class="${ins.claseVencimiento}" th:text="${ins.textoVencimiento}">-</span>
+                    </td>
+                    <td>
+                        <span th:if="${ins.bajoStock}" class="badge bg-warning text-dark">Bajo stock</span>
+                    </td>
+                    <td class="text-end pe-3">
+                        <a th:href="@{/inventario/precios(nombre=${ins.nombre})}"
+                           class="action-link view" title="Historial de precios">
+                            <i class="bi bi-graph-up"></i>
+                        </a>
+                        <span class="action-sep">·</span>
+                        <a th:href="@{/inventario/{id}/historial(id=${ins.id})}"
+                           class="action-link edit" title="Movimientos">
+                            <i class="bi bi-clock-history"></i>
+                        </a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <button type="button" class="action-link edit border-0 bg-transparent p-0"
+                                title="Ajuste rápido"
+                                sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                                th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}"
+                                onclick="abrirAjusteDesdeBtn(this)">
+                            <i class="bi bi-plus-slash-minus"></i>
+                        </button>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <a th:href="@{/inventario/editar/{id}(id=${ins.id})}"
+                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                           class="action-link edit">Editar</a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <form th:action="@{/inventario/eliminar/{id}(id=${ins.id})}" method="post"
+                              class="d-inline"
+                              onsubmit="return confirm('¿Eliminar este insumo?')"
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
 
-    <div class="card-zymos">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="bi bi-table me-2"></i>
-                <span th:if="${filtroBajoStock}">Insumos con Bajo Stock</span>
-                <span th:if="${filtroPorVencer}">Insumos Próximos a Vencer (30 días)</span>
-                <span th:if="${!filtroBajoStock and !filtroPorVencer}">Todos los Insumos</span>
-            </h5>
-            <span class="text-muted small"
-                  th:text="${totalInsumos} + ' insumo' + (${totalInsumos} != 1 ? 's' : '')"></span>
-        </div>
-        <div class="card-body p-0">
-            <div th:if="${#lists.isEmpty(insumos)}" class="empty-state py-4">
-                <i class="bi bi-box"></i>
-                <p>No hay insumos registrados</p>
-            </div>
-            <div th:unless="${#lists.isEmpty(insumos)}" class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead>
-                    <tr>
-                        <th style="background:var(--verde-alera);color:var(--crema);padding:0.75rem 1rem;">Nombre</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Tipo</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Cantidad</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Stock Mín.</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Vencimiento</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Proveedor</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);">Acciones</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="ins : ${insumos}" th:classappend="${ins.bajoStock} ? 'table-warning' : ''">
-                        <td class="ps-3 fw-semibold">
-                            <span th:text="${ins.nombre}">-</span>
-                            <i th:if="${ins.bajoStock}" class="bi bi-exclamation-triangle text-danger ms-1" title="Bajo stock"></i>
-                        </td>
-                        <td><span class="badge" th:classappend="'bg-' + ${ins.colorTipo}" th:text="${ins.tipo}">-</span></td>
-                        <td th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidad} != null ? ${ins.unidad} : '')">-</td>
-                        <td th:text="${ins.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidad} != null ? ${ins.unidad} : '')">-</td>
-                        <td>
-                            <span th:class="${ins.claseVencimiento}" th:text="${ins.textoVencimiento}">-</span>
-                        </td>
-                        <td th:text="${ins.proveedor != null} ? ${ins.proveedor} : '-'">-</td>
-                        <td>
-                            <a th:href="@{/inventario/precios(nombre=${ins.nombre})}"
-                               class="btn btn-sm btn-outline-info" title="Historial de precios">
-                                <i class="bi bi-graph-up"></i>
-                            </a>
-                            <a th:href="@{/inventario/{id}/historial(id=${ins.id})}"
-                               class="btn btn-sm btn-outline-secondary ms-1" title="Movimientos de stock">
-                                <i class="bi bi-clock-history"></i>
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-warning ms-1"
-                                    title="Ajuste rápido de stock"
-                                    sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                                    th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}"
-                                    onclick="abrirAjusteDesdeBtn(this)">
-                                <i class="bi bi-plus-slash-minus"></i>
-                            </button>
-                            <a th:href="@{/inventario/editar/{id}(id=${ins.id})}"
-                               sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                               class="btn btn-sm btn-outline-secondary ms-1">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form th:action="@{/inventario/eliminar/{id}(id=${ins.id})}" method="post" class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar este insumo?')"
-                                  sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-            </div>
+        <!-- Paginación -->
+        <div class="pagination-simple" th:if="${totalPaginas > 1}">
+            <a th:href="@{/inventario(page=${paginaActual - 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''">
+                ← Anterior
+            </a>
+            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+            <a th:href="@{/inventario(page=${paginaActual + 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
+                Siguiente →
+            </a>
         </div>
     </div>
 
-    <!-- Paginación -->
-    <div class="mt-3" th:if="${totalPaginas > 1}">
-        <nav aria-label="Paginación">
-            <ul class="pagination pagination-sm justify-content-center mb-0">
-                <li class="page-item" th:classappend="${paginaActual == 0} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/inventario(page=${paginaActual - 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}">
-                        <i class="bi bi-chevron-left"></i>
-                    </a>
-                </li>
-                <li th:each="num : ${#numbers.sequence(0, totalPaginas - 1)}"
-                    class="page-item" th:classappend="${num == paginaActual} ? 'active' : ''">
-                    <a class="page-link"
-                       th:href="@{/inventario(page=${num},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
-                       th:text="${num + 1}">1</a>
-                </li>
-                <li class="page-item" th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
-                    <a class="page-link" th:href="@{/inventario(page=${paginaActual + 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}">
-                        <i class="bi bi-chevron-right"></i>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-        <p class="text-center text-muted small mt-1">
-            Página <span th:text="${paginaActual + 1}">1</span> de <span th:text="${totalPaginas}">1</span>
-        </p>
-    </div>
 </div>
+
 <!-- Modal Ajuste de Stock -->
 <div class="modal fade" id="modalAjuste" tabindex="-1">
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
-            <div class="modal-header" style="background:var(--verde-alera);color:var(--crema);">
-                <h5 class="modal-title"><i class="bi bi-plus-slash-minus me-2"></i>Ajustar Stock</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold"><i class="bi bi-plus-slash-minus me-2"></i>Ajustar Stock</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="formAjuste" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <div class="modal-body">
                     <p class="fw-semibold mb-3" id="ajusteNombreLabel">—</p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size:.8rem;">Operación</label>
+                        <label class="form-label small fw-semibold">Operación</label>
                         <select name="tipo" id="ajusteTipo" class="form-select form-select-sm">
                             <option value="ENTRADA">+ Entrada (suma al stock)</option>
                             <option value="SALIDA">− Salida (descuenta del stock)</option>
@@ -241,20 +344,20 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold" style="font-size:.8rem;">Cantidad <span id="ajusteUnidadLabel" class="text-muted"></span></label>
+                        <label class="form-label small fw-semibold">Cantidad <span id="ajusteUnidadLabel" class="text-muted"></span></label>
                         <input type="number" name="cantidad" id="ajusteCantidad"
                                class="form-control form-control-sm"
                                min="0" step="0.001" required placeholder="0">
                     </div>
                     <div class="mb-1">
-                        <label class="form-label fw-semibold" style="font-size:.8rem;">Motivo <span class="text-muted">(opcional)</span></label>
+                        <label class="form-label small fw-semibold">Motivo <span class="text-muted">(opcional)</span></label>
                         <input type="text" name="motivo" class="form-control form-control-sm"
                                maxlength="300" placeholder="Ej: Conteo físico, merma, recepción...">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm btn-zymos">Aplicar</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Aplicar</button>
                 </div>
             </form>
         </div>

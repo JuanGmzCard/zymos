@@ -22,6 +22,18 @@
 
 * { box-sizing: border-box; }
 
+.container-fluid {
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.navbar-zymos .container-fluid {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+}
+
 body {
     font-family: var(--font-body);
     background-color: var(--fondo);
