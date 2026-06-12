@@ -59,8 +59,17 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Crema: `#F5EDD0` (texto sobre fondos oscuros) — CSS var `--crema`
 - Fondo body: `#F0EDE2` — CSS var `--fondo`
 - Dark mode: fondo `#111606`, cards `#1c2410`, texto crema — activado con clase `html.dark-mode`. Variables centralizadas `--dm-*` en `style.css` (bloque `:root`): `--dm-bg`, `--dm-card`, `--dm-input`, `--dm-text`, `--dm-text-muted`, `--dm-text-dim`, `--dm-text-dimmer`, `--dm-border-faint`, `--dm-border-light`, `--dm-border-med`, `--dm-border-heavy`, `--dm-hover`, `--dm-verde-bg`, `--dm-verde-border`, `--dm-verde-faint`. Los templates con `<style>` inline propio incluyen también un bloque `html.dark-mode` local al final de ese `<style>`, usando las vars `--dm-*`.
-- Componentes clave: `.card-zymos`, `.hero-section`, `.stat-card`, `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`, `.badge-role` (pill dorado para rol de usuario en navbar — reemplaza inline styles), `.fase-pill` (6 variantes en `trazabilidad/index.html` con dark mode), `.kanban-col-header` (dark mode por columna con colores de fase usando `!important` sobre inline styles), `.wz-tab.done` (tab wizard completado — círculo verde con ✓ via CSS `::after { content:'✓' }`)
-- **Botones en card-header oscuro**: `.card-zymos .card-header` usa gradiente oscuro (`var(--verde-zymos)` → `var(--verde-oscuro)`). Los botones dentro del header DEBEN usar `btn-outline-crema` (borde + texto en `var(--crema)`, diseñado para fondos oscuros). **NUNCA** usar `btn-zymos-outline` en card-headers — su `color: var(--verde-zymos)` queda invisible sobre el fondo del mismo color. Reservar `btn-zymos-outline` para fondos claros (body, cards blancas/crema).
+- Componentes clave en `style.css` (globales, no redefinir en `<style>` inline): `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`, `.badge-role` (pill dorado para rol de usuario en navbar), `.fase-pill` (6 variantes en `trazabilidad/index.html` con dark mode), `.kanban-col-header` (dark mode por columna con colores de fase usando `!important` sobre inline styles), `.wz-tab.done` (tab wizard completado — círculo verde con ✓ via CSS `::after { content:'✓' }`)
+- **Componentes UI modernos slate/azul** — definidos localmente en el `<style>` de cada template (NO en `style.css`). Todos incluyen bloque `html.dark-mode { ... }` al final usando vars `--dm-*`:
+  - `.page-header` — cabecera de página: `padding:1.75rem 0 1rem`; h1 `font-size:1.5rem; font-weight:700; color:#1e293b`; `.subtitle` en `#94a3b8; font-size:0.875rem`. Siempre en `<div class="container-fluid px-4">` propio, antes del `container-fluid px-4 pb-4` del contenido.
+  - `.stat-card-simple` — tarjeta de métrica compacta: `background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.5rem; min-width:130px`. Sub-elementos: `.stat-label` (`font-size:0.7rem; font-weight:600; text-transform:uppercase; color:#94a3b8`) y `.stat-value` (`font-size:1.75rem; font-weight:700; color:#1e293b`) con variantes de color `.success` (#16a34a), `.info` (#0284c7), `.warning` (#f97316), `.muted` (#64748b). Agrupadas en `<div class="d-flex flex-wrap gap-3 mb-4">`.
+  - `.filter-card` — panel de filtros: `background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.25rem`. Contiene forms y filter-tabs.
+  - `.filter-tab` — píldora de filtro activo/inactivo: `border-radius:20px; font-size:0.8rem`. `.active` usa `background:var(--verde-zymos)` o azul fijo; `.inactive` es transparente con hover `#f1f5f9`.
+  - `.table-card` — contenedor de tabla con header: `background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden`. Sub-elemento `.table-count` o `.table-title` con `border-bottom:1px solid #e2e8f0`. `thead th`: `background:#f8fafc !important; color:#64748b !important; font-size:0.7rem`. `tbody td`: `padding:0.75rem 1rem; border-bottom:1px solid #f1f5f9; color:#334155`. Hover: `background:#f8fafc`.
+  - `.section-box` — variante de `.table-card` para secciones con contenido mixto (ej: `trazabilidad/detalle.html`): mismo borde/fondo/radius. Sub-elementos `.sh` (header con padding, `border-bottom`) y `.sb` (body con padding `1.25rem`). Útil cuando una sección combina datos con padding y tablas edge-to-edge.
+  - `.chart-card` — tarjeta de gráfico: igual que `.table-card`. Sub-elemento `.chart-card-header` con `font-size:0.8rem; font-weight:600; color:#475569; border-bottom`.
+  - **Regla de botones en templates modernos**: usar `btn-primary btn-sm` (acción principal), `btn-outline-secondary btn-sm` (acciones secundarias). NUNCA `btn-zymos`, `btn-outline-crema` ni `btn-zymos-outline` en templates rediseñados.
+- **Botones en card-header oscuro** (solo en `.card-zymos` legacy): `.card-zymos .card-header` usa gradiente oscuro. Botones dentro DEBEN usar `btn-outline-crema`. NUNCA `btn-zymos-outline` ahí.
 - **Multi-tenant**: el navbar fragment inyecta `<style th:inline="text">:root { --verde-oscuro: [[${branding.colorNavbar}]]; --verde-zymos: [[${branding.colorPrimary}]]; --verde-alera: [[${branding.colorPrimary}]]; ... }</style>` que sobrescribe las variables CSS del archivo. `login.html` hace lo mismo en su `<head>`. Los templates NO cambian — siguen usando `${branding.*}` y las CSS vars son transparentes. **CRÍTICO**: `--verde-alera` y `--verde-zymos` apuntan ambas a `branding.colorPrimary` — los encabezados de tabla (`<thead style="background:var(--verde-alera)">`) toman automáticamente el color primario del tenant.
 - **Colores hardcodeados — regla**: NUNCA usar hex fijos (`#364318`, `#F5EDD0`, `#C9A028`, etc.) en templates HTML. Usar siempre las CSS vars: `var(--verde-alera)`, `var(--crema)`, `var(--dorado)`, `var(--dorado-claro)`, `var(--verde-oscuro)`. Excepción: `emails/alertas.html` (clientes de email no soportan CSS vars) y fallbacks de JS del patrón `getComputedStyle(...) || '#hex'`. Las `rgba(...)` tampoco pueden usar CSS vars directamente — usar `color-mix(in srgb, var(--dorado) XX%, transparent)` como alternativa moderna que sí acepta CSS vars y genera el equivalente a `rgba(C9A028, XX%)`. Soportado en Chrome 111+, Firefox 113+, Safari 16.2+. Ejemplo en `navbar.html`: `border: 1px solid color-mix(in srgb, var(--dorado) 35%, transparent)`.
 
@@ -1500,6 +1509,33 @@ APP_BRAND_FONT_BODY=Roboto
 - **Logging**: `logback-spring.xml` — perfil `!prod` con consola colorizada DEBUG; perfil `prod` con stdout estructurado, raíz en WARN, `com.alera` en INFO
 - **Seguridad BD — roles PostgreSQL** (`db_security.sql` en raíz del proyecto): ejecutar UNA VEZ en el servidor PostgreSQL de producción (`psql -U postgres -d trazabilidad_cervezas -f db_security.sql`). Crea dos roles con mínimo privilegio: `zymos_app` (solo DML — usado por HikariCP) y `zymos_flyway` (DDL completo — usado solo por Flyway en cada deploy). `ALTER DEFAULT PRIVILEGES FOR ROLE zymos_flyway` garantiza que `zymos_app` reciba DML automáticamente en tablas creadas por migraciones futuras. Cambiar contraseñas placeholder con `\password zymos_app` y `\password zymos_flyway` tras ejecutar el script.
 - **Plantilla de entorno**: `.env.Zymos` en raíz del proyecto — copiar a `.env` y completar contraseñas antes del primer deploy.
+
+---
+
+## DEPLOY (`deploy/`)
+
+Archivos de infraestructura en el directorio `deploy/` (no forman parte del build Maven):
+
+### `deploy/nginx.conf` — Reverse proxy HTTPS
+- Reverse proxy nginx para producción. Soporta wildcard `*.tudominio.com` → multi-tenant por subdominio.
+- Pasa `Host` intacto a Spring Boot → `TenantFilter` resuelve el tenant por subdominio.
+- Redirige HTTP → HTTPS (301). TLS 1.2/1.3 con OCSP stapling.
+- Cache agresiva (30d) para assets estáticos (css/js/img/fonts).
+- `/actuator/` solo accesible desde red interna (127.0.0.1, 10.x, 172.16.x, 192.168.x).
+- `client_max_body_size 20M` — necesario para importación de Excel en `/admin/migracion`.
+- **Configurar**: reemplazar `tudominio.com` por el dominio real, ajustar rutas de certificados Let's Encrypt.
+- **Uso**: `cp deploy/nginx.conf /etc/nginx/sites-available/zymos && ln -s ... /sites-enabled/zymos && nginx -t && systemctl reload nginx`
+
+### `deploy/backup.sh` — Backup diario de PostgreSQL
+- Genera dump comprimido (`pg_dump | gzip -9`) con timestamp: `zymos_{DB_NAME}_{YYYYMMDD_HHMMSS}.sql.gz`.
+- **Backups diarios**: retención configurable via `BACKUP_KEEP_DAYS` (def: 7). Limpieza automática con `find -mtime`.
+- **Backups semanales**: cada domingo copia el dump a `backups/weekly/`, retención `BACKUP_KEEP_WEEKS` (def: 4 semanas).
+- **Verificación de integridad**: `gzip -t` tras cada backup — sale con error si el archivo está corrupto.
+- Carga `.env` automáticamente si existe en la raíz del proyecto (`set -a && source .env && set +a`).
+- Variables: `DB_HOST` (def: localhost), `DB_PORT` (def: 5432), `DB_NAME` (def: trazabilidad_cervezas), `DB_USERNAME` (obligatorio), `DB_PASSWORD` (obligatorio), `BACKUP_DIR` (def: `./backups`), `BACKUP_KEEP_DAYS`, `BACKUP_KEEP_WEEKS`.
+- **Cron diario a las 2 AM**: `0 2 * * * /ruta/al/proyecto/deploy/backup.sh >> /var/log/zymos-backup.log 2>&1`
+- **Uso**: `chmod +x deploy/backup.sh && ./deploy/backup.sh`
+- Usa `zymos_flyway` (acceso completo a la BD) como usuario recomendado para el dump.
 
 ---
 
