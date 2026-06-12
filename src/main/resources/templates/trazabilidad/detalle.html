@@ -7,130 +7,130 @@
     <title th:text="${branding.name} + ' - Detalle Lote'">Alera - Detalle Lote</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.5rem; min-width:150px; }
+        .stat-card-simple .stat-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:0.25rem; }
+        .stat-card-simple .stat-value { font-size:1.75rem; font-weight:700; line-height:1; color:#1e293b; }
+        .stat-card-simple .stat-value.success { color:#16a34a; }
+        .stat-card-simple .stat-value.info    { color:#0284c7; }
+        .stat-card-simple .stat-value.warning { color:#f97316; }
+        .stat-card-simple .stat-value.muted   { color:#64748b; }
+        .page-header { padding:1.75rem 0 1rem; }
+        .page-header h1 { font-size:1.5rem; font-weight:700; color:#1e293b; margin-bottom:0.2rem; font-family:var(--font-body),sans-serif; }
+        .page-header .subtitle { color:#94a3b8; font-size:0.875rem; }
+        .section-box { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .section-box .sh { padding:0.75rem 1.25rem; font-size:0.875rem; font-weight:600; color:#1e293b; border-bottom:1px solid #e2e8f0; }
+        .section-box .sb { padding:1.25rem; }
+        .section-box table thead th { background:#f8fafc !important; color:#64748b !important; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; padding:0.65rem 1rem; border-bottom:1px solid #e2e8f0; }
+        .section-box table tbody td { padding:0.75rem 1rem; vertical-align:middle; border-bottom:1px solid #f1f5f9; color:#334155; }
+        .section-box table tbody tr:last-child td { border-bottom:none; }
+        .section-box table tbody tr:hover { background:#f8fafc; }
+        html.dark-mode .stat-card-simple { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color:var(--dm-text); }
+        html.dark-mode .page-header h1 { color:var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color:var(--dm-text-muted); }
+        html.dark-mode .section-box { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .section-box .sh { color:var(--dm-text); border-color:var(--dm-border-light); }
+        html.dark-mode .section-box table thead th { background:var(--dm-input) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-light); }
+        html.dark-mode .section-box table tbody td { color:var(--dm-text); border-color:var(--dm-border-faint); }
+        html.dark-mode .section-box table tbody tr:hover { background:var(--dm-hover); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<!-- Hero -->
-<div class="hero-section">
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-                <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
-                    <h1 class="mb-0" th:text="${lote.codigoLote}">IPA-001</h1>
-                    <span class="phase-badge"
-                          th:classappend="${lote.completado} ? 'completado' :
-                                          (${lote.faseActual == 'Carbonatación'} ? 'carbonatacion' :
-                                          (${lote.faseActual == 'Maduración'} ? 'maduracion' :
-                                          (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
-                                          (${lote.faseActual == 'Fermentación'} ? 'fermentacion' : 'inicio'))))"
-                          th:text="${lote.completado} ? 'COMPLETADO' : ${lote.faseActual}">Fase</span>
-                </div>
-                <p class="mb-1" th:text="${lote.estilo}">Estilo</p>
-                <small class="hero-meta" th:if="${lote.fechaElaboracion != null}">
-                    <i class="bi bi-calendar3 me-1"></i>
-                    <span th:text="${#temporals.format(lote.fechaElaboracion,'dd MMM yyyy')}"></span>
-                    <span th:if="${lote.equipoFermentador != null}" class="ms-3">
-                        <i class="bi bi-box me-1"></i>
-                        <span th:text="${lote.equipoFermentador.nombre}"></span>
-                    </span>
-                </small>
+<!-- Page header -->
+<div class="container-fluid px-4">
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
+                <h1 class="mb-0" th:text="${lote.codigoLote}">IPA-001</h1>
+                <span class="phase-badge"
+                      th:classappend="${lote.completado} ? 'completado' :
+                                      (${lote.faseActual == 'Carbonatación'} ? 'carbonatacion' :
+                                      (${lote.faseActual == 'Maduración'} ? 'maduracion' :
+                                      (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
+                                      (${lote.faseActual == 'Fermentación'} ? 'fermentacion' : 'inicio'))))"
+                      th:text="${lote.completado} ? 'COMPLETADO' : ${lote.faseActual}">Fase</span>
             </div>
-            <div class="d-flex gap-2 align-self-center">
-                <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-zymos">
-                    <i class="bi bi-pencil me-1"></i>Editar
-                </a>
-                <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-crema">
-                    <i class="bi bi-copy me-1"></i>Duplicar
-                </a>
-                <a th:href="@{/ver/{id}/pdf(id=${lote.id})}" class="btn btn-outline-crema">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                </a>
-                <button onclick="window.print()" class="btn btn-outline-crema">
-                    <i class="bi bi-printer me-1"></i>Imprimir
-                </button>
-                <a th:href="@{/}" class="btn btn-outline-crema">
-                    <i class="bi bi-arrow-left me-1"></i>Volver
-                </a>
-            </div>
+            <p class="subtitle mb-1" th:text="${lote.estilo}">Estilo</p>
+            <p class="subtitle mb-0" th:if="${lote.fechaElaboracion != null}">
+                <i class="bi bi-calendar3 me-1"></i>
+                <span th:text="${#temporals.format(lote.fechaElaboracion,'dd MMM yyyy')}"></span>
+                <span th:if="${lote.equipoFermentador != null}" class="ms-3">
+                    <i class="bi bi-box me-1"></i>
+                    <span th:text="${lote.equipoFermentador.nombre}"></span>
+                </span>
+            </p>
+        </div>
+        <div class="d-flex gap-2 align-self-center pt-1 flex-wrap">
+            <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil me-1"></i>Editar
+            </a>
+            <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-copy me-1"></i>Duplicar
+            </a>
+            <a th:href="@{/ver/{id}/pdf(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-printer me-1"></i>Imprimir
+            </button>
+            <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
         </div>
     </div>
 </div>
 
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 pb-4">
 
-    <!-- Timeline -->
-    <div class="card-zymos mb-4">
-        <div class="card-header">
-            <h5><i class="bi bi-diagram-3 me-2"></i>Progreso del Proceso</h5>
+    <!-- Stat cards — calidad -->
+    <div class="d-flex flex-wrap gap-3 mb-4" th:if="${lote.densidadInicial != null}">
+        <div class="stat-card-simple">
+            <div class="stat-label">Alcohol (ABV)</div>
+            <div class="stat-value info"
+                 th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
+            <div class="text-muted small mt-1" th:if="${lote.abv == null}">Pendiente densidad final</div>
         </div>
-        <div class="card-body p-0">
-            <div class="phase-timeline">
-                <div class="phase-step" th:classappend="${lote.fermFechaInicial != null} ? (${lote.fermFechaFinal != null} ? 'completed' : 'active') : ''">
-                    <div class="phase-step-number">1</div>
-                    <div class="phase-step-label">Fermentación</div>
-                    <div class="phase-step-date" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM')} : '—'">—</div>
-                </div>
-                <div class="phase-step" th:classappend="${lote.acondFechaInicial != null} ? (${lote.acondFechaFinal != null} ? 'completed' : 'active') : ''">
-                    <div class="phase-step-number">2</div>
-                    <div class="phase-step-label">Acondic.</div>
-                    <div class="phase-step-date" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM')} : '—'">—</div>
-                </div>
-                <div class="phase-step" th:classappend="${lote.madurFechaInicial != null} ? (${lote.madurFechaFinal != null} ? 'completed' : 'active') : ''">
-                    <div class="phase-step-number">3</div>
-                    <div class="phase-step-label">Maduración</div>
-                    <div class="phase-step-date" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM')} : '—'">—</div>
-                </div>
-                <div class="phase-step" th:classappend="${lote.carbFechaInicial != null} ? (${lote.carbFechaFinal != null} ? 'completed' : 'active') : ''">
-                    <div class="phase-step-number">4</div>
-                    <div class="phase-step-label">Carbonatación</div>
-                    <div class="phase-step-date" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM')} : '—'">—</div>
-                </div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Atenuación Aparente</div>
+            <div class="stat-value muted"
+                 th:text="${lote.atenuacionAparente != null} ? ${lote.atenuacionAparente.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
+            <div class="text-muted small mt-1" th:if="${lote.atenuacionAparente == null}">Pendiente densidad final</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Eficiencia de Macerado</div>
+            <div class="stat-value success"
+                 th:text="${lote.eficienciaMacerado != null} ? ${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
+            <div class="text-muted small mt-1" th:if="${lote.eficienciaMacerado == null}">Sin maltas registradas</div>
         </div>
     </div>
 
-    <!-- Análisis de calidad -->
-    <div class="row g-3 mb-4" th:if="${lote.densidadInicial != null}">
-        <div class="col-md-4">
-            <div class="stat-card">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Alcohol (ABV)</div>
-                        <div class="stat-number mt-1"
-                             th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-                        <div class="text-muted small mt-1" th:if="${lote.abv == null}">Pendiente densidad final</div>
-                    </div>
-                    <i class="bi bi-droplet-half stat-icon"></i>
-                </div>
+    <!-- Timeline -->
+    <div class="section-box mb-4">
+        <div class="sh"><i class="bi bi-diagram-3 me-2"></i>Progreso del Proceso</div>
+        <div class="phase-timeline">
+            <div class="phase-step" th:classappend="${lote.fermFechaInicial != null} ? (${lote.fermFechaFinal != null} ? 'completed' : 'active') : ''">
+                <div class="phase-step-number">1</div>
+                <div class="phase-step-label">Fermentación</div>
+                <div class="phase-step-date" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card info">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Atenuación Aparente</div>
-                        <div class="stat-number mt-1"
-                             th:text="${lote.atenuacionAparente != null} ? ${lote.atenuacionAparente.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-                        <div class="text-muted small mt-1" th:if="${lote.atenuacionAparente == null}">Pendiente densidad final</div>
-                    </div>
-                    <i class="bi bi-activity stat-icon"></i>
-                </div>
+            <div class="phase-step" th:classappend="${lote.acondFechaInicial != null} ? (${lote.acondFechaFinal != null} ? 'completed' : 'active') : ''">
+                <div class="phase-step-number">2</div>
+                <div class="phase-step-label">Acondic.</div>
+                <div class="phase-step-date" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="stat-card success">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <div class="stat-label">Eficiencia de Macerado</div>
-                        <div class="stat-number mt-1"
-                             th:text="${lote.eficienciaMacerado != null} ? ${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-                        <div class="text-muted small mt-1" th:if="${lote.eficienciaMacerado == null}">Sin maltas registradas</div>
-                    </div>
-                    <i class="bi bi-speedometer2 stat-icon"></i>
-                </div>
+            <div class="phase-step" th:classappend="${lote.madurFechaInicial != null} ? (${lote.madurFechaFinal != null} ? 'completed' : 'active') : ''">
+                <div class="phase-step-number">3</div>
+                <div class="phase-step-label">Maduración</div>
+                <div class="phase-step-date" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM')} : '—'">—</div>
+            </div>
+            <div class="phase-step" th:classappend="${lote.carbFechaInicial != null} ? (${lote.carbFechaFinal != null} ? 'completed' : 'active') : ''">
+                <div class="phase-step-number">4</div>
+                <div class="phase-step-label">Carbonatación</div>
+                <div class="phase-step-date" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
         </div>
     </div>
@@ -142,9 +142,9 @@
         <div class="col-lg-5 d-flex flex-column gap-4">
 
             <!-- Información del lote -->
-            <div class="card-zymos">
-                <div class="card-header"><h5><i class="bi bi-info-circle me-2"></i>Información del Lote</h5></div>
-                <div class="card-body">
+            <div class="section-box">
+                <div class="sh"><i class="bi bi-info-circle me-2"></i>Información del Lote</div>
+                <div class="sb">
                     <div class="row g-3">
                         <div class="col-6">
                             <div class="detail-label">Código</div>
@@ -169,9 +169,9 @@
             </div>
 
             <!-- Parámetros de proceso -->
-            <div class="card-zymos">
-                <div class="card-header"><h5><i class="bi bi-flask me-2"></i>Parámetros de Proceso</h5></div>
-                <div class="card-body">
+            <div class="section-box">
+                <div class="sh"><i class="bi bi-flask me-2"></i>Parámetros de Proceso</div>
+                <div class="sb">
                     <div class="row g-3">
                         <div class="col-4">
                             <div class="detail-label">Agua</div>
@@ -217,9 +217,9 @@
 
         <!-- Columna derecha: Ingredientes -->
         <div class="col-lg-7">
-            <div class="card-zymos h-100">
-                <div class="card-header"><h5><i class="bi bi-list-ul me-2"></i>Ingredientes</h5></div>
-                <div class="card-body">
+            <div class="section-box h-100">
+                <div class="sh"><i class="bi bi-list-ul me-2"></i>Ingredientes</div>
+                <div class="sb">
                     <div class="mb-4" th:if="${!#lists.isEmpty(lote.maltas)}">
                         <div class="ingrediente-grupo-label">
                             <i class="bi bi-circle-fill me-1 text-malta"></i>Maltas
@@ -270,122 +270,121 @@
     </div>
 
     <!-- Detalle de fases -->
-    <div class="card-zymos mb-4">
-        <div class="card-header"><h5><i class="bi bi-calendar-week me-2"></i>Detalle de Fases</h5></div>
-        <div class="card-body p-0">
-            <div class="row g-0 fases-grid">
+    <div class="section-box mb-4">
+        <div class="sh"><i class="bi bi-calendar-week me-2"></i>Detalle de Fases</div>
+        <div class="row g-0 fases-grid">
 
-                <!-- Fermentación -->
-                <div class="col-md-3 fase-col"
-                     th:classappend="${lote.fermFechaFinal != null} ? 'fase-completada' :
-                                      (${lote.fermFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
-                    <div class="fase-numero">1</div>
-                    <div class="fase-nombre">Fermentación</div>
-                    <div class="fase-dato" th:if="${lote.fermFechaInicial != null}">
-                        <span class="fase-dato-key">Inicio</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.fermFechaFinalIdeal != null}">
-                        <span class="fase-dato-key">Fin ideal</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.fermFechaFinal != null}">
-                        <span class="fase-dato-key">Fin real</span>
-                        <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.fermTemperatura != null}">
-                        <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
-                    </div>
-                    <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+            <!-- Fermentación -->
+            <div class="col-md-3 fase-col"
+                 th:classappend="${lote.fermFechaFinal != null} ? 'fase-completada' :
+                                  (${lote.fermFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
+                <div class="fase-numero">1</div>
+                <div class="fase-nombre">Fermentación</div>
+                <div class="fase-dato" th:if="${lote.fermFechaInicial != null}">
+                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')}"></span>
                 </div>
-
-                <!-- Acondicionamiento -->
-                <div class="col-md-3 fase-col"
-                     th:classappend="${lote.acondFechaFinal != null} ? 'fase-completada' :
-                                      (${lote.acondFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
-                    <div class="fase-numero">2</div>
-                    <div class="fase-nombre">Acondicionamiento</div>
-                    <div class="fase-dato" th:if="${lote.acondFechaInicial != null}">
-                        <span class="fase-dato-key">Inicio</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.acondFechaFinalIdeal != null}">
-                        <span class="fase-dato-key">Fin ideal</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.acondFechaFinal != null}">
-                        <span class="fase-dato-key">Fin real</span>
-                        <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.acondTemperatura != null}">
-                        <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
-                    </div>
-                    <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div class="fase-dato" th:if="${lote.fermFechaFinalIdeal != null}">
+                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')}"></span>
                 </div>
-
-                <!-- Maduración -->
-                <div class="col-md-3 fase-col"
-                     th:classappend="${lote.madurFechaFinal != null} ? 'fase-completada' :
-                                      (${lote.madurFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
-                    <div class="fase-numero">3</div>
-                    <div class="fase-nombre">Maduración</div>
-                    <div class="fase-dato" th:if="${lote.madurFechaInicial != null}">
-                        <span class="fase-dato-key">Inicio</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.madurFechaFinalIdeal != null}">
-                        <span class="fase-dato-key">Fin ideal</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.madurFechaFinal != null}">
-                        <span class="fase-dato-key">Fin real</span>
-                        <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.madurTemperatura != null}">
-                        <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
-                    </div>
-                    <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div class="fase-dato" th:if="${lote.fermFechaFinal != null}">
+                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
-
-                <!-- Carbonatación -->
-                <div class="col-md-3 fase-col border-end-0"
-                     th:classappend="${lote.carbFechaFinal != null} ? 'fase-completada' :
-                                      (${lote.carbFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
-                    <div class="fase-numero">4</div>
-                    <div class="fase-nombre">Carbonatación</div>
-                    <div class="fase-dato" th:if="${lote.carbFechaInicial != null}">
-                        <span class="fase-dato-key">Inicio</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.carbFechaFinalIdeal != null}">
-                        <span class="fase-dato-key">Fin ideal</span>
-                        <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.carbFechaFinal != null}">
-                        <span class="fase-dato-key">Fin real</span>
-                        <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')}"></span>
-                    </div>
-                    <div class="fase-dato" th:if="${lote.carbTemperatura != null}">
-                        <span class="fase-dato-key">Temperatura</span>
-                        <span class="fase-dato-val" th:text="${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
-                    </div>
-                    <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div class="fase-dato" th:if="${lote.fermTemperatura != null}">
+                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-val" th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                 </div>
-
+                <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
             </div>
+
+            <!-- Acondicionamiento -->
+            <div class="col-md-3 fase-col"
+                 th:classappend="${lote.acondFechaFinal != null} ? 'fase-completada' :
+                                  (${lote.acondFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
+                <div class="fase-numero">2</div>
+                <div class="fase-nombre">Acondicionamiento</div>
+                <div class="fase-dato" th:if="${lote.acondFechaInicial != null}">
+                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.acondFechaFinalIdeal != null}">
+                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.acondFechaFinal != null}">
+                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.acondTemperatura != null}">
+                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-val" th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                </div>
+                <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+            </div>
+
+            <!-- Maduración -->
+            <div class="col-md-3 fase-col"
+                 th:classappend="${lote.madurFechaFinal != null} ? 'fase-completada' :
+                                  (${lote.madurFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
+                <div class="fase-numero">3</div>
+                <div class="fase-nombre">Maduración</div>
+                <div class="fase-dato" th:if="${lote.madurFechaInicial != null}">
+                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.madurFechaFinalIdeal != null}">
+                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.madurFechaFinal != null}">
+                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.madurTemperatura != null}">
+                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-val" th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                </div>
+                <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+            </div>
+
+            <!-- Carbonatación -->
+            <div class="col-md-3 fase-col border-end-0"
+                 th:classappend="${lote.carbFechaFinal != null} ? 'fase-completada' :
+                                  (${lote.carbFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
+                <div class="fase-numero">4</div>
+                <div class="fase-nombre">Carbonatación</div>
+                <div class="fase-dato" th:if="${lote.carbFechaInicial != null}">
+                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.carbFechaFinalIdeal != null}">
+                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.carbFechaFinal != null}">
+                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')}"></span>
+                </div>
+                <div class="fase-dato" th:if="${lote.carbTemperatura != null}">
+                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-val" th:text="${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                </div>
+                <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+            </div>
+
         </div>
     </div>
 
     <!-- Curva de Fermentación -->
-    <div class="card-zymos mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-graph-up-arrow me-2"></i>Curva de Fermentación</h5>
-            <span class="text-muted small" th:text="${#lists.size(lecturas)} + ' lectura' + (${#lists.size(lecturas) != 1} ? 's' : '')"></span>
+    <div class="section-box mb-4">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-graph-up-arrow me-2"></i>Curva de Fermentación</span>
+            <span class="fw-normal text-muted" style="font-size:0.8rem;"
+                  th:text="${#lists.size(lecturas)} + ' lectura' + (${#lists.size(lecturas) != 1} ? 's' : '')"></span>
         </div>
-        <div class="card-body">
+        <div class="sb">
 
             <!-- Gráfico -->
             <div th:if="${!#lists.isEmpty(lecturas)}" style="max-height:250px;" class="mb-4">
@@ -394,7 +393,7 @@
 
             <!-- Tabla de lecturas -->
             <div th:if="${!#lists.isEmpty(lecturas)}" class="table-responsive mb-4">
-                <table class="table table-sm table-zymos mb-0" style="font-size:0.82rem;">
+                <table class="table table-sm mb-0" style="font-size:0.82rem;">
                     <thead>
                         <tr>
                             <th>Fecha</th>
@@ -463,7 +462,7 @@
                                placeholder="Observación opcional" maxlength="500">
                     </div>
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-zymos btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm">
                             <i class="bi bi-check2 me-1"></i>Guardar
                         </button>
                     </div>
@@ -473,12 +472,10 @@
     </div>
 
     <!-- Detalle de Carbonatación Avanzada -->
-    <div class="card-zymos mb-4"
+    <div class="section-box mb-4"
          th:if="${lote.carbMetodo != null or lote.carbCo2Objetivo != null or lote.carbDestino != null}">
-        <div class="card-header">
-            <h5><i class="bi bi-wind me-2"></i>Carbonatación — Detalle</h5>
-        </div>
-        <div class="card-body">
+        <div class="sh"><i class="bi bi-wind me-2"></i>Carbonatación — Detalle</div>
+        <div class="sb">
 
             <!-- Fila 1: método, CO₂ objetivo/real, validación -->
             <div class="row g-3 mb-3">
@@ -587,15 +584,15 @@
     </div>
 
     <!-- Comparativa Receta vs Lote -->
-    <div class="card-zymos mb-4"
+    <div class="section-box mb-4"
          th:if="${lote.receta != null and (lote.receta.ogObjetivo != null or lote.receta.fgObjetivo != null)}">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-arrow-left-right me-2"></i>Comparativa Receta vs Lote</h5>
-            <a th:href="@{/recetas/ver/{id}(id=${lote.receta.id})}" class="btn btn-sm btn-zymos-outline">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-arrow-left-right me-2"></i>Comparativa Receta vs Lote</span>
+            <a th:href="@{/recetas/ver/{id}(id=${lote.receta.id})}" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-journal-bookmark me-1"></i>Ver Receta
             </a>
         </div>
-        <div class="card-body">
+        <div class="sb">
             <div class="row g-3 text-center">
                 <div class="col-md-4" th:if="${lote.receta.ogObjetivo != null}">
                     <div class="comparativa-box">
@@ -638,13 +635,13 @@
     </div>
 
     <!-- Evaluación Sensorial (BJCP) -->
-    <div class="card-zymos mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-clipboard2-check me-2"></i>Evaluación Sensorial</h5>
-            <span class="text-muted small"
+    <div class="section-box mb-4">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clipboard2-check me-2"></i>Evaluación Sensorial</span>
+            <span class="fw-normal text-muted" style="font-size:0.8rem;"
                   th:text="${#lists.size(evaluaciones)} + ' evaluación' + (${#lists.size(evaluaciones) != 1} ? 'es' : '')"></span>
         </div>
-        <div class="card-body">
+        <div class="sb">
 
             <!-- Promedio cuando hay más de una evaluación con puntaje -->
             <div th:if="${promedioEvaluacion != null and #lists.size(evaluaciones) > 1}" class="mb-3">
@@ -662,16 +659,16 @@
 
             <!-- Tabla historial de evaluaciones -->
             <div th:if="${!#lists.isEmpty(evaluaciones)}" class="table-responsive mb-4">
-                <table class="table table-sm table-zymos mb-0" style="font-size:0.82rem;">
+                <table class="table table-sm mb-0" style="font-size:0.82rem;">
                     <thead>
                         <tr>
                             <th>Fecha</th>
                             <th>Catador</th>
-                            <th class="text-center">Aroma<br><small class="text-muted fw-normal">/12</small></th>
-                            <th class="text-center">Apariencia<br><small class="text-muted fw-normal">/3</small></th>
-                            <th class="text-center">Sabor<br><small class="text-muted fw-normal">/20</small></th>
-                            <th class="text-center">Boca<br><small class="text-muted fw-normal">/5</small></th>
-                            <th class="text-center">General<br><small class="text-muted fw-normal">/10</small></th>
+                            <th class="text-center">Aroma<br><small class="fw-normal">/12</small></th>
+                            <th class="text-center">Apariencia<br><small class="fw-normal">/3</small></th>
+                            <th class="text-center">Sabor<br><small class="fw-normal">/20</small></th>
+                            <th class="text-center">Boca<br><small class="fw-normal">/5</small></th>
+                            <th class="text-center">General<br><small class="fw-normal">/10</small></th>
                             <th class="text-center">Total</th>
                             <th>Notas</th>
                             <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
@@ -805,7 +802,7 @@
                                       rows="2" placeholder="Observaciones libres de la cata..." maxlength="1000"></textarea>
                         </div>
 
-                        <button type="submit" class="btn btn-zymos btn-sm">
+                        <button type="submit" class="btn btn-primary btn-sm">
                             <i class="bi bi-check2 me-1"></i>Guardar evaluación
                         </button>
                     </form>
@@ -851,64 +848,58 @@
     <div class="row g-4 mb-4"
          th:if="${(lote.observaciones != null and !lote.observaciones.isBlank()) or (lote.notasCata != null and !lote.notasCata.isBlank())}">
         <div class="col-md-6" th:if="${lote.observaciones != null and !lote.observaciones.isBlank()}">
-            <div class="card-zymos">
-                <div class="card-header"><h5><i class="bi bi-chat-left-text me-2"></i>Observaciones</h5></div>
-                <div class="card-body">
+            <div class="section-box">
+                <div class="sh"><i class="bi bi-chat-left-text me-2"></i>Observaciones</div>
+                <div class="sb">
                     <p class="mb-0 observaciones-texto" th:text="${lote.observaciones}"></p>
                 </div>
             </div>
         </div>
         <div class="col-md-6" th:if="${lote.notasCata != null and !lote.notasCata.isBlank()}">
-            <div class="card-zymos">
-                <div class="card-header"><h5><i class="bi bi-cup-hot me-2"></i>Notas de Cata</h5></div>
-                <div class="card-body">
+            <div class="section-box">
+                <div class="sh"><i class="bi bi-cup-hot me-2"></i>Notas de Cata</div>
+                <div class="sb">
                     <p class="mb-0 observaciones-texto" th:text="${lote.notasCata}"></p>
                 </div>
             </div>
         </div>
     </div>
 
-</div>
-
-    <!-- Costo de producción — visible cuando hay ítems asignados -->
-    <div class="card-zymos mb-4" th:if="${!#lists.isEmpty(lote.itemsFactura)}">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-currency-dollar me-2"></i>Costo de Producción</h5>
+    <!-- Costo de producción -->
+    <div class="section-box mb-4" th:if="${!#lists.isEmpty(lote.itemsFactura)}">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-currency-dollar me-2"></i>Costo de Producción</span>
             <span th:if="${lote.costoTotal != null}" class="fw-bold text-dorado"
                   th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}"></span>
         </div>
-        <div class="card-body">
-            <div class="row g-3 mb-3" th:if="${lote.costoTotal != null}">
-                <div class="col-md-4">
-                    <div class="densidad-box text-center">
-                        <div class="densidad-tag">Costo Total</div>
-                        <div class="densidad-valor" style="font-size:1.3rem;"
-                             th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}">—</div>
-                    </div>
+        <div class="sb">
+            <div class="d-flex flex-wrap gap-3 mb-3" th:if="${lote.costoTotal != null}">
+                <div class="densidad-box text-center">
+                    <div class="densidad-tag">Costo Total</div>
+                    <div class="densidad-valor" style="font-size:1.3rem;"
+                         th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}">—</div>
                 </div>
-                <div class="col-md-4" th:if="${lote.costoPorLitro != null}">
-                    <div class="densidad-box densidad-final text-center">
-                        <div class="densidad-tag">Costo / Litro</div>
-                        <div class="densidad-valor" style="font-size:1.3rem;"
-                             th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,'COMMA',2,'POINT')}">—</div>
-                    </div>
+                <div class="densidad-box densidad-final text-center" th:if="${lote.costoPorLitro != null}">
+                    <div class="densidad-tag">Costo / Litro</div>
+                    <div class="densidad-valor" style="font-size:1.3rem;"
+                         th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,'COMMA',2,'POINT')}">—</div>
                 </div>
-                <div class="col-md-4">
-                    <div class="densidad-box text-center">
-                        <div class="densidad-tag">Ítems asignados</div>
-                        <div class="densidad-valor" style="font-size:1.3rem;"
-                             th:text="${#lists.size(lote.itemsFactura)}">—</div>
-                    </div>
+                <div class="densidad-box text-center">
+                    <div class="densidad-tag">Ítems asignados</div>
+                    <div class="densidad-valor" style="font-size:1.3rem;"
+                         th:text="${#lists.size(lote.itemsFactura)}">—</div>
                 </div>
             </div>
-            <table class="table table-sm mb-0" style="font-size:0.8rem;">
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;" class="ps-3">Factura</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Proveedor</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Ítem</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Cantidad</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;" class="text-end pe-3">Valor asignado</th>
+                        <th class="ps-3">Factura</th>
+                        <th>Proveedor</th>
+                        <th>Ítem</th>
+                        <th>Cantidad</th>
+                        <th class="text-end pe-3">Valor asignado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -929,27 +920,27 @@
     </div>
 
     <!-- Ventas y Despacho de este lote -->
-    <div class="card-zymos mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-bag-check me-2"></i>Ventas y Despacho</h5>
+    <div class="section-box mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-bag-check me-2"></i>Ventas y Despacho</span>
             <div class="d-flex gap-2 align-items-center">
-                <span class="text-muted small"
+                <span class="fw-normal text-muted" style="font-size:0.8rem;"
                       th:text="${#lists.size(ventasLote)} + ' registro' + (${#lists.size(ventasLote) != 1} ? 's' : '')"></span>
-                <a th:href="@{/ventas/nuevo(loteId=${lote.id})}" class="btn btn-sm btn-zymos">
+                <a th:href="@{/ventas/nuevo(loteId=${lote.id})}" class="btn btn-sm btn-primary">
                     <i class="bi bi-plus-lg me-1"></i>Registrar Venta
                 </a>
             </div>
         </div>
-        <div class="card-body p-0" th:if="${!#lists.isEmpty(ventasLote)}">
-            <table class="table table-sm mb-0" style="font-size:0.82rem;">
+        <div th:if="${!#lists.isEmpty(ventasLote)}" class="table-responsive">
+            <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Cliente</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Fecha</th>
-                        <th class="text-center" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Cantidad</th>
-                        <th class="text-center" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Estado</th>
-                        <th class="text-end" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Valor Total</th>
-                        <th class="pe-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;width:44px;"></th>
+                        <th class="ps-3">Cliente</th>
+                        <th>Fecha</th>
+                        <th class="text-center">Cantidad</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-end">Valor Total</th>
+                        <th class="pe-3" style="width:44px;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -975,7 +966,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="card-body text-center text-muted py-3" th:if="${#lists.isEmpty(ventasLote)}">
+        <div class="sb text-center text-muted py-2" th:if="${#lists.isEmpty(ventasLote)}">
             <i class="bi bi-bag-x me-1"></i>Sin ventas registradas para este lote.
         </div>
     </div>
@@ -995,19 +986,20 @@
     </div>
 
     <!-- Historial de cambios -->
-    <div class="card-zymos mt-2" th:if="${!#lists.isEmpty(historial)}">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-clock-history me-2"></i>Historial de Cambios</h5>
-            <span class="text-muted small" th:text="${#lists.size(historial)} + ' registros'"></span>
+    <div class="section-box mt-2" th:if="${!#lists.isEmpty(historial)}">
+        <div class="sh d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-clock-history me-2"></i>Historial de Cambios</span>
+            <span class="fw-normal text-muted" style="font-size:0.8rem;"
+                  th:text="${#lists.size(historial)} + ' registros'"></span>
         </div>
-        <div class="card-body p-0">
-            <table class="table table-sm mb-0" style="font-size:0.82rem;">
+        <div class="table-responsive">
+            <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Fecha</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Acción</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Usuario</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.72rem;">Notas</th>
+                        <th class="ps-3">Fecha</th>
+                        <th>Acción</th>
+                        <th>Usuario</th>
+                        <th>Notas</th>
                     </tr>
                 </thead>
                 <tbody>

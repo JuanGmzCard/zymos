@@ -8,23 +8,36 @@
     <title th:text="${branding.name} + (${esNuevo} ? ' - Nuevo Tenant' : ' - Editar Tenant')">Alera - Tenant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .page-header { padding: 1.75rem 0 1rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; font-family: var(--font-body), sans-serif; }
+        .page-header .subtitle { color: #94a3b8; font-size: 0.875rem; }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4">
-        <h1>
-            <i class="bi" th:classappend="${esNuevo} ? 'bi-building-add' : 'bi-pencil-square'"></i>
-            <span th:text="${esNuevo} ? ' Nuevo Tenant' : ' Editar Tenant'"></span>
-        </h1>
-        <p th:text="${esNuevo} ? 'Registrar nuevo cliente en la plataforma' : 'Modificar configuración del cliente'"></p>
+<div class="container-fluid px-4">
+    <div class="page-header d-flex justify-content-between align-items-start">
+        <div>
+            <h1>
+                <i class="bi me-2" th:classappend="${esNuevo} ? 'bi-building-add' : 'bi-pencil-square'"></i>
+                <span th:text="${esNuevo} ? 'Nuevo Tenant' : 'Editar Tenant'"></span>
+            </h1>
+            <p class="subtitle mb-0" th:text="${esNuevo} ? 'Registrar nuevo cliente en la plataforma' : 'Modificar configuración del cliente'"></p>
+        </div>
+        <div class="pt-1">
+            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+        </div>
     </div>
 </div>
 
-<div class="container py-4" style="max-width:860px;">
+<div class="container pb-4" style="max-width:860px;">
     <form th:action="@{/admin/tenants/guardar}" method="post" th:object="${tenant}">
         <input type="hidden" name="esNuevo" th:value="${esNuevo}">
 
@@ -32,7 +45,7 @@
         <input th:if="${!esNuevo}" type="hidden" th:field="*{subdomain}">
 
         <!-- SECCIÓN: Información básica -->
-        <div class="card-zymos p-4 mb-3">
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
             <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i>Información básica</h6>
 
             <div class="row g-3">
@@ -68,7 +81,7 @@
                         <input type="email" th:field="*{emailAdmin}" id="emailAdmin"
                                class="form-control" placeholder="admin@cerveceria.com">
                         <button th:if="${!esNuevo}" type="button" id="btnTestEmail"
-                                class="btn btn-zymos-outline btn-sm text-nowrap"
+                                class="btn btn-outline-secondary btn-sm text-nowrap"
                                 onclick="enviarEmailPrueba()">
                             <i class="bi bi-send me-1"></i>Probar
                         </button>
@@ -138,7 +151,7 @@
         </div>
 
         <!-- SECCIÓN: Importar / Exportar -->
-        <div class="card-zymos p-4 mb-3">
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
             <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i>Importar / Exportar configuración</h6>
             <div class="d-flex flex-wrap gap-4 align-items-end">
 
@@ -146,7 +159,7 @@
                 <div th:if="${!esNuevo}">
                     <div class="small text-muted mb-1">Exportar branding</div>
                     <a th:href="@{/admin/tenants/{s}/export(s=${tenant.subdomain})}"
-                       class="btn btn-zymos-outline btn-sm text-nowrap">
+                       class="btn btn-outline-secondary btn-sm text-nowrap">
                         <i class="bi bi-download me-1"></i>Exportar JSON
                     </a>
                 </div>
@@ -156,7 +169,7 @@
                     <div class="small text-muted mb-1">Importar desde archivo JSON</div>
                     <div class="input-group input-group-sm">
                         <input type="file" id="importJsonFile" accept=".json" class="form-control">
-                        <button type="button" class="btn btn-zymos text-nowrap" onclick="importarConfig()">
+                        <button type="button" class="btn btn-primary text-nowrap" onclick="importarConfig()">
                             <i class="bi bi-upload me-1"></i>Aplicar
                         </button>
                     </div>
@@ -184,7 +197,7 @@
         </div>
 
         <!-- SECCIÓN: Paleta de colores -->
-        <div class="card-zymos p-4 mb-3">
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
             <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i>Paleta de colores</h6>
 
             <!-- Previews en vivo -->
@@ -298,11 +311,11 @@
         </div>
 
         <!-- SECCIÓN: Tipografías -->
-        <div class="card-zymos p-4 mb-3">
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
             <h6 class="detail-label mb-3"><i class="bi bi-fonts me-2"></i>Tipografías</h6>
 
             <!-- Preview de fuentes en vivo -->
-            <div class="mb-4 p-3 rounded" style="background:var(--fondo);border:1px solid rgba(0,0,0,.08);">
+            <div class="mb-4 p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
                 <div id="previewFontHeading"
                      style="font-size:1.4rem;font-weight:600;color:var(--verde-zymos);margin-bottom:4px;">
                     Cervecería Artesanal
@@ -347,11 +360,11 @@
 
         <!-- Botones -->
         <div class="d-flex gap-2">
-            <button type="submit" class="btn btn-zymos">
+            <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-lg me-1"></i>
                 <span th:text="${esNuevo} ? 'Crear Tenant' : 'Guardar Cambios'">Guardar</span>
             </button>
-            <a th:href="@{/admin/tenants}" class="btn btn-zymos-outline">Cancelar</a>
+            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary">Cancelar</a>
         </div>
     </form>
 </div>

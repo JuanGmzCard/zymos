@@ -6,138 +6,142 @@
     <title th:text="${branding.name} + ' - Reporte de Ventas'">Alera - Reporte de Ventas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.5rem; min-width:130px; }
+        .stat-card-simple .stat-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:0.25rem; }
+        .stat-card-simple .stat-value { font-size:1.75rem; font-weight:700; line-height:1; color:#1e293b; }
+        .stat-card-simple .stat-value.success { color:#16a34a; }
+        .stat-card-simple .stat-value.warning { color:#f97316; }
+        .stat-card-simple .stat-value.info    { color:#0284c7; }
+        .stat-card-simple .stat-value.muted   { color:#64748b; }
+        .page-header { padding:1.75rem 0 1rem; }
+        .page-header h1 { font-size:1.5rem; font-weight:700; color:#1e293b; margin-bottom:0.2rem; font-family:var(--font-body),sans-serif; }
+        .page-header .subtitle { color:#94a3b8; font-size:0.875rem; }
+        .filter-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.25rem; margin-bottom:1rem; }
+        .chart-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .chart-card .chart-card-header { padding:0.75rem 1.25rem; font-size:0.8rem; font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0; }
+        .table-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .table-card .table-title { padding:0.875rem 1.25rem; font-size:0.875rem; font-weight:600; color:#1e293b; border-bottom:1px solid #e2e8f0; }
+        .table-card table thead th { background:#f8fafc !important; color:#64748b !important; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; padding:0.65rem 1rem; border-bottom:1px solid #e2e8f0; }
+        .table-card table tbody td { padding:0.75rem 1rem; vertical-align:middle; border-bottom:1px solid #f1f5f9; color:#334155; }
+        .table-card table tbody tr:last-child td { border-bottom:none; }
+        .table-card table tbody tr:hover { background:#f8fafc; }
+        html.dark-mode .stat-card-simple { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color:var(--dm-text); }
+        html.dark-mode .filter-card { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .chart-card { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .chart-card .chart-card-header { color:var(--dm-text-muted); border-color:var(--dm-border-light); }
+        html.dark-mode .table-card { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .table-card .table-title { color:var(--dm-text); border-color:var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background:var(--dm-input) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color:var(--dm-text); border-color:var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background:var(--dm-hover); }
+        html.dark-mode .page-header h1 { color:var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color:var(--dm-text-muted); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+    <div class="page-header d-flex justify-content-between align-items-start">
         <div>
             <h1><i class="bi bi-graph-up-arrow me-2"></i>Reporte de Ventas</h1>
-            <p>Análisis de ventas y despachos por período</p>
+            <p class="subtitle mb-0">Análisis de ventas y despachos por período</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 pt-1">
             <a th:href="@{/ventas/export(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''})}"
-               class="btn btn-outline-crema">
+               class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel me-1"></i>Excel
             </a>
-            <button onclick="window.print()" class="btn btn-outline-crema">
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-printer me-1"></i>Imprimir
             </button>
         </div>
     </div>
 </div>
 
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 pb-4">
 
     <!-- Selector de período -->
-    <div class="card-zymos mb-4">
-        <div class="card-body">
-            <form th:action="@{/reportes/ventas}" method="get" class="d-flex gap-3 align-items-end flex-wrap">
-                <div>
-                    <label class="form-label" for="desde">Desde</label>
-                    <input type="date" id="desde" name="desde" class="form-control"
-                           th:value="${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''}">
-                </div>
-                <div>
-                    <label class="form-label" for="hasta">Hasta</label>
-                    <input type="date" id="hasta" name="hasta" class="form-control"
-                           th:value="${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''}">
-                </div>
-                <div>
-                    <button type="submit" class="btn btn-zymos">
-                        <i class="bi bi-search me-1"></i>Filtrar
-                    </button>
-                </div>
-            </form>
-            <!-- Atajos de período -->
-            <div class="mt-2 d-flex gap-2 flex-wrap"
-                 th:with="hoy=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')},
-                          primMes=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1),'yyyy-MM-dd')},
-                          primMesAnt=${#temporals.format(T(java.time.LocalDate).now().minusMonths(1).withDayOfMonth(1),'yyyy-MM-dd')},
-                          finMesAnt=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1).minusDays(1),'yyyy-MM-dd')},
-                          hace3m=${#temporals.format(T(java.time.LocalDate).now().minusMonths(3),'yyyy-MM-dd')},
-                          primAnio=${#temporals.format(T(java.time.LocalDate).now().withDayOfYear(1),'yyyy-MM-dd')}">
-                <span class="text-muted small me-1">Atajos:</span>
-                <a th:href="@{/reportes/ventas(desde=${primMes},hasta=${hoy})}"
-                   class="btn btn-sm btn-outline-secondary">Este mes</a>
-                <a th:href="@{/reportes/ventas(desde=${primMesAnt},hasta=${finMesAnt})}"
-                   class="btn btn-sm btn-outline-secondary">Mes anterior</a>
-                <a th:href="@{/reportes/ventas(desde=${hace3m},hasta=${hoy})}"
-                   class="btn btn-sm btn-outline-secondary">3 meses</a>
-                <a th:href="@{/reportes/ventas(desde=${primAnio},hasta=${hoy})}"
-                   class="btn btn-sm btn-outline-secondary">Este año</a>
+    <div class="filter-card mb-3">
+        <form th:action="@{/reportes/ventas}" method="get" class="d-flex gap-3 align-items-end flex-wrap mb-2">
+            <div>
+                <label class="form-label" for="desde">Desde</label>
+                <input type="date" id="desde" name="desde" class="form-control form-control-sm"
+                       th:value="${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''}">
             </div>
+            <div>
+                <label class="form-label" for="hasta">Hasta</label>
+                <input type="date" id="hasta" name="hasta" class="form-control form-control-sm"
+                       th:value="${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''}">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary btn-sm px-3">
+                    <i class="bi bi-search me-1"></i>Filtrar
+                </button>
+            </div>
+        </form>
+        <!-- Atajos de período -->
+        <div class="d-flex gap-2 flex-wrap align-items-center"
+             th:with="hoy=${#temporals.format(T(java.time.LocalDate).now(),'yyyy-MM-dd')},
+                      primMes=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1),'yyyy-MM-dd')},
+                      primMesAnt=${#temporals.format(T(java.time.LocalDate).now().minusMonths(1).withDayOfMonth(1),'yyyy-MM-dd')},
+                      finMesAnt=${#temporals.format(T(java.time.LocalDate).now().withDayOfMonth(1).minusDays(1),'yyyy-MM-dd')},
+                      hace3m=${#temporals.format(T(java.time.LocalDate).now().minusMonths(3),'yyyy-MM-dd')},
+                      primAnio=${#temporals.format(T(java.time.LocalDate).now().withDayOfYear(1),'yyyy-MM-dd')}">
+            <span class="text-muted small">Atajos:</span>
+            <a th:href="@{/reportes/ventas(desde=${primMes},hasta=${hoy})}" class="btn btn-sm btn-outline-secondary">Este mes</a>
+            <a th:href="@{/reportes/ventas(desde=${primMesAnt},hasta=${finMesAnt})}" class="btn btn-sm btn-outline-secondary">Mes anterior</a>
+            <a th:href="@{/reportes/ventas(desde=${hace3m},hasta=${hoy})}" class="btn btn-sm btn-outline-secondary">3 meses</a>
+            <a th:href="@{/reportes/ventas(desde=${primAnio},hasta=${hoy})}" class="btn btn-sm btn-outline-secondary">Este año</a>
         </div>
     </div>
 
     <!-- Stat cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-2">
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-bag-check"></i></div>
-                <div class="stat-card-value" th:text="${totalVentas}">0</div>
-                <div class="stat-card-label">Total Ventas</div>
-            </div>
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total Ventas</div>
+            <div class="stat-value" th:text="${totalVentas}">0</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="stat-card success">
-                <div class="stat-card-icon"><i class="bi bi-check-circle"></i></div>
-                <div class="stat-card-value" th:text="${totalDespachadas}">0</div>
-                <div class="stat-card-label">Despachadas</div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Despachadas</div>
+            <div class="stat-value success" th:text="${totalDespachadas}">0</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="stat-card warning">
-                <div class="stat-card-icon"><i class="bi bi-hourglass-split"></i></div>
-                <div class="stat-card-value" th:text="${totalPendientes}">0</div>
-                <div class="stat-card-label">Pendientes</div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Pendientes</div>
+            <div class="stat-value warning" th:text="${totalPendientes}">0</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-x-circle"></i></div>
-                <div class="stat-card-value" th:text="${totalCanceladas}">0</div>
-                <div class="stat-card-label">Canceladas</div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Canceladas</div>
+            <div class="stat-value muted" th:text="${totalCanceladas}">0</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-currency-dollar"></i></div>
-                <div class="stat-card-value"
-                     th:text="'$' + ${#numbers.formatDecimal(ingresosTotales,1,'COMMA',0,'POINT')}">$0</div>
-                <div class="stat-card-label">Ingresos</div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Ingresos</div>
+            <div class="stat-value info"
+                 th:text="'$' + ${#numbers.formatDecimal(ingresosTotales,1,'COMMA',0,'POINT')}">$0</div>
         </div>
-        <div class="col-6 col-md-2">
-            <div class="stat-card info">
-                <div class="stat-card-icon"><i class="bi bi-people"></i></div>
-                <div class="stat-card-value" th:text="${clientesUnicos}">0</div>
-                <div class="stat-card-label">Clientes Únicos</div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Clientes Únicos</div>
+            <div class="stat-value info" th:text="${clientesUnicos}">0</div>
         </div>
     </div>
 
     <!-- Gráficos -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
         <div class="col-md-8">
-            <div class="card-zymos h-100">
-                <div class="card-header">
-                    <h5><i class="bi bi-bar-chart-line me-2"></i>Ingresos Mensuales</h5>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+            <div class="chart-card h-100">
+                <div class="chart-card-header"><i class="bi bi-bar-chart-line me-2"></i>Ingresos Mensuales</div>
+                <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                     <canvas id="chartIngresosMes" style="max-height:200px;"></canvas>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card-zymos h-100">
-                <div class="card-header">
-                    <h5><i class="bi bi-pie-chart me-2"></i>Por Estado</h5>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+            <div class="chart-card h-100">
+                <div class="chart-card-header"><i class="bi bi-pie-chart me-2"></i>Por Estado</div>
+                <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                     <canvas id="chartEstados" style="max-height:200px;"></canvas>
                 </div>
             </div>
@@ -145,33 +149,29 @@
     </div>
 
     <!-- Resumen por cliente -->
-    <div class="card-zymos mb-4">
-        <div class="card-header">
-            <h5><i class="bi bi-people me-2"></i>Top Clientes</h5>
+    <div class="table-card mb-4">
+        <div class="table-title"><i class="bi bi-people me-2"></i>Top Clientes</div>
+        <div th:if="${#lists.isEmpty(resumenClientes)}" class="p-4 text-muted">
+            No hay ventas en el período seleccionado.
         </div>
-        <div th:if="${#lists.isEmpty(resumenClientes)}" class="card-body">
-            <p class="text-muted mb-0">No hay ventas en el período seleccionado.</p>
-        </div>
-        <div th:unless="${#lists.isEmpty(resumenClientes)}" class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-zymos table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th class="ps-3">Cliente</th>
-                            <th class="text-center">Ventas</th>
-                            <th class="text-end pe-3">Total Ingresos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="c : ${resumenClientes}">
-                            <td class="ps-3 fw-semibold" th:text="${c.cliente}">—</td>
-                            <td class="text-center" th:text="${c.ventas}">0</td>
-                            <td class="text-end pe-3 fw-bold"
-                                th:text="'$' + ${#numbers.formatDecimal(c.total,1,'COMMA',0,'POINT')}">$0</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div th:unless="${#lists.isEmpty(resumenClientes)}" class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th style="padding-left:1.25rem;">Cliente</th>
+                        <th class="text-center">Ventas</th>
+                        <th class="text-end pe-3">Total Ingresos</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${resumenClientes}">
+                        <td style="padding-left:1.25rem;" class="fw-semibold" th:text="${c.cliente}">—</td>
+                        <td class="text-center" th:text="${c.ventas}">0</td>
+                        <td class="text-end pe-3 fw-bold"
+                            th:text="'$' + ${#numbers.formatDecimal(c.total,1,'COMMA',0,'POINT')}">$0</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

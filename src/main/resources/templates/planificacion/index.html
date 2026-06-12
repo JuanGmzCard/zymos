@@ -9,7 +9,6 @@
     <title th:text="${branding.name} + ' - Planificación'">Alera - Planificación</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
@@ -21,49 +20,71 @@
             font-weight: 600;
         }
         .fc .fc-event { cursor: pointer; border-radius: 4px !important; }
-        .fc .fc-toolbar-title { font-family: 'Cinzel', serif; font-size: 1.1rem; }
+        .fc .fc-toolbar-title { font-size: 1.1rem; }
         .proxima-card {
-            border-left: 4px solid var(--dorado);
+            border-left: 4px solid #0284c7;
             padding: 8px 12px;
             margin-bottom: 8px;
-            background: var(--fondo);
+            background: #f8fafc;
             border-radius: 0 6px 6px 0;
         }
         .proxima-card.en-proceso { border-left-color: #0288D1; }
+
+        .page-header { padding: 1.75rem 0 1rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; font-family: var(--font-body), sans-serif; }
+        .page-header .subtitle { color: #94a3b8; font-size: 0.875rem; }
+
+        .table-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .table-card .table-title { padding: 0.875rem 1.25rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; border-bottom: 1px solid #e2e8f0; }
+        .table-card table thead th { background: #f8fafc !important; color: #64748b !important; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.65rem 1rem; border-bottom: 1px solid #e2e8f0; }
+        .table-card table tbody td { padding: 0.75rem 1rem; vertical-align: middle; border-bottom: 1px solid #f1f5f9; color: #334155; }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        html.dark-mode .proxima-card { background: var(--dm-card); border-left-color: #0284c7; }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card .table-title { color: var(--dm-text); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
     </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+    <div class="page-header d-flex justify-content-between align-items-start">
         <div>
             <h1><i class="bi bi-calendar-week me-2"></i>Planificación de Producción</h1>
-            <p>Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
+            <p class="subtitle mb-0">Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
         </div>
-        <button class="btn btn-zymos" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                onclick="abrirModalNuevo()">
-            <i class="bi bi-plus-circle me-1"></i>Nueva Planificación
-        </button>
+        <div class="pt-1">
+            <button class="btn btn-primary btn-sm" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                    onclick="abrirModalNuevo()">
+                <i class="bi bi-plus-circle me-1"></i>Nueva Planificación
+            </button>
+        </div>
     </div>
 </div>
 
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 pb-4">
 
     <!-- Calendario + próximas -->
     <div class="row g-4 mb-4">
 
         <!-- Calendario FullCalendar -->
         <div class="col-lg-8">
-            <div class="card-zymos p-3">
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem;">
                 <div id="calPlanificacion"></div>
             </div>
         </div>
 
         <!-- Panel de próximas -->
         <div class="col-lg-4">
-            <div class="card-zymos p-3 h-100">
-                <h6 class="detail-label mb-3">
+            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; height:100%;">
+                <h6 style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;" class="mb-3">
                     <i class="bi bi-list-check me-2"></i>Próximas elaboraciones
                 </h6>
 
@@ -96,9 +117,9 @@
     </div>
 
     <!-- Tabla completa -->
-    <div class="card-zymos">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-table me-2"></i>Todas las planificaciones</h5>
+    <div class="table-card mb-4">
+        <div class="table-title d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-table me-2"></i>Todas las planificaciones</span>
             <span class="text-muted small" th:text="${#lists.size(todas)} + ' registros'"></span>
         </div>
 
@@ -108,10 +129,10 @@
         </div>
 
         <div th:unless="${#lists.isEmpty(todas)}" class="table-responsive">
-            <table class="table table-zymos mb-0" style="font-size:.85rem;">
+            <table class="table mb-0" style="font-size:.85rem;">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
+                        <th style="padding-left:1.25rem;">Fecha</th>
                         <th>Elaboración</th>
                         <th>Receta</th>
                         <th class="text-center">Vol. estimado</th>
@@ -123,7 +144,7 @@
                 <tbody>
                     <tr th:each="p : ${todas}"
                         th:classappend="${p.estado.name() == 'CANCELADA'} ? 'opacity-50' : ''">
-                        <td class="text-nowrap fw-bold"
+                        <td style="padding-left:1.25rem;" class="text-nowrap fw-bold"
                             th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</td>
                         <td th:text="${p.nombreElaboracion}">—</td>
                         <td class="text-muted small">
@@ -142,7 +163,7 @@
                         <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <div class="d-flex gap-1 flex-wrap">
                                 <!-- Editar -->
-                                <button class="btn btn-sm btn-zymos-outline py-0 px-2 btn-editar-plan"
+                                <button class="btn btn-sm btn-outline-secondary py-0 px-2 btn-editar-plan"
                                         th:attr="data-plan-id=${p.id},
                                                  data-nombre=${p.nombreElaboracion},
                                                  data-receta-id=${p.receta != null ? p.receta.id : ''},
@@ -202,7 +223,7 @@
         <div class="modal-content">
             <form id="formPlan" th:action="@{/planificacion/guardar}" method="post">
                 <input type="hidden" name="id" id="planId">
-                <div class="modal-header" th:style="'background:var(--verde-oscuro);color:var(--crema);'">
+                <div class="modal-header" style="background:#1e293b;color:#fff;">
                     <h5 class="modal-title" id="modalPlanTitulo">Nueva Planificación</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -241,8 +262,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-zymos">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>Guardar
                     </button>
                 </div>
