@@ -26,6 +26,31 @@
         }
         .stat-card-link:hover { transform: translateY(-2px); }
         .stat-card-link:hover .stat-card { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+
+        .table-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .table-card .table-count { padding:0.875rem 1.25rem; font-size:0.875rem; font-weight:600; color:#1e293b; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; }
+        .table-card table thead th { background:#f8fafc !important; color:#64748b !important; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; padding:0.65rem 1rem; border-bottom:1px solid #e2e8f0; }
+        .table-card table tbody td { padding:0.75rem 1rem; vertical-align:middle; border-bottom:1px solid #f1f5f9; color:#334155; }
+        .table-card table tbody tr:last-child td { border-bottom:none; }
+        .table-card table tbody tr:hover { background:#f8fafc; }
+        .table-card .tc-footer { padding:0.75rem 1.25rem; border-top:1px solid #e2e8f0; }
+
+        .fin-metric { padding:0.875rem 0; border-bottom:1px solid #f1f5f9; }
+        .fin-metric:last-child { border-bottom:none; }
+        .fin-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:0.2rem; }
+        .fin-value { font-size:1.5rem; font-weight:700; color:#1e293b; line-height:1.1; }
+        .fin-value.primary { color:var(--verde-zymos, #2563eb); }
+        .fin-sub { font-size:0.75rem; color:#94a3b8; }
+
+        html.dark-mode .table-card { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .table-card .table-count { color:var(--dm-text); border-color:var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background:var(--dm-input) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color:var(--dm-text); border-color:var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background:var(--dm-hover); }
+        html.dark-mode .table-card .tc-footer { border-color:var(--dm-border-light); }
+        html.dark-mode .fin-metric { border-color:var(--dm-border-faint); }
+        html.dark-mode .fin-label { color:var(--dm-text-muted); }
+        html.dark-mode .fin-value { color:var(--dm-text); }
     </style>
 </head>
 <body>
@@ -409,30 +434,30 @@
         </div>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="card-zymos h-100">
-                    <div class="card-header">
-                        <h5><i class="bi bi-currency-dollar me-2"></i>Resumen Financiero</h5>
+                <div class="table-card h-100 d-flex flex-column">
+                    <div class="table-count">
+                        <span><i class="bi bi-currency-dollar me-2"></i>Resumen Financiero</span>
                     </div>
-                    <div class="card-body p-3">
-                        <div class="mb-3 pb-3 border-bottom">
-                            <div class="detail-label">Total Facturas</div>
-                            <div class="detail-value highlight" th:text="${totalFacturas}">0</div>
-                            <small class="text-muted">documentos registrados</small>
+                    <div class="px-3 py-2 flex-grow-1">
+                        <div class="fin-metric">
+                            <div class="fin-label">Total Facturas</div>
+                            <div class="fin-value primary" th:text="${totalFacturas}">0</div>
+                            <div class="fin-sub">documentos registrados</div>
                         </div>
-                        <div class="mb-3 pb-3 border-bottom">
-                            <div class="detail-label">Gasto Total Compras</div>
-                            <div class="detail-value highlight">
+                        <div class="fin-metric">
+                            <div class="fin-label">Gasto Total Compras</div>
+                            <div class="fin-value">
                                 $<span th:text="${#numbers.formatDecimal(totalGastado, 1, 'COMMA', 0, 'POINT')}">0</span>
                             </div>
                         </div>
-                        <div>
-                            <div class="detail-label">Costo Mantenimientos</div>
-                            <div class="detail-value highlight">
+                        <div class="fin-metric">
+                            <div class="fin-label">Costo Mantenimientos</div>
+                            <div class="fin-value">
                                 $<span th:text="${#numbers.formatDecimal(totalMantenimientos, 1, 'COMMA', 0, 'POINT')}">0</span>
                             </div>
                         </div>
                     </div>
-                    <div class="card-footer bg-transparent d-flex gap-2">
+                    <div class="tc-footer d-flex gap-2">
                         <a th:href="@{/facturas}" class="btn btn-primary btn-sm flex-fill">
                             <i class="bi bi-receipt me-1"></i>Facturas
                         </a>
@@ -443,54 +468,57 @@
                 </div>
             </div>
             <div class="col-md-8">
-                <div class="card-zymos h-100">
-                    <div class="card-header">
-                        <h5><i class="bi bi-clock-history me-2"></i>Últimos Lotes</h5>
+                <div class="table-card h-100 d-flex flex-column">
+                    <div class="table-count">
+                        <span><i class="bi bi-clock-history me-2"></i>Últimos Lotes</span>
                     </div>
-                    <div class="card-body p-0">
-                        <div th:if="${#lists.isEmpty(ultimosLotes)}" class="empty-state py-4">
-                            <i class="bi bi-droplet"></i>
-                            <p>No hay lotes registrados</p>
-                            <a th:href="@{/nuevo}" class="btn btn-primary btn-sm">Crear primer lote</a>
-                        </div>
-                        <div th:unless="${#lists.isEmpty(ultimosLotes)}">
-                            <table class="table table-hover mb-0">
-                                <thead>
-                                <tr>
-                                    <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Código</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Estilo</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fase</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fecha</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;"></th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                <tr th:each="lote : ${ultimosLotes}">
-                                    <td class="ps-3 fw-bold" th:text="${lote.codigoLote}">-</td>
-                                    <td th:text="${lote.estilo}">-</td>
-                                    <td>
-                                        <span class="phase-badge"
-                                              th:classappend="${lote.faseActual == 'Carbonatación'} ? 'carbonatacion' :
-                                                              (${lote.faseActual == 'Maduración'} ? 'maduracion' :
-                                                              (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
-                                                              (${lote.faseActual == 'Fermentación'} ? 'fermentacion' :
-                                                              (${lote.completado} ? 'completado' : 'inicio'))))"
-                                              th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}">-</span>
-                                    </td>
-                                    <td>
-                                        <small th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '-'">-</small>
-                                    </td>
-                                    <td>
-                                        <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div th:if="${#lists.isEmpty(ultimosLotes)}" class="empty-state py-4">
+                        <i class="bi bi-droplet"></i>
+                        <p>No hay lotes registrados</p>
+                        <a th:href="@{/nuevo}" class="btn btn-primary btn-sm">Crear primer lote</a>
                     </div>
-                    <div class="card-footer bg-transparent">
+                    <div th:unless="${#lists.isEmpty(ultimosLotes)}" class="table-responsive flex-grow-1">
+                        <table class="table mb-0">
+                            <thead>
+                            <tr>
+                                <th style="padding-left:1.25rem;">Código</th>
+                                <th>Estilo</th>
+                                <th>Fase</th>
+                                <th>Fecha</th>
+                                <th></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="lote : ${ultimosLotes}">
+                                <td style="padding-left:1.25rem;" class="fw-semibold">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}"
+                                       class="text-decoration-none"
+                                       style="color:var(--verde-zymos,#2563eb);"
+                                       th:text="${lote.codigoLote}">-</a>
+                                </td>
+                                <td th:text="${lote.estilo}">-</td>
+                                <td>
+                                    <span class="phase-badge"
+                                          th:classappend="${lote.faseActual == 'Carbonatación'} ? 'carbonatacion' :
+                                                          (${lote.faseActual == 'Maduración'} ? 'maduracion' :
+                                                          (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
+                                                          (${lote.faseActual == 'Fermentación'} ? 'fermentacion' :
+                                                          (${lote.completado} ? 'completado' : 'inicio'))))"
+                                          th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}">-</span>
+                                </td>
+                                <td>
+                                    <small th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '-'">-</small>
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tc-footer">
                         <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">Ver todos los lotes</a>
                     </div>
                 </div>
