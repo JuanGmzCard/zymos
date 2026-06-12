@@ -96,23 +96,25 @@
                                         <span th:unless="${cat.activo}" class="badge bg-secondary">Inactiva</span>
                                     </td>
                                     <td>
-                                        <form th:action="@{/admin/categorias/insumo/{id}/toggle(id=${cat.id})}"
-                                              method="post" class="d-inline">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                                    th:title="${cat.activo} ? 'Desactivar' : 'Activar'">
-                                                <i class="bi"
-                                                   th:classappend="${cat.activo} ? 'bi-toggle-on text-success' : 'bi-toggle-off'"></i>
-                                            </button>
-                                        </form>
-                                        <form th:action="@{/admin/categorias/insumo/{id}/eliminar(id=${cat.id})}"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Eliminar esta categoría?')">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <div class="d-flex gap-1 align-items-center">
+                                            <form th:action="@{/admin/categorias/insumo/{id}/toggle(id=${cat.id})}"
+                                                  method="post">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                        th:title="${cat.activo} ? 'Desactivar' : 'Activar'">
+                                                    <i class="bi"
+                                                       th:classappend="${cat.activo} ? 'bi-toggle-on text-success' : 'bi-toggle-off'"></i>
+                                                </button>
+                                            </form>
+                                            <form th:action="@{/admin/categorias/insumo/{id}/eliminar(id=${cat.id})}"
+                                                  method="post"
+                                                  onsubmit="return confirm('¿Eliminar esta categoría?')">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(categoriasInsumo)}">
@@ -179,23 +181,25 @@
                                         <span th:unless="${cat.activo}" class="badge bg-secondary">Inactiva</span>
                                     </td>
                                     <td>
-                                        <form th:action="@{/admin/categorias/equipo/{id}/toggle(id=${cat.id})}"
-                                              method="post" class="d-inline">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-secondary"
-                                                    th:title="${cat.activo} ? 'Desactivar' : 'Activar'">
-                                                <i class="bi"
-                                                   th:classappend="${cat.activo} ? 'bi-toggle-on text-success' : 'bi-toggle-off'"></i>
-                                            </button>
-                                        </form>
-                                        <form th:action="@{/admin/categorias/equipo/{id}/eliminar(id=${cat.id})}"
-                                              method="post" class="d-inline"
-                                              onsubmit="return confirm('¿Eliminar esta categoría?')">
-                                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                            <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                        <div class="d-flex gap-1 align-items-center">
+                                            <form th:action="@{/admin/categorias/equipo/{id}/toggle(id=${cat.id})}"
+                                                  method="post">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                                        th:title="${cat.activo} ? 'Desactivar' : 'Activar'">
+                                                    <i class="bi"
+                                                       th:classappend="${cat.activo} ? 'bi-toggle-on text-success' : 'bi-toggle-off'"></i>
+                                                </button>
+                                            </form>
+                                            <form th:action="@{/admin/categorias/equipo/{id}/eliminar(id=${cat.id})}"
+                                                  method="post"
+                                                  onsubmit="return confirm('¿Eliminar esta categoría?')">
+                                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(categoriasEquipo)}">
