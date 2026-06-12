@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.alera.repository.FacturaProveedorRepository;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.service.EquipoService;
 import com.alera.service.RecetaService;
@@ -53,6 +54,7 @@ public class TrazabilidadController {
     private final EvaluacionSensorialService evaluacionService;
     private final PlanificacionService planificacionService;
     private final VentaService ventaService;
+    private final LoteCervezaRepository loteRepo;
 
     public TrazabilidadController(TrazabilidadService service,
                                    EquipoService equipoService,
@@ -64,7 +66,8 @@ public class TrazabilidadController {
                                    LecturaFermentacionService lecturaService,
                                    EvaluacionSensorialService evaluacionService,
                                    PlanificacionService planificacionService,
-                                   VentaService ventaService) {
+                                   VentaService ventaService,
+                                   LoteCervezaRepository loteRepo) {
         this.service = service;
         this.equipoService = equipoService;
         this.recetaService = recetaService;
@@ -76,6 +79,7 @@ public class TrazabilidadController {
         this.evaluacionService = evaluacionService;
         this.planificacionService = planificacionService;
         this.ventaService = ventaService;
+        this.loteRepo = loteRepo;
     }
 
     @GetMapping
@@ -95,6 +99,10 @@ public class TrazabilidadController {
         model.addAttribute("faseFiltro",   fase);
         model.addAttribute("desdeFiltro",  desde);
         model.addAttribute("hastaFiltro",  hasta);
+        model.addAttribute("statsTotalLotes",  loteRepo.count());
+        model.addAttribute("statsEnProceso",   loteRepo.countEnProceso());
+        model.addAttribute("statsCompletados", loteRepo.countCompletados());
+        model.addAttribute("statsEstilos",     loteRepo.countDistinctEstilos());
         return "trazabilidad/index";
     }
 

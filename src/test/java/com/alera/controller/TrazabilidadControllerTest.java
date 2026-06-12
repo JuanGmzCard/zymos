@@ -10,6 +10,7 @@ import com.alera.dto.LoteGuardadoResult;
 import com.alera.model.LoteCerveza;
 import com.alera.repository.FacturaProveedorRepository;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.service.*;
@@ -61,11 +62,16 @@ class TrazabilidadControllerTest {
     @MockBean EvaluacionSensorialService   evaluacionService;
     @MockBean PlanificacionService         planificacionService;
     @MockBean VentaService                 ventaService;
+    @MockBean LoteCervezaRepository        loteRepo;
 
     @BeforeEach
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(ventaService.listarPorLote(any())).thenReturn(List.of());
+        when(loteRepo.count()).thenReturn(0L);
+        when(loteRepo.countEnProceso()).thenReturn(0L);
+        when(loteRepo.countCompletados()).thenReturn(0L);
+        when(loteRepo.countDistinctEstilos()).thenReturn(0L);
     }
 
     // ── Seguridad ──────────────────────────────────────────────────────

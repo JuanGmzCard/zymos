@@ -41,9 +41,20 @@
         .table-card table tbody tr:last-child td { border-bottom: none; }
         .table-card table tbody tr:hover { background: #f8fafc; }
 
+        .stat-card-simple { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.5rem; min-width:130px; }
+        .stat-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:2px; }
+        .stat-value { font-size:1.75rem; font-weight:700; color:#1e293b; line-height:1; }
+        .stat-value.success { color:#16a34a; }
+        .stat-value.info    { color:#0284c7; }
+        .stat-value.warning { color:#f97316; }
+        .stat-value.muted   { color:#64748b; }
+
         html.dark-mode .proxima-card { background: var(--dm-card); border-left-color: #0284c7; }
         html.dark-mode .page-header h1 { color: var(--dm-text); }
         html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-label { color: var(--dm-text-muted); }
+        html.dark-mode .stat-value { color: var(--dm-text); }
         html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .table-card .table-title { color: var(--dm-text); border-color: var(--dm-border-light); }
         html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
@@ -70,6 +81,26 @@
 </div>
 
 <div class="container-fluid px-4 pb-4">
+
+    <!-- Stat cards -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" th:text="${#lists.size(todas)}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Planificadas</div>
+            <div class="stat-value warning" th:text="${todas.?[estado.name() == 'PLANIFICADA'].size()}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">En Proceso</div>
+            <div class="stat-value info" th:text="${todas.?[estado.name() == 'EN_PROCESO'].size()}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Completadas</div>
+            <div class="stat-value success" th:text="${todas.?[estado.name() == 'COMPLETADA'].size()}">0</div>
+        </div>
+    </div>
 
     <!-- Calendario + próximas -->
     <div class="row g-4 mb-4">

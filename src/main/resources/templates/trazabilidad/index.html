@@ -95,7 +95,18 @@
         .fase-dot.done   { background:#27ae60; }
         .fase-dot.active { background:var(--dorado); box-shadow:0 0 0 2px color-mix(in srgb, var(--dorado) 35%, transparent); }
 
+        /* ══ STAT CARDS ════════════════════════════════════ */
+        .stat-card-simple { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem 1.5rem; min-width:130px; }
+        .stat-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:2px; }
+        .stat-value { font-size:1.75rem; font-weight:700; color:#1e293b; line-height:1; }
+        .stat-value.success { color:#16a34a; }
+        .stat-value.info    { color:#0284c7; }
+        .stat-value.muted   { color:#64748b; }
+
         /* ══ DARK MODE ═════════════════════════════════════ */
+        html.dark-mode .stat-card-simple { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .stat-label { color:var(--dm-text-muted); }
+        html.dark-mode .stat-value { color:var(--dm-text); }
         html.dark-mode .tab-panel-wrapper { background: var(--dm-card) !important; border-color: var(--dm-border-light); }
         html.dark-mode .col-lote { background: var(--dm-card) !important; }
         html.dark-mode tr:hover .col-lote { background: var(--dm-hover) !important; }
@@ -138,6 +149,26 @@
             <a th:href="@{/nuevo}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i>Nuevo Lote
             </a>
+        </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <a th:href="@{/}" class="stat-card-simple text-decoration-none">
+            <div class="stat-label">Total Lotes</div>
+            <div class="stat-value" th:text="${statsTotalLotes}">0</div>
+        </a>
+        <a th:href="@{/(fase='FERMENTACION')}" class="stat-card-simple text-decoration-none">
+            <div class="stat-label">En Proceso</div>
+            <div class="stat-value info" th:text="${statsEnProceso}">0</div>
+        </a>
+        <a th:href="@{/(fase='COMPLETADO')}" class="stat-card-simple text-decoration-none">
+            <div class="stat-label">Completados</div>
+            <div class="stat-value success" th:text="${statsCompletados}">0</div>
+        </a>
+        <div class="stat-card-simple">
+            <div class="stat-label">Estilos Únicos</div>
+            <div class="stat-value muted" th:text="${statsEstilos}">0</div>
         </div>
     </div>
 
