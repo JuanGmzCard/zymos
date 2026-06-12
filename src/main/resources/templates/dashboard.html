@@ -32,15 +32,16 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
-        <div>
-            <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
-            <p>Resumen general del sistema de trazabilidad cervecera</p>
-        </div>
+<div class="container-fluid px-4">
+<div class="page-header d-flex justify-content-between align-items-start">
+    <div>
+        <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+        <p class="text-muted mb-0">Resumen general del sistema de trazabilidad cervecera</p>
+    </div>
+    <div class="d-flex gap-2 pt-1">
         <!-- Botón personalizar -->
         <div class="dropdown">
-            <button class="btn btn-outline-crema dropdown-toggle" type="button"
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
                     data-bs-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-sliders me-1"></i>Personalizar
             </button>
@@ -85,6 +86,7 @@
         </div>
     </div>
 </div>
+</div>
 
 <div class="container-fluid px-4 py-4">
 <div id="dash-sortable">
@@ -97,53 +99,33 @@
         <div class="row g-3">
             <div class="col-6 col-md-3">
                 <a th:href="@{/}" class="stat-card-link">
-                    <div class="stat-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${totalLotes}">0</div>
-                                <div class="stat-label">Total Lotes</div>
-                            </div>
-                            <i class="bi bi-droplet-fill stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label">Total Lotes</div>
+                        <div class="stat-value" th:text="${totalLotes}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/kanban}" class="stat-card-link">
-                    <div class="stat-card warning">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${enProceso}">0</div>
-                                <div class="stat-label">En Proceso</div>
-                            </div>
-                            <i class="bi bi-arrow-repeat stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label">En Proceso</div>
+                        <div class="stat-value warning" th:text="${enProceso}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/(fase='completados')}" class="stat-card-link">
-                    <div class="stat-card success">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${completados}">0</div>
-                                <div class="stat-label">Completados</div>
-                            </div>
-                            <i class="bi bi-check-circle stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label">Completados</div>
+                        <div class="stat-value success" th:text="${completados}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/reportes/produccion}" class="stat-card-link">
-                    <div class="stat-card info">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${estilosDistintos}">0</div>
-                                <div class="stat-label">Estilos Distintos</div>
-                            </div>
-                            <i class="bi bi-tags stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label">Estilos Distintos</div>
+                        <div class="stat-value info" th:text="${estilosDistintos}">0</div>
                     </div>
                 </a>
             </div>

@@ -15,286 +15,274 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<!-- Hero -->
-<div class="hero-section">
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-                <div class="d-flex align-items-center gap-3 mb-1 flex-wrap">
-                    <h1 class="mb-0" th:text="${venta.cliente}">Cliente</h1>
-                    <span class="badge rounded-pill fs-6"
-                          th:classappend="${venta.estado.badgeClass}"
-                          th:text="${venta.estado.displayName}">Estado</span>
-                    <span th:if="${venta.remisionNumero != null}"
-                          class="badge bg-dark rounded-pill fs-6"
-                          th:text="${venta.remisionNumero}">REM-001</span>
-                </div>
-                <p class="mb-1">
-                    <span th:if="${!#lists.isEmpty(venta.items)}">
-                        <i class="bi bi-clipboard-data me-1"></i>
-                        Lote:
-                        <a th:if="${venta.items[0].lote != null}"
-                           th:href="@{/ver/{id}(id=${venta.items[0].lote.id})}"
-                           th:text="${venta.items[0].codigoLote}"
-                           style="color:var(--dorado-claro);text-decoration:none;font-weight:600;">—</a>
-                        <span th:if="${venta.items[0].lote == null}"
-                              th:text="${venta.items[0].codigoLote}"
-                              style="color:var(--dorado-claro);font-weight:600;">—</span>
-                        <span th:if="${venta.items.size() > 1}" class="text-muted small ms-1"
-                              th:text="'(+' + (${venta.items.size()} - 1) + ' más)'"></span>
-                    </span>
-                    <span th:if="${#lists.isEmpty(venta.items)}" class="text-muted">Sin lotes asociados</span>
-                </p>
-                <small class="hero-meta">
-                    <i class="bi bi-calendar3 me-1"></i>
-                    <span th:text="${venta.fechaDespacho != null} ? ${#temporals.format(venta.fechaDespacho,'dd MMM yyyy')} : '—'"></span>
-                </small>
-            </div>
-            <div class="d-flex gap-2 align-self-center flex-wrap">
-                <a th:href="@{/ventas/{id}/pdf(id=${venta.id})}" class="btn btn-outline-crema" title="Descargar remisión PDF">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF
-                </a>
-                <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')" class="d-flex gap-2">
-                    <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-outline-crema"
-                       title="Duplicar esta venta con los mismos ítems">
-                        <i class="bi bi-copy me-1"></i>Duplicar
-                    </a>
-                    <a th:href="@{/ventas/editar/{id}(id=${venta.id})}" class="btn btn-zymos">
-                        <i class="bi bi-pencil me-1"></i>Editar
-                    </a>
-                </div>
-                <a th:href="@{/ventas}" class="btn btn-outline-crema">
-                    <i class="bi bi-arrow-left me-1"></i>Volver
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="container-fluid px-4 py-4">
+<div class="container-fluid px-4 py-4" style="max-width:1400px;">
 
     <!-- Flash -->
-    <div th:if="${mensaje}" class="alert"
+    <div th:if="${mensaje}" class="alert mb-3"
          th:classappend="'alert-' + ${tipoMensaje}" role="alert" th:text="${mensaje}"></div>
 
+    <!-- Cabecera -->
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-1" th:text="${venta.cliente}">Cliente</h1>
+            <p class="subtitle mb-0">
+                <span class="badge rounded-pill"
+                      th:classappend="${venta.estado.badgeClass}"
+                      th:text="${venta.estado.displayName}">Estado</span>
+                <span th:if="${venta.remisionNumero != null}"
+                      class="badge rounded-pill bg-dark ms-1"
+                      th:text="${venta.remisionNumero}">REM-001</span>
+                <span class="ms-2 text-muted small" th:if="${!#lists.isEmpty(venta.items)}">
+                    <i class="bi bi-box me-1"></i>
+                    <a th:if="${venta.items[0].lote != null}"
+                       th:href="@{/ver/{id}(id=${venta.items[0].lote.id})}"
+                       th:text="${venta.items[0].codigoLote}"
+                       class="text-muted text-decoration-none fw-semibold">—</a>
+                    <span th:if="${venta.items[0].lote == null}"
+                          th:text="${venta.items[0].codigoLote}"
+                          class="fw-semibold">—</span>
+                    <span th:if="${venta.items.size() > 1}"
+                          th:text="'(+' + (${venta.items.size()} - 1) + ' más)'"></span>
+                </span>
+            </p>
+        </div>
+        <div class="d-flex gap-2 pt-1 flex-wrap">
+            <a th:href="@{/ventas/{id}/pdf(id=${venta.id})}" class="btn btn-sm btn-outline-secondary"
+               title="Descargar remisión PDF">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')" class="d-flex gap-2">
+                <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-sm btn-outline-secondary"
+                   title="Duplicar esta venta con los mismos ítems">
+                    <i class="bi bi-copy me-1"></i>Duplicar
+                </a>
+                <a th:href="@{/ventas/editar/{id}(id=${venta.id})}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                </a>
+            </div>
+            <a th:href="@{/ventas}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Volver
+            </a>
+        </div>
+    </div>
+
     <div class="row g-4">
-        <!-- Datos principales + ítems -->
+        <!-- Columna principal -->
         <div class="col-lg-8">
+
             <!-- Info general -->
-            <div class="card-zymos mb-4">
-                <div class="card-header">
-                    <h5><i class="bi bi-bag-check me-2"></i>Información General</h5>
+            <div class="content-card mb-3">
+                <div class="content-card-title pb-2 mb-3">
+                    <i class="bi bi-bag-check me-2"></i>INFORMACIÓN GENERAL
                 </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="detail-label">Cliente</div>
-                            <div class="detail-value fw-bold" th:text="${venta.cliente}">—</div>
-                            <div th:if="${venta.clienteRef != null}" class="mt-1 d-flex flex-wrap gap-2">
-                                <span th:if="${venta.clienteRef.nit != null}" class="text-muted small">
-                                    NIT: <span th:text="${venta.clienteRef.nit}"></span>
-                                </span>
-                                <span th:if="${venta.clienteRef.listaPrecio != null}"
-                                      class="badge bg-light text-dark border"
-                                      style="font-size:0.72rem;"
-                                      th:text="${venta.clienteRef.listaPrecio.displayName}">—</span>
-                                <a th:href="@{/clientes/ver/{id}(id=${venta.clienteRef.id})}"
-                                   class="text-muted small text-decoration-none">
-                                    <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i> Ver ficha
-                                </a>
-                            </div>
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="small text-muted">Cliente</div>
+                        <div class="fw-semibold" th:text="${venta.cliente}">—</div>
+                        <div th:if="${venta.clienteRef != null}" class="mt-1 d-flex flex-wrap gap-2">
+                            <span th:if="${venta.clienteRef.nit != null}" class="text-muted small">
+                                NIT: <span th:text="${venta.clienteRef.nit}"></span>
+                            </span>
+                            <span th:if="${venta.clienteRef.listaPrecio != null}"
+                                  class="badge bg-light text-dark border"
+                                  style="font-size:0.72rem;"
+                                  th:text="${venta.clienteRef.listaPrecio.displayName}">—</span>
+                            <a th:href="@{/clientes/ver/{id}(id=${venta.clienteRef.id})}"
+                               class="text-muted small text-decoration-none">
+                                <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i> Ver ficha
+                            </a>
                         </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Fecha de Despacho</div>
-                            <div class="detail-value"
-                                 th:text="${venta.fechaDespacho != null} ? ${#temporals.format(venta.fechaDespacho,'dd/MM/yyyy')} : '—'">—</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="small text-muted">Fecha de Despacho</div>
+                        <div class="fw-semibold"
+                             th:text="${venta.fechaDespacho != null} ? ${#temporals.format(venta.fechaDespacho,'dd/MM/yyyy')} : '—'">—</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="small text-muted">Estado</div>
+                        <div>
+                            <span class="badge" th:classappend="${venta.estado.badgeClass}"
+                                  th:text="${venta.estado.displayName}">—</span>
+                            <span th:if="${venta.remisionNumero != null}"
+                                  class="badge bg-dark ms-2"
+                                  th:text="${venta.remisionNumero}">—</span>
                         </div>
-                        <div class="col-md-6">
-                            <div class="detail-label">Estado</div>
-                            <div class="detail-value">
-                                <span class="badge" th:classappend="${venta.estado.badgeClass}"
-                                      th:text="${venta.estado.displayName}">—</span>
-                                <span th:if="${venta.remisionNumero != null}"
-                                      class="badge bg-dark ms-2"
-                                      th:text="${venta.remisionNumero}">—</span>
-                            </div>
-                        </div>
-                        <div th:if="${venta.estado.name() == 'COTIZACION' or venta.estado.name() == 'EXPIRADO'}"
-                             class="col-md-6">
-                            <div class="detail-label">Vencimiento Cotización</div>
-                            <div class="detail-value"
-                                 th:text="${venta.cotizacionExpiraEn != null} ? ${#temporals.format(venta.cotizacionExpiraEn,'dd/MM/yyyy')} : 'No definido'">—</div>
-                        </div>
-                        <div class="col-12" th:if="${venta.notas != null and !venta.notas.isBlank()}">
-                            <div class="detail-label">Notas</div>
-                            <div class="detail-value observaciones-texto" th:text="${venta.notas}">—</div>
-                        </div>
+                    </div>
+                    <div th:if="${venta.estado.name() == 'COTIZACION' or venta.estado.name() == 'EXPIRADO'}"
+                         class="col-sm-6">
+                        <div class="small text-muted">Vencimiento Cotización</div>
+                        <div class="fw-semibold"
+                             th:text="${venta.cotizacionExpiraEn != null} ? ${#temporals.format(venta.cotizacionExpiraEn,'dd/MM/yyyy')} : 'No definido'">—</div>
+                    </div>
+                    <div class="col-12" th:if="${venta.notas != null and !venta.notas.isBlank()}">
+                        <div class="small text-muted">Notas</div>
+                        <div class="small" th:text="${venta.notas}">—</div>
                     </div>
                 </div>
             </div>
 
             <!-- Ítems -->
-            <div class="card-zymos mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="bi bi-list-check me-2"></i>Ítems de la Venta</h5>
-                    <span class="badge bg-secondary" th:text="${venta.items.size()} + ' ítem(s)'">0</span>
+            <div class="content-card mb-3">
+                <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-check me-2"></i>ÍTEMS DE LA VENTA</span>
+                    <span class="badge bg-secondary fw-normal" th:text="${venta.items.size()} + ' ítem(s)'">0</span>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm mb-0 align-middle">
-                            <thead>
-                                <tr>
-                                    <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Lote</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Descripción</th>
-                                    <th class="text-end" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Cantidad</th>
-                                    <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Unidad</th>
-                                    <th class="text-end" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Precio Unit.</th>
-                                    <th class="text-end" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Desc.%</th>
-                                    <th class="text-end pe-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:each="item : ${venta.items}">
-                                    <td class="ps-3">
-                                        <a th:if="${item.lote != null}"
-                                           th:href="@{/ver/{id}(id=${item.lote.id})}"
-                                           th:text="${item.codigoLote}"
-                                           class="text-decoration-none fw-semibold"
-                                           style="color:var(--dorado);">—</a>
-                                        <span th:if="${item.lote == null and item.codigoLote != null}"
-                                              th:text="${item.codigoLote}"
-                                              class="text-muted">—</span>
-                                        <span th:if="${item.lote == null and item.codigoLote == null}"
-                                              class="text-muted fst-italic">Sin lote</span>
-                                    </td>
-                                    <td class="text-muted small"
-                                        th:text="${item.descripcion ?: '—'}">—</td>
-                                    <td class="text-end"
-                                        th:text="${item.cantidad.stripTrailingZeros().toPlainString()}">—</td>
-                                    <td class="text-muted small"
-                                        th:text="${item.unidad ?: '—'}">—</td>
-                                    <td class="text-end"
-                                        th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario,1,'COMMA',2,'POINT')}">—</td>
-                                    <td class="text-end text-muted small"
-                                        th:text="${item.descuentoPct != null and item.descuentoPct.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? (${item.descuentoPct} + '%') : '—'">—</td>
-                                    <td class="text-end pe-3 fw-semibold"
-                                        th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')}">—</td>
-                                </tr>
-                                <tr th:if="${#lists.isEmpty(venta.items)}">
-                                    <td colspan="7" class="text-center text-muted py-3 fst-italic">Sin ítems registrados</td>
-                                </tr>
-                            </tbody>
-                            <tfoot th:if="${!#lists.isEmpty(venta.items)}">
-                                <tr style="background:var(--fondo);">
-                                    <td colspan="6" class="text-end pe-2 fw-bold small">TOTAL</td>
-                                    <td class="text-end pe-3 fw-bold"
-                                        th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small text-muted fw-semibold">Lote</th>
+                                <th class="small text-muted fw-semibold">Descripción</th>
+                                <th class="text-end small text-muted fw-semibold">Cantidad</th>
+                                <th class="small text-muted fw-semibold">Unidad</th>
+                                <th class="text-end small text-muted fw-semibold">Precio Unit.</th>
+                                <th class="text-end small text-muted fw-semibold">Desc.%</th>
+                                <th class="text-end small text-muted fw-semibold">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="item : ${venta.items}">
+                                <td>
+                                    <a th:if="${item.lote != null}"
+                                       th:href="@{/ver/{id}(id=${item.lote.id})}"
+                                       th:text="${item.codigoLote}"
+                                       class="text-decoration-none fw-semibold"
+                                       style="color:var(--dorado);">—</a>
+                                    <span th:if="${item.lote == null and item.codigoLote != null}"
+                                          th:text="${item.codigoLote}"
+                                          class="text-muted">—</span>
+                                    <span th:if="${item.lote == null and item.codigoLote == null}"
+                                          class="text-muted fst-italic">Sin lote</span>
+                                </td>
+                                <td class="text-muted small"
+                                    th:text="${item.descripcion ?: '—'}">—</td>
+                                <td class="text-end"
+                                    th:text="${item.cantidad.stripTrailingZeros().toPlainString()}">—</td>
+                                <td class="text-muted small"
+                                    th:text="${item.unidad ?: '—'}">—</td>
+                                <td class="text-end"
+                                    th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario,1,'COMMA',2,'POINT')}">—</td>
+                                <td class="text-end text-muted small"
+                                    th:text="${item.descuentoPct != null and item.descuentoPct.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? (${item.descuentoPct} + '%') : '—'">—</td>
+                                <td class="text-end fw-semibold"
+                                    th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')}">—</td>
+                            </tr>
+                            <tr th:if="${#lists.isEmpty(venta.items)}">
+                                <td colspan="7" class="text-center text-muted py-3 fst-italic">Sin ítems registrados</td>
+                            </tr>
+                        </tbody>
+                        <tfoot th:if="${!#lists.isEmpty(venta.items)}">
+                            <tr class="table-light">
+                                <td colspan="6" class="text-end fw-bold small">TOTAL</td>
+                                <td class="text-end fw-bold"
+                                    th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
+            </div>
+
+            <!-- Historial de cambios de estado -->
+            <div class="content-card mb-3" th:if="${!#lists.isEmpty(historial)}">
+                <div class="content-card-title pb-2 mb-3">
+                    <i class="bi bi-clock-history me-2"></i>HISTORIAL DE ESTADO
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="small text-muted fw-semibold">Fecha</th>
+                                <th class="small text-muted fw-semibold">Estado Anterior</th>
+                                <th class="small text-muted fw-semibold">Nuevo Estado</th>
+                                <th class="small text-muted fw-semibold">Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="h : ${historial}">
+                                <td class="text-muted small"
+                                    th:text="${#temporals.format(h.fecha,'dd/MM/yyyy HH:mm')}">—</td>
+                                <td>
+                                    <span th:if="${h.estadoAnterior != null}"
+                                          class="badge" th:classappend="${h.estadoAnterior.badgeClass}"
+                                          th:text="${h.estadoAnterior.displayName}">—</span>
+                                    <span th:if="${h.estadoAnterior == null}" class="text-muted small">Creación</span>
+                                </td>
+                                <td>
+                                    <span class="badge" th:classappend="${h.estadoNuevo.badgeClass}"
+                                          th:text="${h.estadoNuevo.displayName}">—</span>
+                                </td>
+                                <td class="text-muted small" th:text="${h.usuario ?: 'sistema'}">—</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Metadatos -->
+            <div class="text-muted small d-flex flex-wrap gap-3 align-items-center mb-2">
+                <span th:if="${venta.createdAt != null}">
+                    <i class="bi bi-person-plus me-1"></i>
+                    Creado por <strong th:text="${venta.createdBy ?: 'sistema'}"></strong>
+                    el <span th:text="${#temporals.format(venta.createdAt,'dd/MM/yyyy HH:mm')}"></span>
+                </span>
+                <span th:if="${venta.lastModifiedAt != null}">
+                    <i class="bi bi-pencil me-1"></i>
+                    Última modificación por <strong th:text="${venta.lastModifiedBy ?: 'sistema'}"></strong>
+                    el <span th:text="${#temporals.format(venta.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
+                </span>
             </div>
         </div>
 
-        <!-- Panel lateral: total + cambio estado -->
+        <!-- Panel lateral -->
         <div class="col-lg-4">
+
             <!-- Total -->
-            <div class="card-zymos mb-4">
-                <div class="card-header"><h5><i class="bi bi-currency-dollar me-2"></i>Valor Total</h5></div>
-                <div class="card-body text-center">
-                    <div class="densidad-box mb-0" style="display:inline-block;min-width:140px;">
-                        <div class="densidad-tag">Total</div>
-                        <div class="densidad-valor" style="font-size:1.6rem;"
-                             th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</div>
-                    </div>
-                    <div class="text-muted small mt-2">
-                        <span th:text="${venta.items.size()} + ' ítem(s)'">0 ítems</span>
-                    </div>
+            <div class="content-card mb-3 text-center">
+                <div class="content-card-title pb-2 mb-3">
+                    <i class="bi bi-currency-dollar me-2"></i>VALOR TOTAL
                 </div>
+                <div class="display-6 fw-bold mb-1"
+                     th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</div>
+                <div class="text-muted small"
+                     th:text="${venta.items.size()} + ' ítem(s)'">0 ítems</div>
             </div>
 
             <!-- Cambiar estado -->
-            <div class="card-zymos" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
-                <div class="card-header"><h5><i class="bi bi-arrow-repeat me-2"></i>Cambiar Estado</h5></div>
-                <div class="card-body">
-                    <form th:action="@{/ventas/{id}/estado(id=${venta.id})}" method="post">
-                        <div class="mb-3">
-                            <label for="nuevoEstado" class="form-label detail-label">Nuevo estado</label>
-                            <select id="nuevoEstado" name="estado" class="form-select">
-                                <option th:each="est : ${estados}"
-                                        th:value="${est.name()}"
-                                        th:selected="${est == venta.estado}"
-                                        th:text="${est.displayName}">—</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-zymos w-100">
-                            <i class="bi bi-check-lg me-1"></i>Actualizar Estado
-                        </button>
-                    </form>
+            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                <div class="content-card-title pb-2 mb-3">
+                    <i class="bi bi-arrow-repeat me-2"></i>CAMBIAR ESTADO
                 </div>
+                <form th:action="@{/ventas/{id}/estado(id=${venta.id})}" method="post">
+                    <div class="mb-3">
+                        <label for="nuevoEstado" class="form-label small text-muted">Nuevo estado</label>
+                        <select id="nuevoEstado" name="estado" class="form-select form-select-sm">
+                            <option th:each="est : ${estados}"
+                                    th:value="${est.name()}"
+                                    th:selected="${est == venta.estado}"
+                                    th:text="${est.displayName}">—</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-check-lg me-1"></i>Actualizar Estado
+                    </button>
+                </form>
             </div>
 
-            <!-- Eliminar -->
-            <div class="mt-3" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <!-- Zona de peligro -->
+            <div class="content-card mb-3" style="border-color:#fecaca;"
+                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
+                    <i class="bi bi-exclamation-triangle me-2"></i>ZONA DE PELIGRO
+                </div>
                 <form th:action="@{/ventas/{id}/eliminar(id=${venta.id})}" method="post"
                       onsubmit="return confirm('¿Eliminar esta venta? Esta acción no se puede deshacer.')">
-                    <button type="submit" class="btn btn-outline-danger w-100">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">
                         <i class="bi bi-trash3 me-1"></i>Eliminar Venta
                     </button>
                 </form>
             </div>
-        </div>
-    </div>
 
-    <!-- Historial de cambios de estado -->
-    <div class="card-zymos mb-4" th:if="${!#lists.isEmpty(historial)}">
-        <div class="card-header">
-            <h5><i class="bi bi-clock-history me-2"></i>Historial de Estado</h5>
         </div>
-        <div class="card-body p-0">
-            <table class="table table-sm mb-0">
-                <thead>
-                    <tr>
-                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Fecha</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Estado Anterior</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Nuevo Estado</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;">Usuario</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="h : ${historial}">
-                        <td class="ps-3 text-muted small"
-                            th:text="${#temporals.format(h.fecha,'dd/MM/yyyy HH:mm')}">—</td>
-                        <td>
-                            <span th:if="${h.estadoAnterior != null}"
-                                  class="badge" th:classappend="${h.estadoAnterior.badgeClass}"
-                                  th:text="${h.estadoAnterior.displayName}">—</span>
-                            <span th:if="${h.estadoAnterior == null}" class="text-muted small">Creación</span>
-                        </td>
-                        <td>
-                            <span class="badge" th:classappend="${h.estadoNuevo.badgeClass}"
-                                  th:text="${h.estadoNuevo.displayName}">—</span>
-                        </td>
-                        <td class="text-muted small" th:text="${h.usuario ?: 'sistema'}">—</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Metadatos -->
-    <div class="audit-meta mt-2 mb-2 text-muted small d-flex flex-wrap gap-3 align-items-center">
-        <span th:if="${venta.createdAt != null}">
-            <i class="bi bi-person-plus me-1"></i>
-            Creado por <strong th:text="${venta.createdBy ?: 'sistema'}"></strong>
-            el <span th:text="${#temporals.format(venta.createdAt,'dd/MM/yyyy HH:mm')}"></span>
-        </span>
-        <span th:if="${venta.lastModifiedAt != null}" class="ms-2">
-            <i class="bi bi-pencil me-1"></i>
-            Última modificación por <strong th:text="${venta.lastModifiedBy ?: 'sistema'}"></strong>
-            el <span th:text="${#temporals.format(venta.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
-        </span>
     </div>
 
 </div>

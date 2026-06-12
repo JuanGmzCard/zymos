@@ -12,153 +12,144 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera -->
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-bar-chart-line me-2"></i>Reporte de Producción</h1>
-            <p>Análisis de lotes elaborados por período</p>
+            <h1><i class="bi bi-bar-chart-line me-2" style="color:var(--verde-zymos,#2563eb);"></i>Reporte de Producción</h1>
+            <p class="subtitle">Análisis de lotes elaborados por período</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 flex-wrap">
             <a th:href="@{/reportes/produccion/pdf(desde=${#temporals.format(desde,'yyyy-MM-dd')},hasta=${#temporals.format(hasta,'yyyy-MM-dd')},estilo=${estilo})}"
-               class="btn btn-outline-crema">
+               class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
             <a th:href="@{/reportes/produccion/excel(desde=${#temporals.format(desde,'yyyy-MM-dd')},hasta=${#temporals.format(hasta,'yyyy-MM-dd')},estilo=${estilo})}"
-               class="btn btn-outline-crema">
+               class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-excel me-1"></i>Excel
             </a>
-            <button onclick="window.print()" class="btn btn-outline-crema">
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-printer me-1"></i>Imprimir
             </button>
         </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
-
-    <!-- Selector de período + filtro de estilo -->
-    <div class="card-zymos mb-4">
-        <div class="card-body">
-            <form th:action="@{/reportes/produccion}" method="get" class="d-flex gap-3 align-items-end flex-wrap">
-                <div>
-                    <label class="form-label">Desde</label>
-                    <input type="date" name="desde" class="form-control"
-                           th:value="${#temporals.format(desde,'yyyy-MM-dd')}">
-                </div>
-                <div>
-                    <label class="form-label">Hasta</label>
-                    <input type="date" name="hasta" class="form-control"
-                           th:value="${#temporals.format(hasta,'yyyy-MM-dd')}">
-                </div>
-                <div th:if="${!#lists.isEmpty(estilosDisponibles)}">
-                    <label class="form-label">Estilo</label>
-                    <select name="estilo" class="form-select" style="min-width:160px;">
-                        <option value="">Todos los estilos</option>
-                        <option th:each="e : ${estilosDisponibles}"
-                                th:value="${e}" th:text="${e}"
-                                th:selected="${e == estilo}"></option>
-                    </select>
-                </div>
-                <div>
-                    <button type="submit" class="btn btn-zymos">
-                        <i class="bi bi-search me-1"></i>Aplicar
-                    </button>
-                </div>
-                <!-- Shortcuts de período -->
-                <div class="d-flex gap-1 align-items-end flex-wrap">
-                    <a th:href="${urlEsteMes}"   class="btn btn-outline-secondary btn-sm">Este mes</a>
-                    <a th:href="${urlUltimoMes}" class="btn btn-outline-secondary btn-sm">Último mes</a>
-                    <a th:href="${urlUltimos3}"  class="btn btn-outline-secondary btn-sm">3 meses</a>
-                    <a th:href="${urlEsteAnio}"  class="btn btn-outline-secondary btn-sm">Este año</a>
-                </div>
-                <div class="ms-auto text-muted small align-self-center">
-                    <i class="bi bi-calendar2-range me-1"></i>
-                    <span th:text="${#temporals.format(desde,'dd/MM/yyyy')} + ' — ' + ${#temporals.format(hasta,'dd/MM/yyyy')}"></span>
-                    <span th:if="${estilo != null and !estilo.isEmpty()}"
-                          class="badge ms-1"
-                          style="background:var(--dorado);color:var(--fondo);"
-                          th:text="${estilo}"></span>
-                </div>
-            </form>
-        </div>
+    <!-- Filtros de período -->
+    <div class="filter-card mb-4">
+        <form th:action="@{/reportes/produccion}" method="get" class="d-flex gap-3 align-items-end flex-wrap">
+            <div>
+                <label class="form-label form-label-sm mb-1">Desde</label>
+                <input type="date" name="desde" class="form-control form-control-sm"
+                       th:value="${#temporals.format(desde,'yyyy-MM-dd')}">
+            </div>
+            <div>
+                <label class="form-label form-label-sm mb-1">Hasta</label>
+                <input type="date" name="hasta" class="form-control form-control-sm"
+                       th:value="${#temporals.format(hasta,'yyyy-MM-dd')}">
+            </div>
+            <div th:if="${!#lists.isEmpty(estilosDisponibles)}">
+                <label class="form-label form-label-sm mb-1">Estilo</label>
+                <select name="estilo" class="form-select form-select-sm" style="min-width:160px;">
+                    <option value="">Todos los estilos</option>
+                    <option th:each="e : ${estilosDisponibles}"
+                            th:value="${e}" th:text="${e}"
+                            th:selected="${e == estilo}"></option>
+                </select>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search me-1"></i>Aplicar
+                </button>
+            </div>
+            <!-- Shortcuts de período -->
+            <div class="d-flex gap-1 align-items-end flex-wrap">
+                <a th:href="${urlEsteMes}"   class="btn btn-outline-secondary btn-sm">Este mes</a>
+                <a th:href="${urlUltimoMes}" class="btn btn-outline-secondary btn-sm">Último mes</a>
+                <a th:href="${urlUltimos3}"  class="btn btn-outline-secondary btn-sm">3 meses</a>
+                <a th:href="${urlEsteAnio}"  class="btn btn-outline-secondary btn-sm">Este año</a>
+            </div>
+            <div class="ms-auto text-secondary align-self-center" style="font-size:0.8rem;">
+                <i class="bi bi-calendar2-range me-1"></i>
+                <span th:text="${#temporals.format(desde,'dd/MM/yyyy')} + ' — ' + ${#temporals.format(hasta,'dd/MM/yyyy')}"></span>
+                <span th:if="${estilo != null and !estilo.isEmpty()}"
+                      class="badge ms-1 bg-primary"
+                      th:text="${estilo}"></span>
+            </div>
+        </form>
     </div>
 
     <!-- Stat cards — 8 métricas en 2 filas de 4 -->
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-number" th:text="${totalLotes}">0</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Lotes Elaborados</div>
+                <div class="stat-value" th:text="${totalLotes}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card success">
-                <div class="stat-number" th:text="${totalLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Litros Producidos</div>
+                <div class="stat-value success" th:text="${totalLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card info">
-                <div class="stat-number" th:text="${avgLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Prom. por Lote</div>
+                <div class="stat-value info" th:text="${avgLitros.stripTrailingZeros().toPlainString()} + ' L'">0 L</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card warning">
-                <div class="stat-number"
-                     th:text="${avgAbv != null} ? ${avgAbv.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">ABV Promedio</div>
+                <div class="stat-value warning"
+                     th:text="${avgAbv != null} ? ${avgAbv.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card success">
-                <div class="stat-number"
-                     th:text="${avgEficiencia != null} ? ${avgEficiencia.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Eficiencia Prom.</div>
+                <div class="stat-value success"
+                     th:text="${avgEficiencia != null} ? ${avgEficiencia.stripTrailingZeros().toPlainString()} + '%' : '—'">—</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-number"
-                     th:text="${costoTotalPeriodo != null} ? '$' + ${#numbers.formatDecimal(costoTotalPeriodo,1,0)} : '—'">—</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Costo Total</div>
+                <div class="stat-value"
+                     th:text="${costoTotalPeriodo != null} ? '$' + ${#numbers.formatDecimal(costoTotalPeriodo,1,0)} : '—'">—</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card info">
-                <div class="stat-number" th:text="${estilosUnicos}">0</div>
+            <div class="stat-card-simple">
                 <div class="stat-label">Estilos Distintos</div>
+                <div class="stat-value info" th:text="${estilosUnicos}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="stat-card success">
-                <div class="stat-number" th:text="${completados}">0</div>
-                <div class="stat-label"
-                     th:text="'Completados (' + ${tasaCompletados} + '%)'">Completados</div>
+            <div class="stat-card-simple">
+                <div class="stat-label" th:text="'Completados (' + ${tasaCompletados} + '%)'">Completados</div>
+                <div class="stat-value success" th:text="${completados}">0</div>
             </div>
         </div>
     </div>
 
     <!-- Gráficos fila 1: Tendencia + Litros por Estilo -->
-    <div class="row g-4 mb-4" th:if="${!chartTendencia.isEmpty() or !chartEstilosLitros.isEmpty()}">
+    <div class="row g-3 mb-3" th:if="${!chartTendencia.isEmpty() or !chartEstilosLitros.isEmpty()}">
         <div th:if="${!chartTendencia.isEmpty()}"
              th:class="${!chartEstilosLitros.isEmpty()} ? 'col-md-7' : 'col-12'">
-            <div class="card-zymos h-100">
-                <div class="card-header">
-                    <h5><i class="bi bi-graph-up me-2"></i>Tendencia Mensual</h5>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+            <div class="content-card h-100" style="margin-bottom:0;">
+                <div class="content-card-title"><i class="bi bi-graph-up me-2"></i>Tendencia Mensual</div>
+                <div class="d-flex align-items-center justify-content-center" style="min-height:200px;">
                     <canvas id="chartTendencia" style="max-height:200px;"></canvas>
                 </div>
             </div>
         </div>
         <div th:if="${!chartEstilosLitros.isEmpty()}"
              th:class="${!chartTendencia.isEmpty()} ? 'col-md-5' : 'col-12'">
-            <div class="card-zymos h-100">
-                <div class="card-header">
-                    <h5><i class="bi bi-bar-chart me-2"></i>Litros por Estilo</h5>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+            <div class="content-card h-100" style="margin-bottom:0;">
+                <div class="content-card-title"><i class="bi bi-bar-chart me-2"></i>Litros por Estilo</div>
+                <div class="d-flex align-items-center justify-content-center" style="min-height:200px;">
                     <canvas id="chartPeriodo" style="max-height:200px;"></canvas>
                 </div>
             </div>
@@ -166,13 +157,11 @@
     </div>
 
     <!-- Gráfico fila 2: Distribución ABV -->
-    <div class="row g-4 mb-4" th:if="${!chartAbvDist.isEmpty()}">
+    <div class="row g-3 mb-3" th:if="${!chartAbvDist.isEmpty()}">
         <div class="col-md-6">
-            <div class="card-zymos">
-                <div class="card-header">
-                    <h5><i class="bi bi-distribute-horizontal me-2"></i>Distribución de ABV</h5>
-                </div>
-                <div class="card-body d-flex align-items-center justify-content-center" style="min-height:200px;">
+            <div class="content-card" style="margin-bottom:0;">
+                <div class="content-card-title"><i class="bi bi-distribute-horizontal me-2"></i>Distribución de ABV</div>
+                <div class="d-flex align-items-center justify-content-center" style="min-height:180px;">
                     <canvas id="chartAbv" style="max-height:180px;"></canvas>
                 </div>
             </div>
@@ -180,27 +169,27 @@
     </div>
 
     <!-- Tabla de lotes + Resumen por estilo -->
-    <div class="row g-4 mb-4">
+    <div class="row g-3 mb-4">
 
         <!-- Tabla de lotes con paginación -->
         <div th:class="${!#lists.isEmpty(resumenEstilos)} ? 'col-md-8' : 'col-12'">
-            <div class="card-zymos h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="bi bi-list-ul me-2"></i>Lotes en el Período</h5>
+            <div class="table-card h-100">
+                <div class="table-count d-flex align-items-center justify-content-between">
+                    <span><i class="bi bi-list-ul me-2"></i><strong>Lotes en el Período</strong></span>
                     <div class="d-flex align-items-center gap-2">
-                        <span id="paginaInfo" class="text-muted small"></span>
+                        <span id="paginaInfo" class="text-secondary" style="font-size:0.8rem;"></span>
                         <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="btnPrev"
                                 onclick="cambiarPagina(-1)" disabled>&lsaquo;</button>
                         <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="btnNext"
                                 onclick="cambiarPagina(1)">&rsaquo;</button>
                     </div>
                 </div>
-                <div th:if="${#lists.isEmpty(lotes)}" class="empty-state py-4">
-                    <i class="bi bi-droplet"></i>
-                    <p>Sin lotes en este período</p>
+                <div th:if="${#lists.isEmpty(lotes)}" class="text-center text-secondary py-5">
+                    <i class="bi bi-droplet" style="font-size:2.5rem; opacity:.3;"></i>
+                    <p class="mt-2 mb-0">Sin lotes en este período</p>
                 </div>
                 <div th:unless="${#lists.isEmpty(lotes)}" class="table-responsive">
-                    <table class="table table-zymos mb-0" style="font-size:0.8rem;" id="tablaLotes">
+                    <table class="table mb-0" style="font-size:0.8rem;" id="tablaLotes">
                         <thead>
                             <tr>
                                 <th>Código</th>
@@ -218,34 +207,35 @@
                             <tr th:each="lote : ${lotes}">
                                 <td>
                                     <a th:href="@{/ver/{id}(id=${lote.id})}"
-                                       style="font-family:'Cinzel',serif;font-weight:700;color:var(--dorado);font-size:0.8rem;"
+                                       class="fw-bold font-monospace text-decoration-none"
+                                       style="color:var(--verde-zymos,#2563eb); font-size:0.8rem;"
                                        th:text="${lote.codigoLote}">-</a>
                                 </td>
                                 <td th:text="${lote.estilo}">-</td>
                                 <td>
-                                    <span th:if="${lote.receta != null}" class="text-muted"
+                                    <span th:if="${lote.receta != null}" class="text-secondary"
                                           th:text="${lote.receta.nombre}">-</span>
-                                    <span th:unless="${lote.receta != null}" class="text-muted">—</span>
+                                    <span th:unless="${lote.receta != null}" class="text-secondary">—</span>
                                 </td>
-                                <td class="text-muted"
+                                <td class="text-secondary"
                                     th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yy')} : '—'">-</td>
                                 <td th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">-</td>
                                 <td>
                                     <span th:if="${lote.abv != null}"
                                           style="font-weight:700;color:var(--dorado);"
                                           th:text="${lote.abv.stripTrailingZeros().toPlainString()} + '%'">-</span>
-                                    <span th:unless="${lote.abv != null}" class="text-muted">—</span>
+                                    <span th:unless="${lote.abv != null}" class="text-secondary">—</span>
                                 </td>
                                 <td>
                                     <span th:if="${lote.eficienciaMacerado != null}"
-                                          th:style="${lote.eficienciaMacerado >= 75} ? 'color:#198754;font-weight:600;' : (${lote.eficienciaMacerado >= 60} ? 'color:var(--dorado);font-weight:600;' : 'color:#dc3545;font-weight:600;')"
+                                          th:style="${lote.eficienciaMacerado >= 75} ? 'color:#22c55e;font-weight:600;' : (${lote.eficienciaMacerado >= 60} ? 'color:var(--dorado);font-weight:600;' : 'color:#ef4444;font-weight:600;')"
                                           th:text="${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + '%'">-</span>
-                                    <span th:unless="${lote.eficienciaMacerado != null}" class="text-muted">—</span>
+                                    <span th:unless="${lote.eficienciaMacerado != null}" class="text-secondary">—</span>
                                 </td>
                                 <td>
-                                    <span th:if="${lote.costoPorLitro != null}" class="text-muted"
+                                    <span th:if="${lote.costoPorLitro != null}" class="text-secondary"
                                           th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,2)}">-</span>
-                                    <span th:unless="${lote.costoPorLitro != null}" class="text-muted">—</span>
+                                    <span th:unless="${lote.costoPorLitro != null}" class="text-secondary">—</span>
                                 </td>
                                 <td>
                                     <span class="phase-badge"
@@ -261,28 +251,25 @@
 
         <!-- Resumen por estilo con barras de progreso -->
         <div class="col-md-4" th:unless="${#lists.isEmpty(resumenEstilos)}">
-            <div class="card-zymos h-100">
-                <div class="card-header">
-                    <h5><i class="bi bi-pie-chart me-2"></i>Resumen por Estilo</h5>
-                </div>
-                <div class="card-body">
-                    <div th:each="r : ${resumenEstilos}" class="mb-3">
-                        <div class="d-flex justify-content-between align-items-center mb-1">
-                            <span class="fw-semibold" style="font-size:0.85rem;" th:text="${r.estilo}">—</span>
-                            <span class="text-muted" style="font-size:0.75rem;">
-                                <span th:text="${r.cantidad}">0</span> lote(s) ·
-                                <span th:text="${r.litros.stripTrailingZeros().toPlainString()}">0</span> L
-                            </span>
-                        </div>
-                        <div class="progress" style="height:6px; border-radius:3px;">
-                            <div class="progress-bar progress-zymos" role="progressbar"
-                                 th:style="'width:' + ${r.pct} + '%'"
-                                 th:attr="aria-valuenow=${r.pct}"
-                                 aria-valuemin="0" aria-valuemax="100"></div>
-                        </div>
-                        <div class="text-end mt-1" style="font-size:0.7rem; color:var(--dorado);"
-                             th:text="${r.pct} + '% del volumen'"></div>
+            <div class="content-card h-100" style="margin-bottom:0;">
+                <div class="content-card-title"><i class="bi bi-pie-chart me-2"></i>Resumen por Estilo</div>
+                <div th:each="r : ${resumenEstilos}" class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-semibold" style="font-size:0.85rem; color:#334155;" th:text="${r.estilo}">—</span>
+                        <span class="text-secondary" style="font-size:0.75rem;">
+                            <span th:text="${r.cantidad}">0</span> lote(s) ·
+                            <span th:text="${r.litros.stripTrailingZeros().toPlainString()}">0</span> L
+                        </span>
                     </div>
+                    <div class="progress" style="height:5px; border-radius:3px; background:#e2e8f0;">
+                        <div class="progress-bar" role="progressbar"
+                             style="background:var(--verde-zymos,#2563eb);"
+                             th:style="'background:var(--verde-zymos,#2563eb); width:' + ${r.pct} + '%'"
+                             th:attr="aria-valuenow=${r.pct}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="text-end mt-1" style="font-size:0.7rem; color:#94a3b8;"
+                         th:text="${r.pct} + '% del volumen'"></div>
                 </div>
             </div>
         </div>

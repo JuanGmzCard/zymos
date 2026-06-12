@@ -7,199 +7,315 @@
     <title th:text="${branding.name} + ' - Barriles'">Alera - Barriles</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            min-width: 130px;
+        }
+        .stat-card-simple .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card-simple .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1e293b;
+        }
+        .stat-card-simple .stat-value.success { color: #16a34a; }
+        .stat-card-simple .stat-value.info    { color: #0284c7; }
+        .stat-card-simple .stat-value.warning { color: #f97316; }
+
+        .page-header {
+            padding: 1.75rem 0 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+            font-family: var(--font-body), sans-serif;
+        }
+        .page-header .subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .filter-tab {
+            display: inline-block;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+        .filter-tab.active   { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        .action-link {
+            font-size: 0.8rem;
+            text-decoration: none;
+            padding: 0 0.25rem;
+        }
+        .action-link.view { color: var(--verde-zymos, #2563eb); }
+        .action-link.edit { color: #475569; }
+        .action-link.del  { color: #ef4444; }
+        .action-link:hover.view { color: var(--dorado, #1d4ed8); text-decoration: underline; }
+        .action-link:hover.edit { color: #1e293b; text-decoration: underline; }
+        .action-link:hover.del  { color: #b91c1c; text-decoration: underline; }
+        .action-sep { color: #cbd5e1; font-size: 0.75rem; margin: 0 0.1rem; }
+
+        .pagination-simple {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination-simple a {
+            color: var(--verde-zymos, #2563eb);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .pagination-simple a.disabled {
+            color: #cbd5e1;
+            pointer-events: none;
+        }
+
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color: var(--dm-text); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+        html.dark-mode .pagination-simple { border-color: var(--dm-border-light); color: var(--dm-text-muted); }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera de página -->
+    <div class="page-header d-flex justify-content-between align-items-start">
         <div>
             <h1><i class="bi bi-bucket me-2"></i>Barriles / Kegs</h1>
-            <p>Control de inventario y movimiento de barriles</p>
+            <p class="subtitle mb-0">Control de inventario y movimiento de barriles</p>
         </div>
-        <a th:href="@{/barriles/nuevo}" class="btn btn-zymos"
-           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-            <i class="bi bi-plus-lg me-1"></i>Nuevo Barril
-        </a>
+        <div class="d-flex gap-2 pt-1">
+            <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm"
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                <i class="bi bi-plus-lg me-1"></i>Nuevo Barril
+            </a>
+        </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
-
-    <!-- Mensajes flash -->
-    <div th:if="${mensaje}" class="alert"
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert mb-3"
          th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : (${tipoMensaje == 'warning'} ? 'alert-warning' : 'alert-danger')"
          th:text="${mensaje}"></div>
 
     <!-- Stat-cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="bi bi-bucket"></i></div>
-                <div class="stat-info">
-                    <div class="stat-number" th:text="${statsTotal}">0</div>
-                    <div class="stat-label">Total barriles</div>
-                </div>
-            </div>
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" th:text="${statsTotal}">0</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="color:#198754;"><i class="bi bi-check-circle"></i></div>
-                <div class="stat-info">
-                    <div class="stat-number" th:text="${statsDisponibles}">0</div>
-                    <div class="stat-label">Disponibles</div>
-                </div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Disponibles</div>
+            <div class="stat-value success" th:text="${statsDisponibles}">0</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="color:#0d6efd;"><i class="bi bi-droplet-fill"></i></div>
-                <div class="stat-info">
-                    <div class="stat-number" th:text="${statsLlenos}">0</div>
-                    <div class="stat-label">Llenos</div>
-                </div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Llenos</div>
+            <div class="stat-value info" th:text="${statsLlenos}">0</div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stat-card">
-                <div class="stat-icon" style="color:var(--dorado);"><i class="bi bi-truck"></i></div>
-                <div class="stat-info">
-                    <div class="stat-number" th:text="${statsDespachados}">0</div>
-                    <div class="stat-label">Despachados</div>
-                </div>
-            </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Despachados</div>
+            <div class="stat-value warning" th:text="${statsDespachados}">0</div>
         </div>
     </div>
 
     <!-- Filtros -->
-    <div class="mb-3 d-flex gap-2 flex-wrap align-items-center">
-        <span class="text-muted small me-1">Filtrar:</span>
-        <a th:href="@{/barriles(codigo=${codigo})}"
-           class="btn btn-sm"
-           th:classappend="${estadoFiltro == null} ? 'btn-zymos' : 'btn-zymos-outline'">
-            <i class="bi bi-grid-3x3-gap me-1"></i>Todos
-        </a>
-        <a th:each="est : ${estados}"
-           th:href="@{/barriles(codigo=${codigo}, estado=${est.name()})}"
-           class="btn btn-sm"
-           th:classappend="${estadoFiltro == est} ? 'btn-zymos' : 'btn-zymos-outline'"
-           th:text="${est.displayName}">Estado</a>
-    </div>
-
-    <!-- Búsqueda por código -->
-    <form th:action="@{/barriles}" method="get" class="mb-3 d-flex gap-2" style="max-width:400px;">
-        <input type="hidden" th:if="${estadoFiltro != null}" name="estado" th:value="${estadoFiltro.name()}">
-        <input type="text" name="codigo" class="form-control form-control-sm"
-               placeholder="Buscar por código..." th:value="${codigo}">
-        <button type="submit" class="btn btn-sm btn-zymos-outline">
-            <i class="bi bi-search"></i>
-        </button>
-        <a th:href="@{/barriles}" class="btn btn-sm btn-secondary" th:if="${codigo != ''}">
-            <i class="bi bi-x"></i>
-        </a>
-    </form>
-
-    <!-- Estado vacío -->
-    <div th:if="${#lists.isEmpty(barriles)}" class="empty-state">
-        <i class="bi bi-bucket"></i>
-        <h5>No hay barriles registrados</h5>
-        <p class="text-muted" th:if="${codigo != '' or estadoFiltro != null}">
-            Prueba cambiando los filtros de búsqueda.
-        </p>
-        <a th:href="@{/barriles/nuevo}" class="btn btn-zymos mt-2"
-           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-            <i class="bi bi-plus-lg me-1"></i>Registrar Barril
-        </a>
+    <div class="filter-card mb-3">
+        <form th:action="@{/barriles}" method="get" class="row g-2 align-items-end mb-3">
+            <div class="col-auto">
+                <input type="hidden" th:if="${estadoFiltro != null}" name="estado" th:value="${estadoFiltro.name()}">
+                <input type="text" name="codigo" class="form-control form-control-sm"
+                       style="width:220px;" placeholder="Buscar por código..."
+                       th:value="${codigo}">
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+            </div>
+            <div class="col-auto">
+                <a th:href="@{/barriles}" class="btn btn-outline-secondary btn-sm px-3"
+                   th:if="${codigo != ''}">Limpiar</a>
+            </div>
+        </form>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a th:href="@{/barriles(codigo=${codigo})}"
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
+                Todos
+            </a>
+            <a th:each="est : ${estados}"
+               th:href="@{/barriles(codigo=${codigo}, estado=${est.name()})}"
+               th:classappend="${estadoFiltro == est} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="${est.displayName}">Estado</a>
+        </div>
     </div>
 
     <!-- Tabla -->
-    <div th:unless="${#lists.isEmpty(barriles)}" class="card-zymos">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5><i class="bi bi-list-ul me-2"></i>Listado de Barriles</h5>
-            <span class="text-muted small"
-                  th:text="${#lists.size(barriles)} + ' barril' + (${#lists.size(barriles)} != 1 ? 'es' : '')"></span>
+    <div class="table-card mb-4">
+        <div class="table-count">
+            <span th:text="${#lists.size(barriles)}">0</span>
+            <span th:text="${#lists.size(barriles) != 1} ? ' barriles' : ' barril'">barriles</span>
         </div>
-        <div class="table-responsive">
-            <table class="table table-zymos mb-0">
+
+        <div th:if="${#lists.isEmpty(barriles)}" class="text-center py-5 text-muted">
+            <i class="bi bi-bucket fs-1 d-block mb-2"></i>
+            <p th:if="${codigo != '' or estadoFiltro != null}">No hay resultados para los filtros aplicados.</p>
+            <p th:unless="${codigo != '' or estadoFiltro != null}">No hay barriles registrados.</p>
+            <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm mt-1"
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                <i class="bi bi-plus-lg me-1"></i>Registrar Barril
+            </a>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(barriles)}" class="table-responsive">
+            <table class="table mb-0">
                 <thead>
-                    <tr>
-                        <th>Código</th>
-                        <th>Tipo</th>
-                        <th>Capacidad</th>
-                        <th>Estado</th>
-                        <th>Lote / Cerveza</th>
-                        <th>Cliente</th>
-                        <th>Despacho</th>
-                        <th class="text-end">Acciones</th>
-                    </tr>
+                <tr>
+                    <th style="padding-left:1.25rem;">Código</th>
+                    <th>Tipo</th>
+                    <th>Capacidad</th>
+                    <th>Estado</th>
+                    <th>Lote / Cerveza</th>
+                    <th>Cliente</th>
+                    <th>Despacho</th>
+                    <th></th>
+                </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="barril : ${barriles}">
-                        <td>
-                            <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
-                               class="fw-600 text-decoration-none" style="color:var(--dorado);"
-                               th:text="${barril.codigo}">—</a>
-                        </td>
-                        <td>
-                            <span th:if="${barril.tipo != null}"
-                                  class="badge bg-light text-dark border" th:text="${barril.tipo}">—</span>
-                            <span th:if="${barril.tipo == null}" class="text-muted">—</span>
-                        </td>
-                        <td>
-                            <span th:if="${barril.capacidadLitros != null}"
-                                  th:text="${barril.capacidadLitros.stripTrailingZeros().toPlainString()} + ' L'">—</span>
-                            <span th:if="${barril.capacidadLitros == null}" class="text-muted">—</span>
-                        </td>
-                        <td>
-                            <span class="badge" th:classappend="${barril.estado.badgeClass}"
-                                  th:text="${barril.estado.displayName}">—</span>
-                        </td>
-                        <td>
-                            <span th:if="${barril.codigoLote != null}"
-                                  class="badge bg-light text-dark border" th:text="${barril.codigoLote}">—</span>
-                            <span th:if="${barril.codigoLote == null}" class="text-muted">—</span>
-                        </td>
-                        <td>
-                            <span th:if="${barril.clienteNombre != null}" th:text="${barril.clienteNombre}">—</span>
-                            <span th:if="${barril.clienteNombre == null}" class="text-muted">—</span>
-                        </td>
-                        <td>
-                            <span th:if="${barril.fechaDespacho != null}"
-                                  th:text="${#temporals.format(barril.fechaDespacho,'dd/MM/yyyy')}">—</span>
-                            <span th:if="${barril.fechaDespacho == null}" class="text-muted">—</span>
-                        </td>
-                        <td class="text-end">
-                            <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
-                               class="btn btn-sm btn-zymos-outline me-1" title="Ver detalle">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                            <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
-                               class="btn btn-sm btn-zymos-outline me-1" title="Editar"
-                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                                <i class="bi bi-pencil"></i>
-                            </a>
-                            <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post"
-                                  class="d-inline"
-                                  sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                                  onsubmit="return confirm('¿Eliminar barril ' + [[${barril.codigo}]] + '?')">
-                                <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                <tr th:each="barril : ${barriles}">
+                    <td style="padding-left:1.25rem;" class="fw-semibold">
+                        <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
+                           class="text-decoration-none"
+                           style="color:var(--verde-zymos, #2563eb);"
+                           th:text="${barril.codigo}">—</a>
+                    </td>
+                    <td>
+                        <span th:if="${barril.tipo != null}"
+                              class="badge bg-light text-dark border" th:text="${barril.tipo}">—</span>
+                        <span th:if="${barril.tipo == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${barril.capacidadLitros != null}"
+                              th:text="${barril.capacidadLitros.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                        <span th:if="${barril.capacidadLitros == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span class="badge" th:classappend="${barril.estado.badgeClass}"
+                              th:text="${barril.estado.displayName}">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${barril.codigoLote != null}"
+                              class="badge bg-light text-dark border" th:text="${barril.codigoLote}">—</span>
+                        <span th:if="${barril.codigoLote == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${barril.clienteNombre != null}" th:text="${barril.clienteNombre}">—</span>
+                        <span th:if="${barril.clienteNombre == null}" class="text-muted">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${barril.fechaDespacho != null}"
+                              th:text="${#temporals.format(barril.fechaDespacho,'dd/MM/yyyy')}">—</span>
+                        <span th:if="${barril.fechaDespacho == null}" class="text-muted">—</span>
+                    </td>
+                    <td class="text-end pe-3">
+                        <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
+                           class="action-link view" title="Ver detalle">Ver</a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
+                           class="action-link edit" title="Editar"
+                           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Editar</a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post"
+                              class="d-inline"
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                              onsubmit="return confirm('¿Eliminar barril ' + [[${barril.codigo}]] + '?')">
+                            <input type="hidden" name="_csrf" th:value="${_csrf.token}">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div th:replace="~{fragments/paginacion :: paginacion(baseUrl='/barriles',
-         extraParams=${'codigo=' + codigo + (estadoFiltro != null ? '&estado=' + estadoFiltro.name() : '')},
-         paginaActual=${paginaActual}, totalPaginas=${totalPaginas})}"></div>
+        <!-- Paginación -->
+        <div class="pagination-simple" th:if="${totalPaginas > 1}">
+            <div th:replace="~{fragments/paginacion :: paginacion(baseUrl='/barriles',
+                 extraParams=${'codigo=' + codigo + (estadoFiltro != null ? '&estado=' + estadoFiltro.name() : '')},
+                 paginaActual=${paginaActual}, totalPaginas=${totalPaginas})}"></div>
+        </div>
+    </div>
 
 </div>
 

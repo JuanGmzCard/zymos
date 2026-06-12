@@ -12,54 +12,72 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4" style="max-width:1100px;">
+
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-bar-chart-line me-2"></i>Métricas — <code th:text="${tenant.subdomain}">tenant</code></h1>
-            <p th:text="${tenant.name} + ' · Panel de actividad'">Tenant</p>
+            <div class="subtitle" th:text="${tenant.name} + ' · Panel de actividad'">Tenant</div>
         </div>
-        <a th:href="@{/admin/tenants}" class="btn btn-zymos-outline">
+        <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm align-self-start">
             <i class="bi bi-arrow-left me-1"></i>Volver
         </a>
     </div>
-</div>
-
-<div class="container-fluid px-4 py-4" style="max-width:1100px;">
 
     <!-- Tenant info strip -->
-    <div class="card-zymos p-3 mb-4 d-flex align-items-center gap-3">
+    <div class="content-card d-flex align-items-center gap-3 mb-4">
         <div class="rounded-3 p-2 d-flex align-items-center justify-content-center"
-             th:style="'background:' + ${tenant.colorNavbar} + ';width:48px;height:48px;'">
-            <i class="bi bi-building fs-5" th:style="'color:' + ${tenant.colorAccent} + ';'"></i>
+             th:style="'background:' + ${tenant.colorNavbar} + ';width:44px;height:44px;flex-shrink:0;'">
+            <i class="bi bi-building" th:style="'color:' + ${tenant.colorAccent} + '; font-size:1.1rem;'"></i>
         </div>
         <div>
-            <div class="fw-bold" th:text="${tenant.name}">Tenant</div>
-            <small class="text-muted">
+            <div class="fw-semibold" th:text="${tenant.name}">Tenant</div>
+            <div class="small text-muted">
                 <code th:text="${tenant.subdomain}">sub</code>
                 <span th:if="${tenant.emailAdmin}" th:text="' · ' + ${tenant.emailAdmin}"></span>
                 <span th:if="${!tenant.active}" class="badge bg-danger ms-2">Inactivo</span>
                 <span th:if="${tenant.active}" class="badge bg-success ms-2">Activo</span>
-            </small>
+            </div>
         </div>
         <div class="ms-auto text-end">
             <div class="small text-muted">Último acceso</div>
-            <div class="fw-semibold" th:if="${metricas.ultimoAcceso != null}"
+            <div class="fw-semibold small" th:if="${metricas.ultimoAcceso != null}"
                  th:text="${#temporals.format(metricas.ultimoAcceso, 'dd/MM/yyyy HH:mm')}">—</div>
             <div class="text-muted small" th:if="${metricas.ultimoAcceso == null}">Sin registros</div>
         </div>
     </div>
 
+    <!-- Alertas -->
+    <div th:if="${tenant.emailAdmin == null or #strings.isEmpty(tenant.emailAdmin)}"
+         class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-envelope-x"></i>
+        <span>Este tenant no tiene email de administrador — las alertas por correo están deshabilitadas.</span>
+        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-sm btn-warning ms-auto">
+            Configurar email
+        </a>
+    </div>
+    <div th:if="${tenant.alertasIntentosFallidos > 0}"
+         class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-exclamation-triangle"></i>
+        <span>
+            <strong th:text="${tenant.alertasIntentosFallidos}">N</strong> fallo(s) SMTP consecutivo(s).
+            <span th:if="${tenant.alertasUltimoIntento != null}">
+                Último intento: <span th:text="${#temporals.format(tenant.alertasUltimoIntento, 'dd/MM/yyyy HH:mm')}"></span>.
+            </span>
+        </span>
+    </div>
+
     <!-- Producción -->
-    <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.05em;">
+    <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
         <i class="bi bi-droplet me-1"></i>Producción
-    </h6>
+    </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalLotes}">0</div>
-                <div class="small text-muted">Lotes totales</div>
-                <div th:if="${tenant.maxLotes != null}" class="mt-1">
-                    <div class="progress" style="height:5px;" title="Uso del plan">
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Lotes totales</div>
+                <div class="stat-value" th:text="${metricas.totalLotes}">0</div>
+                <div th:if="${tenant.maxLotes != null}" class="mt-2">
+                    <div class="progress" style="height:4px;">
                         <div class="progress-bar"
                              th:classappend="${metricas.totalLotes >= tenant.maxLotes} ? 'bg-danger' : (${metricas.totalLotes >= tenant.maxLotes * 0.8} ? 'bg-warning' : 'bg-success')"
                              role="progressbar"
@@ -72,106 +90,104 @@
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold text-primary" th:text="${metricas.lotesEnProceso}">0</div>
-                <div class="small text-muted">En proceso</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">En proceso</div>
+                <div class="stat-value info" th:text="${metricas.lotesEnProceso}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold text-success" th:text="${metricas.lotesCompletados}">0</div>
-                <div class="small text-muted">Completados</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Completados</div>
+                <div class="stat-value success" th:text="${metricas.lotesCompletados}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);"
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Litros producidos</div>
+                <div class="stat-value"
                      th:text="${metricas.litrosTotales != null ? metricas.litrosTotales.stripTrailingZeros().toPlainString() : '0'}">0</div>
-                <div class="small text-muted">Litros producidos</div>
             </div>
         </div>
     </div>
 
     <!-- Ventas -->
-    <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.05em;">
+    <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
         <i class="bi bi-cart me-1"></i>Ventas
-    </h6>
+    </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalVentas}">0</div>
-                <div class="small text-muted">Ventas registradas</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Ventas registradas</div>
+                <div class="stat-value" th:text="${metricas.totalVentas}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold text-success"
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Ingresos despachados</div>
+                <div class="stat-value success"
                      th:text="'$' + ${#numbers.formatDecimal(metricas.ingresosVentas, 1, 'COMMA', 0, 'POINT')}">$0</div>
-                <div class="small text-muted">Ingresos (despachados)</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalClientes}">0</div>
-                <div class="small text-muted">Clientes activos</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Clientes activos</div>
+                <div class="stat-value" th:text="${metricas.totalClientes}">0</div>
             </div>
         </div>
     </div>
 
     <!-- Compras -->
-    <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.05em;">
+    <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
         <i class="bi bi-receipt me-1"></i>Compras
-    </h6>
+    </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-6">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalFacturas}">0</div>
-                <div class="small text-muted">Facturas de proveedor</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Facturas de proveedor</div>
+                <div class="stat-value" th:text="${metricas.totalFacturas}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-6">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold text-danger"
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Total compras</div>
+                <div class="stat-value danger"
                      th:text="'$' + ${#numbers.formatDecimal(metricas.totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</div>
-                <div class="small text-muted">Total compras</div>
             </div>
         </div>
     </div>
 
     <!-- Inventario & Equipos -->
-    <h6 class="text-muted text-uppercase fw-semibold mb-2" style="font-size:.75rem;letter-spacing:.05em;">
+    <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
         <i class="bi bi-box-seam me-1"></i>Inventario &amp; Equipos
-    </h6>
+    </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalInsumos}">0</div>
-                <div class="small text-muted">Insumos en inventario</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Insumos</div>
+                <div class="stat-value" th:text="${metricas.totalInsumos}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold"
-                     th:classappend="${metricas.bajoStock > 0} ? 'text-warning' : 'text-muted'"
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Bajo stock</div>
+                <div class="stat-value"
+                     th:classappend="${metricas.bajoStock > 0} ? 'warning' : ''"
                      th:text="${metricas.bajoStock}">0</div>
-                <div class="small text-muted">Bajo stock</div>
-                <div th:if="${metricas.bajoStock > 0}">
-                    <span class="badge bg-warning text-dark" style="font-size:.65rem;">Alerta</span>
-                </div>
+                <span th:if="${metricas.bajoStock > 0}" class="badge bg-warning text-dark mt-1" style="font-size:.65rem;">Alerta</span>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalEquipos}">0</div>
-                <div class="small text-muted">Equipos registrados</div>
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Equipos</div>
+                <div class="stat-value" th:text="${metricas.totalEquipos}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
-            <div class="card-zymos p-3 text-center h-100">
-                <div class="fs-2 fw-bold" style="color:var(--dorado);" th:text="${metricas.totalUsuarios}">0</div>
-                <div class="small text-muted">Usuarios activos</div>
-                <div th:if="${tenant.maxUsuarios != null}" class="mt-1">
-                    <div class="progress" style="height:5px;" title="Uso del plan">
+            <div class="stat-card-simple h-100">
+                <div class="stat-label">Usuarios activos</div>
+                <div class="stat-value" th:text="${metricas.totalUsuarios}">0</div>
+                <div th:if="${tenant.maxUsuarios != null}" class="mt-2">
+                    <div class="progress" style="height:4px;">
                         <div class="progress-bar"
                              th:classappend="${metricas.totalUsuarios >= tenant.maxUsuarios} ? 'bg-danger' : (${metricas.totalUsuarios >= tenant.maxUsuarios * 0.8} ? 'bg-warning' : 'bg-success')"
                              role="progressbar"
@@ -185,41 +201,18 @@
         </div>
     </div>
 
-    <!-- SMTP alert if no email configured -->
-    <div th:if="${tenant.emailAdmin == null or #strings.isEmpty(tenant.emailAdmin)}"
-         class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-envelope-x fs-5"></i>
-        <span>Este tenant no tiene email de administrador configurado — las alertas por correo están deshabilitadas.</span>
-        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-sm btn-warning ms-auto">
-            Configurar email
-        </a>
-    </div>
-
-    <!-- SMTP failure counter -->
-    <div th:if="${tenant.alertasIntentosFallidos > 0}"
-         class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-        <i class="bi bi-exclamation-triangle fs-5"></i>
-        <span>
-            <strong th:text="${tenant.alertasIntentosFallidos}">N</strong>
-            fallo(s) SMTP consecutivo(s).
-            <span th:if="${tenant.alertasUltimoIntento != null}">
-                Último intento: <span th:text="${#temporals.format(tenant.alertasUltimoIntento, 'dd/MM/yyyy HH:mm')}"></span>.
-            </span>
-        </span>
-    </div>
-
-    <!-- Quick-action links -->
-    <div class="d-flex gap-2 flex-wrap mt-2">
-        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-zymos-outline btn-sm">
+    <!-- Quick actions -->
+    <div class="d-flex gap-2 flex-wrap pb-4">
+        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-pencil me-1"></i>Editar configuración
         </a>
-        <a th:href="@{/admin/tenants/{s}/usuarios(s=${tenant.subdomain})}" class="btn btn-zymos-outline btn-sm">
+        <a th:href="@{/admin/tenants/{s}/usuarios(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-people me-1"></i>Gestionar usuarios
         </a>
-        <a th:href="@{/admin/tenants/{s}/historial(s=${tenant.subdomain})}" class="btn btn-zymos-outline btn-sm">
+        <a th:href="@{/admin/tenants/{s}/historial(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-clock-history me-1"></i>Ver historial
         </a>
-        <a th:href="@{/admin/migracion/{s}(s=${tenant.subdomain})}" class="btn btn-zymos-outline btn-sm">
+        <a th:href="@{/admin/migracion/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-upload me-1"></i>Migración de datos
         </a>
     </div>

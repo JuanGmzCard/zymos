@@ -12,51 +12,61 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera -->
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-bar-chart-steps me-2"></i>Comparativa de Lotes</h1>
-            <p>Seleccioná entre 2 y 6 lotes para comparar sus métricas</p>
+            <h1><i class="bi bi-bar-chart-steps me-2" style="color:var(--verde-zymos,#2563eb);"></i>Comparativa de Lotes</h1>
+            <p class="subtitle">Seleccioná entre 2 y 6 lotes para comparar sus métricas</p>
         </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
+    <!-- Flash -->
+    <div th:if="${mensaje}" th:classappend="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show mb-3'" role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
 
-    <!-- Buscador -->
-    <form th:action="@{/comparativa}" method="get" class="d-flex gap-2 mb-3">
-        <input type="search" name="q" class="form-control" style="max-width:320px;"
-               placeholder="Buscar por código o estilo…"
-               th:value="${qFiltro}" autocomplete="off">
-        <button type="submit" class="btn btn-zymos-outline">
-            <i class="bi bi-search"></i>
-        </button>
-        <a th:if="${!qFiltro.isBlank()}" th:href="@{/comparativa}" class="btn btn-outline-secondary">
-            <i class="bi bi-x-lg"></i>
-        </a>
-    </form>
+    <!-- Filtro de búsqueda -->
+    <div class="filter-card mb-3">
+        <form th:action="@{/comparativa}" method="get" class="d-flex gap-2 align-items-center flex-wrap">
+            <i class="bi bi-search text-secondary"></i>
+            <input type="search" name="q" class="form-control form-control-sm"
+                   style="max-width:280px;"
+                   placeholder="Buscar por código o estilo…"
+                   th:value="${qFiltro}" autocomplete="off">
+            <button type="submit" class="btn btn-sm btn-primary">Buscar</button>
+            <a th:if="${!qFiltro.isBlank()}" th:href="@{/comparativa}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-x-lg me-1"></i>Limpiar
+            </a>
+        </form>
+    </div>
 
     <!-- Formulario de selección -->
     <form action="/comparativa/resultado" method="get" id="formComparativa">
-        <!-- Barra flotante de acción -->
-        <div class="d-flex align-items-center justify-content-between mb-3">
-            <span class="text-muted small">
+
+        <!-- Barra de acción -->
+        <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+            <span class="text-secondary" style="font-size:0.875rem;">
                 <span id="contadorSeleccion">0</span> seleccionado<span id="pluralS" style="display:none;">s</span>
-                <span class="text-muted"> (mín. 2, máx. 6)</span>
+                <span class="text-secondary"> (mín. 2, máx. 6)</span>
             </span>
-            <button type="submit" id="btnComparar" class="btn btn-zymos" disabled>
+            <button type="submit" id="btnComparar" class="btn btn-primary btn-sm" disabled>
                 <i class="bi bi-bar-chart-steps me-1"></i>Comparar seleccionados
             </button>
         </div>
 
-        <div th:if="${#lists.isEmpty(lotes)}" class="text-center text-muted py-5">
-            <i class="bi bi-clipboard-x" style="font-size:3rem; opacity:.4;"></i>
-            <p class="mt-3">No se encontraron lotes</p>
+        <!-- Empty state -->
+        <div th:if="${#lists.isEmpty(lotes)}" class="content-card text-center py-5">
+            <i class="bi bi-clipboard-x" style="font-size:2.5rem; color:#cbd5e1;"></i>
+            <p class="mt-3 text-secondary mb-0">No se encontraron lotes</p>
         </div>
 
-        <div class="card-zymos" th:unless="${#lists.isEmpty(lotes)}">
+        <!-- Tabla de lotes -->
+        <div class="table-card" th:unless="${#lists.isEmpty(lotes)}">
             <div class="table-responsive">
-                <table class="table table-zymos mb-0" style="font-size:0.85rem;">
+                <table class="table mb-0" style="font-size:0.85rem;">
                     <thead>
                         <tr>
                             <th style="width:36px;"></th>
@@ -79,10 +89,10 @@
                                        name="ids" th:value="${lote.id}">
                             </td>
                             <td>
-                                <span class="fw-bold" th:text="${lote.codigoLote}">—</span>
+                                <span class="fw-bold font-monospace" style="color:var(--verde-zymos,#2563eb);" th:text="${lote.codigoLote}">—</span>
                             </td>
                             <td th:text="${lote.estilo}">—</td>
-                            <td class="text-muted text-nowrap"
+                            <td class="text-secondary text-nowrap"
                                 th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yy')} : '—'">—</td>
                             <td>
                                 <span class="phase-badge"
@@ -98,7 +108,7 @@
                                 th:text="${lote.densidadInicial != null} ? ${lote.densidadInicial} : '—'">—</td>
                             <td class="text-end font-monospace"
                                 th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'">—</td>
-                            <td class="text-end"
+                            <td class="text-end fw-semibold"
                                 th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + '%' : '—'">—</td>
                             <td class="text-end"
                                 th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
@@ -107,6 +117,7 @@
                 </table>
             </div>
         </div>
+
     </form>
 
 </div>

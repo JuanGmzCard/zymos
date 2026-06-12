@@ -14,48 +14,95 @@
               th:href="@{'https://fonts.googleapis.com/css2?family=' + ${#strings.replace(t.fontHeadings,' ','+')} + ':wght@400;600;700&display=swap'}"
               rel="stylesheet">
     </th:block>
+    <style>
+        .tenant-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: box-shadow 0.15s;
+        }
+        .tenant-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+        .tenant-card.inactive { opacity: 0.72; }
+        .tenant-card-body { padding: 1rem 1.25rem; }
+        .tenant-subdomain {
+            font-family: monospace;
+            font-size: 0.78rem;
+            color: #64748b;
+            background: #f1f5f9;
+            border-radius: 4px;
+            padding: 1px 6px;
+        }
+        .tenant-name {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 0.4rem 0 0.15rem;
+        }
+        .tenant-tagline {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-bottom: 0.75rem;
+        }
+        .tenant-preview {
+            border-radius: 5px;
+            padding: 0.4rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.875rem;
+        }
+        .tenant-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
+        .tenant-actions .btn { font-size: 0.75rem; padding: 0.25rem 0.6rem; }
+
+        html.dark-mode .tenant-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .tenant-subdomain { background: var(--dm-input); color: var(--dm-text-muted); }
+        html.dark-mode .tenant-name { color: var(--dm-text); }
+        html.dark-mode .tenant-tagline { color: var(--dm-text-muted); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4" style="max-width:1400px;">
+
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-building-gear me-2"></i>Gestión de Tenants</h1>
-            <p>Clientes registrados en la plataforma multi-tenant</p>
+            <div class="subtitle">Clientes registrados en la plataforma multi-tenant</div>
         </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-info" id="btnVerificarAlertas"
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVerificarAlertas"
                     onclick="verificarAlertas()">
                 <i class="bi bi-bell me-1"></i>Verificar alertas
             </button>
-            <form th:action="@{/admin/tenants/cache/evict}" method="post">
+            <form th:action="@{/admin/tenants/cache/evict}" method="post" class="d-inline">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <button type="submit" class="btn btn-outline-warning">
+                <button type="submit" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-arrow-clockwise me-1"></i>Limpiar cache
                 </button>
             </form>
-            <a th:href="@{/admin/tenants/nuevo}" class="btn btn-zymos">
+            <a th:href="@{/admin/tenants/nuevo}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-circle me-1"></i>Nuevo Tenant
             </a>
         </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
-
-    <div th:if="${#lists.isEmpty(tenants)}" class="text-center text-muted py-5">
-        <i class="bi bi-building" style="font-size:3rem; opacity:.4;"></i>
-        <p class="mt-3">No hay tenants registrados aún</p>
+    <div th:if="${#lists.isEmpty(tenants)}" class="content-card text-center py-5 text-muted">
+        <i class="bi bi-building" style="font-size:2.5rem; opacity:.3;"></i>
+        <p class="mt-3 mb-0">No hay tenants registrados aún</p>
     </div>
 
-    <div class="row g-3">
+    <div class="row g-3 pb-4">
         <div class="col-xl-4 col-md-6" th:each="t : ${tenants}">
-            <div class="card-zymos h-100 overflow-hidden"
-                 th:classappend="${!t.active} ? 'opacity-75' : ''">
+            <div class="tenant-card h-100" th:classappend="${!t.active} ? 'inactive' : ''">
 
-                <!-- Franja de colores -->
-                <div class="d-flex" style="height:10px;">
+                <!-- Color strip -->
+                <div class="d-flex" style="height:6px;">
                     <div class="flex-fill" th:style="'background:' + ${t.colorNavbar}"></div>
                     <div class="flex-fill" th:style="'background:' + ${t.colorPrimary}"></div>
                     <div class="flex-fill" th:style="'background:' + ${t.colorAccent}"></div>
@@ -64,92 +111,90 @@
                     <div class="flex-fill" th:style="'background:' + ${t.colorBodyBg}"></div>
                 </div>
 
-                <div class="p-3">
-                    <!-- Subdomain + estado -->
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <code class="text-muted small" th:text="${t.subdomain}">default</code>
-                            <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;">Activo</span>
-                            <span th:unless="${t.active}" class="badge badge-neutral" style="font-size:.65rem;">Inactivo</span>
-                            <span th:if="${t.alertasIntentosFallidos > 0}"
-                                  class="badge bg-warning text-dark"
-                                  style="font-size:.65rem; cursor:default;"
-                                  th:title="${'Email: ' + t.alertasIntentosFallidos + ' fallo(s) consecutivo(s)' + (t.alertasUltimoIntento != null ? ' · Último: ' + #temporals.format(t.alertasUltimoIntento, 'dd/MM HH:mm') : '')}">
-                                <i class="bi bi-envelope-exclamation me-1"></i><span th:text="${t.alertasIntentosFallidos}"></span>
-                            </span>
-                            <!-- Badge plan vencido -->
-                            <span th:if="${t.planFin != null and t.planVencido}"
-                                  class="badge bg-danger" style="font-size:.65rem;"
-                                  th:title="${'Plan vencido desde ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
-                                <i class="bi bi-calendar-x me-1"></i>Vencido
-                            </span>
-                            <!-- Badge plan por vencer (próximos 7 días) -->
-                            <span th:if="${t.planFin != null and !t.planVencido and t.planPorVencer}"
-                                  class="badge bg-warning text-dark" style="font-size:.65rem;"
-                                  th:title="${'Plan vence: ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
-                                <i class="bi bi-calendar-exclamation me-1"></i>Por vencer
-                            </span>
-                            <!-- Badge plan vigente con fecha -->
-                            <span th:if="${t.planFin != null and !t.planVencido and !t.planPorVencer}"
-                                  class="badge bg-info text-dark" style="font-size:.65rem;"
-                                  th:title="${'Plan vigente hasta ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
-                                <i class="bi bi-calendar-check me-1"></i><span th:text="${#temporals.format(t.planFin,'dd/MM/yy')}"></span>
-                            </span>
-                        </div>
+                <div class="tenant-card-body">
+                    <!-- Header row: subdomain + badges -->
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="tenant-subdomain" th:text="${t.subdomain}">default</span>
+                        <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;">Activo</span>
+                        <span th:unless="${t.active}" class="badge bg-secondary" style="font-size:.65rem;">Inactivo</span>
+                        <span th:if="${t.alertasIntentosFallidos > 0}"
+                              class="badge bg-warning text-dark"
+                              style="font-size:.65rem; cursor:default;"
+                              th:title="${'Email: ' + t.alertasIntentosFallidos + ' fallo(s) consecutivo(s)' + (t.alertasUltimoIntento != null ? ' · Último: ' + #temporals.format(t.alertasUltimoIntento, 'dd/MM HH:mm') : '')}">
+                            <i class="bi bi-envelope-exclamation me-1"></i><span th:text="${t.alertasIntentosFallidos}"></span>
+                        </span>
+                        <span th:if="${t.planFin != null and t.planVencido}"
+                              class="badge bg-danger" style="font-size:.65rem;"
+                              th:title="${'Plan vencido desde ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                            <i class="bi bi-calendar-x me-1"></i>Vencido
+                        </span>
+                        <span th:if="${t.planFin != null and !t.planVencido and t.planPorVencer}"
+                              class="badge bg-warning text-dark" style="font-size:.65rem;"
+                              th:title="${'Plan vence: ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                            <i class="bi bi-calendar-exclamation me-1"></i>Por vencer
+                        </span>
+                        <span th:if="${t.planFin != null and !t.planVencido and !t.planPorVencer}"
+                              class="badge bg-info text-dark" style="font-size:.65rem;"
+                              th:title="${'Plan vigente hasta ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
+                            <i class="bi bi-calendar-check me-1"></i><span th:text="${#temporals.format(t.planFin,'dd/MM/yy')}"></span>
+                        </span>
                         <i th:if="${!#strings.isEmpty(t.logoUrl)}"
-                           class="bi bi-image text-muted" title="Tiene logo configurado"
+                           class="bi bi-image text-muted ms-auto" title="Tiene logo configurado"
                            style="font-size:.85rem;"></i>
                     </div>
 
-                    <!-- Nombre y tagline -->
-                    <h5 class="mb-1" th:text="${t.name}"
-                        th:style="${t.fontHeadings != null} ? 'font-family: \'' + ${t.fontHeadings} + '\', serif' : ''">Nombre del tenant</h5>
-                    <p class="text-muted small mb-3"
-                       th:text="${!#strings.isEmpty(t.tagline)} ? ${t.tagline} : 'Sin tagline'"
-                       th:classappend="${#strings.isEmpty(t.tagline)} ? 'fst-italic' : ''">Tagline</p>
+                    <!-- Name & tagline -->
+                    <div class="tenant-name" th:text="${t.name}"
+                         th:style="${t.fontHeadings != null} ? 'font-family: \'' + ${t.fontHeadings} + '\', serif' : ''">Nombre</div>
+                    <div class="tenant-tagline"
+                         th:text="${!#strings.isEmpty(t.tagline)} ? ${t.tagline} : 'Sin tagline'"
+                         th:classappend="${#strings.isEmpty(t.tagline)} ? 'fst-italic' : ''">Tagline</div>
 
                     <!-- Mini navbar preview -->
-                    <div class="rounded-2 mb-3 px-2 py-2 d-flex align-items-center gap-2"
+                    <div class="tenant-preview mb-3"
                          th:style="'background:' + ${t.colorNavbar}">
                         <i class="bi bi-droplet-fill"
                            th:unless="${!#strings.isEmpty(t.logoUrl)}"
-                           th:style="'color:' + ${t.colorAccent} + '; font-size:.9rem;'"></i>
+                           th:style="'color:' + ${t.colorAccent} + '; font-size:.85rem;'"></i>
                         <img th:if="${!#strings.isEmpty(t.logoUrl)}"
-                             th:src="${t.logoUrl}" alt="" style="height:18px; object-fit:contain;">
-                        <span class="small fw-bold"
-                              th:style="'font-family:\'' + ${t.fontHeadings != null ? t.fontHeadings : 'Cinzel'} + '\'; font-size:.8rem; flex:1; color:' + ${t.colorCream}"
+                             th:src="${t.logoUrl}" alt="" style="height:16px; object-fit:contain;">
+                        <span style="flex:1; font-size:.78rem; font-weight:600;"
+                              th:style="'font-family:\'' + ${t.fontHeadings != null ? t.fontHeadings : 'Cinzel'} + '\'; font-size:.78rem; font-weight:600; color:' + ${t.colorCream}"
                               th:text="${t.name}">Nombre</span>
-                        <span class="rounded px-2 small"
-                              th:style="'background:' + ${t.colorAccent} + '; color:' + ${t.colorNavbar} + '; font-size:.7rem; padding-top:2px; padding-bottom:2px;'">
+                        <span class="rounded px-2"
+                              style="font-size:.68rem; padding-top:2px; padding-bottom:2px;"
+                              th:style="'background:' + ${t.colorAccent} + '; color:' + ${t.colorNavbar} + '; font-size:.68rem; padding:2px 8px; border-radius:4px;'">
                             Preview
                         </span>
                     </div>
 
-                    <!-- Acciones -->
-                    <div class="d-flex gap-2 flex-wrap">
+                    <!-- Actions -->
+                    <div class="tenant-actions">
                         <a th:href="@{/admin/tenants/editar/{sub}(sub=${t.subdomain})}"
-                           class="btn btn-zymos-outline btn-sm flex-fill">
+                           class="btn btn-outline-primary">
                             <i class="bi bi-pencil me-1"></i>Editar
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/usuarios(sub=${t.subdomain})}"
-                           class="btn btn-outline-secondary btn-sm flex-fill">
+                           class="btn btn-outline-secondary">
                             <i class="bi bi-people me-1"></i>Usuarios
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/metricas(sub=${t.subdomain})}"
-                           class="btn btn-outline-secondary btn-sm flex-fill">
+                           class="btn btn-outline-secondary">
                             <i class="bi bi-bar-chart-line me-1"></i>Métricas
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/historial(sub=${t.subdomain})}"
-                           class="btn btn-outline-secondary btn-sm flex-fill">
+                           class="btn btn-outline-secondary">
                             <i class="bi bi-clock-history me-1"></i>Historial
                         </a>
                         <a th:href="@{/admin/migracion/{sub}(sub=${t.subdomain})}"
-                           class="btn btn-outline-info btn-sm flex-fill">
+                           class="btn btn-outline-secondary">
                             <i class="bi bi-cloud-upload me-1"></i>Migración
                         </a>
-                        <form th:action="@{/admin/tenants/{sub}/toggle(sub=${t.subdomain})}" method="post">
-                            <button type="submit" class="btn btn-sm"
-                                    th:classappend="${t.active} ? 'btn-outline-warning' : 'btn-outline-success'">
+                        <form th:action="@{/admin/tenants/{sub}/toggle(sub=${t.subdomain})}" method="post" class="d-inline">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                            <button type="submit" class="btn"
+                                    th:classappend="${t.active} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                    th:title="${t.active} ? 'Desactivar' : 'Activar'">
                                 <i class="bi" th:classappend="${t.active} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
                             </button>
                         </form>
@@ -175,18 +220,18 @@ function verificarAlertas() {
     .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function() {
         btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Alertas verificadas';
-        btn.className = 'btn btn-outline-success';
+        btn.className = 'btn btn-outline-success btn-sm';
         setTimeout(function() {
             btn.disabled = false;
             btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
-            btn.className = 'btn btn-outline-info';
+            btn.className = 'btn btn-outline-secondary btn-sm';
         }, 3000);
     })
     .catch(function() {
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
-        btn.className = 'btn btn-outline-danger';
-        setTimeout(function() { btn.className = 'btn btn-outline-info'; }, 3000);
+        btn.className = 'btn btn-outline-danger btn-sm';
+        setTimeout(function() { btn.className = 'btn btn-outline-secondary btn-sm'; }, 3000);
     });
 }
 </script>

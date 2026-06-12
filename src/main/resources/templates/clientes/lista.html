@@ -9,172 +9,300 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            min-width: 130px;
+        }
+        .stat-card-simple .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card-simple .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1e293b;
+        }
+
+        .page-header {
+            padding: 1.75rem 0 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+            font-family: var(--font-body), sans-serif;
+        }
+        .page-header .subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        .action-link {
+            font-size: 0.8rem;
+            text-decoration: none;
+            padding: 0 0.25rem;
+        }
+        .action-link.view  { color: var(--verde-zymos, #2563eb); }
+        .action-link.edit  { color: #475569; }
+        .action-link.del   { color: #ef4444; }
+        .action-link:hover.view { color: var(--dorado, #1d4ed8); text-decoration: underline; }
+        .action-link:hover.edit { color: #1e293b; text-decoration: underline; }
+        .action-link:hover.del  { color: #b91c1c; text-decoration: underline; }
+        .action-sep { color: #cbd5e1; font-size: 0.75rem; margin: 0 0.1rem; }
+
+        .filter-tab {
+            display: inline-block;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+        .filter-tab.active  { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+
+        .pagination-simple {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 1rem;
+            font-size: 0.875rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+        }
+        .pagination-simple a {
+            color: var(--verde-zymos, #2563eb);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .pagination-simple a.disabled {
+            color: #cbd5e1;
+            pointer-events: none;
+        }
+
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color: var(--dm-text); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+        html.dark-mode .pagination-simple { border-color: var(--dm-border-light); color: var(--dm-text-muted); }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<!-- Hero -->
-<div class="hero-section">
-    <div class="container-fluid px-4">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h1><i class="bi bi-people me-2"></i>Clientes</h1>
-                <p class="mb-0">Directorio de clientes registrados</p>
-            </div>
-            <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
-                <a th:href="@{/clientes/nuevo}" class="btn btn-zymos">
-                    <i class="bi bi-plus-lg me-1"></i>Nuevo Cliente
-                </a>
-            </div>
+<div class="container-fluid px-4">
+
+    <!-- Cabecera de página -->
+    <div class="page-header d-flex justify-content-between align-items-start">
+        <div>
+            <h1><i class="bi bi-people me-2"></i>Clientes</h1>
+            <p class="subtitle mb-0">Directorio de clientes registrados</p>
+        </div>
+        <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+            <a th:href="@{/clientes/nuevo}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Nuevo Cliente
+            </a>
         </div>
     </div>
-</div>
-
-<div class="container-fluid px-4 py-4">
 
     <!-- Flash -->
-    <div th:if="${mensaje}" class="alert"
-         th:classappend="'alert-' + ${tipoMensaje}" role="alert" th:text="${mensaje}"></div>
+    <div th:if="${mensaje}" class="alert mb-3"
+         th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : (${tipoMensaje == 'warning'} ? 'alert-warning' : 'alert-danger')">
+        <span th:text="${mensaje}"></span>
+    </div>
 
-    <!-- Stat-card total -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-md-3">
-            <div class="stat-card">
-                <div class="stat-card-icon"><i class="bi bi-people"></i></div>
-                <div class="stat-card-value" th:text="${totalClientes}">0</div>
-                <div class="stat-card-label">Total Clientes</div>
-            </div>
+    <!-- Stat cards -->
+    <div class="d-flex gap-3 flex-wrap mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total Clientes</div>
+            <div class="stat-value" th:text="${totalClientes}">0</div>
         </div>
     </div>
 
-    <!-- Filtros + tabla -->
-    <div class="card-zymos">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Directorio</h5>
+    <!-- Filtros -->
+    <div class="filter-card mb-3">
+        <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+                <!-- Tabs activo/inactivo -->
+                <a th:href="@{/clientes(nombre=${nombre})}"
+                   th:classappend="${activo == null} ? 'filter-tab active' : 'filter-tab inactive'">
+                    Todos
+                </a>
+                <a th:href="@{/clientes(nombre=${nombre},activo=true)}"
+                   th:classappend="${activo != null and activo} ? 'filter-tab active' : 'filter-tab inactive'">
+                    Activos
+                </a>
+                <a th:href="@{/clientes(nombre=${nombre},activo=false)}"
+                   th:classappend="${activo != null and !activo} ? 'filter-tab active' : 'filter-tab inactive'">
+                    Inactivos
+                </a>
+            </div>
             <div class="d-flex gap-2 align-items-center flex-wrap">
+                <!-- Filtro por nombre -->
+                <form th:action="@{/clientes}" method="get" class="d-flex gap-2 align-items-center">
+                    <input type="hidden" name="activo" th:if="${activo != null}" th:value="${activo}">
+                    <input type="text" name="nombre" class="form-control form-control-sm"
+                           style="width:220px;"
+                           th:value="${nombre}" placeholder="Filtrar por nombre o NIT…">
+                    <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+                    <a th:if="${nombre != null or activo != null}"
+                       th:href="@{/clientes}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x"></i> Limpiar
+                    </a>
+                </form>
                 <!-- Typeahead -->
                 <div class="position-relative">
                     <input type="search" id="clienteSearch" class="form-control form-control-sm"
-                           placeholder="Buscar por nombre o NIT…" autocomplete="off"
-                           style="min-width:220px;" th:value="${nombre}">
+                           placeholder="Búsqueda rápida…" autocomplete="off"
+                           style="width:200px;" th:value="${nombre}">
                     <div id="clienteSuggestHeader" class="search-suggest" style="display:none;"></div>
                 </div>
-                <!-- Tabs activo/inactivo -->
-                <a th:href="@{/clientes(nombre=${nombre},activo=true)}"
-                   class="btn btn-sm"
-                   th:classappend="${activo != null and activo} ? 'btn-zymos' : 'btn-outline-secondary'">Activos</a>
-                <a th:href="@{/clientes(nombre=${nombre},activo=false)}"
-                   class="btn btn-sm"
-                   th:classappend="${activo != null and !activo} ? 'btn-zymos' : 'btn-outline-secondary'">Inactivos</a>
-                <a th:if="${nombre != null or activo != null}"
-                   th:href="@{/clientes}" class="btn btn-sm btn-outline-secondary">
-                    <i class="bi bi-x"></i>
-                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Filtro nombre -->
-        <div class="card-body border-bottom py-2">
-            <form th:action="@{/clientes}" method="get" class="row g-2 align-items-end">
-                <input type="hidden" name="activo" th:if="${activo != null}" th:value="${activo}">
-                <div class="col-auto">
-                    <label class="form-label form-label-sm mb-0">Nombre o NIT</label>
-                    <input type="text" name="nombre" class="form-control form-control-sm"
-                           th:value="${nombre}" placeholder="Filtrar…">
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-sm btn-zymos">
-                        <i class="bi bi-search me-1"></i>Buscar
-                    </button>
-                </div>
-            </form>
+    <!-- Tabla -->
+    <div class="table-card mb-4">
+        <div class="table-count">
+            <span th:text="${totalClientes}">0</span> clientes
         </div>
 
-        <!-- Tabla -->
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-zymos table-hover mb-0">
-                    <thead>
-                        <tr>
-                            <th class="ps-3">Nombre / Razón Social</th>
-                            <th>NIT</th>
-                            <th>Ciudad</th>
-                            <th>Lista de Precio</th>
-                            <th class="text-center">Estado</th>
-                            <th style="width:130px;"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:if="${#lists.isEmpty(clientes)}">
-                            <td colspan="6" class="text-center text-muted py-4">
-                                <i class="bi bi-people fs-4 d-block mb-2"></i>
-                                No hay clientes registrados
-                            </td>
-                        </tr>
-                        <tr th:each="c : ${clientes}">
-                            <td class="ps-3">
-                                <div class="fw-semibold" th:text="${c.nombre}">—</div>
-                                <div th:if="${c.razonSocial != null and !c.razonSocial.isBlank()}"
-                                     class="text-muted small" th:text="${c.razonSocial}"></div>
-                            </td>
-                            <td class="text-muted" th:text="${c.nit ?: '—'}">—</td>
-                            <td class="text-muted small">
-                                <span th:if="${c.ciudad != null}" th:text="${c.ciudad}">—</span>
-                                <span th:if="${c.departamento != null and c.ciudad != null}">, </span>
-                                <span th:if="${c.departamento != null}" th:text="${c.departamento}"></span>
-                                <span th:if="${c.ciudad == null and c.departamento == null}">—</span>
-                            </td>
-                            <td>
-                                <span th:if="${c.listaPrecio != null}"
-                                      class="badge bg-light text-dark border"
-                                      style="font-size:0.72rem;"
-                                      th:text="${c.listaPrecio.displayName}">—</span>
-                                <span th:if="${c.listaPrecio == null}" class="text-muted">—</span>
-                            </td>
-                            <td class="text-center">
-                                <span th:if="${c.activo}" class="badge bg-success">Activo</span>
-                                <span th:if="${!c.activo}" class="badge bg-secondary">Inactivo</span>
-                            </td>
-                            <td class="text-nowrap">
-                                <a th:href="@{/clientes/ver/{id}(id=${c.id})}"
-                                   class="btn btn-sm btn-outline-secondary py-0 px-2"
-                                   title="Ver ficha">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
-                                   th:href="@{/clientes/editar/{id}(id=${c.id})}"
-                                   class="btn btn-sm btn-outline-primary py-0 px-2 ms-1"
-                                   title="Editar">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <form sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
-                                      th:action="@{/clientes/{id}/toggle(id=${c.id})}" method="post"
-                                      class="d-inline">
-                                    <button type="submit"
-                                            class="btn btn-sm py-0 px-2 ms-1"
-                                            th:classappend="${c.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
-                                            th:title="${c.activo} ? 'Desactivar' : 'Activar'">
-                                        <i class="bi" th:classappend="${c.activo} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                <tr>
+                    <th style="padding-left:1.25rem;">Nombre / Razón Social</th>
+                    <th>NIT</th>
+                    <th>Ciudad</th>
+                    <th>Lista de Precio</th>
+                    <th class="text-center">Estado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:if="${#lists.isEmpty(clientes)}">
+                    <td colspan="6" class="text-center text-muted py-5">
+                        <i class="bi bi-people fs-1 d-block mb-2"></i>
+                        No hay clientes registrados
+                    </td>
+                </tr>
+                <tr th:each="c : ${clientes}">
+                    <td style="padding-left:1.25rem;">
+                        <div class="fw-semibold" th:text="${c.nombre}">—</div>
+                        <div th:if="${c.razonSocial != null and !c.razonSocial.isBlank()}"
+                             class="text-muted small" th:text="${c.razonSocial}"></div>
+                    </td>
+                    <td class="text-muted" th:text="${c.nit ?: '—'}">—</td>
+                    <td class="text-muted small">
+                        <span th:if="${c.ciudad != null}" th:text="${c.ciudad}">—</span>
+                        <span th:if="${c.departamento != null and c.ciudad != null}">, </span>
+                        <span th:if="${c.departamento != null}" th:text="${c.departamento}"></span>
+                        <span th:if="${c.ciudad == null and c.departamento == null}">—</span>
+                    </td>
+                    <td>
+                        <span th:if="${c.listaPrecio != null}"
+                              class="badge bg-light text-dark border"
+                              style="font-size:0.72rem;"
+                              th:text="${c.listaPrecio.displayName}">—</span>
+                        <span th:if="${c.listaPrecio == null}" class="text-muted">—</span>
+                    </td>
+                    <td class="text-center">
+                        <span th:if="${c.activo}" class="badge bg-success">Activo</span>
+                        <span th:if="${!c.activo}" class="badge bg-secondary">Inactivo</span>
+                    </td>
+                    <td class="text-end pe-3">
+                        <a th:href="@{/clientes/ver/{id}(id=${c.id})}"
+                           class="action-link view" title="Ver ficha">Ver</a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
+                        <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                           th:href="@{/clientes/editar/{id}(id=${c.id})}"
+                           class="action-link edit">Editar</a>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
+                        <form sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                              th:action="@{/clientes/{id}/toggle(id=${c.id})}" method="post"
+                              class="d-inline">
+                            <button type="submit"
+                                    class="action-link border-0 bg-transparent p-0"
+                                    th:classappend="${c.activo} ? 'del' : 'view'"
+                                    th:title="${c.activo} ? 'Desactivar' : 'Activar'">
+                                <i class="bi" th:classappend="${c.activo} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
         </div>
 
         <!-- Paginación -->
-        <div th:if="${totalPaginas > 1}" class="card-footer">
-            <div th:replace="~{fragments/paginacion :: paginacion(
-                baseUrl='/clientes',
-                extraParams=${(nombre != null ? '&nombre=' + nombre : '') + (activo != null ? '&activo=' + activo : '')},
-                paginaActual=${paginaActual},
-                totalPaginas=${totalPaginas})}"></div>
+        <div th:if="${totalPaginas > 1}" class="pagination-simple">
+            <a th:href="@{/clientes(page=${paginaActual - 1},nombre=${nombre},activo=${activo})}"
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''">← Anterior</a>
+            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+            <a th:href="@{/clientes(page=${paginaActual + 1},nombre=${nombre},activo=${activo})}"
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">Siguiente →</a>
         </div>
     </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -35,10 +35,10 @@
 <!-- Datalist compartido — se actualiza dinámicamente según tipo+categoría -->
 <datalist id="datalist-item-nombres"></datalist>
 
-<div class="hero-section">
-    <div class="container-fluid px-4">
+<div class="container-fluid px-4 pt-4">
+    <div class="page-header d-flex justify-content-between align-items-start">
         <h1 th:text="${facturaId != null} ? 'Editar Factura' : 'Nueva Factura'">Factura</h1>
-        <p>Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
+        <p class="text-muted mb-0">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
     </div>
 </div>
 
@@ -47,8 +47,8 @@
           th:object="${facturaForm}" method="post">
 
         <!-- DATOS GENERALES -->
-        <div class="form-section">
-            <div class="form-section-title"><i class="bi bi-receipt me-2"></i>Datos de la Factura</div>
+        <div class="content-card mb-4">
+            <div class="content-card-title"><i class="bi bi-receipt me-2"></i>Datos de la Factura</div>
             <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">N° Factura</label>

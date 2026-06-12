@@ -12,95 +12,101 @@
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4" style="max-width:960px;">
+
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-people me-2"></i>Usuarios — <code th:text="${tenant.subdomain}">tenant</code></h1>
-            <p th:text="${tenant.name} + ' · ' + ${usuarios.size()} + ' usuario(s)'">Tenant</p>
+            <div class="subtitle" th:text="${tenant.name} + ' · ' + ${usuarios.size()} + ' usuario(s)'">Tenant</div>
         </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-zymos" data-bs-toggle="modal" data-bs-target="#modalNuevo">
+        <div class="d-flex gap-2 align-items-center">
+            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevo">
                 <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
             </button>
-            <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-zymos-outline">
+            <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i>Volver
             </a>
         </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4" style="max-width:900px;">
-
-    <div class="card-zymos p-0 overflow-hidden">
-        <table class="table mb-0 align-middle">
-            <thead>
-                <tr>
-                    <th class="detail-label px-3 py-2">Usuario</th>
-                    <th class="detail-label px-3 py-2">Rol</th>
-                    <th class="detail-label px-3 py-2">Estado</th>
-                    <th class="detail-label px-3 py-2">Creado</th>
-                    <th class="detail-label px-3 py-2 text-end">Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:if="${#lists.isEmpty(usuarios)}">
-                    <td colspan="5" class="text-center text-muted py-4">No hay usuarios en este tenant</td>
-                </tr>
-                <tr th:each="u : ${usuarios}">
-                    <td class="px-3 py-2 fw-semibold" th:text="${u.username}">admin</td>
-                    <td class="px-3 py-2">
-                        <span class="badge"
-                              th:text="${u.rol != null ? u.rol.displayName : '-'}"
-                              th:style="${u.rol != null and u.rol.name() == 'ADMIN'} ? 'background:var(--dorado);color:var(--verde-oscuro)' : 'background:#6c757d'">
-                        </span>
-                    </td>
-                    <td class="px-3 py-2">
-                        <span th:if="${u.activo}" class="badge bg-success">Activo</span>
-                        <span th:unless="${u.activo}" class="badge badge-neutral">Inactivo</span>
-                    </td>
-                    <td class="px-3 py-2 text-muted small"
-                        th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : '-'}">
-                    </td>
-                    <td class="px-3 py-2 text-end">
-                        <div class="d-flex gap-1 justify-content-end">
-                            <!-- Toggle activo -->
-                            <form th:action="@{/admin/tenants/{s}/usuarios/{id}/toggle(s=${tenant.subdomain},id=${u.id})}" method="post">
-                                <button type="submit" class="btn btn-sm"
-                                        th:classappend="${u.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
-                                        th:title="${u.activo} ? 'Desactivar' : 'Activar'">
-                                    <i class="bi" th:classappend="${u.activo} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+    <div class="table-card mb-4">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Usuario</th>
+                        <th>Rol</th>
+                        <th>Estado</th>
+                        <th>Creado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(usuarios)}">
+                        <td colspan="5" class="text-center text-muted py-5">
+                            <i class="bi bi-person-x d-block mb-2" style="font-size:1.5rem; opacity:.4;"></i>
+                            No hay usuarios en este tenant
+                        </td>
+                    </tr>
+                    <tr th:each="u : ${usuarios}">
+                        <td class="fw-semibold" th:text="${u.username}">admin</td>
+                        <td>
+                            <span class="badge"
+                                  th:text="${u.rol != null ? u.rol.displayName : '-'}"
+                                  th:classappend="${u.rol != null and u.rol.name() == 'ADMIN'} ? 'bg-primary' : 'bg-secondary'">
+                            </span>
+                        </td>
+                        <td>
+                            <span th:if="${u.activo}" class="badge bg-success">Activo</span>
+                            <span th:unless="${u.activo}" class="badge bg-secondary">Inactivo</span>
+                        </td>
+                        <td class="text-muted small"
+                            th:text="${u.createdAt != null ? #temporals.format(u.createdAt, 'dd/MM/yyyy') : '-'}">
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <!-- Toggle activo -->
+                                <form th:action="@{/admin/tenants/{s}/usuarios/{id}/toggle(s=${tenant.subdomain},id=${u.id})}" method="post">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-sm"
+                                            th:classappend="${u.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
+                                            th:title="${u.activo} ? 'Desactivar' : 'Activar'">
+                                        <i class="bi" th:classappend="${u.activo} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
+                                    </button>
+                                </form>
+                                <!-- Cambiar contraseña -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        title="Cambiar contraseña"
+                                        data-bs-toggle="modal" data-bs-target="#modalPassword"
+                                        th:attr="data-id=${u.id}, data-username=${u.username}"
+                                        onclick="prepararModalPassword(this)">
+                                    <i class="bi bi-key"></i>
                                 </button>
-                            </form>
-                            <!-- Cambiar contraseña -->
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    title="Cambiar contraseña"
-                                    data-bs-toggle="modal" data-bs-target="#modalPassword"
-                                    th:attr="data-id=${u.id}, data-username=${u.username}"
-                                    onclick="prepararModalPassword(this)">
-                                <i class="bi bi-key"></i>
-                            </button>
-                            <!-- Cambiar rol -->
-                            <button type="button" class="btn btn-sm btn-outline-secondary"
-                                    title="Cambiar rol"
-                                    data-bs-toggle="modal" data-bs-target="#modalRol"
-                                    th:attr="data-id=${u.id}, data-username=${u.username}, data-rol=${u.rol != null ? u.rol.name() : ''}"
-                                    onclick="prepararModalRol(this)">
-                                <i class="bi bi-person-badge"></i>
-                            </button>
-                            <!-- Eliminar -->
-                            <form th:action="@{/admin/tenants/{s}/usuarios/{id}/eliminar(s=${tenant.subdomain},id=${u.id})}" method="post"
-                                  onsubmit="return confirm('¿Eliminar usuario ' + this.dataset.username + '? Esta acción no se puede deshacer.')"
-                                  th:attr="data-username=${u.username}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    <i class="bi bi-trash"></i>
+                                <!-- Cambiar rol -->
+                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                        title="Cambiar rol"
+                                        data-bs-toggle="modal" data-bs-target="#modalRol"
+                                        th:attr="data-id=${u.id}, data-username=${u.username}, data-rol=${u.rol != null ? u.rol.name() : ''}"
+                                        onclick="prepararModalRol(this)">
+                                    <i class="bi bi-person-badge"></i>
                                 </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                                <!-- Eliminar -->
+                                <form th:action="@{/admin/tenants/{s}/usuarios/{id}/eliminar(s=${tenant.subdomain},id=${u.id})}" method="post"
+                                      onsubmit="return confirm('¿Eliminar usuario ' + this.dataset.username + '? Esta acción no se puede deshacer.')"
+                                      th:attr="data-username=${u.username}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
+
 </div>
 
 <!-- Modal: Nuevo usuario -->
@@ -108,17 +114,18 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <form th:action="@{/admin/tenants/{s}/usuarios/guardar(s=${tenant.subdomain})}" method="post">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nuevo Usuario</h5>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-semibold"><i class="bi bi-person-plus me-2"></i>Nuevo Usuario</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label detail-label">Usuario *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Usuario *</label>
                         <input type="text" name="username" class="form-control" required autocomplete="off">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label detail-label">Contraseña *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="password" class="form-control" minlength="8" required>
                             <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
@@ -126,22 +133,22 @@
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label detail-label">Confirmar contraseña *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Confirmar contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="confirmarPassword" class="form-control" required>
                             <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                     <div class="mb-1">
-                        <label class="form-label detail-label">Rol *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Rol *</label>
                         <select name="rol" class="form-select" required>
                             <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.displayName}"></option>
                         </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Crear</button>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Crear</button>
                 </div>
             </form>
         </div>
@@ -154,13 +161,13 @@
         <div class="modal-content">
             <form id="formPassword" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-key me-2"></i>Cambiar Contraseña — <span id="usernamePassword"></span></h5>
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-semibold"><i class="bi bi-key me-2"></i>Cambiar Contraseña — <span id="usernamePassword"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label detail-label">Nueva contraseña *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Nueva contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="nuevaPassword" class="form-control" minlength="8" required>
                             <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
@@ -168,16 +175,16 @@
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
                     <div class="mb-1">
-                        <label class="form-label detail-label">Confirmar contraseña *</label>
+                        <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Confirmar contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="confirmarPassword" class="form-control" required>
                             <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
                 </div>
             </form>
         </div>
@@ -190,18 +197,19 @@
         <div class="modal-content">
             <form id="formRol" method="post">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-person-badge me-2"></i>Cambiar Rol — <span id="usernameRol"></span></h5>
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-semibold"><i class="bi bi-person-badge me-2"></i>Cambiar Rol — <span id="usernameRol"></span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
+                    <label class="form-label small fw-semibold text-muted text-uppercase mb-2" style="letter-spacing:.04em;">Nuevo rol</label>
                     <select name="rol" id="selectRol" class="form-select" required>
                         <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.displayName}"></option>
                     </select>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-zymos-outline" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-zymos"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                <div class="modal-footer border-top">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Guardar</button>
                 </div>
             </form>
         </div>

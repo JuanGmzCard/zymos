@@ -13,53 +13,64 @@
         .mejor-valor .bi { font-size: .75em; vertical-align: middle; }
         .tabla-comparativa th.lote-header { min-width: 140px; text-align: center; }
         .tabla-comparativa td.valor-celda { text-align: center; vertical-align: middle; }
-        .tabla-comparativa .seccion-header { background: var(--verde-zymos); color: var(--crema);
-            font-family: Cinzel; font-size: .75rem; letter-spacing: .05em; }
-        .cpl-mejor { color: #198754; font-weight: 700; }
+        .tabla-comparativa .seccion-header {
+            background: #f1f5f9;
+            color: #475569;
+            font-size: .7rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+        .cpl-mejor { color: #22c55e; font-weight: 700; }
+
+        html.dark-mode .tabla-comparativa .seccion-header {
+            background: var(--dm-input);
+            color: var(--dm-text-muted);
+        }
     </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera -->
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-bar-chart-steps me-2"></i>Comparativa de Lotes</h1>
-            <p th:text="${#lists.size(lotes)} + ' lotes comparados'">N lotes comparados</p>
+            <h1><i class="bi bi-bar-chart-steps me-2" style="color:var(--verde-zymos,#2563eb);"></i>Comparativa de Lotes</h1>
+            <p class="subtitle" th:text="${#lists.size(lotes)} + ' lotes comparados'">N lotes comparados</p>
         </div>
         <div class="d-flex gap-2">
             <a th:href="@{/comparativa/resultado/pdf(ids=${lotes.![id]})}"
-               class="btn btn-outline-secondary">
+               class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <a th:href="@{/comparativa}" class="btn btn-zymos-outline">
+            <a th:href="@{/comparativa}" class="btn btn-sm btn-primary">
                 <i class="bi bi-arrow-left me-1"></i>Nueva comparativa
             </a>
         </div>
     </div>
-</div>
-
-<div class="container-fluid px-4 py-4">
 
     <!-- Gráfico de métricas -->
-    <div class="card-zymos p-3 mb-4">
-        <h6 class="detail-label mb-3"><i class="bi bi-graph-up me-2"></i>Métricas de calidad (%)</h6>
+    <div class="content-card mb-3">
+        <div class="content-card-title"><i class="bi bi-graph-up me-2"></i>Métricas de calidad (%)</div>
         <div style="max-height:280px;">
             <canvas id="chartComparativa"></canvas>
         </div>
     </div>
 
     <!-- Tabla comparativa transpuesta -->
-    <div class="card-zymos mb-4">
+    <div class="table-card mb-3">
         <div class="table-responsive">
             <table class="table tabla-comparativa mb-0" style="font-size:0.85rem;">
                 <thead>
                     <tr>
-                        <th style="min-width:160px;">Métrica</th>
-                        <th class="lote-header" th:each="lote : ${lotes}">
+                        <th style="min-width:160px; background:#f8fafc !important; color:#64748b !important;">Métrica</th>
+                        <th class="lote-header" th:each="lote : ${lotes}"
+                            style="background:#f8fafc !important; color:#64748b !important;">
                             <a th:href="@{/ver/{id}(id=${lote.id})}"
                                class="text-decoration-none fw-bold"
-                               th:style="'color: var(--dorado);'"
+                               style="color:var(--verde-zymos,#2563eb);"
                                th:text="${lote.codigoLote}">LOTE-001</a>
                         </th>
                     </tr>
@@ -72,23 +83,23 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Estilo</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Estilo</td>
                         <td class="valor-celda" th:each="lote : ${lotes}" th:text="${lote.estilo}">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Receta</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Receta</td>
                         <td class="valor-celda" th:each="lote : ${lotes}">
                             <span th:if="${lote.receta != null}" th:text="${lote.receta.nombre}">—</span>
-                            <span th:unless="${lote.receta != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.receta != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Fecha elaboración</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">Fecha elaboración</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Fase actual</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Fase actual</td>
                         <td class="valor-celda" th:each="lote : ${lotes}">
                             <span class="phase-badge"
                                   th:text="${lote.faseActual}"
@@ -108,12 +119,12 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">OG (densidad inicial)</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">OG (densidad inicial)</td>
                         <td class="valor-celda font-monospace" th:each="lote : ${lotes}"
                             th:text="${lote.densidadInicial != null} ? ${lote.densidadInicial} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">FG (densidad final)</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">FG (densidad final)</td>
                         <td class="valor-celda font-monospace" th:each="lote : ${lotes}"
                             th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'">—</td>
                     </tr>
@@ -122,13 +133,13 @@
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
                             <i class="bi bi-award me-1"></i>Calidad
-                            <span class="fw-normal" style="opacity:.8;font-size:.85em;">
+                            <span class="fw-normal" style="opacity:.7; font-size:.85em;">
                                 — <i class="bi bi-star-fill" style="font-size:.7em;"></i> = mejor valor
                             </span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">ABV <span class="text-muted">(% vol.)</span></td>
+                        <td class="text-secondary" style="font-size:0.8rem;">ABV <span class="text-secondary">(% vol.)</span></td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['abv'] != null and mejores['abv'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.abv != null}">
@@ -136,11 +147,11 @@
                                 <i th:if="${mejores['abv'] != null and mejores['abv'] == lote.id}"
                                    class="bi bi-star-fill ms-1" style="font-size:.7em;"></i>
                             </span>
-                            <span th:unless="${lote.abv != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.abv != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Atenuación aparente</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Atenuación aparente</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['atenuacion'] != null and mejores['atenuacion'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.atenuacionAparente != null}">
@@ -148,11 +159,11 @@
                                 <i th:if="${mejores['atenuacion'] != null and mejores['atenuacion'] == lote.id}"
                                    class="bi bi-star-fill ms-1" style="font-size:.7em;"></i>
                             </span>
-                            <span th:unless="${lote.atenuacionAparente != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.atenuacionAparente != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Eficiencia macerado</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Eficiencia macerado</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['eficiencia'] != null and mejores['eficiencia'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.eficienciaMacerado != null}">
@@ -160,7 +171,7 @@
                                 <i th:if="${mejores['eficiencia'] != null and mejores['eficiencia'] == lote.id}"
                                    class="bi bi-star-fill ms-1" style="font-size:.7em;"></i>
                             </span>
-                            <span th:unless="${lote.eficienciaMacerado != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.eficienciaMacerado != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
 
@@ -171,7 +182,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Litros finales</td>
+                        <td class="text-secondary" style="font-size:0.8rem;">Litros finales</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['litros'] != null and mejores['litros'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.litrosFinales != null}">
@@ -179,22 +190,22 @@
                                 <i th:if="${mejores['litros'] != null and mejores['litros'] == lote.id}"
                                    class="bi bi-star-fill ms-1" style="font-size:.7em;"></i>
                             </span>
-                            <span th:unless="${lote.litrosFinales != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.litrosFinales != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Agua utilizada</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">Agua utilizada</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">pH agua</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">pH agua</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.phAgua != null} ? ${lote.phAgua} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Clarificante</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">Clarificante</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${!#strings.isEmpty(lote.clarificante)} ? ${lote.clarificante} : '—'">—</td>
                     </tr>
 
@@ -205,13 +216,13 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Temperatura ferm.</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">Temperatura ferm.</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Inicio fermentación</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}"
+                        <td class="text-secondary" style="font-size:0.8rem;">Inicio fermentación</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')} : '—'">—</td>
                     </tr>
 
@@ -222,16 +233,16 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Costo total</td>
-                        <td class="valor-celda text-muted" th:each="lote : ${lotes}">
+                        <td class="text-secondary" style="font-size:0.8rem;">Costo total</td>
+                        <td class="valor-celda text-secondary" th:each="lote : ${lotes}">
                             <span th:if="${lote.costoTotal != null}"
                                   th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal, 1, 'COMMA', 0, 'POINT')}">—</span>
-                            <span th:unless="${lote.costoTotal != null}" class="text-muted fst-italic" style="font-size:.8em;">sin costo asignado</span>
+                            <span th:unless="${lote.costoTotal != null}" class="text-secondary fst-italic" style="font-size:.8em;">sin costo asignado</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="detail-label">Costo por litro
-                            <span class="text-muted" style="font-size:.8em;">(↓ mejor)</span>
+                        <td class="text-secondary" style="font-size:0.8rem;">Costo por litro
+                            <span class="text-secondary" style="font-size:.8em;">(↓ mejor)</span>
                         </td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['cpl'] != null and mejores['cpl'] == lote.id} ? 'cpl-mejor' : ''">
@@ -240,7 +251,7 @@
                                 <i th:if="${mejores['cpl'] != null and mejores['cpl'] == lote.id}"
                                    class="bi bi-arrow-down-circle-fill ms-1 text-success" style="font-size:.75em;"></i>
                             </span>
-                            <span th:unless="${lote.costoPorLitro != null}" class="text-muted">—</span>
+                            <span th:unless="${lote.costoPorLitro != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                 </tbody>
@@ -249,16 +260,18 @@
     </div>
 
     <!-- Notas de cata -->
-    <div th:if="${!#lists.isEmpty(lotes.?[notasCata != null and !notasCata.isEmpty()])}">
-        <h6 class="detail-label mb-3"><i class="bi bi-journal-text me-2"></i>Notas de cata</h6>
+    <div th:if="${!#lists.isEmpty(lotes.?[notasCata != null and !notasCata.isEmpty()])}" class="mb-4">
+        <div class="content-card-title mb-3" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8;">
+            <i class="bi bi-journal-text me-2"></i>Notas de cata
+        </div>
         <div class="row g-3">
             <div class="col-md-6 col-xl-4" th:each="lote : ${lotes}" th:if="${!#strings.isEmpty(lote.notasCata)}">
-                <div class="card-zymos p-3 h-100">
+                <div class="content-card h-100" style="margin-bottom:0;">
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <span class="fw-bold" th:style="'color:var(--dorado);'" th:text="${lote.codigoLote}">LOTE</span>
-                        <span class="text-muted small" th:text="${lote.estilo}">Estilo</span>
+                        <span class="fw-bold font-monospace" style="color:var(--verde-zymos,#2563eb);" th:text="${lote.codigoLote}">LOTE</span>
+                        <span class="text-secondary" style="font-size:0.85rem;" th:text="${lote.estilo}">Estilo</span>
                     </div>
-                    <p class="text-muted small mb-0" style="white-space:pre-line;" th:text="${lote.notasCata}">—</p>
+                    <p class="text-secondary mb-0" style="font-size:0.85rem; white-space:pre-line;" th:text="${lote.notasCata}">—</p>
                 </div>
             </div>
         </div>

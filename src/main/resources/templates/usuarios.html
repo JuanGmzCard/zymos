@@ -7,68 +7,195 @@
     <title th:text="${branding.name} + ' - Usuarios'">Alera - Usuarios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .stat-card-simple {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            min-width: 130px;
+        }
+        .stat-card-simple .stat-label {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #94a3b8;
+            margin-bottom: 0.25rem;
+        }
+        .stat-card-simple .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1;
+            color: #1e293b;
+        }
+
+        .page-header {
+            padding: 1.75rem 0 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.2rem;
+            font-family: var(--font-body), sans-serif;
+        }
+        .page-header .subtitle {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+        .table-card table tbody tr.row-current { background: #fffbeb; }
+        .table-card table tbody tr.row-current:hover { background: #fef9c3; }
+
+        .action-link {
+            font-size: 0.8rem;
+            text-decoration: none;
+            padding: 0 0.25rem;
+        }
+        .action-link.view  { color: var(--verde-zymos, #2563eb); }
+        .action-link.edit  { color: #475569; }
+        .action-link.del   { color: #ef4444; }
+        .action-link:hover.view { color: var(--dorado, #1d4ed8); text-decoration: underline; }
+        .action-link:hover.edit { color: #1e293b; text-decoration: underline; }
+        .action-link:hover.del  { color: #b91c1c; text-decoration: underline; }
+        .action-sep { color: #cbd5e1; font-size: 0.75rem; margin: 0 0.1rem; }
+
+        /* Row flash on :target */
+        tr:target > td { animation: usuarioFlash 1.8s ease; }
+        @keyframes usuarioFlash {
+            0%,100% { background: transparent; }
+            15%,55% { background: color-mix(in srgb, var(--dorado) 22%, transparent); }
+        }
+
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-value { color: var(--dm-text); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+        html.dark-mode .table-card table tbody tr.row-current { background: var(--dm-hover); }
+    </style>
 </head>
 <body>
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<div class="hero-section">
-    <div class="container-fluid px-4 d-flex justify-content-between align-items-center">
+<div class="container-fluid px-4">
+
+    <!-- Cabecera de página -->
+    <div class="page-header d-flex justify-content-between align-items-start">
         <div>
             <h1><i class="bi bi-people me-2"></i>Usuarios</h1>
-            <p>Gestión de acceso al sistema</p>
+            <p class="subtitle mb-0">Gestión de acceso al sistema</p>
         </div>
-        <button class="btn btn-zymos" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
-            <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
-        </button>
+        <div class="d-flex gap-2 pt-1">
+            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoUsuario">
+                <i class="bi bi-person-plus me-1"></i>Nuevo Usuario
+            </button>
+        </div>
     </div>
-</div>
 
-<div class="container-fluid px-4 py-4">
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert mb-3" role="alert"
+         th:classappend="${tipoMensaje == 'success'} ? 'alert-success' : (${tipoMensaje == 'warning'} ? 'alert-warning' : 'alert-danger')">
+        <span th:text="${mensaje}"></span>
+    </div>
 
-    <div th:if="${mensaje}" class="alert" role="alert"
-         th:classappend="'alert-' + ${tipoMensaje}" th:text="${mensaje}"></div>
+    <!-- Stat cards -->
+    <div class="d-flex gap-3 flex-wrap mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Total</div>
+            <div class="stat-value" th:text="${#lists.size(usuarios)}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Sesión activa</div>
+            <div class="stat-value" style="font-size:1rem; padding-top:0.3rem; color:#475569;"
+                 sec:authentication="name">usuario</div>
+        </div>
+    </div>
 
-    <div class="card-zymos">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-people me-2"></i>Lista de Usuarios</h5>
-            <div class="d-flex align-items-center gap-3">
-                <span class="text-muted small">
-                    <i class="bi bi-person-fill-check me-1"></i>
-                    Sesión activa: <strong sec:authentication="name">usuario</strong>
-                </span>
-                <div class="position-relative">
-                    <input type="text" id="usuarioInput" class="form-control form-control-sm"
-                           style="width:190px;" placeholder="Buscar usuario..." autocomplete="off">
-                    <div id="usuarioSuggest" class="search-suggest" style="display:none;"></div>
-                </div>
+    <!-- Búsqueda -->
+    <div class="filter-card mb-3">
+        <div class="d-flex gap-2 align-items-center">
+            <div class="position-relative">
+                <input type="text" id="usuarioInput" class="form-control form-control-sm"
+                       style="width:240px;" placeholder="Buscar usuario..." autocomplete="off">
+                <div id="usuarioSuggest" class="search-suggest" style="display:none;"></div>
             </div>
         </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-card mb-4">
+        <div class="table-count">
+            <span th:text="${#lists.size(usuarios)}">0</span> usuarios
+        </div>
         <div class="table-responsive">
-            <table class="table table-zymos mb-0">
+            <table class="table mb-0">
                 <thead>
-                    <tr>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th class="text-center">Estado</th>
-                        <th class="text-center">Creado</th>
-                        <th class="text-end">Acciones</th>
-                    </tr>
+                <tr>
+                    <th style="padding-left:1.25rem;">Usuario</th>
+                    <th>Rol</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-center">Creado</th>
+                    <th></th>
+                </tr>
                 </thead>
                 <tbody>
                 <tr th:each="usuario : ${usuarios}"
                     th:id="'usuario-' + ${usuario.id}"
-                    th:classappend="${usuario.username == #authentication.name} ? 'table-warning' : ''">
-                    <td>
-                        <span class="fw-600" th:text="${usuario.username}">-</span>
+                    th:classappend="${usuario.username == #authentication.name} ? 'row-current' : ''">
+                    <td style="padding-left:1.25rem;">
+                        <span class="fw-semibold" th:text="${usuario.username}">-</span>
                         <span th:if="${usuario.username == #authentication.name}"
                               class="badge bg-warning text-dark ms-2" style="font-size:0.7rem;">
                             <i class="bi bi-person-fill me-1"></i>Tú
                         </span>
                     </td>
                     <td>
-                        <span class="badge badge-neutral"
+                        <span class="badge bg-light text-dark border" style="font-size:0.72rem;"
                               th:text="${usuario.rol.displayName}">-</span>
                     </td>
                     <td class="text-center">
@@ -76,75 +203,71 @@
                         <span th:unless="${usuario.activo}" class="badge bg-danger">Inactivo</span>
                     </td>
                     <td class="text-center">
-                        <small th:text="${usuario.createdAt != null}
+                        <small class="text-muted" th:text="${usuario.createdAt != null}
                             ? ${#temporals.format(usuario.createdAt,'dd/MM/yyyy')} : '—'">-</small>
                     </td>
-                    <td class="text-end">
-                        <div class="d-flex gap-1 justify-content-end">
-
-                            <!-- Toggle activo — deshabilitado para el usuario en sesión -->
-                            <form th:if="${usuario.username != #authentication.name}"
-                                  th:action="@{/usuarios/{id}/toggle(id=${usuario.id})}" method="post"
-                                  class="d-inline">
-                                <button type="submit" class="btn btn-sm"
-                                        th:classappend="${usuario.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
-                                        th:title="${usuario.activo} ? 'Desactivar' : 'Activar'">
-                                    <i class="bi" th:classappend="${usuario.activo} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
-                                </button>
-                            </form>
-                            <button th:if="${usuario.username == #authentication.name}"
-                                    class="btn btn-sm btn-outline-secondary" disabled
-                                    title="No puedes desactivarte a ti mismo">
-                                <i class="bi bi-toggle-on"></i>
+                    <td class="text-end pe-3">
+                        <!-- Toggle activo -->
+                        <form th:if="${usuario.username != #authentication.name}"
+                              th:action="@{/usuarios/{id}/toggle(id=${usuario.id})}" method="post"
+                              class="d-inline">
+                            <button type="submit" class="action-link border-0 bg-transparent p-0"
+                                    th:classappend="${usuario.activo} ? 'del' : 'view'"
+                                    th:title="${usuario.activo} ? 'Desactivar' : 'Activar'">
+                                <i class="bi" th:classappend="${usuario.activo} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
                             </button>
+                        </form>
+                        <span th:if="${usuario.username == #authentication.name}"
+                              class="action-link edit" style="cursor:default;" title="No puedes desactivarte a ti mismo">
+                            <i class="bi bi-toggle-on"></i>
+                        </span>
 
-                            <!-- Cambiar contraseña -->
-                            <button class="btn btn-sm btn-outline-primary"
-                                    data-bs-toggle="modal"
-                                    th:attr="data-bs-target='#modalPwd' + ${usuario.id}"
-                                    title="Cambiar contraseña">
-                                <i class="bi bi-key"></i>
-                            </button>
+                        <span class="action-sep">·</span>
 
-                            <!-- Cambiar rol — deshabilitado para el usuario en sesión -->
-                            <button th:if="${usuario.username != #authentication.name}"
-                                    class="btn btn-sm btn-outline-info"
-                                    data-bs-toggle="modal"
-                                    th:attr="data-bs-target='#modalRol' + ${usuario.id}"
-                                    title="Cambiar rol">
-                                <i class="bi bi-person-gear"></i>
-                            </button>
-                            <button th:if="${usuario.username == #authentication.name}"
-                                    class="btn btn-sm btn-outline-secondary" disabled
-                                    title="No puedes cambiar tu propio rol">
-                                <i class="bi bi-person-gear"></i>
-                            </button>
+                        <!-- Cambiar contraseña -->
+                        <button class="action-link edit border-0 bg-transparent p-0"
+                                data-bs-toggle="modal"
+                                th:attr="data-bs-target='#modalPwd' + ${usuario.id}"
+                                title="Cambiar contraseña">
+                            <i class="bi bi-key"></i>
+                        </button>
 
-                            <!-- Eliminar — deshabilitado para el usuario en sesión -->
-                            <form th:if="${usuario.username != #authentication.name}"
-                                  th:action="@{/usuarios/{id}/eliminar(id=${usuario.id})}" method="post"
-                                  class="d-inline"
-                                  onsubmit="return confirm('¿Eliminar este usuario?')">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </form>
-                            <button th:if="${usuario.username == #authentication.name}"
-                                    class="btn btn-sm btn-outline-secondary" disabled
-                                    title="No puedes eliminarte a ti mismo">
+                        <span class="action-sep">·</span>
+
+                        <!-- Cambiar rol -->
+                        <button th:if="${usuario.username != #authentication.name}"
+                                class="action-link edit border-0 bg-transparent p-0"
+                                data-bs-toggle="modal"
+                                th:attr="data-bs-target='#modalRol' + ${usuario.id}"
+                                title="Cambiar rol">
+                            <i class="bi bi-person-gear"></i>
+                        </button>
+                        <span th:if="${usuario.username == #authentication.name}"
+                              class="action-link edit" style="cursor:default;" title="No puedes cambiar tu propio rol">
+                            <i class="bi bi-person-gear"></i>
+                        </span>
+
+                        <span class="action-sep" th:if="${usuario.username != #authentication.name}">·</span>
+
+                        <!-- Eliminar -->
+                        <form th:if="${usuario.username != #authentication.name}"
+                              th:action="@{/usuarios/{id}/eliminar(id=${usuario.id})}" method="post"
+                              class="d-inline"
+                              onsubmit="return confirm('¿Eliminar este usuario?')">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Eliminar">
                                 <i class="bi bi-trash"></i>
                             </button>
-                        </div>
+                        </form>
 
                         <!-- Modal cambiar contraseña -->
                         <div class="modal fade" th:id="'modalPwd' + ${usuario.id}" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <div class="modal-header" style="background:var(--verde-alera);">
-                                        <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fw-semibold">
                                             <i class="bi bi-key me-2"></i>Cambiar Contraseña
                                         </h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form th:action="@{/usuarios/{id}/password(id=${usuario.id})}" method="post">
                                         <div class="modal-body">
@@ -152,7 +275,7 @@
                                                 Usuario: <strong th:text="${usuario.username}"></strong>
                                             </p>
                                             <div class="mb-3">
-                                                <label class="form-label">Nueva contraseña</label>
+                                                <label class="form-label small fw-semibold">Nueva contraseña</label>
                                                 <div class="input-group">
                                                     <input type="password" name="newPassword" class="form-control"
                                                            required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
@@ -160,7 +283,7 @@
                                                 </div>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label">Confirmar contraseña</label>
+                                                <label class="form-label small fw-semibold">Confirmar contraseña</label>
                                                 <div class="input-group">
                                                     <input type="password" name="confirmPassword" class="form-control"
                                                            required minlength="8" placeholder="Repite la contraseña">
@@ -169,8 +292,8 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-zymos">Cambiar</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-primary">Cambiar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -182,11 +305,11 @@
                              class="modal fade" th:id="'modalRol' + ${usuario.id}" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
-                                    <div class="modal-header" style="background:var(--verde-alera);">
-                                        <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title fw-semibold">
                                             <i class="bi bi-person-gear me-2"></i>Cambiar Rol
                                         </h5>
-                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
                                     <form th:action="@{/usuarios/{id}/rol(id=${usuario.id})}" method="post">
                                         <div class="modal-body">
@@ -194,7 +317,7 @@
                                                 Usuario: <strong th:text="${usuario.username}"></strong>
                                             </p>
                                             <div class="mb-3">
-                                                <label class="form-label">Nuevo rol</label>
+                                                <label class="form-label small fw-semibold">Nuevo rol</label>
                                                 <select name="rol" class="form-select">
                                                     <option th:each="rolOpc : ${roles}"
                                                             th:value="${rolOpc.name()}"
@@ -205,8 +328,8 @@
                                             </div>
                                         </div>
                                         <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-zymos">Guardar</button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
                                         </div>
                                     </form>
                                 </div>
@@ -218,27 +341,28 @@
             </table>
         </div>
     </div>
+
 </div>
 
 <!-- Modal Nuevo Usuario -->
 <div class="modal fade" id="modalNuevoUsuario" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header" style="background:var(--verde-alera);">
-                <h5 class="modal-title" style="color:var(--dorado);font-family:var(--font-headings);">
+            <div class="modal-header">
+                <h5 class="modal-title fw-semibold">
                     <i class="bi bi-person-plus me-2"></i>Nuevo Usuario
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form th:action="@{/usuarios/guardar}" method="post">
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Usuario *</label>
+                        <label class="form-label small fw-semibold">Usuario *</label>
                         <input type="text" name="username" class="form-control" required
                                placeholder="Nombre de usuario">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Contraseña *</label>
+                        <label class="form-label small fw-semibold">Contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="password" class="form-control"
                                    required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
@@ -246,7 +370,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Confirmar Contraseña *</label>
+                        <label class="form-label small fw-semibold">Confirmar Contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="confirmPassword" class="form-control"
                                    required minlength="8" placeholder="Repite la contraseña">
@@ -254,7 +378,7 @@
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Rol</label>
+                        <label class="form-label small fw-semibold">Rol</label>
                         <select name="rol" class="form-select">
                             <option th:each="rol : ${roles}"
                                     th:value="${rol.name()}"
@@ -264,8 +388,8 @@
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-zymos">Crear Usuario</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary">Crear Usuario</button>
                 </div>
             </form>
         </div>
@@ -273,13 +397,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-tr:target > td { animation: usuarioFlash 1.8s ease; }
-@keyframes usuarioFlash {
-    0%,100% { background: transparent; }
-    15%,55% { background: color-mix(in srgb, var(--dorado) 22%, transparent); }
+<script>
+function togglePwd(btn) {
+    var inp = btn.previousElementSibling;
+    if (!inp) return;
+    inp.type = (inp.type === 'password') ? 'text' : 'password';
+    btn.querySelector('i').className = (inp.type === 'password') ? 'bi bi-eye' : 'bi bi-eye-slash';
 }
-</style>
+</script>
 <script>
 (function() {
     var debTimer, activeIdx = -1;
