@@ -7,6 +7,8 @@ import com.alera.config.ZymosAuthFailureHandler;
 import com.alera.config.ZymosAuthSuccessHandler;
 import com.alera.model.OrdenCompra;
 import com.alera.model.enums.EstadoOrdenCompra;
+import com.alera.repository.EquipoRepository;
+import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,6 +55,8 @@ class OrdenCompraControllerTest {
     @MockBean CategoriaInsumoService    categoriaInsumoService;
     @MockBean CategoriaEquipoService    categoriaEquipoService;
     @MockBean PdfExportService          pdfExportService;
+    @MockBean InsumoInventarioRepository insumoRepo;
+    @MockBean EquipoRepository          equipoRepo;
 
     @BeforeEach
     void setUp() {
