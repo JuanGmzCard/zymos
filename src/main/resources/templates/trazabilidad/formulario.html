@@ -996,7 +996,7 @@
                         const card = document.getElementById('calculadoraResultado');
                         if (metodo !== 'NATURAL' || !card) return;
 
-                        const litros = parseFloat((document.getElementById('litrosFinales') || document.querySelector('[name=litrosFinales]') || {value:''}).value) || 0;
+                        const litros = (window.numVal ? numVal((document.getElementById('litrosFinales') || document.querySelector('[name=litrosFinales]') || {value:''}).value || 0) : parseFloat((document.getElementById('litrosFinales') || document.querySelector('[name=litrosFinales]') || {value:''}).value)) || 0;
                         const co2Obj = parseFloat(document.getElementById('carbCo2ObjetivoInput').value) || 0;
                         const temp = parseFloat(document.getElementById('carbTempInput').value) || 20;
                         const tipoAzucar = document.getElementById('carbAzucarTipoSelect').value;

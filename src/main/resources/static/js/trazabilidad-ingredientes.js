@@ -50,7 +50,7 @@ const TO_LITERS = { L: 1, mL: 0.001, gal: 3.78541 };
 function volUpdate(field) {
     const displayInput = document.getElementById(field + '-display');
     const unit = document.getElementById(field + '-unit').value;
-    const displayVal = parseFloat(displayInput.value);
+    const displayVal = window.numVal ? numVal(displayInput.value || 0) : parseFloat(displayInput.value);
     if (isNaN(displayVal)) {
         document.getElementById(field + '-value').value = '';
         document.getElementById(field + '-equiv').textContent = '';

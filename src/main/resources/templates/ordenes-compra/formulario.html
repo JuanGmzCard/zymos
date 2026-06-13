@@ -377,8 +377,8 @@ function recalcular() {
     var rows = document.querySelectorAll('#itemsBody .item-row');
     var subtotal = 0, total = 0;
     rows.forEach(function(row) {
-        var cant  = parseFloat(row.querySelector('.item-cantidad')?.value) || 0;
-        var precio= parseFloat(row.querySelector('.item-precio')?.value)   || 0;
+        var cant  = (window.numVal ? numVal(row.querySelector('.item-cantidad')?.value || 0) : parseFloat(row.querySelector('.item-cantidad')?.value)) || 0;
+        var precio= (window.numVal ? numVal(row.querySelector('.item-precio')?.value   || 0) : parseFloat(row.querySelector('.item-precio')?.value))   || 0;
         var iva   = parseFloat(row.querySelector('.item-iva')?.value)      || 0;
         var linea = cant * precio;
         subtotal += linea;

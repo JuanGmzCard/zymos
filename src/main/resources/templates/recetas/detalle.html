@@ -466,7 +466,7 @@ function fmtNum(n, maxDec) {
 }
 
 function calcularEscala() {
-    const volObj    = parseFloat(document.getElementById('volObjetivo').value);
+    const volObj    = window.numVal ? numVal(document.getElementById('volObjetivo').value || 0) : parseFloat(document.getElementById('volObjetivo').value);
     const factorEl  = document.getElementById('factorEscala');
     const resultado = document.getElementById('escalaResultado');
 

@@ -71,7 +71,7 @@ function removerItemCosto(itemId) {
 
 function actualizarCantidadCosto(itemId, val) {
     var a = asignados.find(function(x) { return x.itemId == itemId; });
-    if (a) a.cantidadAsignada = parseFloat(val) || 0;
+    if (a) a.cantidadAsignada = (window.numVal ? window.numVal(val) : parseFloat(val)) || 0;
     var tr = document.querySelector('[data-item-id="' + itemId + '"]');
     if (tr) {
         var td = tr.closest('tr').querySelector('.costo-valor');
@@ -152,7 +152,7 @@ function sincronizarIngredientesDesdeItems() {
         var tipo = (a.itemData.tipoInsumo || '').toUpperCase();
         if (!grupos[tipo]) return;
         var inp = document.querySelector('[data-item-id="' + a.itemId + '"]');
-        var cant = inp ? parseFloat(inp.value) : a.cantidadAsignada;
+        var cant = inp ? (window.numVal ? window.numVal(inp.value) : parseFloat(inp.value)) : a.cantidadAsignada;
         if (!cant || cant <= 0) return;
         grupos[tipo].push({ nombre: a.itemData.nombre, cantidad: String(cant), unidad: a.itemData.unidad || 'gr' });
     });

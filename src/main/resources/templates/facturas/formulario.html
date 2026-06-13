@@ -459,11 +459,11 @@ function renumberItems() {
 function calcularTotalFila(input) {
     const ivainc     = document.getElementById('ivaIncluido')?.checked;
     const row        = input.closest('.ingrediente-row');
-    const cantidad   = parseFloat(row.querySelector('input[name*=".cantidad"]')?.value)             || 0;
-    const unitario   = parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)        || 0;
+    const cantidad   = (window.numVal ? numVal(row.querySelector('input[name*=".cantidad"]')?.value    || 0) : parseFloat(row.querySelector('input[name*=".cantidad"]')?.value))    || 0;
+    const unitario   = (window.numVal ? numVal(row.querySelector('input[name*=".valorUnitario"]')?.value || 0) : parseFloat(row.querySelector('input[name*=".valorUnitario"]')?.value)) || 0;
     const descuento  = parseFloat(row.querySelector('input[name*=".porcentajeDescuento"]')?.value)  || 0;
     const iva        = parseFloat(row.querySelector('input[name*=".porcentajeIvaItem"]')?.value)    || 0;
-    const impConsumo = parseFloat(row.querySelector('input[name*=".impuestoConsumo"]')?.value)      || 0;
+    const impConsumo = (window.numVal ? numVal(row.querySelector('input[name*=".impuestoConsumo"]')?.value || 0) : parseFloat(row.querySelector('input[name*=".impuestoConsumo"]')?.value)) || 0;
     let total;
     if (ivainc) {
         // valorUnitario already includes IVA; total = cantidad * unitario * (1 - desc%) + impConsumo

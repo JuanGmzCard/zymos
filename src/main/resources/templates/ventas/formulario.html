@@ -423,8 +423,8 @@ function actualizarTotales() {
     var rows = document.querySelectorAll('#itemsBody .item-row');
     var grand = 0;
     rows.forEach(function(row) {
-        var qty   = parseFloat(row.querySelector('.item-cantidad')?.value)   || 0;
-        var price = parseFloat(row.querySelector('.item-precio')?.value)     || 0;
+        var qty   = (window.numVal ? numVal(row.querySelector('.item-cantidad')?.value || 0) : parseFloat(row.querySelector('.item-cantidad')?.value))  || 0;
+        var price = (window.numVal ? numVal(row.querySelector('.item-precio')?.value   || 0) : parseFloat(row.querySelector('.item-precio')?.value))    || 0;
         var disc  = parseFloat(row.querySelector('.item-descuento')?.value)  || 0;
         var total = qty * price * (1 - disc / 100);
         var cell  = row.querySelector('.item-total');
@@ -562,8 +562,8 @@ function aplicarStep(row) {
     var cfg = stepParaUnidad(sel.value);
     inp.step = cfg.step;
     inp.min  = cfg.min;
-    if (cfg.step === '1' && inp.value && !Number.isInteger(parseFloat(inp.value))) {
-        inp.value = Math.round(parseFloat(inp.value));
+    if (cfg.step === '1' && inp.value && !Number.isInteger(window.numVal ? numVal(inp.value) : parseFloat(inp.value))) {
+        inp.value = Math.round(window.numVal ? numVal(inp.value) : parseFloat(inp.value));
     }
 }
 
