@@ -277,6 +277,8 @@ public class TrazabilidadService {
         lote.setDensidadInicial(dto.getDensidadInicial());
         lote.setDensidadFinal(dto.getDensidadFinal());
         lote.setDensidadFinalFecha(dto.getDensidadFinalFecha());
+        lote.setOgBrix(dto.getOgBrix());
+        lote.setFgBrix(dto.getFgBrix());
         lote.setFermFechaInicial(dto.getFermFechaInicial());
         lote.setFermFechaFinalIdeal(dto.getFermFechaFinalIdeal());
         lote.setFermTemperatura(dto.getFermTemperatura());

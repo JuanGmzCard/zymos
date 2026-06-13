@@ -404,24 +404,78 @@
                     </div>
 
                     <div class="col-12"><hr class="my-1"></div>
-                    <div class="col-12">
-                        <p class="text-muted small mb-2"><i class="bi bi-activity me-1"></i><strong>Densidades</strong> — pueden completarse al avanzar el proceso</p>
+                    <div class="col-12 d-flex align-items-center gap-3 mb-1">
+                        <p class="text-muted small mb-0"><i class="bi bi-activity me-1"></i><strong>Densidades</strong> — pueden completarse al avanzar el proceso</p>
+                        <!-- Toggle instrumento -->
+                        <div class="btn-group btn-group-sm" role="group" id="instrumento-toggle">
+                            <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-sg"
+                                   value="SG" th:checked="${loteForm.instrumentoMedicion == null or loteForm.instrumentoMedicion == 'SG'}"
+                                   onchange="toggleInstrumento('SG')">
+                            <label class="btn btn-outline-secondary" for="instr-sg">
+                                <i class="bi bi-rulers me-1"></i>Hidrómetro (SG)
+                            </label>
+                            <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-brix"
+                                   value="BRIX" th:checked="${loteForm.instrumentoMedicion == 'BRIX'}"
+                                   onchange="toggleInstrumento('BRIX')">
+                            <label class="btn btn-outline-secondary" for="instr-brix">
+                                <i class="bi bi-eyedropper me-1"></i>Refractómetro (°Brix)
+                            </label>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="densidadInicial">Densidad Inicial (OG)</label>
-                        <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
-                               placeholder="1060" inputmode="numeric">
-                        <small class="text-muted">Rango: 1000–1150</small>
+
+                    <!-- Modo SG (hidrómetro) -->
+                    <div id="modo-sg">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label" for="densidadInicial">Densidad Inicial (OG)</label>
+                                <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
+                                       placeholder="1060" inputmode="numeric">
+                                <small class="text-muted">Rango: 1000–1150</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="densidadFinal">Densidad Final (FG)</label>
+                                <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
+                                       placeholder="1014" inputmode="numeric">
+                                <small class="text-muted">Rango: 990–1060</small>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label" for="densidadFinalFecha">Fecha Densidad Final</label>
+                                <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="densidadFinal">Densidad Final (FG)</label>
-                        <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
-                               placeholder="1014" inputmode="numeric">
-                        <small class="text-muted">Rango: 990–1060</small>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="densidadFinalFecha">Fecha Densidad Final</label>
-                        <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
+
+                    <!-- Modo Brix (refractómetro) -->
+                    <div id="modo-brix" class="d-none">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label" for="ogBrix">OG en °Brix</label>
+                                <input type="number" step="0.1" min="1" max="40" th:field="*{ogBrix}" class="form-control"
+                                       placeholder="14.6" oninput="calcularSgDesdeBrix()">
+                                <small class="text-muted">Lectura del mosto sin fermentar</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">OG derivado (SG)</label>
+                                <input type="number" id="ogSgPreview" class="form-control" readonly tabindex="-1"
+                                       placeholder="—" style="background:#f8fafc;">
+                                <small class="text-muted">Calculado automáticamente</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label" for="fgBrix">FG en °Brix <small class="text-muted">(lectura cruda)</small></label>
+                                <input type="number" step="0.1" min="1" max="40" th:field="*{fgBrix}" class="form-control"
+                                       placeholder="5.2" oninput="calcularSgDesdeBrix()">
+                                <small class="text-muted">Sin corregir — Terrill lo ajusta</small>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">FG corregido (Terrill)</label>
+                                <input type="number" id="fgSgPreview" class="form-control" readonly tabindex="-1"
+                                       placeholder="—" style="background:#f8fafc;">
+                                <small class="text-muted">Sean Terrill correction</small>
+                            </div>
+                            <div class="col-md-4">
+                                <div id="brix-abv-preview" class="text-muted small pt-3"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1151,7 +1205,93 @@ var ITEMS_FACTURA = /*[[${todosItemsFactura}]]*/ [];
 var INIT_IDS = /*[[${loteForm.itemsIds}]]*/ [];
 var INIT_CANTIDADES = /*[[${loteForm.itemsCantidades}]]*/ [];
 var INVENTARIO_STOCK = /*[[${inventarioStock}]]*/ [];
+var INIT_INSTRUMENTO = /*[[${loteForm.instrumentoMedicion}]]*/ 'SG';
 /*]]>*/
+</script>
+<script>
+// ── Brix / Refractómetro ──────────────────────────────────────────────────────
+
+function brixToSg(brix) {
+    // Conversión simple Brix → SG (mosto sin fermentar)
+    return brix / (258.6 - (brix / 258.2 * 227.1)) + 1.0;
+}
+
+function fgTerrill(ogBrix, fgBrix) {
+    // Corrección de Sean Terrill para FG medido con refractómetro
+    var o = ogBrix, f = fgBrix;
+    return 1.0000
+        - 0.0044993 * o
+        + 0.011774  * f
+        + 0.00027581 * o * o
+        - 0.0012717  * f * f
+        - 0.0000072800 * o * o * o
+        + 0.000063293  * f * f * f;
+}
+
+function calcularSgDesdeBrix() {
+    var ogB = parseFloat(document.getElementById('ogBrix').value);
+    var fgB = parseFloat(document.getElementById('fgBrix').value);
+
+    var ogPrev  = document.getElementById('ogSgPreview');
+    var fgPrev  = document.getElementById('fgSgPreview');
+    var inpOg   = document.getElementById('densidadInicial');
+    var inpFg   = document.getElementById('densidadFinal');
+    var preview = document.getElementById('brix-abv-preview');
+
+    if (!isNaN(ogB) && ogB > 1) {
+        var ogSg = Math.round(brixToSg(ogB) * 1000);
+        ogPrev.value = ogSg;
+        if (inpOg) inpOg.value = ogSg;
+    } else {
+        ogPrev.value = '';
+        if (inpOg) inpOg.value = '';
+    }
+
+    if (!isNaN(ogB) && !isNaN(fgB) && ogB > 1 && fgB > 1) {
+        var ogSgVal = Math.round(brixToSg(ogB) * 1000);
+        var fgSg = Math.round(fgTerrill(ogB, fgB) * 1000);
+        fgPrev.value = fgSg;
+        if (inpFg) inpFg.value = fgSg;
+        var abv = ((ogSgVal - fgSg) * 131.25 / 1000.0).toFixed(2);
+        preview.innerHTML = '<i class="bi bi-info-circle me-1"></i>ABV estimado (Terrill): <strong>' + abv + ' %</strong>';
+    } else {
+        fgPrev.value = '';
+        if (inpFg) inpFg.value = '';
+        preview.innerHTML = '';
+    }
+}
+
+function toggleInstrumento(modo) {
+    var modSg   = document.getElementById('modo-sg');
+    var modBrix = document.getElementById('modo-brix');
+    var inpOg   = document.getElementById('densidadInicial');
+    var inpFg   = document.getElementById('densidadFinal');
+
+    if (modo === 'BRIX') {
+        modSg.classList.add('d-none');
+        modBrix.classList.remove('d-none');
+        // En modo Brix: el SG se deriva de Brix, los inputs SG son readonly
+        if (inpOg) { inpOg.readOnly = true; inpOg.style.background = '#f8fafc'; }
+        if (inpFg) { inpFg.readOnly = true; inpFg.style.background = '#f8fafc'; }
+        calcularSgDesdeBrix();
+    } else {
+        modSg.classList.remove('d-none');
+        modBrix.classList.add('d-none');
+        if (inpOg) { inpOg.readOnly = false; inpOg.style.background = ''; }
+        if (inpFg) { inpFg.readOnly = false; inpFg.style.background = ''; }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var instrInicial = (INIT_INSTRUMENTO || 'SG');
+    if (instrInicial === 'BRIX') {
+        document.getElementById('instr-brix').checked = true;
+        toggleInstrumento('BRIX');
+        calcularSgDesdeBrix();
+    } else {
+        toggleInstrumento('SG');
+    }
+});
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js}"></script>
 <script th:src="@{/js/trazabilidad-costos.js}"></script>

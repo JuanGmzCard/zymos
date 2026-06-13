@@ -89,10 +89,15 @@
     <!-- Stat cards — calidad -->
     <div class="d-flex flex-wrap gap-3 mb-4" th:if="${lote.densidadInicial != null}">
         <div class="stat-card-simple">
-            <div class="stat-label">Alcohol (ABV)</div>
+            <div class="stat-label">
+                Alcohol (ABV)
+                <span th:if="${lote.ogBrix != null}" class="badge bg-info text-dark ms-1" style="font-size:0.6rem;">Terrill</span>
+            </div>
+            <!-- Si hay Brix, mostrar ABV Terrill; si no, ABV estándar -->
             <div class="stat-value info"
-                 th:text="${lote.abv != null} ? ${lote.abv.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-            <div class="text-muted small mt-1" th:if="${lote.abv == null}">Pendiente densidad final</div>
+                 th:with="abvVal=${lote.ogBrix != null ? lote.abvTerrill : lote.abv}"
+                 th:text="${abvVal != null} ? ${abvVal.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
+            <div class="text-muted small mt-1" th:if="${lote.ogBrix != null ? lote.abvTerrill == null : lote.abv == null}">Pendiente densidad final</div>
         </div>
         <div class="stat-card-simple">
             <div class="stat-label">Atenuación Aparente</div>
@@ -190,18 +195,35 @@
                         </div>
                         <div class="col-6" th:if="${lote.densidadInicial != null}">
                             <div class="densidad-box">
-                                <div class="densidad-tag">OG</div>
+                                <div class="densidad-tag">
+                                    OG
+                                    <span th:if="${lote.ogBrix != null}"
+                                          class="badge bg-info text-dark ms-1" style="font-size:0.55rem;vertical-align:middle;">Refractómetro</span>
+                                </div>
                                 <div class="densidad-valor" th:text="${lote.densidadInicial}">—</div>
-                                <div class="detail-label">Densidad Inicial</div>
+                                <div class="detail-label">
+                                    Densidad Inicial
+                                    <span th:if="${lote.ogBrix != null}"
+                                          th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
+                                          class="text-info"></span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-6" th:if="${lote.densidadFinal != null}">
                             <div class="densidad-box densidad-final">
-                                <div class="densidad-tag">FG</div>
+                                <div class="densidad-tag">
+                                    FG
+                                    <span th:if="${lote.fgBrix != null}"
+                                          class="badge bg-info text-dark ms-1" style="font-size:0.55rem;vertical-align:middle;">Terrill</span>
+                                </div>
                                 <div class="densidad-valor" th:text="${lote.densidadFinal}">—</div>
-                                <div class="detail-label">Densidad Final
+                                <div class="detail-label">
+                                    Densidad Final
                                     <span th:if="${lote.densidadFinalFecha != null}"
                                           th:text="'· ' + ${#temporals.format(lote.densidadFinalFecha,'dd/MM')}"></span>
+                                    <span th:if="${lote.fgBrix != null}"
+                                          th:text="'· ' + ${lote.fgBrix.stripTrailingZeros().toPlainString()} + ' °Brix crudo'"
+                                          class="text-info"></span>
                                 </div>
                             </div>
                         </div>

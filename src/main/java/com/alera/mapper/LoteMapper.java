@@ -30,6 +30,11 @@ public interface LoteMapper {
     LoteFormDto toLoteFormDto(LoteCerveza lote);
 
     @AfterMapping
+    default void mapInstrumentoMedicion(LoteCerveza lote, @MappingTarget LoteFormDto dto) {
+        dto.setInstrumentoMedicion(lote.getOgBrix() != null ? "BRIX" : "SG");
+    }
+
+    @AfterMapping
     default void mapItemsFactura(LoteCerveza lote, @MappingTarget LoteFormDto dto) {
         List<Long> ids = new ArrayList<>();
         List<BigDecimal> cantidades = new ArrayList<>();

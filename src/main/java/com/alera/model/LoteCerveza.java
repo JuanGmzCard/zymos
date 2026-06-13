@@ -38,6 +38,12 @@ public class LoteCerveza extends AuditableEntity {
     private Integer densidadFinal;
     private LocalDate densidadFinalFecha;
 
+    // Medición con refractómetro — valores Brix originales
+    @Column(name = "og_brix", precision = 5, scale = 2)
+    private BigDecimal ogBrix;
+    @Column(name = "fg_brix", precision = 5, scale = 2)
+    private BigDecimal fgBrix;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "equipo_fermentador_id")
     private Equipo equipoFermentador;
@@ -169,6 +175,38 @@ public class LoteCerveza extends AuditableEntity {
         return inicio != null ? ChronoUnit.DAYS.between(inicio, LocalDate.now()) : 0;
     }
 
+    // Conversión Brix → SG (mosto sin fermentar)
+    public Integer getOgSgFromBrix() {
+        if (ogBrix == null) return null;
+        double b = ogBrix.doubleValue();
+        double sg = b / (258.6 - (b / 258.2 * 227.1)) + 1.0;
+        return (int) Math.round(sg * 1000);
+    }
+
+    // Corrección de Sean Terrill — FG real cuando FG fue medido con refractómetro
+    public Integer getFgSgTerrill() {
+        if (ogBrix == null || fgBrix == null) return null;
+        double o = ogBrix.doubleValue();
+        double f = fgBrix.doubleValue();
+        double fg = 1.0000
+                - 0.0044993 * o
+                + 0.011774  * f
+                + 0.00027581 * o * o
+                - 0.0012717  * f * f
+                - 0.0000072800 * o * o * o
+                + 0.000063293  * f * f * f;
+        return (int) Math.round(fg * 1000);
+    }
+
+    // ABV usando OG desde Brix + FG corregido por Terrill
+    public BigDecimal getAbvTerrill() {
+        Integer ogSg = getOgSgFromBrix();
+        Integer fgSg = getFgSgTerrill();
+        if (ogSg == null || fgSg == null) return null;
+        return BigDecimal.valueOf((ogSg - fgSg) * 131.25 / 1000.0)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
+
     // Cálculos de calidad — densidades en formato XXXX (ej: 1056, 1015)
     public BigDecimal getAbv() {
         if (densidadInicial == null || densidadFinal == null) return null;
@@ -290,6 +328,10 @@ public class LoteCerveza extends AuditableEntity {
     public void setCarbValidacion(String carbValidacion) { this.carbValidacion = carbValidacion; }
     public String getCarbDestino() { return carbDestino; }
     public void setCarbDestino(String carbDestino) { this.carbDestino = carbDestino; }
+    public BigDecimal getOgBrix() { return ogBrix; }
+    public void setOgBrix(BigDecimal ogBrix) { this.ogBrix = ogBrix; }
+    public BigDecimal getFgBrix() { return fgBrix; }
+    public void setFgBrix(BigDecimal fgBrix) { this.fgBrix = fgBrix; }
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
     public String getNotasCata() { return notasCata; }

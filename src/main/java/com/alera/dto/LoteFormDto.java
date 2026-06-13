@@ -32,6 +32,9 @@ public class LoteFormDto {
     @Size(max = 200, message = "El clarificante no puede superar 200 caracteres")
     private String clarificante;
 
+    // Instrumento de medición — "SG" (hidrómetro, default) o "BRIX" (refractómetro)
+    private String instrumentoMedicion;
+
     @Min(value = 1000, message = "La densidad inicial mínima es 1000")
     @Max(value = 1150, message = "La densidad inicial máxima es 1150")
     private Integer densidadInicial;
@@ -42,6 +45,15 @@ public class LoteFormDto {
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate densidadFinalFecha;
+
+    // Medición con refractómetro
+    @DecimalMin(value = "1.0",  message = "El °Brix inicial debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix inicial no puede superar 40")
+    private BigDecimal ogBrix;
+
+    @DecimalMin(value = "1.0",  message = "El °Brix final debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix final no puede superar 40")
+    private BigDecimal fgBrix;
 
     private List<InsumoDto> maltas = new ArrayList<>();
     private List<InsumoDto> lupulos = new ArrayList<>();
@@ -133,12 +145,18 @@ public class LoteFormDto {
     public void setLitrosFinales(BigDecimal litrosFinales) { this.litrosFinales = litrosFinales; }
     public String getClarificante() { return clarificante; }
     public void setClarificante(String clarificante) { this.clarificante = clarificante; }
+    public String getInstrumentoMedicion() { return instrumentoMedicion; }
+    public void setInstrumentoMedicion(String instrumentoMedicion) { this.instrumentoMedicion = instrumentoMedicion; }
     public Integer getDensidadInicial() { return densidadInicial; }
     public void setDensidadInicial(Integer densidadInicial) { this.densidadInicial = densidadInicial; }
     public Integer getDensidadFinal() { return densidadFinal; }
     public void setDensidadFinal(Integer densidadFinal) { this.densidadFinal = densidadFinal; }
     public LocalDate getDensidadFinalFecha() { return densidadFinalFecha; }
     public void setDensidadFinalFecha(LocalDate densidadFinalFecha) { this.densidadFinalFecha = densidadFinalFecha; }
+    public BigDecimal getOgBrix() { return ogBrix; }
+    public void setOgBrix(BigDecimal ogBrix) { this.ogBrix = ogBrix; }
+    public BigDecimal getFgBrix() { return fgBrix; }
+    public void setFgBrix(BigDecimal fgBrix) { this.fgBrix = fgBrix; }
     public List<InsumoDto> getMaltas() { return maltas; }
     public void setMaltas(List<InsumoDto> maltas) { this.maltas = maltas; }
     public List<InsumoDto> getLupulos() { return lupulos; }
