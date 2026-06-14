@@ -472,11 +472,11 @@
                     <div class="col-auto" th:if="${lote.ogBrix != null}">
                         <label class="form-label detail-label" for="lectBrixInput">
                             <i class="bi bi-eyedropper me-1" style="color:#0284c7;"></i>°Brix actual
+                            <span style="font-size:0.65rem;color:#94a3b8;font-weight:400;"> → auto-SG</span>
                         </label>
                         <input type="number" id="lectBrixInput" class="form-control form-control-sm"
                                style="width:90px;" placeholder="4.2" min="1" max="40" step="0.1"
                                oninput="lectBrixToSg(this.value)">
-                        <div style="font-size:0.65rem;color:#64748b;margin-top:2px;">→ auto-SG (Terrill)</div>
                     </div>
                     <div class="col-auto">
                         <label class="form-label detail-label" for="lectDensidadInput">Densidad (SG)</label>
