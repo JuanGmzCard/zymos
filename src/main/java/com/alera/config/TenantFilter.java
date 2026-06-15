@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.concurrent.TimeUnit;
 
 public class TenantFilter extends OncePerRequestFilter {
@@ -21,13 +22,15 @@ public class TenantFilter extends OncePerRequestFilter {
 
     private final TenantRepository tenantRepo;
     private final String defaultSubdomain;
+    private final int diasGracia;
 
     // Cache con TTL — expira automáticamente; evictCache/evictAll para invalidación manual
     private final Cache<String, Tenant> cache;
 
-    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain, long ttlMinutes) {
+    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain, long ttlMinutes, int diasGracia) {
         this.tenantRepo = tenantRepo;
         this.defaultSubdomain = defaultSubdomain;
+        this.diasGracia = diasGracia;
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(ttlMinutes, TimeUnit.MINUTES)
                 .maximumSize(200)
@@ -58,10 +61,24 @@ public class TenantFilter extends OncePerRequestFilter {
         request.setAttribute(TENANT_ATTR, tenant);
         TenantContext.setCurrentTenant(tenant.getSubdomain());
         try {
+            if (planBloqueado(tenant) && !esRutaPermitidaConPlanVencido(request.getRequestURI())) {
+                response.sendRedirect("/plan-vencido");
+                return;
+            }
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+    }
+
+    /** true si el plan venció hace más de {@code diasGracia} días. */
+    private boolean planBloqueado(Tenant tenant) {
+        return tenant.getPlanFin() != null
+                && tenant.getPlanFin().plusDays(diasGracia).isBefore(LocalDate.now());
+    }
+
+    private boolean esRutaPermitidaConPlanVencido(String path) {
+        return path.equals("/plan-vencido") || path.equals("/logout") || path.startsWith("/login");
     }
 
     private Tenant resolveTenant(String subdomain) {

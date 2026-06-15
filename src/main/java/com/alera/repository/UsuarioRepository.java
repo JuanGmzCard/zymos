@@ -19,6 +19,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Query(value = "SELECT * FROM usuarios WHERE tenant_id = :tenantId ORDER BY created_at DESC", nativeQuery = true)
     List<Usuario> findAllByTenantId(@Param("tenantId") String tenantId);
 
+    @Query(value = "SELECT COUNT(*) FROM usuarios WHERE tenant_id = :tenantId", nativeQuery = true)
+    long countByTenantId(@Param("tenantId") String tenantId);
+
     @Query(value = "SELECT COUNT(*) FROM usuarios WHERE username = :username AND tenant_id = :tenantId", nativeQuery = true)
     int countByUsernameAndTenantId(@Param("username") String username, @Param("tenantId") String tenantId);
 

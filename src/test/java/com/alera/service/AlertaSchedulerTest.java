@@ -2,7 +2,9 @@ package com.alera.service;
 
 import com.alera.config.TenantContext;
 import com.alera.model.Tenant;
+import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.repository.UsuarioRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,8 @@ class AlertaSchedulerTest {
     @Mock NotificacionService      notificacionService;
     @Mock FacturaProveedorService  facturaService;
     @Mock VentaService             ventaService;
+    @Mock LoteCervezaRepository    loteCervezaRepo;
+    @Mock UsuarioRepository        usuarioRepo;
 
     @InjectMocks AlertaScheduler scheduler;
 
@@ -43,6 +47,8 @@ class AlertaSchedulerTest {
         lenient().when(facturaService.listarSinProcesar(anyInt())).thenReturn(List.of());
         lenient().when(ventaService.expirarCotizaciones()).thenReturn(0);
         lenient().when(emailService.mailConfigurado()).thenReturn(false);
+        lenient().when(loteCervezaRepo.count()).thenReturn(0L);
+        lenient().when(usuarioRepo.countByTenantId(any())).thenReturn(0L);
     }
 
     @AfterEach
@@ -144,6 +150,18 @@ class AlertaSchedulerTest {
         scheduler.enviarAlertasDiarias();
 
         verify(notificacionService).crearAlertaFacturas(any(), eq(30));
+    }
+
+    @Test
+    void enviarAlertasDiarias_creaAlertaPlan() {
+        Tenant t = tenant("mosto", true, null);
+        when(tenantRepo.findAll()).thenReturn(List.of(t));
+        when(loteCervezaRepo.count()).thenReturn(5L);
+        when(usuarioRepo.countByTenantId("mosto")).thenReturn(2L);
+
+        scheduler.enviarAlertasDiarias();
+
+        verify(notificacionService).crearAlertaPlan(t, 5L, 2L);
     }
 
     @Test

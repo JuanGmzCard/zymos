@@ -5,7 +5,9 @@ import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
+import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.repository.UsuarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,6 +32,8 @@ public class AlertaScheduler {
     private final NotificacionService      notificacionService;
     private final FacturaProveedorService  facturaService;
     private final VentaService             ventaService;
+    private final LoteCervezaRepository    loteCervezaRepo;
+    private final UsuarioRepository        usuarioRepo;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -44,7 +48,9 @@ public class AlertaScheduler {
                             TenantService tenantService,
                             NotificacionService notificacionService,
                             FacturaProveedorService facturaService,
-                            VentaService ventaService) {
+                            VentaService ventaService,
+                            LoteCervezaRepository loteCervezaRepo,
+                            UsuarioRepository usuarioRepo) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -53,6 +59,8 @@ public class AlertaScheduler {
         this.notificacionService = notificacionService;
         this.facturaService      = facturaService;
         this.ventaService        = ventaService;
+        this.loteCervezaRepo     = loteCervezaRepo;
+        this.usuarioRepo         = usuarioRepo;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -85,6 +93,11 @@ public class AlertaScheduler {
 
                 List<FacturaProveedor> sinProcesar = facturaService.listarSinProcesar(facturaAlertaDias);
                 notificacionService.crearAlertaFacturas(sinProcesar, facturaAlertaDias);
+
+                // Estado del plan: vencimiento y límites de uso (lotes/usuarios)
+                long totalLotes    = loteCervezaRepo.count();
+                long totalUsuarios = usuarioRepo.countByTenantId(tenant.getSubdomain());
+                notificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios);
 
                 // Expirar cotizaciones vencidas
                 int expiradas = ventaService.expirarCotizaciones();

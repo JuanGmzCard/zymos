@@ -4,6 +4,7 @@ import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Notificacion;
+import com.alera.model.Tenant;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.NotificacionRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,6 +115,64 @@ public class NotificacionService {
 
     public void marcarTodasLeidas() {
         repo.marcarTodasLeidas();
+    }
+
+    /**
+     * Crea notificaciones in-app sobre el estado del plan del tenant: vencimiento
+     * (vencido o por vencer) y cercanía a los límites de lotes/usuarios (>= 90%).
+     * Evita duplicados si ya se creó una notificación del mismo tipo hoy.
+     */
+    public void crearAlertaPlan(Tenant tenant, long totalLotes, long totalUsuarios) {
+        LocalDateTime hoy     = LocalDate.now().atStartOfDay();
+        LocalDateTime maniana = hoy.plusDays(1);
+
+        if ((tenant.isPlanVencido() || tenant.isPlanPorVencer())
+                && !repo.existeEnPeriodo(TipoNotificacion.PLAN_VENCIMIENTO, hoy, maniana)) {
+            if (tenant.isPlanVencido()) {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_VENCIMIENTO,
+                        "Plan vencido",
+                        "El plan venció el " + tenant.getPlanFin() + ". Contacta al administrador para renovarlo.",
+                        null));
+            } else {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_VENCIMIENTO,
+                        "Plan por vencer",
+                        "El plan vence el " + tenant.getPlanFin() + ".",
+                        null));
+            }
+        }
+
+        if (!repo.existeEnPeriodo(TipoNotificacion.PLAN_LIMITE, hoy, maniana)) {
+            Integer maxLotes    = tenant.getMaxLotes();
+            Integer maxUsuarios = tenant.getMaxUsuarios();
+
+            if (maxLotes != null && totalLotes >= maxLotes) {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_LIMITE,
+                        "Límite de lotes alcanzado",
+                        "Se alcanzó el límite de " + maxLotes + " lotes incluidos en el plan.",
+                        null));
+            } else if (maxLotes != null && totalLotes >= maxLotes * 0.9) {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_LIMITE,
+                        "Cerca del límite de lotes",
+                        "Se usaron " + totalLotes + " de " + maxLotes + " lotes incluidos en el plan.",
+                        null));
+            } else if (maxUsuarios != null && totalUsuarios >= maxUsuarios) {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_LIMITE,
+                        "Límite de usuarios alcanzado",
+                        "Se alcanzó el límite de " + maxUsuarios + " usuarios incluidos en el plan.",
+                        null));
+            } else if (maxUsuarios != null && totalUsuarios >= maxUsuarios * 0.9) {
+                repo.save(Notificacion.of(
+                        TipoNotificacion.PLAN_LIMITE,
+                        "Cerca del límite de usuarios",
+                        "Se usaron " + totalUsuarios + " de " + maxUsuarios + " usuarios incluidos en el plan.",
+                        null));
+            }
+        }
     }
 
     public void crearAlertaFacturas(List<FacturaProveedor> sinProcesar, int dias) {

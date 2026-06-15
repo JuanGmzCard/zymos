@@ -4,6 +4,7 @@ import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Notificacion;
+import com.alera.model.Tenant;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.NotificacionRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -272,5 +274,112 @@ class NotificacionServiceTest {
         verify(repo).save(cap.capture());
         assertThat(cap.getValue().getMensaje()).contains("y 1 más");
         assertThat(cap.getValue().getTitulo()).contains("4 facturas");
+    }
+
+    // ── crearAlertaPlan ────────────────────────────────────────────────────────
+
+    private Tenant tenant(LocalDate planFin, Integer maxLotes, Integer maxUsuarios) {
+        Tenant t = new Tenant();
+        t.setSubdomain("test");
+        t.setPlanFin(planFin);
+        t.setMaxLotes(maxLotes);
+        t.setMaxUsuarios(maxUsuarios);
+        return t;
+    }
+
+    @Test
+    void crearAlertaPlan_sinPlanFinNiLimites_noCreaNada() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(null, null, null), 5, 2);
+
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void crearAlertaPlan_planVencido_creaNotificacionVencimiento() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(LocalDate.now().minusDays(1), null, null), 0, 0);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.PLAN_VENCIMIENTO);
+        assertThat(cap.getValue().getTitulo()).isEqualTo("Plan vencido");
+    }
+
+    @Test
+    void crearAlertaPlan_planPorVencer_creaNotificacionPorVencer() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(LocalDate.now().plusDays(3), null, null), 0, 0);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.PLAN_VENCIMIENTO);
+        assertThat(cap.getValue().getTitulo()).isEqualTo("Plan por vencer");
+    }
+
+    @Test
+    void crearAlertaPlan_planVencido_yaNotificadoHoy_noDuplica() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.PLAN_VENCIMIENTO), any(), any())).thenReturn(true);
+
+        service.crearAlertaPlan(tenant(LocalDate.now().minusDays(1), null, null), 0, 0);
+
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void crearAlertaPlan_limiteLotesAlcanzado_creaNotificacionLimite() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(null, 10, null), 10, 0);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.PLAN_LIMITE);
+        assertThat(cap.getValue().getTitulo()).isEqualTo("Límite de lotes alcanzado");
+    }
+
+    @Test
+    void crearAlertaPlan_cercaDelLimiteDeLotes_creaNotificacionCerca() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(null, 10, null), 9, 0);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.PLAN_LIMITE);
+        assertThat(cap.getValue().getTitulo()).isEqualTo("Cerca del límite de lotes");
+    }
+
+    @Test
+    void crearAlertaPlan_limiteUsuariosAlcanzado_creaNotificacionLimite() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(null, null, 5), 0, 5);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.PLAN_LIMITE);
+        assertThat(cap.getValue().getTitulo()).isEqualTo("Límite de usuarios alcanzado");
+    }
+
+    @Test
+    void crearAlertaPlan_debajoDeLosLimites_noCreaNada() {
+        when(repo.existeEnPeriodo(any(), any(), any())).thenReturn(false);
+
+        service.crearAlertaPlan(tenant(null, 10, 10), 5, 5);
+
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void crearAlertaPlan_limiteLotesYaNotificadoHoy_noDuplica() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.PLAN_LIMITE), any(), any())).thenReturn(true);
+
+        service.crearAlertaPlan(tenant(null, 10, null), 10, 0);
+
+        verify(repo, never()).save(any());
     }
 }

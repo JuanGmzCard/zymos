@@ -199,8 +199,9 @@
 - **WARN escalado**: si `alertasIntentosFallidos >= UMBRAL_WARN (3)`, loggea WARN antes de cada intento de email.
 - **EmailService**: `enviarAlertasDiarias()` relanza excepción SMTP como `RuntimeException` para que el scheduler pueda trackearla.
 - **Expiración de cotizaciones**: por cada tenant activo, después de procesar alertas de inventario/equipos/facturas, llama `ventaService.expirarCotizaciones()`. Las cotizaciones con `cotizacion_expira_en < today` y `estado = COTIZACION` pasan automáticamente a EXPIRADO.
+- **Alertas de plan**: tras las alertas de facturas, calcula `loteCervezaRepo.count()` y `usuarioRepo.countByTenantId(subdomain)` y llama `notificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios)` — ver `NotificacionService`.
 - Loggea resumen: "N notificación(es) in-app creada(s), M email(s) enviado(s) de K tenant(s)"
-- Inyecta `NotificacionService`, `FacturaProveedorService` y `VentaService`.
+- Inyecta `NotificacionService`, `FacturaProveedorService`, `VentaService`, `LoteCervezaRepository` y `UsuarioRepository`.
 
 ### NotificacionService
 - `crear(tipo, titulo, mensaje, urlAccion)` — persiste una `Notificacion` para el tenant activo
@@ -212,6 +213,9 @@
 - `marcarLeida(id)` — busca por id y setea `leida = true`
 - `marcarTodasLeidas()` — bulk update via `repo.marcarTodasLeidas()`
 - `crearAlertaFacturas(sinProcesar, dias)` — crea notificación `TipoNotificacion.SISTEMA` con deduplicación diaria (`existeEnPeriodo(SISTEMA, hoy, maniana)`). Mensaje resume los primeros 3 proveedores. URL de acción: `/facturas`. Solo crea si `!sinProcesar.isEmpty()` y no existe notificación SISTEMA del día.
+- `crearAlertaPlan(tenant, totalLotes, totalUsuarios)` — notificaciones in-app sobre el estado del plan, con deduplicación diaria:
+  - `PLAN_VENCIMIENTO` (dedup. por `existeEnPeriodo(PLAN_VENCIMIENTO, ...)`): si `tenant.isPlanVencido()` → "Plan vencido"; si `tenant.isPlanPorVencer()` (≤7 días) → "Plan por vencer". `urlAccion=null`.
+  - `PLAN_LIMITE` (dedup. por `existeEnPeriodo(PLAN_LIMITE, ...)`): si `totalLotes >= maxLotes` → "Límite de lotes alcanzado"; si `>= maxLotes*0.9` → "Cerca del límite de lotes"; análogo para `totalUsuarios`/`maxUsuarios`. Solo evalúa lotes antes que usuarios (un único tipo de alerta por día). `maxLotes`/`maxUsuarios` null = sin límite, no genera alerta.
 - `pageSize` inyectado via `@Value("${app.page-size:15}")`
 
 ### PlanificacionService

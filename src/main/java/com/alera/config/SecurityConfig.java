@@ -35,8 +35,9 @@ public class SecurityConfig {
     @Bean
     public TenantFilter tenantFilter(TenantRepository tenantRepo,
                                       @Value("${app.default-subdomain:default}") String defaultSubdomain,
-                                      @Value("${app.tenant-cache-ttl-minutes:5}") long ttlMinutes) {
-        return new TenantFilter(tenantRepo, defaultSubdomain, ttlMinutes);
+                                      @Value("${app.tenant-cache-ttl-minutes:5}") long ttlMinutes,
+                                      @Value("${app.plan.dias-gracia:7}") int diasGracia) {
+        return new TenantFilter(tenantRepo, defaultSubdomain, ttlMinutes, diasGracia);
     }
 
     @Bean
@@ -126,6 +127,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                 .requestMatchers("/error", "/error/**").permitAll()
+                .requestMatchers("/plan-vencido").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/api/auth/**").permitAll()

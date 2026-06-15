@@ -151,6 +151,8 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 39. **@WebMvcTest — httpBasic y status de autenticación**: con `httpBasic()` configurado en `SecurityConfig`, peticiones sin credenciales y sin `Accept: text/html` devuelven `401 Unauthorized` (no `302 redirect`). Las aserciones de tests deben usar `status().isUnauthorized()` para requests no autenticados en endpoints REST.
 
+42. **Plan de tenant — alertas y bloqueo**: `AlertaScheduler` llama diariamente a `NotificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios)` para generar notificaciones in-app (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) cuando el plan está vencido/por vencer (`Tenant.isPlanVencido()`/`isPlanPorVencer()`, ≤7 días) o cerca/sobre los límites `maxLotes`/`maxUsuarios` (≥90%/100%). Si `planFin + app.plan.dias-gracia (def: 7)` ya pasó, `TenantFilter` redirige todas las rutas (excepto `/plan-vencido`, `/logout`, `/login*`) a `/plan-vencido` (`PlanController` + `templates/plan/vencido.html`).
+
 ---
 
 ## CONVENCIONES DEL PROYECTO
@@ -193,7 +195,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:
 
-- **[docs/estructura.md](docs/estructura.md)** — Estructura de paquetes (`config/`, `controller/`, `service/`, `model/`, etc.)
+- **[docs/estr  `uctura.md](docs/estructura.md)** — Estructura de paquetes (`config/`, `controller/`, `service/`, `model/`, etc.)
 - **[docs/entidades.md](docs/entidades.md)** — Entidades y modelos JPA
 - **[docs/repositorios.md](docs/repositorios.md)** — Repositorios y queries clave
 - **[docs/servicios.md](docs/servicios.md)** — Servicios y lógica de negocio
