@@ -111,8 +111,10 @@ public class TenantAdminController {
                           RedirectAttributes ra) {
         calcularPlanFin(tenant);
         tenantService.guardar(tenant);
-        String accion = esNuevo ? "creado" : "actualizado";
-        ra.addFlashAttribute("mensaje", "Tenant '" + tenant.getSubdomain() + "' " + accion + " correctamente");
+        if (esNuevo) {
+            return "redirect:/admin/tenants/" + tenant.getSubdomain() + "/onboarding";
+        }
+        ra.addFlashAttribute("mensaje", "Tenant '" + tenant.getSubdomain() + "' actualizado correctamente");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/admin/tenants";
     }
@@ -379,6 +381,56 @@ public class TenantAdminController {
         model.addAttribute("tenant", tenant);
         model.addAttribute("metricas", metricsService.obtener(subdomain));
         return "admin/tenant-metricas";
+    }
+
+    // ── Onboarding wizard (paso 2 tras crear tenant) ────────────────────
+
+    @GetMapping("/{subdomain}/onboarding")
+    public String onboardingForm(@PathVariable String subdomain, Model model, RedirectAttributes ra) {
+        Tenant tenant = tenantService.buscarPorSubdomain(subdomain).orElse(null);
+        if (tenant == null) {
+            ra.addFlashAttribute("mensaje", "Tenant no encontrado: " + subdomain);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/admin/tenants";
+        }
+        model.addAttribute("tenant", tenant);
+        model.addAttribute("roles", RolUsuario.values());
+        model.addAttribute("tieneUsuarios", !usuarioRepo.findAllByTenantId(subdomain).isEmpty());
+        return "admin/tenant-onboarding";
+    }
+
+    @Transactional
+    @PostMapping("/{subdomain}/onboarding/guardar")
+    public String onboardingGuardar(@PathVariable String subdomain,
+                                     @RequestParam String username,
+                                     @RequestParam String password,
+                                     @RequestParam String confirmarPassword,
+                                     @RequestParam RolUsuario rol,
+                                     RedirectAttributes ra) {
+        String redirect = "redirect:/admin/tenants/" + subdomain + "/onboarding";
+        String errorPassword = PasswordPolicy.validar(password);
+        if (errorPassword != null) {
+            ra.addFlashAttribute("mensaje", errorPassword);
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        if (!password.equals(confirmarPassword)) {
+            ra.addFlashAttribute("mensaje", "Las contraseñas no coinciden");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        if (usuarioRepo.countByUsernameAndTenantId(username, subdomain) > 0) {
+            ra.addFlashAttribute("mensaje", "El usuario '" + username + "' ya existe en este tenant");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return redirect;
+        }
+        usuarioRepo.insertarConTenant(username, passwordEncoder.encode(password), rol.name(), subdomain);
+        tenantService.registrarAccion(subdomain, "USUARIO_CREADO", username + " (" + rol.getDisplayName() + ")");
+        tenantService.buscarPorSubdomain(subdomain).ifPresent(t ->
+                emailService.enviarBienvenida(t, username, password));
+        ra.addFlashAttribute("mensaje", "¡Onboarding completado! Tenant '" + subdomain + "' listo con usuario '" + username + "'");
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants";
     }
 
     // ── Reporte de tenants inactivos ────────────────────────────────────
