@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - Tenants inactivos'">Alera - Tenants inactivos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .filter-tab {
+            display: inline-block;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+        .filter-tab.active   { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .table-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important;
+            color: #64748b !important;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .filter-tab.inactive { color: var(--dm-text-muted); }
+        html.dark-mode .filter-tab.inactive:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid px-4" style="max-width:1100px;">
+
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+        <div>
+            <h1><i class="bi bi-moon-stars me-2"></i>Tenants inactivos</h1>
+            <div class="subtitle">Tenants sin actividad reciente (basado en log de accesos)</div>
+        </div>
+        <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm align-self-start">
+            <i class="bi bi-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <div class="filter-card">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <span class="small text-muted me-1">Sin actividad hace al menos:</span>
+            <a th:href="@{/admin/tenants/inactivos(dias=7)}"
+               th:classappend="${dias == 7} ? 'filter-tab active' : 'filter-tab inactive'">7 días</a>
+            <a th:href="@{/admin/tenants/inactivos(dias=15)}"
+               th:classappend="${dias == 15} ? 'filter-tab active' : 'filter-tab inactive'">15 días</a>
+            <a th:href="@{/admin/tenants/inactivos(dias=30)}"
+               th:classappend="${dias == 30} ? 'filter-tab active' : 'filter-tab inactive'">30 días</a>
+            <a th:href="@{/admin/tenants/inactivos(dias=60)}"
+               th:classappend="${dias == 60} ? 'filter-tab active' : 'filter-tab inactive'">60 días</a>
+            <a th:href="@{/admin/tenants/inactivos(dias=90)}"
+               th:classappend="${dias == 90} ? 'filter-tab active' : 'filter-tab inactive'">90 días</a>
+        </div>
+    </div>
+
+    <div class="table-card mb-4">
+        <div class="table-count" th:text="${reporte.size()} + ' tenant(s) sin actividad en los últimos ' + ${dias} + ' día(s)'">N tenants</div>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Subdominio</th>
+                        <th>Nombre</th>
+                        <th>Estado</th>
+                        <th>Último acceso</th>
+                        <th>Días sin actividad</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(reporte)}">
+                        <td colspan="6" class="text-center text-muted py-5">
+                            <i class="bi bi-check-circle d-block mb-2" style="font-size:1.5rem; opacity:.4;"></i>
+                            Todos los tenants tuvieron actividad en este período
+                        </td>
+                    </tr>
+                    <tr th:each="r : ${reporte}">
+                        <td><code th:text="${r.tenant.subdomain}">sub</code></td>
+                        <td th:text="${r.tenant.name}">Nombre</td>
+                        <td>
+                            <span th:if="${r.tenant.active}" class="badge bg-success">Activo</span>
+                            <span th:unless="${r.tenant.active}" class="badge bg-secondary">Inactivo</span>
+                        </td>
+                        <td class="small text-muted" th:text="${r.ultimoAcceso != null ? #temporals.format(r.ultimoAcceso, 'dd/MM/yyyy HH:mm') : 'Nunca'}">—</td>
+                        <td th:text="${r.diasInactivo != null ? r.diasInactivo + ' días' : 'Sin registros'}">—</td>
+                        <td class="text-end">
+                            <a th:href="@{/admin/tenants/{s}/metricas(s=${r.tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-bar-chart-line me-1"></i>Métricas
+                            </a>
+                            <a th:href="@{/admin/tenants/editar/{s}(s=${r.tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

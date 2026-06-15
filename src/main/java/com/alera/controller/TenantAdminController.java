@@ -21,6 +21,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -376,6 +379,32 @@ public class TenantAdminController {
         model.addAttribute("tenant", tenant);
         model.addAttribute("metricas", metricsService.obtener(subdomain));
         return "admin/tenant-metricas";
+    }
+
+    // ── Reporte de tenants inactivos ────────────────────────────────────
+
+    public record TenantInactividad(Tenant tenant, LocalDateTime ultimoAcceso, Long diasInactivo) {}
+
+    @GetMapping("/inactivos")
+    public String inactivos(@RequestParam(defaultValue = "30") int dias, Model model) {
+        Map<String, LocalDateTime> ultimosAccesos = metricsService.ultimoAccesoPorTenant();
+        LocalDateTime ahora = LocalDateTime.now();
+
+        List<TenantInactividad> reporte = tenantService.listarTodos().stream()
+                .map(t -> {
+                    LocalDateTime ultimo = ultimosAccesos.get(t.getSubdomain());
+                    Long diasInactivo = ultimo != null ? ChronoUnit.DAYS.between(ultimo, ahora) : null;
+                    return new TenantInactividad(t, ultimo, diasInactivo);
+                })
+                .filter(r -> r.diasInactivo() == null || r.diasInactivo() >= dias)
+                .sorted(Comparator.comparing(
+                        (TenantInactividad r) -> r.diasInactivo() == null ? Long.MAX_VALUE : r.diasInactivo())
+                        .reversed())
+                .toList();
+
+        model.addAttribute("reporte", reporte);
+        model.addAttribute("dias", dias);
+        return "admin/tenants-inactivos";
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────

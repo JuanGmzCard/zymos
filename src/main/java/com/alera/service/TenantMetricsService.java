@@ -6,6 +6,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class TenantMetricsService {
@@ -72,5 +74,15 @@ public class TenantMetricsService {
         return jdbc.queryForObject(
             "SELECT MAX(fecha) FROM log_accesos WHERE tenant_id = ?",
             LocalDateTime.class, tenantId);
+    }
+
+    /** Último acceso registrado por cada tenant (todos), para el reporte de tenants inactivos. */
+    @Transactional(readOnly = true)
+    public Map<String, LocalDateTime> ultimoAccesoPorTenant() {
+        Map<String, LocalDateTime> resultado = new HashMap<>();
+        jdbc.query("SELECT tenant_id, MAX(fecha) AS ultimo FROM log_accesos GROUP BY tenant_id", rs -> {
+            resultado.put(rs.getString("tenant_id"), rs.getTimestamp("ultimo").toLocalDateTime());
+        });
+        return resultado;
     }
 }

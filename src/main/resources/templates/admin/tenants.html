@@ -100,6 +100,9 @@
             <div class="subtitle">Clientes registrados en la plataforma multi-tenant</div>
         </div>
         <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a th:href="@{/admin/tenants/inactivos}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-moon-stars me-1"></i>Tenants inactivos
+            </a>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVerificarAlertas"
                     onclick="verificarAlertas()">
                 <i class="bi bi-bell me-1"></i>Verificar alertas
