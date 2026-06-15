@@ -41,7 +41,7 @@
 - `countFacturas(proveedorId)`, `sumFacturas(proveedorId)`
 
 ### FacturaProveedorRepository
-- `findAllWithItems()` — DISTINCT + JOIN FETCH (usado en `TrazabilidadController.agregarInventarioAlModelo()` para el buscador de costos)
+- `findAllWithItems()` — DISTINCT + JOIN FETCH de todas las facturas con items. Usado por `FacturaProveedorService.listarTodas()`/`listarParaExport()`. **Ya no se usa para el buscador de costos de `TrazabilidadController`** — ver `FacturaItemRepository.search()` / `findByIdIn()`.
 - `findAllFiltered(estado, desde, hasta, Pageable)` — paginado con filtros opcionales: `:estado IS NULL OR f.estado = :estado`, `:desde IS NULL OR f.fechaFactura >= :desde`, `:hasta IS NULL OR f.fechaFactura <= :hasta`. Orden `fechaFactura DESC NULLS LAST, id DESC`. Único query paginado — reemplazó `findAllPaged` y `findAllPagedByEstado`.
 - `findByIdWithItems(id)` — LEFT JOIN FETCH items por id
 - `search(q, Pageable)` — LIKE en `COALESCE(numeroFactura,'')` y `COALESCE(proveedor,'')`, orden `fechaFactura DESC NULLS LAST` — para el typeahead de la lista de facturas
@@ -123,6 +123,9 @@
 - `findHistorialPreciosPorNombre(nombre)` — `JOIN FETCH fi.factura`, filtra por `LOWER(TRIM(fi.nombre)) = LOWER(TRIM(:nombre))`, `cantidad > 0`, orden `f.fechaFactura DESC NULLS LAST`. **CRÍTICO**: el campo de fecha en `FacturaProveedor` es `fechaFactura` (no `fecha`) — usar `f.fechaFactura` en JPQL y `getFechaFactura()` en Java.
 - `findNombresDistintos()` — `SELECT DISTINCT fi.nombre` para datalist de búsqueda
 - `findUltimosPrecios(List<String> nombres)` — `JOIN FETCH fi.factura`, filtra por `LOWER(TRIM(fi.nombre)) IN :nombres` y `valorUnitario > 0`, orden `f.fechaFactura DESC NULLS LAST, fi.id DESC`. Devuelve todos los ítems que coincidan; el controller toma el primero por nombre (más reciente). Usado por `RecetaController.calcularCostosEstimados()` para estimación de costo por ingrediente.
+- `findByIdIn(List<Long> ids)` — `JOIN FETCH fi.factura`, sin orden. Usado por `TrazabilidadController.agregarInventarioAlModelo()` para precargar los datos de los ítems ya asignados al lote (`itemsFacturaAsignados` → `INIT_ITEMS_DATA`).
+- `findByNombresIn(List<String> nombres)` — `JOIN FETCH fi.factura`, filtra por `LOWER(TRIM(fi.nombre)) IN :nombres`, orden `f.fechaFactura DESC NULLS LAST, fi.id DESC` (primer match por nombre = factura más reciente). Usado por `TrazabilidadController.suggestItemsPorNombre()` → `GET /suggest-items-por-nombre?nombres=...` para auto-sugerir costos al cargar una receta.
+- `search(q, tipo, Pageable)` — `JOIN FETCH fi.factura`, filtra por `q` (LIKE en `fi.nombre`, `f.numeroFactura`, `f.proveedor`; `:q = ''` = sin filtro) y `tipo` (`fi.tipoInsumo = :tipo`; `:tipo = ''` = sin filtro), orden `f.fechaFactura DESC NULLS LAST, fi.id DESC`. Usado por `TrazabilidadController.suggestItems()` → `GET /suggest-items` (buscador AJAX de "Costos de Producción", paginado a 30).
 - Usado también por `TrazabilidadService.mapearDto()` para resolver ítems por ID al guardar lotes
 
 ### MantenimientoEquipoRepository

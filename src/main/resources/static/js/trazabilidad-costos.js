@@ -1,12 +1,14 @@
-// Depende de: ITEMS_FACTURA, INIT_IDS, INIT_CANTIDADES (inyectados por Thymeleaf)
+// Depende de: INIT_ITEMS_DATA, INIT_IDS, INIT_CANTIDADES (inyectados por Thymeleaf)
 //             poblarDesdeReceta, goTab (de trazabilidad-ingredientes.js)
 
 var asignados = [];
+var ultimosResultados = {};
+var _filtroCostoTimer;
 
 function initAsignados() {
     if (INIT_IDS && INIT_IDS.length) {
         INIT_IDS.forEach(function(id, i) {
-            var item = ITEMS_FACTURA.find(function(it) { return it.id == id; });
+            var item = INIT_ITEMS_DATA.find(function(it) { return it.id == id; });
             if (!item) return;
             var cant = (INIT_CANTIDADES && INIT_CANTIDADES[i] != null) ? parseFloat(INIT_CANTIDADES[i]) : 0;
             asignados.push({ itemId: id, cantidadAsignada: cant, itemData: item });
@@ -16,24 +18,31 @@ function initAsignados() {
 }
 
 function filtrarItemsCosto() {
-    var q = (document.getElementById('costo-search').value || '').trim().toLowerCase();
+    clearTimeout(_filtroCostoTimer);
+    _filtroCostoTimer = setTimeout(buscarItemsCosto, 260);
+}
+
+function buscarItemsCosto() {
+    var q = (document.getElementById('costo-search').value || '').trim();
     var tipo = document.getElementById('costo-tipo-filter').value;
     var resultadosDiv = document.getElementById('costo-resultados');
     if (!q && !tipo) { resultadosDiv.style.display = 'none'; return; }
 
-    var filtrados = ITEMS_FACTURA.filter(function(it) {
-        var mq = !q || (it.nombre && it.nombre.toLowerCase().includes(q))
-                    || (it.proveedor && it.proveedor.toLowerCase().includes(q))
-                    || (it.facturaNumero && it.facturaNumero.toLowerCase().includes(q));
-        return mq && (!tipo || it.tipoInsumo === tipo);
-    });
+    fetch('/suggest-items?q=' + encodeURIComponent(q) + '&tipo=' + encodeURIComponent(tipo))
+        .then(function(r) { return r.json(); })
+        .then(function(items) { renderizarResultadosCosto(items); });
+}
+
+function renderizarResultadosCosto(items) {
+    var resultadosDiv = document.getElementById('costo-resultados');
+    items.forEach(function(it) { ultimosResultados[it.id] = it; });
 
     var tbody = document.getElementById('costo-resultados-body');
     tbody.innerHTML = '';
-    if (!filtrados.length) {
+    if (!items.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-2 small">Sin resultados</td></tr>';
     } else {
-        filtrados.slice(0, 50).forEach(function(it) {
+        items.forEach(function(it) {
             var ya = asignados.some(function(a) { return a.itemId == it.id; });
             var tr = document.createElement('tr');
             if (ya) tr.classList.add('table-warning');
@@ -56,17 +65,17 @@ function filtrarItemsCosto() {
 }
 
 function agregarItemCosto(itemId) {
-    var it = ITEMS_FACTURA.find(function(x) { return x.id == itemId; });
+    var it = ultimosResultados[itemId];
     if (!it || asignados.some(function(a) { return a.itemId == itemId; })) return;
     asignados.push({ itemId: itemId, cantidadAsignada: parseFloat(it.cantidad) || 0, itemData: it });
     renderizarAsignados();
-    filtrarItemsCosto();
+    buscarItemsCosto();
 }
 
 function removerItemCosto(itemId) {
     asignados = asignados.filter(function(a) { return a.itemId != itemId; });
     renderizarAsignados();
-    filtrarItemsCosto();
+    buscarItemsCosto();
 }
 
 function actualizarCantidadCosto(itemId, val) {

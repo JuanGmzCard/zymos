@@ -223,6 +223,26 @@ function verificarStockReceta(data) {
         { key: 'clarificantes', containerId: 'clarificantes-container', tipo: 'CLARIFICANTE' }
     ];
 
+    var nombres = [];
+    grupos.forEach(function(cfg) {
+        (data[cfg.key] || []).forEach(function(item) {
+            if (item.nombre) nombres.push(item.nombre);
+        });
+    });
+
+    if (!nombres.length) {
+        procesarStockReceta(data, grupos, {});
+        return;
+    }
+
+    var qs = nombres.map(function(n) { return 'nombres=' + encodeURIComponent(n); }).join('&');
+    fetch('/suggest-items-por-nombre?' + qs)
+        .then(function(r) { return r.json(); })
+        .then(function(costosPorNombre) { procesarStockReceta(data, grupos, costosPorNombre || {}); })
+        .catch(function() { procesarStockReceta(data, grupos, {}); });
+}
+
+function procesarStockReceta(data, grupos, costosPorNombre) {
     var advertencias = [];
     var costosSugeridos = [];
 
@@ -248,7 +268,7 @@ function verificarStockReceta(data) {
             var insuficiente = !stockItem || (baseReceta === baseStock && cantStockBase < cantRecetaBase);
 
             // Siempre buscar ítem de factura para todos los ingredientes
-            var costoItem = encontrarItemCostoPorNombre(item.nombre);
+            var costoItem = costosPorNombre[nombreNorm] || null;
             if (costoItem) {
                 costosSugeridos.push(Object.assign({}, costoItem, {
                     cantidadReceta: parseFloat(item.cantidad) || 0,
@@ -356,13 +376,6 @@ function aplicarReemplazo(btn) {
         if (badge) badge.remove();
         panel.remove();
     }
-}
-
-function encontrarItemCostoPorNombre(nombre) {
-    var nombreLower = (nombre || '').toLowerCase().trim();
-    return (ITEMS_FACTURA || []).find(function(it) {
-        return (it.nombre || '').toLowerCase().trim() === nombreLower;
-    }) || null;
 }
 
 function escAttr(s) {

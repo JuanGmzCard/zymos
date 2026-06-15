@@ -306,7 +306,7 @@
                     <div class="col-12"><hr class="my-1"></div>
 
                     <!-- Costos de Producción — buscador de ítems de factura -->
-                    <div class="col-12 mt-2" th:if="${!#lists.isEmpty(todosItemsFactura)}">
+                    <div class="col-12 mt-2" th:if="${hayItemsFactura}">
                         <div class="card border-0" style="background:#faf7f0;border:1px solid #e0d9c8!important;">
                             <div class="card-header py-2 d-flex align-items-center justify-content-between"
                                  style="cursor:pointer;background:#f1ece0;border-bottom:1px solid #e0d9c8;"
@@ -1126,29 +1126,33 @@
                     function agregarAgenteCostoSugerido() {
                         var nombre = document.getElementById('carbAzucarTipoSelect').value;
                         var gramos = parseFloat(document.getElementById('gramosCalculados').textContent) || 0;
-                        if (!nombre || gramos <= 0 || typeof ITEMS_FACTURA === 'undefined') return;
-                        var nombreLower = nombre.toLowerCase().trim();
-                        var match = ITEMS_FACTURA.find(function(it) {
-                            return it.nombre && it.nombre.toLowerCase().trim().includes(nombreLower);
-                        });
+                        if (!nombre || gramos <= 0) return;
                         var btn = document.getElementById('btnAgregarAgenteCosto');
-                        if (!match) {
-                            if (btn) { btn.textContent = '✗ No encontrado en facturas'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2500); }
-                            return;
-                        }
-                        if (typeof asignados !== 'undefined' && asignados.some(function(a) { return a.itemId == match.id; })) {
-                            actualizarCantidadCosto(match.id, gramos);
-                            if (btn) { btn.textContent = '✓ Cantidad actualizada'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
-                            return;
-                        }
-                        var unidad = (match.unidad || '').toLowerCase().trim();
-                        var cantAsig = unidad === 'kg' ? gramos / 1000 : gramos;
-                        if (typeof asignados !== 'undefined') {
-                            asignados.push({ itemId: match.id, cantidadAsignada: cantAsig, itemData: match });
-                            if (typeof renderizarAsignados === 'function') renderizarAsignados();
-                            if (typeof filtrarItemsCosto === 'function') filtrarItemsCosto();
-                        }
-                        if (btn) { btn.textContent = '✓ Agregado'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
+
+                        fetch('/suggest-items?q=' + encodeURIComponent(nombre.trim()))
+                            .then(function(r) { return r.json(); })
+                            .then(function(items) {
+                                var nombreLower = nombre.toLowerCase().trim();
+                                var match = items.find(function(it) {
+                                    return it.nombre && it.nombre.toLowerCase().trim().includes(nombreLower);
+                                });
+                                if (!match) {
+                                    if (btn) { btn.textContent = '✗ No encontrado en facturas'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2500); }
+                                    return;
+                                }
+                                if (typeof asignados !== 'undefined' && asignados.some(function(a) { return a.itemId == match.id; })) {
+                                    actualizarCantidadCosto(match.id, gramos);
+                                    if (btn) { btn.textContent = '✓ Cantidad actualizada'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
+                                    return;
+                                }
+                                var unidad = (match.unidad || '').toLowerCase().trim();
+                                var cantAsig = unidad === 'kg' ? gramos / 1000 : gramos;
+                                if (typeof asignados !== 'undefined') {
+                                    asignados.push({ itemId: match.id, cantidadAsignada: cantAsig, itemData: match });
+                                    if (typeof renderizarAsignados === 'function') renderizarAsignados();
+                                }
+                                if (btn) { btn.textContent = '✓ Agregado'; setTimeout(function() { if(btn) btn.innerHTML = '<i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción'; }, 2000); }
+                            });
                     }
 
                     // Inicialización al cargar
@@ -1201,7 +1205,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript">
 /*<![CDATA[*/
-var ITEMS_FACTURA = /*[[${todosItemsFactura}]]*/ [];
+var INIT_ITEMS_DATA = /*[[${itemsFacturaAsignados}]]*/ [];
 var INIT_IDS = /*[[${loteForm.itemsIds}]]*/ [];
 var INIT_CANTIDADES = /*[[${loteForm.itemsCantidades}]]*/ [];
 var INVENTARIO_STOCK = /*[[${inventarioStock}]]*/ [];

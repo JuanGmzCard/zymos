@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.dto.LoteFormDto;
 import com.alera.dto.InsumoDto;
+import com.alera.model.FacturaItem;
 import com.alera.model.LoteCerveza;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.Tenant;
@@ -24,7 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import com.alera.repository.FacturaProveedorRepository;
+import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TipoCervezaRepository;
@@ -48,7 +49,7 @@ public class TrazabilidadController {
     private final RecetaService recetaService;
     private final InsumoInventarioRepository insumoRepo;
     private final TipoCervezaRepository tipoCervezaRepo;
-    private final FacturaProveedorRepository facturaRepo;
+    private final FacturaItemRepository facturaItemRepo;
     private final PdfExportService pdfExportService;
     private final LecturaFermentacionService lecturaService;
     private final EvaluacionSensorialService evaluacionService;
@@ -61,7 +62,7 @@ public class TrazabilidadController {
                                    RecetaService recetaService,
                                    InsumoInventarioRepository insumoRepo,
                                    TipoCervezaRepository tipoCervezaRepo,
-                                   FacturaProveedorRepository facturaRepo,
+                                   FacturaItemRepository facturaItemRepo,
                                    PdfExportService pdfExportService,
                                    LecturaFermentacionService lecturaService,
                                    EvaluacionSensorialService evaluacionService,
@@ -73,7 +74,7 @@ public class TrazabilidadController {
         this.recetaService = recetaService;
         this.insumoRepo = insumoRepo;
         this.tipoCervezaRepo = tipoCervezaRepo;
-        this.facturaRepo = facturaRepo;
+        this.facturaItemRepo = facturaItemRepo;
         this.pdfExportService = pdfExportService;
         this.lecturaService = lecturaService;
         this.evaluacionService = evaluacionService;
@@ -110,6 +111,28 @@ public class TrazabilidadController {
     @ResponseBody
     public List<Map<String, Object>> suggest(@RequestParam(defaultValue = "") String q) {
         return service.suggest(q);
+    }
+
+    @GetMapping(value = "/suggest-items", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> suggestItems(@RequestParam(defaultValue = "") String q,
+                                                    @RequestParam(defaultValue = "") String tipo) {
+        var pagina = facturaItemRepo.search(q.trim(), tipo.trim(), org.springframework.data.domain.PageRequest.of(0, 30));
+        return pagina.getContent().stream().map(this::mapFacturaItem).toList();
+    }
+
+    @GetMapping(value = "/suggest-items-por-nombre", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Map<String, Object>> suggestItemsPorNombre(@RequestParam(required = false) List<String> nombres) {
+        if (nombres == null || nombres.isEmpty()) return Map.of();
+        var nombresNorm = nombres.stream().map(n -> n.toLowerCase().trim()).filter(n -> !n.isEmpty()).distinct().toList();
+        if (nombresNorm.isEmpty()) return Map.of();
+        var result = new LinkedHashMap<String, Map<String, Object>>();
+        facturaItemRepo.findByNombresIn(nombresNorm).forEach(item -> {
+            String key = item.getNombre().toLowerCase().trim();
+            result.putIfAbsent(key, mapFacturaItem(item));
+        });
+        return result;
     }
 
     @GetMapping("/kanban")
@@ -429,28 +452,33 @@ public class TrazabilidadController {
         model.addAttribute("fermentadores", equipoService.listarFermentadoresDisponibles());
         model.addAttribute("tiposCerveza", tipoCervezaRepo.findByActivoTrueOrderByNombreAsc());
         model.addAttribute("recetasActivas", recetaService.listarActivas());
-        // Flatten all invoice items for the cost search UI
-        var todosItems = new java.util.ArrayList<java.util.Map<String, Object>>();
-        facturaRepo.findAllWithItems().forEach(f -> {
-            String numFac = (f.getNumeroFactura() != null && !f.getNumeroFactura().isBlank())
-                    ? f.getNumeroFactura() : "#" + f.getId();
-            String fechaStr = f.getFechaFactura() != null
-                    ? f.getFechaFactura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
-            f.getItems().forEach(item -> {
-                var m = new java.util.LinkedHashMap<String, Object>();
-                m.put("id", item.getId());
-                m.put("nombre", item.getNombre());
-                m.put("tipoInsumo", item.getTipoInsumo());
-                m.put("unidad", item.getUnidad());
-                m.put("cantidad", item.getCantidad());
-                m.put("valorLinea", item.getValorLinea());
-                m.put("facturaId", f.getId());
-                m.put("facturaNumero", numFac);
-                m.put("proveedor", f.getProveedor());
-                m.put("fechaFactura", fechaStr);
-                todosItems.add(m);
-            });
-        });
-        model.addAttribute("todosItemsFactura", todosItems);
+        // Solo precargar los ítems de factura ya asignados a este lote (la búsqueda del resto es vía AJAX)
+        var loteForm = (LoteFormDto) model.getAttribute("loteForm");
+        var itemsIds = (loteForm != null && loteForm.getItemsIds() != null) ? loteForm.getItemsIds() : List.<Long>of();
+        var itemsAsignados = itemsIds.isEmpty()
+                ? List.<Map<String, Object>>of()
+                : facturaItemRepo.findByIdIn(itemsIds).stream().map(this::mapFacturaItem).toList();
+        model.addAttribute("itemsFacturaAsignados", itemsAsignados);
+        model.addAttribute("hayItemsFactura", facturaItemRepo.count() > 0);
+    }
+
+    private Map<String, Object> mapFacturaItem(FacturaItem item) {
+        var f = item.getFactura();
+        String numFac = (f.getNumeroFactura() != null && !f.getNumeroFactura().isBlank())
+                ? f.getNumeroFactura() : "#" + f.getId();
+        String fechaStr = f.getFechaFactura() != null
+                ? f.getFechaFactura().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) : null;
+        var m = new LinkedHashMap<String, Object>();
+        m.put("id", item.getId());
+        m.put("nombre", item.getNombre());
+        m.put("tipoInsumo", item.getTipoInsumo());
+        m.put("unidad", item.getUnidad());
+        m.put("cantidad", item.getCantidad());
+        m.put("valorLinea", item.getValorLinea());
+        m.put("facturaId", f.getId());
+        m.put("facturaNumero", numFac);
+        m.put("proveedor", f.getProveedor());
+        m.put("fechaFactura", fechaStr);
+        return m;
     }
 }

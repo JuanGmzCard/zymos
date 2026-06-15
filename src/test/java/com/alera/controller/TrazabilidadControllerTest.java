@@ -8,7 +8,7 @@ import com.alera.config.LoginAttemptService;
 import com.alera.exception.LoteNoEncontradoException;
 import com.alera.dto.LoteGuardadoResult;
 import com.alera.model.LoteCerveza;
-import com.alera.repository.FacturaProveedorRepository;
+import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
@@ -47,7 +47,7 @@ class TrazabilidadControllerTest {
     @MockBean RecetaService                recetaService;
     @MockBean InsumoInventarioRepository   insumoRepo;
     @MockBean TipoCervezaRepository        tipoCervezaRepo;
-    @MockBean FacturaProveedorRepository   facturaRepo;
+    @MockBean FacturaItemRepository        facturaItemRepo;
     @MockBean LogAccesoService             logAccesoService;
     @MockBean UsuarioService               usuarioService;
     @MockBean TenantRepository             tenantRepo;
@@ -139,7 +139,6 @@ class TrazabilidadControllerTest {
         when(equipoService.listarFermentadoresDisponibles()).thenReturn(List.of());
         when(tipoCervezaRepo.findByActivoTrueOrderByNombreAsc()).thenReturn(List.of());
         when(recetaService.listarActivas()).thenReturn(List.of());
-        when(facturaRepo.findAllWithItems()).thenReturn(List.of());
 
         mockMvc.perform(get("/nuevo"))
                 .andExpect(status().isOk())
@@ -181,7 +180,6 @@ class TrazabilidadControllerTest {
         when(equipoService.listarFermentadoresDisponibles()).thenReturn(List.of());
         when(tipoCervezaRepo.findByActivoTrueOrderByNombreAsc()).thenReturn(List.of());
         when(recetaService.listarActivas()).thenReturn(List.of());
-        when(facturaRepo.findAllWithItems()).thenReturn(List.of());
 
         mockMvc.perform(post("/guardar")
                         .with(csrf())
