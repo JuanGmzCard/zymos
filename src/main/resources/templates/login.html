@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style th:inline="text">
+    <style th:inline="text" th:attr="nonce=${cspNonce}">
 @import url('https://fonts.googleapis.com/css2?family=[[${branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
     :root {
         --font-headings: '[[${branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
@@ -83,7 +83,7 @@
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
 function togglePwd(btn) {
   const inp = btn.closest('.input-group').querySelector('input');
   const ico = btn.querySelector('i');

@@ -14,7 +14,7 @@
               th:href="@{'https://fonts.googleapis.com/css2?family=' + ${#strings.replace(t.fontHeadings,' ','+')} + ':wght@400;600;700&display=swap'}"
               rel="stylesheet">
     </th:block>
-    <style>
+    <style th:attr="nonce=${cspNonce}">
         .tenant-card {
             background: #fff;
             border: 1px solid #e2e8f0;
@@ -207,7 +207,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 function verificarAlertas() {
     var btn = document.getElementById('btnVerificarAlertas');
     btn.disabled = true;

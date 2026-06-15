@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
+    <style th:attr="nonce=${cspNonce}">
         .mejor-valor { color: var(--dorado); font-weight: 700; }
         .mejor-valor .bi { font-size: .75em; vertical-align: middle; }
         .tabla-comparativa th.lote-header { min-width: 140px; text-align: center; }
@@ -281,7 +281,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 /*<![CDATA[*/
 const LABELS    = /*[[${chartLabels}]]*/    [];
 const ABV       = /*[[${chartAbv}]]*/       [];

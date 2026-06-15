@@ -191,7 +191,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
 (function() {
     var debTimer, activeIdx = -1;
     var input   = document.getElementById('facturaInput');

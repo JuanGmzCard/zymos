@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
+    <style th:attr="nonce=${cspNonce}">
         .plan-badge {
             display: inline-block;
             padding: 2px 8px;
@@ -305,7 +305,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 /*<![CDATA[*/
 var esAdmin = /*[[${#authorization.expression('hasAnyRole(''ADMIN'',''SUPERADMIN'',''PRODUCCION'')')}]]*/ false
     || document.getElementById('adminMarker') !== null;

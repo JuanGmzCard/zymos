@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
+    <style th:attr="nonce=${cspNonce}">
         .subtipo-placeholder {
             height: 31px;
             background: #f8f9fa;
@@ -350,7 +350,7 @@
 </div>
 
 <!-- Datos de inventario agrupados por tipo -->
-<script th:inline="javascript">
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 const INSUMOS_POR_TIPO = /*[[${insumosPorTipo}]]*/ {};
 const EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
 const TIPOS_INSUMO = /*[[${tiposInsumo}]]*/ [];
@@ -358,7 +358,7 @@ const TIPOS_EQUIPO = /*[[${tiposEquipo}]]*/ [];
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
 // Listas de categorías inyectadas desde el servidor (display names)
 
 // ── Datalist dinámico ─────────────────────────────────────────────────────

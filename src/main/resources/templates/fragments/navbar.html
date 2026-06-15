@@ -5,10 +5,10 @@
 <nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-zymos">
 
     <!-- Inicializar dark mode antes del render (evita flash) -->
-    <script>(function(){if(localStorage.getItem('zymos-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
+    <script th:attr="nonce=${cspNonce}">(function(){if(localStorage.getItem('zymos-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
 
     <!-- Variables de color del cliente (sobrescriben :root de style.css) -->
-    <style th:inline="text">
+    <style th:inline="text" th:attr="nonce=${cspNonce}">
 @import url('https://fonts.googleapis.com/css2?family=[[${branding != null and branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding != null and branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
     :root {
         --font-headings: '[[${branding != null and branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
@@ -24,7 +24,7 @@
     }
     </style>
 
-    <style>
+    <style th:attr="nonce=${cspNonce}">
     .search-suggest {
         position: absolute;
         top: calc(100% + 4px);
@@ -106,7 +106,7 @@
     }
     </style>
 
-    <script>
+    <script th:attr="nonce=${cspNonce}">
     function togglePwd(btn) {
       const inp = btn.closest('.input-group').querySelector('input');
       const ico = btn.querySelector('i');
@@ -482,11 +482,11 @@
         </div>
     </div>
 
-    <script th:inline="javascript">
+    <script th:inline="javascript" th:attr="nonce=${cspNonce}">
     var ALERA_CSRF_TOKEN  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
     var ALERA_CSRF_HEADER = /*[[${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}]]*/ 'X-CSRF-TOKEN';
     </script>
-    <script>
+    <script th:attr="nonce=${cspNonce}">
     // ── CSRF para fetch desde navbar ─────────────────────────────────
     // Intenta meta tags del template (si existen); fallback a variables Thymeleaf inline.
     function _csrfToken()  { return (document.querySelector('meta[name="_csrf"]') || {}).content || ALERA_CSRF_TOKEN || ''; }

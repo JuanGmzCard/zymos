@@ -10,7 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
+    <style th:attr="nonce=${cspNonce}">
         .cat-tabs .nav-link {
             color: #64748b;
             border: none;
@@ -244,7 +244,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:attr="nonce=${cspNonce}">
 // Restaurar tab activo tras redirect (flash message)
 (function () {
     const stored = sessionStorage.getItem('catTab');
