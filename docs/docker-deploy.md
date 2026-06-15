@@ -99,3 +99,11 @@ Archivos de infraestructura en el directorio `deploy/` (no forman parte del buil
 - **Uso**: `chmod +x deploy/backup.sh && ./deploy/backup.sh`
 - Usa `zymos_flyway` (acceso completo a la BD) como usuario recomendado para el dump.
 
+### `deploy/restore-test.sh` — Prueba mensual de restauración
+- Restaura el backup más reciente (`backups/zymos_*.sql.gz`, o `backups/weekly/` si no hay diarios) en una base de datos temporal (`${DB_NAME}_restore_test` por defecto).
+- **Sanity checks**: cuenta filas en `usuarios`, `tenants`, `lotes_cerveza`, `inventario` — falla si alguna consulta da error.
+- **Limpieza garantizada**: la base temporal se borra al finalizar (`trap cleanup EXIT`), incluso si la restauración falla.
+- Requiere un usuario con privilegio `CREATEDB` (`RESTORE_TEST_DB_USERNAME`/`RESTORE_TEST_DB_PASSWORD`; si no se definen usa `DB_USERNAME`/`DB_PASSWORD`, que normalmente NO tienen `CREATEDB` — configurar un rol dedicado o usar `postgres`).
+- **Cron mensual (día 1, 3 AM)**: `0 3 1 * * /ruta/al/proyecto/deploy/restore-test.sh >> /var/log/zymos-restore-test.log 2>&1`
+- **Uso**: `chmod +x deploy/restore-test.sh && ./deploy/restore-test.sh`
+
