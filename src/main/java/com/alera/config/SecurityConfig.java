@@ -48,6 +48,18 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CspNonceFilter cspNonceFilter() {
+        return new CspNonceFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean<CspNonceFilter> cspNonceFilterRegistration(CspNonceFilter filter) {
+        FilterRegistrationBean<CspNonceFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
     public LoginAttemptFilter loginAttemptFilter(LoginAttemptService loginAttemptService) {
         return new LoginAttemptFilter(loginAttemptService);
     }
@@ -100,6 +112,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                             DaoAuthenticationProvider authProvider,
+                                            CspNonceFilter cspNonceFilter,
                                             TenantFilter tenantFilter,
                                             LoginAttemptFilter loginAttemptFilter,
                                             JwtFilter jwtFilter,
@@ -108,6 +121,7 @@ public class SecurityConfig {
                                             ZymosAuthFailureHandler failureHandler,
                                             ZymosAccessDeniedHandler accessDeniedHandler) throws Exception {
         http
+            .addFilterBefore(cspNonceFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(apiRateLimitFilter, UsernamePasswordAuthenticationFilter.class)

@@ -30,4 +30,11 @@ public class GlobalControllerAdvice {
     public String currentUri(HttpServletRequest request) {
         return request.getRequestURI();
     }
+
+    // Nonce CSP generado por CspNonceFilter — usar th:attr="nonce=${cspNonce}" en <script>/<style> inline.
+    @ModelAttribute("cspNonce")
+    public String cspNonce(HttpServletRequest request) {
+        Object nonce = request.getAttribute(CspNonceFilter.CSP_NONCE_ATTR);
+        return nonce != null ? nonce.toString() : "";
+    }
 }
