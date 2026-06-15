@@ -59,10 +59,34 @@
         }
         .tenant-actions .btn { font-size: 0.75rem; padding: 0.25rem 0.6rem; }
 
+        .filter-card {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1rem;
+        }
+        .filter-tab {
+            display: inline-block;
+            padding: 0.3rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all .15s;
+        }
+        .filter-tab.active   { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+
         html.dark-mode .tenant-card { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .tenant-subdomain { background: var(--dm-input); color: var(--dm-text-muted); }
         html.dark-mode .tenant-name { color: var(--dm-text); }
         html.dark-mode .tenant-tagline { color: var(--dm-text-muted); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .filter-tab.inactive { color: var(--dm-text-muted); }
+        html.dark-mode .filter-tab.inactive:hover { background: var(--dm-hover); }
     </style>
 </head>
 <body>
@@ -92,9 +116,34 @@
         </div>
     </div>
 
+    <div class="filter-card">
+        <form th:action="@{/admin/tenants}" method="get" class="d-flex gap-2 flex-wrap align-items-center mb-3">
+            <input type="text" name="q" class="form-control form-control-sm" style="width:240px;"
+                   placeholder="Buscar por subdominio o nombre..." th:value="${qFiltro}" autocomplete="off">
+            <input type="hidden" name="estado" th:value="${estadoFiltro}">
+            <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm px-3">Limpiar</a>
+        </form>
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <a th:href="@{/admin/tenants(q=${qFiltro})}"
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">Todos</a>
+            <a th:href="@{/admin/tenants(q=${qFiltro},estado='activos')}"
+               th:classappend="${estadoFiltro == 'activos'} ? 'filter-tab active' : 'filter-tab inactive'">Activos</a>
+            <a th:href="@{/admin/tenants(q=${qFiltro},estado='inactivos')}"
+               th:classappend="${estadoFiltro == 'inactivos'} ? 'filter-tab active' : 'filter-tab inactive'">Inactivos</a>
+            <a th:href="@{/admin/tenants(q=${qFiltro},estado='vencido')}"
+               th:classappend="${estadoFiltro == 'vencido'} ? 'filter-tab active' : 'filter-tab inactive'">Plan vencido</a>
+            <a th:href="@{/admin/tenants(q=${qFiltro},estado='porVencer')}"
+               th:classappend="${estadoFiltro == 'porVencer'} ? 'filter-tab active' : 'filter-tab inactive'">Por vencer</a>
+            <a th:href="@{/admin/tenants(q=${qFiltro},estado='alertas')}"
+               th:classappend="${estadoFiltro == 'alertas'} ? 'filter-tab active' : 'filter-tab inactive'">Con alertas</a>
+        </div>
+    </div>
+
     <div th:if="${#lists.isEmpty(tenants)}" class="content-card text-center py-5 text-muted">
         <i class="bi bi-building" style="font-size:2.5rem; opacity:.3;"></i>
-        <p class="mt-3 mb-0">No hay tenants registrados aún</p>
+        <p class="mt-3 mb-0" th:if="${qFiltro == null and estadoFiltro == null}">No hay tenants registrados aún</p>
+        <p class="mt-3 mb-0" th:unless="${qFiltro == null and estadoFiltro == null}">No hay tenants para los filtros seleccionados</p>
     </div>
 
     <div class="row g-3 pb-4">

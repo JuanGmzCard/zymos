@@ -50,8 +50,33 @@ public class TenantAdminController {
     }
 
     @GetMapping
-    public String lista(Model model) {
-        model.addAttribute("tenants", tenantService.listarTodos());
+    public String lista(@RequestParam(required = false) String q,
+                         @RequestParam(required = false) String estado,
+                         Model model) {
+        List<Tenant> tenants = tenantService.listarTodos();
+
+        if (q != null && !q.isBlank()) {
+            String needle = q.trim().toLowerCase();
+            tenants = tenants.stream()
+                    .filter(t -> t.getSubdomain().toLowerCase().contains(needle)
+                            || t.getName().toLowerCase().contains(needle))
+                    .toList();
+        }
+
+        if (estado != null && !estado.isBlank()) {
+            tenants = switch (estado) {
+                case "activos" -> tenants.stream().filter(Tenant::isActive).toList();
+                case "inactivos" -> tenants.stream().filter(t -> !t.isActive()).toList();
+                case "vencido" -> tenants.stream().filter(Tenant::isPlanVencido).toList();
+                case "porVencer" -> tenants.stream().filter(Tenant::isPlanPorVencer).toList();
+                case "alertas" -> tenants.stream().filter(t -> t.getAlertasIntentosFallidos() > 0).toList();
+                default -> tenants;
+            };
+        }
+
+        model.addAttribute("tenants", tenants);
+        model.addAttribute("qFiltro", q);
+        model.addAttribute("estadoFiltro", estado);
         return "admin/tenants";
     }
 
