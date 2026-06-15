@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -47,12 +49,53 @@ public class TenantService {
     }
 
     public Tenant guardar(Tenant tenant) {
-        boolean esNuevo = !repo.existsById(tenant.getSubdomain());
+        Optional<Tenant> existente = repo.findById(tenant.getSubdomain());
+        boolean esNuevo = existente.isEmpty();
+        String detalles = esNuevo ? null : diffCambios(existente.get(), tenant);
         Tenant saved = repo.save(tenant);
         tenantFilter.evictCache(tenant.getSubdomain());
         historialRepo.save(HistorialTenant.of(
-                tenant.getSubdomain(), esNuevo ? "CREADO" : "EDITADO", usuarioActual(), null));
+                tenant.getSubdomain(), esNuevo ? "CREADO" : "EDITADO", usuarioActual(), detalles));
         return saved;
+    }
+
+    private static final int MAX_DETALLES = 500;
+
+    /** Compara los campos editables del formulario y devuelve un resumen "campo: antes → después", o null si no hubo cambios. */
+    private String diffCambios(Tenant antes, Tenant despues) {
+        List<String> cambios = new ArrayList<>();
+        agregarCambio(cambios, "nombre", antes.getName(), despues.getName());
+        agregarCambio(cambios, "tagline", antes.getTagline(), despues.getTagline());
+        agregarCambio(cambios, "logoUrl", antes.getLogoUrl(), despues.getLogoUrl());
+        agregarCambio(cambios, "emailAdmin", antes.getEmailAdmin(), despues.getEmailAdmin());
+        agregarCambio(cambios, "colorNavbar", antes.getColorNavbar(), despues.getColorNavbar());
+        agregarCambio(cambios, "colorPrimary", antes.getColorPrimary(), despues.getColorPrimary());
+        agregarCambio(cambios, "colorAccent", antes.getColorAccent(), despues.getColorAccent());
+        agregarCambio(cambios, "colorAccentHover", antes.getColorAccentHover(), despues.getColorAccentHover());
+        agregarCambio(cambios, "colorCream", antes.getColorCream(), despues.getColorCream());
+        agregarCambio(cambios, "colorBodyBg", antes.getColorBodyBg(), despues.getColorBodyBg());
+        agregarCambio(cambios, "fontHeadings", antes.getFontHeadings(), despues.getFontHeadings());
+        agregarCambio(cambios, "fontBody", antes.getFontBody(), despues.getFontBody());
+        agregarCambio(cambios, "active", antes.isActive(), despues.isActive());
+        agregarCambio(cambios, "maxLotes", antes.getMaxLotes(), despues.getMaxLotes());
+        agregarCambio(cambios, "maxUsuarios", antes.getMaxUsuarios(), despues.getMaxUsuarios());
+        agregarCambio(cambios, "planTipo", antes.getPlanTipo(), despues.getPlanTipo());
+        agregarCambio(cambios, "planInicio", antes.getPlanInicio(), despues.getPlanInicio());
+        agregarCambio(cambios, "planFin", antes.getPlanFin(), despues.getPlanFin());
+
+        if (cambios.isEmpty()) return null;
+        String resumen = String.join("; ", cambios);
+        return resumen.length() > MAX_DETALLES ? resumen.substring(0, MAX_DETALLES - 3) + "..." : resumen;
+    }
+
+    private void agregarCambio(List<String> cambios, String campo, Object antes, Object despues) {
+        if (!Objects.equals(antes, despues)) {
+            cambios.add(campo + ": " + formatValor(antes) + " → " + formatValor(despues));
+        }
+    }
+
+    private String formatValor(Object valor) {
+        return valor == null ? "—" : valor.toString();
     }
 
     public void evictAllCache() {

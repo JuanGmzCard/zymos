@@ -104,7 +104,7 @@ class TenantServiceTest {
     void guardar_tenantNuevo_registraCREADO() {
         autenticarComo("admin");
         Tenant t = tenant("nuevo", true);
-        when(repo.existsById("nuevo")).thenReturn(false);
+        when(repo.findById("nuevo")).thenReturn(Optional.empty());
         when(repo.save(t)).thenReturn(t);
 
         service.guardar(t);
@@ -121,7 +121,7 @@ class TenantServiceTest {
     void guardar_tenantExistente_registraEDITADO() {
         autenticarComo("admin");
         Tenant t = tenant("mosto", true);
-        when(repo.existsById("mosto")).thenReturn(true);
+        when(repo.findById("mosto")).thenReturn(Optional.of(tenant("mosto", true)));
         when(repo.save(t)).thenReturn(t);
 
         service.guardar(t);
@@ -132,10 +132,48 @@ class TenantServiceTest {
     }
 
     @Test
+    @DisplayName("guardar registra el diff de campos modificados en detalles")
+    void guardar_tenantExistente_registraDiffEnDetalles() {
+        autenticarComo("admin");
+        Tenant anterior = tenant("mosto", true);
+        Tenant nuevo = tenant("mosto", true);
+        nuevo.setName("Mosto Renovado");
+        nuevo.setColorPrimary("#123456");
+        nuevo.setMaxLotes(50);
+        when(repo.findById("mosto")).thenReturn(Optional.of(anterior));
+        when(repo.save(nuevo)).thenReturn(nuevo);
+
+        service.guardar(nuevo);
+
+        ArgumentCaptor<HistorialTenant> captor = ArgumentCaptor.forClass(HistorialTenant.class);
+        verify(historialRepo).save(captor.capture());
+        String detalles = captor.getValue().getDetalles();
+        assertThat(detalles).contains("nombre: Tenant mosto → Mosto Renovado");
+        assertThat(detalles).contains("colorPrimary: #364318 → #123456");
+        assertThat(detalles).contains("maxLotes: — → 50");
+    }
+
+    @Test
+    @DisplayName("guardar no registra detalles cuando no hay cambios")
+    void guardar_tenantExistente_sinCambios_detallesNull() {
+        autenticarComo("admin");
+        Tenant anterior = tenant("mosto", true);
+        Tenant igual = tenant("mosto", true);
+        when(repo.findById("mosto")).thenReturn(Optional.of(anterior));
+        when(repo.save(igual)).thenReturn(igual);
+
+        service.guardar(igual);
+
+        ArgumentCaptor<HistorialTenant> captor = ArgumentCaptor.forClass(HistorialTenant.class);
+        verify(historialRepo).save(captor.capture());
+        assertThat(captor.getValue().getDetalles()).isNull();
+    }
+
+    @Test
     @DisplayName("guardar evicta el cache del tenant guardado")
     void guardar_evictaCacheDelTenant() {
         Tenant t = tenant("mosto", true);
-        when(repo.existsById("mosto")).thenReturn(true);
+        when(repo.findById("mosto")).thenReturn(Optional.of(tenant("mosto", true)));
         when(repo.save(t)).thenReturn(t);
 
         service.guardar(t);
@@ -147,7 +185,7 @@ class TenantServiceTest {
     @DisplayName("guardar retorna el tenant guardado")
     void guardar_retornaTenantGuardado() {
         Tenant t = tenant("alfa", true);
-        when(repo.existsById("alfa")).thenReturn(false);
+        when(repo.findById("alfa")).thenReturn(Optional.empty());
         when(repo.save(t)).thenReturn(t);
 
         Tenant resultado = service.guardar(t);
