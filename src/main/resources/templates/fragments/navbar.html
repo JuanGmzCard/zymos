@@ -455,6 +455,12 @@
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
+                            <a class="dropdown-item" th:href="@{/mi-plan}"
+                               th:classappend="${currentUri != null and currentUri.startsWith('/mi-plan')} ? 'active' : ''">
+                                <i class="bi bi-shield-check me-2"></i>Mi Plan
+                            </a>
+                        </li>
+                        <li>
                             <a class="dropdown-item" th:href="@{/perfil/password}">
                                 <i class="bi bi-key me-2"></i>Cambiar contraseña
                             </a>
