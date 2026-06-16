@@ -12,8 +12,8 @@ import java.util.Base64;
 
 // Genera un nonce por request para CSP (Content-Security-Policy) y lo expone como
 // request attribute "cspNonce" -> GlobalControllerAdvice lo publica a los templates.
-// Cabecera en modo Report-Only: no bloquea nada, solo registra violaciones en la consola
-// del navegador. Fase A del plan de CSP incremental (ver memoria del proyecto).
+// Fase C: header enforced (bloquea). style-src incluye 'unsafe-inline' por los 600+
+// atributos style= en templates; script-src sin unsafe-inline (todos los handlers migrados).
 public class CspNonceFilter extends OncePerRequestFilter {
 
     public static final String CSP_NONCE_ATTR = "cspNonce";
@@ -28,10 +28,10 @@ public class CspNonceFilter extends OncePerRequestFilter {
         String nonce = Base64.getEncoder().encodeToString(bytes);
         request.setAttribute(CSP_NONCE_ATTR, nonce);
 
-        response.setHeader("Content-Security-Policy-Report-Only",
+        response.setHeader("Content-Security-Policy",
                 "default-src 'self'; "
                 + "script-src 'self' 'nonce-" + nonce + "' https://cdn.jsdelivr.net; "
-                + "style-src 'self' 'nonce-" + nonce + "' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+                + "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
                 + "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; "
                 + "img-src 'self' data: https:; "
                 + "connect-src 'self'; "

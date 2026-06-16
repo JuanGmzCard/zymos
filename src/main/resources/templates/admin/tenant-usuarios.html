@@ -75,27 +75,24 @@
                                     </button>
                                 </form>
                                 <!-- Cambiar contraseña -->
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-preparar-password"
                                         title="Cambiar contraseña"
                                         data-bs-toggle="modal" data-bs-target="#modalPassword"
-                                        th:attr="data-id=${u.id}, data-username=${u.username}"
-                                        onclick="prepararModalPassword(this)">
+                                        th:attr="data-id=${u.id}, data-username=${u.username}">
                                     <i class="bi bi-key"></i>
                                 </button>
                                 <!-- Cambiar rol -->
-                                <button type="button" class="btn btn-sm btn-outline-secondary"
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-preparar-rol"
                                         title="Cambiar rol"
                                         data-bs-toggle="modal" data-bs-target="#modalRol"
-                                        th:attr="data-id=${u.id}, data-username=${u.username}, data-rol=${u.rol != null ? u.rol.name() : ''}"
-                                        onclick="prepararModalRol(this)">
+                                        th:attr="data-id=${u.id}, data-username=${u.username}, data-rol=${u.rol != null ? u.rol.name() : ''}">
                                     <i class="bi bi-person-badge"></i>
                                 </button>
                                 <!-- Eliminar -->
-                                <form th:action="@{/admin/tenants/{s}/usuarios/{id}/eliminar(s=${tenant.subdomain},id=${u.id})}" method="post"
-                                      onsubmit="return confirm('¿Eliminar usuario ' + this.dataset.username + '? Esta acción no se puede deshacer.')"
-                                      th:attr="data-username=${u.username}">
+                                <form th:action="@{/admin/tenants/{s}/usuarios/{id}/eliminar(s=${tenant.subdomain},id=${u.id})}" method="post">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar"
+                                            th:attr="data-confirm=|¿Eliminar usuario ${u.username}? Esta acción no se puede deshacer.|">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>
@@ -128,7 +125,7 @@
                         <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="password" class="form-control" minlength="8" required>
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
@@ -136,7 +133,7 @@
                         <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Confirmar contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="confirmarPassword" class="form-control" required>
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                     <div class="mb-1">
@@ -170,7 +167,7 @@
                         <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Nueva contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="nuevaPassword" class="form-control" minlength="8" required>
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                         <div class="form-text">Mínimo 8 caracteres, una letra y un número.</div>
                     </div>
@@ -178,7 +175,7 @@
                         <label class="form-label small fw-semibold text-muted text-uppercase" style="letter-spacing:.04em;">Confirmar contraseña *</label>
                         <div class="input-group">
                             <input type="password" name="confirmarPassword" class="form-control" required>
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                 </div>
@@ -240,6 +237,13 @@
             opt.selected = opt.value === rol;
         }
     }
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-preparar-password');
+        if (btn) { prepararModalPassword(btn); return; }
+        btn = e.target.closest('.btn-preparar-rol');
+        if (btn) prepararModalRol(btn);
+    });
 </script>
 </body>
 </html>

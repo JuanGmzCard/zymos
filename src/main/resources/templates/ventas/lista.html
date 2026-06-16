@@ -358,10 +358,9 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                               th:action="@{/ventas/{id}/eliminar(id=${v.id})}" method="post"
-                              class="d-inline"
-                              onsubmit="return confirm('¿Eliminar esta venta?')">
+                              class="d-inline">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
-                                    title="Eliminar">
+                                    title="Eliminar" data-confirm="¿Eliminar esta venta?">
                                 <i class="bi bi-trash3"></i>
                             </button>
                         </form>

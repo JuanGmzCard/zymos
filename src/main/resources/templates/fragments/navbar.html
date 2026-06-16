@@ -340,7 +340,7 @@
                 <!-- Botón modo oscuro -->
                 <li class="nav-item">
                     <button class="btn border-0 nav-link px-2" id="darkToggleBtn"
-                            onclick="toggleDarkMode()" title="Cambiar modo oscuro/claro"
+                            title="Cambiar modo oscuro/claro"
                             style="background:transparent;">
                         <i class="bi bi-moon-fill" id="darkModeIcon" style="font-size:1rem;"></i>
                     </button>
@@ -408,7 +408,7 @@
                         <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
                             <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Notificaciones</small>
                             <button id="btnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
-                                    style="font-size:.72rem;text-decoration:none;" onclick="notifMarcarTodas()">
+                                    style="font-size:.72rem;text-decoration:none;">
                                 Marcar todas leídas
                             </button>
                         </li>
@@ -516,6 +516,44 @@
         if (notifToggle) {
             notifToggle.addEventListener('show.bs.dropdown', function() { notifCargar(); });
         }
+
+        // ── Listeners CSP-safe (reemplazan onclick= en templates) ────
+        var _darkBtn = document.getElementById('darkToggleBtn');
+        if (_darkBtn) _darkBtn.addEventListener('click', toggleDarkMode);
+
+        var _marcarTodasBtn = document.getElementById('btnMarcarTodas');
+        if (_marcarTodasBtn) _marcarTodasBtn.addEventListener('click', notifMarcarTodas);
+
+        var _notifLista = document.getElementById('notifLista');
+        if (_notifLista) {
+            _notifLista.addEventListener('click', function(e) {
+                var btn = e.target.closest('.btn-notif-leer');
+                if (btn) notifMarcarLeida(parseInt(btn.dataset.notifId), btn);
+            });
+        }
+
+        // togglePwd: mostrar/ocultar contraseña (global, todos los templates)
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.btn-toggle-pwd');
+            if (btn && typeof togglePwd === 'function') togglePwd(btn);
+        });
+        // Imprimir página
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-print')) window.print();
+        });
+        // Confirmar acción antes de continuar (reemplaza onclick="return confirm(...)")
+        document.addEventListener('click', function(e) {
+            var el = e.target.closest('[data-confirm]');
+            if (el && !confirm(el.dataset.confirm)) e.preventDefault();
+        }, true);
+        // Detener propagación de click (reemplaza onclick="event.stopPropagation()")
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('[data-stop-propagation]')) e.stopPropagation();
+        });
+        // Auto-submit formulario al cambiar un select (reemplaza onchange="this.form.submit()")
+        document.addEventListener('change', function(e) {
+            if (e.target.matches('[data-auto-submit]') && e.target.form) e.target.form.submit();
+        });
     });
     // ── Notificaciones in-app ────────────────────────────────────
     function notifCargar() {
@@ -557,8 +595,8 @@
                    '</div>' +
                    '<div class="d-flex gap-1 flex-shrink-0">' +
                    (n.urlAccion ? '<a href="' + notifEsc(n.urlAccion) + '" class="btn btn-sm p-0 px-1 text-muted" title="Ver"><i class="bi bi-arrow-right"></i></a>' : '') +
-                   '<button class="btn btn-sm p-0 px-1 text-muted" title="Marcar leída" ' +
-                   'onclick="notifMarcarLeida(' + n.id + ', this)"><i class="bi bi-check2"></i></button>' +
+                   '<button class="btn btn-sm p-0 px-1 text-muted btn-notif-leer" title="Marcar leída" ' +
+                   'data-notif-id="' + n.id + '"><i class="bi bi-check2"></i></button>' +
                    '</div></div>';
         }).join('');
     }

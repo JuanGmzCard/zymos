@@ -342,10 +342,9 @@
                         <td class="text-secondary" th:text="${log.usuario}">-</td>
                         <td>
                             <button th:if="${log.detalles != null and !log.detalles.isEmpty()}"
-                                    class="btn btn-outline-secondary btn-sm"
+                                    class="btn btn-outline-secondary btn-sm btn-mostrar-errores"
                                     data-bs-toggle="modal" data-bs-target="#modalErrores"
-                                    th:attr="data-detalles=${log.detalles}"
-                                    onclick="mostrarErrores(this)">
+                                    th:attr="data-detalles=${log.detalles}">
                                 <i class="bi bi-list-ul"></i>
                             </button>
                         </td>
@@ -377,6 +376,10 @@
 function mostrarErrores(btn) {
     document.getElementById('erroresTexto').textContent = btn.dataset.detalles;
 }
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-mostrar-errores');
+    if (btn) mostrarErrores(btn);
+});
 </script>
 </body>
 </html>

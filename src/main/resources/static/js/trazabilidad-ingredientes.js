@@ -134,7 +134,7 @@ function addRow(containerId, tipo, listId, placeholder) {
                     </select>
                 </div>
                 <div class="col-md-1 text-end">
-                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                    <button type="button" class="btn-remove-ingrediente">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
@@ -354,7 +354,7 @@ function construirPanelReemplazo(item, stockItem, tipo, row) {
             '<select class="form-select form-select-sm reemplazo-select" style="max-width:300px;">' +
             '<option value="">— Seleccionar alternativa —</option>' + opts +
             '</select>' +
-            '<button type="button" class="btn btn-sm btn-outline-warning py-0" onclick="aplicarReemplazo(this)">' +
+            '<button type="button" class="btn btn-sm btn-outline-warning py-0 btn-aplicar-reemplazo">' +
             '<i class="bi bi-check-lg me-1"></i>Aplicar</button>' +
             '</div>';
     }
@@ -407,7 +407,7 @@ function poblarDesdeReceta(containerId, tipo, listId, placeholder, items) {
                         </select>
                     </div>
                     <div class="col-md-1 text-end">
-                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                        <button type="button" class="btn-remove-ingrediente">
                             <i class="bi bi-x"></i>
                         </button>
                     </div>
@@ -423,3 +423,60 @@ function unitOptionsSelected(selected, includePcs) {
         `<option value="${u}"${u === selected ? ' selected' : ''}>${u}</option>`
     ).join('');
 }
+
+// ── CSP-safe event listeners ──────────────────────────────────────
+
+// Wizard tab clicks
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.wz-tab[data-tab]');
+    if (btn) goTab(parseInt(btn.dataset.tab));
+});
+
+// Remove ingredient row (delegation)
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-remove-ingrediente');
+    if (btn) removeRow(btn);
+});
+
+// Add ingredient row (delegation) — data-container + data-field buttons
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-container][data-field]');
+    if (btn && !btn.closest('.wz-tab[data-tab]')) {
+        addRow(btn.dataset.container, btn.dataset.field, btn.dataset.datalist, btn.dataset.label);
+    }
+});
+
+// Apply replacement (delegation)
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-aplicar-reemplazo');
+    if (btn) aplicarReemplazo(btn);
+});
+
+// Volume inputs (oninput via data-vol-field)
+document.addEventListener('input', function(e) {
+    var field = e.target.dataset.volField;
+    if (field) volUpdate(field);
+});
+
+// Volume unit selects (onchange via data-vol-unit-field)
+document.addEventListener('change', function(e) {
+    var field = e.target.dataset.volUnitField;
+    if (field) volUnitChange(field);
+});
+
+// Wire up prevTab / nextTab / btnCargarReceta in DOMContentLoaded
+(function() {
+    function initIngredientesListeners() {
+        var _prev = document.getElementById('btnPrev');
+        var _next = document.getElementById('btnNext');
+        var _cargar = document.getElementById('btnCargarReceta');
+        if (_prev) _prev.addEventListener('click', prevTab);
+        if (_next) _next.addEventListener('click', nextTab);
+        if (_cargar) _cargar.addEventListener('click', cargarRecetaEnLote);
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initIngredientesListeners);
+    } else {
+        initIngredientesListeners();
+    }
+}());

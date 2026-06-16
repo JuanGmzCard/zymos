@@ -91,7 +91,7 @@
                 <div class="mb-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <div class="content-card-title pb-0"><i class="bi bi-list-ul me-1"></i>ÍTEMS DE LA ORDEN</div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addItemRow()">
+                        <button type="button" id="btnAddItemRow" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-plus-lg me-1"></i>Agregar ítem
                         </button>
                     </div>
@@ -115,8 +115,7 @@
                                 <tr th:each="item,stat : ${oc.items}" class="item-row" th:id="'row-' + ${stat.index}">
                                     <td>
                                         <select class="form-select form-select-sm tipo-select"
-                                                th:name="'items[' + ${stat.index} + '].tipoItem'"
-                                                onchange="onTipoChange(this)">
+                                                th:name="'items[' + ${stat.index} + '].tipoItem'">
                                             <option th:each="t : ${tiposItem}" th:value="${t.name()}"
                                                     th:text="${t.displayName}"
                                                     th:selected="${item.tipoItem == t}"></option>
@@ -126,8 +125,7 @@
                                         <!-- tipoInsumo -->
                                         <select class="form-select form-select-sm tipo-extra insumo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoInsumo'"
-                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'"
-                                                onchange="onCategoriaChange(this)">
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'">
                                             <option value="">-- Categoría --</option>
                                             <option th:each="ti : ${tiposInsumo}" th:value="${ti}"
                                                     th:text="${ti}"
@@ -136,8 +134,7 @@
                                         <!-- tipoEquipo -->
                                         <select class="form-select form-select-sm tipo-extra equipo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoEquipo'"
-                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'"
-                                                onchange="onCategoriaChange(this)">
+                                                th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'">
                                             <option value="">-- Categoría --</option>
                                             <option th:each="te : ${tiposEquipo}" th:value="${te}"
                                                     th:text="${te}"
@@ -159,7 +156,7 @@
                                         <input type="number" class="form-control form-control-sm item-cantidad"
                                                th:name="'items[' + ${stat.index} + '].cantidad'"
                                                th:value="${item.cantidad}"
-                                               min="0.001" step="any" required oninput="recalcular()"/>
+                                               min="0.001" step="any" required/>
                                     </td>
                                     <td>
                                         <select class="form-select form-select-sm"
@@ -174,19 +171,17 @@
                                         <input type="number" class="form-control form-control-sm item-precio"
                                                th:name="'items[' + ${stat.index} + '].precioUnitarioEstimado'"
                                                th:value="${item.precioUnitarioEstimado}"
-                                               min="0" step="any" placeholder="0"
-                                               oninput="recalcular()"/>
+                                               min="0" step="any" placeholder="0"/>
                                     </td>
                                     <td class="text-center">
                                         <input type="number" class="form-control form-control-sm item-iva"
                                                th:name="'items[' + ${stat.index} + '].porcentajeIvaItem'"
                                                th:value="${item.porcentajeIvaItem}"
-                                               min="0" max="100" step="any" placeholder="0"
-                                               oninput="recalcular()"/>
+                                               min="0" max="100" step="any" placeholder="0"/>
                                     </td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                onclick="removeRow(this)" title="Eliminar">
+                                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"
+                                                title="Eliminar">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -316,15 +311,15 @@ function addItemRow() {
     row.id = 'row-' + idx;
     row.innerHTML =
         '<td>' +
-          '<select class="form-select form-select-sm tipo-select" name="' + p + 'tipoItem" onchange="onTipoChange(this)">' +
+          '<select class="form-select form-select-sm tipo-select" name="' + p + 'tipoItem">' +
             TIPO_ITEM_OPTS.map(function(o){ return '<option value="'+o.val+'">'+o.label+'</option>'; }).join('') +
           '</select>' +
         '</td>' +
         '<td>' +
-          '<select class="form-select form-select-sm tipo-extra insumo-extra" name="' + p + 'tipoInsumo" style="display:block" onchange="onCategoriaChange(this)">' +
+          '<select class="form-select form-select-sm tipo-extra insumo-extra" name="' + p + 'tipoInsumo" style="display:block">' +
             buildInsumoOpts() +
           '</select>' +
-          '<select class="form-select form-select-sm tipo-extra equipo-extra" name="' + p + 'tipoEquipo" style="display:none" onchange="onCategoriaChange(this)">' +
+          '<select class="form-select form-select-sm tipo-extra equipo-extra" name="' + p + 'tipoEquipo" style="display:none">' +
             buildEquipoOpts() +
           '</select>' +
         '</td>' +
@@ -332,11 +327,11 @@ function addItemRow() {
           '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" list="datalist-item-nombres" placeholder="Nombre del producto" required/>' +
           '<input type="text" class="form-control form-control-sm mt-1" name="' + p + 'descripcion" placeholder="Descripción (opcional)"/>' +
         '</td>' +
-        '<td><input type="number" class="form-control form-control-sm item-cantidad" name="' + p + 'cantidad" min="0.001" step="any" required oninput="recalcular()"/></td>' +
+        '<td><input type="number" class="form-control form-control-sm item-cantidad" name="' + p + 'cantidad" min="0.001" step="any" required/></td>' +
         '<td><select class="form-select form-select-sm" name="' + p + 'unidad">' + buildUnidadOpts('') + '</select></td>' +
-        '<td><input type="number" class="form-control form-control-sm item-precio" name="' + p + 'precioUnitarioEstimado" min="0" step="any" placeholder="0" oninput="recalcular()"/></td>' +
-        '<td class="text-center"><input type="number" class="form-control form-control-sm item-iva" name="' + p + 'porcentajeIvaItem" min="0" max="100" step="any" placeholder="0" oninput="recalcular()"/></td>' +
-        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(this)" title="Eliminar"><i class="bi bi-trash"></i></button></td>';
+        '<td><input type="number" class="form-control form-control-sm item-precio" name="' + p + 'precioUnitarioEstimado" min="0" step="any" placeholder="0"/></td>' +
+        '<td class="text-center"><input type="number" class="form-control form-control-sm item-iva" name="' + p + 'porcentajeIvaItem" min="0" max="100" step="any" placeholder="0"/></td>' +
+        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Eliminar"><i class="bi bi-trash"></i></button></td>';
     document.getElementById('itemsBody').appendChild(row);
     updateEmptyMsg();
     recalcular();
@@ -400,6 +395,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelectorAll('#itemsBody .item-row').length === 0) {
         addItemRow();
     }
+});
+
+// ── Event delegation: reemplaza todos los inline handlers ────────────────────
+
+// Botón Agregar Ítem
+document.getElementById('btnAddItemRow').addEventListener('click', addItemRow);
+
+// Delegation en #itemsBody para tipo-select, categoria-select, inputs numéricos y botón eliminar
+document.getElementById('itemsBody').addEventListener('change', function(e) {
+    if (e.target.classList.contains('tipo-select')) {
+        onTipoChange(e.target);
+    }
+    if (e.target.classList.contains('insumo-extra') || e.target.classList.contains('equipo-extra')) {
+        onCategoriaChange(e.target);
+    }
+});
+
+document.getElementById('itemsBody').addEventListener('input', function(e) {
+    if (e.target.classList.contains('item-cantidad') ||
+        e.target.classList.contains('item-precio')   ||
+        e.target.classList.contains('item-iva')) {
+        recalcular();
+    }
+});
+
+document.getElementById('itemsBody').addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-remove-row');
+    if (btn) removeRow(btn);
 });
 </script>
 </body>

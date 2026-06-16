@@ -92,7 +92,7 @@
                     <div class="small text-muted mb-1">Estado</div>
                     <form th:action="@{/equipos/{id}/estado(id=${equipo.id})}" method="post" class="d-inline">
                         <select name="estado" class="form-select form-select-sm" style="width:auto;"
-                                onchange="this.form.submit()">
+                                data-auto-submit="true">
                             <option th:each="est : ${estadosEquipo}"
                                     th:value="${est.name()}"
                                     th:text="${est.displayName}"

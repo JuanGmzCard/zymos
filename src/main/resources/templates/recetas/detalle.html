@@ -380,15 +380,14 @@
             <div class="col-md-4">
                 <label class="form-label small text-muted">Volumen objetivo (L)</label>
                 <input type="number" step="any" id="volObjetivo" class="form-control form-control-sm"
-                       th:placeholder="${receta.volumenBase}" oninput="calcularEscala()">
+                       th:placeholder="${receta.volumenBase}">
             </div>
             <div class="col-md-4">
                 <label class="form-label small text-muted">Factor de escala</label>
                 <div class="form-control-plaintext fw-bold" style="color:var(--verde-alera);" id="factorEscala">—</div>
             </div>
             <div class="col-md-4">
-                <button type="button" class="btn btn-sm btn-outline-secondary"
-                        onclick="document.getElementById('volObjetivo').value='';calcularEscala()">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetEscala">
                     <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer
                 </button>
             </div>
@@ -525,6 +524,15 @@ function resetAgua() {
         if (el) el.classList.add('d-none');
     });
 }
+document.addEventListener('DOMContentLoaded', function() {
+    var _resetEscala = document.getElementById('btnResetEscala');
+    if (_resetEscala) _resetEscala.addEventListener('click', function() {
+        document.getElementById('volObjetivo').value = '';
+        calcularEscala();
+    });
+    var _volObjetivo = document.getElementById('volObjetivo');
+    if (_volObjetivo) _volObjetivo.addEventListener('input', calcularEscala);
+});
 </script>
 </body>
 </html>

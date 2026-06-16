@@ -274,9 +274,9 @@
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
                     <i class="bi bi-exclamation-triangle me-2"></i>ZONA DE PELIGRO
                 </div>
-                <form th:action="@{/ventas/{id}/eliminar(id=${venta.id})}" method="post"
-                      onsubmit="return confirm('¿Eliminar esta venta? Esta acción no se puede deshacer.')">
-                    <button type="submit" class="btn btn-sm btn-outline-danger w-100">
+                <form th:action="@{/ventas/{id}/eliminar(id=${venta.id})}" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100"
+                            data-confirm="¿Eliminar esta venta? Esta acción no se puede deshacer.">
                         <i class="bi bi-trash3 me-1"></i>Eliminar Venta
                     </button>
                 </form>

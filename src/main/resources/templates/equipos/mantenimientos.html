@@ -119,8 +119,8 @@
                             <td th:text="${mant.costo != null} ? '$' + ${#numbers.formatDecimal(mant.costo,1,'COMMA',2,'POINT')} : '—'">—</td>
                             <td>
                                 <form th:action="@{/equipos/{eid}/mantenimientos/eliminar/{mid}(eid=${equipo.id},mid=${mant.id})}"
-                                      method="post" onsubmit="return confirm('¿Eliminar?')">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                      method="post">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="¿Eliminar?">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

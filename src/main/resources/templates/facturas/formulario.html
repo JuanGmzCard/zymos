@@ -57,8 +57,7 @@
                 <div class="col-md-4">
                     <label class="form-label">Proveedor *</label>
                     <div class="input-group" th:if="${!#lists.isEmpty(proveedoresActivos)}">
-                        <select id="proveedorSelect" class="form-select" style="max-width:160px;"
-                                onchange="seleccionarProveedor(this)">
+                        <select id="proveedorSelect" class="form-select" style="max-width:160px;">
                             <option value="">Existente…</option>
                             <option th:each="prov : ${proveedoresActivos}"
                                     th:value="${prov.id}"
@@ -96,8 +95,7 @@
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch"
-                               id="ivaIncluido" th:field="*{ivaIncluido}"
-                               onchange="recalcularTodo()">
+                               id="ivaIncluido" th:field="*{ivaIncluido}">
                         <label class="form-check-label" for="ivaIncluido">
                             El precio unitario <strong>ya incluye IVA</strong>
                             <small class="text-muted ms-1">(precio bruto — el IVA está incluido en el valor ingresado)</small>
@@ -132,8 +130,7 @@
                         <!-- TIPO ITEM -->
                         <div class="col-md-1">
                             <select th:name="'items[' + ${itemStat.index} + '].tipoItem'"
-                                    class="form-select form-select-sm tipo-select"
-                                    onchange="onTipoChange(this)">
+                                    class="form-select form-select-sm tipo-select">
                                 <option value="">-- Tipo --</option>
                                 <option th:each="ti : ${tiposItem}"
                                         th:value="${ti}"
@@ -149,8 +146,7 @@
                             </div>
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'INSUMO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoInsumo'"
-                                    class="form-select form-select-sm categoria-select"
-                                    onchange="onCategoryChange(this)">
+                                    class="form-select form-select-sm categoria-select">
                                 <option value="">-- Categoría --</option>
                                 <option th:each="tins : ${tiposInsumo}"
                                         th:value="${tins}"
@@ -159,8 +155,7 @@
                             </select>
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'EQUIPO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoEquipo'"
-                                    class="form-select form-select-sm categoria-select"
-                                    onchange="onCategoryChange(this)">
+                                    class="form-select form-select-sm categoria-select">
                                 <option value="">-- Categoría --</option>
                                 <option th:each="teq : ${tiposEquipo}"
                                         th:value="${teq}"
@@ -178,11 +173,9 @@
                                        class="form-control form-control-sm nombre-item"
                                        placeholder="Nombre"
                                        list="datalist-item-nombres"
-                                       autocomplete="off"
-                                       onfocus="syncDatalist(this)">
+                                       autocomplete="off">
                                 <button type="button"
-                                        class="btn btn-outline-secondary btn-sm px-1"
-                                        onclick="abrirModalCrearItem(this)"
+                                        class="btn btn-outline-secondary btn-sm px-1 btn-crear-item"
                                         title="Crear si no existe">
                                     <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
                                 </button>
@@ -194,8 +187,7 @@
                             <input type="number" step="0.001"
                                    th:name="'items[' + ${itemStat.index} + '].cantidad'"
                                    th:value="${itemF.cantidad}"
-                                   class="form-control form-control-sm" placeholder="1"
-                                   oninput="calcularTotalFila(this)">
+                                   class="form-control form-control-sm" placeholder="1">
                         </div>
 
                         <!-- UNIDAD -->
@@ -218,8 +210,7 @@
                             <input type="number" step="0.01"
                                    th:name="'items[' + ${itemStat.index} + '].valorUnitario'"
                                    th:value="${itemF.valorUnitario}"
-                                   class="form-control form-control-sm" placeholder="0.00"
-                                   oninput="calcularTotalFila(this)">
+                                   class="form-control form-control-sm" placeholder="0.00">
                         </div>
 
                         <!-- DESCUENTO -->
@@ -227,8 +218,7 @@
                             <input type="number" step="0.01"
                                    th:name="'items[' + ${itemStat.index} + '].porcentajeDescuento'"
                                    th:value="${itemF.porcentajeDescuento}"
-                                   class="form-control form-control-sm" placeholder="0"
-                                   oninput="calcularTotalFila(this)">
+                                   class="form-control form-control-sm" placeholder="0">
                         </div>
 
                         <!-- IVA -->
@@ -236,8 +226,7 @@
                             <input type="number" step="0.01"
                                    th:name="'items[' + ${itemStat.index} + '].porcentajeIvaItem'"
                                    th:value="${itemF.porcentajeIvaItem}"
-                                   class="form-control form-control-sm" placeholder="0"
-                                   oninput="calcularTotalFila(this)">
+                                   class="form-control form-control-sm" placeholder="0">
                         </div>
 
                         <!-- IMP. CONSUMO -->
@@ -245,14 +234,13 @@
                             <input type="number" step="0.01"
                                    th:name="'items[' + ${itemStat.index} + '].impuestoConsumo'"
                                    th:value="${itemF.impuestoConsumo}"
-                                   class="form-control form-control-sm" placeholder="0.00"
-                                   oninput="calcularTotalFila(this)">
+                                   class="form-control form-control-sm" placeholder="0.00">
                         </div>
 
                         <!-- TOTAL + ELIMINAR -->
                         <div class="col-md-1 d-flex flex-column align-items-end gap-1">
                             <span class="item-total fw-bold text-verde" style="font-size:0.82rem;">—</span>
-                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                            <button type="button" class="btn-remove-ingrediente">
                                 <i class="bi bi-x"></i>
                             </button>
                         </div>
@@ -260,7 +248,7 @@
                 </div>
             </div>
 
-            <button type="button" class="btn btn-sm btn-zymos-outline mt-2" onclick="addItem()">
+            <button type="button" id="btnAddItem" class="btn btn-sm btn-zymos-outline mt-2">
                 <i class="bi bi-plus me-1"></i>Agregar Item
             </button>
         </div>
@@ -418,8 +406,7 @@ function renderSubtipoField(container, tipo, idx) {
         });
         container.innerHTML =
             `<select name="items[${idx}].tipoInsumo"
-                     class="form-select form-select-sm categoria-select"
-                     onchange="onCategoryChange(this)">${opts}</select>`;
+                     class="form-select form-select-sm categoria-select">${opts}</select>`;
     } else if (tipo === 'EQUIPO') {
         let opts = '<option value="">-- Categoría --</option>';
         TIPOS_EQUIPO.forEach(cat => {
@@ -427,8 +414,7 @@ function renderSubtipoField(container, tipo, idx) {
         });
         container.innerHTML =
             `<select name="items[${idx}].tipoEquipo"
-                     class="form-select form-select-sm categoria-select"
-                     onchange="onCategoryChange(this)">${opts}</select>`;
+                     class="form-select form-select-sm categoria-select">${opts}</select>`;
     } else {
         container.innerHTML =
             `<div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> Elige tipo</div>`;
@@ -551,7 +537,7 @@ function addItem() {
     row.innerHTML = `
         <div class="row g-2 align-items-center">
             <div class="col-md-1">
-                <select name="items[${idx}].tipoItem" class="form-select form-select-sm tipo-select" onchange="onTipoChange(this)">
+                <select name="items[${idx}].tipoItem" class="form-select form-select-sm tipo-select">
                     <option value="">-- Tipo --</option>
                     <option value="INSUMO">Insumo</option>
                     <option value="EQUIPO">Equipo</option>
@@ -566,18 +552,16 @@ function addItem() {
                            class="form-control form-control-sm nombre-item"
                            placeholder="Nombre"
                            list="datalist-item-nombres"
-                           autocomplete="off"
-                           onfocus="syncDatalist(this)">
-                    <button type="button" class="btn btn-outline-secondary btn-sm px-1"
-                            onclick="abrirModalCrearItem(this)" title="Crear si no existe">
+                           autocomplete="off">
+                    <button type="button" class="btn btn-outline-secondary btn-sm px-1 btn-crear-item"
+                            title="Crear si no existe">
                         <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
                     </button>
                 </div>
             </div>
             <div class="col-md-1">
                 <input type="number" step="0.001" name="items[${idx}].cantidad"
-                       class="form-control form-control-sm" placeholder="1"
-                       oninput="calcularTotalFila(this)">
+                       class="form-control form-control-sm" placeholder="1">
             </div>
             <div class="col-md-1">
                 <select name="items[${idx}].unidad" class="form-select form-select-sm">
@@ -593,27 +577,23 @@ function addItem() {
             </div>
             <div class="col-md-1">
                 <input type="number" step="0.01" name="items[${idx}].valorUnitario"
-                       class="form-control form-control-sm" placeholder="0.00"
-                       oninput="calcularTotalFila(this)">
+                       class="form-control form-control-sm" placeholder="0.00">
             </div>
             <div class="col-md-1">
                 <input type="number" step="0.01" name="items[${idx}].porcentajeDescuento"
-                       class="form-control form-control-sm" placeholder="0"
-                       oninput="calcularTotalFila(this)">
+                       class="form-control form-control-sm" placeholder="0">
             </div>
             <div class="col-md-1">
                 <input type="number" step="0.01" name="items[${idx}].porcentajeIvaItem"
-                       class="form-control form-control-sm" placeholder="0"
-                       oninput="calcularTotalFila(this)">
+                       class="form-control form-control-sm" placeholder="0">
             </div>
             <div class="col-md-1">
                 <input type="number" step="0.01" name="items[${idx}].impuestoConsumo"
-                       class="form-control form-control-sm" placeholder="0.00"
-                       oninput="calcularTotalFila(this)">
+                       class="form-control form-control-sm" placeholder="0.00">
             </div>
             <div class="col-md-1 d-flex flex-column align-items-end gap-1">
                 <span class="item-total fw-bold text-verde" style="font-size:0.82rem;">—</span>
-                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                <button type="button" class="btn-remove-ingrediente">
                     <i class="bi bi-x"></i>
                 </button>
             </div>
@@ -718,6 +698,49 @@ document.getElementById('btnCrearEquipoF').addEventListener('click', async () =>
             errorEl.classList.remove('d-none');
         }
     } catch { errorEl.textContent = 'Error de conexión'; errorEl.classList.remove('d-none'); }
+});
+
+// ── Event delegation: reemplaza todos los inline handlers ────────────────────
+
+// Botón Agregar Item
+document.getElementById('btnAddItem').addEventListener('click', addItem);
+
+// Switch IVA incluido
+document.getElementById('ivaIncluido').addEventListener('change', recalcularTodo);
+
+// Selección de proveedor
+document.getElementById('proveedorSelect').addEventListener('change', function() {
+    seleccionarProveedor(this);
+});
+
+// Delegation en #items-container para tipo-select, categoria-select, nombre-item (focus), btn-crear-item, btn-remove-ingrediente, e inputs numéricos
+document.getElementById('items-container').addEventListener('change', e => {
+    if (e.target.classList.contains('tipo-select')) {
+        onTipoChange(e.target);
+    }
+    if (e.target.classList.contains('categoria-select')) {
+        onCategoryChange(e.target);
+    }
+});
+
+document.getElementById('items-container').addEventListener('focusin', e => {
+    if (e.target.classList.contains('nombre-item')) {
+        syncDatalist(e.target);
+    }
+});
+
+document.getElementById('items-container').addEventListener('input', e => {
+    if (e.target.matches('input[name*=".cantidad"], input[name*=".valorUnitario"], input[name*=".porcentajeDescuento"], input[name*=".porcentajeIvaItem"], input[name*=".impuestoConsumo"]')) {
+        calcularTotalFila(e.target);
+    }
+});
+
+document.getElementById('items-container').addEventListener('click', e => {
+    const removeBtn = e.target.closest('.btn-remove-ingrediente');
+    if (removeBtn) removeRow(removeBtn);
+
+    const crearBtn = e.target.closest('.btn-crear-item');
+    if (crearBtn) abrirModalCrearItem(crearBtn);
 });
 </script>
 </body>

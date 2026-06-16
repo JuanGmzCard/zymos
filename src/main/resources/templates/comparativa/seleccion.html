@@ -84,7 +84,7 @@
                         <tr th:each="lote : ${lotes}"
                             class="lote-row" style="cursor:pointer;"
                             th:data-id="${lote.id}">
-                            <td class="text-center" onclick="event.stopPropagation()">
+                            <td class="text-center" data-stop-propagation="true">
                                 <input class="form-check-input chk-lote" type="checkbox"
                                        name="ids" th:value="${lote.id}">
                             </td>

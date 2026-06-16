@@ -168,9 +168,8 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/facturas/eliminar/{id}(id=${factura.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                              onsubmit="return confirm('¿Eliminar factura y revertir inventario?')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" data-confirm="¿Eliminar factura y revertir inventario?">Eliminar</button>
                         </form>
                     </td>
                 </tr>

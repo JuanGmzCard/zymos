@@ -29,7 +29,7 @@
                class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-excel me-1"></i>Excel
             </a>
-            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+            <button class="btn btn-sm btn-outline-secondary btn-print">
                 <i class="bi bi-printer me-1"></i>Imprimir
             </button>
         </div>
@@ -179,9 +179,9 @@
                     <div class="d-flex align-items-center gap-2">
                         <span id="paginaInfo" class="text-secondary" style="font-size:0.8rem;"></span>
                         <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="btnPrev"
-                                onclick="cambiarPagina(-1)" disabled>&lsaquo;</button>
+                                disabled>&lsaquo;</button>
                         <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="btnNext"
-                                onclick="cambiarPagina(1)">&rsaquo;</button>
+                                >&rsaquo;</button>
                     </div>
                 </div>
                 <div th:if="${#lists.isEmpty(lotes)}" class="text-center text-secondary py-5">
@@ -412,7 +412,13 @@ function cambiarPagina(delta) {
     renderPage();
 }
 
-document.addEventListener('DOMContentLoaded', renderPage);
+document.addEventListener('DOMContentLoaded', function() {
+    renderPage();
+    var _prev = document.getElementById('btnPrev');
+    var _next = document.getElementById('btnNext');
+    if (_prev) _prev.addEventListener('click', function() { cambiarPagina(-1); });
+    if (_next) _next.addEventListener('click', function() { cambiarPagina(1); });
+});
 /*]]>*/
 </script>
 </body>

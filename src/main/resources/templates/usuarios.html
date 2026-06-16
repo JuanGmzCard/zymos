@@ -252,9 +252,9 @@
                         <!-- Eliminar -->
                         <form th:if="${usuario.username != #authentication.name}"
                               th:action="@{/usuarios/{id}/eliminar(id=${usuario.id})}" method="post"
-                              class="d-inline"
-                              onsubmit="return confirm('¿Eliminar este usuario?')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Eliminar">
+                              class="d-inline">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Eliminar"
+                                    data-confirm="¿Eliminar este usuario?">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -279,7 +279,7 @@
                                                 <div class="input-group">
                                                     <input type="password" name="newPassword" class="form-control"
                                                            required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
-                                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -287,7 +287,7 @@
                                                 <div class="input-group">
                                                     <input type="password" name="confirmPassword" class="form-control"
                                                            required minlength="8" placeholder="Repite la contraseña">
-                                                    <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                                                    <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -366,7 +366,7 @@
                         <div class="input-group">
                             <input type="password" name="password" class="form-control"
                                    required minlength="8" placeholder="Mínimo 8 caracteres, una letra y un número">
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -374,7 +374,7 @@
                         <div class="input-group">
                             <input type="password" name="confirmPassword" class="form-control"
                                    required minlength="8" placeholder="Repite la contraseña">
-                            <button type="button" class="btn btn-outline-secondary" onclick="togglePwd(this)" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
+                            <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -470,7 +470,7 @@ function togglePwd(btn) {
             var badge = item.activo
                 ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">Activo</span>'
                 : '<span class="badge bg-danger ms-auto" style="font-size:.65rem;">Inactivo</span>';
-            html += '<a href="#' + esc(item.anchor) + '" class="ss-item" onclick="hideSuggest()">' +
+            html += '<a href="#' + esc(item.anchor) + '" class="ss-item">' +
                 '<i class="bi bi-person-circle ss-icon"></i>' +
                 '<span class="ss-title">' + esc(item.username) + '</span>' +
                 '<span class="ss-sub">' + esc(item.rol) + '</span>' +
@@ -487,6 +487,10 @@ function togglePwd(btn) {
     }
 
     window.hideSuggest = function() { hide(); };
+
+    suggest.addEventListener('click', function(e) {
+        if (e.target.closest('a.ss-item')) hide();
+    });
 })();
 </script>
 </body>

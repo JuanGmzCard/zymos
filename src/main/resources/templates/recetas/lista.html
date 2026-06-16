@@ -298,9 +298,9 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
                               sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                              class="d-inline"
-                              onsubmit="return confirm('¿Archivar la receta «' + /*[[${rec.nombre}]]*/ '' + '»? Los datos se conservan.')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Archivar">
+                              class="d-inline">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Archivar"
+                                    th:attr="data-confirm=|¿Archivar la receta «${rec.nombre}»? Los datos se conservan.|">
                                 <i class="bi bi-archive"></i>
                             </button>
                         </form>

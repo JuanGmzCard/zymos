@@ -298,10 +298,10 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                              onsubmit="return confirm('¿Eliminar barril ' + [[${barril.codigo}]] + '?')">
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0"
+                                    th:attr="data-confirm=|¿Eliminar barril ${barril.codigo}?|">Eliminar</button>
                         </form>
                     </td>
                 </tr>

@@ -55,8 +55,8 @@ function renderizarResultadosCosto(items) {
                 '<td class="text-muted">' + fmtNum(it.cantidad) + ' ' + esc(it.unidad || '') + '</td>' +
                 '<td class="text-end fw-bold">$' + fmtMoney(it.valorLinea) + '</td>' +
                 '<td class="pe-2"><button type="button" class="btn btn-sm py-0 px-2 ' +
-                    (ya ? 'btn-secondary disabled' : 'btn-outline-primary') + '" ' +
-                    (ya ? '' : 'onclick="agregarItemCosto(' + it.id + ')"') + '>' +
+                    (ya ? 'btn-secondary disabled' : 'btn-outline-primary btn-agregar-item-costo') + '" ' +
+                    'data-costo-item-id="' + it.id + '">' +
                     (ya ? '✓' : '+') + '</button></td>';
             tbody.appendChild(tr);
         });
@@ -123,16 +123,15 @@ function renderizarAsignados() {
                 '" target="_blank">' + esc(a.itemData.facturaNumero) + '</a> — ' + esc(a.itemData.proveedor) + '</td>' +
             '<td>' +
                 '<div class="input-group input-group-sm">' +
-                    '<input type="number" class="form-control form-control-sm" min="0" step="0.001" ' +
-                        'data-item-id="' + a.itemId + '" value="' + a.cantidadAsignada + '" ' +
-                        'oninput="actualizarCantidadCosto(' + a.itemId + ', this.value)">' +
+                    '<input type="number" class="form-control form-control-sm costo-cantidad-input" min="0" step="0.001" ' +
+                        'data-item-id="' + a.itemId + '" value="' + a.cantidadAsignada + '">' +
                     '<span class="input-group-text">' + esc(a.itemData.unidad || '') + '</span>' +
                 '</div>' +
                 (esCostoTotal ? '<small class="text-muted d-block mt-1">Costo total del ítem</small>' : '') +
             '</td>' +
             '<td class="text-end pe-2 fw-bold costo-valor">$' + fmtMoney(calcularValorAsignado(a)) + '</td>' +
-            '<td><button type="button" class="btn-remove-ingrediente" onclick="removerItemCosto(' + a.itemId +
-                ')"><i class="bi bi-x"></i></button></td>';
+            '<td><button type="button" class="btn-remove-ingrediente btn-remover-item-costo" ' +
+                'data-costo-item-id="' + a.itemId + '"><i class="bi bi-x"></i></button></td>';
         tbody.appendChild(tr);
     });
 }
@@ -233,11 +232,10 @@ function autoAgregarCostosReceta(costosSugeridos, advertencias) {
         '<div class="flex-grow-1"><strong>Stock insuficiente</strong> para: ' +
         advertencias.map(function(n) { return '<em>' + esc(n) + '</em>'; }).join(', ') +
         '.' + msgCostos + '</div>' +
-        '<button type="button" class="btn-close btn-sm" onclick="this.closest(\'.alert\').remove()"></button>' +
+        '<button type="button" class="btn-close btn-sm btn-cerrar-stock-alert"></button>' +
         '</div>' +
         '<div class="mt-2 ps-4">' +
-        '<button type="button" class="btn btn-sm btn-warning py-0 px-2" ' +
-        'onclick="if(typeof _actualizarEstadoAplicar===\'function\') _actualizarEstadoAplicar(false); this.closest(\'.alert\').remove();">' +
+        '<button type="button" class="btn btn-sm btn-warning py-0 px-2 btn-ignorar-stock">' +
         '<i class="bi bi-arrow-right-circle me-1"></i>Ignorar advertencias y continuar</button>' +
         '</div>' +
         '</div>';
@@ -300,6 +298,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (fb) fb.textContent = '';
             }
         });
+    }
+
+    // Wire "Aplicar a Receta e Insumos" button
+    var btnAplicar = document.getElementById('btnAplicarReceta');
+    if (btnAplicar) btnAplicar.addEventListener('click', sincronizarIngredientesDesdeItems);
+
+    // Wire costo search inputs
+    var costoSearch = document.getElementById('costo-search');
+    if (costoSearch) costoSearch.addEventListener('input', filtrarItemsCosto);
+    var costoTipo = document.getElementById('costo-tipo-filter');
+    if (costoTipo) costoTipo.addEventListener('change', filtrarItemsCosto);
+});
+
+// ── CSP-safe delegated event listeners ────────────────────────────
+
+// Agregar ítem de costo desde resultados de búsqueda
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-agregar-item-costo');
+    if (btn) agregarItemCosto(btn.dataset.costoItemId);
+});
+
+// Remover ítem de costo asignado
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-remover-item-costo');
+    if (btn) removerItemCosto(btn.dataset.costoItemId);
+});
+
+// Actualizar cantidad de ítem de costo asignado
+document.addEventListener('input', function(e) {
+    var inp = e.target.closest('.costo-cantidad-input');
+    if (inp && inp.dataset.itemId) actualizarCantidadCosto(inp.dataset.itemId, inp.value);
+});
+
+// Cerrar alerta de stock (btn-close)
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-cerrar-stock-alert');
+    if (btn) btn.closest('.alert').remove();
+});
+
+// Ignorar advertencias de stock
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-ignorar-stock');
+    if (btn) {
+        if (typeof _actualizarEstadoAplicar === 'function') _actualizarEstadoAplicar(false);
+        btn.closest('.alert').remove();
     }
 });
 

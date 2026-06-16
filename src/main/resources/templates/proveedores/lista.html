@@ -200,9 +200,8 @@
                            class="action-link edit">Editar</a>
                         <span class="action-sep">·</span>
                         <form th:action="@{/proveedores/eliminar/{id}(id=${prov.id})}" method="post"
-                              class="d-inline"
-                              onsubmit="return confirm('¿Eliminar proveedor?')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                              class="d-inline">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" data-confirm="¿Eliminar proveedor?">Eliminar</button>
                         </form>
                     </td>
                 </tr>

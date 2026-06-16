@@ -74,7 +74,7 @@
             <a th:href="@{/ver/{id}/pdf(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <button class="btn btn-outline-secondary btn-sm btn-print">
                 <i class="bi bi-printer me-1"></i>Imprimir
             </button>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
@@ -445,7 +445,7 @@
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
-                                            onclick="return confirm('¿Eliminar esta lectura?')"
+                                            data-confirm="¿Eliminar esta lectura?"
                                             title="Eliminar">
                                         <i class="bi bi-trash3"></i>
                                     </button>
@@ -475,8 +475,7 @@
                             <span style="font-size:0.65rem;color:#94a3b8;font-weight:400;"> → auto-SG</span>
                         </label>
                         <input type="number" id="lectBrixInput" class="form-control form-control-sm"
-                               style="width:90px;" placeholder="4.2" min="1" max="40" step="0.1"
-                               oninput="lectBrixToSg(this.value)">
+                               style="width:90px;" placeholder="4.2" min="1" max="40" step="0.1">
                     </div>
                     <div class="col-auto">
                         <label class="form-label detail-label" for="lectDensidadInput">Densidad (SG)</label>
@@ -728,7 +727,7 @@
                                 <form th:action="@{/ver/{id}/evaluaciones/{eid}/eliminar(id=${lote.id},eid=${ev.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
-                                            onclick="return confirm('¿Eliminar esta evaluación?')"
+                                            data-confirm="¿Eliminar esta evaluación?"
                                             title="Eliminar">
                                         <i class="bi bi-trash3"></i>
                                     </button>
@@ -771,8 +770,7 @@
                                         Aroma <span class="text-muted fw-normal">(0–12)</span>
                                     </label>
                                     <input type="range" id="evalAroma" name="aroma" class="form-range flex-grow-1"
-                                           min="0" max="12" step="1" value="0"
-                                           oninput="syncEval('Aroma',this.value)">
+                                           min="0" max="12" step="1" value="0">
                                     <span class="badge bg-secondary rounded-pill" id="valAroma" style="min-width:2.5rem;">0</span>
                                 </div>
                             </div>
@@ -782,8 +780,7 @@
                                         Apariencia <span class="text-muted fw-normal">(0–3)</span>
                                     </label>
                                     <input type="range" id="evalApariencia" name="apariencia" class="form-range flex-grow-1"
-                                           min="0" max="3" step="1" value="0"
-                                           oninput="syncEval('Apariencia',this.value)">
+                                           min="0" max="3" step="1" value="0">
                                     <span class="badge bg-secondary rounded-pill" id="valApariencia" style="min-width:2.5rem;">0</span>
                                 </div>
                             </div>
@@ -793,8 +790,7 @@
                                         Sabor <span class="text-muted fw-normal">(0–20)</span>
                                     </label>
                                     <input type="range" id="evalSabor" name="sabor" class="form-range flex-grow-1"
-                                           min="0" max="20" step="1" value="0"
-                                           oninput="syncEval('Sabor',this.value)">
+                                           min="0" max="20" step="1" value="0">
                                     <span class="badge bg-secondary rounded-pill" id="valSabor" style="min-width:2.5rem;">0</span>
                                 </div>
                             </div>
@@ -804,8 +800,7 @@
                                         Sensación en boca <span class="text-muted fw-normal">(0–5)</span>
                                     </label>
                                     <input type="range" id="evalSensacionBoca" name="sensacionBoca" class="form-range flex-grow-1"
-                                           min="0" max="5" step="1" value="0"
-                                           oninput="syncEval('SensacionBoca',this.value)">
+                                           min="0" max="5" step="1" value="0">
                                     <span class="badge bg-secondary rounded-pill" id="valSensacionBoca" style="min-width:2.5rem;">0</span>
                                 </div>
                             </div>
@@ -815,8 +810,7 @@
                                         Impresión general <span class="text-muted fw-normal">(0–10)</span>
                                     </label>
                                     <input type="range" id="evalImpresionGeneral" name="impresionGeneral" class="form-range flex-grow-1"
-                                           min="0" max="10" step="1" value="0"
-                                           oninput="syncEval('ImpresionGeneral',this.value)">
+                                           min="0" max="10" step="1" value="0">
                                     <span class="badge bg-secondary rounded-pill" id="valImpresionGeneral" style="min-width:2.5rem;">0</span>
                                 </div>
                             </div>
@@ -1087,6 +1081,16 @@ function lectBrixToSg(fgBrixStr) {
         + 0.000063293 * fb * fb * fb;
     sgInput.value = Math.round(fg * 1000);
 }
+</script>
+<script th:attr="nonce=${cspNonce}">
+document.addEventListener('DOMContentLoaded', function() {
+    var _brixInput = document.getElementById('lectBrixInput');
+    if (_brixInput) _brixInput.addEventListener('input', function() { lectBrixToSg(this.value); });
+    ['Aroma','Apariencia','Sabor','SensacionBoca','ImpresionGeneral'].forEach(function(f) {
+        var el = document.getElementById('eval' + f);
+        if (el) el.addEventListener('input', function() { syncEval(f, this.value); });
+    });
+});
 </script>
 </body>
 </html>

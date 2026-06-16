@@ -80,9 +80,9 @@
                         <input type="text" th:field="*{estilo}" class="form-control"
                                placeholder="Ej: Stout" required
                                list="datalist-estilos" autocomplete="off">
-                        <button type="button" class="btn btn-outline-secondary"
+                        <button type="button" class="btn btn-outline-secondary" id="btnNuevoTipoCerveza"
                                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                                onclick="abrirModalTipoCerveza()" title="Crear tipo de cerveza">
+                                title="Crear tipo de cerveza">
                             <i class="bi bi-plus-square"></i>
                         </button>
                     </div>
@@ -183,8 +183,8 @@
                                        placeholder="Nombre malta" list="datalist-maltas" autocomplete="off">
                             </div>
                             <div class="col-md-1 ps-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                                        onclick="abrirModalInsumo('MALTA', this)" title="Crear en inventario">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
+                                        data-tipo="MALTA" title="Crear en inventario">
                                     <i class="bi bi-plus-square"></i>
                                 </button>
                             </div>
@@ -202,13 +202,13 @@
                                 </select>
                             </div>
                             <div class="col-md-1 text-end">
-                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                        onclick="addRecetaRow('receta-maltas-container','maltas','Malta')">
+                <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
+                        data-container="receta-maltas-container" data-field="maltas" data-label="Malta">
                     <i class="bi bi-plus me-1"></i>Agregar Malta
                 </button>
             </div>
@@ -227,8 +227,8 @@
                                        placeholder="Nombre lúpulo" list="datalist-lupulos" autocomplete="off">
                             </div>
                             <div class="col-md-1 ps-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                                        onclick="abrirModalInsumo('LUPULO', this)" title="Crear en inventario">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
+                                        data-tipo="LUPULO" title="Crear en inventario">
                                     <i class="bi bi-plus-square"></i>
                                 </button>
                             </div>
@@ -246,13 +246,13 @@
                                 </select>
                             </div>
                             <div class="col-md-1 text-end">
-                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                        onclick="addRecetaRow('receta-lupulos-container','lupulos','Lúpulo')">
+                <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
+                        data-container="receta-lupulos-container" data-field="lupulos" data-label="Lúpulo">
                     <i class="bi bi-plus me-1"></i>Agregar Lúpulo
                 </button>
             </div>
@@ -271,8 +271,8 @@
                                        placeholder="Nombre levadura" list="datalist-levaduras" autocomplete="off">
                             </div>
                             <div class="col-md-1 ps-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                                        onclick="abrirModalInsumo('LEVADURA', this)" title="Crear en inventario">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
+                                        data-tipo="LEVADURA" title="Crear en inventario">
                                     <i class="bi bi-plus-square"></i>
                                 </button>
                             </div>
@@ -290,13 +290,13 @@
                                 </select>
                             </div>
                             <div class="col-md-1 text-end">
-                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                        onclick="addRecetaRow('receta-levaduras-container','levaduras','Levadura')">
+                <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
+                        data-container="receta-levaduras-container" data-field="levaduras" data-label="Levadura">
                     <i class="bi bi-plus me-1"></i>Agregar Levadura
                 </button>
             </div>
@@ -315,8 +315,8 @@
                                        placeholder="Nombre clarificante" list="datalist-clarificantes" autocomplete="off">
                             </div>
                             <div class="col-md-1 ps-0">
-                                <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                                        onclick="abrirModalInsumo('CLARIFICANTE', this)" title="Crear en inventario">
+                                <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
+                                        data-tipo="CLARIFICANTE" title="Crear en inventario">
                                     <i class="bi bi-plus-square"></i>
                                 </button>
                             </div>
@@ -335,13 +335,13 @@
                                 </select>
                             </div>
                             <div class="col-md-1 text-end">
-                                <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                        onclick="addRecetaRow('receta-clarificantes-container','clarificantes','Clarificante')">
+                <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
+                        data-container="receta-clarificantes-container" data-field="clarificantes" data-label="Clarificante">
                     <i class="bi bi-plus me-1"></i>Agregar Clarificante
                 </button>
             </div>
@@ -374,12 +374,12 @@
                             </div>
                         </div>
                         <div class="col-md-2 text-end">
-                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                            <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                         </div>
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-sm btn-zymos-outline mt-2" onclick="addEscalon()">
+            <button type="button" class="btn btn-sm btn-zymos-outline mt-2" id="btnAddEscalon">
                 <i class="bi bi-plus me-1"></i>Agregar Escalón
             </button>
         </div>
@@ -431,7 +431,7 @@
                             </select>
                         </div>
                         <div class="col-md-1 text-end">
-                            <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                            <button type="button" class="btn-remove-ingrediente">
                                 <i class="bi bi-x"></i>
                             </button>
                         </div>
@@ -440,7 +440,7 @@
             </div>
             <div class="row g-2 mt-2 align-items-center">
                 <div class="col-auto">
-                    <button type="button" class="btn btn-sm btn-zymos-outline" onclick="addAdicionHervor()">
+                    <button type="button" class="btn btn-sm btn-zymos-outline" id="btnAddAdicionHervor">
                         <i class="bi bi-plus me-1"></i>Agregar Adición
                     </button>
                 </div>
@@ -626,7 +626,7 @@ function addAdicionHervor() {
                     </select>
                 </div>
                 <div class="col-md-1 text-end">
-                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)">
+                    <button type="button" class="btn-remove-ingrediente">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
@@ -647,8 +647,8 @@ function addRecetaRow(containerId, tipo, placeholder) {
                            placeholder="${placeholder}" list="${datalistId}" autocomplete="off">
                 </div>
                 <div class="col-md-1 ps-0">
-                    <button type="button" class="btn btn-sm btn-outline-secondary w-100"
-                            onclick="abrirModalInsumo('${tipoEnum}', this)" title="Crear en inventario">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
+                            data-tipo="${tipoEnum}" title="Crear en inventario">
                         <i class="bi bi-plus-square"></i>
                     </button>
                 </div>
@@ -659,7 +659,7 @@ function addRecetaRow(containerId, tipo, placeholder) {
                     <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">${tipo === 'clarificantes' ? UNIT_OPTIONS + '<option value="und">und</option>' : UNIT_OPTIONS}</select>
                 </div>
                 <div class="col-md-1 text-end">
-                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                    <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                 </div>
             </div>
         </div>`);
@@ -687,7 +687,7 @@ function addEscalon() {
                     </div>
                 </div>
                 <div class="col-md-2 text-end">
-                    <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                    <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                 </div>
             </div>
         </div>`);
@@ -766,6 +766,37 @@ function abrirModalInsumo(tipoEnum, btn) {
     new bootstrap.Modal(document.getElementById('modalNuevoInsumo')).show();
     setTimeout(() => document.getElementById('nuevoInsumoNombre').focus(), 300);
 }
+
+// ── CSP-safe event delegation ──────────────────────────────────────
+
+// Remove ingredient row
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-remove-ingrediente');
+    if (btn) removeRow(btn);
+});
+
+// Add receta ingredient row
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-add-receta-row');
+    if (btn) addRecetaRow(btn.dataset.container, btn.dataset.field, btn.dataset.label);
+});
+
+// Open modal insumo (static rows + dynamically created rows)
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-crear-insumo');
+    if (btn) abrirModalInsumo(btn.dataset.tipo, btn);
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    var btnTipo = document.getElementById('btnNuevoTipoCerveza');
+    if (btnTipo) btnTipo.addEventListener('click', abrirModalTipoCerveza);
+
+    var btnEscalon = document.getElementById('btnAddEscalon');
+    if (btnEscalon) btnEscalon.addEventListener('click', addEscalon);
+
+    var btnAdicion = document.getElementById('btnAddAdicionHervor');
+    if (btnAdicion) btnAdicion.addEventListener('click', addAdicionHervor);
+});
 
 document.getElementById('btnGuardarInsumoRapido').addEventListener('click', async () => {
     const nombre  = document.getElementById('nuevoInsumoNombre').value.trim();

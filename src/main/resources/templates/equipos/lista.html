@@ -116,7 +116,7 @@
                         <form th:action="@{/equipos/{id}/estado(id=${equipo.id})}" method="post" class="d-inline">
                             <select name="estado" class="form-select form-select-sm border-0 px-1 py-0"
                                     style="width:auto;background:transparent;cursor:pointer;"
-                                    onchange="this.form.submit()">
+                                    data-auto-submit="true">
                                 <option th:each="est : ${estadosEquipo}"
                                         th:value="${est.name()}"
                                         th:text="${est.displayName}"
@@ -157,9 +157,9 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/equipos/eliminar/{id}(id=${equipo.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                              onsubmit="return confirm('¿Eliminar ' + /*[[${equipo.nombre}]]*/ '' + '?')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0"
+                                    th:attr="data-confirm=|¿Eliminar ${equipo.nombre}?|">Eliminar</button>
                         </form>
                     </td>
                 </tr>

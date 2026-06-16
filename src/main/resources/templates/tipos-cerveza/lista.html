@@ -69,10 +69,9 @@
                             </button>
                         </form>
                         <span class="action-sep">·</span>
-                        <form th:action="@{/tipos-cerveza/{id}/eliminar(id=${tipo.id})}" method="post" class="d-inline"
-                              onsubmit="return confirm('¿Eliminar este tipo?')">
+                        <form th:action="@{/tipos-cerveza/{id}/eliminar(id=${tipo.id})}" method="post" class="d-inline">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" data-confirm="¿Eliminar este tipo?">Eliminar</button>
                         </form>
                     </td>
                 </tr>

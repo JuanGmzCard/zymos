@@ -283,11 +283,10 @@
                             <i class="bi bi-clock-history"></i>
                         </a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
-                        <button type="button" class="action-link edit border-0 bg-transparent p-0"
+                        <button type="button" class="action-link edit border-0 bg-transparent p-0 btn-ajuste-rapido"
                                 title="Ajuste rápido"
                                 sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                                th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}"
-                                onclick="abrirAjusteDesdeBtn(this)">
+                                th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}">
                             <i class="bi bi-plus-slash-minus"></i>
                         </button>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
@@ -297,9 +296,8 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/inventario/eliminar/{id}(id=${ins.id})}" method="post"
                               class="d-inline"
-                              onsubmit="return confirm('¿Eliminar este insumo?')"
                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0">Eliminar</button>
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" data-confirm="¿Eliminar este insumo?">Eliminar</button>
                         </form>
                     </td>
                 </tr>
@@ -377,6 +375,10 @@ function abrirAjusteDesdeBtn(btn) {
     document.getElementById('formAjuste').action = '/inventario/' + id + '/ajuste';
     new bootstrap.Modal(document.getElementById('modalAjuste')).show();
 }
+document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-ajuste-rapido');
+    if (btn) abrirAjusteDesdeBtn(btn);
+});
 </script>
 <script th:attr="nonce=${cspNonce}">
 (function() {

@@ -104,7 +104,6 @@
                 <i class="bi bi-moon-stars me-1"></i>Tenants inactivos
             </a>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVerificarAlertas"
-                    onclick="verificarAlertas()">
                 <i class="bi bi-bell me-1"></i>Verificar alertas
             </button>
             <form th:action="@{/admin/tenants/cache/evict}" method="post" class="d-inline">
@@ -286,6 +285,10 @@ function verificarAlertas() {
         setTimeout(function() { btn.className = 'btn btn-outline-secondary btn-sm'; }, 3000);
     });
 }
+document.addEventListener('DOMContentLoaded', function() {
+    var _vBtn = document.getElementById('btnVerificarAlertas');
+    if (_vBtn) _vBtn.addEventListener('click', verificarAlertas);
+});
 </script>
 </body>
 </html>

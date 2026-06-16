@@ -195,27 +195,27 @@
 
         <!-- ══ WIZARD NAV ═══════════════════════════ -->
         <div class="wizard-nav" id="wizardNav">
-            <button type="button" class="wz-tab tab-general active" data-tab="0" onclick="goTab(0)">
+            <button type="button" class="wz-tab tab-general active" data-tab="0">
                 <span class="wz-num">1</span>
                 <span><i class="bi bi-info-circle me-1"></i>Datos Generales</span>
             </button>
-            <button type="button" class="wz-tab tab-recipe" data-tab="1" onclick="goTab(1)">
+            <button type="button" class="wz-tab tab-recipe" data-tab="1">
                 <span class="wz-num">2</span>
                 <span><i class="bi bi-basket me-1"></i>Receta / Insumos</span>
             </button>
-            <button type="button" class="wz-tab tab-ferm" data-tab="2" onclick="goTab(2)">
+            <button type="button" class="wz-tab tab-ferm" data-tab="2">
                 <span class="wz-num">3</span>
                 <span><i class="bi bi-thermometer me-1"></i>Fermentación</span>
             </button>
-            <button type="button" class="wz-tab tab-acond" data-tab="3" onclick="goTab(3)">
+            <button type="button" class="wz-tab tab-acond" data-tab="3">
                 <span class="wz-num">4</span>
                 <span><i class="bi bi-droplet-half me-1"></i>Acondicionamiento</span>
             </button>
-            <button type="button" class="wz-tab tab-madur" data-tab="4" onclick="goTab(4)">
+            <button type="button" class="wz-tab tab-madur" data-tab="4">
                 <span class="wz-num">5</span>
                 <span><i class="bi bi-hourglass-split me-1"></i>Maduración</span>
             </button>
-            <button type="button" class="wz-tab tab-carbon" data-tab="5" onclick="goTab(5)">
+            <button type="button" class="wz-tab tab-carbon" data-tab="5">
                 <span class="wz-num">6</span>
                 <span><i class="bi bi-wind me-1"></i>Carbonatación</span>
             </button>
@@ -241,7 +241,7 @@
                                     th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
                                     th:selected="${loteForm.recetaId != null and rec.id == loteForm.recetaId}"></option>
                         </select>
-                        <button type="button" class="btn btn-sm btn-zymos" onclick="cargarRecetaEnLote()">
+                        <button type="button" class="btn btn-sm btn-zymos" id="btnCargarReceta">
                             <i class="bi bi-arrow-down-circle me-1"></i>Cargar
                         </button>
                     </div>
@@ -270,9 +270,9 @@
                         <div class="input-group">
                             <input type="number" step="0.001" id="agua-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.aguaUtilizada}"
-                                   oninput="volUpdate('agua')">
+                                   data-vol-field="agua">
                             <select id="agua-unit" class="form-select" style="max-width:130px;"
-                                    onchange="volUnitChange('agua')">
+                                    data-vol-unit-field="agua">
                                 <option value="L">Litros (L)</option>
                                 <option value="mL">Mililitros (mL)</option>
                                 <option value="gal">Galones (gal)</option>
@@ -291,9 +291,9 @@
                         <div class="input-group">
                             <input type="number" step="0.001" id="litros-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.litrosFinales}"
-                                   oninput="volUpdate('litros')">
+                                   data-vol-field="litros">
                             <select id="litros-unit" class="form-select" style="max-width:130px;"
-                                    onchange="volUnitChange('litros')">
+                                    data-vol-unit-field="litros">
                                 <option value="L">Litros (L)</option>
                                 <option value="mL">Mililitros (mL)</option>
                                 <option value="gal">Galones (gal)</option>
@@ -329,11 +329,11 @@
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                                                 <input type="text" id="costo-search" class="form-control"
-                                                       placeholder="Buscar ítem por nombre o proveedor…" oninput="filtrarItemsCosto()">
+                                                       placeholder="Buscar ítem por nombre o proveedor…">
                                             </div>
                                         </div>
                                         <div class="col-auto">
-                                            <select id="costo-tipo-filter" class="form-select form-select-sm" onchange="filtrarItemsCosto()">
+                                            <select id="costo-tipo-filter" class="form-select form-select-sm">
                                                 <option value="">Todos los tipos</option>
                                                 <option value="MALTA">Malta</option>
                                                 <option value="LUPULO">Lúpulo</option>
@@ -392,8 +392,7 @@
                                     </div>
 
                                     <div class="d-flex justify-content-end mt-2">
-                                        <button type="button" id="btnAplicarReceta" class="btn btn-sm btn-outline-secondary"
-                                                onclick="sincronizarIngredientesDesdeItems()">
+                                        <button type="button" id="btnAplicarReceta" class="btn btn-sm btn-outline-secondary">
                                             <i class="bi bi-basket me-1"></i>Aplicar a Receta e Insumos
                                         </button>
                                     </div>
@@ -409,14 +408,12 @@
                         <!-- Toggle instrumento -->
                         <div class="btn-group btn-group-sm" role="group" id="instrumento-toggle">
                             <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-sg"
-                                   value="SG" th:checked="${loteForm.instrumentoMedicion == null or loteForm.instrumentoMedicion == 'SG'}"
-                                   onchange="toggleInstrumento('SG')">
+                                   value="SG" th:checked="${loteForm.instrumentoMedicion == null or loteForm.instrumentoMedicion == 'SG'}">
                             <label class="btn btn-outline-secondary" for="instr-sg">
                                 <i class="bi bi-rulers me-1"></i>Hidrómetro (SG)
                             </label>
                             <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-brix"
-                                   value="BRIX" th:checked="${loteForm.instrumentoMedicion == 'BRIX'}"
-                                   onchange="toggleInstrumento('BRIX')">
+                                   value="BRIX" th:checked="${loteForm.instrumentoMedicion == 'BRIX'}">
                             <label class="btn btn-outline-secondary" for="instr-brix">
                                 <i class="bi bi-eyedropper me-1"></i>Refractómetro (°Brix)
                             </label>
@@ -451,7 +448,7 @@
                             <div class="col-md-3">
                                 <label class="form-label" for="ogBrix">OG en °Brix</label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{ogBrix}" class="form-control"
-                                       placeholder="14.6" oninput="calcularSgDesdeBrix()">
+                                       placeholder="14.6">
                                 <small class="text-muted">Lectura del mosto sin fermentar</small>
                             </div>
                             <div class="col-md-3">
@@ -463,7 +460,7 @@
                             <div class="col-md-3">
                                 <label class="form-label" for="fgBrix">FG en °Brix <small class="text-muted">(lectura cruda)</small></label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{fgBrix}" class="form-control"
-                                       placeholder="5.2" oninput="calcularSgDesdeBrix()">
+                                       placeholder="5.2">
                                 <small class="text-muted">Sin corregir — Terrill lo ajusta</small>
                             </div>
                             <div class="col-md-3">
@@ -514,14 +511,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-1 text-end">
-                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                        <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <datalist id="lista-maltas"><option th:each="inv : ${maltasInventario}" th:value="${inv.nombre}"></option></datalist>
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                                onclick="addRow('maltas-container','maltas','lista-maltas','Malta')">
+                                data-container="maltas-container" data-field="maltas"
+                                data-datalist="lista-maltas" data-label="Malta">
                             <i class="bi bi-plus me-1"></i>Agregar Malta
                         </button>
                     </div>
@@ -555,14 +553,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-1 text-end">
-                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                        <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <datalist id="lista-lupulos"><option th:each="inv : ${lupulosInventario}" th:value="${inv.nombre}"></option></datalist>
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                                onclick="addRow('lupulos-container','lupulos','lista-lupulos','Lúpulo')">
+                                data-container="lupulos-container" data-field="lupulos"
+                                data-datalist="lista-lupulos" data-label="Lúpulo">
                             <i class="bi bi-plus me-1"></i>Agregar Lúpulo
                         </button>
                     </div>
@@ -596,14 +595,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-1 text-end">
-                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                        <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <datalist id="lista-levaduras"><option th:each="inv : ${levaduraInventario}" th:value="${inv.nombre}"></option></datalist>
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                                onclick="addRow('levaduras-container','levaduras','lista-levaduras','Levadura')">
+                                data-container="levaduras-container" data-field="levaduras"
+                                data-datalist="lista-levaduras" data-label="Levadura">
                             <i class="bi bi-plus me-1"></i>Agregar Levadura
                         </button>
                     </div>
@@ -638,14 +638,15 @@
                                         </select>
                                     </div>
                                     <div class="col-md-1 text-end">
-                                        <button type="button" class="btn-remove-ingrediente" onclick="removeRow(this)"><i class="bi bi-x"></i></button>
+                                        <button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <datalist id="lista-clarificantes"><option th:each="inv : ${clarificantesInventario}" th:value="${inv.nombre}"></option></datalist>
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
-                                onclick="addRow('clarificantes-container','clarificantes','lista-clarificantes','Clarificante')">
+                                data-container="clarificantes-container" data-field="clarificantes"
+                                data-datalist="lista-clarificantes" data-label="Clarificante">
                             <i class="bi bi-plus me-1"></i>Agregar Clarificante
                         </button>
                     </div>
@@ -820,8 +821,7 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-md-4">
                                 <label class="form-label" for="carbAzucarTipo">Tipo de Azúcar / Agente</label>
-                                <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect"
-                                        onchange="actualizarCalculadora()">
+                                <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect">
                                     <option value="">-- Seleccionar --</option>
                                     <th:block th:if="${not #lists.isEmpty(agentesCarbonatacion)}">
                                         <optgroup label="📦 Del inventario">
@@ -856,7 +856,7 @@
                                     <strong>Sugerido: <span id="gramosCalculados">—</span> g</strong>
                                     <div class="text-muted small mt-1">Basado en litros del lote y CO₂ objetivo</div>
                                     <button type="button" class="btn btn-sm btn-outline-primary mt-2 d-none"
-                                            id="btnAgregarAgenteCosto" onclick="agregarAgenteCostoSugerido()">
+                                            id="btnAgregarAgenteCosto">
                                         <i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción
                                     </button>
                                 </div>
@@ -915,8 +915,7 @@
                     <div class="col-md-6">
                         <label class="form-label">Destino y Empaque del Lote</label>
                         <div id="destinoList" class="mb-2"></div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary"
-                                onclick="addDestinoRow()">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddDestinoRow">
                             <i class="bi bi-plus me-1"></i>Agregar formato
                         </button>
                         <input type="hidden" th:field="*{carbDestino}" id="carbDestino">
@@ -1051,12 +1050,15 @@
                         var row = document.createElement('div');
                         row.className = 'destino-row d-flex gap-1 mb-1 align-items-center flex-wrap';
                         row.innerHTML =
-                            '<select class="form-select form-select-sm destino-formato" style="max-width:175px" onchange="onDestinoRowChange(this)">'
+                            '<select class="form-select form-select-sm destino-formato" style="max-width:175px">'
                             + DESTINO_OPTS + '</select>'
-                            + '<input type="number" class="form-control form-control-sm destino-cantidad" style="width:75px;display:none" placeholder="Uds" min="1" oninput="componerDestino()">'
-                            + '<input type="text" class="form-control form-control-sm destino-otro" style="display:none;max-width:160px" placeholder="Personalizado..." oninput="componerDestino()">'
-                            + '<button type="button" class="btn btn-sm btn-outline-danger px-1" onclick="removeDestinoRow(this)"><i class="bi bi-x"></i></button>';
+                            + '<input type="number" class="form-control form-control-sm destino-cantidad" style="width:75px;display:none" placeholder="Uds" min="1">'
+                            + '<input type="text" class="form-control form-control-sm destino-otro" style="display:none;max-width:160px" placeholder="Personalizado...">'
+                            + '<button type="button" class="btn btn-sm btn-outline-danger px-1 btn-remove-destino"><i class="bi bi-x"></i></button>';
                         document.getElementById('destinoList').appendChild(row);
+                        row.querySelector('.destino-formato').addEventListener('change', function() { onDestinoRowChange(this); });
+                        row.querySelector('.destino-cantidad').addEventListener('input', componerDestino);
+                        row.querySelector('.destino-otro').addEventListener('input', componerDestino);
                         if (formato != null) {
                             var sel       = row.querySelector('.destino-formato');
                             var cantInput = row.querySelector('.destino-cantidad');
@@ -1168,6 +1170,17 @@
 
                         const estiloInput = document.getElementById('estilo') || document.querySelector('[name=estilo]');
                         if (estiloInput) estiloInput.addEventListener('input', sugerirCo2PorEstilo);
+
+                        var btnAdd = document.getElementById('btnAddDestinoRow');
+                        if (btnAdd) btnAdd.addEventListener('click', function() { addDestinoRow(); });
+
+                        var btnAgente = document.getElementById('btnAgregarAgenteCosto');
+                        if (btnAgente) btnAgente.addEventListener('click', agregarAgenteCostoSugerido);
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        var btn = e.target.closest('.btn-remove-destino');
+                        if (btn) removeDestinoRow(btn);
                     });
                 </script>
             </div>
@@ -1175,7 +1188,7 @@
             <!-- ══ FOOTER: navegación + guardar ══ -->
             <div class="wizard-footer">
                 <div class="d-flex align-items-center gap-3">
-                    <button type="button" class="btn btn-zymos-outline btn-sm" id="btnPrev" onclick="prevTab()" style="display:none!important;">
+                    <button type="button" class="btn btn-zymos-outline btn-sm" id="btnPrev" style="display:none!important;">
                         <i class="bi bi-arrow-left me-1"></i>Anterior
                     </button>
                     <div class="wz-progress">
@@ -1193,7 +1206,7 @@
                         <i class="bi bi-save me-2"></i>
                         <span th:text="${loteId != null} ? 'Actualizar Lote' : 'Guardar Lote'">Guardar</span>
                     </button>
-                    <button type="button" class="btn btn-outline-secondary px-4" id="btnNext" onclick="nextTab()">
+                    <button type="button" class="btn btn-outline-secondary px-4" id="btnNext">
                         Siguiente <i class="bi bi-arrow-right ms-1"></i>
                     </button>
                 </div>
@@ -1295,6 +1308,16 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         toggleInstrumento('SG');
     }
+
+    // Instrument toggle listeners
+    document.getElementById('instr-sg').addEventListener('change', function() { if (this.checked) toggleInstrumento('SG'); });
+    document.getElementById('instr-brix').addEventListener('change', function() { if (this.checked) toggleInstrumento('BRIX'); });
+
+    // Brix oninput listeners
+    var ogBrixEl = document.getElementById('ogBrix');
+    var fgBrixEl = document.getElementById('fgBrix');
+    if (ogBrixEl) ogBrixEl.addEventListener('input', calcularSgDesdeBrix);
+    if (fgBrixEl) fgBrixEl.addEventListener('input', calcularSgDesdeBrix);
 });
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js}"></script>

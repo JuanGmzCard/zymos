@@ -81,8 +81,7 @@
                         <input type="email" th:field="*{emailAdmin}" id="emailAdmin"
                                class="form-control" placeholder="admin@cerveceria.com">
                         <button th:if="${!esNuevo}" type="button" id="btnTestEmail"
-                                class="btn btn-outline-secondary btn-sm text-nowrap"
-                                onclick="enviarEmailPrueba()">
+                                class="btn btn-outline-secondary btn-sm text-nowrap">
                             <i class="bi bi-send me-1"></i>Probar
                         </button>
                     </div>
@@ -102,7 +101,7 @@
                         <div class="col-sm-4">
                             <label class="form-label small text-muted" for="planTipo">Período del plan</label>
                             <select th:field="*{planTipo}" id="planTipo"
-                                    class="form-select form-select-sm" onchange="onPlanTipoChange()">
+                                    class="form-select form-select-sm">
                                 <option value="">Sin vencimiento (ilimitado)</option>
                                 <option value="MENSUAL">Mensual — 1 mes</option>
                                 <option value="TRIMESTRAL">Trimestral — 3 meses</option>
@@ -114,7 +113,7 @@
                         <div class="col-sm-4" id="planInicioGroup" style="display:none">
                             <label class="form-label small text-muted" for="planInicio">Fecha de inicio</label>
                             <input type="date" th:field="*{planInicio}" id="planInicio"
-                                   class="form-control form-control-sm" onchange="actualizarPlanFin()">
+                                   class="form-control form-control-sm">
                         </div>
                         <div class="col-sm-4" id="planFinGroup" style="display:none">
                             <label class="form-label small text-muted">Fecha de vencimiento</label>
@@ -169,7 +168,7 @@
                     <div class="small text-muted mb-1">Importar desde archivo JSON</div>
                     <div class="input-group input-group-sm">
                         <input type="file" id="importJsonFile" accept=".json" class="form-control">
-                        <button type="button" class="btn btn-primary text-nowrap" onclick="importarConfig()">
+                        <button type="button" class="btn btn-primary text-nowrap" id="btnImportarConfig">
                             <i class="bi bi-upload me-1"></i>Aplicar
                         </button>
                     </div>
@@ -186,8 +185,7 @@
                                     th:text="${ot.name} + ' (' + ${ot.subdomain} + ')'">
                             </option>
                         </select>
-                        <button type="button" class="btn btn-outline-secondary text-nowrap"
-                                onclick="copiarConfigDeTenant()">
+                        <button type="button" class="btn btn-outline-secondary text-nowrap" id="btnCopiarConfig">
                             <i class="bi bi-copy me-1"></i>Copiar
                         </button>
                     </div>
@@ -684,6 +682,20 @@
         }
     })();
 })();
+</script>
+<script th:attr="nonce=${cspNonce}">
+document.addEventListener('DOMContentLoaded', function() {
+    var _testEmail = document.getElementById('btnTestEmail');
+    if (_testEmail) _testEmail.addEventListener('click', enviarEmailPrueba);
+    var _importar  = document.getElementById('btnImportarConfig');
+    if (_importar)  _importar.addEventListener('click', importarConfig);
+    var _copiar    = document.getElementById('btnCopiarConfig');
+    if (_copiar)    _copiar.addEventListener('click', copiarConfigDeTenant);
+    var _planTipo  = document.getElementById('planTipo');
+    if (_planTipo)  _planTipo.addEventListener('change', onPlanTipoChange);
+    var _planInicio = document.getElementById('planInicio');
+    if (_planInicio) _planInicio.addEventListener('change', actualizarPlanFin);
+});
 </script>
 </body>
 </html>

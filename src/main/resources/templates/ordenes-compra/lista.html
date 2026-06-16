@@ -199,7 +199,7 @@
         <form method="get" th:action="@{/ordenes-compra}" class="row g-2 align-items-end mb-3">
             <div class="col-auto">
                 <select name="estado" class="form-select form-select-sm" style="width:auto"
-                        onchange="this.form.submit()">
+                        data-auto-submit="true">
                     <option value="" th:selected="${estadoFiltro == null}">Todos los estados</option>
                     <option th:each="e : ${estados}" th:value="${e.name()}"
                             th:text="${e.displayName}"
