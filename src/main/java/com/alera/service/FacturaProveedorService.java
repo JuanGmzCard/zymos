@@ -258,9 +258,7 @@ public class FacturaProveedorService {
                     insumoRepo.save(nuevo);
                 }
             } else if (item.getTipoItem() == TipoItemFactura.EQUIPO) {
-                Optional<Equipo> existing = equipoRepo.findAll().stream()
-                        .filter(e -> e.getNombre().equalsIgnoreCase(item.getNombre()))
-                        .findFirst();
+                Optional<Equipo> existing = equipoRepo.findByNombreIgnoreCase(item.getNombre());
                 if (existing.isPresent()) {
                     Equipo eq = existing.get();
                     eq.setObservaciones("Recomprado " + fecha + " - " + proveedor);
