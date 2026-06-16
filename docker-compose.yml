@@ -55,7 +55,7 @@ services:
       APP_BRAND_COLOR_CREAM:   ${APP_BRAND_COLOR_CREAM:-#F5EDD0}
       APP_BRAND_COLOR_BODY_BG: ${APP_BRAND_COLOR_BODY_BG:-#F0EDE2}
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
