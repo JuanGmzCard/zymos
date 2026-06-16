@@ -2,6 +2,7 @@ package com.alera.config;
 
 import com.alera.model.Tenant;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -36,5 +37,12 @@ public class GlobalControllerAdvice {
     public String cspNonce(HttpServletRequest request) {
         Object nonce = request.getAttribute(CspNonceFilter.CSP_NONCE_ATTR);
         return nonce != null ? nonce.toString() : "";
+    }
+
+    // Idioma activo — usado en el toggle de idioma del navbar.
+    // Patrón en templates: #{enum.EstadoVenta.__${venta.estado}__}
+    @ModelAttribute("currentLang")
+    public String currentLang() {
+        return LocaleContextHolder.getLocale().getLanguage();
     }
 }
