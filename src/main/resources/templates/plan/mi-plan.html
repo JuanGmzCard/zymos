@@ -161,15 +161,9 @@
 
                     <div class="stat-mini">
                         <div class="sm-icon"
-                             th:style="${tenant.planFin == null} ? 'background:#f1f5f9;'
-                                       : (tenant.isPlanVencido()   ? 'background:#fef2f2;'
-                                       : (tenant.isPlanPorVencer() ? 'background:#fffbeb;'
-                                       :                             'background:#f0fdf4;'))">
+                             th:style="${tenant.planFin == null} ? 'background:#f1f5f9;' : (tenant.isPlanVencido() ? 'background:#fef2f2;' : (tenant.isPlanPorVencer() ? 'background:#fffbeb;' : 'background:#f0fdf4;'))">
                             <i class="bi bi-calendar-x"
-                               th:style="${tenant.planFin == null} ? 'color:#94a3b8;'
-                                         : (tenant.isPlanVencido()   ? 'color:#dc2626;'
-                                         : (tenant.isPlanPorVencer() ? 'color:#f97316;'
-                                         :                             'color:#16a34a;'))"></i>
+                               th:style="${tenant.planFin == null} ? 'color:#94a3b8;' : (tenant.isPlanVencido() ? 'color:#dc2626;' : (tenant.isPlanPorVencer() ? 'color:#f97316;' : 'color:#16a34a;'))"></i>
                         </div>
                         <div>
                             <div class="sm-label">Vencimiento</div>

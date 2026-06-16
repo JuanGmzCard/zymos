@@ -73,8 +73,9 @@ public class SecurityConfig {
 
     @Bean
     public ApiRateLimitFilter apiRateLimitFilter(
-            @Value("${app.api.rate-limit:100}") int limit) {
-        return new ApiRateLimitFilter(limit);
+            @Value("${app.api.rate-limit:100}") int apiLimit,
+            @Value("${app.admin.import-rate-limit:10}") int importLimit) {
+        return new ApiRateLimitFilter(apiLimit, importLimit);
     }
 
     @Bean
