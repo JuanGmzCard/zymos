@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - Stock P. Terminado'">Zymos - Stock P. Terminado</title>
+    <meta name="_csrf"        th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .page-header { padding: 1.75rem 0 1rem; }
+        .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; }
+        .page-header .subtitle { color: #94a3b8; font-size: 0.875rem; }
+
+        .stat-card-simple {
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 1rem 1.5rem; min-width: 130px;
+        }
+        .stat-card-simple .stat-label {
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; color: #94a3b8; margin-bottom: 0.25rem;
+        }
+        .stat-card-simple .stat-value {
+            font-size: 1.75rem; font-weight: 700; line-height: 1; color: #1e293b;
+        }
+        .stat-card-simple .stat-value.success { color: #16a34a; }
+        .stat-card-simple .stat-value.warning { color: #f97316; }
+        .stat-card-simple .stat-value.muted   { color: #64748b; }
+
+        .filter-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+        .filter-tab { display: inline-block; padding: 0.3rem 0.85rem; border-radius: 20px; font-size: 0.8rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all .15s; }
+        .filter-tab.active   { background: var(--verde-zymos, #2563eb); color: #fff; }
+        .filter-tab.inactive { background: transparent; color: #475569; }
+        .filter-tab.inactive:hover { background: #f1f5f9; }
+
+        .table-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+        .table-card .table-count {
+            padding: 0.875rem 1.25rem; font-size: 0.875rem; color: #64748b;
+            border-bottom: 1px solid #e2e8f0; display: flex; align-items: center;
+            justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+        }
+        .table-card table thead th {
+            background: #f8fafc !important; color: #64748b !important;
+            font-size: 0.7rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.05em; padding: 0.65rem 1rem; border-bottom: 1px solid #e2e8f0;
+        }
+        .table-card table tbody td {
+            padding: 0.75rem 1rem; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: middle;
+        }
+        .table-card table tbody tr:last-child td { border-bottom: none; }
+        .table-card table tbody tr:hover { background: #f8fafc; }
+
+        .badge-stock  { font-size: 0.7rem; padding: 0.3em 0.65em; }
+        .badge-con    { background: #dcfce7; color: #15803d; }
+        .badge-poco   { background: #fef9c3; color: #a16207; }
+        .badge-agotado{ background: #fee2e2; color: #dc2626; }
+
+        .disponible-col { font-weight: 700; font-size: 0.95rem; }
+        .disponible-col.positivo { color: #16a34a; }
+        .disponible-col.bajo     { color: #f97316; }
+        .disponible-col.negativo { color: #dc2626; }
+
+        .ajuste-row { display: none; }
+        .ajuste-row.visible { display: table-row; }
+
+        /* Modal ajuste */
+        .modal-stock .modal-header { background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+        .modal-stock .modal-title  { font-size: 1rem; font-weight: 600; color: #1e293b; }
+
+        html.dark-mode .page-header h1 { color: var(--dm-text); }
+        html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+        html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .stat-card-simple .stat-label { color: var(--dm-text-muted); }
+        html.dark-mode .stat-card-simple .stat-value { color: var(--dm-text); }
+        html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .filter-tab.inactive { color: var(--dm-text-muted); }
+        html.dark-mode .filter-tab.inactive:hover { background: var(--dm-hover); }
+        html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
+        html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; }
+        html.dark-mode .table-card table tbody td { border-color: var(--dm-border-faint); color: var(--dm-text); }
+        html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+        html.dark-mode .modal-stock .modal-header { background: var(--dm-input); border-color: var(--dm-border-light); }
+        html.dark-mode .modal-stock .modal-title { color: var(--dm-text); }
+        html.dark-mode .modal-stock .modal-content { background: var(--dm-card); }
+        html.dark-mode .modal-stock .modal-body label { color: var(--dm-text-muted); }
+        html.dark-mode .modal-stock .form-control,
+        html.dark-mode .modal-stock .form-select { background: var(--dm-input); border-color: var(--dm-border-med); color: var(--dm-text); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid px-4">
+    <div class="page-header">
+        <h1><i class="bi bi-archive me-2"></i>Stock de Producto Terminado</h1>
+        <div class="subtitle">Inventario de lotes completados — disponible para despacho</div>
+    </div>
+</div>
+
+<div class="container-fluid px-4 pb-4">
+
+    <!-- Stat cards -->
+    <div class="d-flex flex-wrap gap-3 mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label">Lotes completados</div>
+            <div class="stat-value" th:text="${totalLotes}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Con stock</div>
+            <div class="stat-value success" th:text="${lotesConStock}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Agotados</div>
+            <div class="stat-value muted" th:text="${lotesAgotados}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label">Total disponible</div>
+            <div class="stat-value success"
+                 th:text="${totalDisponible != null ? totalDisponible.stripTrailingZeros().toPlainString() + ' L' : '—'}">0 L</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card d-flex align-items-center gap-2 flex-wrap">
+        <span class="text-muted me-1" style="font-size:0.8rem;">Mostrar:</span>
+        <a class="filter-tab active" data-filtro="todos" href="#">Todos <span class="ms-1" th:text="'(' + ${totalLotes} + ')'"></span></a>
+        <a class="filter-tab inactive" data-filtro="con-stock" href="#">Con stock <span class="ms-1" th:text="'(' + ${lotesConStock} + ')'"></span></a>
+        <a class="filter-tab inactive" data-filtro="agotados" href="#">Agotados <span class="ms-1" th:text="'(' + ${lotesAgotados} + ')'"></span></a>
+        <div class="ms-auto">
+            <input type="text" id="buscarLote" class="form-control form-control-sm"
+                   placeholder="Buscar código o estilo…" style="min-width:200px;">
+        </div>
+    </div>
+
+    <!-- Tabla de stock -->
+    <div class="table-card">
+        <div class="table-count">
+            <span id="contadorVisible">
+                <strong th:text="${totalLotes}">0</strong> lotes
+            </span>
+            <span class="text-muted" style="font-size:0.8rem;">
+                Última actualización: <span th:text="${#temporals.format(#temporals.createNow(), 'dd/MM/yyyy HH:mm')}">—</span>
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="tablaStock">
+                <thead>
+                    <tr>
+                        <th>Código lote</th>
+                        <th>Estilo</th>
+                        <th>Completado</th>
+                        <th class="text-end">Producido</th>
+                        <th class="text-end">Vendido</th>
+                        <th class="text-end">Ajustes</th>
+                        <th class="text-end">Disponible</th>
+                        <th>Empaque</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${#lists.isEmpty(stocks)}">
+                        <td colspan="9" class="text-center text-muted py-5">
+                            <i class="bi bi-archive d-block mb-2" style="font-size:2rem;"></i>
+                            No hay lotes completados aún.
+                        </td>
+                    </tr>
+                    <tr th:each="s : ${stocks}"
+                        th:attr="data-filtro=${s.agotado() ? 'agotado' : 'con-stock'},
+                                  data-buscar=${s.codigoLote + ' ' + s.estilo}"
+                        class="stock-row">
+                        <td>
+                            <a th:href="@{'/ver/' + ${s.loteId}}" class="fw-semibold text-decoration-none"
+                               style="color:var(--verde-alera);" th:text="${s.codigoLote}">IPA-001</a>
+                        </td>
+                        <td th:text="${s.estilo}">IPA</td>
+                        <td th:text="${s.fechaCompletado != null ? #temporals.format(s.fechaCompletado, 'dd/MM/yyyy') : '—'}">—</td>
+                        <td class="text-end text-muted">
+                            <span th:text="${s.producido != null ? s.producido.stripTrailingZeros().toPlainString() + ' ' + s.unidad : '—'}">—</span>
+                        </td>
+                        <td class="text-end text-muted">
+                            <span th:text="${s.vendido != null ? s.vendido.stripTrailingZeros().toPlainString() + ' ' + s.unidad : '0 ' + s.unidad}">0 L</span>
+                        </td>
+                        <td class="text-end">
+                            <span th:if="${s.ajustado != null and s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) != 0}"
+                                  th:classappend="${s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-success' : 'text-danger'"
+                                  th:text="${(s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? '+' : '') + s.ajustado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">—</span>
+                            <span th:if="${s.ajustado == null or s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                  class="text-muted">—</span>
+                        </td>
+                        <td class="text-end">
+                            <span th:if="${s.disponible != null}"
+                                  th:classappend="${s.disponible.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'disponible-col positivo' : 'disponible-col negativo'"
+                                  th:text="${s.disponible.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">—</span>
+                            <span th:if="${s.disponible == null}" class="text-muted">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${s.carbDestino != null and !s.carbDestino.isBlank()}"
+                                  class="text-muted" style="font-size:0.78rem;"
+                                  th:text="${#strings.abbreviate(s.carbDestino, 40)}">—</span>
+                            <span th:if="${s.carbDestino == null or s.carbDestino.isBlank()}"
+                                  class="text-muted" style="font-size:0.78rem;">A granel / litros</span>
+                        </td>
+                        <td class="text-center">
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a th:href="@{'/ver/' + ${s.loteId}}"
+                                   class="btn btn-outline-secondary btn-sm" title="Ver lote">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-secondary btn-sm btn-ajuste"
+                                        sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')"
+                                        th:attr="data-lote-id=${s.loteId},
+                                                  data-lote-codigo=${s.codigoLote},
+                                                  data-lote-unidad=${s.unidad}"
+                                        title="Registrar ajuste">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Registrar ajuste de stock -->
+<div class="modal fade modal-stock" id="modalAjuste" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square me-2"></i>Ajuste de stock
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form id="formAjuste" method="post" th:action="@{/stock/ajustar/0}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <p class="text-muted mb-3" style="font-size:0.85rem;">
+                        Registra mermas, degustaciones, muestras o correcciones de stock
+                        para el lote <strong id="ajusteCodigoLote">—</strong>.
+                        Cantidad positiva = entrada. Negativa = salida / merma.
+                    </p>
+                    <div class="row g-3">
+                        <div class="col-sm-5">
+                            <label class="form-label small fw-semibold">Cantidad <span class="text-danger">*</span></label>
+                            <input type="number" name="cantidad" step="0.001" required
+                                   class="form-control form-control-sm"
+                                   placeholder="Ej: -2 (merma) o 5 (corrección)">
+                        </div>
+                        <div class="col-sm-4">
+                            <label class="form-label small fw-semibold">Unidad</label>
+                            <input type="text" name="unidad" id="ajusteUnidad" class="form-control form-control-sm"
+                                   placeholder="L" maxlength="50">
+                        </div>
+                        <div class="col-sm-3">
+                            <label class="form-label small fw-semibold">Fecha <span class="text-danger">*</span></label>
+                            <input type="date" name="fecha" required class="form-control form-control-sm"
+                                   th:value="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd')}">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Motivo <span class="text-danger">*</span></label>
+                            <input type="text" name="motivo" required maxlength="500"
+                                   class="form-control form-control-sm"
+                                   placeholder="Ej: Muestra de calidad, derrame, degustación…">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg me-1"></i>Guardar ajuste
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" th:attr="nonce=${cspNonce}"></script>
+<script th:attr="nonce=${cspNonce}">
+document.addEventListener('DOMContentLoaded', function() {
+
+    // ── Filtros por tab ────────────────────────────────────────────────────────
+    var filas = document.querySelectorAll('.stock-row');
+    var contador = document.getElementById('contadorVisible');
+
+    function aplicarFiltros() {
+        var filtroActivo = (document.querySelector('.filter-tab.active') || {}).dataset.filtro || 'todos';
+        var busq = (document.getElementById('buscarLote').value || '').toLowerCase();
+        var visibles = 0;
+        filas.forEach(function(fila) {
+            var filtroFila = fila.dataset.filtro;
+            var buscarFila = (fila.dataset.buscar || '').toLowerCase();
+            var pasaTab  = filtroActivo === 'todos' ||
+                           (filtroActivo === 'con-stock' && filtroFila === 'con-stock') ||
+                           (filtroActivo === 'agotados'  && filtroFila === 'agotado');
+            var pasaBusq = busq === '' || buscarFila.includes(busq);
+            var mostrar  = pasaTab && pasaBusq;
+            fila.style.display = mostrar ? '' : 'none';
+            if (mostrar) visibles++;
+        });
+        if (contador) contador.innerHTML = '<strong>' + visibles + '</strong> lotes';
+    }
+
+    document.querySelectorAll('.filter-tab').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.querySelectorAll('.filter-tab').forEach(function(t) {
+                t.classList.remove('active');
+                t.classList.add('inactive');
+            });
+            this.classList.remove('inactive');
+            this.classList.add('active');
+            aplicarFiltros();
+        });
+    });
+
+    var buscarInput = document.getElementById('buscarLote');
+    if (buscarInput) {
+        buscarInput.addEventListener('input', aplicarFiltros);
+    }
+
+    // ── Modal ajuste ──────────────────────────────────────────────────────────
+    var modalAjuste = document.getElementById('modalAjuste');
+    var formAjuste  = document.getElementById('formAjuste');
+
+    document.querySelectorAll('.btn-ajuste').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var loteId    = this.dataset.loteId;
+            var loteCodigo= this.dataset.loteCodigo;
+            var unidad    = this.dataset.loteUnidad || 'L';
+
+            document.getElementById('ajusteCodigoLote').textContent = loteCodigo;
+            document.getElementById('ajusteUnidad').value = unidad;
+
+            // Construir action con el loteId real
+            formAjuste.action = formAjuste.action.replace(/\/ajustar\/\d+$/, '/ajustar/' + loteId);
+
+            new bootstrap.Modal(modalAjuste).show();
+        });
+    });
+
+});
+</script>
+</body>
+</html>
