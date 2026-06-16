@@ -18,6 +18,16 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
     @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items ORDER BY f.fechaFactura DESC")
     List<FacturaProveedor> findAllWithItems();
 
+    @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items WHERE " +
+           "(:estado IS NULL OR f.estado = :estado) AND " +
+           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(:hasta  IS NULL OR f.fechaFactura <= :hasta) " +
+           "ORDER BY f.fechaFactura DESC NULLS LAST, f.id DESC")
+    List<FacturaProveedor> findWithItemsFiltered(
+            @Param("estado") EstadoFactura estado,
+            @Param("desde")  LocalDate desde,
+            @Param("hasta")  LocalDate hasta);
+
     @Query("SELECT f FROM FacturaProveedor f WHERE " +
            "(:estado IS NULL OR f.estado = :estado) AND " +
            "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +

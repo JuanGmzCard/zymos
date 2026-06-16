@@ -56,10 +56,6 @@ public class FacturaProveedorService {
     @Value("${app.page-size:15}")
     private int pageSize;
 
-    public List<FacturaProveedor> listarTodas() {
-        return repo.findAllWithItems();
-    }
-
     public Page<FacturaProveedor> listarPaginado(EstadoFactura estado, java.time.LocalDate desde, java.time.LocalDate hasta, int page) {
         return repo.findAllFiltered(estado, desde, hasta, PageRequest.of(page, pageSize));
     }
@@ -87,11 +83,7 @@ public class FacturaProveedorService {
 
     @Transactional(readOnly = true)
     public List<FacturaProveedor> listarParaExport(EstadoFactura estado, java.time.LocalDate desde, java.time.LocalDate hasta) {
-        return repo.findAllWithItems().stream()
-                .filter(f -> estado == null || f.getEstado() == estado)
-                .filter(f -> desde == null || (f.getFechaFactura() != null && !f.getFechaFactura().isBefore(desde)))
-                .filter(f -> hasta == null || (f.getFechaFactura() != null && !f.getFechaFactura().isAfter(hasta)))
-                .collect(java.util.stream.Collectors.toList());
+        return repo.findWithItemsFiltered(estado, desde, hasta);
     }
 
     public void cambiarEstado(Long id, EstadoFactura nuevoEstado) {
