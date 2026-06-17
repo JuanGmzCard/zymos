@@ -9,6 +9,7 @@ import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.ClienteRepository;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.StockAjusteRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
 import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
@@ -47,6 +48,7 @@ class VentaServiceTest {
     @Mock private NotificacionService              notificacionService;
     @Mock private ClienteRepository                clienteRepo;
     @Mock private InsumoInventarioService          insumoService;
+    @Mock private StockAjusteRepository            ajusteRepo;
     @Mock private EntityManager                    em;
     @Mock private Query                            nativeQuery;
 

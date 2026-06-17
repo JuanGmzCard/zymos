@@ -91,8 +91,10 @@ public class StockService {
     // ── Helpers privados ──────────────────────────────────────────────────────
 
     private StockLoteDto construirDto(LoteCerveza lote) {
-        BigDecimal vendido  = ventaItemRepo.sumCantidadActivaByLote(lote.getId(), null);
-        BigDecimal ajustado = ajusteRepo.sumCantidadByLoteId(lote.getId());
+        BigDecimal despachado = ventaItemRepo.sumCantidadDespachadadaByLote(lote.getId());
+        BigDecimal reservado  = ventaItemRepo.sumCantidadReservadaByLote(lote.getId());
+        BigDecimal vendido    = despachado.add(reservado);
+        BigDecimal ajustado   = ajusteRepo.sumCantidadByLoteId(lote.getId());
 
         // Determinar producido y unidad desde carbDestino o litrosFinales
         String     carbDestino = lote.getCarbDestino();
@@ -124,7 +126,9 @@ public class StockService {
                 vendido,
                 ajustado,
                 disponible,
-                unidad
+                unidad,
+                despachado,
+                reservado
         );
     }
 

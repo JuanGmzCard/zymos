@@ -11,6 +11,7 @@ import com.alera.model.enums.EstadoVenta;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.ClienteRepository;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.StockAjusteRepository;
 import com.alera.repository.VentaHistorialEstadoRepository;
 import com.alera.repository.VentaItemRepository;
 import com.alera.repository.VentaRepository;
@@ -51,6 +52,7 @@ public class VentaService {
     private final NotificacionService         notificacionService;
     private final ClienteRepository           clienteRepo;
     private final InsumoInventarioService     insumoService;
+    private final StockAjusteRepository       ajusteRepo;
 
     @PersistenceContext
     private EntityManager em;
@@ -67,7 +69,8 @@ public class VentaService {
                         VentaHistorialEstadoRepository historialRepo,
                         NotificacionService notificacionService,
                         ClienteRepository clienteRepo,
-                        InsumoInventarioService insumoService) {
+                        InsumoInventarioService insumoService,
+                        StockAjusteRepository ajusteRepo) {
         this.ventaRepo           = ventaRepo;
         this.ventaItemRepo       = ventaItemRepo;
         this.loteRepo            = loteRepo;
@@ -75,6 +78,7 @@ public class VentaService {
         this.notificacionService = notificacionService;
         this.clienteRepo         = clienteRepo;
         this.insumoService       = insumoService;
+        this.ajusteRepo          = ajusteRepo;
     }
 
     // ── Consultas ─────────────────────────────────────────────────────────────
@@ -210,7 +214,8 @@ public class VentaService {
                 : loteRepo.searchCompletados(trimmed, PageRequest.of(0, preload));
         List<Map<String, Object>> result = new ArrayList<>();
         for (var l : candidatos) {
-            BigDecimal vendido = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
+            BigDecimal vendido   = ventaItemRepo.sumCantidadActivaByLote(l.getId(), null);
+            BigDecimal ajustado  = ajusteRepo.sumCantidadByLoteId(l.getId());
             BigDecimal disponible = null;
             String unidadDisponible = "L";
 
@@ -219,13 +224,13 @@ public class VentaService {
             if (!entradas.isEmpty()) {
                 BigDecimal totalCapacidad = entradas.stream()
                     .map(DestinoEntry::cantidad).reduce(BigDecimal.ZERO, BigDecimal::add);
-                disponible = totalCapacidad.subtract(vendido);
+                disponible = totalCapacidad.subtract(vendido).add(ajustado);
                 if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
                 unidadDisponible = entradas.size() == 1 ? entradas.get(0).formato() : "uds";
             }
 
             if (disponible == null && l.getLitrosFinales() != null) {
-                disponible = l.getLitrosFinales().subtract(vendido);
+                disponible = l.getLitrosFinales().subtract(vendido).add(ajustado);
                 if (disponible.compareTo(BigDecimal.ZERO) <= 0) continue;
             }
 

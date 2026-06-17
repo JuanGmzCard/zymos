@@ -54,6 +54,19 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
            "i.unidad = 'und')")
     List<VentaItem> findItemsConEnvase(@Param("ventaId") Long ventaId);
 
+    // Suma de cantidad ya despachada (solo estado DESPACHADO) para un lote
+    @Query("SELECT COALESCE(SUM(i.cantidad), 0) FROM VentaItem i " +
+           "WHERE i.lote.id = :loteId " +
+           "AND i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO")
+    BigDecimal sumCantidadDespachadadaByLote(@Param("loteId") Long loteId);
+
+    // Suma de cantidad reservada (COTIZACION + PENDIENTE) para un lote
+    @Query("SELECT COALESCE(SUM(i.cantidad), 0) FROM VentaItem i " +
+           "WHERE i.lote.id = :loteId " +
+           "AND i.venta.estado IN (com.alera.model.enums.EstadoVenta.COTIZACION, " +
+           "                       com.alera.model.enums.EstadoVenta.PENDIENTE)")
+    BigDecimal sumCantidadReservadaByLote(@Param("loteId") Long loteId);
+
     // Suma de ingresos de ventas despachadas (para stat-card)
     @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +
            "FROM VentaItem i WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO")

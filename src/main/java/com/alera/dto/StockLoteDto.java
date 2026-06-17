@@ -13,7 +13,9 @@ public record StockLoteDto(
         BigDecimal vendido,
         BigDecimal ajustado,
         BigDecimal disponible,
-        String unidad
+        String unidad,
+        BigDecimal despachado,
+        BigDecimal reservado
 ) {
     public boolean agotado() {
         return disponible == null || disponible.compareTo(BigDecimal.ZERO) <= 0;

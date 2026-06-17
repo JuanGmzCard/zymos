@@ -155,7 +155,8 @@
                         <th>Estilo</th>
                         <th>Completado</th>
                         <th class="text-end">Producido</th>
-                        <th class="text-end">Vendido</th>
+                        <th class="text-end">Despachado</th>
+                        <th class="text-end">Reservado</th>
                         <th class="text-end">Ajustes</th>
                         <th class="text-end">Disponible</th>
                         <th>Empaque</th>
@@ -164,7 +165,7 @@
                 </thead>
                 <tbody>
                     <tr th:if="${#lists.isEmpty(stocks)}">
-                        <td colspan="9" class="text-center text-muted py-5">
+                        <td colspan="10" class="text-center text-muted py-5">
                             <i class="bi bi-archive d-block mb-2" style="font-size:2rem;"></i>
                             No hay lotes completados aún.
                         </td>
@@ -183,7 +184,18 @@
                             <span th:text="${s.producido != null ? s.producido.stripTrailingZeros().toPlainString() + ' ' + s.unidad : '—'}">—</span>
                         </td>
                         <td class="text-end text-muted">
-                            <span th:text="${s.vendido != null ? s.vendido.stripTrailingZeros().toPlainString() + ' ' + s.unidad : '0 ' + s.unidad}">0 L</span>
+                            <span th:if="${s.despachado != null and s.despachado.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                  th:text="${s.despachado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">0 L</span>
+                            <span th:if="${s.despachado == null or s.despachado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                  class="text-muted">—</span>
+                        </td>
+                        <td class="text-end">
+                            <span th:if="${s.reservado != null and s.reservado.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+                                  class="text-warning fw-semibold"
+                                  th:text="${s.reservado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}"
+                                  th:title="'Cotizaciones/ventas pendientes de despacho'">0 L</span>
+                            <span th:if="${s.reservado == null or s.reservado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
+                                  class="text-muted">—</span>
                         </td>
                         <td class="text-end">
                             <span th:if="${s.ajustado != null and s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) != 0}"
