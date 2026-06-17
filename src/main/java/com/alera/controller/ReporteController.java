@@ -385,13 +385,13 @@ public class ReporteController {
         // Costos por lote (una sola query agregada)
         Map<Long, BigDecimal> costosPorLote = new HashMap<>();
         for (Object[] row : loteItemFacturaRepo.sumCostosPorLote()) {
-            costosPorLote.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+            costosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
         }
 
         // Ingresos despachados por lote (una sola query agregada)
         Map<Long, BigDecimal> ingresosPorLote = new HashMap<>();
         for (Object[] row : ventaItemRepo.sumIngresosDespachadosPorLote()) {
-            ingresosPorLote.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+            ingresosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
         }
 
         // Lotes completados con filtro de período
@@ -527,5 +527,12 @@ public class ReporteController {
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(excel);
+    }
+
+    // JPQL SUM sobre BigDecimal puede retornar Double en Hibernate — conversión segura
+    private static BigDecimal toBigDecimal(Object o) {
+        if (o == null) return BigDecimal.ZERO;
+        if (o instanceof BigDecimal bd) return bd;
+        return BigDecimal.valueOf(((Number) o).doubleValue());
     }
 }
