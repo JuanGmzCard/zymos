@@ -2,11 +2,14 @@ package com.alera.controller;
 
 import com.alera.config.ExportBranding;
 import com.alera.config.TenantContext;
+import com.alera.dto.RentabilidadLoteDto;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Tenant;
 import com.alera.model.Venta;
 import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.LoteItemFacturaRepository;
+import com.alera.repository.VentaItemRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
 import com.alera.service.VentaService;
@@ -26,24 +29,32 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.Comparator;
+import java.util.HashMap;
 
 @Controller
 @RequestMapping("/reportes")
 public class ReporteController {
 
-    private final LoteCervezaRepository loteRepo;
-    private final ExcelExportService    excelExportService;
-    private final PdfExportService      pdfExportService;
-    private final VentaService          ventaService;
+    private final LoteCervezaRepository     loteRepo;
+    private final ExcelExportService        excelExportService;
+    private final PdfExportService          pdfExportService;
+    private final VentaService              ventaService;
+    private final LoteItemFacturaRepository loteItemFacturaRepo;
+    private final VentaItemRepository       ventaItemRepo;
 
     public ReporteController(LoteCervezaRepository loteRepo,
                               ExcelExportService excelExportService,
                               PdfExportService pdfExportService,
-                              VentaService ventaService) {
-        this.loteRepo           = loteRepo;
-        this.excelExportService = excelExportService;
-        this.pdfExportService   = pdfExportService;
-        this.ventaService       = ventaService;
+                              VentaService ventaService,
+                              LoteItemFacturaRepository loteItemFacturaRepo,
+                              VentaItemRepository ventaItemRepo) {
+        this.loteRepo            = loteRepo;
+        this.excelExportService  = excelExportService;
+        this.pdfExportService    = pdfExportService;
+        this.ventaService        = ventaService;
+        this.loteItemFacturaRepo = loteItemFacturaRepo;
+        this.ventaItemRepo       = ventaItemRepo;
     }
 
     @GetMapping("/produccion")
@@ -359,6 +370,139 @@ public class ReporteController {
         model.addAttribute("chartEstados",     chartEstados);
         model.addAttribute("resumenClientes",  resumenClientes);
         return "reportes/ventas";
+    }
+
+    // ── Reporte de Rentabilidad por Lote ──────────────────────────────────────
+
+    @GetMapping("/rentabilidad")
+    public String rentabilidad(
+            @RequestParam(required = false) String estilo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            @RequestParam(required = false, defaultValue = "margen") String ordenar,
+            Model model) {
+
+        // Costos por lote (una sola query agregada)
+        Map<Long, BigDecimal> costosPorLote = new HashMap<>();
+        for (Object[] row : loteItemFacturaRepo.sumCostosPorLote()) {
+            costosPorLote.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        // Ingresos despachados por lote (una sola query agregada)
+        Map<Long, BigDecimal> ingresosPorLote = new HashMap<>();
+        for (Object[] row : ventaItemRepo.sumIngresosDespachadosPorLote()) {
+            ingresosPorLote.put(((Number) row[0]).longValue(), (BigDecimal) row[1]);
+        }
+
+        // Lotes completados con filtro de período
+        var todosLotes = loteRepo.findAllCompletados(
+                org.springframework.data.domain.PageRequest.of(0, 1000));
+
+        // Filtro de período por fechaCompletado (carbFechaFinal)
+        var lotesFiltrados = todosLotes.stream()
+                .filter(l -> desde == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isBefore(desde)))
+                .filter(l -> hasta == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isAfter(hasta)))
+                .filter(l -> estilo == null || estilo.isBlank() || estilo.equals(l.getEstilo()))
+                .collect(Collectors.toList());
+
+        // Estilos disponibles para el filtro
+        List<String> estilosDisponibles = todosLotes.stream()
+                .map(LoteCerveza::getEstilo).filter(e -> e != null && !e.isBlank())
+                .distinct().sorted().collect(Collectors.toList());
+
+        // Construir DTOs
+        List<RentabilidadLoteDto> filas = new ArrayList<>();
+        for (LoteCerveza lote : lotesFiltrados) {
+            BigDecimal costo    = costosPorLote.getOrDefault(lote.getId(), null);
+            BigDecimal ingresos = ingresosPorLote.getOrDefault(lote.getId(), null);
+
+            // Si el costo es 0 y no hay entrada, lo tratamos como sin datos
+            if (costo != null && costo.compareTo(BigDecimal.ZERO) == 0) costo = null;
+            if (ingresos != null && ingresos.compareTo(BigDecimal.ZERO) == 0) ingresos = null;
+
+            BigDecimal margen    = null;
+            BigDecimal margenPct = null;
+            if (costo != null && ingresos != null) {
+                margen    = ingresos.subtract(costo).setScale(0, RoundingMode.HALF_UP);
+                margenPct = ingresos.compareTo(BigDecimal.ZERO) > 0
+                        ? margen.multiply(BigDecimal.valueOf(100))
+                                .divide(ingresos, 1, RoundingMode.HALF_UP)
+                        : null;
+            } else if (ingresos != null) {
+                margen = ingresos.setScale(0, RoundingMode.HALF_UP); // sin costo registrado
+            }
+
+            BigDecimal litros = lote.getLitrosFinales();
+            BigDecimal costoPorLitro = (costo != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
+                    ? costo.divide(litros, 2, RoundingMode.HALF_UP) : null;
+            BigDecimal ingresoPorLitro = (ingresos != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
+                    ? ingresos.divide(litros, 2, RoundingMode.HALF_UP) : null;
+
+            filas.add(new RentabilidadLoteDto(
+                    lote.getId(), lote.getCodigoLote(), lote.getEstilo(),
+                    lote.getCarbFechaFinal(), litros,
+                    costo, ingresos, margen, margenPct,
+                    costoPorLitro, ingresoPorLitro));
+        }
+
+        // Ordenamiento
+        Comparator<RentabilidadLoteDto> comp = switch (ordenar) {
+            case "ingreso" -> Comparator.comparing(r -> r.ingresos() != null ? r.ingresos() : BigDecimal.ZERO,
+                    Comparator.reverseOrder());
+            case "pct"     -> Comparator.comparing(r -> r.margenPct() != null ? r.margenPct() : BigDecimal.valueOf(-999),
+                    Comparator.reverseOrder());
+            case "fecha"   -> Comparator.comparing(r -> r.fechaCompletado() != null ? r.fechaCompletado() : LocalDate.MIN,
+                    Comparator.reverseOrder());
+            default        -> Comparator.comparing(r -> r.margen() != null ? r.margen() : BigDecimal.valueOf(-999_999),
+                    Comparator.reverseOrder());
+        };
+        filas.sort(comp);
+
+        // Totales y estadísticas
+        BigDecimal totalCosto     = filas.stream().filter(r -> r.costo() != null)
+                .map(RentabilidadLoteDto::costo).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIngresos  = filas.stream().filter(r -> r.ingresos() != null)
+                .map(RentabilidadLoteDto::ingresos).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMargen    = totalIngresos.subtract(totalCosto).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal totalMargenPct = totalIngresos.compareTo(BigDecimal.ZERO) > 0
+                ? totalMargen.multiply(BigDecimal.valueOf(100))
+                        .divide(totalIngresos, 1, RoundingMode.HALF_UP)
+                : null;
+
+        long lotesConDatos   = filas.stream().filter(r -> !r.sinCosto() && !r.sinVentas()).count();
+        long lotesRentables  = filas.stream().filter(RentabilidadLoteDto::rentable).count();
+        long lotesEnRojo     = filas.stream().filter(RentabilidadLoteDto::enRojo).count();
+
+        // Gráfico: top 10 por margen (barras)
+        Map<String, Number> chartMargen = new LinkedHashMap<>();
+        filas.stream()
+                .filter(r -> r.margen() != null)
+                .limit(10)
+                .forEach(r -> chartMargen.put(r.codigoLote(), r.margen()));
+
+        // Shortcuts de período
+        LocalDate hoy = LocalDate.now();
+        model.addAttribute("urlEsteMes",   "/reportes/rentabilidad?desde=" + hoy.withDayOfMonth(1) + "&hasta=" + hoy);
+        model.addAttribute("urlUltimoMes", "/reportes/rentabilidad?desde="
+                + hoy.withDayOfMonth(1).minusMonths(1) + "&hasta=" + hoy.withDayOfMonth(1).minusDays(1));
+        model.addAttribute("urlEsteAnio",  "/reportes/rentabilidad?desde=" + hoy.withDayOfYear(1) + "&hasta=" + hoy);
+        model.addAttribute("urlUltimos3",  "/reportes/rentabilidad?desde=" + hoy.minusMonths(3) + "&hasta=" + hoy);
+
+        model.addAttribute("filas",              filas);
+        model.addAttribute("desde",              desde);
+        model.addAttribute("hasta",              hasta);
+        model.addAttribute("estilo",             estilo);
+        model.addAttribute("ordenar",            ordenar);
+        model.addAttribute("estilosDisponibles", estilosDisponibles);
+        model.addAttribute("totalCosto",         totalCosto);
+        model.addAttribute("totalIngresos",      totalIngresos);
+        model.addAttribute("totalMargen",        totalMargen);
+        model.addAttribute("totalMargenPct",     totalMargenPct);
+        model.addAttribute("lotesConDatos",      lotesConDatos);
+        model.addAttribute("lotesRentables",     lotesRentables);
+        model.addAttribute("lotesEnRojo",        lotesEnRojo);
+        model.addAttribute("chartMargen",        chartMargen);
+        return "reportes/rentabilidad";
     }
 
     @GetMapping("/ventas/excel")

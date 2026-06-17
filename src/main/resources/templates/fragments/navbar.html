@@ -231,7 +231,7 @@
                 <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.startsWith('/stock'))} ? 'active' : ''">
+                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.startsWith('/stock') or currentUri.contains('/reportes/rentabilidad'))} ? 'active' : ''">
                         <i class="bi bi-receipt"></i> Comercial
                     </a>
                     <ul class="dropdown-menu">
@@ -257,6 +257,12 @@
                             <a class="dropdown-item" th:href="@{/reportes/ventas}"
                                th:classappend="${currentUri != null and currentUri.contains('/reportes/ventas')} ? 'active' : ''">
                                 <i class="bi bi-graph-up-arrow me-2"></i>Reporte Ventas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/reportes/rentabilidad}"
+                               th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? 'active' : ''">
+                                <i class="bi bi-currency-dollar me-2"></i>Rentabilidad
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>

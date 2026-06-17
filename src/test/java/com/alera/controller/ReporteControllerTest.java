@@ -2,7 +2,9 @@ package com.alera.controller;
 
 import com.alera.config.*;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.repository.LoteItemFacturaRepository;
 import com.alera.repository.TenantRepository;
+import com.alera.repository.VentaItemRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.JwtService;
 import com.alera.service.PdfExportService;
@@ -42,6 +44,8 @@ class ReporteControllerTest {
     @MockBean LoginAttemptService        loginAttemptService;
     @MockBean JwtService                 jwtService;
     @MockBean LoteCervezaRepository      loteRepo;
+    @MockBean LoteItemFacturaRepository  loteItemFacturaRepo;
+    @MockBean VentaItemRepository        ventaItemRepo;
     @MockBean ExcelExportService         excelService;
     @MockBean PdfExportService           pdfService;
     @MockBean VentaService               ventaService;
@@ -50,7 +54,10 @@ class ReporteControllerTest {
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(loteRepo.findByPeriodo(any(), any())).thenReturn(List.of());
+        when(loteRepo.findAllCompletados(any())).thenReturn(List.of());
         when(loteRepo.findResumenPorEstilo(any(), any(), any())).thenReturn(List.of());
+        when(loteItemFacturaRepo.sumCostosPorLote()).thenReturn(List.of());
+        when(ventaItemRepo.sumIngresosDespachadosPorLote()).thenReturn(List.of());
         when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x50, 0x4B});
         when(pdfService.generarPdfReporteProduccion(any(), any(), any(), any(), any()))

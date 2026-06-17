@@ -67,6 +67,15 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
            "                       com.alera.model.enums.EstadoVenta.PENDIENTE)")
     BigDecimal sumCantidadReservadaByLote(@Param("loteId") Long loteId);
 
+    // Ingresos despachados agrupados por lote (para reporte de rentabilidad)
+    @Query("SELECT i.lote.id, " +
+           "COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0) " +
+           "FROM VentaItem i " +
+           "WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO " +
+           "AND i.lote IS NOT NULL " +
+           "GROUP BY i.lote.id")
+    List<Object[]> sumIngresosDespachadosPorLote();
+
     // Suma de ingresos de ventas despachadas (para stat-card)
     @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +
            "FROM VentaItem i WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO")
