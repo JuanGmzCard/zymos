@@ -77,7 +77,7 @@
                 <span th:text="${volverTexto != null} ? ${volverTexto} : 'Ir al Dashboard'">Volver</span>
             </a>
             <a th:href="@{/}" class="btn btn-outline-secondary px-4">
-                <i class="bi bi-house me-1"></i>Inicio
+                <i class="bi bi-house me-1"></i><span th:text="#{error.home}">Inicio</span>
             </a>
         </div>
     </div>

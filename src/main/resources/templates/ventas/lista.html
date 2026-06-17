@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Ventas'">Alera - Ventas</title>
+    <title th:text="${branding.name} + ' - ' + #{ventas.title}">Alera - Ventas</title>
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -202,16 +202,16 @@
     <!-- Cabecera de página -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-bag-check me-2"></i>Ventas y Despacho</h1>
-            <p class="subtitle mb-0">Registro de salidas y despachos por lote</p>
+            <h1><i class="bi bi-bag-check me-2"></i><span th:text="#{ventas.title}">Ventas</span></h1>
+            <p class="subtitle mb-0" th:text="#{ventas.subtitle}">Registro de salidas y despachos por lote</p>
         </div>
         <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
             <a th:href="@{/ventas/export(estado=${estadoFiltro},desde=${desde},hasta=${hasta})}"
-               class="btn btn-outline-secondary btn-sm" title="Exportar Excel">
-                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+               class="btn btn-outline-secondary btn-sm" th:title="#{action.export}" title="Exportar Excel">
+                <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{action.export}">Excel</span>
             </a>
             <a th:href="@{/ventas/nuevo}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Nueva Venta
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{ventas.nueva}">Nueva Venta</span>
             </a>
         </div>
     </div>
@@ -223,11 +223,11 @@
     <!-- Stat-cards -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total Ventas</div>
+            <div class="stat-label" th:text="#{ventas.stats.total}">Total Ventas</div>
             <div class="stat-value" th:text="${statsTotal}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Pendientes</div>
+            <div class="stat-label" th:text="#{ventas.stats.pendientes}">Pendientes</div>
             <div class="stat-value warning" th:text="${statsPendientes}">0</div>
         </div>
         <div class="stat-card-simple">
@@ -247,18 +247,18 @@
         <form th:action="@{/ventas}" method="get" class="row g-2 align-items-end mb-3">
             <input type="hidden" name="estado" th:if="${estadoFiltro != null}" th:value="${estadoFiltro}">
             <div class="col-auto">
-                <label class="form-label form-label-sm mb-0 small text-muted">Desde</label>
+                <label class="form-label form-label-sm mb-0 small text-muted" th:text="#{ventas.filter.desde}">Desde</label>
                 <input type="date" name="desde" class="form-control form-control-sm"
                        th:value="${desde}">
             </div>
             <div class="col-auto">
-                <label class="form-label form-label-sm mb-0 small text-muted">Hasta</label>
+                <label class="form-label form-label-sm mb-0 small text-muted" th:text="#{ventas.filter.hasta}">Hasta</label>
                 <input type="date" name="hasta" class="form-control form-control-sm"
                        th:value="${hasta}">
             </div>
             <div class="col-auto">
                 <button type="submit" class="btn btn-primary btn-sm px-3">
-                    <i class="bi bi-search me-1"></i>Filtrar
+                    <i class="bi bi-search me-1"></i><span th:text="#{action.filter}">Filtrar</span>
                 </button>
             </div>
             <div class="col-auto">
@@ -298,11 +298,11 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">Cliente</th>
+                    <th style="padding-left:1.25rem;" th:text="#{ventas.table.cliente}">Cliente</th>
                     <th>Primer Lote</th>
-                    <th>Fecha</th>
-                    <th class="text-center">Estado</th>
-                    <th class="text-end">Valor Total</th>
+                    <th th:text="#{ventas.table.fecha}">Fecha</th>
+                    <th class="text-center" th:text="#{ventas.table.estado}">Estado</th>
+                    <th class="text-end" th:text="#{ventas.table.total}">Valor Total</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -310,7 +310,7 @@
                 <tr th:if="${#lists.isEmpty(ventas)}">
                     <td colspan="6" class="text-center text-muted py-5">
                         <i class="bi bi-bag-x fs-1 d-block mb-2"></i>
-                        No hay ventas registradas
+                        <span th:text="#{ventas.empty}">No hay ventas registradas</span>
                     </td>
                 </tr>
                 <tr th:each="v : ${ventas}">

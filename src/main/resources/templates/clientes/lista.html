@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Clientes'">Alera - Clientes</title>
+    <title th:text="${branding.name} + ' - ' + #{clientes.title}">Alera - Clientes</title>
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -154,12 +154,12 @@
     <!-- Cabecera de página -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-people me-2"></i>Clientes</h1>
-            <p class="subtitle mb-0">Directorio de clientes registrados</p>
+            <h1><i class="bi bi-people me-2"></i><span th:text="#{clientes.title}">Clientes</span></h1>
+            <p class="subtitle mb-0" th:text="#{clientes.subtitle}">Directorio de clientes registrados</p>
         </div>
         <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
             <a th:href="@{/clientes/nuevo}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Nuevo Cliente
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{clientes.nuevo}">Nuevo Cliente</span>
             </a>
         </div>
     </div>
@@ -173,7 +173,7 @@
     <!-- Stat cards -->
     <div class="d-flex gap-3 flex-wrap mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total Clientes</div>
+            <div class="stat-label" th:text="#{clientes.stats.total}">Total Clientes</div>
             <div class="stat-value" th:text="${totalClientes}">0</div>
         </div>
     </div>
@@ -184,15 +184,18 @@
             <div class="d-flex gap-2 flex-wrap align-items-center">
                 <!-- Tabs activo/inactivo -->
                 <a th:href="@{/clientes(nombre=${nombre})}"
-                   th:classappend="${activo == null} ? 'filter-tab active' : 'filter-tab inactive'">
+                   th:classappend="${activo == null} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{clientes.filter.todos}">
                     Todos
                 </a>
                 <a th:href="@{/clientes(nombre=${nombre},activo=true)}"
-                   th:classappend="${activo != null and activo} ? 'filter-tab active' : 'filter-tab inactive'">
+                   th:classappend="${activo != null and activo} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{clientes.filter.activos}">
                     Activos
                 </a>
                 <a th:href="@{/clientes(nombre=${nombre},activo=false)}"
-                   th:classappend="${activo != null and !activo} ? 'filter-tab active' : 'filter-tab inactive'">
+                   th:classappend="${activo != null and !activo} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{clientes.filter.inactivos}">
                     Inactivos
                 </a>
             </div>
@@ -202,8 +205,8 @@
                     <input type="hidden" name="activo" th:if="${activo != null}" th:value="${activo}">
                     <input type="text" name="nombre" class="form-control form-control-sm"
                            style="width:220px;"
-                           th:value="${nombre}" placeholder="Filtrar por nombre o NIT…">
-                    <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+                           th:value="${nombre}" th:placeholder="#{clientes.filter.buscar}" placeholder="Filtrar por nombre o NIT…">
+                    <button type="submit" class="btn btn-primary btn-sm px-3" th:text="#{action.search}">Buscar</button>
                     <a th:if="${nombre != null or activo != null}"
                        th:href="@{/clientes}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-x"></i> Limpiar
@@ -230,11 +233,11 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">Nombre / Razón Social</th>
-                    <th>NIT</th>
-                    <th>Ciudad</th>
-                    <th>Lista de Precio</th>
-                    <th class="text-center">Estado</th>
+                    <th style="padding-left:1.25rem;" th:text="#{clientes.table.nombre}">Nombre / Razón Social</th>
+                    <th th:text="#{clientes.table.nit}">NIT</th>
+                    <th th:text="#{clientes.table.ciudad}">Ciudad</th>
+                    <th th:text="#{clientes.table.lista}">Lista de Precio</th>
+                    <th class="text-center" th:text="#{clientes.table.estado}">Estado</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -242,7 +245,7 @@
                 <tr th:if="${#lists.isEmpty(clientes)}">
                     <td colspan="6" class="text-center text-muted py-5">
                         <i class="bi bi-people fs-1 d-block mb-2"></i>
-                        No hay clientes registrados
+                        <span th:text="#{clientes.empty}">No hay clientes registrados</span>
                     </td>
                 </tr>
                 <tr th:each="c : ${clientes}">
@@ -296,10 +299,12 @@
         <!-- Paginación -->
         <div th:if="${totalPaginas > 1}" class="pagination-simple">
             <a th:href="@{/clientes(page=${paginaActual - 1},nombre=${nombre},activo=${activo})}"
-               th:classappend="${paginaActual == 0} ? 'disabled' : ''">← Anterior</a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''"
+               th:text="#{clientes.pagination.anterior}">← Anterior</a>
+            <span><span th:text="#{clientes.pagination.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/clientes(page=${paginaActual + 1},nombre=${nombre},activo=${activo})}"
-               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">Siguiente →</a>
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
+               th:text="#{clientes.pagination.siguiente}">Siguiente →</a>
         </div>
     </div>
 

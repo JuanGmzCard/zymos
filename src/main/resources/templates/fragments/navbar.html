@@ -134,7 +134,7 @@
                 <li class="nav-item">
                     <a class="nav-link" th:href="@{/dashboard}"
                        th:classappend="${currentUri != null and currentUri.contains('/dashboard')} ? 'active' : ''">
-                        <i class="bi bi-speedometer2"></i> Dashboard
+                        <i class="bi bi-speedometer2"></i> <span th:text="#{nav.dashboard}">Dashboard</span>
                     </a>
                 </li>
 
@@ -142,45 +142,45 @@
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri == '/' or currentUri.contains('/kanban') or currentUri.contains('/planificacion') or currentUri.contains('/comparativa') or currentUri.contains('/calendario') or currentUri.contains('/reportes'))} ? 'active' : ''">
-                        <i class="bi bi-clipboard-data"></i> Producción
+                        <i class="bi bi-clipboard-data"></i> <span th:text="#{nav.produccion}">Producción</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" th:href="@{/}"
                                th:classappend="${currentUri != null and currentUri == '/'} ? 'active' : ''">
-                                <i class="bi bi-clipboard-data me-2"></i>Trazabilidad
+                                <i class="bi bi-clipboard-data me-2"></i><span th:text="#{nav.produccion.trazabilidad}">Trazabilidad</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/kanban}"
                                th:classappend="${currentUri != null and currentUri.contains('/kanban')} ? 'active' : ''">
-                                <i class="bi bi-kanban me-2"></i>Kanban
+                                <i class="bi bi-kanban me-2"></i><span th:text="#{nav.produccion.kanban}">Kanban</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/planificacion}"
                                th:classappend="${currentUri != null and currentUri.contains('/planificacion')} ? 'active' : ''">
-                                <i class="bi bi-calendar-week me-2"></i>Planificación
+                                <i class="bi bi-calendar-week me-2"></i><span th:text="#{nav.produccion.planificacion}">Planificación</span>
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" th:href="@{/comparativa}"
                                th:classappend="${currentUri != null and currentUri.contains('/comparativa')} ? 'active' : ''">
-                                <i class="bi bi-bar-chart-steps me-2"></i>Comparativa
+                                <i class="bi bi-bar-chart-steps me-2"></i><span th:text="#{nav.produccion.comparativa}">Comparativa</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/calendario}"
                                th:classappend="${currentUri != null and currentUri.contains('/calendario')} ? 'active' : ''">
-                                <i class="bi bi-calendar3 me-2"></i>Calendario
+                                <i class="bi bi-calendar3 me-2"></i><span th:text="#{nav.produccion.calendario}">Calendario</span>
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" th:href="@{/reportes/produccion}"
                                th:classappend="${currentUri != null and currentUri.contains('/reportes')} ? 'active' : ''">
-                                <i class="bi bi-bar-chart-line me-2"></i>Reportes
+                                <i class="bi bi-bar-chart-line me-2"></i><span th:text="#{nav.produccion.reportes}">Reportes</span>
                             </a>
                         </li>
                     </ul>
@@ -190,31 +190,31 @@
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas') or currentUri.contains('/barriles') or currentUri.startsWith('/stock'))} ? 'active' : ''">
-                        <i class="bi bi-box-seam"></i> Almacén
+                        <i class="bi bi-box-seam"></i> <span th:text="#{nav.almacen}">Almacén</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" th:href="@{/inventario}"
                                th:classappend="${currentUri != null and currentUri.contains('/inventario')} ? 'active' : ''">
-                                <i class="bi bi-box-seam me-2"></i>Inventario
+                                <i class="bi bi-box-seam me-2"></i><span th:text="#{nav.almacen.inventario}">Inventario</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/recetas}"
                                th:classappend="${currentUri != null and currentUri.contains('/recetas')} ? 'active' : ''">
-                                <i class="bi bi-journal-bookmark me-2"></i>Recetas
+                                <i class="bi bi-journal-bookmark me-2"></i><span th:text="#{nav.almacen.recetas}">Recetas</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/barriles}"
                                th:classappend="${currentUri != null and currentUri.contains('/barriles')} ? 'active' : ''">
-                                <i class="bi bi-bucket me-2"></i>Barriles / Kegs
+                                <i class="bi bi-bucket me-2"></i><span th:text="#{nav.almacen.barriles}">Barriles / Kegs</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/stock}"
                                th:classappend="${currentUri != null and currentUri.startsWith('/stock')} ? 'active' : ''">
-                                <i class="bi bi-archive me-2"></i>Stock P. Terminado
+                                <i class="bi bi-archive me-2"></i><span th:text="#{nav.almacen.stock}">Stock P. Terminado</span>
                             </a>
                         </li>
                     </ul>
@@ -224,7 +224,7 @@
                 <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link" th:href="@{/equipos}"
                        th:classappend="${currentUri != null and currentUri.contains('/equipos')} ? 'active' : ''">
-                        <i class="bi bi-tools"></i> Equipos
+                        <i class="bi bi-tools"></i> <span th:text="#{nav.equipos}">Equipos</span>
                     </a>
                 </li>
 
@@ -232,56 +232,56 @@
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.startsWith('/stock') or currentUri.contains('/reportes/rentabilidad'))} ? 'active' : ''">
-                        <i class="bi bi-receipt"></i> Comercial
+                        <i class="bi bi-receipt"></i> <span th:text="#{nav.comercial}">Comercial</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" th:href="@{/ventas}"
                                th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? 'active' : ''">
-                                <i class="bi bi-bag-check me-2"></i>Ventas
+                                <i class="bi bi-bag-check me-2"></i><span th:text="#{nav.comercial.ventas}">Ventas</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/stock}"
                                th:classappend="${currentUri != null and currentUri.startsWith('/stock')} ? 'active' : ''">
-                                <i class="bi bi-archive me-2"></i>Stock P. Terminado
+                                <i class="bi bi-archive me-2"></i><span th:text="#{nav.almacen.stock}">Stock P. Terminado</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/clientes}"
                                th:classappend="${currentUri != null and currentUri.contains('/clientes')} ? 'active' : ''">
-                                <i class="bi bi-people me-2"></i>Clientes
+                                <i class="bi bi-people me-2"></i><span th:text="#{nav.comercial.clientes}">Clientes</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/reportes/ventas}"
                                th:classappend="${currentUri != null and currentUri.contains('/reportes/ventas')} ? 'active' : ''">
-                                <i class="bi bi-graph-up-arrow me-2"></i>Reporte Ventas
+                                <i class="bi bi-graph-up-arrow me-2"></i><span th:text="#{nav.comercial.reporte.ventas}">Reporte Ventas</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/reportes/rentabilidad}"
                                th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? 'active' : ''">
-                                <i class="bi bi-currency-dollar me-2"></i>Rentabilidad
+                                <i class="bi bi-currency-dollar me-2"></i><span th:text="#{nav.comercial.rentabilidad}">Rentabilidad</span>
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" th:href="@{/ordenes-compra}"
                                th:classappend="${currentUri != null and currentUri.contains('/ordenes-compra')} ? 'active' : ''">
-                                <i class="bi bi-cart-check me-2"></i>Órdenes de Compra
+                                <i class="bi bi-cart-check me-2"></i><span th:text="#{nav.comercial.ordenes}">Órdenes de Compra</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/facturas}"
                                th:classappend="${currentUri != null and currentUri.contains('/facturas')} ? 'active' : ''">
-                                <i class="bi bi-receipt me-2"></i>Facturas
+                                <i class="bi bi-receipt me-2"></i><span th:text="#{nav.comercial.facturas}">Facturas</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/proveedores}"
                                th:classappend="${currentUri != null and currentUri.contains('/proveedores')} ? 'active' : ''">
-                                <i class="bi bi-building me-2"></i>Proveedores
+                                <i class="bi bi-building me-2"></i><span th:text="#{nav.comercial.proveedores}">Proveedores</span>
                             </a>
                         </li>
                     </ul>
@@ -291,51 +291,51 @@
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/tipos-cerveza') or currentUri.contains('/usuarios') or currentUri.contains('/admin'))} ? 'active' : ''">
-                        <i class="bi bi-shield-lock"></i> Admin
+                        <i class="bi bi-shield-lock"></i> <span th:text="#{nav.admin}">Admin</span>
                     </a>
                     <ul class="dropdown-menu">
                         <!-- Gestión -->
                         <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;">Gestión</small>
+                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.gestion}">Gestión</small>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/usuarios}"
                                th:classappend="${currentUri != null and currentUri.contains('/usuarios')} ? 'active' : ''">
-                                <i class="bi bi-people me-2"></i>Usuarios
+                                <i class="bi bi-people me-2"></i><span th:text="#{nav.admin.usuarios}">Usuarios</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/tipos-cerveza}"
                                th:classappend="${currentUri != null and currentUri.contains('/tipos-cerveza')} ? 'active' : ''">
-                                <i class="bi bi-tag me-2"></i>Tipos de Cerveza
+                                <i class="bi bi-tag me-2"></i><span th:text="#{nav.admin.tipos.cerveza}">Tipos de Cerveza</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/admin/categorias}"
                                th:classappend="${currentUri != null and currentUri.contains('/admin/categorias')} ? 'active' : ''">
-                                <i class="bi bi-collection me-2"></i>Categorías
+                                <i class="bi bi-collection me-2"></i><span th:text="#{nav.admin.categorias}">Categorías</span>
                             </a>
                         </li>
                         <!-- Sistema -->
                         <li><hr class="dropdown-divider mb-0"></li>
                         <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;">Sistema</small>
+                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.sistema}">Sistema</small>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/admin/logs}"
                                th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? 'active' : ''">
-                                <i class="bi bi-journal-text me-2"></i>Log de Accesos
+                                <i class="bi bi-journal-text me-2"></i><span th:text="#{nav.admin.logs}">Log de Accesos</span>
                             </a>
                         </li>
                         <!-- Plataforma (solo SUPERADMIN) -->
                         <li sec:authorize="hasRole('SUPERADMIN')"><hr class="dropdown-divider mb-0"></li>
                         <li sec:authorize="hasRole('SUPERADMIN')" class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;">Plataforma</small>
+                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.plataforma}">Plataforma</small>
                         </li>
                         <li sec:authorize="hasRole('SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/admin/tenants}"
                                th:classappend="${currentUri != null and currentUri.contains('/admin/tenants')} ? 'active' : ''">
-                                <i class="bi bi-building-gear me-2"></i>Tenants
+                                <i class="bi bi-building-gear me-2"></i><span th:text="#{nav.admin.tenants}">Tenants</span>
                             </a>
                         </li>
                     </ul>
@@ -345,7 +345,8 @@
             <form class="d-flex flex-grow-1 mx-3 my-2 my-lg-0 position-relative" th:action="@{/buscar}" method="get" role="search">
                 <div class="input-group input-group-sm w-100">
                     <input type="search" name="q" id="navSearchInput" class="form-control navbar-search"
-                           placeholder="Buscar…" aria-label="Buscar" autocomplete="off"
+                           th:placeholder="#{nav.search.placeholder}" placeholder="Buscar…"
+                           th:attr="aria-label=#{nav.search.aria}" aria-label="Buscar" autocomplete="off"
                            style="min-width:180px;max-width:280px;background:rgba(255,255,255,0.1);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
                     <button type="submit" class="btn btn-sm" style="background:color-mix(in srgb,var(--dorado) 20%,transparent);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
                         <i class="bi bi-search"></i>
@@ -358,7 +359,7 @@
                 <!-- Botón modo oscuro -->
                 <li class="nav-item">
                     <button class="btn border-0 nav-link px-2" id="darkToggleBtn"
-                            title="Cambiar modo oscuro/claro"
+                            th:title="#{nav.dark.toggle}" title="Cambiar modo oscuro/claro"
                             style="background:transparent;">
                         <i class="bi bi-moon-fill" id="darkModeIcon" style="font-size:1rem;"></i>
                     </button>
@@ -368,41 +369,41 @@
                     <a class="nav-link px-2 py-1 d-flex align-items-center gap-1" href="#"
                        data-bs-toggle="dropdown" aria-expanded="false"
                        style="border:1px solid color-mix(in srgb,var(--dorado) 55%,transparent);border-radius:6px;color:var(--dorado);font-size:0.82rem;font-weight:600;line-height:1.4;">
-                        <i class="bi bi-plus-lg" style="font-size:0.85rem;"></i> Nuevo
+                        <i class="bi bi-plus-lg" style="font-size:0.85rem;"></i> <span th:text="#{nav.nuevo}">Nuevo</span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:220px;">
                         <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Crear nuevo</small>
+                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.nuevo.crear}">Crear nuevo</small>
                         </li>
                         <li><hr class="dropdown-divider mt-1 mb-0"></li>
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION')">
                             <a class="dropdown-item py-2" th:href="@{/nuevo}">
-                                <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i>Lote de cerveza
+                                <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.lote}">Lote de cerveza</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/recetas/nueva}">
-                                <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i>Receta
+                                <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.receta}">Receta</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/inventario/nuevo}">
-                                <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i>Insumo
+                                <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.insumo}">Insumo</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/equipos/nuevo}">
-                                <i class="bi bi-tools me-2" style="color:var(--dorado);"></i>Equipo
+                                <i class="bi bi-tools me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.equipo}">Equipo</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
-                                <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i>Factura
+                                <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.factura}">Factura</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                             <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
-                                <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i>Venta
+                                <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.venta}">Venta</span>
                             </a>
                         </li>
                     </ul>
@@ -424,9 +425,9 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-lg-end p-0" style="min-width:300px;max-width:340px;">
                         <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
-                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;">Notificaciones</small>
+                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.notificaciones}">Notificaciones</small>
                             <button id="btnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
-                                    style="font-size:.72rem;text-decoration:none;">
+                                    style="font-size:.72rem;text-decoration:none;" th:text="#{nav.notif.marcar.todas}">
                                 Marcar todas leídas
                             </button>
                         </li>
@@ -435,7 +436,7 @@
                         <li><hr class="dropdown-divider my-0"></li>
                         <li>
                             <a class="dropdown-item text-center py-2" th:href="@{/notificaciones}"
-                               style="font-size:.82rem;color:var(--dorado);">
+                               style="font-size:.82rem;color:var(--dorado);" th:text="#{nav.notif.ver.todas}">
                                 Ver todas las notificaciones →
                             </a>
                         </li>
@@ -463,12 +464,12 @@
                         <li>
                             <a class="dropdown-item" th:href="@{/mi-plan}"
                                th:classappend="${currentUri != null and currentUri.startsWith('/mi-plan')} ? 'active' : ''">
-                                <i class="bi bi-shield-check me-2"></i>Mi Plan
+                                <i class="bi bi-shield-check me-2"></i><span th:text="#{nav.user.mi.plan}">Mi Plan</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/perfil/password}">
-                                <i class="bi bi-key me-2"></i>Cambiar contraseña
+                                <i class="bi bi-key me-2"></i><span th:text="#{nav.user.password}">Cambiar contraseña</span>
                             </a>
                         </li>
                         <li>
@@ -487,7 +488,7 @@
                         <li>
                             <form th:action="@{/logout}" method="post" class="d-inline">
                                 <button type="submit" class="dropdown-item">
-                                    <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+                                    <i class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.user.logout}">Cerrar Sesión</span>
                                 </button>
                             </form>
                         </li>
