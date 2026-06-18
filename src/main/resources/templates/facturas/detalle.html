@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Detalle Factura'">Alera - Detalle Factura</title>
+    <title th:text="${branding.name} + ' - ' + #{fact.det.title}">Alera - Detalle Factura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -21,13 +21,13 @@
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/facturas/duplicar/{id}(id=${factura.id})}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-copy me-1"></i>Duplicar
+                <i class="bi bi-copy me-1"></i><span th:text="#{fact.det.btn.duplicar}">Duplicar</span>
             </a>
             <a th:href="@{/facturas/editar/{id}(id=${factura.id})}" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/facturas}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{fact.det.btn.volver}">Volver</span>
             </a>
         </div>
     </div>
@@ -44,29 +44,29 @@
 
             <!-- Datos generales -->
             <div class="content-card mb-3">
-                <div class="content-card-title">Datos Generales</div>
+                <div class="content-card-title" th:text="#{fact.det.seccion.datos}">Datos Generales</div>
                 <div class="row g-3">
                     <div class="col-sm-4">
-                        <div class="detail-label">N° Factura</div>
+                        <div class="detail-label" th:text="#{fact.det.label.num}">N° Factura</div>
                         <div class="detail-value highlight"
-                             th:text="${factura.numeroFactura != null} ? ${factura.numeroFactura} : 'Sin número'">-</div>
+                             th:text="${factura.numeroFactura != null} ? ${factura.numeroFactura} : #{fact.det.sin.numero}">-</div>
                     </div>
                     <div class="col-sm-4">
-                        <div class="detail-label">Proveedor</div>
+                        <div class="detail-label" th:text="#{fact.det.label.proveedor}">Proveedor</div>
                         <div class="detail-value" th:text="${factura.proveedor}">-</div>
                     </div>
                     <div class="col-sm-4">
-                        <div class="detail-label">Fecha</div>
+                        <div class="detail-label" th:text="#{fact.det.label.fecha}">Fecha</div>
                         <div class="detail-value"
                              th:text="${factura.fechaFactura != null} ? ${#temporals.format(factura.fechaFactura,'dd/MM/yyyy')} : '-'">-</div>
                     </div>
                     <div th:if="${factura.descripcion != null}" class="col-12">
-                        <div class="detail-label">Descripción</div>
+                        <div class="detail-label" th:text="#{fact.det.label.desc}">Descripción</div>
                         <div class="detail-value small" th:text="${factura.descripcion}">-</div>
                     </div>
                     <div th:if="${factura.ivaIncluido}" class="col-12">
                         <span class="badge bg-warning text-dark">
-                            <i class="bi bi-percent me-1"></i>Precio unitario con IVA incluido
+                            <i class="bi bi-percent me-1"></i><span th:text="#{fact.det.iva.incl}">Precio unitario con IVA incluido</span>
                         </span>
                     </div>
                 </div>
@@ -75,23 +75,23 @@
             <!-- Ítems de la Factura -->
             <div class="table-card mb-3">
                 <div class="table-count">
-                    <span>Ítems de la Factura</span>
+                    <span th:text="#{fact.det.items.titulo}">Ítems de la Factura</span>
                     <span class="badge bg-secondary" th:text="${#lists.size(factura.items)} + ' ítem(s)'">0</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead>
                         <tr>
-                            <th style="padding-left:1.25rem;">Tipo</th>
-                            <th>Nombre</th>
-                            <th>Cantidad</th>
-                            <th th:text="${factura.ivaIncluido} ? 'V. Unitario (c/IVA)' : 'V. Unitario'">V. Unitario</th>
-                            <th th:if="${factura.ivaIncluido}">V. sin IVA</th>
-                            <th>Desc.</th>
-                            <th>IVA %</th>
-                            <th>Valor IVA</th>
-                            <th>Imp. Consumo</th>
-                            <th>Total Línea</th>
+                            <th style="padding-left:1.25rem;" th:text="#{fact.det.col.tipo}">Tipo</th>
+                            <th th:text="#{fact.det.col.nombre}">Nombre</th>
+                            <th th:text="#{fact.det.col.cantidad}">Cantidad</th>
+                            <th th:text="${factura.ivaIncluido} ? #{fact.det.col.pu.iva} : #{fact.det.col.pu}">V. Unitario</th>
+                            <th th:if="${factura.ivaIncluido}" th:text="#{fact.det.col.sin.iva}">V. sin IVA</th>
+                            <th th:text="#{fact.det.col.desc}">Desc.</th>
+                            <th th:text="#{fact.det.col.iva}">IVA %</th>
+                            <th th:text="#{fact.det.col.val.iva}">Valor IVA</th>
+                            <th th:text="#{fact.det.col.imp.cons}">Imp. Consumo</th>
+                            <th th:text="#{fact.det.col.total}">Total Línea</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -123,15 +123,15 @@
 
             <!-- Historial de estado -->
             <div class="table-card mb-3" th:if="${!#lists.isEmpty(historial)}">
-                <div class="table-count">Historial de Estado</div>
+                <div class="table-count" th:text="#{fact.det.historial}">Historial de Estado</div>
                 <div class="table-responsive">
                     <table class="table mb-0">
                         <thead>
                         <tr>
-                            <th style="padding-left:1.25rem;">Fecha</th>
-                            <th>Usuario</th>
-                            <th>Desde</th>
-                            <th>Hacia</th>
+                            <th style="padding-left:1.25rem;" th:text="#{fact.det.hist.fecha}">Fecha</th>
+                            <th th:text="#{fact.det.hist.usuario}">Usuario</th>
+                            <th th:text="#{fact.det.hist.desde}">Desde</th>
+                            <th th:text="#{fact.det.hist.hacia}">Hacia</th>
                         </tr>
                         </thead>
                         <tbody>
@@ -140,7 +140,8 @@
                                 th:text="${#temporals.format(h.fecha,'dd/MM/yyyy HH:mm')}">-</td>
                             <td th:text="${h.usuario}">-</td>
                             <td>
-                                <span th:if="${h.estadoAnterior == null}" class="text-muted fst-italic small">Creación</span>
+                                <span th:if="${h.estadoAnterior == null}" class="text-muted fst-italic small"
+                                      th:text="#{fact.det.hist.creacion}">Creación</span>
                                 <span th:unless="${h.estadoAnterior == null}"
                                       class="badge" th:classappend="${h.estadoAnterior.badgeClass}"
                                       th:text="${h.estadoAnterior.displayName}">-</span>
@@ -162,7 +163,7 @@
 
             <!-- Estado actual -->
             <div class="content-card mb-3">
-                <div class="content-card-title">Estado</div>
+                <div class="content-card-title" th:text="#{fact.det.estado}">Estado</div>
                 <div class="text-center mb-3">
                     <span class="badge fs-6 px-4 py-2"
                           th:classappend="${factura.estado.badgeClass}"
@@ -184,39 +185,39 @@
 
             <!-- Resumen financiero -->
             <div class="content-card mb-3">
-                <div class="content-card-title">Resumen Financiero</div>
+                <div class="content-card-title" th:text="#{fact.det.resumen}">Resumen Financiero</div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted small"
-                          th:text="${factura.ivaIncluido} ? 'Subtotal (base sin IVA)' : 'Subtotal'">Subtotal</span>
+                          th:text="${factura.ivaIncluido} ? #{fact.det.subtotal.sin.iva} : #{fact.det.subtotal}">Subtotal</span>
                     <span class="fw-semibold"
                           th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span class="text-muted small">IVA (por ítem)</span>
+                    <span class="text-muted small" th:text="#{fact.det.iva.x.item}">IVA (por ítem)</span>
                     <span th:text="'$' + ${#numbers.formatDecimal(factura.valorIva,1,'COMMA',2,'POINT')}">-</span>
                 </div>
                 <th:block th:with="envio=${factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO},
                                    impConsumoTotal=${factura.valorTotal.subtract(factura.subtotal).subtract(factura.valorIva).subtract(factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO)}">
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${impConsumoTotal.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
-                        <span class="text-muted small">Imp. Consumo</span>
+                        <span class="text-muted small" th:text="#{fact.det.imp.consumo}">Imp. Consumo</span>
                         <span th:text="'$' + ${#numbers.formatDecimal(impConsumoTotal,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
-                        <span class="text-muted small fw-semibold">Total sin envío</span>
+                        <span class="text-muted small fw-semibold" th:text="#{fact.det.total.sin.envio}">Total sin envío</span>
                         <span class="fw-semibold"
                               th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal.subtract(envio),1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
-                        <span class="text-muted small">Envío</span>
+                        <span class="text-muted small" th:text="#{fact.det.envio}">Envío</span>
                         <span th:text="'$' + ${#numbers.formatDecimal(envio,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between">
                         <span class="fw-bold"
-                              th:text="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? 'TOTAL (con envío)' : 'TOTAL'">TOTAL</span>
+                              th:text="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? #{fact.det.total.con.envio} : #{fact.det.total}">TOTAL</span>
                         <span class="fw-bold"
                               style="color:#1e293b;"
                               th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</span>

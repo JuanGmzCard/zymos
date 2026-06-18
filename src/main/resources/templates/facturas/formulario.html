@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title th:text="${branding.name} + ' - Factura'">Alera - Factura</title>
+    <title th:text="${branding.name} + ' - ' + (${facturaId != null} ? #{fact.form.title.editar} : #{fact.form.title.nueva})">Alera - Factura</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -37,8 +37,8 @@
 
 <div class="container-fluid px-4 pt-4">
     <div class="page-header d-flex justify-content-between align-items-start">
-        <h1 th:text="${facturaId != null} ? 'Editar Factura' : 'Nueva Factura'">Factura</h1>
-        <p class="text-muted mb-0">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
+        <h1 th:text="${facturaId != null} ? #{fact.form.title.editar} : #{fact.form.title.nueva}">Factura</h1>
+        <p class="text-muted mb-0" th:text="#{fact.form.subtitle}">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
     </div>
 </div>
 
@@ -48,17 +48,17 @@
 
         <!-- DATOS GENERALES -->
         <div class="content-card mb-4">
-            <div class="content-card-title"><i class="bi bi-receipt me-2"></i>Datos de la Factura</div>
+            <div class="content-card-title"><i class="bi bi-receipt me-2"></i><span th:text="#{fact.form.seccion.datos}">Datos de la Factura</span></div>
             <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">N° Factura</label>
+                    <label class="form-label" th:text="#{fact.form.label.num}">N° Factura</label>
                     <input type="text" th:field="*{numeroFactura}" class="form-control" placeholder="FAC-001">
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Proveedor *</label>
+                    <label class="form-label" th:text="#{fact.form.label.proveedor}">Proveedor *</label>
                     <div class="input-group" th:if="${!#lists.isEmpty(proveedoresActivos)}">
                         <select id="proveedorSelect" class="form-select" style="max-width:160px;">
-                            <option value="">Existente…</option>
+                            <option value="" th:text="#{fact.form.sel.existente}">Existente…</option>
                             <option th:each="prov : ${proveedoresActivos}"
                                     th:value="${prov.id}"
                                     th:attr="data-nombre=${prov.nombre}"
@@ -66,22 +66,22 @@
                                     th:text="${prov.nombre}">—</option>
                         </select>
                         <input type="hidden" th:field="*{proveedorId}" id="proveedorIdHidden">
-                        <input type="text" th:field="*{proveedor}" class="form-control" required placeholder="Nombre del proveedor">
+                        <input type="text" th:field="*{proveedor}" class="form-control" required th:placeholder="#{fact.form.ph.proveedor}">
                     </div>
                     <input th:unless="${!#lists.isEmpty(proveedoresActivos)}"
-                           type="text" th:field="*{proveedor}" class="form-control" required placeholder="Nombre del proveedor">
+                           type="text" th:field="*{proveedor}" class="form-control" required th:placeholder="#{fact.form.ph.proveedor}">
                     <div th:if="${#fields.hasErrors('proveedor')}" class="text-danger small" th:errors="*{proveedor}"></div>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label">Fecha</label>
+                    <label class="form-label" th:text="#{fact.form.label.fecha}">Fecha</label>
                     <input type="date" th:field="*{fechaFactura}" class="form-control">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">Costo Envío</label>
+                    <label class="form-label" th:text="#{fact.form.label.envio}">Costo Envío</label>
                     <input type="number" step="0.01" th:field="*{costoEnvio}" class="form-control" placeholder="0.00">
                 </div>
                 <div class="col-md-2" th:if="${facturaId != null}">
-                    <label class="form-label">Estado</label>
+                    <label class="form-label" th:text="#{fact.form.label.estado}">Estado</label>
                     <select th:field="*{estado}" class="form-select">
                         <option th:each="est : ${estados}"
                                 th:value="${est}"
@@ -89,16 +89,16 @@
                     </select>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label">Descripción</label>
-                    <input type="text" th:field="*{descripcion}" class="form-control" placeholder="Descripción opcional">
+                    <label class="form-label" th:text="#{fact.form.label.desc}">Descripción</label>
+                    <input type="text" th:field="*{descripcion}" class="form-control" th:placeholder="#{fact.form.ph.desc}">
                 </div>
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" role="switch"
                                id="ivaIncluido" th:field="*{ivaIncluido}">
                         <label class="form-check-label" for="ivaIncluido">
-                            El precio unitario <strong>ya incluye IVA</strong>
-                            <small class="text-muted ms-1">(precio bruto — el IVA está incluido en el valor ingresado)</small>
+                            <span th:text="#{fact.form.iva.check}">El precio unitario ya incluye IVA</span>
+                            <small class="text-muted ms-1" th:text="#{fact.form.iva.hint}">(precio bruto — el IVA está incluido en el valor ingresado)</small>
                         </label>
                     </div>
                 </div>
@@ -107,20 +107,20 @@
 
         <!-- ITEMS -->
         <div class="form-section">
-            <div class="form-section-title"><i class="bi bi-list-ul me-2"></i>Items</div>
+            <div class="form-section-title"><i class="bi bi-list-ul me-2"></i><span th:text="#{fact.form.seccion.items}">Items</span></div>
 
             <!-- Cabecera de columnas -->
             <div class="row g-2 mb-1 d-none d-md-flex">
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">TIPO ITEM</span></div>
-                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">CATEGORÍA</span></div>
-                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;">NOMBRE</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">CANTIDAD</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">UNIDAD</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" id="colUnitarioHeader">V. UNITARIO</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">DESC %</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IVA %</span></div>
-                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;">IMP. CONSUMO</span></div>
-                <div class="col-md-1 text-end"><span class="text-muted" style="font-size:0.7rem;">TOTAL</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.tipo}">TIPO ITEM</span></div>
+                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.cat}">CATEGORÍA</span></div>
+                <div class="col-md-2"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.nombre}">NOMBRE</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.cantidad}">CANTIDAD</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.unidad}">UNIDAD</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" id="colUnitarioHeader" th:text="#{fact.form.col.unitario}">V. UNITARIO</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.desc.pct}">DESC %</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.iva}">IVA %</span></div>
+                <div class="col-md-1"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.imp}">IMP. CONSUMO</span></div>
+                <div class="col-md-1 text-end"><span class="text-muted" style="font-size:0.7rem;" th:text="#{fact.form.col.total}">TOTAL</span></div>
             </div>
 
             <div id="items-container">
@@ -131,7 +131,7 @@
                         <div class="col-md-1">
                             <select th:name="'items[' + ${itemStat.index} + '].tipoItem'"
                                     class="form-select form-select-sm tipo-select">
-                                <option value="">-- Tipo --</option>
+                                <option value="" th:text="#{fact.form.sel.tipo}">-- Tipo --</option>
                                 <option th:each="ti : ${tiposItem}"
                                         th:value="${ti}"
                                         th:selected="${itemF.tipoItem == ti}"
@@ -147,7 +147,7 @@
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'INSUMO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoInsumo'"
                                     class="form-select form-select-sm categoria-select">
-                                <option value="">-- Categoría --</option>
+                                <option value="" th:text="#{fact.form.sel.cat}">-- Categoría --</option>
                                 <option th:each="tins : ${tiposInsumo}"
                                         th:value="${tins}"
                                         th:selected="${itemF.tipoInsumo == tins}"
@@ -156,7 +156,7 @@
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'EQUIPO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoEquipo'"
                                     class="form-select form-select-sm categoria-select">
-                                <option value="">-- Categoría --</option>
+                                <option value="" th:text="#{fact.form.sel.cat}">-- Categoría --</option>
                                 <option th:each="teq : ${tiposEquipo}"
                                         th:value="${teq}"
                                         th:selected="${itemF.tipoEquipo == teq}"
@@ -171,7 +171,7 @@
                                        th:name="'items[' + ${itemStat.index} + '].nombre'"
                                        th:value="${itemF.nombre}"
                                        class="form-control form-control-sm nombre-item"
-                                       placeholder="Nombre"
+                                       th:placeholder="#{fact.form.ph.nombre.item}"
                                        list="datalist-item-nombres"
                                        autocomplete="off">
                                 <button type="button"
@@ -249,16 +249,16 @@
             </div>
 
             <button type="button" id="btnAddItem" class="btn btn-sm btn-zymos-outline mt-2">
-                <i class="bi bi-plus me-1"></i>Agregar Item
+                <i class="bi bi-plus me-1"></i><span th:text="#{fact.form.btn.add.item}">Agregar Item</span>
             </button>
         </div>
 
         <div class="d-flex gap-2 mb-4">
             <button type="submit" class="btn btn-zymos px-4">
                 <i class="bi bi-save me-2"></i>
-                <span th:text="${facturaId != null} ? 'Actualizar' : 'Guardar y Sincronizar Inventario'">Guardar</span>
+                <span th:text="${facturaId != null} ? #{fact.form.btn.actualizar} : #{fact.form.btn.save}">Guardar</span>
             </button>
-            <a th:href="@{/facturas}" class="btn btn-zymos-outline px-4">Cancelar</a>
+            <a th:href="@{/facturas}" class="btn btn-zymos-outline px-4" th:text="#{action.cancel}">Cancelar</a>
         </div>
     </form>
 </div>
@@ -268,23 +268,23 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i>Crear Insumo en Inventario</h5>
+                <h5 class="modal-title"><i class="bi bi-box-seam me-2"></i><span th:text="#{fact.form.modal.insumo.title}">Crear Insumo en Inventario</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small">Se crea con stock en cero. La factura actualizará el stock al guardar.</p>
+                <p class="text-muted small" th:text="#{fact.form.modal.insumo.hint}">Se crea con stock en cero. La factura actualizará el stock al guardar.</p>
                 <div class="mb-3">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" th:text="#{fact.form.modal.label.nombre}">Nombre *</label>
                     <input type="text" id="nuevoInsumoNombreF" class="form-control">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Categoría</label>
+                    <label class="form-label" th:text="#{fact.form.modal.label.cat}">Categoría</label>
                     <select id="nuevoInsumoTipoF" class="form-select">
                         <option th:each="tins : ${tiposInsumo}" th:value="${tins}" th:text="${tins}">-</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Unidad</label>
+                    <label class="form-label" th:text="#{fact.form.modal.label.unidad}">Unidad</label>
                     <select id="nuevoInsumoUnidadF" class="form-select">
                         <option value="gr">gr — gramos</option>
                         <option value="kg">kg — kilogramos</option>
@@ -297,9 +297,9 @@
                 <div id="errorInsumoF" class="alert alert-danger py-2 d-none"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
                 <button type="button" class="btn btn-zymos" id="btnCrearInsumoF">
-                    <i class="bi bi-save me-1"></i>Crear Insumo
+                    <i class="bi bi-save me-1"></i><span th:text="#{fact.form.modal.insumo.btn}">Crear Insumo</span>
                 </button>
             </div>
         </div>
@@ -311,16 +311,16 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-tools me-2"></i>Crear Equipo</h5>
+                <h5 class="modal-title"><i class="bi bi-tools me-2"></i><span th:text="#{fact.form.modal.equipo.title}">Crear Equipo</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label">Nombre *</label>
+                    <label class="form-label" th:text="#{fact.form.modal.label.nombre}">Nombre *</label>
                     <input type="text" id="nuevoEquipoNombreF" class="form-control">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Tipo</label>
+                    <label class="form-label" th:text="#{fact.form.modal.label.tipo}">Tipo</label>
                     <select id="nuevoEquipoTipoF" class="form-select">
                         <option th:each="teq : ${tiposEquipo}" th:value="${teq}" th:text="${teq}">-</option>
                     </select>
@@ -328,9 +328,9 @@
                 <div id="errorEquipoF" class="alert alert-danger py-2 d-none"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
                 <button type="button" class="btn btn-zymos" id="btnCrearEquipoF">
-                    <i class="bi bi-save me-1"></i>Crear Equipo
+                    <i class="bi bi-save me-1"></i><span th:text="#{fact.form.modal.equipo.btn}">Crear Equipo</span>
                 </button>
             </div>
         </div>
@@ -709,7 +709,7 @@ document.getElementById('btnAddItem').addEventListener('click', addItem);
 document.getElementById('ivaIncluido').addEventListener('change', recalcularTodo);
 
 // Selección de proveedor
-document.getElementById('proveedorSelect').addEventListener('change', function() {
+document.getElementById('proveedorSelect')?.addEventListener('change', function() {
     seleccionarProveedor(this);
 });
 
