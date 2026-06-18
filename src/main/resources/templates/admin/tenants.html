@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Tenants'">Alera - Tenants</title>
+    <title th:text="${branding.name} + ' - ' + #{admin.ten.title}">Alera - Tenants</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -96,24 +96,24 @@
 
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
-            <h1><i class="bi bi-building-gear me-2"></i>Gestión de Tenants</h1>
-            <div class="subtitle">Clientes registrados en la plataforma multi-tenant</div>
+            <h1><i class="bi bi-building-gear me-2"></i><span th:text="#{admin.ten.title}">Gestión de Tenants</span></h1>
+            <div class="subtitle" th:text="#{admin.ten.subtitle}">Clientes registrados en la plataforma multi-tenant</div>
         </div>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/admin/tenants/inactivos}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-moon-stars me-1"></i>Tenants inactivos
+                <i class="bi bi-moon-stars me-1"></i><span th:text="#{admin.ten.btn.inactivos}">Tenants inactivos</span>
             </a>
             <button type="button" class="btn btn-outline-secondary btn-sm" id="btnVerificarAlertas">
-                <i class="bi bi-bell me-1"></i>Verificar alertas
+                <i class="bi bi-bell me-1"></i><span th:text="#{admin.ten.btn.alertas}">Verificar alertas</span>
             </button>
             <form th:action="@{/admin/tenants/cache/evict}" method="post" class="d-inline">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                 <button type="submit" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-arrow-clockwise me-1"></i>Limpiar cache
+                    <i class="bi bi-arrow-clockwise me-1"></i><span th:text="#{admin.ten.btn.cache}">Limpiar cache</span>
                 </button>
             </form>
             <a th:href="@{/admin/tenants/nuevo}" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle me-1"></i>Nuevo Tenant
+                <i class="bi bi-plus-circle me-1"></i><span th:text="#{admin.ten.btn.nuevo}">Nuevo Tenant</span>
             </a>
         </div>
     </div>
@@ -121,31 +121,37 @@
     <div class="filter-card">
         <form th:action="@{/admin/tenants}" method="get" class="d-flex gap-2 flex-wrap align-items-center mb-3">
             <input type="text" name="q" class="form-control form-control-sm" style="width:240px;"
-                   placeholder="Buscar por subdominio o nombre..." th:value="${qFiltro}" autocomplete="off">
+                   th:placeholder="#{admin.ten.ph.buscar}" th:value="${qFiltro}" autocomplete="off">
             <input type="hidden" name="estado" th:value="${estadoFiltro}">
-            <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
-            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm px-3">Limpiar</a>
+            <button type="submit" class="btn btn-primary btn-sm px-3" th:text="#{admin.ten.btn.buscar}">Buscar</button>
+            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm px-3" th:text="#{admin.ten.btn.limpiar}">Limpiar</a>
         </form>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/admin/tenants(q=${qFiltro})}"
-               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">Todos</a>
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.todos}">Todos</a>
             <a th:href="@{/admin/tenants(q=${qFiltro},estado='activos')}"
-               th:classappend="${estadoFiltro == 'activos'} ? 'filter-tab active' : 'filter-tab inactive'">Activos</a>
+               th:classappend="${estadoFiltro == 'activos'} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.activos}">Activos</a>
             <a th:href="@{/admin/tenants(q=${qFiltro},estado='inactivos')}"
-               th:classappend="${estadoFiltro == 'inactivos'} ? 'filter-tab active' : 'filter-tab inactive'">Inactivos</a>
+               th:classappend="${estadoFiltro == 'inactivos'} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.inactivos}">Inactivos</a>
             <a th:href="@{/admin/tenants(q=${qFiltro},estado='vencido')}"
-               th:classappend="${estadoFiltro == 'vencido'} ? 'filter-tab active' : 'filter-tab inactive'">Plan vencido</a>
+               th:classappend="${estadoFiltro == 'vencido'} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.vencido}">Plan vencido</a>
             <a th:href="@{/admin/tenants(q=${qFiltro},estado='porVencer')}"
-               th:classappend="${estadoFiltro == 'porVencer'} ? 'filter-tab active' : 'filter-tab inactive'">Por vencer</a>
+               th:classappend="${estadoFiltro == 'porVencer'} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.por.vencer}">Por vencer</a>
             <a th:href="@{/admin/tenants(q=${qFiltro},estado='alertas')}"
-               th:classappend="${estadoFiltro == 'alertas'} ? 'filter-tab active' : 'filter-tab inactive'">Con alertas</a>
+               th:classappend="${estadoFiltro == 'alertas'} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{admin.ten.filter.alertas}">Con alertas</a>
         </div>
     </div>
 
     <div th:if="${#lists.isEmpty(tenants)}" class="content-card text-center py-5 text-muted">
         <i class="bi bi-building" style="font-size:2.5rem; opacity:.3;"></i>
-        <p class="mt-3 mb-0" th:if="${qFiltro == null and estadoFiltro == null}">No hay tenants registrados aún</p>
-        <p class="mt-3 mb-0" th:unless="${qFiltro == null and estadoFiltro == null}">No hay tenants para los filtros seleccionados</p>
+        <p class="mt-3 mb-0" th:if="${qFiltro == null and estadoFiltro == null}" th:text="#{admin.ten.empty}">No hay tenants registrados aún</p>
+        <p class="mt-3 mb-0" th:unless="${qFiltro == null and estadoFiltro == null}" th:text="#{admin.ten.empty.filtros}">No hay tenants para los filtros seleccionados</p>
     </div>
 
     <div class="row g-3 pb-4">
@@ -166,8 +172,8 @@
                     <!-- Header row: subdomain + badges -->
                     <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                         <span class="tenant-subdomain" th:text="${t.subdomain}">default</span>
-                        <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;">Activo</span>
-                        <span th:unless="${t.active}" class="badge bg-secondary" style="font-size:.65rem;">Inactivo</span>
+                        <span th:if="${t.active}" class="badge bg-success" style="font-size:.65rem;" th:text="#{admin.ten.badge.activo}">Activo</span>
+                        <span th:unless="${t.active}" class="badge bg-secondary" style="font-size:.65rem;" th:text="#{admin.ten.badge.inactivo}">Inactivo</span>
                         <span th:if="${t.alertasIntentosFallidos > 0}"
                               class="badge bg-warning text-dark"
                               style="font-size:.65rem; cursor:default;"
@@ -177,12 +183,12 @@
                         <span th:if="${t.planFin != null and t.planVencido}"
                               class="badge bg-danger" style="font-size:.65rem;"
                               th:title="${'Plan vencido desde ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
-                            <i class="bi bi-calendar-x me-1"></i>Vencido
+                            <i class="bi bi-calendar-x me-1"></i><span th:text="#{admin.ten.badge.vencido}">Vencido</span>
                         </span>
                         <span th:if="${t.planFin != null and !t.planVencido and t.planPorVencer}"
                               class="badge bg-warning text-dark" style="font-size:.65rem;"
                               th:title="${'Plan vence: ' + #temporals.format(t.planFin,'dd/MM/yyyy')}">
-                            <i class="bi bi-calendar-exclamation me-1"></i>Por vencer
+                            <i class="bi bi-calendar-exclamation me-1"></i><span th:text="#{admin.ten.badge.por.vencer}">Por vencer</span>
                         </span>
                         <span th:if="${t.planFin != null and !t.planVencido and !t.planPorVencer}"
                               class="badge bg-info text-dark" style="font-size:.65rem;"
@@ -198,7 +204,7 @@
                     <div class="tenant-name" th:text="${t.name}"
                          th:style="${t.fontHeadings != null} ? 'font-family: \'' + ${t.fontHeadings} + '\', serif' : ''">Nombre</div>
                     <div class="tenant-tagline"
-                         th:text="${!#strings.isEmpty(t.tagline)} ? ${t.tagline} : 'Sin tagline'"
+                         th:text="${!#strings.isEmpty(t.tagline)} ? ${t.tagline} : #{admin.ten.sin.tagline}"
                          th:classappend="${#strings.isEmpty(t.tagline)} ? 'fst-italic' : ''">Tagline</div>
 
                     <!-- Mini navbar preview -->
@@ -223,29 +229,29 @@
                     <div class="tenant-actions">
                         <a th:href="@{/admin/tenants/editar/{sub}(sub=${t.subdomain})}"
                            class="btn btn-outline-primary">
-                            <i class="bi bi-pencil me-1"></i>Editar
+                            <i class="bi bi-pencil me-1"></i><span th:text="#{admin.ten.btn.editar}">Editar</span>
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/usuarios(sub=${t.subdomain})}"
                            class="btn btn-outline-secondary">
-                            <i class="bi bi-people me-1"></i>Usuarios
+                            <i class="bi bi-people me-1"></i><span th:text="#{admin.ten.btn.usuarios}">Usuarios</span>
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/metricas(sub=${t.subdomain})}"
                            class="btn btn-outline-secondary">
-                            <i class="bi bi-bar-chart-line me-1"></i>Métricas
+                            <i class="bi bi-bar-chart-line me-1"></i><span th:text="#{admin.ten.btn.metricas}">Métricas</span>
                         </a>
                         <a th:href="@{/admin/tenants/{sub}/historial(sub=${t.subdomain})}"
                            class="btn btn-outline-secondary">
-                            <i class="bi bi-clock-history me-1"></i>Historial
+                            <i class="bi bi-clock-history me-1"></i><span th:text="#{admin.ten.btn.historial}">Historial</span>
                         </a>
                         <a th:href="@{/admin/migracion/{sub}(sub=${t.subdomain})}"
                            class="btn btn-outline-secondary">
-                            <i class="bi bi-cloud-upload me-1"></i>Migración
+                            <i class="bi bi-cloud-upload me-1"></i><span th:text="#{admin.ten.btn.migracion}">Migración</span>
                         </a>
                         <form th:action="@{/admin/tenants/{sub}/toggle(sub=${t.subdomain})}" method="post" class="d-inline">
                             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                             <button type="submit" class="btn"
                                     th:classappend="${t.active} ? 'btn-outline-warning' : 'btn-outline-success'"
-                                    th:title="${t.active} ? 'Desactivar' : 'Activar'">
+                                    th:title="${t.active} ? #{admin.usu.title.desactivar} : #{admin.usu.title.activar}">
                                 <i class="bi" th:classappend="${t.active} ? 'bi-pause-circle' : 'bi-play-circle'"></i>
                             </button>
                         </form>

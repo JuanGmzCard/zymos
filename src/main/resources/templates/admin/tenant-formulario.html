@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf" th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
-    <title th:text="${branding.name} + (${esNuevo} ? ' - Nuevo Tenant' : ' - Editar Tenant')">Alera - Tenant</title>
+    <title th:text="${branding.name} + ' - ' + (${esNuevo} ? #{admin.tform.title.nuevo} : #{admin.tform.title.editar})">Alera - Tenant</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -25,13 +25,13 @@
         <div>
             <h1>
                 <i class="bi me-2" th:classappend="${esNuevo} ? 'bi-building-add' : 'bi-pencil-square'"></i>
-                <span th:text="${esNuevo} ? 'Nuevo Tenant' : 'Editar Tenant'"></span>
+                <span th:text="${esNuevo} ? #{admin.tform.title.nuevo} : #{admin.tform.title.editar}"></span>
             </h1>
-            <p class="subtitle mb-0" th:text="${esNuevo} ? 'Registrar nuevo cliente en la plataforma' : 'Modificar configuración del cliente'"></p>
+            <p class="subtitle mb-0" th:text="${esNuevo} ? #{admin.tform.subtitle.nuevo} : #{admin.tform.subtitle.editar}"></p>
         </div>
         <div class="pt-1">
             <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{admin.tform.btn.volver}">Volver</span>
             </a>
         </div>
     </div>
@@ -46,47 +46,47 @@
 
         <!-- SECCIÓN: Información básica -->
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
-            <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i>Información básica</h6>
+            <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i><span th:text="#{admin.tform.seccion.info}">Información básica</span></h6>
 
             <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label detail-label">Subdomain *</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.label.subdomain}">Subdomain *</label>
                     <input th:if="${esNuevo}" type="text" th:field="*{subdomain}"
                            class="form-control" placeholder="ej: cerveceria1"
                            pattern="[a-z0-9-]+" title="Solo letras minúsculas, números y guiones"
                            required autocomplete="off">
                     <div th:unless="${esNuevo}" class="form-control-plaintext fw-bold font-monospace"
                          th:text="*{subdomain}">default</div>
-                    <div class="form-text" th:if="${esNuevo}">Solo minúsculas, números y guiones. No se puede cambiar.</div>
+                    <div class="form-text" th:if="${esNuevo}" th:text="#{admin.tform.hint.subdomain}">Solo minúsculas, números y guiones. No se puede cambiar.</div>
                 </div>
                 <div class="col-md-8">
-                    <label class="form-label detail-label" for="name">Nombre *</label>
+                    <label class="form-label detail-label" for="name" th:text="#{admin.tform.label.nombre}">Nombre *</label>
                     <input type="text" th:field="*{name}"
-                           class="form-control" placeholder="Nombre de la cervecería" required>
+                           class="form-control" th:placeholder="#{admin.tform.ph.nombre}" required>
                 </div>
                 <div class="col-12">
-                    <label class="form-label detail-label" for="tagline">Tagline</label>
+                    <label class="form-label detail-label" for="tagline" th:text="#{admin.tform.label.tagline}">Tagline</label>
                     <input type="text" th:field="*{tagline}"
-                           class="form-control" placeholder="Eslogan o descripción breve">
+                           class="form-control" th:placeholder="#{admin.tform.ph.tagline}">
                 </div>
                 <div class="col-12">
-                    <label class="form-label detail-label" for="logoUrl">URL del Logo</label>
+                    <label class="form-label detail-label" for="logoUrl" th:text="#{admin.tform.label.logo}">URL del Logo</label>
                     <input type="text" th:field="*{logoUrl}"
                            class="form-control" placeholder="https://... o /img/mi-logo.png">
-                    <div class="form-text">URL externa (https://...) o ruta local (/img/mi-logo.png). Dejar vacío para mostrar el ícono de gota.</div>
+                    <div class="form-text" th:text="#{admin.tform.hint.logo}">URL externa (https://...) o ruta local (/img/mi-logo.png). Dejar vacío para mostrar el ícono de gota.</div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label detail-label" for="emailAdmin">Email de alertas</label>
+                    <label class="form-label detail-label" for="emailAdmin" th:text="#{admin.tform.label.email}">Email de alertas</label>
                     <div class="d-flex gap-2 align-items-start">
                         <input type="email" th:field="*{emailAdmin}" id="emailAdmin"
-                               class="form-control" placeholder="admin@cerveceria.com">
+                               class="form-control" th:placeholder="#{admin.tform.ph.email}">
                         <button th:if="${!esNuevo}" type="button" id="btnTestEmail"
                                 class="btn btn-outline-secondary btn-sm text-nowrap">
-                            <i class="bi bi-send me-1"></i>Probar
+                            <i class="bi bi-send me-1"></i><span th:text="#{admin.tform.btn.probar}">Probar</span>
                         </button>
                     </div>
                     <div id="testEmailResult" class="mt-1 small" style="display:none;"></div>
-                    <div class="form-text">
+                    <div class="form-text" th:text="#{admin.tform.hint.email}">
                         Si está configurado, recibirá un resumen diario (lunes a viernes a las 8 AM) con alertas de
                         bajo stock, vencimientos próximos y mantenimientos. Requiere SMTP configurado en el servidor.
                     </div>
@@ -94,15 +94,15 @@
                 <!-- Límites de plan -->
                 <div class="col-12">
                     <hr class="my-1">
-                    <div class="detail-label mb-2">Límites del plan</div>
+                    <div class="detail-label mb-2" th:text="#{admin.tform.seccion.plan}">Límites del plan</div>
 
                     <!-- Período de vigencia -->
                     <div class="row g-2 mb-2">
                         <div class="col-sm-4">
-                            <label class="form-label small text-muted" for="planTipo">Período del plan</label>
+                            <label class="form-label small text-muted" for="planTipo" th:text="#{admin.tform.plan.tipo}">Período del plan</label>
                             <select th:field="*{planTipo}" id="planTipo"
                                     class="form-select form-select-sm">
-                                <option value="">Sin vencimiento (ilimitado)</option>
+                                <option value="" th:text="#{admin.tform.plan.sin.venc}">Sin vencimiento (ilimitado)</option>
                                 <option value="MENSUAL">Mensual — 1 mes</option>
                                 <option value="TRIMESTRAL">Trimestral — 3 meses</option>
                                 <option value="SEMESTRAL">Semestral — 6 meses</option>
@@ -111,12 +111,12 @@
                             </select>
                         </div>
                         <div class="col-sm-4" id="planInicioGroup" style="display:none">
-                            <label class="form-label small text-muted" for="planInicio">Fecha de inicio</label>
+                            <label class="form-label small text-muted" for="planInicio" th:text="#{admin.tform.plan.inicio}">Fecha de inicio</label>
                             <input type="date" th:field="*{planInicio}" id="planInicio"
                                    class="form-control form-control-sm">
                         </div>
                         <div class="col-sm-4" id="planFinGroup" style="display:none">
-                            <label class="form-label small text-muted">Fecha de vencimiento</label>
+                            <label class="form-label small text-muted" th:text="#{admin.tform.plan.fin}">Fecha de vencimiento</label>
                             <input type="text" id="planFinDisplay" class="form-control form-control-sm"
                                    readonly placeholder="— calculado automáticamente —"
                                    style="background:var(--bs-secondary-bg)">
@@ -127,23 +127,23 @@
                     <!-- Límites numéricos -->
                     <div class="row g-2">
                         <div class="col-sm-6">
-                            <label class="form-label small text-muted" for="maxLotes">Máx. lotes activos</label>
+                            <label class="form-label small text-muted" for="maxLotes" th:text="#{admin.tform.plan.max.lotes}">Máx. lotes activos</label>
                             <input type="number" th:field="*{maxLotes}" id="maxLotes"
                                    class="form-control form-control-sm" min="1" placeholder="Sin límite">
-                            <div class="form-text">Dejar vacío para ilimitado.</div>
+                            <div class="form-text" th:text="#{admin.tform.plan.max.lotes.hint}">Dejar vacío para ilimitado.</div>
                         </div>
                         <div class="col-sm-6">
-                            <label class="form-label small text-muted" for="maxUsuarios">Máx. usuarios</label>
+                            <label class="form-label small text-muted" for="maxUsuarios" th:text="#{admin.tform.plan.max.usu}">Máx. usuarios</label>
                             <input type="number" th:field="*{maxUsuarios}" id="maxUsuarios"
                                    class="form-control form-control-sm" min="1" placeholder="Sin límite">
-                            <div class="form-text">Dejar vacío para ilimitado.</div>
+                            <div class="form-text" th:text="#{admin.tform.plan.max.usu.hint}">Dejar vacío para ilimitado.</div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" th:field="*{active}">
-                        <label class="form-check-label detail-label" for="active">Tenant activo</label>
+                        <label class="form-check-label detail-label" for="active" th:text="#{admin.tform.label.activo}">Tenant activo</label>
                     </div>
                 </div>
             </div>
@@ -151,25 +151,25 @@
 
         <!-- SECCIÓN: Importar / Exportar -->
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
-            <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i>Importar / Exportar configuración</h6>
+            <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i><span th:text="#{admin.tform.seccion.import}">Importar / Exportar configuración</span></h6>
             <div class="d-flex flex-wrap gap-4 align-items-end">
 
                 <!-- Exportar (solo en edición) -->
                 <div th:if="${!esNuevo}">
-                    <div class="small text-muted mb-1">Exportar branding</div>
+                    <div class="small text-muted mb-1" th:text="#{admin.tform.export.label}">Exportar branding</div>
                     <a th:href="@{/admin/tenants/{s}/export(s=${tenant.subdomain})}"
                        class="btn btn-outline-secondary btn-sm text-nowrap">
-                        <i class="bi bi-download me-1"></i>Exportar JSON
+                        <i class="bi bi-download me-1"></i><span th:text="#{admin.tform.export.btn}">Exportar JSON</span>
                     </a>
                 </div>
 
                 <!-- Importar -->
                 <div style="min-width:260px; flex:1 1 260px;">
-                    <div class="small text-muted mb-1">Importar desde archivo JSON</div>
+                    <div class="small text-muted mb-1" th:text="#{admin.tform.import.label}">Importar desde archivo JSON</div>
                     <div class="input-group input-group-sm">
                         <input type="file" id="importJsonFile" accept=".json" class="form-control">
                         <button type="button" class="btn btn-primary text-nowrap" id="btnImportarConfig">
-                            <i class="bi bi-upload me-1"></i>Aplicar
+                            <i class="bi bi-upload me-1"></i><span th:text="#{admin.tform.import.btn}">Aplicar</span>
                         </button>
                     </div>
                 </div>
@@ -177,7 +177,7 @@
                 <!-- Copiar de otro tenant -->
                 <div th:if="${otrosTenants != null and !otrosTenants.isEmpty()}"
                      style="min-width:240px; flex:1 1 240px;">
-                    <div class="small text-muted mb-1">Copiar branding de otro tenant</div>
+                    <div class="small text-muted mb-1" th:text="#{admin.tform.copiar.label}">Copiar branding de otro tenant</div>
                     <div class="input-group input-group-sm">
                         <select id="copiarDeTenant" class="form-select">
                             <option th:each="ot : ${otrosTenants}"
@@ -186,7 +186,7 @@
                             </option>
                         </select>
                         <button type="button" class="btn btn-outline-secondary text-nowrap" id="btnCopiarConfig">
-                            <i class="bi bi-copy me-1"></i>Copiar
+                            <i class="bi bi-copy me-1"></i><span th:text="#{admin.tform.copiar.btn}">Copiar</span>
                         </button>
                     </div>
                 </div>
@@ -196,13 +196,13 @@
 
         <!-- SECCIÓN: Paleta de colores -->
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
-            <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i>Paleta de colores</h6>
+            <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i><span th:text="#{admin.tform.seccion.colores}">Paleta de colores</span></h6>
 
             <!-- Previews en vivo -->
             <div class="row g-3 mb-3">
             <!-- Preview navbar -->
             <div class="col-md-7">
-                <div class="small text-muted mb-1">Vista previa del navbar</div>
+                <div class="small text-muted mb-1" th:text="#{admin.tform.preview.navbar}">Vista previa del navbar</div>
                 <div class="rounded overflow-hidden" id="previewWrap"
                      style="height:52px; display:flex; align-items:center; padding:0 14px; gap:10px;">
                     <i class="bi bi-droplet-fill" id="previewIcon" style="font-size:.95rem;"></i>
@@ -225,7 +225,7 @@
 
             <!-- Preview login -->
             <div class="col-md-5">
-                <div class="small text-muted mb-1">Vista previa del login</div>
+                <div class="small text-muted mb-1" th:text="#{admin.tform.preview.login}">Vista previa del login</div>
                 <div id="loginPreviewOuter" class="rounded d-flex justify-content-center align-items-center p-2" style="min-height:140px;">
                     <div id="loginPreviewCard" style="width:170px;border-radius:10px;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.25);">
                         <!-- Header -->
@@ -258,7 +258,7 @@
 
             <div class="row g-3">
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Navbar</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.navbar}">Navbar</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorNavbar}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -266,7 +266,7 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Primary (hero)</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.primary}">Primary (hero)</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorPrimary}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -274,7 +274,7 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Acento</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.acento}">Acento</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorAccent}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -282,7 +282,7 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Acento hover</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.acento.hover}">Acento hover</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorAccentHover}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -290,7 +290,7 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Crema (texto)</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.crema}">Crema (texto)</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorCream}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -298,7 +298,7 @@
                     </div>
                 </div>
                 <div class="col-xl-4 col-md-6 col-6">
-                    <label class="form-label detail-label">Fondo body</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.color.fondo}">Fondo body</label>
                     <div class="d-flex align-items-center gap-2">
                         <input type="color" th:field="*{colorBodyBg}"
                                class="form-control form-control-color" style="width:44px; height:36px; padding:2px;">
@@ -310,7 +310,7 @@
 
         <!-- SECCIÓN: Tipografías -->
         <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
-            <h6 class="detail-label mb-3"><i class="bi bi-fonts me-2"></i>Tipografías</h6>
+            <h6 class="detail-label mb-3"><i class="bi bi-fonts me-2"></i><span th:text="#{admin.tform.seccion.tipografia}">Tipografías</span></h6>
 
             <!-- Preview de fuentes en vivo -->
             <div class="mb-4 p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
@@ -326,7 +326,7 @@
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label detail-label">Fuente de títulos</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.font.headings}">Fuente de títulos</label>
                     <select th:field="*{fontHeadings}" id="fontHeadings" class="form-select">
                         <option value="Cinzel">Cinzel — Clásica romana (defecto)</option>
                         <option value="Playfair Display">Playfair Display — Serif elegante</option>
@@ -338,10 +338,10 @@
                         <option value="Roboto">Roboto — Clean y neutral</option>
                         <option value="Bowlby One SC">Bowlby One SC — Display bold compacta</option>
                     </select>
-                    <div class="form-text">Se aplica en títulos, encabezados y el nombre en el navbar.</div>
+                    <div class="form-text" th:text="#{admin.tform.font.headings.hint}">Se aplica en títulos, encabezados y el nombre en el navbar.</div>
                 </div>
                 <div class="col-md-6">
-                    <label class="form-label detail-label">Fuente de cuerpo</label>
+                    <label class="form-label detail-label" th:text="#{admin.tform.font.body}">Fuente de cuerpo</label>
                     <select th:field="*{fontBody}" id="fontBody" class="form-select">
                         <option value="Raleway">Raleway — Humanista elegante (defecto)</option>
                         <option value="Inter">Inter — UI moderna y legible</option>
@@ -351,7 +351,7 @@
                         <option value="Nunito">Nunito — Redondeada y amigable</option>
                         <option value="DM Sans">DM Sans — Moderna y limpia</option>
                     </select>
-                    <div class="form-text">Se aplica en textos, tablas, formularios y menús.</div>
+                    <div class="form-text" th:text="#{admin.tform.font.body.hint}">Se aplica en textos, tablas, formularios y menús.</div>
                 </div>
             </div>
         </div>
@@ -360,9 +360,9 @@
         <div class="d-flex gap-2">
             <button type="submit" class="btn btn-primary">
                 <i class="bi bi-check-lg me-1"></i>
-                <span th:text="${esNuevo} ? 'Crear Tenant' : 'Guardar Cambios'">Guardar</span>
+                <span th:text="${esNuevo} ? #{admin.tform.btn.crear} : #{admin.tform.btn.guardar}">Guardar</span>
             </button>
-            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary">Cancelar</a>
+            <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary" th:text="#{admin.tform.btn.cancelar}">Cancelar</a>
         </div>
     </form>
 </div>

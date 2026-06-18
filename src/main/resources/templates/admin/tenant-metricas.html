@@ -17,10 +17,10 @@
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
             <h1><i class="bi bi-bar-chart-line me-2"></i>Métricas — <code th:text="${tenant.subdomain}">tenant</code></h1>
-            <div class="subtitle" th:text="${tenant.name} + ' · Panel de actividad'">Tenant</div>
+            <div class="subtitle" th:text="${tenant.name} + ' · ' + #{admin.met.subtitle.panel}">Tenant</div>
         </div>
         <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm align-self-start">
-            <i class="bi bi-arrow-left me-1"></i>Volver
+            <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
         </a>
     </div>
 
@@ -35,15 +35,15 @@
             <div class="small text-muted">
                 <code th:text="${tenant.subdomain}">sub</code>
                 <span th:if="${tenant.emailAdmin}" th:text="' · ' + ${tenant.emailAdmin}"></span>
-                <span th:if="${!tenant.active}" class="badge bg-danger ms-2">Inactivo</span>
-                <span th:if="${tenant.active}" class="badge bg-success ms-2">Activo</span>
+                <span th:if="${!tenant.active}" class="badge bg-danger ms-2" th:text="#{admin.met.badge.inactivo}">Inactivo</span>
+                <span th:if="${tenant.active}" class="badge bg-success ms-2" th:text="#{admin.met.badge.activo}">Activo</span>
             </div>
         </div>
         <div class="ms-auto text-end">
-            <div class="small text-muted">Último acceso</div>
+            <div class="small text-muted" th:text="#{admin.met.ultimo.acceso}">Último acceso</div>
             <div class="fw-semibold small" th:if="${metricas.ultimoAcceso != null}"
                  th:text="${#temporals.format(metricas.ultimoAcceso, 'dd/MM/yyyy HH:mm')}">—</div>
-            <div class="text-muted small" th:if="${metricas.ultimoAcceso == null}">Sin registros</div>
+            <div class="text-muted small" th:if="${metricas.ultimoAcceso == null}" th:text="#{admin.met.sin.registros}">Sin registros</div>
         </div>
     </div>
 
@@ -51,30 +51,29 @@
     <div th:if="${tenant.emailAdmin == null or #strings.isEmpty(tenant.emailAdmin)}"
          class="alert alert-warning d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-envelope-x"></i>
-        <span>Este tenant no tiene email de administrador — las alertas por correo están deshabilitadas.</span>
-        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-sm btn-warning ms-auto">
-            Configurar email
-        </a>
+        <span th:text="#{admin.met.sin.email}">Este tenant no tiene email de administrador — las alertas por correo están deshabilitadas.</span>
+        <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-sm btn-warning ms-auto"
+           th:text="#{admin.met.email.conf}">Configurar email</a>
     </div>
     <div th:if="${tenant.alertasIntentosFallidos > 0}"
          class="alert alert-warning d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-exclamation-triangle"></i>
         <span>
-            <strong th:text="${tenant.alertasIntentosFallidos}">N</strong> fallo(s) SMTP consecutivo(s).
+            <strong th:text="${tenant.alertasIntentosFallidos}">N</strong> <span th:text="#{admin.met.smtp.fallos(${tenant.alertasIntentosFallidos})}">fallo(s) SMTP consecutivo(s).</span>
             <span th:if="${tenant.alertasUltimoIntento != null}">
-                Último intento: <span th:text="${#temporals.format(tenant.alertasUltimoIntento, 'dd/MM/yyyy HH:mm')}"></span>.
+                <span th:text="#{admin.met.smtp.ultimo}">Último intento:</span> <span th:text="${#temporals.format(tenant.alertasUltimoIntento, 'dd/MM/yyyy HH:mm')}"></span>.
             </span>
         </span>
     </div>
 
     <!-- Producción -->
     <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
-        <i class="bi bi-droplet me-1"></i>Producción
+        <i class="bi bi-droplet me-1"></i><span th:text="#{admin.met.sec.produccion}">Producción</span>
     </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Lotes totales</div>
+                <div class="stat-label" th:text="#{admin.met.lotes.total}">Lotes totales</div>
                 <div class="stat-value" th:text="${metricas.totalLotes}">0</div>
                 <div th:if="${tenant.maxLotes != null}" class="mt-2">
                     <div class="progress" style="height:4px;">
@@ -91,19 +90,19 @@
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">En proceso</div>
+                <div class="stat-label" th:text="#{admin.met.en.proceso}">En proceso</div>
                 <div class="stat-value info" th:text="${metricas.lotesEnProceso}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Completados</div>
+                <div class="stat-label" th:text="#{admin.met.completados}">Completados</div>
                 <div class="stat-value success" th:text="${metricas.lotesCompletados}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Litros producidos</div>
+                <div class="stat-label" th:text="#{admin.met.litros}">Litros producidos</div>
                 <div class="stat-value"
                      th:text="${metricas.litrosTotales != null ? metricas.litrosTotales.stripTrailingZeros().toPlainString() : '0'}">0</div>
             </div>
@@ -112,25 +111,25 @@
 
     <!-- Ventas -->
     <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
-        <i class="bi bi-cart me-1"></i>Ventas
+        <i class="bi bi-cart me-1"></i><span th:text="#{admin.met.sec.ventas}">Ventas</span>
     </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-4">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Ventas registradas</div>
+                <div class="stat-label" th:text="#{admin.met.ventas.reg}">Ventas registradas</div>
                 <div class="stat-value" th:text="${metricas.totalVentas}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Ingresos despachados</div>
+                <div class="stat-label" th:text="#{admin.met.ingresos}">Ingresos despachados</div>
                 <div class="stat-value success"
                      th:text="'$' + ${#numbers.formatDecimal(metricas.ingresosVentas, 1, 'COMMA', 0, 'POINT')}">$0</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Clientes activos</div>
+                <div class="stat-label" th:text="#{admin.met.clientes}">Clientes activos</div>
                 <div class="stat-value" th:text="${metricas.totalClientes}">0</div>
             </div>
         </div>
@@ -138,18 +137,18 @@
 
     <!-- Compras -->
     <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
-        <i class="bi bi-receipt me-1"></i>Compras
+        <i class="bi bi-receipt me-1"></i><span th:text="#{admin.met.sec.compras}">Compras</span>
     </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-6">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Facturas de proveedor</div>
+                <div class="stat-label" th:text="#{admin.met.facturas}">Facturas de proveedor</div>
                 <div class="stat-value" th:text="${metricas.totalFacturas}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-6">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Total compras</div>
+                <div class="stat-label" th:text="#{admin.met.total.gasto}">Total compras</div>
                 <div class="stat-value danger"
                      th:text="'$' + ${#numbers.formatDecimal(metricas.totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</div>
             </div>
@@ -158,33 +157,34 @@
 
     <!-- Inventario & Equipos -->
     <div class="small fw-semibold text-uppercase text-muted mb-2" style="letter-spacing:.06em;">
-        <i class="bi bi-box-seam me-1"></i>Inventario &amp; Equipos
+        <i class="bi bi-box-seam me-1"></i><span th:text="#{admin.met.sec.inventario}">Inventario &amp; Equipos</span>
     </div>
     <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Insumos</div>
+                <div class="stat-label" th:text="#{admin.met.insumos}">Insumos</div>
                 <div class="stat-value" th:text="${metricas.totalInsumos}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Bajo stock</div>
+                <div class="stat-label" th:text="#{admin.met.bajo.stock}">Bajo stock</div>
                 <div class="stat-value"
                      th:classappend="${metricas.bajoStock > 0} ? 'warning' : ''"
                      th:text="${metricas.bajoStock}">0</div>
-                <span th:if="${metricas.bajoStock > 0}" class="badge bg-warning text-dark mt-1" style="font-size:.65rem;">Alerta</span>
+                <span th:if="${metricas.bajoStock > 0}" class="badge bg-warning text-dark mt-1"
+                      style="font-size:.65rem;" th:text="#{admin.met.badge.alerta}">Alerta</span>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Equipos</div>
+                <div class="stat-label" th:text="#{admin.met.equipos}">Equipos</div>
                 <div class="stat-value" th:text="${metricas.totalEquipos}">0</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
             <div class="stat-card-simple h-100">
-                <div class="stat-label">Usuarios activos</div>
+                <div class="stat-label" th:text="#{admin.met.usuarios}">Usuarios activos</div>
                 <div class="stat-value" th:text="${metricas.totalUsuarios}">0</div>
                 <div th:if="${tenant.maxUsuarios != null}" class="mt-2">
                     <div class="progress" style="height:4px;">
@@ -204,16 +204,16 @@
     <!-- Quick actions -->
     <div class="d-flex gap-2 flex-wrap pb-4">
         <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-pencil me-1"></i>Editar configuración
+            <i class="bi bi-pencil me-1"></i><span th:text="#{admin.met.editar.config}">Editar configuración</span>
         </a>
         <a th:href="@{/admin/tenants/{s}/usuarios(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-people me-1"></i>Gestionar usuarios
+            <i class="bi bi-people me-1"></i><span th:text="#{admin.met.gestionar.usuarios}">Gestionar usuarios</span>
         </a>
         <a th:href="@{/admin/tenants/{s}/historial(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-clock-history me-1"></i>Ver historial
+            <i class="bi bi-clock-history me-1"></i><span th:text="#{admin.met.ver.historial}">Ver historial</span>
         </a>
         <a th:href="@{/admin/migracion/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-upload me-1"></i>Migración de datos
+            <i class="bi bi-upload me-1"></i><span th:text="#{admin.met.migracion}">Migración de datos</span>
         </a>
     </div>
 

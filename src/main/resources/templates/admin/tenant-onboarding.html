@@ -68,20 +68,20 @@
 <div class="container-fluid px-4" style="max-width:640px;">
 
     <div class="page-header">
-        <h1><i class="bi bi-rocket-takeoff me-2"></i>Nuevo tenant</h1>
-        <div class="subtitle">Onboarding en 2 pasos</div>
+        <h1><i class="bi bi-rocket-takeoff me-2"></i><span th:text="#{admin.ob.title}">Nuevo tenant</span></h1>
+        <div class="subtitle" th:text="#{admin.ob.subtitle}">Onboarding en 2 pasos</div>
     </div>
 
     <!-- Progress steps -->
     <div class="wizard-steps">
         <div class="wz-step done">
             <div class="wz-circle"><i class="bi bi-check-lg"></i></div>
-            <span>Tenant creado</span>
+            <span th:text="#{admin.ob.step.creado}">Tenant creado</span>
         </div>
         <div class="wz-connector done"></div>
         <div class="wz-step active">
             <div class="wz-circle">2</div>
-            <span>Usuario administrador</span>
+            <span th:text="#{admin.ob.step.admin}">Usuario administrador</span>
         </div>
     </div>
 
@@ -95,38 +95,37 @@
             <div class="fw-semibold small" th:text="${tenant.name}">Tenant</div>
             <code class="small" th:text="${tenant.subdomain}">subdomain</code>
         </div>
-        <span class="badge bg-success ms-auto">Creado</span>
+        <span class="badge bg-success ms-auto" th:text="#{admin.ob.badge.creado}">Creado</span>
     </div>
 
     <!-- Ya tiene usuarios (ej. llegó aquí dos veces) -->
     <div th:if="${tieneUsuarios}" class="alert alert-info d-flex align-items-center gap-2 mb-3">
         <i class="bi bi-info-circle"></i>
-        <span>Este tenant ya tiene usuarios. Podés crear uno adicional o saltearte este paso.</span>
+        <span th:text="#{admin.ob.ya.usuarios}">Este tenant ya tiene usuarios. Podés crear uno adicional o saltearte este paso.</span>
     </div>
 
     <div class="form-card">
-        <h6 class="fw-semibold mb-3 text-muted text-uppercase" style="font-size:0.7rem; letter-spacing:.06em;">
-            Crear primer usuario administrador
-        </h6>
+        <h6 class="fw-semibold mb-3 text-muted text-uppercase" style="font-size:0.7rem; letter-spacing:.06em;"
+            th:text="#{admin.ob.form.title}">Crear primer usuario administrador</h6>
 
         <form th:action="@{/admin/tenants/{s}/onboarding/guardar(s=${tenant.subdomain})}" method="post">
             <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
 
             <div class="mb-3">
-                <label class="form-label small fw-semibold">Usuario</label>
+                <label class="form-label small fw-semibold" th:text="#{admin.ob.label.usuario}">Usuario</label>
                 <input type="text" name="username" class="form-control" required autocomplete="off">
             </div>
             <div class="mb-3">
-                <label class="form-label small fw-semibold">Contraseña</label>
+                <label class="form-label small fw-semibold" th:text="#{admin.ob.label.pwd}">Contraseña</label>
                 <input type="password" name="password" class="form-control" required autocomplete="new-password">
-                <div class="form-text">Mínimo 6 caracteres.</div>
+                <div class="form-text" th:text="#{admin.ob.hint.pwd}">Mínimo 6 caracteres.</div>
             </div>
             <div class="mb-3">
-                <label class="form-label small fw-semibold">Confirmar contraseña</label>
+                <label class="form-label small fw-semibold" th:text="#{admin.ob.label.confirmar}">Confirmar contraseña</label>
                 <input type="password" name="confirmarPassword" class="form-control" required autocomplete="new-password">
             </div>
             <div class="mb-4">
-                <label class="form-label small fw-semibold">Rol</label>
+                <label class="form-label small fw-semibold" th:text="#{admin.ob.label.rol}">Rol</label>
                 <select name="rol" class="form-select">
                     <option th:each="r : ${roles}"
                             th:value="${r.name()}"
@@ -136,11 +135,10 @@
             </div>
 
             <div class="d-flex gap-2 justify-content-end">
-                <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm px-4">
-                    Crear usuario después
-                </a>
+                <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm px-4"
+                   th:text="#{admin.ob.btn.saltear}">Crear usuario después</a>
                 <button type="submit" class="btn btn-primary btn-sm px-4">
-                    <i class="bi bi-check-lg me-1"></i>Finalizar onboarding
+                    <i class="bi bi-check-lg me-1"></i><span th:text="#{admin.ob.btn.finalizar}">Finalizar onboarding</span>
                 </button>
             </div>
         </form>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Migración de Datos'">Zymos - Migración</title>
+    <title th:text="${branding.name} + ' - ' + #{admin.mig.title}">Zymos - Migración</title>
     <meta name="_csrf"        th:content="${_csrf.token}">
     <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -19,14 +19,14 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-cloud-upload me-2" style="color:var(--verde-zymos,#2563eb);"></i>Migración de Datos</h1>
+            <h1><i class="bi bi-cloud-upload me-2" style="color:var(--verde-zymos,#2563eb);"></i><span th:text="#{admin.mig.title}">Migración de Datos</span></h1>
             <p class="subtitle">
                 Tenant: <strong th:text="${tenant.name}">Tenant</strong>
                 &nbsp;<code class="text-secondary" style="font-size:0.8rem;" th:text="${tenant.subdomain}">subdomain</code>
             </p>
         </div>
         <a th:href="@{/admin/tenants}" class="btn btn-sm btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i>Volver a Tenants
+            <i class="bi bi-arrow-left me-1"></i><span th:text="#{admin.mig.btn.volver}">Volver a Tenants</span>
         </a>
     </div>
 
@@ -41,7 +41,7 @@
         <div class="d-flex gap-3 align-items-start">
             <i class="bi bi-info-circle-fill flex-shrink-0 mt-1" style="color:#3b82f6; font-size:1.1rem;"></i>
             <div>
-                <strong class="d-block mb-1" style="color:#1e40af;">Instrucciones generales</strong>
+                <strong class="d-block mb-1" style="color:#1e40af;" th:text="#{admin.mig.instrucciones.title}">Instrucciones generales</strong>
                 <ol class="mb-0 text-secondary" style="font-size:0.875rem; padding-left:1.1rem;">
                     <li>Descargue la plantilla del módulo que desea migrar.</li>
                     <li>Abra el archivo en Excel u OpenOffice y complete los datos desde la fila 4 (respete los formatos de la fila de ejemplo).</li>
@@ -69,15 +69,15 @@
                         <i class="bi bi-boxes" style="color:#2563eb; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Almacén</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Insumos de inventario (maltas, lúpulos, levaduras, envases…)</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.almacen}">Almacén</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.almacen.desc}">Insumos de inventario (maltas, lúpulos, levaduras, envases…)</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/almacen(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-almacen.xlsx</span>
                     </div>
@@ -88,7 +88,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -106,15 +106,15 @@
                         <i class="bi bi-gear" style="color:#16a34a; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Equipos</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Fermentadores, ollas, bombas, medidores…</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.equipos}">Equipos</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.equipos.desc}">Fermentadores, ollas, bombas, medidores…</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/equipos(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-equipos.xlsx</span>
                     </div>
@@ -125,7 +125,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -143,15 +143,15 @@
                         <i class="bi bi-receipt" style="color:#ca8a04; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Comercial</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Proveedores, facturas e ítems de compra</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.comercial}">Comercial</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.comercial.desc}">Proveedores, facturas e ítems de compra</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/comercial(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-comercial.xlsx (3 hojas)</span>
                     </div>
@@ -162,7 +162,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -180,15 +180,15 @@
                         <i class="bi bi-droplet-half" style="color:#7c3aed; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Producción / Trazabilidad</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Recetas completas y lotes de cerveza con ingredientes</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.produccion}">Producción / Trazabilidad</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.produccion.desc}">Recetas completas y lotes de cerveza con ingredientes</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/produccion(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-produccion.xlsx (6 hojas)</span>
                     </div>
@@ -199,7 +199,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -217,15 +217,15 @@
                         <i class="bi bi-people" style="color:#15803d; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Clientes</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Cartera de clientes con datos fiscales y de contacto</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.clientes}">Clientes</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.clientes.desc}">Cartera de clientes con datos fiscales y de contacto</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/clientes(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-clientes.xlsx</span>
                     </div>
@@ -236,7 +236,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -254,15 +254,15 @@
                         <i class="bi bi-bag-check" style="color:#ea580c; font-size:1rem;"></i>
                     </div>
                     <div>
-                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;">Ventas</div>
-                        <div class="text-secondary" style="font-size:0.775rem;">Ventas y despachos históricos con ítems por lote</div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.ventas}">Ventas</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.ventas.desc}">Ventas y despachos históricos con ítems por lote</div>
                     </div>
                 </div>
                 <div class="px-4 py-3">
                     <div class="d-flex gap-2 align-items-center mb-3">
                         <a th:href="@{/admin/migracion/{s}/plantilla/ventas(s=${tenant.subdomain})}"
                            class="btn btn-sm btn-outline-success">
-                            <i class="bi bi-download me-1"></i>Descargar Plantilla
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
                         </a>
                         <span class="text-secondary" style="font-size:0.775rem;">plantilla-ventas.xlsx (2 hojas)</span>
                     </div>
@@ -273,7 +273,7 @@
                             <input type="file" name="archivo" class="form-control"
                                    accept=".xlsx,.xls" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="bi bi-upload me-1"></i>Importar
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
                             </button>
                         </div>
                     </form>
@@ -286,28 +286,28 @@
     <!-- Historial de migraciones -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span><i class="bi bi-clock-history me-2"></i><strong>Historial de Importaciones</strong></span>
+            <span><i class="bi bi-clock-history me-2"></i><strong th:text="#{admin.mig.hist.title}">Historial de Importaciones</strong></span>
             <span class="badge bg-secondary" style="font-weight:500;"
-                  th:text="${#lists.size(historial)} + ' registros'">0 registros</span>
+                  th:text="#{admin.mig.hist.registros(${#lists.size(historial)})}">0 registros</span>
         </div>
 
         <div th:if="${#lists.isEmpty(historial)}" class="text-center text-secondary py-5">
             <i class="bi bi-inbox" style="font-size:2rem; opacity:.3;"></i>
-            <p class="mt-2 mb-0" style="font-size:0.875rem;">Sin importaciones previas para este tenant</p>
+            <p class="mt-2 mb-0" style="font-size:0.875rem;" th:text="#{admin.mig.hist.empty}">Sin importaciones previas para este tenant</p>
         </div>
 
         <div th:unless="${#lists.isEmpty(historial)}" class="table-responsive">
             <table class="table mb-0" style="font-size:0.85rem;">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Módulo</th>
-                        <th>Archivo</th>
-                        <th class="text-center">Procesadas</th>
-                        <th class="text-center">Exitosas</th>
-                        <th class="text-center">Errores</th>
-                        <th class="text-center">Estado</th>
-                        <th>Usuario</th>
+                        <th th:text="#{admin.mig.col.fecha}">Fecha</th>
+                        <th th:text="#{admin.mig.col.modulo}">Módulo</th>
+                        <th th:text="#{admin.mig.col.archivo}">Archivo</th>
+                        <th class="text-center" th:text="#{admin.mig.col.procesadas}">Procesadas</th>
+                        <th class="text-center" th:text="#{admin.mig.col.exitosas}">Exitosas</th>
+                        <th class="text-center" th:text="#{admin.mig.col.errores}">Errores</th>
+                        <th class="text-center" th:text="#{admin.mig.col.estado}">Estado</th>
+                        <th th:text="#{admin.mig.col.usuario}">Usuario</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -361,7 +361,7 @@
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Detalle de errores</h5>
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2 text-warning"></i><span th:text="#{admin.mig.modal.errores.title}">Detalle de errores</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">

@@ -77,17 +77,17 @@
 
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-2">
         <div>
-            <h1><i class="bi bi-moon-stars me-2"></i>Tenants inactivos</h1>
-            <div class="subtitle">Tenants sin actividad reciente (basado en log de accesos)</div>
+            <h1><i class="bi bi-moon-stars me-2"></i><span th:text="#{admin.inact.title}">Tenants inactivos</span></h1>
+            <div class="subtitle" th:text="#{admin.inact.subtitle}">Tenants sin actividad reciente (basado en log de accesos)</div>
         </div>
         <a th:href="@{/admin/tenants}" class="btn btn-outline-secondary btn-sm align-self-start">
-            <i class="bi bi-arrow-left me-1"></i>Volver
+            <i class="bi bi-arrow-left me-1"></i><span th:text="#{admin.inact.btn.volver}">Volver</span>
         </a>
     </div>
 
     <div class="filter-card">
         <div class="d-flex gap-2 flex-wrap align-items-center">
-            <span class="small text-muted me-1">Sin actividad hace al menos:</span>
+            <span class="small text-muted me-1" th:text="#{admin.inact.filter.label}">Sin actividad hace al menos:</span>
             <a th:href="@{/admin/tenants/inactivos(dias=7)}"
                th:classappend="${dias == 7} ? 'filter-tab active' : 'filter-tab inactive'">7 días</a>
             <a th:href="@{/admin/tenants/inactivos(dias=15)}"
@@ -102,16 +102,16 @@
     </div>
 
     <div class="table-card mb-4">
-        <div class="table-count" th:text="${reporte.size()} + ' tenant(s) sin actividad en los últimos ' + ${dias} + ' día(s)'">N tenants</div>
+        <div class="table-count" th:text="#{admin.inact.count(${reporte.size()},${dias})}">N tenants</div>
         <div class="table-responsive">
             <table class="table mb-0">
                 <thead>
                     <tr>
-                        <th>Subdominio</th>
-                        <th>Nombre</th>
-                        <th>Estado</th>
-                        <th>Último acceso</th>
-                        <th>Días sin actividad</th>
+                        <th th:text="#{admin.inact.col.subdominio}">Subdominio</th>
+                        <th th:text="#{admin.inact.col.nombre}">Nombre</th>
+                        <th th:text="#{admin.inact.col.estado}">Estado</th>
+                        <th th:text="#{admin.inact.col.ultimo}">Último acceso</th>
+                        <th th:text="#{admin.inact.col.dias}">Días sin actividad</th>
                         <th></th>
                     </tr>
                 </thead>
@@ -119,24 +119,24 @@
                     <tr th:if="${#lists.isEmpty(reporte)}">
                         <td colspan="6" class="text-center text-muted py-5">
                             <i class="bi bi-check-circle d-block mb-2" style="font-size:1.5rem; opacity:.4;"></i>
-                            Todos los tenants tuvieron actividad en este período
+                            <span th:text="#{admin.inact.empty}">Todos los tenants tuvieron actividad en este período</span>
                         </td>
                     </tr>
                     <tr th:each="r : ${reporte}">
                         <td><code th:text="${r.tenant.subdomain}">sub</code></td>
                         <td th:text="${r.tenant.name}">Nombre</td>
                         <td>
-                            <span th:if="${r.tenant.active}" class="badge bg-success">Activo</span>
-                            <span th:unless="${r.tenant.active}" class="badge bg-secondary">Inactivo</span>
+                            <span th:if="${r.tenant.active}" class="badge bg-success" th:text="#{admin.inact.badge.activo}">Activo</span>
+                            <span th:unless="${r.tenant.active}" class="badge bg-secondary" th:text="#{admin.inact.badge.inactivo}">Inactivo</span>
                         </td>
-                        <td class="small text-muted" th:text="${r.ultimoAcceso != null ? #temporals.format(r.ultimoAcceso, 'dd/MM/yyyy HH:mm') : 'Nunca'}">—</td>
-                        <td th:text="${r.diasInactivo != null ? r.diasInactivo + ' días' : 'Sin registros'}">—</td>
+                        <td class="small text-muted" th:text="${r.ultimoAcceso != null ? #temporals.format(r.ultimoAcceso, 'dd/MM/yyyy HH:mm') : #{admin.inact.nunca}}">—</td>
+                        <td th:text="${r.diasInactivo != null ? #{admin.inact.dias(${r.diasInactivo})} : #{admin.inact.sin.reg}}">—</td>
                         <td class="text-end">
                             <a th:href="@{/admin/tenants/{s}/metricas(s=${r.tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-bar-chart-line me-1"></i>Métricas
+                                <i class="bi bi-bar-chart-line me-1"></i><span th:text="#{admin.inact.btn.metricas}">Métricas</span>
                             </a>
                             <a th:href="@{/admin/tenants/editar/{s}(s=${r.tenant.subdomain})}" class="btn btn-outline-secondary btn-sm">
-                                <i class="bi bi-pencil me-1"></i>Editar
+                                <i class="bi bi-pencil me-1"></i><span th:text="#{admin.ten.btn.editar}">Editar</span>
                             </a>
                         </td>
                     </tr>

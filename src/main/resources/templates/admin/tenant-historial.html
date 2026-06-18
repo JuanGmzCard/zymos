@@ -20,7 +20,7 @@
             <div class="subtitle" th:text="${tenant.name} + ' · ' + ${historial.size()} + ' evento(s)'">Tenant</div>
         </div>
         <a th:href="@{/admin/tenants/editar/{s}(s=${tenant.subdomain})}" class="btn btn-outline-secondary btn-sm align-self-start">
-            <i class="bi bi-arrow-left me-1"></i>Volver
+            <i class="bi bi-arrow-left me-1"></i><span th:text="#{admin.hist.btn.volver}">Volver</span>
         </a>
     </div>
 
@@ -29,17 +29,17 @@
             <table class="table mb-0">
                 <thead>
                     <tr>
-                        <th>Fecha</th>
-                        <th>Acción</th>
-                        <th>Usuario</th>
-                        <th>Detalles</th>
+                        <th th:text="#{admin.hist.col.fecha}">Fecha</th>
+                        <th th:text="#{admin.hist.col.accion}">Acción</th>
+                        <th th:text="#{admin.hist.col.usuario}">Usuario</th>
+                        <th th:text="#{admin.hist.col.detalles}">Detalles</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr th:if="${#lists.isEmpty(historial)}">
                         <td colspan="4" class="text-center text-muted py-5">
                             <i class="bi bi-inbox d-block mb-2" style="font-size:1.5rem; opacity:.4;"></i>
-                            Sin eventos registrados
+                            <span th:text="#{admin.hist.empty}">Sin eventos registrados</span>
                         </td>
                     </tr>
                     <tr th:each="h : ${historial}">
