@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Historial de Precios'">Alera - Historial de Precios</title>
+    <title th:text="${branding.name} + ' - ' + #{inv.prec.title}">Alera - Historial de Precios</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -16,13 +16,13 @@
 
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-graph-up me-2"></i>Historial de Precios</h1>
+            <h1><i class="bi bi-graph-up me-2"></i><span th:text="#{inv.prec.title}">Historial de Precios</span></h1>
             <p class="subtitle mb-0"
-               th:text="${nombre != null} ? 'Evolución del precio unitario para: ' + ${nombre} : 'Seleccioná un insumo para ver la evolución de su precio'">—</p>
+               th:text="${nombre != null} ? #{inv.prec.subtitle.item} + ' ' + ${nombre} : #{inv.prec.subtitle.sel}">—</p>
         </div>
         <div class="pt-1">
             <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver a Inventario
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{inv.prec.volver}">Volver a Inventario</span>
             </a>
         </div>
     </div>
@@ -32,7 +32,7 @@
         <form th:action="@{/inventario/precios}" method="get"
               class="d-flex gap-2 align-items-end flex-wrap">
             <div class="flex-fill" style="min-width:260px; max-width:480px;">
-                <label class="form-label fw-semibold" style="font-size:.8rem;">Insumo / nombre del ítem</label>
+                <label class="form-label fw-semibold" style="font-size:.8rem;" th:text="#{inv.prec.label.insumo}">Insumo / nombre del ítem</label>
                 <input type="search" name="nombre" class="form-control"
                        list="datalistNombres"
                        placeholder="Ej: Malta Pale Ale, Lúpulo Cascade…"
@@ -44,7 +44,7 @@
             </div>
             <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm">
-                    <i class="bi bi-search me-1"></i>Ver historial
+                    <i class="bi bi-search me-1"></i><span th:text="#{inv.prec.btn.ver}">Ver historial</span>
                 </button>
                 <a th:if="${nombre != null}" th:href="@{/inventario/precios}"
                    class="btn btn-outline-secondary btn-sm">
@@ -60,9 +60,8 @@
         <!-- Sin datos -->
         <div th:if="${#lists.isEmpty(historial)}" class="text-center text-muted py-5">
             <i class="bi bi-receipt-cutoff" style="font-size:3rem;opacity:.4;"></i>
-            <p class="mt-3">No se encontraron compras de "<strong th:text="${nombre}"></strong>"
-               en ninguna factura.</p>
-            <p class="small text-muted">Verificá que el nombre coincida exactamente con el ítem en las facturas.</p>
+            <p class="mt-3" th:text="#{inv.prec.empty}">No se encontraron compras de ese insumo en ninguna factura.</p>
+            <p class="small text-muted" th:text="#{inv.prec.hint}">Verificá que el nombre coincida exactamente con el ítem en las facturas.</p>
         </div>
 
         <div th:unless="${#lists.isEmpty(historial)}">
@@ -71,7 +70,7 @@
             <div class="row g-3 mb-4">
                 <div class="col-6 col-md-3">
                     <div class="stat-card-simple">
-                        <div class="stat-label">Último precio unitario</div>
+                        <div class="stat-label" th:text="#{inv.prec.stat.ultimo}">Último precio unitario</div>
                         <div class="stat-value"
                              th:if="${precioUltimo != null}"
                              th:text="'$' + ${#numbers.formatDecimal(precioUltimo,1,'COMMA',0,'POINT')}">—</div>
@@ -82,7 +81,7 @@
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="stat-card-simple">
-                        <div class="stat-label">Precio promedio</div>
+                        <div class="stat-label" th:text="#{inv.prec.stat.promedio}">Precio promedio</div>
                         <div class="stat-value info"
                              th:if="${precioPromedio != null}"
                              th:text="'$' + ${#numbers.formatDecimal(precioPromedio,1,'COMMA',0,'POINT')}">—</div>
@@ -90,7 +89,7 @@
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="stat-card-simple">
-                        <div class="stat-label">Mín / Máx</div>
+                        <div class="stat-label" th:text="#{inv.prec.stat.minmax}">Mín / Máx</div>
                         <div class="stat-value success" style="font-size:1.1rem;"
                              th:if="${precioMinimo != null and precioMaximo != null}"
                              th:text="'$' + ${#numbers.formatDecimal(precioMinimo,1,'COMMA',0,'POINT')} + ' / $' + ${#numbers.formatDecimal(precioMaximo,1,'COMMA',0,'POINT')}">—</div>
@@ -98,7 +97,7 @@
                 </div>
                 <div class="col-6 col-md-3">
                     <div class="stat-card-simple">
-                        <div class="stat-label">Compras / Proveedores</div>
+                        <div class="stat-label" th:text="#{inv.prec.stat.compras}">Compras / Proveedores</div>
                         <div class="stat-value warning"
                              th:text="${nCompras} + ' / ' + ${nProveedores}">—</div>
                         <div class="small mt-1"
@@ -111,8 +110,8 @@
                                 <i class="bi bi-arrow-down-short"></i>
                                 <span th:text="'$' + ${#numbers.formatDecimal(variacion,1,'COMMA',0,'POINT')}"></span>
                             </span>
-                            <span th:if="${variacion.signum() == 0}" class="text-muted">Sin variación</span>
-                            <span class="text-muted"> vs primera compra</span>
+                            <span th:if="${variacion.signum() == 0}" class="text-muted" th:text="#{inv.prec.sin.variacion}">Sin variación</span>
+                            <span class="text-muted"> <span th:text="#{inv.prec.vs.primera}">vs primera compra</span></span>
                         </div>
                     </div>
                 </div>
@@ -121,7 +120,7 @@
             <!-- Gráfico -->
             <div class="content-card mb-4" th:if="${nCompras > 1}">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-bar-chart me-2"></i>EVOLUCIÓN DEL PRECIO UNITARIO
+                    <i class="bi bi-bar-chart me-2"></i><span th:text="#{inv.prec.chart.titulo}">EVOLUCIÓN DEL PRECIO UNITARIO</span>
                 </div>
                 <div style="max-height:280px;">
                     <canvas id="chartPrecios"></canvas>
@@ -131,7 +130,7 @@
             <!-- Tabla detallada -->
             <div class="table-card mb-4">
                 <div class="table-count d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-list-ul me-2"></i>Detalle de compras</span>
+                    <span><i class="bi bi-list-ul me-2"></i><span th:text="#{inv.prec.table.titulo}">Detalle de compras</span></span>
                     <span class="text-muted small"
                           th:text="${nCompras} + ' compra' + (${nCompras != 1} ? 's' : '')"></span>
                 </div>
@@ -139,13 +138,13 @@
                     <table class="table table-hover mb-0" style="font-size:.85rem;">
                         <thead>
                             <tr>
-                                <th>Fecha</th>
-                                <th>Factura</th>
-                                <th>Proveedor</th>
-                                <th class="text-end">Cantidad</th>
-                                <th class="text-end">P. Unitario</th>
-                                <th class="text-end">IVA</th>
-                                <th class="text-end">Total línea</th>
+                                <th th:text="#{label.fecha}">Fecha</th>
+                                <th th:text="#{inv.prec.table.factura}">Factura</th>
+                                <th th:text="#{label.proveedor}">Proveedor</th>
+                                <th class="text-end" th:text="#{label.cantidad}">Cantidad</th>
+                                <th class="text-end" th:text="#{inv.prec.table.pu}">P. Unitario</th>
+                                <th class="text-end" th:text="#{inv.prec.table.iva}">IVA</th>
+                                <th class="text-end" th:text="#{inv.prec.table.total.linea}">Total línea</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -178,8 +177,8 @@
     <!-- Estado inicial -->
     <div th:unless="${nombre != null}" class="text-center text-muted py-5">
         <i class="bi bi-search" style="font-size:2.5rem;opacity:.4;"></i>
-        <p class="mt-3">Escribí el nombre de un insumo en el buscador y presioná "Ver historial".</p>
-        <p class="small">El historial muestra el precio unitario en cada factura donde aparece ese ítem.</p>
+        <p class="mt-3" th:text="#{inv.prec.instrucciones}">Escribí el nombre de un insumo en el buscador y presioná «Ver historial».</p>
+        <p class="small" th:text="#{inv.prec.info}">El historial muestra el precio unitario en cada factura donde aparece ese ítem.</p>
     </div>
 
 </div>

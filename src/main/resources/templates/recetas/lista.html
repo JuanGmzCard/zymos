@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Recetas'">Alera - Recetas</title>
+    <title th:text="${branding.name} + ' - ' + #{recetas.title}">Alera - Recetas</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -152,13 +152,13 @@
     <!-- Cabecera de página -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-journal-bookmark me-2"></i>Recetas</h1>
-            <p class="subtitle mb-0">Plantillas reutilizables para crear lotes de cerveza</p>
+            <h1><i class="bi bi-journal-bookmark me-2"></i><span th:text="#{recetas.title}">Recetas</span></h1>
+            <p class="subtitle mb-0" th:text="#{recetas.subtitle}">Plantillas reutilizables para crear lotes de cerveza</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Nueva Receta
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.nueva}">Nueva Receta</span>
             </a>
         </div>
     </div>
@@ -172,7 +172,7 @@
     <!-- Stat cards -->
     <div class="d-flex gap-3 flex-wrap mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total</div>
+            <div class="stat-label" th:text="#{label.total}">Total</div>
             <div class="stat-value" th:text="${totalRecetas}">0</div>
         </div>
     </div>
@@ -182,21 +182,18 @@
         <div class="d-flex gap-2 flex-wrap align-items-center justify-content-between">
             <div class="d-flex gap-2 flex-wrap align-items-center">
                 <a th:href="@{/recetas}"
-                   th:classappend="${activaFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
-                    Todas
-                </a>
+                   th:classappend="${activaFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{recetas.filter.todas}">Todas</a>
                 <a th:href="@{/recetas(activa=true)}"
-                   th:classappend="${activaFiltro != null and activaFiltro} ? 'filter-tab active' : 'filter-tab inactive'">
-                    Activas
-                </a>
+                   th:classappend="${activaFiltro != null and activaFiltro} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{recetas.filter.activas}">Activas</a>
                 <a th:href="@{/recetas(activa=false)}"
-                   th:classappend="${activaFiltro != null and !activaFiltro} ? 'filter-tab active' : 'filter-tab inactive'">
-                    Inactivas
-                </a>
+                   th:classappend="${activaFiltro != null and !activaFiltro} ? 'filter-tab active' : 'filter-tab inactive'"
+                   th:text="#{recetas.filter.inactivas}">Inactivas</a>
             </div>
             <div class="position-relative">
                 <input type="text" id="recetaNombreInput" class="form-control form-control-sm"
-                       style="width:220px;" placeholder="Buscar receta..." autocomplete="off"
+                       style="width:220px;" th:placeholder="#{recetas.placeholder}" placeholder="Buscar receta..." autocomplete="off"
                        th:attr="data-activa=${activaFiltro != null ? activaFiltro : ''}">
                 <div id="recetaSuggest" class="search-suggest" style="display:none;"></div>
             </div>
@@ -206,15 +203,15 @@
     <!-- Tabla -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span th:text="${totalRecetas}">0</span> recetas
+            <span th:text="${totalRecetas}">0</span> <span th:text="#{recetas.title}">recetas</span>
         </div>
 
         <div th:if="${#lists.isEmpty(recetas)}" class="text-center py-5 text-muted">
             <i class="bi bi-journal-bookmark fs-1 d-block mb-2"></i>
-            <p>No hay recetas registradas</p>
+            <p th:text="#{recetas.empty}">No hay recetas registradas</p>
             <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                class="btn btn-primary btn-sm mt-1">
-                <i class="bi bi-plus-lg me-1"></i>Crear Receta
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.crear}">Crear Receta</span>
             </a>
         </div>
 
@@ -222,12 +219,12 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">Nombre</th>
-                    <th>Estilo</th>
-                    <th class="text-center">OG / FG</th>
-                    <th class="text-center">Hervor</th>
-                    <th class="text-center">Ingredientes</th>
-                    <th class="text-center">Estado</th>
+                    <th style="padding-left:1.25rem;" th:text="#{label.nombre}">Nombre</th>
+                    <th th:text="#{label.estilo}">Estilo</th>
+                    <th class="text-center" th:text="#{recetas.table.og.fg}">OG / FG</th>
+                    <th class="text-center" th:text="#{recetas.table.hervor}">Hervor</th>
+                    <th class="text-center" th:text="#{recetas.table.ingredientes}">Ingredientes</th>
+                    <th class="text-center" th:text="#{label.estado}">Estado</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -259,7 +256,7 @@
                     </td>
                     <td class="text-center">
                         <span th:if="${rec.tiempoHervorMinutos != null}"
-                              th:text="${rec.tiempoHervorMinutos} + ' min'">—</span>
+                              th:text="${rec.tiempoHervorMinutos} + ' ' + #{recetas.min}">—</span>
                         <span th:if="${rec.tiempoHervorMinutos == null}" class="text-muted">—</span>
                     </td>
                     <td class="text-center">
@@ -272,11 +269,11 @@
                                   th:text="${#lists.size(rec.lupulos)} + ' Lúpulo' + (${#lists.size(rec.lupulos)} != 1 ? 's' : '')"></span>
                         </span>
                         <span th:if="${#lists.isEmpty(rec.maltas) and #lists.isEmpty(rec.lupulos)}"
-                              class="text-muted small">Sin ingredientes</span>
+                              class="text-muted small" th:text="#{recetas.badge.sin.ing}">Sin ingredientes</span>
                     </td>
                     <td class="text-center">
-                        <span th:if="${rec.activa}" class="badge bg-success">Activa</span>
-                        <span th:unless="${rec.activa}" class="badge bg-secondary">Inactiva</span>
+                        <span th:if="${rec.activa}" class="badge bg-success" th:text="#{recetas.badge.activa}">Activa</span>
+                        <span th:unless="${rec.activa}" class="badge bg-secondary" th:text="#{recetas.badge.inactiva}">Inactiva</span>
                         <span th:with="cnt=${lotesCountMap != null ? lotesCountMap[rec.id] : null}"
                               th:if="${cnt != null and cnt > 0}"
                               class="badge ms-1" style="background:var(--dorado);color:var(--verde-oscuro);"
@@ -284,23 +281,25 @@
                               th:text="${cnt} + ' lote' + (${cnt} != 1 ? 's' : '')">0 lotes</span>
                     </td>
                     <td class="text-end pe-3">
-                        <a th:href="@{/recetas/ver/{id}(id=${rec.id})}" class="action-link view">Ver</a>
+                        <a th:href="@{/recetas/ver/{id}(id=${rec.id})}" class="action-link view"
+                           th:text="#{recetas.action.ver}">Ver</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <a th:href="@{/recetas/editar/{id}(id=${rec.id})}"
                            sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                           class="action-link edit">Editar</a>
+                           class="action-link edit" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <a th:href="@{/recetas/duplicar/{id}(id=${rec.id})}"
                            sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                           class="action-link edit" title="Duplicar">
+                           class="action-link edit" th:title="#{recetas.action.duplicar}" title="Duplicar">
                             <i class="bi bi-copy"></i>
                         </a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
                               sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
                               class="d-inline">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0" title="Archivar"
-                                    th:attr="data-confirm=|¿Archivar la receta «${rec.nombre}»? Los datos se conservan.|">
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0"
+                                    th:title="#{recetas.action.archivar}" title="Archivar"
+                                    th:attr="data-confirm=#{recetas.confirm.archivar}">
                                 <i class="bi bi-archive"></i>
                             </button>
                         </form>
@@ -313,10 +312,12 @@
         <!-- Paginación -->
         <div class="pagination-simple" th:if="${totalPaginas > 1}">
             <a th:href="@{/recetas(page=${paginaActual - 1},activa=${activaFiltro})}"
-               th:classappend="${paginaActual == 0} ? 'disabled' : ''">← Anterior</a>
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''"
+               th:text="#{page.anterior}">← Anterior</a>
             <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/recetas(page=${paginaActual + 1},activa=${activaFiltro})}"
-               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">Siguiente →</a>
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
+               th:text="#{page.siguiente}">Siguiente →</a>
         </div>
     </div>
 
