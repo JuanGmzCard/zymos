@@ -228,7 +228,7 @@
                             </div>
                         </div>
                         <div class="col-12" th:if="${lote.clarificante != null and !lote.clarificante.isBlank()}">
-                            <div class="detail-label">Clarificante</div>
+                            <div class="detail-label" th:text="#{traz.det.label.clarificante}">Clarificante</div>
                             <div class="detail-value" th:text="${lote.clarificante}">—</div>
                         </div>
                     </div>
@@ -818,7 +818,7 @@
 
                         <!-- Total en tiempo real -->
                         <div class="mb-3 d-flex align-items-center gap-2">
-                            <span class="detail-label">Total:</span>
+                            <span class="detail-label" th:text="#{traz.det.eval.total}">Total:</span>
                             <span id="evalTotalBadge" class="badge rounded-pill bg-secondary" style="font-size:0.95rem;">0 / 50</span>
                             <span id="evalClasifLabel" class="text-muted small fst-italic"></span>
                         </div>
@@ -839,6 +839,19 @@
         </div>
     </div>
 
+    <script th:inline="javascript" th:attr="nonce=${cspNonce}">
+    /*<![CDATA[*/
+    var EVAL_CLASIF = {
+        excepcional: /*[[#{traz.det.js.clasif.excepcional}]]*/ 'Excepcional',
+        excelente:   /*[[#{traz.det.js.clasif.excelente}]]*/ 'Excelente',
+        muyBuena:    /*[[#{traz.det.js.clasif.muy.buena}]]*/ 'Muy buena',
+        buena:       /*[[#{traz.det.js.clasif.buena}]]*/ 'Buena',
+        aceptable:   /*[[#{traz.det.js.clasif.aceptable}]]*/ 'Aceptable',
+        deficiente:  /*[[#{traz.det.js.clasif.deficiente}]]*/ 'Deficiente',
+        inaceptable: /*[[#{traz.det.js.clasif.inaceptable}]]*/ 'Inaceptable'
+    };
+    /*]]>*/
+    </script>
     <script th:attr="nonce=${cspNonce}">
     function syncEval(cat, val) {
         document.getElementById('val' + cat).textContent = val;
@@ -861,13 +874,13 @@
         return 'bg-danger';
     }
     function _evalClasif(t) {
-        if (t >= 47) return 'Excepcional';
-        if (t >= 38) return 'Excelente';
-        if (t >= 30) return 'Muy buena';
-        if (t >= 21) return 'Buena';
-        if (t >= 14) return 'Aceptable';
-        if (t >= 7)  return 'Deficiente';
-        return 'Inaceptable';
+        if (t >= 47) return EVAL_CLASIF.excepcional;
+        if (t >= 38) return EVAL_CLASIF.excelente;
+        if (t >= 30) return EVAL_CLASIF.muyBuena;
+        if (t >= 21) return EVAL_CLASIF.buena;
+        if (t >= 14) return EVAL_CLASIF.aceptable;
+        if (t >= 7)  return EVAL_CLASIF.deficiente;
+        return EVAL_CLASIF.inaceptable;
     }
     </script>
 
@@ -976,7 +989,7 @@
                         <td class="text-muted"
                             th:text="${v.fechaDespacho != null} ? ${#temporals.format(v.fechaDespacho,'dd/MM/yyyy')} : '—'">—</td>
                         <td class="text-center text-muted small"
-                            th:text="${#lists.size(v.items)} + ' ítem(s)'">—</td>
+                            th:text="${#lists.size(v.items)} + ' ' + #{traz.det.ventas.items}">—</td>
                         <td class="text-center">
                             <span class="badge" th:classappend="${v.estado.badgeClass}"
                                   th:text="${v.estado.displayName}">—</span>
