@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Detalle Lote'">Alera - Detalle Lote</title>
+    <title th:text="${branding.name} + ' - ' + ${lote.codigoLote}">Alera - Detalle Lote</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -52,7 +52,7 @@
                                       (${lote.faseActual == 'Maduración'} ? 'maduracion' :
                                       (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
                                       (${lote.faseActual == 'Fermentación'} ? 'fermentacion' : 'inicio'))))"
-                      th:text="${lote.completado} ? 'COMPLETADO' : ${lote.faseActual}">Fase</span>
+                      th:text="${lote.completado} ? #{traz.det.fase.completado} : ${lote.faseActual}">Fase</span>
             </div>
             <p class="subtitle mb-1" th:text="${lote.estilo}">Estilo</p>
             <p class="subtitle mb-0" th:if="${lote.fechaElaboracion != null}">
@@ -66,19 +66,19 @@
         </div>
         <div class="d-flex gap-2 align-self-center pt-1 flex-wrap">
             <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-primary btn-sm">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-copy me-1"></i>Duplicar
+                <i class="bi bi-copy me-1"></i><span th:text="#{action.duplicate}">Duplicar</span>
             </a>
             <a th:href="@{/ver/{id}/pdf(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
             <button class="btn btn-outline-secondary btn-sm btn-print">
-                <i class="bi bi-printer me-1"></i>Imprimir
+                <i class="bi bi-printer me-1"></i><span th:text="#{action.print}">Imprimir</span>
             </button>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -90,51 +90,51 @@
     <div class="d-flex flex-wrap gap-3 mb-4" th:if="${lote.densidadInicial != null}">
         <div class="stat-card-simple">
             <div class="stat-label">
-                Alcohol (ABV)
+                <span th:text="#{traz.det.abv}">Alcohol (ABV)</span>
                 <span th:if="${lote.ogBrix != null}" class="badge bg-info text-dark ms-1" style="font-size:0.6rem;">Terrill</span>
             </div>
             <!-- Si hay Brix, mostrar ABV Terrill; si no, ABV estándar -->
             <div class="stat-value info"
                  th:with="abvVal=${lote.ogBrix != null ? lote.abvTerrill : lote.abv}"
                  th:text="${abvVal != null} ? ${abvVal.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-            <div class="text-muted small mt-1" th:if="${lote.ogBrix != null ? lote.abvTerrill == null : lote.abv == null}">Pendiente densidad final</div>
+            <div class="text-muted small mt-1" th:if="${lote.ogBrix != null ? lote.abvTerrill == null : lote.abv == null}" th:text="#{traz.det.abv.pendiente}">Pendiente densidad final</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Atenuación Aparente</div>
+            <div class="stat-label" th:text="#{traz.det.atenuacion}">Atenuación Aparente</div>
             <div class="stat-value muted"
                  th:text="${lote.atenuacionAparente != null} ? ${lote.atenuacionAparente.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-            <div class="text-muted small mt-1" th:if="${lote.atenuacionAparente == null}">Pendiente densidad final</div>
+            <div class="text-muted small mt-1" th:if="${lote.atenuacionAparente == null}" th:text="#{traz.det.abv.pendiente}">Pendiente densidad final</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Eficiencia de Macerado</div>
+            <div class="stat-label" th:text="#{traz.det.eficiencia}">Eficiencia de Macerado</div>
             <div class="stat-value success"
                  th:text="${lote.eficienciaMacerado != null} ? ${lote.eficienciaMacerado.stripTrailingZeros().toPlainString()} + ' %' : '—'">—</div>
-            <div class="text-muted small mt-1" th:if="${lote.eficienciaMacerado == null}">Sin maltas registradas</div>
+            <div class="text-muted small mt-1" th:if="${lote.eficienciaMacerado == null}" th:text="#{traz.det.eficiencia.sin}">Sin maltas registradas</div>
         </div>
     </div>
 
     <!-- Timeline -->
     <div class="section-box mb-4">
-        <div class="sh"><i class="bi bi-diagram-3 me-2"></i>Progreso del Proceso</div>
+        <div class="sh"><i class="bi bi-diagram-3 me-2"></i><span th:text="#{traz.det.sec.progreso}">Progreso del Proceso</span></div>
         <div class="phase-timeline">
             <div class="phase-step" th:classappend="${lote.fermFechaInicial != null} ? (${lote.fermFechaFinal != null} ? 'completed' : 'active') : ''">
                 <div class="phase-step-number">1</div>
-                <div class="phase-step-label">Fermentación</div>
+                <div class="phase-step-label" th:text="#{traz.det.step.ferm}">Fermentación</div>
                 <div class="phase-step-date" th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
             <div class="phase-step" th:classappend="${lote.acondFechaInicial != null} ? (${lote.acondFechaFinal != null} ? 'completed' : 'active') : ''">
                 <div class="phase-step-number">2</div>
-                <div class="phase-step-label">Acondic.</div>
+                <div class="phase-step-label" th:text="#{traz.det.step.acond}">Acondic.</div>
                 <div class="phase-step-date" th:text="${lote.acondFechaInicial != null} ? ${#temporals.format(lote.acondFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
             <div class="phase-step" th:classappend="${lote.madurFechaInicial != null} ? (${lote.madurFechaFinal != null} ? 'completed' : 'active') : ''">
                 <div class="phase-step-number">3</div>
-                <div class="phase-step-label">Maduración</div>
+                <div class="phase-step-label" th:text="#{traz.det.step.madur}">Maduración</div>
                 <div class="phase-step-date" th:text="${lote.madurFechaInicial != null} ? ${#temporals.format(lote.madurFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
             <div class="phase-step" th:classappend="${lote.carbFechaInicial != null} ? (${lote.carbFechaFinal != null} ? 'completed' : 'active') : ''">
                 <div class="phase-step-number">4</div>
-                <div class="phase-step-label">Carbonatación</div>
+                <div class="phase-step-label" th:text="#{traz.det.step.carbon}">Carbonatación</div>
                 <div class="phase-step-date" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM')} : '—'">—</div>
             </div>
         </div>
@@ -148,26 +148,26 @@
 
             <!-- Información del lote -->
             <div class="section-box">
-                <div class="sh"><i class="bi bi-info-circle me-2"></i>Información del Lote</div>
+                <div class="sh"><i class="bi bi-info-circle me-2"></i><span th:text="#{traz.det.sec.info}">Información del Lote</span></div>
                 <div class="sb">
                     <div class="row g-3">
                         <div class="col-6">
-                            <div class="detail-label">Código</div>
+                            <div class="detail-label" th:text="#{traz.det.label.codigo}">Código</div>
                             <div class="detail-value highlight" th:text="${lote.codigoLote}">—</div>
                         </div>
                         <div class="col-6">
-                            <div class="detail-label">Estilo</div>
+                            <div class="detail-label" th:text="#{label.estilo}">Estilo</div>
                             <div class="detail-value" th:text="${lote.estilo}">—</div>
                         </div>
                         <div class="col-6">
-                            <div class="detail-label">Fecha de Elaboración</div>
+                            <div class="detail-label" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</div>
                             <div class="detail-value"
                                  th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</div>
                         </div>
                         <div class="col-6">
-                            <div class="detail-label">Fermentador</div>
+                            <div class="detail-label" th:text="#{traz.form.ferm.fermentador}">Fermentador</div>
                             <div class="detail-value"
-                                 th:text="${lote.equipoFermentador != null} ? ${lote.equipoFermentador.nombre} : 'Sin asignar'">—</div>
+                                 th:text="${lote.equipoFermentador != null} ? ${lote.equipoFermentador.nombre} : #{traz.det.label.sin.asignar}">—</div>
                         </div>
                     </div>
                 </div>
@@ -175,21 +175,21 @@
 
             <!-- Parámetros de proceso -->
             <div class="section-box">
-                <div class="sh"><i class="bi bi-flask me-2"></i>Parámetros de Proceso</div>
+                <div class="sh"><i class="bi bi-flask me-2"></i><span th:text="#{traz.det.sec.params}">Parámetros de Proceso</span></div>
                 <div class="sb">
                     <div class="row g-3">
                         <div class="col-4">
-                            <div class="detail-label">Agua</div>
+                            <div class="detail-label" th:text="#{traz.det.label.agua}">Agua</div>
                             <div class="detail-value"
                                  th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</div>
                         </div>
                         <div class="col-4">
-                            <div class="detail-label">pH Agua</div>
+                            <div class="detail-label" th:text="#{traz.det.label.ph.agua}">pH Agua</div>
                             <div class="detail-value"
                                  th:text="${lote.phAgua != null} ? ${lote.phAgua} : '—'">—</div>
                         </div>
                         <div class="col-4">
-                            <div class="detail-label">Vol. Final</div>
+                            <div class="detail-label" th:text="#{traz.det.label.vol.final}">Vol. Final</div>
                             <div class="detail-value"
                                  th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</div>
                         </div>
@@ -202,7 +202,7 @@
                                 </div>
                                 <div class="densidad-valor" th:text="${lote.densidadInicial}">—</div>
                                 <div class="detail-label">
-                                    Densidad Inicial
+                                    <span th:text="#{traz.det.label.og}">Densidad Inicial</span>
                                     <span th:if="${lote.ogBrix != null}"
                                           th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
                                           class="text-info"></span>
@@ -218,7 +218,7 @@
                                 </div>
                                 <div class="densidad-valor" th:text="${lote.densidadFinal}">—</div>
                                 <div class="detail-label">
-                                    Densidad Final
+                                    <span th:text="#{traz.det.label.fg}">Densidad Final</span>
                                     <span th:if="${lote.densidadFinalFecha != null}"
                                           th:text="'· ' + ${#temporals.format(lote.densidadFinalFecha,'dd/MM')}"></span>
                                     <span th:if="${lote.fgBrix != null}"
@@ -240,11 +240,11 @@
         <!-- Columna derecha: Ingredientes -->
         <div class="col-lg-7">
             <div class="section-box h-100">
-                <div class="sh"><i class="bi bi-list-ul me-2"></i>Ingredientes</div>
+                <div class="sh"><i class="bi bi-list-ul me-2"></i><span th:text="#{traz.det.sec.ingredientes}">Ingredientes</span></div>
                 <div class="sb">
                     <div class="mb-4" th:if="${!#lists.isEmpty(lote.maltas)}">
                         <div class="ingrediente-grupo-label">
-                            <i class="bi bi-circle-fill me-1 text-malta"></i>Maltas
+                            <i class="bi bi-circle-fill me-1 text-malta"></i><span th:text="#{traz.det.ing.maltas}">Maltas</span>
                         </div>
                         <div class="mt-2">
                             <span th:each="m : ${lote.maltas}"
@@ -254,7 +254,7 @@
                     </div>
                     <div class="mb-4" th:if="${!#lists.isEmpty(lote.lupulos)}">
                         <div class="ingrediente-grupo-label">
-                            <i class="bi bi-circle-fill me-1 text-lupulo"></i>Lúpulos
+                            <i class="bi bi-circle-fill me-1 text-lupulo"></i><span th:text="#{traz.det.ing.lupulos}">Lúpulos</span>
                         </div>
                         <div class="mt-2">
                             <span th:each="lup : ${lote.lupulos}"
@@ -264,7 +264,7 @@
                     </div>
                     <div class="mb-4" th:if="${!#lists.isEmpty(lote.levaduras)}">
                         <div class="ingrediente-grupo-label">
-                            <i class="bi bi-circle-fill me-1 text-levadura"></i>Levaduras
+                            <i class="bi bi-circle-fill me-1 text-levadura"></i><span th:text="#{traz.det.ing.levaduras}">Levaduras</span>
                         </div>
                         <div class="mt-2">
                             <span th:each="lev : ${lote.levaduras}"
@@ -274,7 +274,7 @@
                     </div>
                     <div class="mb-2" th:if="${!#lists.isEmpty(lote.clarificantes)}">
                         <div class="ingrediente-grupo-label">
-                            <i class="bi bi-circle-fill me-1 text-clarificante"></i>Clarificantes
+                            <i class="bi bi-circle-fill me-1 text-clarificante"></i><span th:text="#{traz.det.ing.clarificantes}">Clarificantes</span>
                         </div>
                         <div class="mt-2">
                             <span th:each="clar : ${lote.clarificantes}"
@@ -284,7 +284,7 @@
                     </div>
                     <div th:if="${#lists.isEmpty(lote.ingredientes)}" class="empty-state py-5">
                         <i class="bi bi-basket3"></i>
-                        <p class="mb-0">Sin ingredientes registrados</p>
+                        <p class="mb-0" th:text="#{traz.det.ing.vacio}">Sin ingredientes registrados</p>
                     </div>
                 </div>
             </div>
@@ -293,7 +293,7 @@
 
     <!-- Detalle de fases -->
     <div class="section-box mb-4">
-        <div class="sh"><i class="bi bi-calendar-week me-2"></i>Detalle de Fases</div>
+        <div class="sh"><i class="bi bi-calendar-week me-2"></i><span th:text="#{traz.det.sec.fases}">Detalle de Fases</span></div>
         <div class="row g-0 fases-grid">
 
             <!-- Fermentación -->
@@ -301,24 +301,24 @@
                  th:classappend="${lote.fermFechaFinal != null} ? 'fase-completada' :
                                   (${lote.fermFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
                 <div class="fase-numero">1</div>
-                <div class="fase-nombre">Fermentación</div>
+                <div class="fase-nombre" th:text="#{traz.tab.ferm}">Fermentación</div>
                 <div class="fase-dato" th:if="${lote.fermFechaInicial != null}">
-                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.inicio}">Inicio</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.fermFechaFinalIdeal != null}">
-                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.ideal}">Fin ideal</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.fermFechaFinalIdeal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.fermFechaFinal != null}">
-                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.real}">Fin real</span>
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.fermTemperatura != null}">
-                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
                     <span class="fase-dato-val" th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                 </div>
-                <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
 
             <!-- Acondicionamiento -->
@@ -326,24 +326,24 @@
                  th:classappend="${lote.acondFechaFinal != null} ? 'fase-completada' :
                                   (${lote.acondFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
                 <div class="fase-numero">2</div>
-                <div class="fase-nombre">Acondicionamiento</div>
+                <div class="fase-nombre" th:text="#{traz.tab.acond}">Acondicionamiento</div>
                 <div class="fase-dato" th:if="${lote.acondFechaInicial != null}">
-                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.inicio}">Inicio</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaInicial,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.acondFechaFinalIdeal != null}">
-                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.ideal}">Fin ideal</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.acondFechaFinalIdeal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.acondFechaFinal != null}">
-                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.real}">Fin real</span>
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.acondTemperatura != null}">
-                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
                     <span class="fase-dato-val" th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                 </div>
-                <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
 
             <!-- Maduración -->
@@ -351,24 +351,24 @@
                  th:classappend="${lote.madurFechaFinal != null} ? 'fase-completada' :
                                   (${lote.madurFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
                 <div class="fase-numero">3</div>
-                <div class="fase-nombre">Maduración</div>
+                <div class="fase-nombre" th:text="#{traz.tab.madur}">Maduración</div>
                 <div class="fase-dato" th:if="${lote.madurFechaInicial != null}">
-                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.inicio}">Inicio</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaInicial,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.madurFechaFinalIdeal != null}">
-                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.ideal}">Fin ideal</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.madurFechaFinalIdeal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.madurFechaFinal != null}">
-                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.real}">Fin real</span>
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.madurTemperatura != null}">
-                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
                     <span class="fase-dato-val" th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                 </div>
-                <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
 
             <!-- Carbonatación -->
@@ -376,24 +376,24 @@
                  th:classappend="${lote.carbFechaFinal != null} ? 'fase-completada' :
                                   (${lote.carbFechaInicial != null} ? 'fase-activa' : 'fase-pendiente')">
                 <div class="fase-numero">4</div>
-                <div class="fase-nombre">Carbonatación</div>
+                <div class="fase-nombre" th:text="#{traz.tab.carbon}">Carbonatación</div>
                 <div class="fase-dato" th:if="${lote.carbFechaInicial != null}">
-                    <span class="fase-dato-key">Inicio</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.inicio}">Inicio</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.carbFechaFinalIdeal != null}">
-                    <span class="fase-dato-key">Fin ideal</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.ideal}">Fin ideal</span>
                     <span class="fase-dato-val" th:text="${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.carbFechaFinal != null}">
-                    <span class="fase-dato-key">Fin real</span>
+                    <span class="fase-dato-key" th:text="#{traz.det.fase.fin.real}">Fin real</span>
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.carbTemperatura != null}">
-                    <span class="fase-dato-key">Temperatura</span>
+                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
                     <span class="fase-dato-val" th:text="${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
                 </div>
-                <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label">No iniciada</div>
+                <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
 
         </div>
@@ -402,9 +402,9 @@
     <!-- Curva de Fermentación -->
     <div class="section-box mb-4">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-graph-up-arrow me-2"></i>Curva de Fermentación</span>
+            <span><i class="bi bi-graph-up-arrow me-2"></i><span th:text="#{traz.det.sec.curva}">Curva de Fermentación</span></span>
             <span class="fw-normal text-muted" style="font-size:0.8rem;"
-                  th:text="${#lists.size(lecturas)} + ' lectura' + (${#lists.size(lecturas) != 1} ? 's' : '')"></span>
+                  th:text="${#lists.size(lecturas)} + ' ' + (${#lists.size(lecturas) != 1} ? #{traz.det.curva.lecturas} : #{traz.det.curva.lectura})"></span>
         </div>
         <div class="sb">
 
@@ -418,11 +418,11 @@
                 <table class="table table-sm mb-0" style="font-size:0.82rem;">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th class="text-center">Densidad</th>
-                            <th class="text-center">ABV parcial</th>
-                            <th class="text-center">Temperatura</th>
-                            <th>Notas</th>
+                            <th th:text="#{label.fecha}">Fecha</th>
+                            <th class="text-center" th:text="#{traz.det.curva.col.densidad}">Densidad</th>
+                            <th class="text-center" th:text="#{traz.det.curva.col.abv}">ABV parcial</th>
+                            <th class="text-center" th:text="#{traz.form.ferm.temperatura}">Temperatura</th>
+                            <th th:text="#{label.notas}">Notas</th>
                             <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
                         </tr>
                     </thead>
@@ -445,8 +445,8 @@
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
-                                            data-confirm="¿Eliminar esta lectura?"
-                                            title="Eliminar">
+                                            th:attr="data-confirm=#{traz.det.confirm.lectura}"
+                                            th:title="#{action.delete}">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </form>
@@ -459,43 +459,43 @@
             <!-- Formulario de nueva lectura -->
             <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <div class="detail-label mb-2">
-                    <i class="bi bi-plus-circle me-1"></i>Registrar lectura
+                    <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.det.curva.form.registrar}">Registrar lectura</span>
                 </div>
                 <form th:action="@{/ver/{id}/lecturas/agregar(id=${lote.id})}" method="post"
                       class="row g-2 align-items-end">
                     <div class="col-auto">
-                        <label class="form-label detail-label">Fecha *</label>
+                        <label class="form-label detail-label" th:text="#{label.fecha} + ' *'">Fecha *</label>
                         <input type="date" name="fecha" class="form-control form-control-sm"
                                th:value="${T(java.time.LocalDate).now()}" required>
                     </div>
                     <!-- Campo °Brix solo visible cuando el lote fue medido con refractómetro -->
                     <div class="col-auto" th:if="${lote.ogBrix != null}">
                         <label class="form-label detail-label" for="lectBrixInput">
-                            <i class="bi bi-eyedropper me-1" style="color:#0284c7;"></i>°Brix actual
-                            <span style="font-size:0.65rem;color:#94a3b8;font-weight:400;"> → auto-SG</span>
+                            <i class="bi bi-eyedropper me-1" style="color:#0284c7;"></i><span th:text="#{traz.det.curva.form.brix}">°Brix actual</span>
+                            <span style="font-size:0.65rem;color:#94a3b8;font-weight:400;" th:text="' ' + #{traz.det.curva.form.brix.auto}"> → auto-SG</span>
                         </label>
                         <input type="number" id="lectBrixInput" class="form-control form-control-sm"
                                style="width:90px;" placeholder="4.2" min="1" max="40" step="0.1">
                     </div>
                     <div class="col-auto">
-                        <label class="form-label detail-label" for="lectDensidadInput">Densidad (SG)</label>
+                        <label class="form-label detail-label" for="lectDensidadInput" th:text="#{traz.det.curva.form.densidad}">Densidad (SG)</label>
                         <input type="number" id="lectDensidadInput" name="densidad" class="form-control form-control-sm"
                                style="width:90px;" placeholder="1042" min="990" max="1150" step="1"
                                th:readonly="${lote.ogBrix != null}">
                     </div>
                     <div class="col-auto">
-                        <label class="form-label detail-label">Temp. (°C)</label>
+                        <label class="form-label detail-label" th:text="#{traz.det.curva.form.temp}">Temp. (°C)</label>
                         <input type="number" name="temperatura" class="form-control form-control-sm"
                                style="width:85px;" placeholder="18.5" min="0" max="60" step="0.1">
                     </div>
                     <div class="col">
-                        <label class="form-label detail-label">Notas</label>
+                        <label class="form-label detail-label" th:text="#{label.notas}">Notas</label>
                         <input type="text" name="notas" class="form-control form-control-sm"
-                               placeholder="Observación opcional" maxlength="500">
+                               th:placeholder="#{traz.det.curva.form.notas.ph}" maxlength="500">
                     </div>
                     <div class="col-auto">
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-check2 me-1"></i>Guardar
+                            <i class="bi bi-check2 me-1"></i><span th:text="#{traz.det.curva.btn.guardar}">Guardar</span>
                         </button>
                     </div>
                 </form>
@@ -506,36 +506,36 @@
     <!-- Detalle de Carbonatación Avanzada -->
     <div class="section-box mb-4"
          th:if="${lote.carbMetodo != null or lote.carbCo2Objetivo != null or lote.carbDestino != null}">
-        <div class="sh"><i class="bi bi-wind me-2"></i>Carbonatación — Detalle</div>
+        <div class="sh"><i class="bi bi-wind me-2"></i><span th:text="#{traz.det.sec.carb}">Carbonatación — Detalle</span></div>
         <div class="sb">
 
             <!-- Fila 1: método, CO₂ objetivo/real, validación -->
             <div class="row g-3 mb-3">
                 <div class="col-md-3" th:if="${lote.carbMetodo != null}">
-                    <div class="detail-label">Método</div>
+                    <div class="detail-label" th:text="#{traz.det.carb.metodo}">Método</div>
                     <span th:if="${lote.carbMetodo == 'NATURAL'}"
                           class="badge rounded-pill"
                           style="background:rgba(39,174,96,0.15);color:#1a6e3e;font-size:0.85rem;">
-                        <i class="bi bi-flower1 me-1"></i>Natural / Priming
+                        <i class="bi bi-flower1 me-1"></i><span th:text="#{traz.det.carb.natural}">Natural / Priming</span>
                     </span>
                     <span th:if="${lote.carbMetodo == 'FORZADA'}"
                           class="badge rounded-pill"
                           style="background:rgba(52,152,219,0.15);color:#1a4a7a;font-size:0.85rem;">
-                        <i class="bi bi-gear me-1"></i>Forzada / CO₂
+                        <i class="bi bi-gear me-1"></i><span th:text="#{traz.det.carb.forzada}">Forzada / CO₂</span>
                     </span>
                 </div>
 
                 <div class="col-md-3" th:if="${lote.carbCo2Objetivo != null or lote.carbCo2Real != null}">
-                    <div class="detail-label">Volúmenes CO₂</div>
+                    <div class="detail-label" th:text="#{traz.det.carb.volumenes}">Volúmenes CO₂</div>
                     <div class="densidad-box" style="display:inline-flex;gap:1rem;align-items:center;">
                         <span th:if="${lote.carbCo2Objetivo != null}">
-                            <small class="text-muted">Objetivo</small><br>
+                            <small class="text-muted" th:text="#{traz.det.carb.objetivo}">Objetivo</small><br>
                             <strong th:text="${lote.carbCo2Objetivo} + ' vol'"></strong>
                         </span>
                         <span th:if="${lote.carbCo2Objetivo != null and lote.carbCo2Real != null}"
                               class="text-muted">→</span>
                         <span th:if="${lote.carbCo2Real != null}">
-                            <small class="text-muted">Real</small><br>
+                            <small class="text-muted" th:text="#{traz.det.carb.real}">Real</small><br>
                             <strong style="color:var(--verde-alera);"
                                     th:text="${lote.carbCo2Real} + ' vol'"></strong>
                         </span>
@@ -543,18 +543,18 @@
                 </div>
 
                 <div class="col-md-3" th:if="${lote.carbValidacion != null}">
-                    <div class="detail-label">Validación Organoléptica</div>
+                    <div class="detail-label" th:text="#{traz.det.carb.validacion}">Validación Organoléptica</div>
                     <span th:switch="${lote.carbValidacion}">
-                        <span th:case="'ADECUADA'" class="badge bg-success">✓ Espuma y retención adecuadas</span>
-                        <span th:case="'RETENCION_CORRECTA'" class="badge bg-success">✓ Retención correcta</span>
-                        <span th:case="'SOBRECARBONATADA'" class="badge bg-warning text-dark">⚠ Sobrecarbonatada</span>
-                        <span th:case="'BAJA_CARBONATACION'" class="badge bg-warning text-dark">⚠ Baja carbonatación</span>
+                        <span th:case="'ADECUADA'" class="badge bg-success" th:text="#{traz.det.carb.val.adecuada}">✓ Espuma y retención adecuadas</span>
+                        <span th:case="'RETENCION_CORRECTA'" class="badge bg-success" th:text="#{traz.det.carb.val.retencion}">✓ Retención correcta</span>
+                        <span th:case="'SOBRECARBONATADA'" class="badge bg-warning text-dark" th:text="#{traz.det.carb.val.sobre}">⚠ Sobrecarbonatada</span>
+                        <span th:case="'BAJA_CARBONATACION'" class="badge bg-warning text-dark" th:text="#{traz.det.carb.val.baja}">⚠ Baja carbonatación</span>
                         <span th:case="*" class="text-muted" th:text="${lote.carbValidacion}"></span>
                     </span>
                 </div>
 
                 <div class="col-md-3" th:if="${lote.carbDestino != null}">
-                    <div class="detail-label">Destino y Empaque</div>
+                    <div class="detail-label" th:text="#{traz.det.carb.destino}">Destino y Empaque</div>
                     <div class="detail-value">
                         <i class="bi bi-box-seam me-1 text-muted"></i>
                         <span th:each="entrada : ${lote.carbDestino.split(' \\| ')}"
@@ -570,15 +570,15 @@
                 <div class="col-12">
                     <div class="phase-card">
                         <div class="phase-card-header" style="background:rgba(39,174,96,0.08);color:#1a6e3e;">
-                            <i class="bi bi-flower1 me-1"></i>Priming
+                            <i class="bi bi-flower1 me-1"></i><span th:text="#{traz.det.carb.priming}">Priming</span>
                         </div>
                         <div class="p-3 d-flex gap-4 flex-wrap">
                             <div th:if="${lote.carbAzucarTipo != null}">
-                                <div class="detail-label">Tipo de azúcar</div>
+                                <div class="detail-label" th:text="#{traz.det.carb.azucar.tipo}">Tipo de azúcar</div>
                                 <div class="detail-value" th:text="${lote.carbAzucarTipo}"></div>
                             </div>
                             <div th:if="${lote.carbAzucarGramos != null}">
-                                <div class="detail-label">Gramos añadidos</div>
+                                <div class="detail-label" th:text="#{traz.det.carb.azucar.gramos}">Gramos añadidos</div>
                                 <div class="detail-value" th:text="${lote.carbAzucarGramos} + ' g'"></div>
                             </div>
                         </div>
@@ -591,21 +591,21 @@
                 <div class="col-12">
                     <div class="phase-card">
                         <div class="phase-card-header" style="background:rgba(52,152,219,0.08);color:#1a4a7a;">
-                            <i class="bi bi-gear me-1"></i>Inyección de CO₂
+                            <i class="bi bi-gear me-1"></i><span th:text="#{traz.det.carb.inyeccion}">Inyección de CO₂</span>
                         </div>
                         <div class="p-3 d-flex gap-4 flex-wrap">
                             <div th:if="${lote.carbPresionPsi != null}">
-                                <div class="detail-label">Presión</div>
+                                <div class="detail-label" th:text="#{traz.det.carb.presion}">Presión</div>
                                 <div class="detail-value" th:text="${lote.carbPresionPsi} + ' PSI'"></div>
                             </div>
                             <div th:if="${lote.carbTiempoHoras != null}">
-                                <div class="detail-label">Tiempo exposición</div>
+                                <div class="detail-label" th:text="#{traz.det.carb.tiempo}">Tiempo exposición</div>
                                 <div class="detail-value" th:text="${lote.carbTiempoHoras} + ' horas'"></div>
                             </div>
                             <div th:if="${lote.carbTecnica != null}">
-                                <div class="detail-label">Técnica</div>
+                                <div class="detail-label" th:text="#{traz.det.carb.tecnica}">Técnica</div>
                                 <div class="detail-value"
-                                     th:text="${lote.carbTecnica == 'PIEDRA'} ? 'Piedra de difusión' : 'Presión fija (superficie / agitación)'"></div>
+                                     th:text="${lote.carbTecnica == 'PIEDRA'} ? #{traz.det.carb.tecnica.piedra} : #{traz.det.carb.tecnica.presion}"></div>
                             </div>
                         </div>
                     </div>
@@ -619,47 +619,47 @@
     <div class="section-box mb-4"
          th:if="${lote.receta != null and (lote.receta.ogObjetivo != null or lote.receta.fgObjetivo != null)}">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-arrow-left-right me-2"></i>Comparativa Receta vs Lote</span>
+            <span><i class="bi bi-arrow-left-right me-2"></i><span th:text="#{traz.det.sec.comparativa}">Comparativa Receta vs Lote</span></span>
             <a th:href="@{/recetas/ver/{id}(id=${lote.receta.id})}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-journal-bookmark me-1"></i>Ver Receta
+                <i class="bi bi-journal-bookmark me-1"></i><span th:text="#{traz.det.comp.ver.receta}">Ver Receta</span>
             </a>
         </div>
         <div class="sb">
             <div class="row g-3 text-center">
                 <div class="col-md-4" th:if="${lote.receta.ogObjetivo != null}">
                     <div class="comparativa-box">
-                        <div class="detail-label">OG Objetivo</div>
+                        <div class="detail-label" th:text="#{traz.det.comp.og}">OG Objetivo</div>
                         <div class="comparativa-objetivo" th:text="${lote.receta.ogObjetivo}">—</div>
                         <div class="comparativa-real" th:if="${lote.densidadInicial != null}">
-                            Real: <strong th:text="${lote.densidadInicial}"></strong>
+                            <span th:text="#{traz.det.comp.real}">Real:</span> <strong th:text="${lote.densidadInicial}"></strong>
                             <span th:with="diff=${lote.densidadInicial} - ${lote.receta.ogObjetivo}"
                                   th:classappend="${diff > 0} ? 'text-success' : (${diff < 0} ? 'text-danger' : 'text-muted')"
                                   th:text="${diff > 0} ? ('(+' + ${diff} + ')') : ('(' + ${diff} + ')')">
                             </span>
                         </div>
-                        <div class="text-muted small" th:if="${lote.densidadInicial == null}">Pendiente</div>
+                        <div class="text-muted small" th:if="${lote.densidadInicial == null}" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
                     </div>
                 </div>
                 <div class="col-md-4" th:if="${lote.receta.fgObjetivo != null}">
                     <div class="comparativa-box">
-                        <div class="detail-label">FG Objetivo</div>
+                        <div class="detail-label" th:text="#{traz.det.comp.fg}">FG Objetivo</div>
                         <div class="comparativa-objetivo" th:text="${lote.receta.fgObjetivo}">—</div>
                         <div class="comparativa-real" th:if="${lote.densidadFinal != null}">
-                            Real: <strong th:text="${lote.densidadFinal}"></strong>
+                            <span th:text="#{traz.det.comp.real}">Real:</span> <strong th:text="${lote.densidadFinal}"></strong>
                         </div>
-                        <div class="text-muted small" th:if="${lote.densidadFinal == null}">Pendiente</div>
+                        <div class="text-muted small" th:if="${lote.densidadFinal == null}" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
                     </div>
                 </div>
                 <div class="col-md-4"
                      th:if="${lote.receta.ogObjetivo != null and lote.receta.fgObjetivo != null}">
                     <div class="comparativa-box">
-                        <div class="detail-label">ABV Objetivo</div>
+                        <div class="detail-label" th:text="#{traz.det.comp.abv}">ABV Objetivo</div>
                         <div class="comparativa-objetivo"
                              th:text="${T(java.math.BigDecimal).valueOf((lote.receta.ogObjetivo - lote.receta.fgObjetivo) * 0.13125).stripTrailingZeros().toPlainString()} + ' %'">—</div>
                         <div class="comparativa-real" th:if="${lote.abv != null}">
-                            Real: <strong th:text="${lote.abv.stripTrailingZeros().toPlainString()} + ' %'"></strong>
+                            <span th:text="#{traz.det.comp.real}">Real:</span> <strong th:text="${lote.abv.stripTrailingZeros().toPlainString()} + ' %'"></strong>
                         </div>
-                        <div class="text-muted small" th:if="${lote.abv == null}">Pendiente</div>
+                        <div class="text-muted small" th:if="${lote.abv == null}" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
                     </div>
                 </div>
             </div>
@@ -669,15 +669,15 @@
     <!-- Evaluación Sensorial (BJCP) -->
     <div class="section-box mb-4">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clipboard2-check me-2"></i>Evaluación Sensorial</span>
+            <span><i class="bi bi-clipboard2-check me-2"></i><span th:text="#{traz.det.sec.eval}">Evaluación Sensorial</span></span>
             <span class="fw-normal text-muted" style="font-size:0.8rem;"
-                  th:text="${#lists.size(evaluaciones)} + ' evaluación' + (${#lists.size(evaluaciones) != 1} ? 'es' : '')"></span>
+                  th:text="${#lists.size(evaluaciones)} + ' ' + (${#lists.size(evaluaciones) != 1} ? #{traz.det.eval.col.evaluaciones} : #{traz.det.eval.col.evaluacion})"></span>
         </div>
         <div class="sb">
 
             <!-- Promedio cuando hay más de una evaluación con puntaje -->
             <div th:if="${promedioEvaluacion != null and #lists.size(evaluaciones) > 1}" class="mb-3">
-                <span class="detail-label">Promedio:</span>
+                <span class="detail-label" th:text="#{traz.det.eval.promedio}">Promedio:</span>
                 <span class="badge rounded-pill ms-2" style="font-size:0.9rem;"
                       th:class="'badge rounded-pill ms-2 '
                           + (${promedioEvaluacion >= 47} ? 'bg-warning text-dark'
@@ -694,15 +694,15 @@
                 <table class="table table-sm mb-0" style="font-size:0.82rem;">
                     <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Catador</th>
-                            <th class="text-center">Aroma<br><small class="fw-normal">/12</small></th>
-                            <th class="text-center">Apariencia<br><small class="fw-normal">/3</small></th>
-                            <th class="text-center">Sabor<br><small class="fw-normal">/20</small></th>
-                            <th class="text-center">Boca<br><small class="fw-normal">/5</small></th>
-                            <th class="text-center">General<br><small class="fw-normal">/10</small></th>
-                            <th class="text-center">Total</th>
-                            <th>Notas</th>
+                            <th th:text="#{label.fecha}">Fecha</th>
+                            <th th:text="#{traz.det.eval.col.catador}">Catador</th>
+                            <th class="text-center"><span th:text="#{traz.det.eval.col.aroma}">Aroma</span><br><small class="fw-normal">/12</small></th>
+                            <th class="text-center"><span th:text="#{traz.det.eval.col.apariencia}">Apariencia</span><br><small class="fw-normal">/3</small></th>
+                            <th class="text-center"><span th:text="#{traz.det.eval.col.sabor}">Sabor</span><br><small class="fw-normal">/20</small></th>
+                            <th class="text-center"><span th:text="#{traz.det.eval.col.boca}">Boca</span><br><small class="fw-normal">/5</small></th>
+                            <th class="text-center"><span th:text="#{traz.det.eval.col.general}">General</span><br><small class="fw-normal">/10</small></th>
+                            <th class="text-center" th:text="#{label.total}">Total</th>
+                            <th th:text="#{label.notas}">Notas</th>
                             <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
                         </tr>
                     </thead>
@@ -727,8 +727,8 @@
                                 <form th:action="@{/ver/{id}/evaluaciones/{eid}/eliminar(id=${lote.id},eid=${ev.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
-                                            data-confirm="¿Eliminar esta evaluación?"
-                                            title="Eliminar">
+                                            th:attr="data-confirm=#{traz.det.confirm.evaluacion}"
+                                            th:title="#{action.delete}">
                                         <i class="bi bi-trash3"></i>
                                     </button>
                                 </form>
@@ -742,23 +742,23 @@
             <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <button class="btn btn-outline-secondary btn-sm mb-3" type="button"
                         data-bs-toggle="collapse" data-bs-target="#formEvaluacion" aria-expanded="false">
-                    <i class="bi bi-plus-circle me-1"></i>Nueva evaluación
+                    <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.det.eval.btn.nueva}">Nueva evaluación</span>
                 </button>
                 <div class="collapse" id="formEvaluacion">
                     <form th:action="@{/ver/{id}/evaluaciones/agregar(id=${lote.id})}" method="post">
 
                         <div class="row g-2 mb-3">
                             <div class="col-auto">
-                                <label class="form-label detail-label" for="evalFecha">Fecha *</label>
+                                <label class="form-label detail-label" for="evalFecha" th:text="#{label.fecha} + ' *'">Fecha *</label>
                                 <input type="date" id="evalFecha" name="fecha"
                                        class="form-control form-control-sm"
                                        th:value="${T(java.time.LocalDate).now()}" required>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label detail-label" for="evalCatador">Catador</label>
+                                <label class="form-label detail-label" for="evalCatador" th:text="#{traz.det.eval.form.catador}">Catador</label>
                                 <input type="text" id="evalCatador" name="catador"
                                        class="form-control form-control-sm"
-                                       placeholder="Nombre del evaluador" maxlength="100">
+                                       th:placeholder="#{traz.det.eval.form.catador.ph}" maxlength="100">
                             </div>
                         </div>
 
@@ -766,8 +766,8 @@
                         <div class="row g-2 mb-3">
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-3">
-                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalAroma">
-                                        Aroma <span class="text-muted fw-normal">(0–12)</span>
+                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalAroma" th:text="#{traz.det.eval.form.aroma}">
+                                        Aroma (0–12)
                                     </label>
                                     <input type="range" id="evalAroma" name="aroma" class="form-range flex-grow-1"
                                            min="0" max="12" step="1" value="0">
@@ -776,8 +776,8 @@
                             </div>
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-3">
-                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalApariencia">
-                                        Apariencia <span class="text-muted fw-normal">(0–3)</span>
+                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalApariencia" th:text="#{traz.det.eval.form.apariencia}">
+                                        Apariencia (0–3)
                                     </label>
                                     <input type="range" id="evalApariencia" name="apariencia" class="form-range flex-grow-1"
                                            min="0" max="3" step="1" value="0">
@@ -786,8 +786,8 @@
                             </div>
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-3">
-                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalSabor">
-                                        Sabor <span class="text-muted fw-normal">(0–20)</span>
+                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalSabor" th:text="#{traz.det.eval.form.sabor}">
+                                        Sabor (0–20)
                                     </label>
                                     <input type="range" id="evalSabor" name="sabor" class="form-range flex-grow-1"
                                            min="0" max="20" step="1" value="0">
@@ -796,8 +796,8 @@
                             </div>
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-3">
-                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalSensacionBoca">
-                                        Sensación en boca <span class="text-muted fw-normal">(0–5)</span>
+                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalSensacionBoca" th:text="#{traz.det.eval.form.boca}">
+                                        Sensación en boca (0–5)
                                     </label>
                                     <input type="range" id="evalSensacionBoca" name="sensacionBoca" class="form-range flex-grow-1"
                                            min="0" max="5" step="1" value="0">
@@ -806,8 +806,8 @@
                             </div>
                             <div class="col-12">
                                 <div class="d-flex align-items-center gap-3">
-                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalImpresionGeneral">
-                                        Impresión general <span class="text-muted fw-normal">(0–10)</span>
+                                    <label class="form-label detail-label mb-0" style="min-width:180px;" for="evalImpresionGeneral" th:text="#{traz.det.eval.form.general}">
+                                        Impresión general (0–10)
                                     </label>
                                     <input type="range" id="evalImpresionGeneral" name="impresionGeneral" class="form-range flex-grow-1"
                                            min="0" max="10" step="1" value="0">
@@ -824,13 +824,13 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label detail-label" for="evalNotas">Notas</label>
+                            <label class="form-label detail-label" for="evalNotas" th:text="#{label.notas}">Notas</label>
                             <textarea id="evalNotas" name="notas" class="form-control form-control-sm"
-                                      rows="2" placeholder="Observaciones libres de la cata..." maxlength="1000"></textarea>
+                                      rows="2" th:placeholder="#{traz.det.eval.form.notas.ph}" maxlength="1000"></textarea>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-check2 me-1"></i>Guardar evaluación
+                            <i class="bi bi-check2 me-1"></i><span th:text="#{traz.det.eval.btn.guardar}">Guardar evaluación</span>
                         </button>
                     </form>
                 </div>
@@ -876,7 +876,7 @@
          th:if="${(lote.observaciones != null and !lote.observaciones.isBlank()) or (lote.notasCata != null and !lote.notasCata.isBlank())}">
         <div class="col-md-6" th:if="${lote.observaciones != null and !lote.observaciones.isBlank()}">
             <div class="section-box">
-                <div class="sh"><i class="bi bi-chat-left-text me-2"></i>Observaciones</div>
+                <div class="sh"><i class="bi bi-chat-left-text me-2"></i><span th:text="#{traz.det.sec.obs}">Observaciones</span></div>
                 <div class="sb">
                     <p class="mb-0 observaciones-texto" th:text="${lote.observaciones}"></p>
                 </div>
@@ -884,7 +884,7 @@
         </div>
         <div class="col-md-6" th:if="${lote.notasCata != null and !lote.notasCata.isBlank()}">
             <div class="section-box">
-                <div class="sh"><i class="bi bi-cup-hot me-2"></i>Notas de Cata</div>
+                <div class="sh"><i class="bi bi-cup-hot me-2"></i><span th:text="#{traz.det.sec.cata}">Notas de Cata</span></div>
                 <div class="sb">
                     <p class="mb-0 observaciones-texto" th:text="${lote.notasCata}"></p>
                 </div>
@@ -895,24 +895,24 @@
     <!-- Costo de producción -->
     <div class="section-box mb-4" th:if="${!#lists.isEmpty(lote.itemsFactura)}">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-currency-dollar me-2"></i>Costo de Producción</span>
+            <span><i class="bi bi-currency-dollar me-2"></i><span th:text="#{traz.det.sec.costo}">Costo de Producción</span></span>
             <span th:if="${lote.costoTotal != null}" class="fw-bold text-dorado"
                   th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}"></span>
         </div>
         <div class="sb">
             <div class="d-flex flex-wrap gap-3 mb-3" th:if="${lote.costoTotal != null}">
                 <div class="densidad-box text-center">
-                    <div class="densidad-tag">Costo Total</div>
+                    <div class="densidad-tag" th:text="#{traz.det.costo.label.total}">Costo Total</div>
                     <div class="densidad-valor" style="font-size:1.3rem;"
                          th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}">—</div>
                 </div>
                 <div class="densidad-box densidad-final text-center" th:if="${lote.costoPorLitro != null}">
-                    <div class="densidad-tag">Costo / Litro</div>
+                    <div class="densidad-tag" th:text="#{traz.det.costo.label.litro}">Costo / Litro</div>
                     <div class="densidad-valor" style="font-size:1.3rem;"
                          th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,'COMMA',2,'POINT')}">—</div>
                 </div>
                 <div class="densidad-box text-center">
-                    <div class="densidad-tag">Ítems asignados</div>
+                    <div class="densidad-tag" th:text="#{traz.det.costo.label.items}">Ítems asignados</div>
                     <div class="densidad-valor" style="font-size:1.3rem;"
                          th:text="${#lists.size(lote.itemsFactura)}">—</div>
                 </div>
@@ -922,11 +922,11 @@
             <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-3">Factura</th>
-                        <th>Proveedor</th>
-                        <th>Ítem</th>
-                        <th>Cantidad</th>
-                        <th class="text-end pe-3">Valor asignado</th>
+                        <th class="ps-3" th:text="#{traz.det.costo.col.factura}">Factura</th>
+                        <th th:text="#{label.proveedor}">Proveedor</th>
+                        <th th:text="#{label.nombre}">Ítem</th>
+                        <th th:text="#{label.cantidad}">Cantidad</th>
+                        <th class="text-end pe-3" th:text="#{traz.det.costo.col.valor}">Valor asignado</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -937,7 +937,7 @@
                         </td>
                         <td th:text="${asig.item.factura.proveedor}">—</td>
                         <td th:text="${asig.item.nombre}">—</td>
-                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? 'Costo total' : ${asig.cantidadAsignada.stripTrailingZeros().toPlainString()} + ' ' + (${asig.item.unidad ?: ''})">—</td>
+                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? #{traz.det.costo.total.item} : ${asig.cantidadAsignada.stripTrailingZeros().toPlainString()} + ' ' + (${asig.item.unidad ?: ''})">—</td>
                         <td class="text-end pe-3 fw-bold"
                             th:text="'$' + ${#numbers.formatDecimal(asig.valorAsignado,1,'COMMA',0,'POINT')}">—</td>
                     </tr>
@@ -949,12 +949,12 @@
     <!-- Ventas y Despacho de este lote -->
     <div class="section-box mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-bag-check me-2"></i>Ventas y Despacho</span>
+            <span><i class="bi bi-bag-check me-2"></i><span th:text="#{traz.det.sec.ventas}">Ventas y Despacho</span></span>
             <div class="d-flex gap-2 align-items-center">
                 <span class="fw-normal text-muted" style="font-size:0.8rem;"
-                      th:text="${#lists.size(ventasLote)} + ' registro' + (${#lists.size(ventasLote) != 1} ? 's' : '')"></span>
+                      th:text="${#lists.size(ventasLote)} + ' ' + (${#lists.size(ventasLote) != 1} ? #{traz.det.hist.registros} : #{traz.det.hist.registro})"></span>
                 <a th:href="@{/ventas/nuevo(loteId=${lote.id})}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-plus-lg me-1"></i>Registrar Venta
+                    <i class="bi bi-plus-lg me-1"></i><span th:text="#{traz.det.ventas.btn.registrar}">Registrar Venta</span>
                 </a>
             </div>
         </div>
@@ -962,11 +962,11 @@
             <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-3">Cliente</th>
-                        <th>Fecha</th>
-                        <th class="text-center">Cantidad</th>
-                        <th class="text-center">Estado</th>
-                        <th class="text-end">Valor Total</th>
+                        <th class="ps-3" th:text="#{traz.det.ventas.col.cliente}">Cliente</th>
+                        <th th:text="#{label.fecha}">Fecha</th>
+                        <th class="text-center" th:text="#{label.cantidad}">Cantidad</th>
+                        <th class="text-center" th:text="#{label.estado}">Estado</th>
+                        <th class="text-end" th:text="#{label.total}">Valor Total</th>
                         <th class="pe-3" style="width:44px;"></th>
                     </tr>
                 </thead>
@@ -985,7 +985,7 @@
                             th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
                         <td class="pe-3 text-center">
                             <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
-                               class="btn btn-sm btn-outline-secondary py-0 px-1 border-0" title="Ver">
+                               class="btn btn-sm btn-outline-secondary py-0 px-1 border-0" th:title="#{action.view.detail}">
                                 <i class="bi bi-eye"></i>
                             </a>
                         </td>
@@ -994,7 +994,7 @@
             </table>
         </div>
         <div class="sb text-center text-muted py-2" th:if="${#lists.isEmpty(ventasLote)}">
-            <i class="bi bi-bag-x me-1"></i>Sin ventas registradas para este lote.
+            <i class="bi bi-bag-x me-1"></i><span th:text="#{traz.det.ventas.vacio}">Sin ventas registradas para este lote.</span>
         </div>
     </div>
 
@@ -1002,31 +1002,31 @@
     <div class="audit-meta mt-4 mb-2 text-muted small d-flex flex-wrap gap-3 align-items-center">
         <span th:if="${lote.createdAt != null}">
             <i class="bi bi-person-plus me-1"></i>
-            Creado por <strong th:text="${lote.createdBy ?: 'sistema'}"></strong>
-            el <span th:text="${#temporals.format(lote.createdAt,'dd/MM/yyyy HH:mm')}"></span>
+            <span th:text="#{traz.det.audit.creado}">Creado por</span> <strong th:text="${lote.createdBy ?: 'sistema'}"></strong>
+            <span th:text="#{traz.det.audit.el}">el</span> <span th:text="${#temporals.format(lote.createdAt,'dd/MM/yyyy HH:mm')}"></span>
         </span>
         <span th:if="${lote.lastModifiedAt != null}" class="ms-2">
             <i class="bi bi-pencil me-1"></i>
-            Última modificación por <strong th:text="${lote.lastModifiedBy ?: 'sistema'}"></strong>
-            el <span th:text="${#temporals.format(lote.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
+            <span th:text="#{traz.det.audit.modificado}">Última modificación por</span> <strong th:text="${lote.lastModifiedBy ?: 'sistema'}"></strong>
+            <span th:text="#{traz.det.audit.el}">el</span> <span th:text="${#temporals.format(lote.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
         </span>
     </div>
 
     <!-- Historial de cambios -->
     <div class="section-box mt-2" th:if="${!#lists.isEmpty(historial)}">
         <div class="sh d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-clock-history me-2"></i>Historial de Cambios</span>
+            <span><i class="bi bi-clock-history me-2"></i><span th:text="#{traz.det.sec.historial}">Historial de Cambios</span></span>
             <span class="fw-normal text-muted" style="font-size:0.8rem;"
-                  th:text="${#lists.size(historial)} + ' registros'"></span>
+                  th:text="${#lists.size(historial)} + ' ' + #{traz.det.hist.registros}"></span>
         </div>
         <div class="table-responsive">
             <table class="table table-sm mb-0">
                 <thead>
                     <tr>
-                        <th class="ps-3">Fecha</th>
-                        <th>Acción</th>
-                        <th>Usuario</th>
-                        <th>Notas</th>
+                        <th class="ps-3" th:text="#{label.fecha}">Fecha</th>
+                        <th th:text="#{traz.det.hist.col.accion}">Acción</th>
+                        <th th:text="#{label.usuario}">Usuario</th>
+                        <th th:text="#{label.notas}">Notas</th>
                     </tr>
                 </thead>
                 <tbody>

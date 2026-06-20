@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Lote'">Alera - Lote</title>
+    <title th:text="${branding.name} + ' - ' + (${loteId != null} ? #{traz.form.title.editar} : #{traz.form.title.nuevo})">Alera - Lote</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -171,12 +171,12 @@
 <div class="container-fluid px-4">
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1 th:text="${loteId != null} ? 'Editar Lote ' + ${codigoLote} : 'Nuevo Lote de Cerveza'">Lote</h1>
-            <p class="subtitle mb-0">Complete la información en cada pestaña del proceso</p>
+            <h1 th:text="${loteId != null} ? #{traz.form.title.editar} + ' ' + ${codigoLote} : #{traz.form.title.nuevo}">Lote</h1>
+            <p class="subtitle mb-0" th:text="#{traz.form.subtitle}">Complete la información en cada pestaña del proceso</p>
         </div>
         <div class="pt-1">
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -190,34 +190,34 @@
         <!-- Banner duplicado -->
         <div class="alert alert-info d-flex align-items-center gap-2 mb-3" th:if="${duplicadoDe != null}">
             <i class="bi bi-copy fs-5"></i>
-            <span>Duplicando desde <strong th:text="${duplicadoDe}"></strong> — los ingredientes se copiaron. Ajusta estilo, fechas y densidades antes de guardar.</span>
+            <span><span th:text="#{traz.form.dup.desde}">Duplicando desde</span> <strong th:text="${duplicadoDe}"></strong> <span th:text="#{traz.form.dup.hint}">— los ingredientes se copiaron. Ajusta estilo, fechas y densidades antes de guardar.</span></span>
         </div>
 
         <!-- ══ WIZARD NAV ═══════════════════════════ -->
         <div class="wizard-nav" id="wizardNav">
             <button type="button" class="wz-tab tab-general active" data-tab="0">
                 <span class="wz-num">1</span>
-                <span><i class="bi bi-info-circle me-1"></i>Datos Generales</span>
+                <span><i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.tab.general}">Datos Generales</span></span>
             </button>
             <button type="button" class="wz-tab tab-recipe" data-tab="1">
                 <span class="wz-num">2</span>
-                <span><i class="bi bi-basket me-1"></i>Receta / Insumos</span>
+                <span><i class="bi bi-basket me-1"></i><span th:text="#{traz.form.tab.receta}">Receta / Insumos</span></span>
             </button>
             <button type="button" class="wz-tab tab-ferm" data-tab="2">
                 <span class="wz-num">3</span>
-                <span><i class="bi bi-thermometer me-1"></i>Fermentación</span>
+                <span><i class="bi bi-thermometer me-1"></i><span th:text="#{traz.tab.ferm}">Fermentación</span></span>
             </button>
             <button type="button" class="wz-tab tab-acond" data-tab="3">
                 <span class="wz-num">4</span>
-                <span><i class="bi bi-droplet-half me-1"></i>Acondicionamiento</span>
+                <span><i class="bi bi-droplet-half me-1"></i><span th:text="#{traz.tab.acond}">Acondicionamiento</span></span>
             </button>
             <button type="button" class="wz-tab tab-madur" data-tab="4">
                 <span class="wz-num">5</span>
-                <span><i class="bi bi-hourglass-split me-1"></i>Maduración</span>
+                <span><i class="bi bi-hourglass-split me-1"></i><span th:text="#{traz.tab.madur}">Maduración</span></span>
             </button>
             <button type="button" class="wz-tab tab-carbon" data-tab="5">
                 <span class="wz-num">6</span>
-                <span><i class="bi bi-wind me-1"></i>Carbonatación</span>
+                <span><i class="bi bi-wind me-1"></i><span th:text="#{traz.tab.carbon}">Carbonatación</span></span>
             </button>
         </div>
 
@@ -227,55 +227,55 @@
                  PANEL 0 — DATOS GENERALES
             ══════════════════════════════════════ -->
             <div class="wz-panel" id="panel-0">
-                <div class="wz-title general"><i class="bi bi-info-circle-fill"></i>Datos Generales del Lote</div>
+                <div class="wz-title general"><i class="bi bi-info-circle-fill"></i><span th:text="#{traz.form.panel.general}">Datos Generales del Lote</span></div>
 
                 <!-- CARGAR DESDE RECETA -->
                 <div class="receta-loader-box mb-3" th:if="${!#lists.isEmpty(recetasActivas)}">
                     <div class="d-flex align-items-center gap-2 flex-wrap">
                         <i class="bi bi-journal-bookmark text-dorado"></i>
-                        <span class="fw-600 small">Cargar desde receta:</span>
+                        <span class="fw-600 small" th:text="#{traz.form.receta.label}">Cargar desde receta:</span>
                         <select id="recetaSelectLote" class="form-select form-select-sm" style="max-width:300px;">
-                            <option value="">— Seleccionar receta —</option>
+                            <option value="" th:text="#{traz.form.receta.select}">— Seleccionar receta —</option>
                             <option th:each="rec : ${recetasActivas}"
                                     th:value="${rec.id}"
                                     th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
                                     th:selected="${loteForm.recetaId != null and rec.id == loteForm.recetaId}"></option>
                         </select>
                         <button type="button" class="btn btn-sm btn-zymos" id="btnCargarReceta">
-                            <i class="bi bi-arrow-down-circle me-1"></i>Cargar
+                            <i class="bi bi-arrow-down-circle me-1"></i><span th:text="#{traz.form.receta.btn}">Cargar</span>
                         </button>
                     </div>
                     <div class="text-muted small mt-1">
-                        <i class="bi bi-info-circle me-1"></i>Precarga agua, volumen, densidades e ingredientes desde la receta
+                        <i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.receta.hint}">Precarga agua, volumen, densidades e ingredientes desde la receta</span>
                     </div>
                     <div id="stock-warnings" class="mt-2"></div>
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="estilo">Estilo de Cerveza *</label>
+                        <label class="form-label" for="estilo" th:text="#{traz.form.label.estilo}">Estilo de Cerveza *</label>
                         <input type="text" th:field="*{estilo}" class="form-control"
-                               list="listaTipos" placeholder="Ej: India Pale Ale" required>
+                               list="listaTipos" th:placeholder="#{traz.form.estilo.ph}" required>
                         <datalist id="listaTipos">
                             <option th:each="tc : ${tiposCerveza}" th:value="${tc.nombre}"></option>
                         </datalist>
                         <div th:if="${#fields.hasErrors('estilo')}" class="text-danger small mt-1" th:errors="*{estilo}"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" for="fechaElaboracion">Fecha de Elaboración</label>
+                        <label class="form-label" for="fechaElaboracion" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</label>
                         <input type="date" th:field="*{fechaElaboracion}" class="form-control">
                     </div>
                     <div class="col-md-5">
-                        <label class="form-label" for="agua-display">Agua Utilizada</label>
+                        <label class="form-label" for="agua-display" th:text="#{traz.form.label.agua}">Agua Utilizada</label>
                         <div class="input-group">
                             <input type="number" step="0.001" id="agua-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.aguaUtilizada}"
                                    data-vol-field="agua">
                             <select id="agua-unit" class="form-select" style="max-width:130px;"
                                     data-vol-unit-field="agua">
-                                <option value="L">Litros (L)</option>
-                                <option value="mL">Mililitros (mL)</option>
-                                <option value="gal">Galones (gal)</option>
+                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
                             </select>
                         </div>
                         <input type="hidden" name="aguaUtilizada" id="agua-value"
@@ -283,20 +283,20 @@
                         <small class="text-muted" id="agua-equiv"></small>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="phAgua">pH del Agua</label>
+                        <label class="form-label" for="phAgua" th:text="#{traz.form.label.ph.agua}">pH del Agua</label>
                         <input type="number" step="0.01" th:field="*{phAgua}" class="form-control" placeholder="5.2">
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" for="litros-display">Volumen Final</label>
+                        <label class="form-label" for="litros-display" th:text="#{traz.form.label.vol.final}">Volumen Final</label>
                         <div class="input-group">
                             <input type="number" step="0.001" id="litros-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.litrosFinales}"
                                    data-vol-field="litros">
                             <select id="litros-unit" class="form-select" style="max-width:130px;"
                                     data-vol-unit-field="litros">
-                                <option value="L">Litros (L)</option>
-                                <option value="mL">Mililitros (mL)</option>
-                                <option value="gal">Galones (gal)</option>
+                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
                             </select>
                         </div>
                         <input type="hidden" name="litrosFinales" id="litros-value"
@@ -313,7 +313,7 @@
                                  data-bs-toggle="collapse" data-bs-target="#costos-collapse" aria-expanded="false">
                                 <span>
                                     <i class="bi bi-receipt me-2 text-dorado"></i>
-                                    <span class="fw-600 small">Costos de Producción</span>
+                                    <span class="fw-600 small" th:text="#{traz.form.costo.titulo}">Costos de Producción</span>
                                     <span id="costo-count-badge" class="badge ms-2"
                                           style="display:none;background:var(--dorado);color:#fff;"></span>
                                 </span>
@@ -329,21 +329,21 @@
                                             <div class="input-group input-group-sm">
                                                 <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
                                                 <input type="text" id="costo-search" class="form-control"
-                                                       placeholder="Buscar ítem por nombre o proveedor…">
+                                                       th:placeholder="#{traz.form.costo.buscar.ph}">
                                             </div>
                                         </div>
                                         <div class="col-auto">
                                             <select id="costo-tipo-filter" class="form-select form-select-sm">
-                                                <option value="">Todos los tipos</option>
-                                                <option value="MALTA">Malta</option>
-                                                <option value="LUPULO">Lúpulo</option>
-                                                <option value="LEVADURA">Levadura</option>
-                                                <option value="CLARIFICANTE">Clarificante</option>
-                                                <option value="AGENTE_CARBONATACION">Agente de Carbonatación</option>
-                                                <option value="AGUA">Agua</option>
-                                                <option value="QUIMICO">Químico</option>
-                                                <option value="ENVASE">Envase</option>
-                                                <option value="OTRO">Otro</option>
+                                                <option value="" th:text="#{traz.form.costo.tipos.todos}">Todos los tipos</option>
+                                                <option value="MALTA" th:text="#{enum.TipoInsumo.MALTA}">Malta</option>
+                                                <option value="LUPULO" th:text="#{enum.TipoInsumo.LUPULO}">Lúpulo</option>
+                                                <option value="LEVADURA" th:text="#{enum.TipoInsumo.LEVADURA}">Levadura</option>
+                                                <option value="CLARIFICANTE" th:text="#{enum.TipoInsumo.CLARIFICANTE}">Clarificante</option>
+                                                <option value="AGENTE_CARBONATACION" th:text="#{enum.TipoInsumo.AGENTE_CARBONATACION}">Agente de Carbonatación</option>
+                                                <option value="AGUA" th:text="#{enum.TipoInsumo.AGUA}">Agua</option>
+                                                <option value="QUIMICO" th:text="#{enum.TipoInsumo.QUIMICO}">Químico</option>
+                                                <option value="ENVASE" th:text="#{enum.TipoInsumo.ENVASE}">Envase</option>
+                                                <option value="OTRO" th:text="#{enum.TipoInsumo.OTRO}">Otro</option>
                                             </select>
                                         </div>
                                     </div>
@@ -354,12 +354,12 @@
                                         <table class="table table-sm table-hover mb-0 align-middle" style="font-size:0.8rem;">
                                             <thead class="sticky-top" style="background:#e8e2d4;">
                                                 <tr>
-                                                    <th class="ps-2">Ítem</th>
-                                                    <th>Tipo</th>
-                                                    <th>Factura</th>
-                                                    <th>Proveedor</th>
-                                                    <th>Disponible</th>
-                                                    <th class="text-end">Valor línea</th>
+                                                    <th class="ps-2" th:text="#{label.nombre}">Ítem</th>
+                                                    <th th:text="#{label.tipo}">Tipo</th>
+                                                    <th th:text="#{traz.det.costo.col.factura}">Factura</th>
+                                                    <th th:text="#{label.proveedor}">Proveedor</th>
+                                                    <th th:text="#{traz.form.costo.col.disponible}">Disponible</th>
+                                                    <th class="text-end" th:text="#{traz.form.costo.col.valor.linea}">Valor línea</th>
                                                     <th></th>
                                                 </tr>
                                             </thead>
@@ -369,20 +369,20 @@
 
                                     <!-- Ítems asignados -->
                                     <p id="costo-asignados-empty" class="text-muted small mb-2">
-                                        <i class="bi bi-info-circle me-1"></i>Use el buscador para agregar ítems a este lote.
+                                        <i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.costo.sin.items}">Use el buscador para agregar ítems a este lote.</span>
                                     </p>
                                     <div id="costo-asignados-wrap" style="display:none;" class="mb-2">
                                         <p class="small fw-600 mb-1">
-                                            <i class="bi bi-check2-circle me-1 text-dorado"></i>Ítems asignados a este lote
+                                            <i class="bi bi-check2-circle me-1 text-dorado"></i><span th:text="#{traz.form.costo.asignados}">Ítems asignados a este lote</span>
                                         </p>
                                         <div class="table-responsive">
                                             <table class="table table-sm mb-0 align-middle" style="font-size:0.82rem;">
                                                 <thead style="background:#e8e2d4;">
                                                     <tr>
-                                                        <th class="ps-2">Ítem</th>
-                                                        <th>Factura / Proveedor</th>
-                                                        <th style="width:175px;">Cantidad asignada</th>
-                                                        <th class="text-end pe-2">Valor asignado</th>
+                                                        <th class="ps-2" th:text="#{label.nombre}">Ítem</th>
+                                                        <th th:text="#{traz.det.costo.col.factura}">Factura / Proveedor</th>
+                                                        <th style="width:175px;" th:text="#{traz.form.costo.col.cantidad}">Cantidad asignada</th>
+                                                        <th class="text-end pe-2" th:text="#{traz.form.costo.col.valor}">Valor asignado</th>
                                                         <th></th>
                                                     </tr>
                                                 </thead>
@@ -393,7 +393,7 @@
 
                                     <div class="d-flex justify-content-end mt-2">
                                         <button type="button" id="btnAplicarReceta" class="btn btn-sm btn-outline-secondary">
-                                            <i class="bi bi-basket me-1"></i>Aplicar a Receta e Insumos
+                                            <i class="bi bi-basket me-1"></i><span th:text="#{traz.form.costo.btn.aplicar}">Aplicar a Receta e Insumos</span>
                                         </button>
                                     </div>
                                     <div id="items-asignados-container"></div>
@@ -404,18 +404,18 @@
 
                     <div class="col-12"><hr class="my-1"></div>
                     <div class="col-12 d-flex align-items-center gap-3 mb-1">
-                        <p class="text-muted small mb-0"><i class="bi bi-activity me-1"></i><strong>Densidades</strong> — pueden completarse al avanzar el proceso</p>
+                        <p class="text-muted small mb-0"><i class="bi bi-activity me-1"></i><strong th:text="#{traz.form.densidades.hint}">Densidades — pueden completarse al avanzar el proceso</strong></p>
                         <!-- Toggle instrumento -->
                         <div class="btn-group btn-group-sm" role="group" id="instrumento-toggle">
                             <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-sg"
                                    value="SG" th:checked="${loteForm.instrumentoMedicion == null or loteForm.instrumentoMedicion == 'SG'}">
                             <label class="btn btn-outline-secondary" for="instr-sg">
-                                <i class="bi bi-rulers me-1"></i>Hidrómetro (SG)
+                                <i class="bi bi-rulers me-1"></i><span th:text="#{traz.form.instr.sg}">Hidrómetro (SG)</span>
                             </label>
                             <input type="radio" class="btn-check" name="instrumentoMedicion" id="instr-brix"
                                    value="BRIX" th:checked="${loteForm.instrumentoMedicion == 'BRIX'}">
                             <label class="btn btn-outline-secondary" for="instr-brix">
-                                <i class="bi bi-eyedropper me-1"></i>Refractómetro (°Brix)
+                                <i class="bi bi-eyedropper me-1"></i><span th:text="#{traz.form.instr.brix}">Refractómetro (°Brix)</span>
                             </label>
                         </div>
                     </div>
@@ -424,19 +424,19 @@
                     <div id="modo-sg">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label" for="densidadInicial">Densidad Inicial (OG)</label>
+                                <label class="form-label" for="densidadInicial" th:text="#{traz.form.label.og}">Densidad Inicial (OG)</label>
                                 <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
                                        placeholder="1060" inputmode="numeric">
-                                <small class="text-muted">Rango: 1000–1150</small>
+                                <small class="text-muted" th:text="#{traz.form.og.rango}">Rango: 1000–1150</small>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="densidadFinal">Densidad Final (FG)</label>
+                                <label class="form-label" for="densidadFinal" th:text="#{traz.form.label.fg}">Densidad Final (FG)</label>
                                 <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
                                        placeholder="1014" inputmode="numeric">
-                                <small class="text-muted">Rango: 990–1060</small>
+                                <small class="text-muted" th:text="#{traz.form.fg.rango}">Rango: 990–1060</small>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="densidadFinalFecha">Fecha Densidad Final</label>
+                                <label class="form-label" for="densidadFinalFecha" th:text="#{traz.form.label.fecha.fg}">Fecha Densidad Final</label>
                                 <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
                             </div>
                         </div>
@@ -446,25 +446,25 @@
                     <div id="modo-brix" class="d-none">
                         <div class="row g-3">
                             <div class="col-md-3">
-                                <label class="form-label" for="ogBrix">OG en °Brix</label>
+                                <label class="form-label" for="ogBrix" th:text="#{traz.form.brix.og}">OG en °Brix</label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{ogBrix}" class="form-control"
                                        placeholder="14.6">
-                                <small class="text-muted">Lectura del mosto sin fermentar</small>
+                                <small class="text-muted" th:text="#{traz.form.brix.og.hint}">Lectura del mosto sin fermentar</small>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">OG derivado (SG)</label>
+                                <label class="form-label" th:text="#{traz.form.brix.og.sg}">OG derivado (SG)</label>
                                 <input type="number" id="ogSgPreview" class="form-control" readonly tabindex="-1"
                                        placeholder="—" style="background:#f8fafc;">
-                                <small class="text-muted">Calculado automáticamente</small>
+                                <small class="text-muted" th:text="#{traz.form.brix.og.sg.hint}">Calculado automáticamente</small>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label" for="fgBrix">FG en °Brix <small class="text-muted">(lectura cruda)</small></label>
+                                <label class="form-label" for="fgBrix"><span th:text="#{traz.form.brix.fg}">FG en °Brix</span> <small class="text-muted">(lectura cruda)</small></label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{fgBrix}" class="form-control"
                                        placeholder="5.2">
-                                <small class="text-muted">Sin corregir — Terrill lo ajusta</small>
+                                <small class="text-muted" th:text="#{traz.form.brix.fg.hint}">Sin corregir — Terrill lo ajusta</small>
                             </div>
                             <div class="col-md-3">
-                                <label class="form-label">FG corregido (Terrill)</label>
+                                <label class="form-label" th:text="#{traz.form.brix.fg.terrill}">FG corregido (Terrill)</label>
                                 <input type="number" id="fgSgPreview" class="form-control" readonly tabindex="-1"
                                        placeholder="—" style="background:#f8fafc;">
                                 <small class="text-muted">Sean Terrill correction</small>
@@ -481,12 +481,12 @@
                  PANEL 1 — RECETA / INSUMOS
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-1">
-                <div class="wz-title recipe"><i class="bi bi-basket-fill"></i>Receta e Insumos</div>
+                <div class="wz-title recipe"><i class="bi bi-basket-fill"></i><span th:text="#{traz.form.panel.receta}">Receta e Insumos</span></div>
 
                 <!-- MALTAS -->
                 <div class="phase-card mb-3">
                     <div class="phase-card-header" style="background:color-mix(in srgb, var(--dorado) 12%, transparent);color:#7a5c00;">
-                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Maltas
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> <span th:text="#{traz.det.ing.maltas}">Maltas</span>
                     </div>
                     <div class="p-3">
                         <div id="maltas-container">
@@ -495,11 +495,11 @@
                                     <div class="col-md-5">
                                         <input type="text" th:name="'maltas[' + ${mStat.index} + '].nombre'"
                                                th:value="${malta.nombre}" class="form-control form-control-sm"
-                                               placeholder="Nombre de la malta" list="lista-maltas">
+                                               th:placeholder="#{traz.form.ing.ph.malta}" list="lista-maltas">
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" th:name="'maltas[' + ${mStat.index} + '].cantidad'"
-                                               th:value="${malta.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                               th:value="${malta.cantidad}" class="form-control form-control-sm" th:placeholder="#{traz.form.ing.ph.cantidad}">
                                     </div>
                                     <div class="col-md-3">
                                         <select th:name="'maltas[' + ${mStat.index} + '].unidad'" class="form-select form-select-sm">
@@ -520,7 +520,7 @@
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
                                 data-container="maltas-container" data-field="maltas"
                                 data-datalist="lista-maltas" data-label="Malta">
-                            <i class="bi bi-plus me-1"></i>Agregar Malta
+                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.ing.btn.malta}">Agregar Malta</span>
                         </button>
                     </div>
                 </div>
@@ -528,7 +528,7 @@
                 <!-- LÚPULOS -->
                 <div class="phase-card mb-3">
                     <div class="phase-card-header" style="background:rgba(39,174,96,0.1);color:#1a6e3e;">
-                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Lúpulos
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> <span th:text="#{traz.det.ing.lupulos}">Lúpulos</span>
                     </div>
                     <div class="p-3">
                         <div id="lupulos-container">
@@ -537,11 +537,11 @@
                                     <div class="col-md-5">
                                         <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].nombre'"
                                                th:value="${lupulo.nombre}" class="form-control form-control-sm"
-                                               placeholder="Nombre del lúpulo" list="lista-lupulos">
+                                               th:placeholder="#{traz.form.ing.ph.lupulo}" list="lista-lupulos">
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" th:name="'lupulos[' + ${lupStat.index} + '].cantidad'"
-                                               th:value="${lupulo.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                               th:value="${lupulo.cantidad}" class="form-control form-control-sm" th:placeholder="#{traz.form.ing.ph.cantidad}">
                                     </div>
                                     <div class="col-md-3">
                                         <select th:name="'lupulos[' + ${lupStat.index} + '].unidad'" class="form-select form-select-sm">
@@ -562,7 +562,7 @@
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
                                 data-container="lupulos-container" data-field="lupulos"
                                 data-datalist="lista-lupulos" data-label="Lúpulo">
-                            <i class="bi bi-plus me-1"></i>Agregar Lúpulo
+                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.ing.btn.lupulo}">Agregar Lúpulo</span>
                         </button>
                     </div>
                 </div>
@@ -570,7 +570,7 @@
                 <!-- LEVADURAS -->
                 <div class="phase-card mb-3">
                     <div class="phase-card-header" style="background:rgba(52,152,219,0.1);color:#1a5276;">
-                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Levaduras
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> <span th:text="#{traz.det.ing.levaduras}">Levaduras</span>
                     </div>
                     <div class="p-3">
                         <div id="levaduras-container">
@@ -579,11 +579,11 @@
                                     <div class="col-md-5">
                                         <input type="text" th:name="'levaduras[' + ${levStat.index} + '].nombre'"
                                                th:value="${levadura.nombre}" class="form-control form-control-sm"
-                                               placeholder="Nombre de la levadura" list="lista-levaduras">
+                                               th:placeholder="#{traz.form.ing.ph.levadura}" list="lista-levaduras">
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" th:name="'levaduras[' + ${levStat.index} + '].cantidad'"
-                                               th:value="${levadura.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                               th:value="${levadura.cantidad}" class="form-control form-control-sm" th:placeholder="#{traz.form.ing.ph.cantidad}">
                                     </div>
                                     <div class="col-md-3">
                                         <select th:name="'levaduras[' + ${levStat.index} + '].unidad'" class="form-select form-select-sm">
@@ -604,7 +604,7 @@
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
                                 data-container="levaduras-container" data-field="levaduras"
                                 data-datalist="lista-levaduras" data-label="Levadura">
-                            <i class="bi bi-plus me-1"></i>Agregar Levadura
+                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.ing.btn.levadura}">Agregar Levadura</span>
                         </button>
                     </div>
                 </div>
@@ -612,7 +612,7 @@
                 <!-- CLARIFICANTES -->
                 <div class="phase-card">
                     <div class="phase-card-header" style="background:rgba(142,68,173,0.1);color:#6c3483;">
-                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> Clarificantes
+                        <i class="bi bi-circle-fill" style="font-size:0.6rem;"></i> <span th:text="#{traz.det.ing.clarificantes}">Clarificantes</span>
                     </div>
                     <div class="p-3">
                         <div id="clarificantes-container">
@@ -621,11 +621,11 @@
                                     <div class="col-md-5">
                                         <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].nombre'"
                                                th:value="${clar.nombre}" class="form-control form-control-sm"
-                                               placeholder="Nombre clarificante" list="lista-clarificantes">
+                                               th:placeholder="#{traz.form.ing.ph.clarificante}" list="lista-clarificantes">
                                     </div>
                                     <div class="col-md-3">
                                         <input type="text" th:name="'clarificantes[' + ${clarStat.index} + '].cantidad'"
-                                               th:value="${clar.cantidad}" class="form-control form-control-sm" placeholder="Cantidad">
+                                               th:value="${clar.cantidad}" class="form-control form-control-sm" th:placeholder="#{traz.form.ing.ph.cantidad}">
                                     </div>
                                     <div class="col-md-3">
                                         <select th:name="'clarificantes[' + ${clarStat.index} + '].unidad'" class="form-select form-select-sm">
@@ -647,7 +647,7 @@
                         <button type="button" class="btn btn-sm btn-zymos-outline mt-2"
                                 data-container="clarificantes-container" data-field="clarificantes"
                                 data-datalist="lista-clarificantes" data-label="Clarificante">
-                            <i class="bi bi-plus me-1"></i>Agregar Clarificante
+                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.ing.btn.clarificante}">Agregar Clarificante</span>
                         </button>
                     </div>
                 </div>
@@ -657,15 +657,15 @@
                  PANEL 2 — FERMENTACIÓN
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-2">
-                <div class="wz-title ferm"><i class="bi bi-thermometer-half"></i>Fase de Fermentación</div>
-                <p class="text-muted small mb-3">Primera etapa: los azúcares se convierten en alcohol y CO₂ por acción de la levadura.</p>
+                <div class="wz-title ferm"><i class="bi bi-thermometer-half"></i><span th:text="#{traz.form.panel.ferm}">Fase de Fermentación</span></div>
+                <p class="text-muted small mb-3" th:text="#{traz.form.ferm.desc}">Primera etapa: los azúcares se convierten en alcohol y CO₂ por acción de la levadura.</p>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="equipoFermentadorId">Fermentador Asignado</label>
+                        <label class="form-label" for="equipoFermentadorId" th:text="#{traz.form.ferm.fermentador}">Fermentador Asignado</label>
                         <select th:field="*{equipoFermentadorId}"
                                 th:classappend="${#fields.hasErrors('equipoFermentadorId')} ? 'is-invalid' : ''"
                                 class="form-select">
-                            <option value="">-- Sin asignar --</option>
+                            <option value="" th:text="#{traz.form.ferm.sin.asignar}">-- Sin asignar --</option>
                             <option th:each="f : ${fermentadores}" th:value="${f.id}" th:text="${f.nombre}"></option>
                         </select>
                         <div th:if="${#fields.hasErrors('equipoFermentadorId')}"
@@ -673,22 +673,22 @@
                              th:errors="*{equipoFermentadorId}"></div>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label" for="fermFechaInicial">Fecha de Inicio</label>
+                        <label class="form-label" for="fermFechaInicial" th:text="#{traz.form.ferm.fecha.inicio}">Fecha de Inicio</label>
                         <input type="date" th:field="*{fermFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="fermFechaFinalIdeal">Fecha Fin Ideal</label>
+                        <label class="form-label" for="fermFechaFinalIdeal" th:text="#{traz.form.ferm.fecha.fin.ideal}">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{fermFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="fermTemperatura">Temperatura (°C)</label>
+                        <label class="form-label" for="fermTemperatura" th:text="#{traz.form.ferm.temperatura}">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{fermTemperatura}" class="form-control" placeholder="18">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="fermFechaFinal">Fecha Fin Real</label>
+                        <label class="form-label" for="fermFechaFinal" th:text="#{traz.form.ferm.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{fermFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -698,26 +698,26 @@
                  PANEL 3 — ACONDICIONAMIENTO
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-3">
-                <div class="wz-title acond"><i class="bi bi-droplet-half"></i>Fase de Acondicionamiento</div>
-                <p class="text-muted small mb-3">Segunda etapa: estabilización de sabores, clarificación y acondicionamiento del producto.</p>
+                <div class="wz-title acond"><i class="bi bi-droplet-half"></i><span th:text="#{traz.form.panel.acond}">Fase de Acondicionamiento</span></div>
+                <p class="text-muted small mb-3" th:text="#{traz.form.acond.desc}">Segunda etapa: estabilización de sabores, clarificación y acondicionamiento del producto.</p>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label" for="acondFechaInicial">Fecha de Inicio</label>
+                        <label class="form-label" for="acondFechaInicial" th:text="#{traz.form.acond.fecha.inicio}">Fecha de Inicio</label>
                         <input type="date" th:field="*{acondFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="acondFechaFinalIdeal">Fecha Fin Ideal</label>
+                        <label class="form-label" for="acondFechaFinalIdeal" th:text="#{traz.form.acond.fecha.fin.ideal}">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{acondFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="acondTemperatura">Temperatura (°C)</label>
+                        <label class="form-label" for="acondTemperatura" th:text="#{traz.form.acond.temperatura}">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{acondTemperatura}" class="form-control" placeholder="12">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="acondFechaFinal">Fecha Fin Real</label>
+                        <label class="form-label" for="acondFechaFinal" th:text="#{traz.form.acond.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{acondFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -727,26 +727,26 @@
                  PANEL 4 — MADURACIÓN
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-4">
-                <div class="wz-title madur"><i class="bi bi-hourglass-split"></i>Fase de Maduración</div>
-                <p class="text-muted small mb-3">Tercera etapa: la cerveza reposa a baja temperatura para desarrollar y refinar su perfil de sabor.</p>
+                <div class="wz-title madur"><i class="bi bi-hourglass-split"></i><span th:text="#{traz.form.panel.madur}">Fase de Maduración</span></div>
+                <p class="text-muted small mb-3" th:text="#{traz.form.madur.desc}">Tercera etapa: la cerveza reposa a baja temperatura para desarrollar y refinar su perfil de sabor.</p>
                 <div class="row g-3">
                     <div class="col-md-3">
-                        <label class="form-label" for="madurFechaInicial">Fecha de Inicio</label>
+                        <label class="form-label" for="madurFechaInicial" th:text="#{traz.form.madur.fecha.inicio}">Fecha de Inicio</label>
                         <input type="date" th:field="*{madurFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="madurFechaFinalIdeal">Fecha Fin Ideal</label>
+                        <label class="form-label" for="madurFechaFinalIdeal" th:text="#{traz.form.madur.fecha.fin.ideal}">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{madurFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="madurTemperatura">Temperatura (°C)</label>
+                        <label class="form-label" for="madurTemperatura" th:text="#{traz.form.madur.temperatura}">Temperatura (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{madurTemperatura}" class="form-control" placeholder="2">
                             <span class="input-group-text">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="madurFechaFinal">Fecha Fin Real</label>
+                        <label class="form-label" for="madurFechaFinal" th:text="#{traz.form.madur.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{madurFechaFinal}" class="form-control">
                     </div>
                 </div>
@@ -756,36 +756,36 @@
                  PANEL 5 — CARBONATACIÓN + OBS
             ══════════════════════════════════════ -->
             <div class="wz-panel d-none" id="panel-5">
-                <div class="wz-title carbon"><i class="bi bi-wind"></i>Fase de Carbonatación</div>
-                <p class="text-muted small mb-3">Etapa final: la cerveza adquiere el gas carbónico necesario para su presentación.</p>
+                <div class="wz-title carbon"><i class="bi bi-wind"></i><span th:text="#{traz.form.panel.carbon}">Fase de Carbonatación</span></div>
+                <p class="text-muted small mb-3" th:text="#{traz.form.carbon.desc}">Etapa final: la cerveza adquiere el gas carbónico necesario para su presentación.</p>
 
                 <!-- Capa 1 — Variables iniciales -->
                 <div class="row g-3 mb-3">
                     <div class="col-md-3">
-                        <label class="form-label" for="carbFechaInicial">Fecha de Inicio</label>
+                        <label class="form-label" for="carbFechaInicial" th:text="#{traz.form.carbon.fecha.inicio}">Fecha de Inicio</label>
                         <input type="date" th:field="*{carbFechaInicial}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbFechaFinalIdeal">Fecha Fin Ideal</label>
+                        <label class="form-label" for="carbFechaFinalIdeal" th:text="#{traz.form.carbon.fecha.fin.ideal}">Fecha Fin Ideal</label>
                         <input type="date" th:field="*{carbFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbTemperatura">Temp. Cerveza (°C)</label>
+                        <label class="form-label" for="carbTemperatura" th:text="#{traz.form.carbon.temp}">Temp. Cerveza (°C)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4" id="carbTempInput">
                             <span class="input-group-text">°C</span>
                         </div>
-                        <div class="form-text">Afecta la absorción de CO₂</div>
+                        <div class="form-text" th:text="#{traz.form.carbon.temp.hint}">Afecta la absorción de CO₂</div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbFechaFinal">Fecha Fin Real</label>
+                        <label class="form-label" for="carbFechaFinal" th:text="#{traz.form.carbon.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{carbFechaFinal}" class="form-control">
                     </div>
                 </div>
 
                 <div class="row g-3 mb-3">
                     <div class="col-md-3">
-                        <label class="form-label" for="carbCo2Objetivo">CO₂ Objetivo (vol)</label>
+                        <label class="form-label" for="carbCo2Objetivo" th:text="#{traz.form.carbon.co2.obj}">CO₂ Objetivo (vol)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" min="0.5" max="6.0"
                                    th:field="*{carbCo2Objetivo}" class="form-control"
@@ -795,7 +795,7 @@
                         <div class="form-text" id="co2Sugerencia"></div>
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbCo2Real">CO₂ Real Medido (vol)</label>
+                        <label class="form-label" for="carbCo2Real" th:text="#{traz.form.carbon.co2.real}">CO₂ Real Medido (vol)</label>
                         <div class="input-group">
                             <input type="number" step="0.1" min="0" max="6.0"
                                    th:field="*{carbCo2Real}" class="form-control" placeholder="—">
@@ -803,11 +803,11 @@
                         </div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="carbMetodo">Método de Carbonatación</label>
+                        <label class="form-label" for="carbMetodo" th:text="#{traz.form.carbon.metodo}">Método de Carbonatación</label>
                         <select th:field="*{carbMetodo}" class="form-select" id="carbMetodoSelect">
-                            <option value="">-- Sin especificar --</option>
-                            <option value="NATURAL">Natural / Priming (refermentación en envase)</option>
-                            <option value="FORZADA">Forzada / Inyección de CO₂</option>
+                            <option value="" th:text="#{traz.form.carbon.metodo.sin}">-- Sin especificar --</option>
+                            <option value="NATURAL" th:text="#{traz.form.carbon.metodo.natural}">Natural / Priming (refermentación en envase)</option>
+                            <option value="FORZADA" th:text="#{traz.form.carbon.metodo.forzada}">Forzada / Inyección de CO₂</option>
                         </select>
                     </div>
                 </div>
@@ -815,22 +815,22 @@
                 <!-- Capa 2 — Natural / Priming -->
                 <div id="seccionNatural" class="phase-card mb-3" style="display:none;">
                     <div class="phase-card-header" style="background:rgba(39,174,96,0.08);color:#1a6e3e;">
-                        <i class="bi bi-flower1 me-1"></i>Parámetros — Natural (Priming)
+                        <i class="bi bi-flower1 me-1"></i><span th:text="#{traz.form.carbon.priming.titulo}">Parámetros — Natural (Priming)</span>
                     </div>
                     <div class="p-3">
                         <div class="row g-3 align-items-end">
                             <div class="col-md-4">
-                                <label class="form-label" for="carbAzucarTipo">Tipo de Azúcar / Agente</label>
+                                <label class="form-label" for="carbAzucarTipo" th:text="#{traz.form.carbon.priming.azucar}">Tipo de Azúcar / Agente</label>
                                 <select th:field="*{carbAzucarTipo}" class="form-select" id="carbAzucarTipoSelect">
-                                    <option value="">-- Seleccionar --</option>
+                                    <option value="" th:text="#{traz.form.carbon.priming.select}">-- Seleccionar --</option>
                                     <th:block th:if="${not #lists.isEmpty(agentesCarbonatacion)}">
-                                        <optgroup label="📦 Del inventario">
+                                        <optgroup th:attr="label='📦 ' + #{traz.form.carbon.priming.inv}">
                                             <option th:each="ag : ${agentesCarbonatacion}"
                                                     th:value="${ag.nombre}"
                                                     th:text="${ag.nombre} + ' (' + ${ag.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ag.unidad} + ')'">
                                             </option>
                                         </optgroup>
-                                        <optgroup label="Otro">
+                                        <optgroup th:attr="label=#{traz.form.carbon.priming.otro}">
                                     </th:block>
                                     <option value="Dextrosa (glucosa)">Dextrosa (glucosa)</option>
                                     <option value="Sacarosa">Sacarosa</option>
@@ -842,7 +842,7 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="carbAzucarGramos">Azúcar Añadida (g)</label>
+                                <label class="form-label" for="carbAzucarGramos" th:text="#{traz.form.carbon.priming.gramos}">Azúcar Añadida (g)</label>
                                 <div class="input-group">
                                     <input type="number" step="0.1" min="0"
                                            th:field="*{carbAzucarGramos}" class="form-control"
@@ -854,10 +854,10 @@
                                 <div class="alert alert-info py-2 px-3 mb-0 d-none" id="calculadoraResultado">
                                     <i class="bi bi-calculator me-1"></i>
                                     <strong>Sugerido: <span id="gramosCalculados">—</span> g</strong>
-                                    <div class="text-muted small mt-1">Basado en litros del lote y CO₂ objetivo</div>
+                                    <div class="text-muted small mt-1" th:text="#{traz.form.carbon.priming.calc.hint}">Basado en litros del lote y CO₂ objetivo</div>
                                     <button type="button" class="btn btn-sm btn-outline-primary mt-2 d-none"
                                             id="btnAgregarAgenteCosto">
-                                        <i class="bi bi-plus-circle me-1"></i>Agregar al costo de producción
+                                        <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.carbon.priming.calc.btn}">Agregar al costo de producción</span>
                                     </button>
                                 </div>
                             </div>
@@ -868,12 +868,12 @@
                 <!-- Capa 2 — Forzada / Inyección -->
                 <div id="seccionForzada" class="phase-card mb-3" style="display:none;">
                     <div class="phase-card-header" style="background:rgba(52,152,219,0.08);color:#1a4a7a;">
-                        <i class="bi bi-gear me-1"></i>Parámetros — Forzada / Inyección de CO₂
+                        <i class="bi bi-gear me-1"></i><span th:text="#{traz.form.carbon.forzada.titulo}">Parámetros — Forzada / Inyección de CO₂</span>
                     </div>
                     <div class="p-3">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <label class="form-label" for="carbPresionPsi">Presión Aplicada</label>
+                                <label class="form-label" for="carbPresionPsi" th:text="#{traz.form.carbon.forzada.presion}">Presión Aplicada</label>
                                 <div class="input-group">
                                     <input type="number" step="0.1" min="0"
                                            th:field="*{carbPresionPsi}" class="form-control" placeholder="12">
@@ -881,7 +881,7 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="carbTiempoHoras">Tiempo de Exposición</label>
+                                <label class="form-label" for="carbTiempoHoras" th:text="#{traz.form.carbon.forzada.tiempo}">Tiempo de Exposición</label>
                                 <div class="input-group">
                                     <input type="number" step="1" min="0"
                                            th:field="*{carbTiempoHoras}" class="form-control" placeholder="48">
@@ -889,11 +889,11 @@
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label" for="carbTecnica">Técnica</label>
+                                <label class="form-label" for="carbTecnica" th:text="#{traz.form.carbon.forzada.tecnica}">Técnica</label>
                                 <select th:field="*{carbTecnica}" class="form-select">
-                                    <option value="">-- Seleccionar --</option>
-                                    <option value="PIEDRA">Piedra de difusión</option>
-                                    <option value="PRESION_FIJA">Presión fija (superficie / agitación)</option>
+                                    <option value="" th:text="#{traz.form.carbon.forzada.tecnica.sin}">-- Seleccionar --</option>
+                                    <option value="PIEDRA" th:text="#{traz.form.carbon.forzada.tecnica.piedra}">Piedra de difusión</option>
+                                    <option value="PRESION_FIJA" th:text="#{traz.form.carbon.forzada.tecnica.pres}">Presión fija (superficie / agitación)</option>
                                 </select>
                             </div>
                         </div>
@@ -903,20 +903,20 @@
                 <!-- Capa 3 — Control de calidad -->
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label" for="carbValidacion">Validación Organoléptica</label>
+                        <label class="form-label" for="carbValidacion" th:text="#{traz.form.carbon.validacion}">Validación Organoléptica</label>
                         <select th:field="*{carbValidacion}" class="form-select">
-                            <option value="">-- Sin evaluar --</option>
-                            <option value="ADECUADA">✓ Espuma y retención adecuadas</option>
-                            <option value="RETENCION_CORRECTA">✓ Retención correcta</option>
-                            <option value="SOBRECARBONATADA">⚠ Sobrecarbonatada</option>
-                            <option value="BAJA_CARBONATACION">⚠ Baja carbonatación</option>
+                            <option value="" th:text="#{traz.form.carbon.validacion.sin}">-- Sin evaluar --</option>
+                            <option value="ADECUADA" th:text="#{traz.form.carbon.validacion.adecuada}">✓ Espuma y retención adecuadas</option>
+                            <option value="RETENCION_CORRECTA" th:text="#{traz.form.carbon.validacion.retencion}">✓ Retención correcta</option>
+                            <option value="SOBRECARBONATADA" th:text="#{traz.form.carbon.validacion.sobre}">⚠ Sobrecarbonatada</option>
+                            <option value="BAJA_CARBONATACION" th:text="#{traz.form.carbon.validacion.baja}">⚠ Baja carbonatación</option>
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Destino y Empaque del Lote</label>
+                        <label class="form-label" th:text="#{traz.form.carbon.destino}">Destino y Empaque del Lote</label>
                         <div id="destinoList" class="mb-2"></div>
                         <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddDestinoRow">
-                            <i class="bi bi-plus me-1"></i>Agregar formato
+                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.carbon.destino.btn}">Agregar formato</span>
                         </button>
                         <input type="hidden" th:field="*{carbDestino}" id="carbDestino">
                     </div>
@@ -925,16 +925,16 @@
                 <hr class="my-3">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label for="observaciones" class="wz-title carbon" style="font-size:0.9rem;"><i class="bi bi-chat-text me-1"></i>Observaciones del Proceso</label>
+                        <label for="observaciones" class="wz-title carbon" style="font-size:0.9rem;"><i class="bi bi-chat-text me-1"></i><span th:text="#{traz.form.carbon.obs}">Observaciones del Proceso</span></label>
                         <textarea th:field="*{observaciones}" class="form-control" rows="4"
-                                  placeholder="Notas generales: densidades tomadas, ajustes realizados, incidencias..."></textarea>
+                                  th:placeholder="#{traz.form.carbon.obs.ph}">Notas generales: densidades tomadas, ajustes realizados, incidencias...</textarea>
                     </div>
                     <div class="col-md-6">
                         <label for="notasCata" class="wz-title carbon" style="font-size:0.9rem;color:var(--dorado);border-color:var(--dorado-claro);">
-                            <i class="bi bi-cup-hot me-1"></i>Notas de Cata
+                            <i class="bi bi-cup-hot me-1"></i><span th:text="#{traz.form.carbon.cata}">Notas de Cata</span>
                         </label>
                         <textarea th:field="*{notasCata}" class="form-control" rows="4"
-                                  placeholder="Evaluación sensorial: aroma, sabor, color, espuma, carbonatación, retrogusto..."></textarea>
+                                  th:placeholder="#{traz.form.carbon.cata.ph}">Evaluación sensorial: aroma, sabor, color, espuma, carbonatación, retrogusto...</textarea>
                     </div>
                 </div>
 
@@ -1189,7 +1189,7 @@
             <div class="wizard-footer">
                 <div class="d-flex align-items-center gap-3">
                     <button type="button" class="btn btn-zymos-outline btn-sm" id="btnPrev" style="display:none!important;">
-                        <i class="bi bi-arrow-left me-1"></i>Anterior
+                        <i class="bi bi-arrow-left me-1"></i><span th:text="#{traz.form.btn.anterior}">Anterior</span>
                     </button>
                     <div class="wz-progress">
                         <div class="wz-dot active" id="dot-0"></div>
@@ -1204,10 +1204,10 @@
                     <!-- Guardar siempre visible -->
                     <button type="submit" class="btn btn-zymos px-4">
                         <i class="bi bi-save me-2"></i>
-                        <span th:text="${loteId != null} ? 'Actualizar Lote' : 'Guardar Lote'">Guardar</span>
+                        <span th:text="${loteId != null} ? #{traz.form.btn.actualizar} : #{traz.form.btn.guardar}">Guardar</span>
                     </button>
                     <button type="button" class="btn btn-outline-secondary px-4" id="btnNext">
-                        Siguiente <i class="bi bi-arrow-right ms-1"></i>
+                        <span th:text="#{traz.form.btn.siguiente}">Siguiente</span> <i class="bi bi-arrow-right ms-1"></i>
                     </button>
                 </div>
             </div>

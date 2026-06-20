@@ -143,7 +143,7 @@
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/reportes/produccion/pdf(estilo=${estiloFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
-               class="btn btn-outline-secondary btn-sm" title="Exportar a PDF" target="_blank">
+               class="btn btn-outline-secondary btn-sm" th:title="#{action.export.pdf}" target="_blank">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
             <a th:href="@{/nuevo}" class="btn btn-primary btn-sm">
@@ -223,9 +223,9 @@
             </div>
             <div class="ms-auto align-self-end pb-1">
                 <span class="badge bg-secondary" style="font-size:0.75rem;">
-                    <span th:text="${totalLotes}">0</span> lotes
+                    <span th:text="${totalLotes}">0</span> <span th:text="#{traz.badge.lotes}">lotes</span>
                     <span th:if="${estiloFiltro != null and !estiloFiltro.isBlank()} or ${faseFiltro != null and !faseFiltro.isBlank()}"
-                          class="ms-1 opacity-75">(filtrados)</span>
+                          class="ms-1 opacity-75" th:text="#{traz.badge.filtrados}">(filtrados)</span>
                 </span>
             </div>
         </form>
@@ -311,19 +311,19 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
-                                    <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Duplicar lote"><i class="bi bi-copy"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/duplicar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.duplicate.lote}"><i class="bi bi-copy"></i></a>
                                     <button th:if="${!lote.completado}"
                                             type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto (los datos se conservan)."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar.completo}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -394,17 +394,17 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
                                     <button type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -439,17 +439,17 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
                                     <button type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -484,17 +484,17 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
                                     <button type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -532,22 +532,22 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
                                     <button type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
                             <td th:text="${lote.estilo}">-</td>
-                            <td><span class="fase-pill carbon"><i class="bi bi-arrow-repeat me-1"></i>En curso</span></td>
+                            <td><span class="fase-pill carbon"><i class="bi bi-arrow-repeat me-1"></i><span th:text="#{traz.fase.en.curso}">En curso</span></span></td>
                             <td class="f-date" th:classappend="${lote.carbFechaInicial == null} ? 'f-none' : ''" th:text="${lote.carbFechaInicial != null} ? ${#temporals.format(lote.carbFechaInicial,'dd/MM/yyyy')} : '—'">-</td>
                             <td class="f-date" th:classappend="${lote.carbFechaFinalIdeal == null} ? 'f-none' : ''" th:text="${lote.carbFechaFinalIdeal != null} ? ${#temporals.format(lote.carbFechaFinalIdeal,'dd/MM/yyyy')} : '—'">-</td>
                             <td th:classappend="${lote.carbTemperatura == null} ? 'f-none' : 'f-temp'" th:text="${lote.carbTemperatura != null} ? ${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">-</td>
@@ -585,17 +585,17 @@
                             <td class="col-lote">
                                 <div class="lote-code" th:text="${lote.codigoLote}">-</div>
                                 <div class="lote-actions">
-                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" title="Ver detalle"><i class="bi bi-eye"></i></a>
-                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Editar"><i class="bi bi-pencil"></i></a>
+                                    <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-primary btn-sm py-0 px-2" th:title="#{action.view.detail}"><i class="bi bi-eye"></i></a>
+                                    <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.edit}"><i class="bi bi-pencil"></i></a>
                                     <button type="button"
                                             class="btn btn-outline-success btn-sm py-0 px-2 btn-completar-lote"
                                             th:attr="data-lote-id=${lote.id}, data-codigo=${lote.codigoLote}"
-                                            title="Marcar como completado">
+                                            th:title="#{action.complete}">
                                         <i class="bi bi-check-lg"></i>
                                     </button>
                                     <form th:action="@{/eliminar/{id}(id=${lote.id})}" method="post" class="d-inline">
-                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" title="Archivar"
-                                                data-confirm="¿Archivar este lote? El inventario se restaurará y el lote quedará oculto."><i class="bi bi-archive"></i></button>
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm py-0 px-2" th:title="#{action.archive}"
+                                                th:attr="data-confirm=#{traz.confirm.archivar}"><i class="bi bi-archive"></i></button>
                                     </form>
                                 </div>
                             </td>
@@ -624,7 +624,7 @@
         <div class="pagination-simple mb-4" th:if="${totalPaginas > 1}">
             <a th:href="@{/(page=${paginaActual - 1},estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
                th:classappend="${paginaActual == 0} ? 'disabled' : ''" th:text="#{traz.page.anterior}">← Anterior</a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span> — <span th:text="${totalLotes}">0</span> lotes</span>
+            <span><span th:text="#{traz.page.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> <span th:text="#{traz.page.de}">de</span> <span th:text="${totalPaginas}">1</span> — <span th:text="${totalLotes}">0</span> <span th:text="#{traz.badge.lotes}">lotes</span></span>
             <a th:href="@{/(page=${paginaActual + 1},estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
                th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''" th:text="#{traz.page.siguiente}">Siguiente →</a>
         </div>
