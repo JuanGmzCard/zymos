@@ -206,7 +206,7 @@
                         th:selected="${tipoFiltro != null and tipoFiltro == t}"></option>
             </select>
             <button type="submit" class="btn btn-primary btn-sm px-3" th:text="#{action.search}">Buscar</button>
-            <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm px-3">Limpiar</a>
+            <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm px-3" th:text="#{action.limpiar}">Limpiar</a>
         </form>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/inventario}"
@@ -232,7 +232,7 @@
     <!-- Tabla -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span th:text="${totalInsumos}">0</span> insumos
+            <span th:text="${totalInsumos}">0</span> <span th:text="#{inv.count}">insumos</span>
         </div>
         <div th:if="${#lists.isEmpty(insumos)}" class="empty-state py-5">
             <i class="bi bi-box fs-1 text-muted d-block mb-2"></i>
@@ -247,7 +247,7 @@
                     <th th:text="#{inv.table.stock}">Cantidad</th>
                     <th th:text="#{inv.table.minimo}">Stock Mín.</th>
                     <th th:text="#{inv.table.vencimiento}">Vencimiento</th>
-                    <th>Estado</th>
+                    <th th:text="#{label.estado}">Estado</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -271,21 +271,21 @@
                         <span th:class="${ins.claseVencimiento}" th:text="${ins.textoVencimiento}">-</span>
                     </td>
                     <td>
-                        <span th:if="${ins.bajoStock}" class="badge bg-warning text-dark">Bajo stock</span>
+                        <span th:if="${ins.bajoStock}" class="badge bg-warning text-dark" th:text="#{inv.badge.bajo.stock}">Bajo stock</span>
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/inventario/precios(nombre=${ins.nombre})}"
-                           class="action-link view" title="Historial de precios">
+                           class="action-link view" th:title="#{inv.action.precios}">
                             <i class="bi bi-graph-up"></i>
                         </a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/inventario/{id}/historial(id=${ins.id})}"
-                           class="action-link edit" title="Movimientos">
+                           class="action-link edit" th:title="#{inv.action.movimientos}">
                             <i class="bi bi-clock-history"></i>
                         </a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <button type="button" class="action-link edit border-0 bg-transparent p-0 btn-ajuste-rapido"
-                                title="Ajuste rápido"
+                                th:title="#{inv.action.ajuste}"
                                 sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
                                 th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}">
                             <i class="bi bi-plus-slash-minus"></i>
@@ -293,12 +293,12 @@
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
                         <a th:href="@{/inventario/editar/{id}(id=${ins.id})}"
                            sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
-                           class="action-link edit">Editar</a>
+                           class="action-link edit" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/inventario/eliminar/{id}(id=${ins.id})}" method="post"
                               class="d-inline"
                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <button type="submit" class="action-link del border-0 bg-transparent p-0" data-confirm="¿Eliminar este insumo?">Eliminar</button>
+                            <button type="submit" class="action-link del border-0 bg-transparent p-0" th:attr="data-confirm=#{inv.confirm.eliminar}" th:text="#{action.delete}">Eliminar</button>
                         </form>
                     </td>
                 </tr>
@@ -309,14 +309,12 @@
         <!-- Paginación -->
         <div class="pagination-simple" th:if="${totalPaginas > 1}">
             <a th:href="@{/inventario(page=${paginaActual - 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
-               th:classappend="${paginaActual == 0} ? 'disabled' : ''">
-                ← Anterior
-            </a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''"
+               th:text="#{page.anterior}">← Anterior</a>
+            <span><span th:text="#{label.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> <span th:text="#{label.de}">de</span> <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/inventario(page=${paginaActual + 1},nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
-               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">
-                Siguiente →
-            </a>
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
+               th:text="#{page.siguiente}">Siguiente →</a>
         </div>
     </div>
 
@@ -327,7 +325,7 @@
     <div class="modal-dialog modal-sm">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title fw-semibold"><i class="bi bi-plus-slash-minus me-2"></i>Ajustar Stock</h5>
+                <h5 class="modal-title fw-semibold"><i class="bi bi-plus-slash-minus me-2"></i><span th:text="#{inv.modal.stock.title}">Ajustar Stock</span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="formAjuste" method="post">
@@ -335,28 +333,28 @@
                 <div class="modal-body">
                     <p class="fw-semibold mb-3" id="ajusteNombreLabel">—</p>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Operación</label>
+                        <label class="form-label small fw-semibold" th:text="#{inv.modal.stock.op}">Operación</label>
                         <select name="tipo" id="ajusteTipo" class="form-select form-select-sm">
-                            <option value="ENTRADA">+ Entrada (suma al stock)</option>
-                            <option value="SALIDA">− Salida (descuenta del stock)</option>
-                            <option value="AJUSTE">= Ajuste (establece valor exacto)</option>
+                            <option value="ENTRADA" th:text="#{inv.modal.stock.entrada}">+ Entrada (suma al stock)</option>
+                            <option value="SALIDA" th:text="#{inv.modal.stock.salida}">− Salida (descuenta del stock)</option>
+                            <option value="AJUSTE" th:text="#{inv.modal.stock.ajuste}">= Ajuste (establece valor exacto)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Cantidad <span id="ajusteUnidadLabel" class="text-muted"></span></label>
+                        <label class="form-label small fw-semibold"><span th:text="#{inv.modal.ajuste.cantidad}">Cantidad</span> <span id="ajusteUnidadLabel" class="text-muted"></span></label>
                         <input type="number" name="cantidad" id="ajusteCantidad"
                                class="form-control form-control-sm"
                                min="0" step="0.001" required placeholder="0">
                     </div>
                     <div class="mb-1">
-                        <label class="form-label small fw-semibold">Motivo <span class="text-muted">(opcional)</span></label>
+                        <label class="form-label small fw-semibold"><span th:text="#{inv.modal.ajuste.motivo}">Motivo</span> <span class="text-muted" th:text="#{inv.modal.stock.motivo.opt}">(opcional)</span></label>
                         <input type="text" name="motivo" class="form-control form-control-sm"
-                               maxlength="300" placeholder="Ej: Conteo físico, merma, recepción...">
+                               maxlength="300" th:placeholder="#{inv.modal.stock.ph.motivo}" placeholder="Ej: Conteo físico, merma, recepción...">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-sm btn-primary">Aplicar</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
+                    <button type="submit" class="btn btn-sm btn-primary" th:text="#{inv.modal.stock.aplicar}">Aplicar</button>
                 </div>
             </form>
         </div>

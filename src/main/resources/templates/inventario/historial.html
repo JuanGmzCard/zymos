@@ -55,7 +55,7 @@
 
         <div class="table-count d-flex justify-content-between align-items-center">
             <span><i class="bi bi-list-ul me-2"></i><span th:text="#{inv.hist.seccion}">Historial de Movimientos</span></span>
-            <span class="badge bg-secondary" th:text="${movimientos.size()} + ' registros'">0</span>
+            <span class="badge bg-secondary" th:text="${movimientos.size()} + ' ' + #{inv.hist.registros}">0</span>
         </div>
 
         <div th:if="${#lists.isEmpty(movimientos)}" class="text-center text-muted py-5">

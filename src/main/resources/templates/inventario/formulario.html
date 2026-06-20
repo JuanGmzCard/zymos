@@ -52,7 +52,7 @@
                 <div class="col-md-3">
                     <label class="form-label" for="unidad" th:text="#{inv.form.label.unidad}">Unidad</label>
                     <select id="unidad" th:field="*{unidad}" class="form-select">
-                        <option value="">-- Seleccionar --</option>
+                        <option value="" th:text="#{label.select}">-- Seleccionar --</option>
                         <option value="gr">gr — gramos</option>
                         <option value="kg">kg — kilogramos</option>
                         <option value="mL">mL — mililitros</option>

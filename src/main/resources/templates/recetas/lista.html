@@ -262,11 +262,11 @@
                     <td class="text-center">
                         <span class="me-1" th:if="${!#lists.isEmpty(rec.maltas)}">
                             <span class="badge ingrediente-chip malta"
-                                  th:text="${#lists.size(rec.maltas)} + ' Malta' + (${#lists.size(rec.maltas)} != 1 ? 's' : '')"></span>
+                                  th:text="${#lists.size(rec.maltas)} + ' ' + (${#lists.size(rec.maltas)} != 1 ? #{recetas.malta.plural} : #{recetas.malta.singular})"></span>
                         </span>
                         <span th:if="${!#lists.isEmpty(rec.lupulos)}">
                             <span class="badge ingrediente-chip lupulo"
-                                  th:text="${#lists.size(rec.lupulos)} + ' Lúpulo' + (${#lists.size(rec.lupulos)} != 1 ? 's' : '')"></span>
+                                  th:text="${#lists.size(rec.lupulos)} + ' ' + (${#lists.size(rec.lupulos)} != 1 ? #{recetas.lupulo.plural} : #{recetas.lupulo.singular})"></span>
                         </span>
                         <span th:if="${#lists.isEmpty(rec.maltas) and #lists.isEmpty(rec.lupulos)}"
                               class="text-muted small" th:text="#{recetas.badge.sin.ing}">Sin ingredientes</span>
@@ -278,7 +278,7 @@
                               th:if="${cnt != null and cnt > 0}"
                               class="badge ms-1" style="background:var(--dorado);color:var(--verde-oscuro);"
                               th:title="${cnt} + ' lote(s) elaborado(s)'"
-                              th:text="${cnt} + ' lote' + (${cnt} != 1 ? 's' : '')">0 lotes</span>
+                              th:text="${cnt} + ' ' + (${cnt} != 1 ? #{recetas.lote.plural} : #{recetas.lote.singular})">0 lotes</span>
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/recetas/ver/{id}(id=${rec.id})}" class="action-link view"
@@ -314,7 +314,7 @@
             <a th:href="@{/recetas(page=${paginaActual - 1},activa=${activaFiltro})}"
                th:classappend="${paginaActual == 0} ? 'disabled' : ''"
                th:text="#{page.anterior}">← Anterior</a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+            <span><span th:text="#{label.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> <span th:text="#{label.de}">de</span> <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/recetas(page=${paginaActual + 1},activa=${activaFiltro})}"
                th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
                th:text="#{page.siguiente}">Siguiente →</a>
