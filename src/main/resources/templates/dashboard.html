@@ -117,7 +117,7 @@
 
     <!-- Stats Lotes -->
     <div id="dash-stats-lotes" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
@@ -158,7 +158,7 @@
 
     <!-- Stats Inventario y Equipos -->
     <div id="dash-stats-inventario" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
@@ -220,7 +220,7 @@
     <!-- Panel de alertas -->
     <div id="dash-alertas" class="dash-section mb-4"
          th:if="${!#lists.isEmpty(alertasBajoStock)} or ${!#lists.isEmpty(alertasProxVencer)}">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
@@ -238,7 +238,7 @@
                                 <td class="py-2 text-danger fw-bold"
                                     th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</td>
                                 <td class="py-2 text-muted small"
-                                    th:text="'Mín: ' + ${ins.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</td>
+                                    th:text="#{dashboard.alerta.min} + ' ' + ${ins.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</td>
                                 <td class="py-2 pe-3 text-end">
                                     <a th:href="@{/inventario}" class="btn btn-xs btn-outline-warning"
                                        style="font-size:0.7rem;padding:1px 6px;">
@@ -277,7 +277,7 @@
 
     <!-- Próximas Elaboraciones -->
     <div id="dash-elaboraciones" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="card-zymos">
@@ -325,12 +325,12 @@
                         <td class="pe-3 text-end">
                             <a th:href="@{/nuevo(planId=${plan.id})}"
                                th:if="${plan.estado.name() == 'PLANIFICADA'}"
-                               class="btn btn-sm btn-primary" title="Iniciar elaboración">
+                               class="btn btn-sm btn-primary" th:title="#{dashboard.elaboraciones.iniciar}">
                                 <i class="bi bi-play-fill"></i>
                             </a>
                             <a th:href="@{/planificacion}"
                                th:unless="${plan.estado.name() == 'PLANIFICADA'}"
-                               class="btn btn-sm btn-outline-secondary" title="Ver planificación">
+                               class="btn btn-sm btn-outline-secondary" th:title="#{dashboard.elaboraciones.ver.plan}">
                                 <i class="bi bi-eye"></i>
                             </a>
                         </td>
@@ -343,7 +343,7 @@
 
     <!-- Gráficas -->
     <div id="dash-charts" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-4">
@@ -368,7 +368,7 @@
 
     <!-- Ventas y Despacho -->
     <div id="dash-ventas" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
@@ -429,7 +429,7 @@
 
     <!-- Finanzas + Últimos Lotes -->
     <div id="dash-finanzas" class="dash-section mb-4">
-        <div class="dash-handle" title="Arrastrar para mover sección">
+        <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-4">
@@ -504,7 +504,7 @@
                                                           (${lote.faseActual == 'Acondicionamiento'} ? 'acondicionamiento' :
                                                           (${lote.faseActual == 'Fermentación'} ? 'fermentacion' :
                                                           (${lote.completado} ? 'completado' : 'inicio'))))"
-                                          th:text="${lote.completado} ? 'Completado' : ${lote.faseActual}">-</span>
+                                          th:text="${lote.completado} ? #{traz.table.completado} : ${lote.faseActual}">-</span>
                                 </td>
                                 <td>
                                     <small th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '-'">-</small>
@@ -611,8 +611,9 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
 /*<![CDATA[*/
-const litrosMesData = /*[[${chartLitrosMes}]]*/ {};
-const estilosData   = /*[[${chartEstilos}]]*/ {};
+const litrosMesData     = /*[[${chartLitrosMes}]]*/ {};
+const estilosData       = /*[[${chartEstilos}]]*/ {};
+const DASH_LITROS_LABEL = /*[[#{dashboard.charts.litros.label}]]*/ 'Litros';
 
 document.addEventListener('DOMContentLoaded', function() {
     const cvars  = getComputedStyle(document.documentElement);
@@ -629,7 +630,7 @@ document.addEventListener('DOMContentLoaded', function() {
         type: 'bar',
         data: {
             labels: Object.keys(litrosMesData),
-            datasets: [{ label: 'Litros', data: Object.values(litrosMesData),
+            datasets: [{ label: DASH_LITROS_LABEL, data: Object.values(litrosMesData),
                 backgroundColor: DORADO, borderColor: VERDE, borderWidth: 1, borderRadius: 4 }]
         },
         options: {

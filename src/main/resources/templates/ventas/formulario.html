@@ -165,7 +165,7 @@
                                     <tbody id="itemsBody">
                                         <tr id="sinItemsMsg" th:style="${#lists.isEmpty(ventaForm.items)} ? '' : 'display:none'">
                                             <td colspan="8" class="text-center text-muted py-3" style="font-size:0.88rem;">
-                                                <i class="bi bi-inbox me-1"></i>Sin ítems — haz click en <strong>Agregar ítem</strong>
+                                                <i class="bi bi-inbox me-1"></i><span th:text="#{ventas.form.items.empty}">Sin ítems — haz click en</span> <strong th:text="#{ventas.form.agregar.item}">Agregar ítem</strong>
                                             </td>
                                         </tr>
                                         <tr th:each="item, iStat : *{items}" class="item-row">
@@ -176,7 +176,7 @@
                                                         <input type="text" class="form-control form-control-sm lote-buscador"
                                                                th:name="'items[' + ${iStat.index} + '].codigoLoteBuscador'"
                                                                th:value="${item.codigoLoteBuscador}"
-                                                               placeholder="Click para seleccionar…" autocomplete="off">
+                                                               th:placeholder="#{ventas.form.lote.ph}" autocomplete="off">
                                                         <span class="input-group-text lote-empaque-badge"
                                                               style="display:none;" title=""></span>
                                                     </div>
@@ -191,7 +191,7 @@
                                                 <input type="text" class="form-control form-control-sm"
                                                        th:name="'items[' + ${iStat.index} + '].descripcion'"
                                                        th:value="${item.descripcion}"
-                                                       placeholder="Opcional">
+                                                       th:placeholder="#{ventas.form.descripcion.ph}">
                                             </td>
                                             <!-- Cantidad -->
                                             <td>
@@ -307,35 +307,55 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var VENTAS_MSG = {
+    lotePh:       /*[[#{ventas.form.lote.ph}]]*/ 'Click para seleccionar…',
+    descPh:       /*[[#{ventas.form.descripcion.ph}]]*/ 'Opcional',
+    cantPh:       /*[[#{ventas.form.js.cant.ph}]]*/ 'Cantidad',
+    eliminarTitle:/*[[#{action.delete.item}]]*/ 'Eliminar ítem',
+    guardando:    /*[[#{ventas.form.js.guardando}]]*/ 'Guardando…',
+    sinLotes:     /*[[#{ventas.form.js.sin.lotes}]]*/ 'Sin lotes completados disponibles',
+    disp:         /*[[#{ventas.form.js.disp}]]*/ 'Disp:',
+    disponible:   /*[[#{ventas.form.js.disponible}]]*/ 'Disponible:',
+    unitBotellas: /*[[#{ventas.unit.botellas}]]*/ 'Botellas',
+    unitLatas:    /*[[#{ventas.unit.latas}]]*/ 'Latas',
+    unitBarriles: /*[[#{ventas.unit.barriles}]]*/ 'Barriles / Kegs',
+    unitGrowlers: /*[[#{ventas.unit.growlers}]]*/ 'Growlers',
+    unitOtros:    /*[[#{ventas.unit.otros}]]*/ 'Otros',
+    selectPh:     /*[[#{label.select}]]*/ '— seleccionar —'
+};
+/*]]>*/
+</script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
 var rowCount = /*[[${ventaForm.items.size()}]]*/ 0;
 // Estado actual al cargar (para mostrar campo cotizacionExpiraEn)
 var estadoInicial = /*[[${ventaForm.estado != null ? ventaForm.estado.name() : 'PENDIENTE'}]]*/ 'PENDIENTE';
 
 var UNIT_OPTIONS = `
-    <option value="">— seleccionar —</option>
-    <optgroup label="Botellas">
+    <option value="">${VENTAS_MSG.selectPh}</option>
+    <optgroup label="${VENTAS_MSG.unitBotellas}">
         <option value="Botella 330ml">Botella 330ml</option>
         <option value="Botella 500ml">Botella 500ml</option>
         <option value="Botella 750ml">Botella 750ml</option>
         <option value="Botella 1000ml">Botella 1000ml</option>
     </optgroup>
-    <optgroup label="Latas">
+    <optgroup label="${VENTAS_MSG.unitLatas}">
         <option value="Lata 330ml">Lata 330ml</option>
         <option value="Lata 355ml">Lata 355ml</option>
         <option value="Lata 473ml">Lata 473ml</option>
     </optgroup>
-    <optgroup label="Barriles / Kegs">
+    <optgroup label="${VENTAS_MSG.unitBarriles}">
         <option value="Barril 10L">Barril 10L</option>
         <option value="Barril 20L">Barril 20L</option>
         <option value="Barril 30L">Barril 30L</option>
         <option value="Barril 50L">Barril 50L</option>
     </optgroup>
-    <optgroup label="Growlers">
+    <optgroup label="${VENTAS_MSG.unitGrowlers}">
         <option value="Growler 1L">Growler 1L</option>
         <option value="Growler 2L">Growler 2L</option>
         <option value="Growler 3.8L">Growler 3.8L</option>
     </optgroup>
-    <optgroup label="Otros">
+    <optgroup label="${VENTAS_MSG.unitOtros}">
         <option value="A granel">A granel</option>
         <option value="L">Litros (L)</option>
         <option value="und">Unidad</option>
@@ -360,15 +380,15 @@ function crearFilaHTML(idx) {
         <div class="position-relative">
             <div class="input-group input-group-sm">
                 <input type="text" class="form-control form-control-sm lote-buscador"
-                       name="items[${idx}].codigoLoteBuscador" placeholder="Click para seleccionar…" autocomplete="off">
+                       name="items[${idx}].codigoLoteBuscador" placeholder="${VENTAS_MSG.lotePh}" autocomplete="off">
                 <span class="input-group-text lote-empaque-badge" style="display:none;" title=""></span>
             </div>
             <div class="search-suggest lote-suggest" style="display:none;"></div>
         </div>
         <input type="hidden" class="lote-id-hidden" name="items[${idx}].loteId" value="">
     </td>
-    <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="Opcional"></td>
-    <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" placeholder="Cantidad" required></td>
+    <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="${VENTAS_MSG.descPh}"></td>
+    <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" placeholder="${VENTAS_MSG.cantPh}" required></td>
     <td><select class="form-select form-select-sm item-unidad" name="items[${idx}].unidad">${UNIT_OPTIONS}</select></td>
     <td><div class="input-group input-group-sm"><span class="input-group-text">$</span>
         <input type="number" class="form-control form-control-sm item-precio" name="items[${idx}].precioUnitario" step="0.01" min="0" required placeholder="0.00">
@@ -377,7 +397,7 @@ function crearFilaHTML(idx) {
         <input type="number" class="form-control form-control-sm item-descuento" name="items[${idx}].descuentoPct" step="0.01" min="0" max="100" placeholder="0">
         <span class="input-group-text">%</span></div></td>
     <td class="text-end item-total">—</td>
-    <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 btn-eliminar-fila" title="Eliminar ítem"><i class="bi bi-trash3"></i></button></td>`;
+    <td class="text-center"><button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 btn-eliminar-fila" title="${VENTAS_MSG.eliminarTitle}"><i class="bi bi-trash3"></i></button></td>`;
 }
 
 function agregarFila() {
@@ -469,7 +489,7 @@ function positionLoteSuggest(suggest, input) {
 
 function renderLotes(items, suggest) {
     if (!items.length) {
-        suggest.innerHTML = '<div class="ss-empty">Sin lotes completados disponibles</div>';
+        suggest.innerHTML = '<div class="ss-empty">' + VENTAS_MSG.sinLotes + '</div>';
         suggest.style.display = 'block';
         if (suggest._inputRef) positionLoteSuggest(suggest, suggest._inputRef);
         return;
@@ -491,7 +511,7 @@ function renderLotes(items, suggest) {
             + '<span class="ss-title">' + (i.codigoLote||'') + '</span>'
             + '<span class="ss-sub">'   + (i.estilo||'')
                 + (formatosLabel ? ' · ' + formatosLabel : '')
-                + (litros !== '' ? ' · Disp: ' + litros : '')
+                + (litros !== '' ? ' · ' + VENTAS_MSG.disp + ' ' + litros : '')
             + '</span></a>';
     }).join('');
     suggest.style.display = 'block';
@@ -619,7 +639,7 @@ function seleccionarLote(el, cell) {
     // ── Placeholder de cantidad ──────────────────────────────────────────────
     var cantInput = row ? row.querySelector('.item-cantidad') : null;
     if (cantInput) {
-        cantInput.placeholder = litros !== '' ? 'Disp: ' + litros : 'Cantidad';
+        cantInput.placeholder = litros !== '' ? VENTAS_MSG.disp + ' ' + litros : VENTAS_MSG.cantPh;
     }
 
     // ── Badge: muestra los formatos reales del lote ──────────────────────────
@@ -631,12 +651,12 @@ function seleccionarLote(el, cell) {
                 return (e.cantidad ? e.cantidad + ' × ' : '') + e.formato;
             }).join(' | ');
             badge.textContent = badgeText;
-            badge.title       = badgeText + (litros !== '' ? ' · Disp: ' + litros : '');
+            badge.title       = badgeText + (litros !== '' ? ' · ' + VENTAS_MSG.disp + ' ' + litros : '');
             badge.style.display = '';
             if (grp) grp.classList.add('has-lote-badge');
         } else if (litros !== '') {
-            badge.textContent = 'Disp: ' + litros + ' L';
-            badge.title       = 'Disponible: ' + litros + ' L';
+            badge.textContent = VENTAS_MSG.disp + ' ' + litros + ' L';
+            badge.title       = VENTAS_MSG.disponible + ': ' + litros + ' L';
             badge.style.display = '';
             if (grp) grp.classList.add('has-lote-badge');
         } else {
@@ -663,7 +683,7 @@ document.getElementById('ventaForm').addEventListener('submit', function(e) {
     var btn = document.getElementById('btnGuardar');
     if (btn) {
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Guardando…';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + VENTAS_MSG.guardando;
     }
 });
 
