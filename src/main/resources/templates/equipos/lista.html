@@ -17,14 +17,14 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1>Equipos</h1>
-            <p class="subtitle mb-0">Gestión del parque de equipos de la cervecería</p>
+            <h1 th:text="#{equipo.title}">Equipos</h1>
+            <p class="subtitle mb-0" th:text="#{equipo.subtitle}">Gestión del parque de equipos de la cervecería</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/equipos/nuevo}"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
                class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-lg me-1"></i>Nuevo Equipo
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{equipo.nuevo}">Nuevo Equipo</span>
             </a>
         </div>
     </div>
@@ -38,19 +38,19 @@
     <!-- Stat cards -->
     <div class="d-flex gap-3 flex-wrap mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total</div>
+            <div class="stat-label" th:text="#{equipo.stats.total}">Total</div>
             <div class="stat-value" th:text="${statsTotal}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Operativos</div>
+            <div class="stat-label" th:text="#{equipo.stats.operativos}">Operativos</div>
             <div class="stat-value success" th:text="${statsOperativos}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">En Mantenimiento</div>
+            <div class="stat-label" th:text="#{equipo.stats.mantenimiento}">En Mantenimiento</div>
             <div class="stat-value warning" th:text="${statsMantenimiento}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Mant. Próximo</div>
+            <div class="stat-label" th:text="#{equipo.stats.proximo}">Mant. Próximo</div>
             <div class="stat-value danger" th:text="${statsPendientes}">0</div>
         </div>
     </div>
@@ -60,16 +60,15 @@
         <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
             <div class="position-relative">
                 <input type="text" id="equipoInput" class="form-control form-control-sm"
-                       style="width:210px;" placeholder="Buscar equipo..." autocomplete="off"
+                       style="width:210px;" th:placeholder="#{equipo.filter.buscar}" autocomplete="off"
                        th:attr="data-estado=${estadoFiltro != null ? estadoFiltro.name() : ''}">
                 <div id="equipoSuggest" class="search-suggest" style="display:none;"></div>
             </div>
         </div>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/equipos}"
-               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
-                Todos
-            </a>
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{label.todos}">Todos</a>
             <a th:each="est : ${estadosEquipo}"
                th:href="@{/equipos(estado=${est})}"
                th:classappend="${estadoFiltro == est} ? 'filter-tab active' : 'filter-tab inactive'"
@@ -81,15 +80,15 @@
     <div class="table-card mb-4">
         <div class="table-count">
             <span th:text="${#lists.size(equipos)}">0</span>
-            <span th:text="${#lists.size(equipos)} != 1 ? ' equipos' : ' equipo'"> equipos</span>
+            <span th:text="' ' + (${#lists.size(equipos)} != 1 ? #{equipo.count.plural} : #{equipo.count.singular})"> equipos</span>
         </div>
 
         <div th:if="${#lists.isEmpty(equipos)}" class="empty-state py-5 text-center">
             <i class="bi bi-tools fs-1 text-muted d-block mb-2"></i>
-            <p class="text-muted">No hay equipos registrados</p>
+            <p class="text-muted" th:text="#{equipo.empty}">No hay equipos registrados</p>
             <a th:href="@{/equipos/nuevo}" class="btn btn-primary btn-sm mt-1"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <i class="bi bi-plus-lg me-1"></i>Agregar Equipo
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{equipo.empty.action}">Agregar Equipo</span>
             </a>
         </div>
 
@@ -97,12 +96,12 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">Nombre</th>
-                    <th>Tipo</th>
-                    <th>Estado</th>
-                    <th>Capacidad</th>
-                    <th>Últ. Mantenimiento</th>
-                    <th>Próx. Mantenimiento</th>
+                    <th style="padding-left:1.25rem;" th:text="#{label.nombre}">Nombre</th>
+                    <th th:text="#{label.tipo}">Tipo</th>
+                    <th th:text="#{label.estado}">Estado</th>
+                    <th th:text="#{equipo.table.capacidad}">Capacidad</th>
+                    <th th:text="#{equipo.table.ult.mant}">Últ. Mantenimiento</th>
+                    <th th:text="#{equipo.table.prox.mant}">Próx. Mantenimiento</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -144,22 +143,23 @@
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/equipos/ver/{id}(id=${equipo.id})}"
-                           class="action-link view" title="Ver detalle">Ver</a>
+                           class="action-link view" th:title="#{action.view.detail}" th:text="#{action.ver}">Ver</a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}"
-                           class="action-link edit" title="Mantenimientos">
+                           class="action-link edit" th:title="#{action.mantenimientos}">
                             <i class="bi bi-wrench"></i>
                         </a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <a th:href="@{/equipos/editar/{id}(id=${equipo.id})}"
                            sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
-                           class="action-link edit" title="Editar">Editar</a>
+                           class="action-link edit" th:title="#{action.edit}" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/equipos/eliminar/{id}(id=${equipo.id})}" method="post"
                               class="d-inline"
                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
-                                    th:attr="data-confirm=|¿Eliminar ${equipo.nombre}?|">Eliminar</button>
+                                    th:attr="data-confirm=#{equipo.confirm.eliminar(${equipo.nombre})}"
+                                    th:text="#{action.delete}">Eliminar</button>
                         </form>
                     </td>
                 </tr>
@@ -170,10 +170,12 @@
         <!-- Paginación -->
         <div class="pagination-simple" th:if="${totalPaginas > 1}">
             <a th:href="@{/equipos(page=${paginaActual - 1},estado=${estadoFiltro})}"
-               th:classappend="${paginaActual == 0} ? 'disabled' : ''">← Anterior</a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+               th:classappend="${paginaActual == 0} ? 'disabled' : ''"
+               th:text="#{page.anterior}">← Anterior</a>
+            <span><span th:text="#{label.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> <span th:text="#{label.de}">de</span> <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/equipos(page=${paginaActual + 1},estado=${estadoFiltro})}"
-               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''">Siguiente →</a>
+               th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
+               th:text="#{page.siguiente}">Siguiente →</a>
         </div>
     </div>
 

@@ -48,20 +48,19 @@
         </div>
         <div class="d-flex gap-2 pt-1 flex-wrap">
             <a th:href="@{/ventas/{id}/pdf(id=${venta.id})}" class="btn btn-sm btn-outline-secondary"
-               title="Descargar remisión PDF">
+               th:title="#{ventas.detalle.pdf.title}">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
             <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')" class="d-flex gap-2">
-                <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-sm btn-outline-secondary"
-                   title="Duplicar esta venta con los mismos ítems">
-                    <i class="bi bi-copy me-1"></i>Duplicar
+                <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-copy me-1"></i><span th:text="#{ventas.detalle.duplicar}">Duplicar</span>
                 </a>
                 <a th:href="@{/ventas/editar/{id}(id=${venta.id})}" class="btn btn-sm btn-primary">
-                    <i class="bi bi-pencil me-1"></i>Editar
+                    <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
                 </a>
             </div>
             <a th:href="@{/ventas}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -73,11 +72,11 @@
             <!-- Info general -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-bag-check me-2"></i>INFORMACIÓN GENERAL
+                    <i class="bi bi-bag-check me-2"></i><span th:text="#{ventas.detalle.info.section}">INFORMACIÓN GENERAL</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-sm-6">
-                        <div class="small text-muted">Cliente</div>
+                        <div class="small text-muted" th:text="#{label.cliente}">Cliente</div>
                         <div class="fw-semibold" th:text="${venta.cliente}">—</div>
                         <div th:if="${venta.clienteRef != null}" class="mt-1 d-flex flex-wrap gap-2">
                             <span th:if="${venta.clienteRef.nit != null}" class="text-muted small">
@@ -89,17 +88,17 @@
                                   th:text="${venta.clienteRef.listaPrecio.displayName}">—</span>
                             <a th:href="@{/clientes/ver/{id}(id=${venta.clienteRef.id})}"
                                class="text-muted small text-decoration-none">
-                                <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i> Ver ficha
+                                <i class="bi bi-box-arrow-up-right" style="font-size:0.75rem;"></i> <span th:text="#{ventas.detalle.ficha}">Ver ficha</span>
                             </a>
                         </div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="small text-muted">Fecha de Despacho</div>
+                        <div class="small text-muted" th:text="#{ventas.field.fecha.despacho}">Fecha de Despacho</div>
                         <div class="fw-semibold"
                              th:text="${venta.fechaDespacho != null} ? ${#temporals.format(venta.fechaDespacho,'dd/MM/yyyy')} : '—'">—</div>
                     </div>
                     <div class="col-sm-6">
-                        <div class="small text-muted">Estado</div>
+                        <div class="small text-muted" th:text="#{label.estado}">Estado</div>
                         <div>
                             <span class="badge" th:classappend="${venta.estado.badgeClass}"
                                   th:text="${venta.estado.displayName}">—</span>
@@ -110,12 +109,12 @@
                     </div>
                     <div th:if="${venta.estado.name() == 'COTIZACION' or venta.estado.name() == 'EXPIRADO'}"
                          class="col-sm-6">
-                        <div class="small text-muted">Vencimiento Cotización</div>
+                        <div class="small text-muted" th:text="#{ventas.field.cotizacion.vence}">Vencimiento Cotización</div>
                         <div class="fw-semibold"
-                             th:text="${venta.cotizacionExpiraEn != null} ? ${#temporals.format(venta.cotizacionExpiraEn,'dd/MM/yyyy')} : 'No definido'">—</div>
+                             th:text="${venta.cotizacionExpiraEn != null} ? ${#temporals.format(venta.cotizacionExpiraEn,'dd/MM/yyyy')} : #{ventas.field.cotizacion.no.def}">—</div>
                     </div>
                     <div class="col-12" th:if="${venta.notas != null and !venta.notas.isBlank()}">
-                        <div class="small text-muted">Notas</div>
+                        <div class="small text-muted" th:text="#{label.notas}">Notas</div>
                         <div class="small" th:text="${venta.notas}">—</div>
                     </div>
                 </div>
@@ -124,20 +123,20 @@
             <!-- Ítems -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-list-check me-2"></i>ÍTEMS DE LA VENTA</span>
+                    <span><i class="bi bi-list-check me-2"></i><span th:text="#{ventas.detalle.items.section}">ÍTEMS DE LA VENTA</span></span>
                     <span class="badge bg-secondary fw-normal" th:text="${venta.items.size()} + ' ítem(s)'">0</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th class="small text-muted fw-semibold">Lote</th>
-                                <th class="small text-muted fw-semibold">Descripción</th>
-                                <th class="text-end small text-muted fw-semibold">Cantidad</th>
-                                <th class="small text-muted fw-semibold">Unidad</th>
-                                <th class="text-end small text-muted fw-semibold">Precio Unit.</th>
-                                <th class="text-end small text-muted fw-semibold">Desc.%</th>
-                                <th class="text-end small text-muted fw-semibold">Total</th>
+                                <th class="small text-muted fw-semibold" th:text="#{ventas.table.lote}">Lote</th>
+                                <th class="small text-muted fw-semibold" th:text="#{ventas.table.descripcion}">Descripción</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{label.cantidad}">Cantidad</th>
+                                <th class="small text-muted fw-semibold" th:text="#{ventas.table.unidad}">Unidad</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{ventas.table.precio.unit}">Precio Unit.</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{ventas.table.desc.pct.short}">Desc.%</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{ventas.table.total}">Total</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -152,7 +151,7 @@
                                           th:text="${item.codigoLote}"
                                           class="text-muted">—</span>
                                     <span th:if="${item.lote == null and item.codigoLote == null}"
-                                          class="text-muted fst-italic">Sin lote</span>
+                                          class="text-muted fst-italic" th:text="#{ventas.sin.lote}">Sin lote</span>
                                 </td>
                                 <td class="text-muted small"
                                     th:text="${item.descripcion ?: '—'}">—</td>
@@ -168,12 +167,12 @@
                                     th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')}">—</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(venta.items)}">
-                                <td colspan="7" class="text-center text-muted py-3 fst-italic">Sin ítems registrados</td>
+                                <td colspan="7" class="text-center text-muted py-3 fst-italic" th:text="#{ventas.table.items.empty}">Sin ítems registrados</td>
                             </tr>
                         </tbody>
                         <tfoot th:if="${!#lists.isEmpty(venta.items)}">
                             <tr class="table-light">
-                                <td colspan="6" class="text-end fw-bold small">TOTAL</td>
+                                <td colspan="6" class="text-end fw-bold small" th:text="#{ventas.table.total.label}">TOTAL</td>
                                 <td class="text-end fw-bold"
                                     th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
@@ -185,16 +184,16 @@
             <!-- Historial de cambios de estado -->
             <div class="content-card mb-3" th:if="${!#lists.isEmpty(historial)}">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-clock-history me-2"></i>HISTORIAL DE ESTADO
+                    <i class="bi bi-clock-history me-2"></i><span th:text="#{ventas.detalle.historial.section}">HISTORIAL DE ESTADO</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="small text-muted fw-semibold">Fecha</th>
-                                <th class="small text-muted fw-semibold">Estado Anterior</th>
-                                <th class="small text-muted fw-semibold">Nuevo Estado</th>
-                                <th class="small text-muted fw-semibold">Usuario</th>
+                                <th class="small text-muted fw-semibold" th:text="#{label.fecha}">Fecha</th>
+                                <th class="small text-muted fw-semibold" th:text="#{ventas.table.estado.anterior}">Estado Anterior</th>
+                                <th class="small text-muted fw-semibold" th:text="#{ventas.table.estado.nuevo}">Nuevo Estado</th>
+                                <th class="small text-muted fw-semibold" th:text="#{label.usuario}">Usuario</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -205,7 +204,7 @@
                                     <span th:if="${h.estadoAnterior != null}"
                                           class="badge" th:classappend="${h.estadoAnterior.badgeClass}"
                                           th:text="${h.estadoAnterior.displayName}">—</span>
-                                    <span th:if="${h.estadoAnterior == null}" class="text-muted small">Creación</span>
+                                    <span th:if="${h.estadoAnterior == null}" class="text-muted small" th:text="#{ventas.table.creacion}">Creación</span>
                                 </td>
                                 <td>
                                     <span class="badge" th:classappend="${h.estadoNuevo.badgeClass}"
@@ -222,13 +221,13 @@
             <div class="text-muted small d-flex flex-wrap gap-3 align-items-center mb-2">
                 <span th:if="${venta.createdAt != null}">
                     <i class="bi bi-person-plus me-1"></i>
-                    Creado por <strong th:text="${venta.createdBy ?: 'sistema'}"></strong>
-                    el <span th:text="${#temporals.format(venta.createdAt,'dd/MM/yyyy HH:mm')}"></span>
+                    <span th:text="#{ventas.meta.creado}">Creado por</span> <strong th:text="${venta.createdBy ?: 'sistema'}"></strong>
+                    <span th:text="#{ventas.meta.el}">el</span> <span th:text="${#temporals.format(venta.createdAt,'dd/MM/yyyy HH:mm')}"></span>
                 </span>
                 <span th:if="${venta.lastModifiedAt != null}">
                     <i class="bi bi-pencil me-1"></i>
-                    Última modificación por <strong th:text="${venta.lastModifiedBy ?: 'sistema'}"></strong>
-                    el <span th:text="${#temporals.format(venta.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
+                    <span th:text="#{ventas.meta.modificado}">Última modificación por</span> <strong th:text="${venta.lastModifiedBy ?: 'sistema'}"></strong>
+                    <span th:text="#{ventas.meta.el}">el</span> <span th:text="${#temporals.format(venta.lastModifiedAt,'dd/MM/yyyy HH:mm')}"></span>
                 </span>
             </div>
         </div>
@@ -239,7 +238,7 @@
             <!-- Total -->
             <div class="content-card mb-3 text-center">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-currency-dollar me-2"></i>VALOR TOTAL
+                    <i class="bi bi-currency-dollar me-2"></i><span th:text="#{ventas.detalle.valor.section}">VALOR TOTAL</span>
                 </div>
                 <div class="display-6 fw-bold mb-1"
                      th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</div>
@@ -250,11 +249,11 @@
             <!-- Cambiar estado -->
             <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-arrow-repeat me-2"></i>CAMBIAR ESTADO
+                    <i class="bi bi-arrow-repeat me-2"></i><span th:text="#{ventas.detalle.estado.section}">CAMBIAR ESTADO</span>
                 </div>
                 <form th:action="@{/ventas/{id}/estado(id=${venta.id})}" method="post">
                     <div class="mb-3">
-                        <label for="nuevoEstado" class="form-label small text-muted">Nuevo estado</label>
+                        <label for="nuevoEstado" class="form-label small text-muted" th:text="#{ventas.form.nuevo.estado}">Nuevo estado</label>
                         <select id="nuevoEstado" name="estado" class="form-select form-select-sm">
                             <option th:each="est : ${estados}"
                                     th:value="${est.name()}"
@@ -263,7 +262,7 @@
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary btn-sm w-100">
-                        <i class="bi bi-check-lg me-1"></i>Actualizar Estado
+                        <i class="bi bi-check-lg me-1"></i><span th:text="#{ventas.btn.actualizar.estado}">Actualizar Estado</span>
                     </button>
                 </form>
             </div>
@@ -272,12 +271,12 @@
             <div class="content-card mb-3" style="border-color:#fecaca;"
                  sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
-                    <i class="bi bi-exclamation-triangle me-2"></i>ZONA DE PELIGRO
+                    <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{ventas.detalle.peligro.section}">ZONA DE PELIGRO</span>
                 </div>
                 <form th:action="@{/ventas/{id}/eliminar(id=${venta.id})}" method="post">
                     <button type="submit" class="btn btn-sm btn-outline-danger w-100"
-                            data-confirm="¿Eliminar esta venta? Esta acción no se puede deshacer.">
-                        <i class="bi bi-trash3 me-1"></i>Eliminar Venta
+                            th:attr="data-confirm=#{ventas.confirm.eliminar.detalle}">
+                        <i class="bi bi-trash3 me-1"></i><span th:text="#{ventas.btn.eliminar}">Eliminar Venta</span>
                     </button>
                 </form>
             </div>

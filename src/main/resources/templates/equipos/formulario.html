@@ -18,13 +18,13 @@
         <div>
             <h1>
                 <i class="bi bi-tools me-2"></i>
-                <span th:text="${equipo.id != null} ? 'Editar Equipo' : 'Nuevo Equipo'">Equipo</span>
+                <span th:text="${equipo.id != null} ? #{equipo.form.edit} : #{equipo.form.new}">Equipo</span>
             </h1>
-            <p class="subtitle mb-0">Datos del equipo de producción</p>
+            <p class="subtitle mb-0" th:text="#{equipo.form.subtitle}">Datos del equipo de producción</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/equipos}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.cancel}">Cancelar</span>
             </a>
         </div>
     </div>
@@ -37,25 +37,25 @@
 
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-info-circle me-2"></i>DATOS DEL EQUIPO
+                        <i class="bi bi-info-circle me-2"></i><span th:text="#{equipo.section.datos}">DATOS DEL EQUIPO</span>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <label class="form-label" for="nombre">Nombre <span class="text-danger">*</span></label>
+                            <label class="form-label" for="nombre"><span th:text="#{label.nombre}">Nombre</span> <span class="text-danger">*</span></label>
                             <input type="text" id="nombre" th:field="*{nombre}" class="form-control" required
-                                   placeholder="Nombre del equipo">
+                                   th:placeholder="#{equipo.form.nombre.ph}">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="tipo">Tipo <span class="text-danger">*</span></label>
+                            <label class="form-label" for="tipo"><span th:text="#{label.tipo}">Tipo</span> <span class="text-danger">*</span></label>
                             <input type="text" id="tipo" th:field="*{tipo}" class="form-control" list="listaTiposEquipo"
-                                   placeholder="Ej: Fermentador, Bomba…" required autocomplete="off">
+                                   th:placeholder="#{equipo.form.tipo.ph}" required autocomplete="off">
                             <datalist id="listaTiposEquipo">
                                 <option th:each="t : ${tiposEquipo}" th:value="${t}"></option>
                             </datalist>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="estado">Estado <span class="text-danger">*</span></label>
+                            <label class="form-label" for="estado"><span th:text="#{label.estado}">Estado</span> <span class="text-danger">*</span></label>
                             <select id="estado" th:field="*{estado}" class="form-select">
                                 <option th:each="s : ${estadosEquipo}" th:value="${s}" th:text="${s.displayName}"></option>
                             </select>
@@ -63,46 +63,46 @@
                     </div>
 
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-rulers me-2"></i>CAPACIDAD Y FECHAS
+                        <i class="bi bi-rulers me-2"></i><span th:text="#{equipo.section.capacidad}">CAPACIDAD Y FECHAS</span>
                     </div>
 
                     <div class="row g-3 mb-4">
                         <div class="col-md-3">
-                            <label class="form-label" for="capacidad">Capacidad</label>
+                            <label class="form-label" for="capacidad" th:text="#{equipo.form.capacidad.label}">Capacidad</label>
                             <input type="number" id="capacidad" step="0.01" th:field="*{capacidad}" class="form-control" placeholder="0.00">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="unidadCapacidad">Unidad capacidad</label>
+                            <label class="form-label" for="unidadCapacidad" th:text="#{equipo.form.unidad.label}">Unidad capacidad</label>
                             <select id="unidadCapacidad" th:field="*{unidadCapacidad}" class="form-select">
-                                <option value="">-- Seleccionar --</option>
-                                <option value="L">L — Litros</option>
-                                <option value="mL">mL — Mililitros</option>
-                                <option value="kg">kg — Kilogramos</option>
-                                <option value="gr">gr — Gramos</option>
-                                <option value="gal">gal — Galones</option>
-                                <option value="unidades">Unidades</option>
+                                <option value="" th:text="#{label.select}">-- Seleccionar --</option>
+                                <option value="L" th:text="#{label.unidad.l}">L — Litros</option>
+                                <option value="mL" th:text="#{label.unidad.ml}">mL — Mililitros</option>
+                                <option value="kg" th:text="#{label.unidad.kg}">kg — Kilogramos</option>
+                                <option value="gr" th:text="#{label.unidad.gr}">gr — Gramos</option>
+                                <option value="gal" th:text="#{label.unidad.gal}">gal — Galones</option>
+                                <option value="unidades" th:text="#{label.unidad.und}">Unidades</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="fechaAdquisicion">Fecha adquisición</label>
+                            <label class="form-label" for="fechaAdquisicion" th:text="#{equipo.form.adquisicion.label}">Fecha adquisición</label>
                             <input type="date" id="fechaAdquisicion" th:field="*{fechaAdquisicion}" class="form-control">
                         </div>
                         <div class="col-md-3">
-                            <label class="form-label" for="proximoMantenimiento">Próx. mantenimiento</label>
+                            <label class="form-label" for="proximoMantenimiento" th:text="#{equipo.form.prox.mant.label}">Próx. mantenimiento</label>
                             <input type="date" id="proximoMantenimiento" th:field="*{proximoMantenimiento}" class="form-control">
                         </div>
                         <div class="col-12">
-                            <label class="form-label" for="observaciones">Observaciones</label>
+                            <label class="form-label" for="observaciones" th:text="#{equipo.form.obs.label}">Observaciones</label>
                             <textarea id="observaciones" th:field="*{observaciones}" class="form-control" rows="2"
-                                      placeholder="Notas sobre el estado o uso del equipo…"></textarea>
+                                      th:placeholder="#{equipo.form.obs.ph}"></textarea>
                         </div>
                     </div>
 
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary px-4">
-                            <i class="bi bi-save me-2"></i>Guardar
+                            <i class="bi bi-save me-2"></i><span th:text="#{action.save}">Guardar</span>
                         </button>
-                        <a th:href="@{/equipos}" class="btn btn-outline-secondary px-4">Cancelar</a>
+                        <a th:href="@{/equipos}" class="btn btn-outline-secondary px-4" th:text="#{action.cancel}">Cancelar</a>
                     </div>
 
                 </div>

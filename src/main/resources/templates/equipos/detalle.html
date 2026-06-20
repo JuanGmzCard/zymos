@@ -24,19 +24,19 @@
                       th:classappend="'bg-' + ${equipo.colorEstado}"
                       th:text="${equipo.estado.displayName}">Estado</span>
                 <span th:if="${equipo.mantenimientoPendiente}" class="ms-2 text-warning small">
-                    <i class="bi bi-exclamation-triangle-fill"></i> Mantenimiento próximo
+                    <i class="bi bi-exclamation-triangle-fill"></i> <span th:text="#{equipo.mant.warning}">Mantenimiento próximo</span>
                 </span>
             </p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}" class="btn btn-sm btn-primary">
-                <i class="bi bi-wrench me-1"></i>Mantenimientos
+                <i class="bi bi-wrench me-1"></i><span th:text="#{action.mantenimientos}">Mantenimientos</span>
             </a>
             <a th:href="@{/equipos/editar/{id}(id=${equipo.id})}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/equipos}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -45,26 +45,26 @@
     <div class="row g-3 mb-4">
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card-simple">
-                <div class="stat-label">MANTENIMIENTOS</div>
+                <div class="stat-label" th:text="#{equipo.detalle.stats.mantenimientos}">MANTENIMIENTOS</div>
                 <div class="stat-value" th:text="${totalMantenimientos}">0</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card-simple">
-                <div class="stat-label">COSTO TOTAL</div>
+                <div class="stat-label" th:text="#{equipo.detalle.stats.costo}">COSTO TOTAL</div>
                 <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(costoTotal,1,'COMMA',0,'POINT')}">$0</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card-simple">
-                <div class="stat-label">ÚLTIMO MANTENIMIENTO</div>
+                <div class="stat-label" th:text="#{equipo.detalle.stats.ult.mant}">ÚLTIMO MANTENIMIENTO</div>
                 <div class="stat-value" style="font-size:1.1rem;"
                      th:text="${equipo.fechaUltimoMantenimiento != null} ? ${#temporals.format(equipo.fechaUltimoMantenimiento,'dd/MM/yyyy')} : '—'">—</div>
             </div>
         </div>
         <div class="col-sm-6 col-xl-3">
             <div class="stat-card-simple">
-                <div class="stat-label">PRÓXIMO MANTENIMIENTO</div>
+                <div class="stat-label" th:text="#{equipo.detalle.stats.prox.mant}">PRÓXIMO MANTENIMIENTO</div>
                 <div class="stat-value" style="font-size:1.1rem;"
                      th:classappend="${equipo.mantenimientoPendiente} ? 'danger' : ''"
                      th:text="${equipo.proximoMantenimiento != null} ? ${#temporals.format(equipo.proximoMantenimiento,'dd/MM/yyyy')} : '—'">—</div>
@@ -78,18 +78,18 @@
         <div class="col-md-4">
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-info-circle me-2"></i>DATOS DEL EQUIPO
+                    <i class="bi bi-info-circle me-2"></i><span th:text="#{equipo.section.datos}">DATOS DEL EQUIPO</span>
                 </div>
                 <div class="mb-3">
-                    <div class="small text-muted">Nombre</div>
+                    <div class="small text-muted" th:text="#{label.nombre}">Nombre</div>
                     <div class="fw-semibold" th:text="${equipo.nombre}">—</div>
                 </div>
                 <div class="mb-3">
-                    <div class="small text-muted">Tipo</div>
+                    <div class="small text-muted" th:text="#{label.tipo}">Tipo</div>
                     <div class="fw-semibold" th:text="${equipo.tipo}">—</div>
                 </div>
                 <div class="mb-3">
-                    <div class="small text-muted mb-1">Estado</div>
+                    <div class="small text-muted mb-1" th:text="#{label.estado}">Estado</div>
                     <form th:action="@{/equipos/{id}/estado(id=${equipo.id})}" method="post" class="d-inline">
                         <select name="estado" class="form-select form-select-sm" style="width:auto;"
                                 data-auto-submit="true">
@@ -101,15 +101,15 @@
                     </form>
                 </div>
                 <div class="mb-3" th:if="${equipo.capacidad != null}">
-                    <div class="small text-muted">Capacidad</div>
+                    <div class="small text-muted" th:text="#{equipo.field.capacidad}">Capacidad</div>
                     <div class="fw-semibold" th:text="${equipo.capacidad} + ' ' + (${equipo.unidadCapacidad} ?: '')">—</div>
                 </div>
                 <div class="mb-3" th:if="${equipo.fechaAdquisicion != null}">
-                    <div class="small text-muted">Fecha de adquisición</div>
+                    <div class="small text-muted" th:text="#{equipo.field.adquisicion}">Fecha de adquisición</div>
                     <div class="fw-semibold" th:text="${#temporals.format(equipo.fechaAdquisicion,'dd/MM/yyyy')}">—</div>
                 </div>
                 <div th:if="${equipo.observaciones != null and !equipo.observaciones.isEmpty()}">
-                    <div class="small text-muted">Observaciones</div>
+                    <div class="small text-muted" th:text="#{equipo.field.observaciones}">Observaciones</div>
                     <div class="small" th:text="${equipo.observaciones}">—</div>
                 </div>
             </div>
@@ -119,26 +119,26 @@
         <div class="col-md-8">
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-clock-history me-2"></i>HISTORIAL DE MANTENIMIENTOS</span>
+                    <span><i class="bi bi-clock-history me-2"></i><span th:text="#{equipo.section.historial}">HISTORIAL DE MANTENIMIENTOS</span></span>
                     <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}"
                        class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-plus me-1"></i>Registrar
+                        <i class="bi bi-plus me-1"></i><span th:text="#{action.registrar}">Registrar</span>
                     </a>
                 </div>
                 <div th:if="${#lists.isEmpty(mantenimientos)}" class="text-center py-4 text-muted">
                     <i class="bi bi-wrench fs-2 d-block mb-2"></i>
-                    Sin mantenimientos registrados.
-                    <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}" class="ms-1">Registrar primero</a>
+                    <span th:text="#{equipo.mant.empty}">Sin mantenimientos registrados.</span>
+                    <a th:href="@{/equipos/{id}/mantenimientos(id=${equipo.id})}" class="ms-1" th:text="#{equipo.mant.empty.link}">Registrar primero</a>
                 </div>
                 <div th:unless="${#lists.isEmpty(mantenimientos)}" class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Descripción</th>
-                            <th>Técnico</th>
-                            <th>Costo</th>
+                            <th th:text="#{label.fecha}">Fecha</th>
+                            <th th:text="#{label.tipo}">Tipo</th>
+                            <th th:text="#{label.descripcion}">Descripción</th>
+                            <th th:text="#{label.tecnico}">Técnico</th>
+                            <th th:text="#{label.costo}">Costo</th>
                         </tr>
                         </thead>
                         <tbody>

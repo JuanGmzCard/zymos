@@ -17,7 +17,7 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-wrench me-2"></i><span th:text="'Mantenimientos — ' + ${equipo.nombre}">Mantenimientos</span></h1>
+            <h1><i class="bi bi-wrench me-2"></i><span th:text="#{equipo.mant.h1.prefix} + ' ' + ${equipo.nombre}">Mantenimientos</span></h1>
             <p class="subtitle mb-0">
                 <span th:text="${equipo.tipo}" class="me-2">Tipo</span>
                 <span class="text-muted">·</span>
@@ -26,10 +26,10 @@
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/equipos/ver/{id}(id=${equipo.id})}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-eye me-1"></i>Ver equipo
+                <i class="bi bi-eye me-1"></i><span th:text="#{action.view.equipment}">Ver equipo</span>
             </a>
             <a th:href="@{/equipos}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -46,41 +46,41 @@
         <div class="col-md-4">
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-plus-circle me-2"></i>REGISTRAR MANTENIMIENTO
+                    <i class="bi bi-plus-circle me-2"></i><span th:text="#{equipo.mant.section.form}">REGISTRAR MANTENIMIENTO</span>
                 </div>
                 <form th:action="@{/equipos/{id}/mantenimientos/registrar(id=${equipo.id})}"
                       th:object="${mantenimientoForm}" method="post">
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Fecha <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-semibold"><span th:text="#{label.fecha}">Fecha</span> <span class="text-danger">*</span></label>
                         <input type="date" th:field="*{fecha}" class="form-control form-control-sm" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Tipo <span class="text-danger">*</span></label>
+                        <label class="form-label small fw-semibold"><span th:text="#{label.tipo}">Tipo</span> <span class="text-danger">*</span></label>
                         <select th:field="*{tipo}" class="form-select form-select-sm" required>
-                            <option value="">-- Seleccionar --</option>
+                            <option value="" th:text="#{label.select}">-- Seleccionar --</option>
                             <option th:each="t : ${tiposMantenimiento}" th:value="${t}" th:text="${t.displayName}"></option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Descripción</label>
+                        <label class="form-label small fw-semibold" th:text="#{label.descripcion}">Descripción</label>
                         <textarea th:field="*{descripcion}" class="form-control form-control-sm" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Técnico</label>
+                        <label class="form-label small fw-semibold" th:text="#{label.tecnico}">Técnico</label>
                         <input type="text" th:field="*{tecnico}" class="form-control form-control-sm"
-                               placeholder="Nombre técnico">
+                               th:placeholder="#{equipo.mant.form.tecnico.ph}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Costo</label>
+                        <label class="form-label small fw-semibold" th:text="#{label.costo}">Costo</label>
                         <input type="number" step="0.01" th:field="*{costo}" class="form-control form-control-sm"
                                placeholder="0.00">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold">Próximo Mantenimiento</label>
+                        <label class="form-label small fw-semibold" th:text="#{equipo.mant.form.prox}">Próximo Mantenimiento</label>
                         <input type="date" th:field="*{proximoMantenimiento}" class="form-control form-control-sm">
                     </div>
                     <button type="submit" class="btn btn-sm btn-primary w-100">
-                        <i class="bi bi-save me-1"></i>Registrar
+                        <i class="bi bi-save me-1"></i><span th:text="#{action.registrar}">Registrar</span>
                     </button>
                 </form>
             </div>
@@ -90,24 +90,24 @@
         <div class="col-md-8">
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-clock-history me-2"></i>HISTORIAL</span>
+                    <span><i class="bi bi-clock-history me-2"></i><span th:text="#{equipo.mant.section.historial}">HISTORIAL</span></span>
                     <div class="d-flex gap-3 small text-muted">
-                        <span><strong th:text="${totalMantenimientos}">0</strong> registros</span>
-                        <span>Total: <strong th:text="'$' + ${#numbers.formatDecimal(costoTotal,1,'COMMA',0,'POINT')}">$0</strong></span>
+                        <span><strong th:text="${totalMantenimientos}">0</strong> <span th:text="#{equipo.mant.form.registros}">registros</span></span>
+                        <span><span th:text="#{equipo.mant.form.total}">Total:</span> <strong th:text="'$' + ${#numbers.formatDecimal(costoTotal,1,'COMMA',0,'POINT')}">$0</strong></span>
                     </div>
                 </div>
                 <div th:if="${#lists.isEmpty(mantenimientos)}" class="text-center py-4 text-muted">
                     <i class="bi bi-wrench fs-2 d-block mb-2"></i>
-                    <p>Sin mantenimientos registrados</p>
+                    <p th:text="#{equipo.mant.empty.list}">Sin mantenimientos registrados</p>
                 </div>
                 <div th:unless="${#lists.isEmpty(mantenimientos)}" class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead>
                         <tr>
-                            <th>Fecha</th>
-                            <th>Tipo</th>
-                            <th>Técnico</th>
-                            <th>Costo</th>
+                            <th th:text="#{label.fecha}">Fecha</th>
+                            <th th:text="#{label.tipo}">Tipo</th>
+                            <th th:text="#{label.tecnico}">Técnico</th>
+                            <th th:text="#{label.costo}">Costo</th>
                             <th></th>
                         </tr>
                         </thead>
@@ -120,7 +120,7 @@
                             <td>
                                 <form th:action="@{/equipos/{eid}/mantenimientos/eliminar/{mid}(eid=${equipo.id},mid=${mant.id})}"
                                       method="post">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="¿Eliminar?">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" th:attr="data-confirm=#{equipo.mant.confirm}">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </form>

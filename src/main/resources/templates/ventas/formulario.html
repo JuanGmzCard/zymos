@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
-    <title th:text="${branding.name} + (${ventaId != null} ? ' - Editar Venta' : ' - Nueva Venta')">Alera - Venta</title>
+    <title th:text="${branding.name} + ' - ' + (${ventaId != null} ? #{ventas.form.title.edit} : #{ventas.form.title.new})">Alera - Venta</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -55,12 +55,12 @@
 
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1 th:text="${ventaId != null} ? 'Editar Venta' : 'Nueva Venta'">Nueva Venta</h1>
-            <p class="subtitle mb-0">Registra una salida, despacho o cotización</p>
+            <h1 th:text="${ventaId != null} ? #{ventas.form.title.edit} : #{ventas.form.title.new}">Nueva Venta</h1>
+            <p class="subtitle mb-0" th:text="#{ventas.form.subtitle}">Registra una salida, despacho o cotización</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/ventas}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -69,13 +69,13 @@
         <div class="col-xl-10">
             <div class="content-card mb-4">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-pencil-square me-2"></i>DATOS DE LA VENTA
+                    <i class="bi bi-pencil-square me-2"></i><span th:text="#{ventas.form.section.datos}">DATOS DE LA VENTA</span>
                 </div>
                     <!-- Aviso duplicado -->
                     <div th:if="${duplicadoDe != null}" class="alert alert-info py-2 mb-3">
                         <i class="bi bi-copy me-1"></i>
-                        Duplicado de la venta <strong th:text="'#' + ${duplicadoDe}"></strong> —
-                        ajusta la fecha y guarda para crear una nueva venta.
+                        <span th:text="#{ventas.form.dup.prefix}">Duplicado de la venta</span> <strong th:text="'#' + ${duplicadoDe}"></strong>
+                        <span th:text="#{ventas.form.dup.hint}">— ajusta la fecha y guarda para crear una nueva venta.</span>
                     </div>
 
                     <form th:action="${ventaId != null} ? @{/ventas/actualizar/{id}(id=${ventaId})} : @{/ventas/guardar}"
@@ -92,14 +92,14 @@
                         <div class="row g-3 mb-4">
                             <!-- Cliente -->
                             <div class="col-md-5">
-                                <label for="clienteDisplay" class="form-label detail-label">Cliente *</label>
+                                <label for="clienteDisplay" class="form-label detail-label"><span th:text="#{label.cliente}">Cliente</span> *</label>
                                 <input type="hidden" th:field="*{clienteId}" id="clienteId">
                                 <div class="position-relative">
                                     <input type="text" id="clienteDisplay"
                                            class="form-control" autocomplete="off"
                                            th:classappend="${#fields.hasErrors('clienteId')} ? 'is-invalid' : ''"
                                            th:value="*{cliente}"
-                                           placeholder="Buscar cliente registrado…">
+                                           th:placeholder="#{ventas.form.cliente.ph}">
                                     <div id="clienteSuggest" class="cliente-suggest"></div>
                                 </div>
                                 <div class="invalid-feedback" th:errors="*{clienteId}">—</div>
@@ -111,7 +111,7 @@
                             </div>
                             <!-- Fecha -->
                             <div class="col-md-4">
-                                <label for="fechaDespacho" class="form-label detail-label">Fecha de Despacho *</label>
+                                <label for="fechaDespacho" class="form-label detail-label" th:text="#{ventas.form.fecha.label}">Fecha de Despacho *</label>
                                 <input type="date" id="fechaDespacho" th:field="*{fechaDespacho}"
                                        class="form-control"
                                        th:classappend="${#fields.hasErrors('fechaDespacho')} ? 'is-invalid' : ''">
@@ -119,7 +119,7 @@
                             </div>
                             <!-- Estado -->
                             <div class="col-md-3">
-                                <label for="estado" class="form-label detail-label">Estado</label>
+                                <label for="estado" class="form-label detail-label" th:text="#{label.estado}">Estado</label>
                                 <select id="estado" th:field="*{estado}" class="form-select">
                                     <option th:each="est : ${estados}"
                                             th:if="${est.name() != 'EXPIRADO'}"
@@ -129,13 +129,13 @@
                             </div>
                             <!-- Fecha vencimiento cotización -->
                             <div class="col-md-4" id="cotizacionExpiraSection" style="display:none;">
-                                <label for="cotizacionExpiraEn" class="form-label detail-label">Válida hasta</label>
+                                <label for="cotizacionExpiraEn" class="form-label detail-label" th:text="#{ventas.form.expira.label}">Válida hasta</label>
                                 <input type="date" id="cotizacionExpiraEn" th:field="*{cotizacionExpiraEn}"
                                        class="form-control"
                                        placeholder="Fecha de vencimiento de la cotización">
                                 <div class="form-text text-muted" style="font-size:0.78rem;">
-                                    <i class="bi bi-info-circle me-1"></i>Si no se define, vence en
-                                    <span id="expiracionDiasHint">15</span> días por defecto.
+                                    <i class="bi bi-info-circle me-1"></i><span th:text="#{ventas.form.expira.hint.prefix}">Si no se define, vence en</span>
+                                    <span id="expiracionDiasHint">15</span> <span th:text="#{ventas.form.expira.hint.suffix}">días por defecto.</span>
                                 </div>
                             </div>
                         </div>
@@ -143,22 +143,22 @@
                         <!-- ─── Ítems de la venta ───────────────────── -->
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="form-label detail-label mb-0">Ítems de la venta *</label>
+                                <label class="form-label detail-label mb-0" th:text="#{ventas.form.items.label}">Ítems de la venta *</label>
                                 <button type="button" id="btnAgregarFila" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-plus-lg me-1"></i>Agregar ítem
+                                    <i class="bi bi-plus-lg me-1"></i><span th:text="#{ventas.form.agregar.item}">Agregar ítem</span>
                                 </button>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-bordered mb-0 items-table">
                                     <thead>
                                         <tr>
-                                            <th style="min-width:180px;">Lote</th>
-                                            <th style="min-width:130px;">Descripción</th>
-                                            <th style="min-width:110px;">Cantidad *</th>
-                                            <th style="min-width:140px;">Unidad</th>
-                                            <th style="min-width:110px;">Precio Unit. *</th>
-                                            <th style="min-width:80px;">Desc. %</th>
-                                            <th style="min-width:90px;" class="text-end">Total</th>
+                                            <th style="min-width:180px;" th:text="#{ventas.table.lote}">Lote</th>
+                                            <th style="min-width:130px;" th:text="#{ventas.table.descripcion}">Descripción</th>
+                                            <th style="min-width:110px;" th:text="#{ventas.table.cantidad.req}">Cantidad *</th>
+                                            <th style="min-width:140px;" th:text="#{ventas.table.unidad}">Unidad</th>
+                                            <th style="min-width:110px;" th:text="#{ventas.table.precio.req}">Precio Unit. *</th>
+                                            <th style="min-width:80px;" th:text="#{ventas.table.desc.pct}">Desc. %</th>
+                                            <th style="min-width:90px;" class="text-end" th:text="#{ventas.table.total}">Total</th>
                                             <th style="width:40px;"></th>
                                         </tr>
                                     </thead>
@@ -204,30 +204,30 @@
                                             <td>
                                                 <select class="form-select form-select-sm item-unidad"
                                                         th:field="*{items[__${iStat.index}__].unidad}">
-                                                    <option value="">— seleccionar —</option>
-                                                    <optgroup label="Botellas">
+                                                    <option value="" th:text="#{label.select}">— seleccionar —</option>
+                                                    <optgroup th:attr="label=#{ventas.unit.botellas}">
                                                         <option value="Botella 330ml">Botella 330ml</option>
                                                         <option value="Botella 500ml">Botella 500ml</option>
                                                         <option value="Botella 750ml">Botella 750ml</option>
                                                         <option value="Botella 1000ml">Botella 1000ml</option>
                                                     </optgroup>
-                                                    <optgroup label="Latas">
+                                                    <optgroup th:attr="label=#{ventas.unit.latas}">
                                                         <option value="Lata 330ml">Lata 330ml</option>
                                                         <option value="Lata 355ml">Lata 355ml</option>
                                                         <option value="Lata 473ml">Lata 473ml</option>
                                                     </optgroup>
-                                                    <optgroup label="Barriles / Kegs">
+                                                    <optgroup th:attr="label=#{ventas.unit.barriles}">
                                                         <option value="Barril 10L">Barril 10L</option>
                                                         <option value="Barril 20L">Barril 20L</option>
                                                         <option value="Barril 30L">Barril 30L</option>
                                                         <option value="Barril 50L">Barril 50L</option>
                                                     </optgroup>
-                                                    <optgroup label="Growlers">
+                                                    <optgroup th:attr="label=#{ventas.unit.growlers}">
                                                         <option value="Growler 1L">Growler 1L</option>
                                                         <option value="Growler 2L">Growler 2L</option>
                                                         <option value="Growler 3.8L">Growler 3.8L</option>
                                                     </optgroup>
-                                                    <optgroup label="Otros">
+                                                    <optgroup th:attr="label=#{ventas.unit.otros}">
                                                         <option value="A granel">A granel</option>
                                                         <option value="L">Litros (L)</option>
                                                         <option value="und">Unidad</option>
@@ -259,7 +259,7 @@
                                             <!-- Eliminar -->
                                             <td class="text-center">
                                                 <button type="button" class="btn btn-outline-danger btn-sm py-0 px-1 btn-eliminar-fila"
-                                                        title="Eliminar ítem">
+                                                        th:title="#{action.delete.item}">
                                                     <i class="bi bi-trash3"></i>
                                                 </button>
                                             </td>
@@ -267,7 +267,7 @@
                                     </tbody>
                                     <tfoot>
                                         <tr>
-                                            <td colspan="6" class="text-end fw-semibold pe-2">Total Venta:</td>
+                                            <td colspan="6" class="text-end fw-semibold pe-2" th:text="#{ventas.form.total.label}">Total Venta:</td>
                                             <td class="text-end pe-2">
                                                 <span id="grandTotal" style="font-weight:700;color:var(--dorado);">$0</span>
                                             </td>
@@ -280,23 +280,23 @@
 
                         <!-- Notas -->
                         <div class="mb-3">
-                            <label for="notas" class="form-label detail-label">Notas</label>
+                            <label for="notas" class="form-label detail-label" th:text="#{label.notas}">Notas</label>
                             <textarea id="notas" th:field="*{notas}"
                                       class="form-control" rows="2"
-                                      placeholder="Observaciones, número de pedido, condiciones de entrega…"></textarea>
+                                      th:placeholder="#{ventas.form.notas.ph}"></textarea>
                         </div>
 
                         <!-- Error inline: sin ítems -->
                         <div id="alertaSinItems" class="alert alert-danger py-2 mb-3" style="display:none;">
                             <i class="bi bi-exclamation-triangle me-1"></i>
-                            Debes agregar al menos un ítem antes de guardar.
+                            <span th:text="#{ventas.form.alert.items}">Debes agregar al menos un ítem antes de guardar.</span>
                         </div>
 
                         <div class="d-flex gap-2 justify-content-end">
-                            <a th:href="@{/ventas}" class="btn btn-outline-secondary">Cancelar</a>
+                            <a th:href="@{/ventas}" class="btn btn-outline-secondary" th:text="#{action.cancel}">Cancelar</a>
                             <button type="submit" id="btnGuardar" class="btn btn-primary">
                                 <i class="bi bi-check-lg me-1"></i>
-                                <span th:text="${ventaId != null} ? 'Actualizar' : 'Registrar Venta'">Guardar</span>
+                                <span th:text="${ventaId != null} ? #{action.update} : #{ventas.btn.registrar}">Guardar</span>
                             </button>
                         </div>
                     </form>

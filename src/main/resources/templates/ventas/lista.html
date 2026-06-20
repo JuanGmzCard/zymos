@@ -231,11 +231,11 @@
             <div class="stat-value warning" th:text="${statsPendientes}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Clientes Únicos</div>
+            <div class="stat-label" th:text="#{ventas.stats.clientes}">Clientes Únicos</div>
             <div class="stat-value" th:text="${statsClientes}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Ingresos Despachados</div>
+            <div class="stat-label" th:text="#{ventas.stats.ingresos}">Ingresos Despachados</div>
             <div class="stat-value success"
                  th:text="'$' + ${#numbers.formatDecimal(statsIngresos,1,'COMMA',0,'POINT')}">$0</div>
         </div>
@@ -263,13 +263,13 @@
             </div>
             <div class="col-auto">
                 <a th:if="${estadoFiltro != null or desde != null or hasta != null}"
-                   th:href="@{/ventas}" class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                   th:href="@{/ventas}" class="btn btn-outline-secondary btn-sm" th:text="#{action.limpiar}">Limpiar</a>
             </div>
             <!-- Typeahead -->
             <div class="col-auto ms-auto">
                 <div class="position-relative">
                     <input type="search" id="ventaSearch" class="form-control form-control-sm"
-                           placeholder="Buscar cliente o lote…" autocomplete="off"
+                           th:placeholder="#{ventas.filter.buscar.lote}" autocomplete="off"
                            style="min-width:200px;" data-suggest-url="/ventas/suggest">
                     <div id="ventaSuggest" class="search-suggest" style="display:none;"></div>
                 </div>
@@ -278,9 +278,8 @@
         <!-- Fila 2: tabs de estado -->
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/ventas(desde=${desde},hasta=${hasta})}"
-               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
-                Todos
-            </a>
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{label.todos}">Todos</a>
             <th:block th:each="est : ${estados}">
                 <a th:href="@{/ventas(estado=${est.name()},desde=${desde},hasta=${hasta})}"
                    th:classappend="${estadoFiltro != null and estadoFiltro.name() == est.name()} ? 'filter-tab active' : 'filter-tab inactive'"
@@ -292,14 +291,14 @@
     <!-- Tabla -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span>Ventas registradas</span>
+            <span th:text="#{ventas.table.count}">Ventas registradas</span>
         </div>
         <div class="table-responsive">
             <table class="table mb-0">
                 <thead>
                 <tr>
                     <th style="padding-left:1.25rem;" th:text="#{ventas.table.cliente}">Cliente</th>
-                    <th>Primer Lote</th>
+                    <th th:text="#{ventas.table.primer.lote}">Primer Lote</th>
                     <th th:text="#{ventas.table.fecha}">Fecha</th>
                     <th class="text-center" th:text="#{ventas.table.estado}">Estado</th>
                     <th class="text-end" th:text="#{ventas.table.total}">Valor Total</th>
@@ -319,7 +318,7 @@
                         <span th:if="${v.primerCodigoLote != null}"
                               class="fw-semibold" style="color:var(--dorado);"
                               th:text="${v.primerCodigoLote}">—</span>
-                        <span th:if="${v.primerCodigoLote == null}" class="text-muted">Sin lote</span>
+                        <span th:if="${v.primerCodigoLote == null}" class="text-muted" th:text="#{ventas.sin.lote}">Sin lote</span>
                         <span th:if="${v.itemsCount > 1}"
                               class="badge bg-secondary ms-1"
                               style="font-size:0.68rem;"
@@ -334,16 +333,16 @@
                         th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
                     <td class="text-end pe-3 text-nowrap">
                         <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
-                           class="action-link view" title="Ver detalle">Ver</a>
+                           class="action-link view" th:title="#{action.view.detail}" th:text="#{action.ver}">Ver</a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/ventas/{id}/pdf(id=${v.id})}"
-                           class="action-link edit" title="Descargar PDF">
+                           class="action-link edit" th:title="#{action.download.pdf}">
                             <i class="bi bi-file-earmark-pdf"></i>
                         </a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
                         <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
                            th:href="@{/ventas/editar/{id}(id=${v.id})}"
-                           class="action-link edit" title="Editar">Editar</a>
+                           class="action-link edit" th:title="#{action.edit}" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep"
                               sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
                               th:if="${v.estado.name() == 'PENDIENTE'}">·</span>
@@ -352,7 +351,7 @@
                                 type="button"
                                 class="action-link view border-0 bg-transparent p-0 btn-despachar"
                                 th:attr="data-id=${v.id}"
-                                title="Marcar como despachado">
+                                th:title="#{ventas.action.despachar}">
                             <i class="bi bi-check-lg"></i>
                         </button>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
@@ -360,7 +359,7 @@
                               th:action="@{/ventas/{id}/eliminar(id=${v.id})}" method="post"
                               class="d-inline">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
-                                    title="Eliminar" data-confirm="¿Eliminar esta venta?">
+                                    th:title="#{action.delete}" th:attr="data-confirm=#{ventas.confirm.eliminar}">
                                 <i class="bi bi-trash3"></i>
                             </button>
                         </form>
@@ -383,7 +382,7 @@
     <!-- Top Clientes -->
     <div class="top-clientes-card" th:if="${!#lists.isEmpty(topClientes)}">
         <div class="tc-header">
-            <span><i class="bi bi-trophy me-2"></i>Top Clientes <small class="text-muted fw-normal">(por ingresos despachados)</small></span>
+            <span><i class="bi bi-trophy me-2"></i><span th:text="#{ventas.top.clientes}">Top Clientes</span> <small class="text-muted fw-normal" th:text="#{ventas.top.clientes.sub}">(por ingresos despachados)</small></span>
             <button class="btn btn-sm btn-outline-secondary py-0 px-2" type="button"
                     data-bs-toggle="collapse" data-bs-target="#collapseTopClientes"
                     aria-expanded="true">
@@ -396,9 +395,9 @@
                     <thead>
                     <tr>
                         <th style="padding-left:1.25rem; width:40px;">#</th>
-                        <th>Cliente</th>
-                        <th class="text-center">Ventas</th>
-                        <th class="text-end pe-3">Ingresos</th>
+                        <th th:text="#{ventas.top.table.cliente}">Cliente</th>
+                        <th class="text-center" th:text="#{ventas.top.table.ventas}">Ventas</th>
+                        <th class="text-end pe-3" th:text="#{ventas.top.table.ingresos}">Ingresos</th>
                     </tr>
                     </thead>
                     <tbody>
