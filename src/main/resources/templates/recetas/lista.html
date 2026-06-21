@@ -324,6 +324,15 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var RECETA_MSG = {
+    sinResultados: /*[[#{traz.index.js.sin.resultados}]]*/ 'Sin resultados para',
+    activa:        /*[[#{recetas.badge.activa}]]*/ 'Activa',
+    inactiva:      /*[[#{recetas.badge.inactiva}]]*/ 'Inactiva'
+};
+/*]]>*/
+</script>
 <script th:attr="nonce=${cspNonce}">
 (function() {
     var debTimer, activeIdx = -1;
@@ -384,15 +393,15 @@
 
     function render(items, q) {
         if (!items.length) {
-            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.innerHTML = '<div class="ss-empty">' + RECETA_MSG.sinResultados + ' &ldquo;' + esc(q) + '&rdquo;</div>';
             suggest.style.display = 'block';
             return;
         }
         var html = '';
         items.forEach(function(item) {
             var badge = item.activa
-                ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">Activa</span>'
-                : '<span class="badge badge-neutral ms-auto" style="font-size:.65rem;">Inactiva</span>';
+                ? '<span class="badge bg-success ms-auto" style="font-size:.65rem;">' + RECETA_MSG.activa + '</span>'
+                : '<span class="badge badge-neutral ms-auto" style="font-size:.65rem;">' + RECETA_MSG.inactiva + '</span>';
             html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                 '<i class="bi bi-journal-bookmark ss-icon"></i>' +
                 '<span class="ss-title">' + esc(item.nombre) + '</span>' +

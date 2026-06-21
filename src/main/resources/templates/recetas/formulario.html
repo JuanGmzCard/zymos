@@ -165,8 +165,9 @@
             <div class="form-section-title"><i class="bi bi-basket me-2"></i><span th:text="#{recetas.form.sec.ing}">Ingredientes</span></div>
             <p class="text-muted small mb-3">
                 <i class="bi bi-info-circle me-1"></i>
-                Los nombres se sugieren desde el inventario. Si un insumo no existe, usa
-                <i class="bi bi-plus-square"></i> para crearlo sin descontar stock.
+                <span th:text="#{recetas.form.ing.hint.pre}">Los nombres se sugieren desde el inventario. Si un insumo no existe, usa</span>
+                <i class="bi bi-plus-square"></i>
+                <span th:text="#{recetas.form.ing.hint.post}">para crearlo sin descontar stock.</span>
             </p>
 
             <!-- Maltas -->
@@ -208,7 +209,8 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
-                        data-container="receta-maltas-container" data-field="maltas" data-label="Malta">
+                        data-container="receta-maltas-container" data-field="maltas"
+                        th:attr="data-label=#{recetas.form.ph.malta}">
                     <i class="bi bi-plus me-1"></i><span th:text="#{recetas.form.btn.agregar.malta}">Agregar Malta</span>
                 </button>
             </div>
@@ -252,7 +254,8 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
-                        data-container="receta-lupulos-container" data-field="lupulos" data-label="Lúpulo">
+                        data-container="receta-lupulos-container" data-field="lupulos"
+                        th:attr="data-label=#{recetas.form.ph.lupulo}">
                     <i class="bi bi-plus me-1"></i><span th:text="#{recetas.form.btn.agregar.lupulo}">Agregar Lúpulo</span>
                 </button>
             </div>
@@ -296,7 +299,8 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
-                        data-container="receta-levaduras-container" data-field="levaduras" data-label="Levadura">
+                        data-container="receta-levaduras-container" data-field="levaduras"
+                        th:attr="data-label=#{recetas.form.ph.levadura}">
                     <i class="bi bi-plus me-1"></i><span th:text="#{recetas.form.btn.agregar.levadura}">Agregar Levadura</span>
                 </button>
             </div>
@@ -341,7 +345,8 @@
                     </div>
                 </div>
                 <button type="button" class="btn btn-sm btn-zymos-outline mt-2 btn-add-receta-row"
-                        data-container="receta-clarificantes-container" data-field="clarificantes" data-label="Clarificante">
+                        data-container="receta-clarificantes-container" data-field="clarificantes"
+                        th:attr="data-label=#{recetas.form.ph.clarificante}">
                     <i class="bi bi-plus me-1"></i><span th:text="#{recetas.form.btn.agregar.clarificante}">Agregar Clarificante</span>
                 </button>
             </div>
@@ -388,9 +393,9 @@
         <div class="form-section">
             <div class="form-section-title"><i class="bi bi-fire me-2"></i><span th:text="#{recetas.form.sec.hervor}">Hervor y Lúpulo</span></div>
             <p class="text-muted small mb-3">
-                Programa las adiciones de lúpulos y clarificantes durante el hervor.
-                <strong>Minutos restantes</strong> = tiempo que falta para terminar el hervor cuando se agrega
-                (60 = al inicio, 0 = apagado/flameout).
+                <span th:text="#{recetas.form.hervor.hint.intro}">Programa las adiciones de lúpulos y clarificantes durante el hervor.</span>
+                <strong th:text="#{recetas.form.hervor.hint.min.label}">Minutos restantes</strong>
+                <span th:text="#{recetas.form.hervor.hint.min.desc}">= tiempo que falta para terminar el hervor cuando se agrega (60 = al inicio, 0 = apagado/flameout).</span>
             </p>
             <div id="adiciones-hervor-container">
                 <div th:if="${!#lists.isEmpty(recetaForm.adicionesHervor)}"
@@ -537,6 +542,24 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var RECETA_FORM_MSG = {
+    nombreReq:   /*[[#{fact.form.js.nombre.req}]]*/ 'El nombre es obligatorio',
+    errorTipo:   /*[[#{recetas.form.js.error.tipo}]]*/ 'Error al crear el tipo',
+    errorInsumo: /*[[#{recetas.form.js.error.insumo}]]*/ 'Error al crear el insumo',
+    errorConn:   /*[[#{fact.form.js.error.conn}]]*/ 'Error de conexión',
+    tipoMalta:   /*[[#{recetas.detalle.tipo.malta}]]*/ 'Malta',
+    tipoLupulo:  /*[[#{recetas.detalle.tipo.lupulo}]]*/ 'Lúpulo',
+    tipoLevadura:/*[[#{recetas.detalle.tipo.levadura}]]*/ 'Levadura',
+    tipoClar:    /*[[#{recetas.detalle.tipo.clarificante}]]*/ 'Clarificante',
+    phHervor:    /*[[#{recetas.form.ph.hervor}]]*/ 'Lúpulo o clarificante',
+    phEscalon:   /*[[#{recetas.form.ph.escalon}]]*/ 'Ej: Sacarificación',
+    phCantidad:  /*[[#{recetas.form.ph.cantidad}]]*/ 'Cantidad',
+    crearInv:    /*[[#{recetas.form.btn.crear.inv}]]*/ 'Crear en inventario'
+};
+/*]]>*/
+</script>
 <script th:attr="nonce=${cspNonce}">
 const UNIT_OPTIONS = `
     <option value="gr">gr</option>
@@ -560,10 +583,10 @@ const TIPO_ENUM_MAP = {
 };
 
 const TIPO_LABEL_MAP = {
-    MALTA: 'Malta',
-    LUPULO: 'Lúpulo',
-    LEVADURA: 'Levadura',
-    CLARIFICANTE: 'Clarificante'
+    MALTA: RECETA_FORM_MSG.tipoMalta,
+    LUPULO: RECETA_FORM_MSG.tipoLupulo,
+    LEVADURA: RECETA_FORM_MSG.tipoLevadura,
+    CLARIFICANTE: RECETA_FORM_MSG.tipoClar
 };
 
 function removeRow(btn) {
@@ -601,7 +624,7 @@ function addAdicionHervor() {
                 <div class="col-md-4">
                     <input type="text" name="adicionesHervor[${idx}].nombre"
                            class="form-control form-control-sm"
-                           placeholder="Lúpulo o clarificante"
+                           placeholder="${RECETA_FORM_MSG.phHervor}"
                            list="datalist-hervor" autocomplete="off">
                 </div>
                 <div class="col-md-2">
@@ -648,12 +671,12 @@ function addRecetaRow(containerId, tipo, placeholder) {
                 </div>
                 <div class="col-md-1 ps-0">
                     <button type="button" class="btn btn-sm btn-outline-secondary w-100 btn-crear-insumo"
-                            data-tipo="${tipoEnum}" title="Crear en inventario">
+                            data-tipo="${tipoEnum}" title="${RECETA_FORM_MSG.crearInv}">
                         <i class="bi bi-plus-square"></i>
                     </button>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" name="${tipo}[${idx}].cantidad" class="form-control form-control-sm" placeholder="Cantidad">
+                    <input type="text" name="${tipo}[${idx}].cantidad" class="form-control form-control-sm" placeholder="${RECETA_FORM_MSG.phCantidad}">
                 </div>
                 <div class="col-md-3">
                     <select name="${tipo}[${idx}].unidad" class="form-select form-select-sm">${tipo === 'clarificantes' ? UNIT_OPTIONS + '<option value="und">und</option>' : UNIT_OPTIONS}</select>
@@ -672,7 +695,7 @@ function addEscalon() {
         <div class="ingrediente-row">
             <div class="row g-2 align-items-center">
                 <div class="col-md-4">
-                    <input type="text" name="escalones[${idx}].nombre" class="form-control form-control-sm" placeholder="Ej: Sacarificación">
+                    <input type="text" name="escalones[${idx}].nombre" class="form-control form-control-sm" placeholder="${RECETA_FORM_MSG.phEscalon}">
                 </div>
                 <div class="col-md-3">
                     <div class="input-group input-group-sm">
@@ -725,7 +748,7 @@ document.getElementById('btnGuardarTipoRapido').addEventListener('click', async 
     const nombre  = document.getElementById('nuevoTipoNombre').value.trim();
     const errorEl = document.getElementById('nuevoTipoError');
     errorEl.classList.add('d-none');
-    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+    if (!nombre) { errorEl.textContent = RECETA_FORM_MSG.nombreReq; errorEl.classList.remove('d-none'); return; }
 
     const csrf       = document.querySelector('meta[name="_csrf"]')?.content;
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
@@ -744,11 +767,11 @@ document.getElementById('btnGuardarTipoRapido').addEventListener('click', async 
             document.querySelector('input[list="datalist-estilos"]').value = data.nombre;
             bootstrap.Modal.getInstance(document.getElementById('modalNuevoTipo')).hide();
         } else {
-            errorEl.textContent = data.error || 'Error al crear el tipo';
+            errorEl.textContent = data.error || RECETA_FORM_MSG.errorTipo;
             errorEl.classList.remove('d-none');
         }
     } catch (e) {
-        errorEl.textContent = 'Error de conexión';
+        errorEl.textContent = RECETA_FORM_MSG.errorConn;
         errorEl.classList.remove('d-none');
     }
 });
@@ -806,7 +829,7 @@ document.getElementById('btnGuardarInsumoRapido').addEventListener('click', asyn
     errorEl.classList.add('d-none');
 
     if (!nombre) {
-        errorEl.textContent = 'El nombre es obligatorio';
+        errorEl.textContent = RECETA_FORM_MSG.nombreReq;
         errorEl.classList.remove('d-none');
         return;
     }
@@ -838,11 +861,11 @@ document.getElementById('btnGuardarInsumoRapido').addEventListener('click', asyn
             if (modalInsumoInputRef) modalInsumoInputRef.value = data.nombre;
             bootstrap.Modal.getInstance(document.getElementById('modalNuevoInsumo')).hide();
         } else {
-            errorEl.textContent = data.error || 'Error al crear el insumo';
+            errorEl.textContent = data.error || RECETA_FORM_MSG.errorInsumo;
             errorEl.classList.remove('d-none');
         }
     } catch (e) {
-        errorEl.textContent = 'Error de conexión';
+        errorEl.textContent = RECETA_FORM_MSG.errorConn;
         errorEl.classList.remove('d-none');
     }
 });
