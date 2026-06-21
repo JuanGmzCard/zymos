@@ -131,7 +131,7 @@
             <a th:href="@{/notificaciones(page=${paginaActual - 1})}"
                th:classappend="${paginaActual == 0} ? 'disabled' : ''"
                th:text="#{page.anterior}">← Anterior</a>
-            <span>Página <strong th:text="${paginaActual + 1}">1</strong> de <span th:text="${totalPaginas}">1</span></span>
+            <span><span th:text="#{label.pagina}">Página</span> <strong th:text="${paginaActual + 1}">1</strong> <span th:text="#{label.de}">de</span> <span th:text="${totalPaginas}">1</span></span>
             <a th:href="@{/notificaciones(page=${paginaActual + 1})}"
                th:classappend="${paginaActual >= totalPaginas - 1} ? 'disabled' : ''"
                th:text="#{page.siguiente}">Siguiente →</a>

@@ -134,7 +134,7 @@
                                      th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</div>
                                 <div class="text-muted" style="font-size:.75rem;"
                                      th:if="${p.volumenEstimado != null}"
-                                     th:text="${p.volumenEstimado.stripTrailingZeros().toPlainString()} + ' L estimados'">—</div>
+                                     th:text="${p.volumenEstimado.stripTrailingZeros().toPlainString()} + ' ' + #{planif.proximas.vol}">—</div>
                             </div>
                             <span class="plan-badge"
                                   th:style="'background:' + ${p.estado.color} + ';color:' + ${p.estado.colorTexto}"
@@ -149,8 +149,8 @@
     <!-- Tabla completa -->
     <div class="table-card mb-4">
         <div class="table-title d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-table me-2"></i>Todas las planificaciones</span>
-            <span class="text-muted small" th:text="${#lists.size(todas)} + ' registros'"></span>
+            <span><i class="bi bi-table me-2"></i><span th:text="#{planif.table.title}">Todas las planificaciones</span></span>
+            <span class="text-muted small" th:text="${#lists.size(todas)} + ' ' + #{label.registros}"></span>
         </div>
 
         <div th:if="${#lists.isEmpty(todas)}" class="text-center text-muted py-5">
@@ -163,7 +163,7 @@
                 <thead>
                     <tr>
                         <th style="padding-left:1.25rem;" th:text="#{label.fecha}">Fecha</th>
-                        <th>Elaboración</th>
+                        <th th:text="#{planif.table.elaboracion}">Elaboración</th>
                         <th th:text="#{label.receta}">Receta</th>
                         <th class="text-center" th:text="#{planif.table.vol}">Vol. estimado</th>
                         <th class="text-center" th:text="#{label.estado}">Estado</th>
@@ -340,7 +340,11 @@ document.addEventListener('DOMContentLoaded', function () {
         dateClick: function (info) {
             if (esAdmin) abrirModalNuevo(info.dateStr);
         },
-        buttonText: { today: 'Hoy', month: 'Mes', list: 'Lista' }
+        buttonText: {
+            today: /*[[#{cal.js.hoy}]]*/ 'Hoy',
+            month: /*[[#{cal.js.mes}]]*/ 'Mes',
+            list:  /*[[#{cal.js.lista}]]*/ 'Lista'
+        }
     });
     cal.render();
 
