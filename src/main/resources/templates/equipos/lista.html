@@ -182,6 +182,14 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var EQUIPO_MSG = {
+    sinResultados: /*[[#{traz.index.js.sin.resultados}]]*/ 'Sin resultados para',
+    mantPendiente: /*[[#{equipo.js.mant.pendiente}]]*/ 'Mantenimiento pendiente'
+};
+/*]]>*/
+</script>
 <script th:attr="nonce=${cspNonce}">
 (function() {
     var debTimer, activeIdx = -1;
@@ -242,7 +250,7 @@
 
     function render(items, q) {
         if (!items.length) {
-            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.innerHTML = '<div class="ss-empty">' + EQUIPO_MSG.sinResultados + ' &ldquo;' + esc(q) + '&rdquo;</div>';
             suggest.style.display = 'block';
             return;
         }
@@ -251,7 +259,7 @@
             var estadoBadge = '<span class="badge bg-' + esc(item.colorEstado) + ' ms-auto" style="font-size:.65rem;">'
                             + esc(item.estado) + '</span>';
             var pendiente   = item.pendiente
-                ? '<i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="Mantenimiento pendiente" style="font-size:.75rem;"></i>'
+                ? '<i class="bi bi-exclamation-triangle-fill text-danger ms-1" title="' + EQUIPO_MSG.mantPendiente + '" style="font-size:.75rem;"></i>'
                 : '';
             html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                 '<i class="bi bi-tools ss-icon"></i>' +

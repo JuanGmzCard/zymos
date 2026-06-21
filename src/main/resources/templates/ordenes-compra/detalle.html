@@ -25,7 +25,7 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
-            <h1 class="mb-1" th:text="${oc.numeroOc != null ? oc.numeroOc : #{oc.sin.numero}}">OC-001</h1>
+            <h1 class="mb-1" th:text="${oc.numeroOc != null} ? ${oc.numeroOc} : #{oc.sin.numero}">OC-001</h1>
             <p class="subtitle mb-0">
                 <span class="badge rounded-pill" th:classappend="${oc.estado.badgeClass}"
                       th:text="${oc.estado.displayName}">Estado</span>
@@ -34,7 +34,7 @@
         </div>
         <div class="d-flex gap-2 pt-1 flex-wrap">
             <a th:href="@{/ordenes-compra/{id}/pdf(id=${oc.id})}"
-               class="btn btn-sm btn-outline-secondary" title="Descargar PDF">
+               class="btn btn-sm btn-outline-secondary" th:title="#{oc.det.btn.pdf}">
                 <i class="bi bi-file-pdf me-1"></i>PDF
             </a>
             <a th:if="${oc.editable}"
@@ -83,7 +83,7 @@
                             <div class="fw-semibold">
                                 <a th:href="@{/facturas/ver/{id}(id=${oc.facturaId})}"
                                    class="text-decoration-none" style="color:var(--verde-alera)">
-                                    <i class="bi bi-receipt me-1"></i>Ver factura →
+                                    <i class="bi bi-receipt me-1"></i><span th:text="#{oc.det.btn.ver.factura}">Ver factura →</span>
                                 </a>
                             </div>
                         </div>

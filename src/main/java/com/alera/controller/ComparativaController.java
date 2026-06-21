@@ -5,6 +5,7 @@ import com.alera.model.Tenant;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.service.PdfExportService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Locale;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
@@ -73,7 +74,7 @@ public class ComparativaController {
 
     @GetMapping("/resultado/pdf")
     public ResponseEntity<byte[]> pdf(@RequestParam(required = false) List<Long> ids,
-                                       HttpServletRequest request) {
+                                       HttpServletRequest request, Locale locale) {
         if (ids == null || ids.size() < 2) {
             return ResponseEntity.badRequest().build();
         }
@@ -92,7 +93,7 @@ public class ComparativaController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
 
-        byte[] pdf = pdfService.generarPdfComparativa(lotes, mejoresMap, mejorCpl, branding);
+        byte[] pdf = pdfService.generarPdfComparativa(lotes, mejoresMap, mejorCpl, branding, locale);
         String filename = "comparativa-" + lotes.stream()
                 .map(LoteCerveza::getCodigoLote).collect(Collectors.joining("-")) + ".pdf";
 

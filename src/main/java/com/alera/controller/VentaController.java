@@ -13,6 +13,7 @@ import com.alera.service.TrazabilidadService;
 import com.alera.service.VentaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -248,12 +249,12 @@ public class VentaController {
     }
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request, Locale locale) {
         var venta = service.buscarPorId(id).orElse(null);
         if (venta == null) return ResponseEntity.notFound().build();
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
-        byte[] bytes = pdfExportService.generarPdfVenta(venta, branding);
+        byte[] bytes = pdfExportService.generarPdfVenta(venta, branding, locale);
         String filename = "remision-venta-" + id + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -266,13 +267,13 @@ public class VentaController {
             @RequestParam(required = false) EstadoVenta estado,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
 
         var ventas = service.listarParaExport(estado, desde, hasta);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
 
-        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding);
+        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding, locale);
         String filename = "ventas-" + LocalDate.now() + ".xlsx";
 
         return ResponseEntity.ok()

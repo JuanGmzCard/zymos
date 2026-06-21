@@ -13,6 +13,7 @@ import com.alera.service.RecetaService;
 import com.alera.service.TipoCervezaService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -142,11 +143,11 @@ public class RecetaController {
     }
 
     @GetMapping("/ver/{id}/pdf")
-    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request, Locale locale) {
         Receta receta = service.buscarPorId(id);
         com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
-        byte[] bytes = pdfService.generarPdfReceta(receta, branding);
+        byte[] bytes = pdfService.generarPdfReceta(receta, branding, locale);
         String filename = "receta-" + receta.getNombre().replaceAll("[^a-zA-Z0-9]", "-") + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

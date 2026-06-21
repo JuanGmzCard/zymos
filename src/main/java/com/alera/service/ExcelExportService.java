@@ -19,6 +19,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.VerticalAlignment;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.*;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -28,16 +29,33 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
 
 @Service
 public class ExcelExportService {
 
-    // Colores neutros fijos (no son parte del branding del tenant)
-    private static final Color C_BORDE = new Color(222, 226, 230);
+    private final MessageSource messageSource;
 
+    public ExcelExportService(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    private static final Color C_BORDE = new Color(222, 226, 230);
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
+
+    private String t(String key) {
+        Locale loc = LOCALE_HOLDER.get();
+        return messageSource.getMessage(key, null, key, loc != null ? loc : Locale.forLanguageTag("es"));
+    }
+
+    private String tf(String key, Object... args) {
+        Locale loc = LOCALE_HOLDER.get();
+        return messageSource.getMessage(key, args, key, loc != null ? loc : Locale.forLanguageTag("es"));
+    }
 
     /** Paleta calculada por request a partir del branding del tenant. */
     private record Pal(Color verde, Color verdeOscuro, Color dorado, Color crema, Color fondo) {
@@ -48,22 +66,27 @@ public class ExcelExportService {
 
     // ── Excel Inventario ─────────────────────────────────────────────
 
-    public byte[] generarExcelInventario(List<InsumoInventario> insumos, ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (XSSFWorkbook wb = new XSSFWorkbook()) {
-            construirSheetInventario(wb, insumos, branding.name(), pal);
-            construirSheetInventarioTipos(wb, insumos, branding.name(), pal);
-            wb.write(baos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando Excel de inventario", e);
+    public byte[] generarExcelInventario(List<InsumoInventario> insumos, ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                construirSheetInventario(wb, insumos, branding.name(), pal);
+                construirSheetInventarioTipos(wb, insumos, branding.name(), pal);
+                wb.write(baos);
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando Excel de inventario", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void construirSheetInventario(XSSFWorkbook wb, List<InsumoInventario> insumos,
                                            String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Inventario");
+        Sheet sheet = wb.createSheet(t("xls.sheet.inventario"));
         sheet.setDefaultColumnWidth(15);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -78,20 +101,24 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Inventario de Insumos");
+        cT.setCellValue(tf("xls.titulo.inventario", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 7));
 
         r++;
         long totalBajoStock = insumos.stream().filter(InsumoInventario::isBajoStock).count();
         Row fRes = sheet.createRow(r++);
-        celda(fRes, 0, "Total: " + insumos.size() + " insumos", stResumen);
-        celda(fRes, 3, "Bajo stock: " + totalBajoStock, stResumen);
+        celda(fRes, 0, tf("xls.resumen.total_insumos", insumos.size()), stResumen);
+        celda(fRes, 3, tf("xls.resumen.bajo_stock", totalBajoStock), stResumen);
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
-        String[] headers = {"Nombre", "Tipo", "Cantidad", "Unidad", "Stock Mínimo", "Estado", "Vencimiento", "Proveedor"};
+        String[] headers = {
+            t("xls.header.nombre"), t("xls.header.tipo"), t("xls.header.cantidad"),
+            t("xls.header.unidad"), t("xls.header.stock_minimo"), t("xls.header.estado"),
+            t("xls.header.vencimiento"), t("xls.header.proveedor")
+        };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
         int[] widths = {28, 14, 12, 10, 13, 10, 14, 20};
@@ -109,7 +136,7 @@ public class ExcelExportService {
             celdaNum(fila, 2, ins.getCantidad() != null ? ins.getCantidad().doubleValue() : null, sN);
             celda(fila, 3, ins.getUnidad() != null ? ins.getUnidad() : "", sD);
             celdaNum(fila, 4, ins.getStockMinimo() != null ? ins.getStockMinimo().doubleValue() : null, sN);
-            celda(fila, 5, ins.isBajoStock() ? "Bajo stock" : "OK", sD);
+            celda(fila, 5, ins.isBajoStock() ? t("xls.text.bajo_stock") : t("xls.text.ok"), sD);
             celda(fila, 6, ins.getFechaVencimiento() != null
                     ? ins.getFechaVencimiento().format(FMT_FECHA) : "", sD);
             celda(fila, 7, ins.getProveedor() != null ? ins.getProveedor() : "", sD);
@@ -122,7 +149,7 @@ public class ExcelExportService {
 
     private void construirSheetInventarioTipos(XSSFWorkbook wb, List<InsumoInventario> insumos,
                                                 String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Por Tipo");
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_tipo"));
         sheet.setDefaultColumnWidth(18);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -136,22 +163,25 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Inventario por Tipo");
+        cT.setCellValue(tf("xls.titulo.por_tipo", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
-        String[] headers = {"Tipo", "Cantidad de items", "Items bajo stock", "% bajo stock"};
+        String[] headers = {
+            t("xls.header.tipo"), t("xls.header.cantidad_items"),
+            t("xls.header.items_bajo_stock"), t("xls.header.pct_bajo_stock")
+        };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
         java.util.LinkedHashMap<String, long[]> grouped = new java.util.LinkedHashMap<>();
         for (InsumoInventario ins : insumos) {
-            String t = ins.getTipo() != null ? ins.getTipo() : "Otro";
-            grouped.computeIfAbsent(t, k -> new long[]{0, 0});
-            grouped.get(t)[0]++;
-            if (ins.isBajoStock()) grouped.get(t)[1]++;
+            String tp = ins.getTipo() != null ? ins.getTipo() : t("xls.text.otro");
+            grouped.computeIfAbsent(tp, k -> new long[]{0, 0});
+            grouped.get(tp)[0]++;
+            if (ins.isBajoStock()) grouped.get(tp)[1]++;
         }
 
         int idx = 0;
@@ -172,25 +202,30 @@ public class ExcelExportService {
     public byte[] generarExcelFacturas(List<FacturaProveedor> facturas,
                                         EstadoFactura estadoFiltro,
                                         LocalDate desde, LocalDate hasta,
-                                        ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (XSSFWorkbook wb = new XSSFWorkbook()) {
-            construirSheetFacturas(wb, facturas, estadoFiltro, desde, hasta, branding.name(), pal);
-            construirSheetProveedores(wb, facturas, branding.name(), pal);
-            construirSheetItems(wb, facturas, branding.name(), pal);
-            wb.write(baos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando Excel de facturas", e);
+                                        ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                construirSheetFacturas(wb, facturas, estadoFiltro, desde, hasta, branding.name(), pal);
+                construirSheetProveedores(wb, facturas, branding.name(), pal);
+                construirSheetItems(wb, facturas, branding.name(), pal);
+                wb.write(baos);
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando Excel de facturas", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void construirSheetFacturas(XSSFWorkbook wb, List<FacturaProveedor> facturas,
                                          EstadoFactura estadoFiltro,
                                          LocalDate desde, LocalDate hasta,
                                          String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Facturas");
+        Sheet sheet = wb.createSheet(t("xls.sheet.facturas"));
         sheet.setDefaultColumnWidth(15);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -203,25 +238,23 @@ public class ExcelExportService {
         XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
 
         int r = 0;
-
         Row fTitulo = sheet.createRow(r++);
         fTitulo.setHeight((short) (20 * 20));
         Cell cTitulo = fTitulo.createCell(0);
-        cTitulo.setCellValue(brandName + " — Facturas de Proveedores");
+        cTitulo.setCellValue(tf("xls.titulo.facturas", brandName));
         cTitulo.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 11));
 
-        Row fFiltro = sheet.createRow(r++);
-        Cell cFiltro = fFiltro.createCell(0);
         String desdeStr  = desde != null ? desde.format(FMT_FECHA) : "—";
         String hastaStr  = hasta != null ? hasta.format(FMT_FECHA) : "—";
-        String estadoStr = estadoFiltro != null ? estadoFiltro.getDisplayName() : "Todas";
-        cFiltro.setCellValue("Estado: " + estadoStr + "   |   Período: " + desdeStr + " — " + hastaStr);
+        String estadoStr = estadoFiltro != null ? estadoFiltro.getDisplayName() : t("xls.filtro.todas");
+        Row fFiltro = sheet.createRow(r++);
+        Cell cFiltro = fFiltro.createCell(0);
+        cFiltro.setCellValue(tf("xls.filtro.estado_periodo", estadoStr, desdeStr, hastaStr));
         cFiltro.setCellStyle(stPeriodo);
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 11));
 
         r++;
-        Row fRes = sheet.createRow(r++);
         BigDecimal totalSubtotal = facturas.stream()
                 .map(f -> f.getSubtotal() != null ? f.getSubtotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -232,17 +265,20 @@ public class ExcelExportService {
                 .map(f -> f.getValorTotal() != null ? f.getValorTotal() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        celda(fRes, 0, "Facturas: " + facturas.size(), stResumen);
-        celda(fRes, 2, "Subtotal: $" + totalSubtotal.toPlainString(), stResumen);
-        celda(fRes, 5, "IVA: $" + totalIva.toPlainString(), stResumen);
-        celda(fRes, 7, "Total: $" + totalGeneral.toPlainString(), stResumen);
+        Row fRes = sheet.createRow(r++);
+        celda(fRes, 0, tf("xls.resumen.total_facturas", facturas.size()), stResumen);
+        celda(fRes, 2, tf("xls.resumen.subtotal",       totalSubtotal.toPlainString()), stResumen);
+        celda(fRes, 5, tf("xls.resumen.iva",            totalIva.toPlainString()), stResumen);
+        celda(fRes, 7, tf("xls.resumen.total",          totalGeneral.toPlainString()), stResumen);
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
         String[] headers = {
-                "N° Factura", "Proveedor", "Fecha", "Estado",
-                "Ítems", "Subtotal", "IVA", "Envío", "Total", "IVA Incluido", "Descripción", "Creado por"
+            t("xls.header.num_factura"), t("xls.header.proveedor"), t("xls.header.fecha"),
+            t("xls.header.estado"), t("xls.header.items"), t("xls.header.subtotal"),
+            t("xls.header.iva"), t("xls.header.envio"), t("xls.header.total"),
+            t("xls.header.iva_incluido"), t("xls.header.descripcion"), t("xls.header.creado_por")
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
@@ -256,16 +292,16 @@ public class ExcelExportService {
             XSSFCellStyle sD = alt ? stDatoAlt : stDato;
             XSSFCellStyle sN = alt ? stNumAlt  : stNum;
 
-            celda(fila, 0, f.getNumeroFactura() != null ? f.getNumeroFactura() : "#" + f.getId(), sD);
-            celda(fila, 1, f.getProveedor() != null ? f.getProveedor() : "", sD);
-            celda(fila, 2, f.getFechaFactura() != null ? f.getFechaFactura().format(FMT_FECHA) : "", sD);
-            celda(fila, 3, f.getEstado() != null ? f.getEstado().getDisplayName() : "", sD);
-            celdaNum(fila, 4, (double) f.getItems().size(), sN);
-            celdaNum(fila, 5, toDouble(f.getSubtotal()),   sN);
-            celdaNum(fila, 6, toDouble(f.getValorIva()),   sN);
-            celdaNum(fila, 7, toDouble(f.getCostoEnvio()), sN);
-            celdaNum(fila, 8, toDouble(f.getValorTotal()), sN);
-            celda(fila, 9,  f.isIvaIncluido() ? "Sí" : "No", sD);
+            celda(fila, 0,  f.getNumeroFactura() != null ? f.getNumeroFactura() : "#" + f.getId(), sD);
+            celda(fila, 1,  f.getProveedor() != null ? f.getProveedor() : "", sD);
+            celda(fila, 2,  f.getFechaFactura() != null ? f.getFechaFactura().format(FMT_FECHA) : "", sD);
+            celda(fila, 3,  f.getEstado() != null ? f.getEstado().getDisplayName() : "", sD);
+            celdaNum(fila, 4,  (double) f.getItems().size(), sN);
+            celdaNum(fila, 5,  toDouble(f.getSubtotal()),    sN);
+            celdaNum(fila, 6,  toDouble(f.getValorIva()),    sN);
+            celdaNum(fila, 7,  toDouble(f.getCostoEnvio()),  sN);
+            celdaNum(fila, 8,  toDouble(f.getValorTotal()),  sN);
+            celda(fila, 9,  f.isIvaIncluido() ? t("xls.text.si") : t("xls.text.no"), sD);
             celda(fila, 10, f.getDescripcion() != null ? f.getDescripcion() : "", sD);
             celda(fila, 11, f.getCreatedBy()  != null ? f.getCreatedBy()  : "", sD);
         }
@@ -277,7 +313,7 @@ public class ExcelExportService {
 
     private void construirSheetProveedores(XSSFWorkbook wb, List<FacturaProveedor> facturas,
                                             String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Por Proveedor");
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_proveedor"));
         sheet.setDefaultColumnWidth(20);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -291,20 +327,20 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Resumen por Proveedor");
+        cT.setCellValue(tf("xls.titulo.por_proveedor", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
         r++;
         Row fH = sheet.createRow(r++);
         fH.setHeight((short) (16 * 20));
-        celda(fH, 0, "Proveedor", stHeader);
-        celda(fH, 1, "Facturas",  stHeader);
-        celda(fH, 2, "Total ($)", stHeader);
+        celda(fH, 0, t("xls.header.proveedor"),  stHeader);
+        celda(fH, 1, t("xls.header.facturas"),   stHeader);
+        celda(fH, 2, t("xls.header.total_pesos"), stHeader);
 
         Map<String, long[]> resumen = new LinkedHashMap<>();
         for (FacturaProveedor f : facturas) {
-            String prov = f.getProveedor() != null ? f.getProveedor() : "Sin proveedor";
+            String prov = f.getProveedor() != null ? f.getProveedor() : t("xls.text.sin_proveedor");
             resumen.computeIfAbsent(prov, k -> new long[]{0, 0});
             resumen.get(prov)[0]++;
             if (f.getValorTotal() != null) resumen.get(prov)[1] += f.getValorTotal().longValue();
@@ -326,7 +362,7 @@ public class ExcelExportService {
 
     private void construirSheetItems(XSSFWorkbook wb, List<FacturaProveedor> facturas,
                                       String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Ítems");
+        Sheet sheet = wb.createSheet(t("xls.sheet.items_factura"));
         sheet.setDefaultColumnWidth(15);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -340,7 +376,7 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Detalle de Ítems");
+        cT.setCellValue(tf("xls.titulo.items_factura", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 12));
 
@@ -348,9 +384,11 @@ public class ExcelExportService {
         Row fH = sheet.createRow(r++);
         fH.setHeight((short) (16 * 20));
         String[] headers = {
-                "N° Factura", "Proveedor", "Fecha", "Tipo",
-                "Nombre", "Cantidad", "Unidad", "V. Unitario",
-                "Desc. %", "IVA %", "Valor IVA", "Imp. Consumo", "Total Línea"
+            t("xls.header.num_factura"), t("xls.header.proveedor"), t("xls.header.fecha"),
+            t("xls.header.tipo"), t("xls.header.nombre"), t("xls.header.cantidad"),
+            t("xls.header.unidad"), t("xls.header.v_unitario"),
+            t("xls.header.desc_pct"), t("xls.header.iva_pct"),
+            t("xls.header.valor_iva"), t("xls.header.imp_consumo"), t("xls.header.total_linea")
         };
         for (int i = 0; i < headers.length; i++) celda(fH, i, headers[i], stHeader);
 
@@ -398,23 +436,28 @@ public class ExcelExportService {
     public byte[] generarExcelReporteProduccion(List<LoteCerveza> lotes,
                                                   List<Object[]> resumen,
                                                   LocalDate desde, LocalDate hasta,
-                                                  ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (XSSFWorkbook wb = new XSSFWorkbook()) {
-            construirSheetLotes(wb, lotes, desde, hasta, branding.name(), pal);
-            construirSheetEstilos(wb, resumen, branding.name(), pal);
-            wb.write(baos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando Excel del reporte", e);
+                                                  ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                construirSheetLotes(wb, lotes, desde, hasta, branding.name(), pal);
+                construirSheetEstilos(wb, resumen, branding.name(), pal);
+                wb.write(baos);
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando Excel del reporte", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void construirSheetLotes(XSSFWorkbook wb, List<LoteCerveza> lotes,
                                       LocalDate desde, LocalDate hasta,
                                       String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Reporte de Producción");
+        Sheet sheet = wb.createSheet(t("xls.sheet.reporte_produccion"));
         sheet.setDefaultColumnWidth(15);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -425,24 +468,22 @@ public class ExcelExportService {
         XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
 
         int r = 0;
-
         Row fTitulo = sheet.createRow(r++);
         fTitulo.setHeight((short) (20 * 20));
         Cell cTitulo = fTitulo.createCell(0);
-        cTitulo.setCellValue(brandName + " — Reporte de Producción");
+        cTitulo.setCellValue(tf("xls.titulo.reporte_produccion", brandName));
         cTitulo.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 17));
 
-        Row fPeriodo = sheet.createRow(r++);
-        Cell cPeriodo = fPeriodo.createCell(0);
         String desdeStr = desde != null ? desde.format(FMT_FECHA) : "—";
         String hastaStr = hasta != null ? hasta.format(FMT_FECHA) : "—";
-        cPeriodo.setCellValue("Período: " + desdeStr + " — " + hastaStr);
+        Row fPeriodo = sheet.createRow(r++);
+        Cell cPeriodo = fPeriodo.createCell(0);
+        cPeriodo.setCellValue(tf("xls.filtro.periodo", desdeStr, hastaStr));
         cPeriodo.setCellStyle(estiloPeriodo(wb, pal));
         sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 17));
 
         r++;
-        Row fRes = sheet.createRow(r++);
         long completados = lotes.stream().filter(LoteCerveza::isCompletado).count();
         BigDecimal totalL = lotes.stream()
                 .filter(l -> l.getLitrosFinales() != null)
@@ -461,28 +502,33 @@ public class ExcelExportService {
                 : String.format("%.1f", totalL.doubleValue() / lotes.size()) + " L";
 
         XSSFCellStyle stResumen = estiloResumen(wb, pal);
-        celda(fRes, 0, "Total lotes: " + lotes.size(),                       stResumen);
-        celda(fRes, 2, "Litros: " + totalL + " L",                           stResumen);
-        celda(fRes, 5, "Estilos: " + estilos,                                stResumen);
-        celda(fRes, 8, "Completados: " + completados + " (" + pctComp + "%)", stResumen);
+        Row fRes = sheet.createRow(r++);
+        celda(fRes, 0, tf("xls.resumen.total_lotes",  lotes.size()),                stResumen);
+        celda(fRes, 2, tf("xls.resumen.litros",        totalL),                      stResumen);
+        celda(fRes, 5, tf("xls.resumen.estilos",       estilos),                    stResumen);
+        celda(fRes, 8, tf("xls.resumen.completados",   completados, pctComp),       stResumen);
 
         Row fRes2 = sheet.createRow(r++);
-        celda(fRes2, 0, "Prom/lote: " + avgLitrosStr, stResumen);
+        celda(fRes2, 0, tf("xls.resumen.prom_lote", avgLitrosStr), stResumen);
         if (avgAbv.isPresent())
-            celda(fRes2, 2, "ABV prom: " + String.format("%.2f", avgAbv.getAsDouble()) + "%", stResumen);
+            celda(fRes2, 2, tf("xls.resumen.abv_prom",
+                    String.format("%.2f", avgAbv.getAsDouble())), stResumen);
         if (avgEfic.isPresent())
-            celda(fRes2, 5, "Eficiencia prom: " + String.format("%.1f", avgEfic.getAsDouble()) + "%", stResumen);
+            celda(fRes2, 5, tf("xls.resumen.efic_prom",
+                    String.format("%.1f", avgEfic.getAsDouble())), stResumen);
         if (costoTotal.compareTo(BigDecimal.ZERO) > 0)
-            celda(fRes2, 8, "Costo total: $" + costoTotal.toPlainString(), stResumen);
+            celda(fRes2, 8, tf("xls.resumen.costo_total", costoTotal.toPlainString()), stResumen);
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
         String[] headers = {
-                "Código", "Estilo", "Receta", "Fecha", "Fase",
-                "OG", "FG", "ABV (%)", "Atenuación (%)", "Eficiencia (%)",
-                "Litros", "Costo Total", "Costo/Litro", "Creado por",
-                "Método Carb.", "CO₂ Obj. (vol)", "CO₂ Real (vol)", "Destino / Empaque"
+            t("xls.header.codigo"),      t("xls.header.estilo"),       t("xls.header.receta"),
+            t("xls.header.fecha"),       t("xls.header.fase"),         t("xls.header.og"),
+            t("xls.header.fg"),          t("xls.header.abv_pct"),      t("xls.header.atenuacion_pct"),
+            t("xls.header.eficiencia_pct"), t("xls.header.litros"),   t("xls.header.costo_total"),
+            t("xls.header.costo_litro"), t("xls.header.creado_por"),   t("xls.header.metodo_carb"),
+            t("xls.header.co2_obj"),     t("xls.header.co2_real"),     t("xls.header.destino_empaque")
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
@@ -501,18 +547,18 @@ public class ExcelExportService {
             celda(fila, 2,  l.getReceta() != null ? l.getReceta().getNombre() : "", sD);
             celda(fila, 3,  l.getFechaElaboracion() != null
                     ? l.getFechaElaboracion().format(FMT_FECHA) : "", sD);
-            celda(fila, 4,  l.isCompletado() ? "Completado" : l.getFaseActual(), sD);
+            celda(fila, 4,  l.isCompletado() ? t("xls.text.completado") : l.getFaseActual(), sD);
             celdaNum(fila, 5,  l.getDensidadInicial() != null ? l.getDensidadInicial().doubleValue() : null, sN);
             celdaNum(fila, 6,  l.getDensidadFinal()   != null ? l.getDensidadFinal().doubleValue()   : null, sN);
-            celdaNum(fila, 7,  toDouble(l.getAbv()),                  sN);
-            celdaNum(fila, 8,  toDouble(l.getAtenuacionAparente()),   sN);
-            celdaNum(fila, 9,  toDouble(l.getEficienciaMacerado()),   sN);
-            celdaNum(fila, 10, toDouble(l.getLitrosFinales()),        sN);
-            celdaNum(fila, 11, toDouble(l.getCostoTotal()),           sN);
-            celdaNum(fila, 12, toDouble(l.getCostoPorLitro()),        sN);
+            celdaNum(fila, 7,  toDouble(l.getAbv()),                 sN);
+            celdaNum(fila, 8,  toDouble(l.getAtenuacionAparente()),  sN);
+            celdaNum(fila, 9,  toDouble(l.getEficienciaMacerado()),  sN);
+            celdaNum(fila, 10, toDouble(l.getLitrosFinales()),       sN);
+            celdaNum(fila, 11, toDouble(l.getCostoTotal()),          sN);
+            celdaNum(fila, 12, toDouble(l.getCostoPorLitro()),       sN);
             celda(fila, 13, l.getCreatedBy() != null ? l.getCreatedBy() : "", sD);
-            String metodoCarb = l.getCarbMetodo() == null ? "" :
-                    "NATURAL".equals(l.getCarbMetodo()) ? "Natural / Priming" : "Forzada / CO₂";
+            String metodoCarb = l.getCarbMetodo() == null ? ""
+                    : "NATURAL".equals(l.getCarbMetodo()) ? t("xls.text.carb_natural") : t("xls.text.carb_forzada");
             celda(fila, 14, metodoCarb, sD);
             celdaNum(fila, 15, l.getCarbCo2Objetivo() != null ? l.getCarbCo2Objetivo().doubleValue() : null, sN);
             celdaNum(fila, 16, l.getCarbCo2Real()     != null ? l.getCarbCo2Real().doubleValue()     : null, sN);
@@ -526,7 +572,7 @@ public class ExcelExportService {
 
     private void construirSheetEstilos(XSSFWorkbook wb, List<Object[]> resumen,
                                         String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Por Estilo");
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_estilo"));
         sheet.setDefaultColumnWidth(18);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -540,14 +586,16 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Producción por Estilo");
+        cT.setCellValue(tf("xls.titulo.por_estilo", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
         r++;
         Row fH = sheet.createRow(r++);
         fH.setHeight((short) (16 * 20));
-        String[] colHeaders = {"Estilo", "Cantidad de lotes", "Litros totales"};
+        String[] colHeaders = {
+            t("xls.header.estilo"), t("xls.header.cantidad_lotes"), t("xls.header.litros_totales")
+        };
         for (int i = 0; i < colHeaders.length; i++) celda(fH, i, colHeaders[i], stHeader);
 
         for (int i = 0; i < resumen.size(); i++) {
@@ -565,26 +613,31 @@ public class ExcelExportService {
     public byte[] generarExcelVentas(List<Venta> ventas,
                                       EstadoVenta estadoFiltro,
                                       LocalDate desde, LocalDate hasta,
-                                      ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try (XSSFWorkbook wb = new XSSFWorkbook()) {
-            construirSheetVentas(wb, ventas, estadoFiltro, desde, hasta, branding.name(), pal);
-            construirSheetVentasItems(wb, ventas, branding.name(), pal);
-            construirSheetVentasPorCliente(wb, ventas, branding.name(), pal);
-            construirSheetVentasPorEstado(wb, ventas, branding.name(), pal);
-            wb.write(baos);
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando Excel de ventas", e);
+                                      ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                construirSheetVentas(wb, ventas, estadoFiltro, desde, hasta, branding.name(), pal);
+                construirSheetVentasItems(wb, ventas, branding.name(), pal);
+                construirSheetVentasPorCliente(wb, ventas, branding.name(), pal);
+                construirSheetVentasPorEstado(wb, ventas, branding.name(), pal);
+                wb.write(baos);
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando Excel de ventas", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void construirSheetVentas(XSSFWorkbook wb, List<Venta> ventas,
                                        EstadoVenta estadoFiltro,
                                        LocalDate desde, LocalDate hasta,
                                        String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Ventas");
+        Sheet sheet = wb.createSheet(t("xls.sheet.ventas"));
         sheet.setDefaultColumnWidth(15);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -597,27 +650,23 @@ public class ExcelExportService {
         XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
 
         int r = 0;
-        // Título
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Ventas y Despacho");
+        cT.setCellValue(tf("xls.titulo.ventas", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
 
-        // Fila período / filtros
-        String periodoStr = "Período: "
-                + (desde != null ? desde.format(FMT_FECHA) : "—")
-                + " al "
-                + (hasta != null ? hasta.format(FMT_FECHA) : "—");
-        if (estadoFiltro != null) periodoStr += "   Estado: " + estadoFiltro.getDisplayName();
+        String periodoStr = tf("xls.filtro.periodo",
+                desde != null ? desde.format(FMT_FECHA) : "—",
+                hasta != null ? hasta.format(FMT_FECHA) : "—");
+        if (estadoFiltro != null) periodoStr += tf("xls.filtro.estado", estadoFiltro.getDisplayName());
         Row fP = sheet.createRow(r++);
         Cell cP = fP.createCell(0);
         cP.setCellValue(periodoStr);
         cP.setCellStyle(stPeriodo);
         sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 8));
 
-        // Resumen
         long totalVentas = ventas.size();
         long totalDespachadas = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.DESPACHADO).count();
         BigDecimal totalIngresos = ventas.stream()
@@ -626,24 +675,27 @@ public class ExcelExportService {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         Row fRes = sheet.createRow(r++);
-        celda(fRes, 0, "Total ventas: " + totalVentas, stResumen);
-        celda(fRes, 3, "Despachadas: " + totalDespachadas, stResumen);
-        celda(fRes, 6, "Ingresos despachados: $" + String.format("%,.0f", totalIngresos), stResumen);
+        celda(fRes, 0, tf("xls.resumen.total_ventas",         totalVentas),      stResumen);
+        celda(fRes, 3, tf("xls.resumen.despachadas",           totalDespachadas), stResumen);
+        celda(fRes, 6, tf("xls.resumen.ingresos_despachados",
+                String.format("%,.0f", totalIngresos)), stResumen);
 
-        r++; // fila en blanco
+        r++;
         sheet.createRow(r++);
 
-        // Encabezado — columnas simplificadas (los detalles de ítem están en la hoja Ítems)
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
-        String[] headers = {"Cliente", "Primer Lote", "Fecha Despacho", "Estado",
-                            "Valor Total", "Notas", "Creado por"};
+        String[] headers = {
+            t("xls.header.cliente"),       t("xls.header.primer_lote"),
+            t("xls.header.fecha_despacho"), t("xls.header.estado"),
+            t("xls.header.valor_total"),   t("xls.header.notas"),
+            t("xls.header.creado_por")
+        };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
         int[] widths = {30, 16, 14, 14, 16, 30, 18};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
-        // Datos
         for (int i = 0; i < ventas.size(); i++) {
             Venta v = ventas.get(i);
             boolean alt = i % 2 != 0;
@@ -667,7 +719,7 @@ public class ExcelExportService {
 
     private void construirSheetVentasItems(XSSFWorkbook wb, List<Venta> ventas,
                                             String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Ítems");
+        Sheet sheet = wb.createSheet(t("xls.sheet.items_venta"));
         sheet.setDefaultColumnWidth(14);
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
@@ -681,15 +733,21 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (20 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Detalle de Ítems de Venta");
+        cT.setCellValue(tf("xls.titulo.items_venta", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
-        String[] headers = {"Venta ID", "Cliente", "Fecha Despacho", "Estado Venta",
-                            "Lote", "Descripción", "Cantidad", "Unidad", "Precio Unit.", "Desc.%", "Total Línea"};
+        String[] headers = {
+            t("xls.header.venta_id"),   t("xls.header.cliente"),
+            t("xls.header.fecha_despacho"), t("xls.header.estado_venta"),
+            t("xls.header.lote"),       t("xls.header.descripcion"),
+            t("xls.header.cantidad"),   t("xls.header.unidad"),
+            t("xls.header.precio_unit"), t("xls.header.desc_pct_v"),
+            t("xls.header.total_linea")
+        };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
         int[] widths = {10, 26, 14, 13, 14, 22, 12, 10, 15, 10, 15};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
@@ -724,7 +782,7 @@ public class ExcelExportService {
 
     private void construirSheetVentasPorCliente(XSSFWorkbook wb, List<Venta> ventas,
                                                  String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Por Cliente");
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_cliente"));
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
         XSSFCellStyle stHeader  = estiloHeader(wb, pal);
@@ -737,30 +795,27 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (18 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Ventas por Cliente");
+        cT.setCellValue(tf("xls.titulo.por_cliente", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (14 * 20));
-        celda(fHead, 0, "Cliente",        stHeader);
-        celda(fHead, 1, "Ventas",         stHeader);
-        celda(fHead, 2, "Total $",        stHeader);
+        celda(fHead, 0, t("xls.header.cliente"),     stHeader);
+        celda(fHead, 1, t("xls.header.ventas"),      stHeader);
+        celda(fHead, 2, t("xls.header.total_dolar"), stHeader);
 
         sheet.setColumnWidth(0, 35 * 256);
         sheet.setColumnWidth(1, 12 * 256);
         sheet.setColumnWidth(2, 18 * 256);
 
-        // Agrupar por cliente
         Map<String, long[]> agrupado = new LinkedHashMap<>();
         for (Venta v : ventas) {
-            String cliente = v.getCliente() != null ? v.getCliente() : "Sin cliente";
+            String cliente = v.getCliente() != null ? v.getCliente() : t("xls.text.sin_cliente");
             agrupado.computeIfAbsent(cliente, k -> new long[]{0, 0});
             agrupado.get(cliente)[0]++;
-            if (v.getValorTotal() != null) {
-                agrupado.get(cliente)[1] += v.getValorTotal().longValue();
-            }
+            if (v.getValorTotal() != null) agrupado.get(cliente)[1] += v.getValorTotal().longValue();
         }
 
         int i = 0;
@@ -776,7 +831,7 @@ public class ExcelExportService {
 
     private void construirSheetVentasPorEstado(XSSFWorkbook wb, List<Venta> ventas,
                                                 String brandName, Pal pal) {
-        Sheet sheet = wb.createSheet("Por Estado");
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_estado"));
 
         XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
         XSSFCellStyle stHeader  = estiloHeader(wb, pal);
@@ -789,16 +844,16 @@ public class ExcelExportService {
         Row fT = sheet.createRow(r++);
         fT.setHeight((short) (18 * 20));
         Cell cT = fT.createCell(0);
-        cT.setCellValue(brandName + " — Ventas por Estado");
+        cT.setCellValue(tf("xls.titulo.por_estado", brandName));
         cT.setCellStyle(stTitulo);
         sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
 
         r++;
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (14 * 20));
-        celda(fHead, 0, "Estado",  stHeader);
-        celda(fHead, 1, "Ventas",  stHeader);
-        celda(fHead, 2, "Total $", stHeader);
+        celda(fHead, 0, t("xls.header.estado"),      stHeader);
+        celda(fHead, 1, t("xls.header.ventas"),      stHeader);
+        celda(fHead, 2, t("xls.header.total_dolar"), stHeader);
 
         sheet.setColumnWidth(0, 18 * 256);
         sheet.setColumnWidth(1, 12 * 256);
@@ -806,12 +861,10 @@ public class ExcelExportService {
 
         Map<String, long[]> agrupado = new LinkedHashMap<>();
         for (Venta v : ventas) {
-            String estado = v.getEstado() != null ? v.getEstado().getDisplayName() : "Sin estado";
+            String estado = v.getEstado() != null ? v.getEstado().getDisplayName() : t("xls.text.sin_estado");
             agrupado.computeIfAbsent(estado, k -> new long[]{0, 0});
             agrupado.get(estado)[0]++;
-            if (v.getValorTotal() != null) {
-                agrupado.get(estado)[1] += v.getValorTotal().longValue();
-            }
+            if (v.getValorTotal() != null) agrupado.get(estado)[1] += v.getValorTotal().longValue();
         }
 
         int i = 0;

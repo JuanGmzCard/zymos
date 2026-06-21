@@ -4,23 +4,32 @@ import com.alera.config.ExportBranding;
 import com.alera.model.LoteCerveza;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.*;
 
-/**
- * Smoke tests para ExcelExportService.
- * Verifican que el output es un archivo XLSX válido (magic bytes PK — formato ZIP),
- * no vacío, y que el servicio no lanza excepciones ante distintas entradas.
- * No verifican el contenido de las celdas — eso pertenece a pruebas manuales.
- */
 @DisplayName("ExcelExportService")
 class ExcelExportServiceTest {
 
-    private final ExcelExportService service = new ExcelExportService();
+    private static final MessageSource MSG;
+    static {
+        var ms = new ResourceBundleMessageSource();
+        ms.setBasename("messages");
+        ms.setDefaultEncoding("UTF-8");
+        ms.setFallbackToSystemLocale(false);
+        MSG = ms;
+    }
+
+    private static final Locale ES = Locale.forLanguageTag("es");
+    private static final Locale EN = Locale.ENGLISH;
+
+    private final ExcelExportService service = new ExcelExportService(MSG);
     private static final ExportBranding BRANDING = ExportBranding.defaults("Alera");
 
     private static final LocalDate DESDE = LocalDate.of(2025, 1, 1);
@@ -61,7 +70,7 @@ class ExcelExportServiceTest {
     @DisplayName("genera Excel válido con listas vacías")
     void generarExcel_listasVacias_produceExcel() {
         byte[] resultado = service.generarExcelReporteProduccion(
-                List.of(), List.of(), DESDE, HASTA, BRANDING);
+                List.of(), List.of(), DESDE, HASTA, BRANDING, ES);
 
         assertEsExcel(resultado);
     }
@@ -72,7 +81,7 @@ class ExcelExportServiceTest {
         byte[] resultado = service.generarExcelReporteProduccion(
                 List.of(lote("IPA-001", "IPA")),
                 List.of(),
-                DESDE, HASTA, BRANDING);
+                DESDE, HASTA, BRANDING, ES);
 
         assertEsExcel(resultado);
     }
@@ -87,7 +96,7 @@ class ExcelExportServiceTest {
         );
 
         byte[] resultado = service.generarExcelReporteProduccion(
-                lotes, List.of(), DESDE, HASTA, BRANDING);
+                lotes, List.of(), DESDE, HASTA, BRANDING, ES);
 
         assertEsExcel(resultado);
     }
@@ -101,7 +110,7 @@ class ExcelExportServiceTest {
 
         byte[] resultado = service.generarExcelReporteProduccion(
                 List.of(lote("IPA-001", "IPA")),
-                resumen, DESDE, HASTA, ExportBranding.defaults("Mosto Cervecería"));
+                resumen, DESDE, HASTA, ExportBranding.defaults("Mosto Cervecería"), ES);
 
         assertEsExcel(resultado);
     }
@@ -110,7 +119,7 @@ class ExcelExportServiceTest {
     @DisplayName("genera Excel válido cuando las fechas desde/hasta son nulas (muestra '—')")
     void generarExcel_fechasNulas_produceExcelValido() {
         byte[] resultado = service.generarExcelReporteProduccion(
-                List.of(lote("APA-001", "APA")), List.of(), null, null, BRANDING);
+                List.of(lote("APA-001", "APA")), List.of(), null, null, BRANDING, ES);
 
         assertEsExcel(resultado);
     }
@@ -122,7 +131,7 @@ class ExcelExportServiceTest {
         resumen.add(resumenEstilo("IPA", 1L, 20.0));
         byte[] resultado = service.generarExcelReporteProduccion(
                 List.of(loteConMetricas("IPA-001", "IPA")),
-                resumen, DESDE, HASTA, BRANDING);
+                resumen, DESDE, HASTA, BRANDING, ES);
 
         assertThat(resultado.length).isGreaterThan(2048);
     }
@@ -136,7 +145,7 @@ class ExcelExportServiceTest {
         }
 
         assertThatCode(() ->
-                service.generarExcelReporteProduccion(lotes, List.of(), DESDE, HASTA, BRANDING))
+                service.generarExcelReporteProduccion(lotes, List.of(), DESDE, HASTA, BRANDING, ES))
                 .doesNotThrowAnyException();
     }
 
@@ -144,10 +153,20 @@ class ExcelExportServiceTest {
     @DisplayName("lotes distintos generan Excels de distinto contenido")
     void generarExcel_contenidoDistinto() {
         byte[] excel1 = service.generarExcelReporteProduccion(
-                List.of(lote("IPA-001", "IPA")), List.of(), DESDE, HASTA, BRANDING);
+                List.of(lote("IPA-001", "IPA")), List.of(), DESDE, HASTA, BRANDING, ES);
         byte[] excel2 = service.generarExcelReporteProduccion(
-                List.of(lote("STOUT-001", "Stout")), List.of(), DESDE, HASTA, BRANDING);
+                List.of(lote("STOUT-001", "Stout")), List.of(), DESDE, HASTA, BRANDING, ES);
 
         assertThat(excel1).isNotEqualTo(excel2);
+    }
+
+    @Test
+    @DisplayName("genera Excel válido en locale inglés")
+    void generarExcel_localeIngles_produceExcel() {
+        byte[] resultado = service.generarExcelReporteProduccion(
+                List.of(loteConMetricas("IPA-001", "IPA")),
+                List.of(), DESDE, HASTA, BRANDING, EN);
+
+        assertEsExcel(resultado);
     }
 }

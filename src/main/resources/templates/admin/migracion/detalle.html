@@ -43,14 +43,14 @@
             <div>
                 <strong class="d-block mb-1" style="color:#1e40af;" th:text="#{admin.mig.instrucciones.title}">Instrucciones generales</strong>
                 <ol class="mb-0 text-secondary" style="font-size:0.875rem; padding-left:1.1rem;">
-                    <li>Descargue la plantilla del módulo que desea migrar.</li>
-                    <li>Abra el archivo en Excel u OpenOffice y complete los datos desde la fila 4 (respete los formatos de la fila de ejemplo).</li>
-                    <li>Guarde el archivo sin cambiar las hojas ni los encabezados.</li>
-                    <li>Cargue el archivo usando el formulario correspondiente.</li>
-                    <li>Los campos marcados con <strong>*</strong> en la plantilla son obligatorios.</li>
-                    <li>Para el módulo Comercial, llene en orden: Proveedores → Facturas → Factura_Items.</li>
-                    <li>Para el módulo Producción, llene en orden: Recetas → Ingredientes → Escalones → Adiciones → Lotes → Lote_Ingredientes.</li>
-                    <li>Para el módulo Ventas, llene en orden: Ventas → Venta_Items (use la misma <code>referencia_venta</code> en ambas hojas).</li>
+                    <li th:text="#{admin.mig.instr.1}">Descargue la plantilla del módulo que desea migrar.</li>
+                    <li th:text="#{admin.mig.instr.2}">Abra el archivo en Excel u OpenOffice y complete los datos desde la fila 4.</li>
+                    <li th:text="#{admin.mig.instr.3}">Guarde el archivo sin cambiar las hojas ni los encabezados.</li>
+                    <li th:text="#{admin.mig.instr.4}">Cargue el archivo usando el formulario correspondiente.</li>
+                    <li th:text="#{admin.mig.instr.5}">Los campos marcados con * en la plantilla son obligatorios.</li>
+                    <li th:text="#{admin.mig.instr.6}">Para el módulo Comercial, llene en orden: Proveedores → Facturas → Factura_Items.</li>
+                    <li th:text="#{admin.mig.instr.7}">Para el módulo Producción, llene en orden: Recetas → Ingredientes → Escalones → Adiciones → Lotes → Lote_Ingredientes.</li>
+                    <li th:text="#{admin.mig.instr.8}">Para el módulo Ventas, llene en orden: Ventas → Venta_Items.</li>
                 </ol>
             </div>
         </div>

@@ -144,7 +144,7 @@
                         <div>
                             <div class="sm-label" th:text="#{miplan.sm.tipo}">Tipo de plan</div>
                             <div class="sm-value"
-                                 th:text="${tenant.planTipo != null ? tenant.planTipo : #{miplan.sm.sin.tipo}}">—</div>
+                                 th:text="${tenant.planTipo != null} ? ${tenant.planTipo} : #{miplan.sm.sin.tipo}">—</div>
                         </div>
                     </div>
 
@@ -161,14 +161,14 @@
 
                     <div class="stat-mini">
                         <div class="sm-icon"
-                             th:style="${tenant.planFin == null} ? 'background:#f1f5f9;' : (tenant.isPlanVencido() ? 'background:#fef2f2;' : (tenant.isPlanPorVencer() ? 'background:#fffbeb;' : 'background:#f0fdf4;'))">
+                             th:style="${tenant.planFin == null ? 'background:#f1f5f9;' : (tenant.isPlanVencido() ? 'background:#fef2f2;' : (tenant.isPlanPorVencer() ? 'background:#fffbeb;' : 'background:#f0fdf4;'))}">
                             <i class="bi bi-calendar-x"
-                               th:style="${tenant.planFin == null} ? 'color:#94a3b8;' : (tenant.isPlanVencido() ? 'color:#dc2626;' : (tenant.isPlanPorVencer() ? 'color:#f97316;' : 'color:#16a34a;'))"></i>
+                               th:style="${tenant.planFin == null ? 'color:#94a3b8;' : (tenant.isPlanVencido() ? 'color:#dc2626;' : (tenant.isPlanPorVencer() ? 'color:#f97316;' : 'color:#16a34a;'))}"></i>
                         </div>
                         <div>
                             <div class="sm-label" th:text="#{miplan.sm.vencimiento}">Vencimiento</div>
                             <div class="sm-value"
-                                 th:text="${tenant.planFin != null ? #temporals.format(tenant.planFin,'dd/MM/yyyy') : #{miplan.sm.sin.fecha}}">—</div>
+                                 th:text="${tenant.planFin != null} ? ${#temporals.format(tenant.planFin,'dd/MM/yyyy')} : #{miplan.sm.sin.fecha}">—</div>
                             <div th:if="${diasRestantes != null}" style="font-size:0.72rem; margin-top:2px;">
                                 <span th:if="${diasRestantes < 0}"
                                       class="dias-vence-vencido"

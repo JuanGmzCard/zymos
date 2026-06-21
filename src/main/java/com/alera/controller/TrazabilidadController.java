@@ -34,6 +34,7 @@ import com.alera.service.RecetaService;
 import com.alera.service.TrazabilidadService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -362,12 +363,12 @@ public class TrazabilidadController {
     }
 
     @GetMapping("/ver/{id}/pdf")
-    public ResponseEntity<byte[]> verPdf(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> verPdf(@PathVariable Long id, HttpServletRequest request, Locale locale) {
         LoteCerveza lote = service.buscarPorId(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
         List<LecturaFermentacion> lecturas = lecturaService.listarPorLote(id);
-        byte[] pdf = pdfExportService.generarPdfLote(lote, branding, lecturas);
+        byte[] pdf = pdfExportService.generarPdfLote(lote, branding, lecturas, locale);
         String filename = "lote-" + lote.getCodigoLote().toLowerCase() + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)

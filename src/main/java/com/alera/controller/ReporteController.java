@@ -14,6 +14,7 @@ import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
 import com.alera.service.VentaService;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Locale;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -224,7 +225,7 @@ public class ReporteController {
             @RequestParam(required = false) String estilo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
 
         if (desde == null) desde = LocalDate.now().minusMonths(3);
         if (hasta == null) hasta = LocalDate.now();
@@ -238,7 +239,7 @@ public class ReporteController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
 
-        byte[] excel = excelExportService.generarExcelReporteProduccion(lotes, resumen, desde, hasta, branding);
+        byte[] excel = excelExportService.generarExcelReporteProduccion(lotes, resumen, desde, hasta, branding, locale);
         String filename = "reporte-produccion-" + desde + "-" + hasta + ".xlsx";
 
         return ResponseEntity.ok()
@@ -252,7 +253,7 @@ public class ReporteController {
             @RequestParam(required = false) String estilo,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
 
         if (desde == null) desde = LocalDate.now().minusMonths(3);
         if (hasta == null) hasta = LocalDate.now();
@@ -265,7 +266,7 @@ public class ReporteController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
 
-        byte[] pdf = pdfExportService.generarPdfReporteProduccion(lotes, desde, hasta, estilo, branding);
+        byte[] pdf = pdfExportService.generarPdfReporteProduccion(lotes, desde, hasta, estilo, branding, locale);
         String filename = "reporte-produccion-" + desde + "-" + hasta + ".pdf";
 
         return ResponseEntity.ok()
@@ -510,7 +511,7 @@ public class ReporteController {
             @RequestParam(required = false) EstadoVenta estado,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
 
         if (desde == null) desde = LocalDate.now().minusMonths(3);
         if (hasta == null) hasta = LocalDate.now();
@@ -519,7 +520,7 @@ public class ReporteController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = ExportBranding.from(tenant);
 
-        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding);
+        byte[] excel = excelExportService.generarExcelVentas(ventas, estado, desde, hasta, branding, locale);
         String filename = "reporte-ventas-" + desde + "-" + hasta + ".xlsx";
 
         return ResponseEntity.ok()

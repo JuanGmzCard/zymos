@@ -258,7 +258,7 @@
                         <a th:href="@{/ordenes-compra/ver/{id}(id=${oc.id})}"
                            class="text-decoration-none"
                            style="color:var(--verde-zymos, #2563eb);"
-                           th:text="${oc.numeroOc != null ? oc.numeroOc : #{oc.sin.numero}}">OC-001</a>
+                           th:text="${oc.numeroOc != null} ? ${oc.numeroOc} : #{oc.sin.numero}">OC-001</a>
                     </td>
                     <td th:text="${oc.proveedor != null ? oc.proveedor : '—'}">Proveedor</td>
                     <td th:text="${oc.fechaEmision != null ? #temporals.format(oc.fechaEmision,'dd/MM/yyyy') : '—'}"></td>
@@ -279,7 +279,7 @@
                            class="action-link edit" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/ordenes-compra/{id}/pdf(id=${oc.id})}"
-                           class="action-link edit" title="Descargar PDF">
+                           class="action-link edit" th:title="#{oc.det.btn.pdf}">
                             <i class="bi bi-file-pdf"></i>
                         </a>
                     </td>

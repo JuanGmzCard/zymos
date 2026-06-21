@@ -20,6 +20,7 @@ import com.lowagie.text.PageSize;
 import com.lowagie.text.Paragraph;
 import com.lowagie.text.Phrase;
 import com.lowagie.text.pdf.*;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -31,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
@@ -38,12 +40,30 @@ import java.util.stream.Collectors;
 @Service
 public class PdfExportService {
 
+    private final MessageSource messageSource;
+
+    public PdfExportService(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
     // Colores neutros fijos (no son parte del branding del tenant)
     private static final Color C_GRIS  = new Color(108, 117, 125);
     private static final Color C_BORDE = new Color(222, 226, 230);
 
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_DT    = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
+
+    private String t(String key) {
+        Locale loc = LOCALE_HOLDER.get();
+        return messageSource.getMessage(key, null, key, loc != null ? loc : Locale.forLanguageTag("es"));
+    }
+
+    private String tf(String key, Object... args) {
+        Locale loc = LOCALE_HOLDER.get();
+        return messageSource.getMessage(key, args, key, loc != null ? loc : Locale.forLanguageTag("es"));
+    }
 
     /** Paleta de colores calculada por request a partir del branding del tenant. */
     private record Pal(
@@ -61,241 +81,251 @@ public class PdfExportService {
     // ── PDF Lote ─────────────────────────────────────────────────────
 
     public byte[] generarPdfLote(LoteCerveza lote, ExportBranding branding,
-                                  List<LecturaFermentacion> lecturas) {
-        Pal pal = Pal.of(branding);
-        String brandName = branding.name();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+                                  List<LecturaFermentacion> lecturas, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
-            PdfWriter.getInstance(doc, baos);
-            doc.open();
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
 
-            addCabeceraPdf(doc, lote, brandName, pal);
+                addCabeceraPdf(doc, lote, brandName, pal);
 
-            addTituloPdf(doc, "INFORMACIÓN DEL LOTE", pal);
-            addTablaInfoLote(doc, lote, pal);
+                addTituloPdf(doc, t("pdf.title.info_lote"), pal);
+                addTablaInfoLote(doc, lote, pal);
 
-            if (lote.getDensidadInicial() != null) {
-                addTituloPdf(doc, "PARÁMETROS Y MÉTRICAS DE CALIDAD", pal);
-                addTablaMetricas(doc, lote, pal);
+                if (lote.getDensidadInicial() != null) {
+                    addTituloPdf(doc, t("pdf.title.parametros_calidad"), pal);
+                    addTablaMetricas(doc, lote, pal);
+                }
+
+                if (lote.getReceta() != null &&
+                        (lote.getReceta().getOgObjetivo() != null || lote.getReceta().getFgObjetivo() != null)) {
+                    addTituloPdf(doc, t("pdf.title.comparativa_receta_lote"), pal);
+                    addComparativaRecetaLote(doc, lote, pal);
+                }
+
+                if (!lote.getIngredientes().isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.ingredientes"), pal);
+                    addIngredientes(doc, lote, pal);
+                }
+
+                addTituloPdf(doc, t("pdf.title.fases_proceso"), pal);
+                addTablaFases(doc, lote, pal);
+
+                if (lecturas != null && !lecturas.isEmpty()) {
+                    addCurvaFermentacion(doc, lote, lecturas, pal);
+                }
+
+                if (lote.getCarbMetodo() != null || lote.getCarbCo2Objetivo() != null
+                        || lote.getCarbDestino() != null) {
+                    addTituloPdf(doc, t("pdf.title.carbonatacion_detalle"), pal);
+                    addDetalleCarbonacion(doc, lote, pal);
+                }
+
+                if (lote.getCostoTotal() != null) {
+                    addTituloPdf(doc, t("pdf.title.costo_produccion"), pal);
+                    addCostos(doc, lote, pal);
+                }
+
+                boolean hayObs  = lote.getObservaciones() != null && !lote.getObservaciones().isBlank();
+                boolean hayCata = lote.getNotasCata() != null && !lote.getNotasCata().isBlank();
+                if (hayObs || hayCata) {
+                    addTituloPdf(doc, t("pdf.title.observaciones_cata"), pal);
+                    addNotas(doc, lote, hayObs, hayCata, pal);
+                }
+
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF del lote " + lote.getCodigoLote(), e);
             }
-
-            if (lote.getReceta() != null &&
-                    (lote.getReceta().getOgObjetivo() != null || lote.getReceta().getFgObjetivo() != null)) {
-                addTituloPdf(doc, "COMPARATIVA RECETA VS LOTE", pal);
-                addComparativaRecetaLote(doc, lote, pal);
-            }
-
-            if (!lote.getIngredientes().isEmpty()) {
-                addTituloPdf(doc, "INGREDIENTES", pal);
-                addIngredientes(doc, lote, pal);
-            }
-
-            addTituloPdf(doc, "FASES DEL PROCESO", pal);
-            addTablaFases(doc, lote, pal);
-
-            if (lecturas != null && !lecturas.isEmpty()) {
-                addCurvaFermentacion(doc, lote, lecturas, pal);
-            }
-
-            if (lote.getCarbMetodo() != null || lote.getCarbCo2Objetivo() != null
-                    || lote.getCarbDestino() != null) {
-                addTituloPdf(doc, "CARBONATACIÓN — DETALLE", pal);
-                addDetalleCarbonacion(doc, lote, pal);
-            }
-
-            if (lote.getCostoTotal() != null) {
-                addTituloPdf(doc, "COSTO DE PRODUCCIÓN", pal);
-                addCostos(doc, lote, pal);
-            }
-
-            boolean hayObs  = lote.getObservaciones() != null && !lote.getObservaciones().isBlank();
-            boolean hayCata = lote.getNotasCata() != null && !lote.getNotasCata().isBlank();
-            if (hayObs || hayCata) {
-                addTituloPdf(doc, "OBSERVACIONES Y NOTAS DE CATA", pal);
-                addNotas(doc, lote, hayObs, hayCata, pal);
-            }
-
-            doc.add(new Paragraph("\n"));
-            Paragraph pie = new Paragraph(
-                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
-                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
-            pie.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(pie);
-
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF del lote " + lote.getCodigoLote(), e);
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     // ── PDF Receta ───────────────────────────────────────────────────
 
-    public byte[] generarPdfReceta(Receta receta, ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        String brandName = branding.name();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+    public byte[] generarPdfReceta(Receta receta, ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
-            PdfWriter.getInstance(doc, baos);
-            doc.open();
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
 
-            // Cabecera
-            PdfPTable header = new PdfPTable(1);
-            header.setWidthPercentage(100);
-            header.setSpacingAfter(10);
-            PdfPCell hCell = new PdfPCell();
-            hCell.setBackgroundColor(pal.verde());
-            hCell.setBorder(0);
-            hCell.setPaddingTop(12);
-            hCell.setPaddingBottom(12);
-            hCell.setPaddingLeft(14);
-            hCell.addElement(new Paragraph(brandName.toUpperCase(),
-                    new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
-            Paragraph tituloH = new Paragraph("FICHA DE RECETA",
-                    new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
-            tituloH.setSpacingBefore(4);
-            hCell.addElement(tituloH);
-            Paragraph subH = new Paragraph(
-                    receta.getNombre() + (receta.getEstilo() != null ? "  ·  " + receta.getEstilo() : ""),
-                    new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro()));
-            subH.setSpacingBefore(4);
-            hCell.addElement(subH);
-            header.addCell(hCell);
-            doc.add(header);
+                // Cabecera
+                PdfPTable header = new PdfPTable(1);
+                header.setWidthPercentage(100);
+                header.setSpacingAfter(10);
+                PdfPCell hCell = new PdfPCell();
+                hCell.setBackgroundColor(pal.verde());
+                hCell.setBorder(0);
+                hCell.setPaddingTop(12);
+                hCell.setPaddingBottom(12);
+                hCell.setPaddingLeft(14);
+                hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                        new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+                Paragraph tituloH = new Paragraph(t("pdf.title.ficha_receta"),
+                        new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
+                tituloH.setSpacingBefore(4);
+                hCell.addElement(tituloH);
+                Paragraph subH = new Paragraph(
+                        receta.getNombre() + (receta.getEstilo() != null ? "  ·  " + receta.getEstilo() : ""),
+                        new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro()));
+                subH.setSpacingBefore(4);
+                hCell.addElement(subH);
+                header.addCell(hCell);
+                doc.add(header);
 
-            // Información básica
-            addTituloPdf(doc, "INFORMACIÓN GENERAL", pal);
-            Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
-            Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
-            PdfPTable info = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
-            info.setWidthPercentage(100);
-            par(info, "Nombre",    receta.getNombre() != null ? receta.getNombre() : "—", lbl, val, pal);
-            par(info, "Estilo",    receta.getEstilo() != null ? receta.getEstilo() : "—", lbl, val, pal);
-            par(info, "Estado",    receta.isActiva() ? "Activa" : "Inactiva", lbl, val, pal);
-            par(info, "Versión",   receta.getVersion() != null ? "v" + receta.getVersion() : "v1", lbl, val, pal);
-            par(info, "Hervor",    receta.getTiempoHervorMinutos() != null
-                    ? receta.getTiempoHervorMinutos() + " min" : "—", lbl, val, pal);
-            par(info, "Vol. base", receta.getVolumenBase() != null
-                    ? receta.getVolumenBase() + " L" : "—", lbl, val, pal);
-            if (receta.getAguaMacerado() != null) {
-                par(info, "Agua macerado", receta.getAguaMacerado() + " "
-                        + (receta.getUnidadAguaMacerado() != null ? receta.getUnidadAguaMacerado() : "L"), lbl, val, pal);
-                par(info, "Agua sparge", receta.getAguaSparge() != null
-                        ? receta.getAguaSparge() + " "
-                          + (receta.getUnidadAguaSparge() != null ? receta.getUnidadAguaSparge() : "L") : "—",
-                        lbl, val, pal);
-            }
-            if (receta.getPhAgua() != null) {
-                par(info, "pH Agua", receta.getPhAgua().toString(), lbl, val, pal);
-                par(info, "", "", lbl, val, pal);
-            }
-            doc.add(info);
-
-            if (notBlank(receta.getDescripcion())) {
-                Font lblD = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
-                Paragraph pd = new Paragraph("Descripción", lblD);
-                pd.setSpacingBefore(4);
-                doc.add(pd);
-                doc.add(new Paragraph(receta.getDescripcion(),
-                        new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
-            }
-
-            // Métricas objetivo
-            if (receta.getOgObjetivo() != null || receta.getFgObjetivo() != null) {
-                addTituloPdf(doc, "PARÁMETROS OBJETIVO", pal);
-                Font lblM = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
-                Font valM = new Font(Font.HELVETICA, 10, Font.BOLD, pal.verdeOscuro());
-                Font subM = new Font(Font.HELVETICA, 8, Font.NORMAL, C_GRIS);
-                PdfPTable metricasR = new PdfPTable(3);
-                metricasR.setWidthPercentage(60);
-                if (receta.getOgObjetivo() != null)
-                    metricaCell(metricasR, "OG", String.valueOf(receta.getOgObjetivo()),
-                            lblM, valM, subM, "Gravedad inicial", pal);
-                if (receta.getFgObjetivo() != null)
-                    metricaCell(metricasR, "FG", String.valueOf(receta.getFgObjetivo()),
-                            lblM, valM, subM, "Gravedad final", pal);
-                if (receta.getOgObjetivo() != null && receta.getFgObjetivo() != null) {
-                    double abvObj = (receta.getOgObjetivo() - receta.getFgObjetivo()) * 0.13125;
-                    metricaCell(metricasR, "ABV",
-                            String.format(java.util.Locale.US, "%.2f%%", abvObj),
-                            lblM, valM, subM, "Estimado", pal);
+                // Información básica
+                addTituloPdf(doc, t("pdf.title.info_general"), pal);
+                Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable info = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
+                info.setWidthPercentage(100);
+                par(info, t("pdf.label.nombre"),    receta.getNombre() != null ? receta.getNombre() : "—", lbl, val, pal);
+                par(info, t("pdf.label.estilo"),    receta.getEstilo() != null ? receta.getEstilo() : "—", lbl, val, pal);
+                par(info, t("pdf.label.estado"),    receta.isActiva() ? t("pdf.text.activa") : t("pdf.text.inactiva"), lbl, val, pal);
+                par(info, t("pdf.label.version"),   receta.getVersion() != null ? "v" + receta.getVersion() : "v1", lbl, val, pal);
+                par(info, t("pdf.label.hervor"),    receta.getTiempoHervorMinutos() != null
+                        ? receta.getTiempoHervorMinutos() + " min" : "—", lbl, val, pal);
+                par(info, t("pdf.label.vol_base"), receta.getVolumenBase() != null
+                        ? receta.getVolumenBase() + " L" : "—", lbl, val, pal);
+                if (receta.getAguaMacerado() != null) {
+                    par(info, t("pdf.label.agua_macerado"), receta.getAguaMacerado() + " "
+                            + (receta.getUnidadAguaMacerado() != null ? receta.getUnidadAguaMacerado() : "L"), lbl, val, pal);
+                    par(info, t("pdf.label.agua_sparge"), receta.getAguaSparge() != null
+                            ? receta.getAguaSparge() + " "
+                              + (receta.getUnidadAguaSparge() != null ? receta.getUnidadAguaSparge() : "L") : "—",
+                            lbl, val, pal);
                 }
-                doc.add(metricasR);
-            }
-
-            // Ingredientes
-            if (!receta.getIngredientes().isEmpty()) {
-                addTituloPdf(doc, "INGREDIENTES", pal);
-                addIngredientesReceta(doc, receta, pal);
-            }
-
-            // Escalones de macerado
-            if (!receta.getEscalones().isEmpty()) {
-                addTituloPdf(doc, "ESCALONES DE MACERADO", pal);
-                Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
-                Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
-                PdfPTable tEsc = new PdfPTable(new float[]{0.5f, 2, 1, 1});
-                tEsc.setWidthPercentage(100);
-                for (String h : new String[]{"#", "Escalón", "Duración", "Temp."}) {
-                    PdfPCell c = new PdfPCell(new Phrase(h, thF));
-                    c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(5);
-                    tEsc.addCell(c);
+                if (receta.getPhAgua() != null) {
+                    par(info, t("pdf.label.ph_agua_cap"), receta.getPhAgua().toString(), lbl, val, pal);
+                    par(info, "", "", lbl, val, pal);
                 }
-                int idx = 1;
-                for (EscalonMacerado e : receta.getEscalones()) {
-                    tableCell(tEsc, String.valueOf(idx++), tdF);
-                    tableCell(tEsc, e.getNombre() != null ? e.getNombre() : "—", tdF);
-                    tableCell(tEsc, e.getDuracionMinutos() != null ? e.getDuracionMinutos() + " min" : "—", tdF);
-                    tableCell(tEsc, e.getTemperaturaC() != null ? e.getTemperaturaC() + " °C" : "—", tdF);
+                doc.add(info);
+
+                if (notBlank(receta.getDescripcion())) {
+                    Font lblD = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                    Paragraph pd = new Paragraph(t("pdf.label.descripcion"), lblD);
+                    pd.setSpacingBefore(4);
+                    doc.add(pd);
+                    doc.add(new Paragraph(receta.getDescripcion(),
+                            new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
                 }
-                doc.add(tEsc);
-            }
 
-            // Hervor / adiciones
-            if (!receta.getAdicionesHervor().isEmpty()) {
-                addTituloPdf(doc, "HERVOR Y ADICIONES", pal);
-                Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
-                Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
-                PdfPTable tAdic = new PdfPTable(new float[]{3, 1.5f, 1.5f});
-                tAdic.setWidthPercentage(100);
-                for (String h : new String[]{"Insumo", "Min. restantes", "Cantidad"}) {
-                    PdfPCell c = new PdfPCell(new Phrase(h, thF));
-                    c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(5);
-                    tAdic.addCell(c);
+                // Métricas objetivo
+                if (receta.getOgObjetivo() != null || receta.getFgObjetivo() != null) {
+                    addTituloPdf(doc, t("pdf.title.parametros_objetivo"), pal);
+                    Font lblM = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
+                    Font valM = new Font(Font.HELVETICA, 10, Font.BOLD, pal.verdeOscuro());
+                    Font subM = new Font(Font.HELVETICA, 8, Font.NORMAL, C_GRIS);
+                    PdfPTable metricasR = new PdfPTable(3);
+                    metricasR.setWidthPercentage(60);
+                    if (receta.getOgObjetivo() != null)
+                        metricaCell(metricasR, "OG", String.valueOf(receta.getOgObjetivo()),
+                                lblM, valM, subM, t("pdf.label.gravedad_inicial"), pal);
+                    if (receta.getFgObjetivo() != null)
+                        metricaCell(metricasR, "FG", String.valueOf(receta.getFgObjetivo()),
+                                lblM, valM, subM, t("pdf.label.gravedad_final"), pal);
+                    if (receta.getOgObjetivo() != null && receta.getFgObjetivo() != null) {
+                        double abvObj = (receta.getOgObjetivo() - receta.getFgObjetivo()) * 0.13125;
+                        metricaCell(metricasR, "ABV",
+                                String.format(java.util.Locale.US, "%.2f%%", abvObj),
+                                lblM, valM, subM, t("pdf.label.estimado"), pal);
+                    }
+                    doc.add(metricasR);
                 }
-                for (AdicionHervor a : receta.getAdicionesHervor()) {
-                    tableCell(tAdic, a.getNombre() != null ? a.getNombre() : "—", tdF);
-                    String mins = a.getMinutosRestantes() != null
-                            ? (a.getMinutosRestantes() == 0 ? "Flameout" : a.getMinutosRestantes() + " min") : "—";
-                    tableCell(tAdic, mins, tdF);
-                    tableCell(tAdic, a.getCantidad() != null
-                            ? a.getCantidad() + " " + (a.getUnidad() != null ? a.getUnidad() : "") : "—", tdF);
+
+                // Ingredientes
+                if (!receta.getIngredientes().isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.ingredientes"), pal);
+                    addIngredientesReceta(doc, receta, pal);
                 }
-                doc.add(tAdic);
+
+                // Escalones de macerado
+                if (!receta.getEscalones().isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.escalones_macerado"), pal);
+                    Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
+                    Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+                    PdfPTable tEsc = new PdfPTable(new float[]{0.5f, 2, 1, 1});
+                    tEsc.setWidthPercentage(100);
+                    for (String h : new String[]{t("pdf.header.num"), t("pdf.header.escalon"), t("pdf.header.duracion"), t("pdf.header.temp")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, thF));
+                        c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(5);
+                        tEsc.addCell(c);
+                    }
+                    int idx = 1;
+                    for (EscalonMacerado e : receta.getEscalones()) {
+                        tableCell(tEsc, String.valueOf(idx++), tdF);
+                        tableCell(tEsc, e.getNombre() != null ? e.getNombre() : "—", tdF);
+                        tableCell(tEsc, e.getDuracionMinutos() != null ? e.getDuracionMinutos() + " min" : "—", tdF);
+                        tableCell(tEsc, e.getTemperaturaC() != null ? e.getTemperaturaC() + " °C" : "—", tdF);
+                    }
+                    doc.add(tEsc);
+                }
+
+                // Hervor / adiciones
+                if (!receta.getAdicionesHervor().isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.hervor_adiciones"), pal);
+                    Font thF = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
+                    Font tdF = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+                    PdfPTable tAdic = new PdfPTable(new float[]{3, 1.5f, 1.5f});
+                    tAdic.setWidthPercentage(100);
+                    for (String h : new String[]{t("pdf.header.insumo"), t("pdf.header.min_restantes"), t("pdf.header.cantidad")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, thF));
+                        c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(5);
+                        tAdic.addCell(c);
+                    }
+                    for (AdicionHervor a : receta.getAdicionesHervor()) {
+                        tableCell(tAdic, a.getNombre() != null ? a.getNombre() : "—", tdF);
+                        String mins = a.getMinutosRestantes() != null
+                                ? (a.getMinutosRestantes() == 0 ? t("pdf.text.flameout") : a.getMinutosRestantes() + " min") : "—";
+                        tableCell(tAdic, mins, tdF);
+                        tableCell(tAdic, a.getCantidad() != null
+                                ? a.getCantidad() + " " + (a.getUnidad() != null ? a.getUnidad() : "") : "—", tdF);
+                    }
+                    doc.add(tAdic);
+                }
+
+                // Notas
+                if (notBlank(receta.getNotas())) {
+                    addTituloPdf(doc, t("pdf.title.notas_tecnicas"), pal);
+                    doc.add(new Paragraph(receta.getNotas(),
+                            new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
+                }
+
+                // Pie
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF de receta " + receta.getNombre(), e);
             }
-
-            // Notas
-            if (notBlank(receta.getNotas())) {
-                addTituloPdf(doc, "NOTAS TÉCNICAS", pal);
-                doc.add(new Paragraph(receta.getNotas(),
-                        new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY)));
-            }
-
-            // Pie
-            doc.add(new Paragraph("\n"));
-            Paragraph pie = new Paragraph(
-                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
-                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
-            pie.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(pie);
-
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF de receta " + receta.getNombre(), e);
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     // ── PDF Comparativa ──────────────────────────────────────────────
@@ -303,116 +333,123 @@ public class PdfExportService {
     public byte[] generarPdfComparativa(List<LoteCerveza> lotes,
                                          Map<String, Long> mejoresMax,
                                          Long mejorCpl,
-                                         ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        String brandName = branding.name();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4.rotate(), 36, 36, 50, 40);
+                                         ExportBranding branding,
+                                         Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
-            PdfWriter.getInstance(doc, baos);
-            doc.open();
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4.rotate(), 36, 36, 50, 40);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
 
-            // Cabecera
-            PdfPTable header = new PdfPTable(1);
-            header.setWidthPercentage(100);
-            header.setSpacingAfter(14);
-            PdfPCell hCell = new PdfPCell();
-            hCell.setBackgroundColor(pal.verde());
-            hCell.setBorder(0);
-            hCell.setPadding(12);
-            hCell.addElement(new Paragraph(brandName.toUpperCase(),
-                    new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
-            Paragraph titulo = new Paragraph("COMPARATIVA DE LOTES",
-                    new Font(Font.HELVETICA, 14, Font.BOLD, pal.crema()));
-            titulo.setSpacingBefore(4);
-            hCell.addElement(titulo);
-            String subtitulo = lotes.stream().map(LoteCerveza::getCodigoLote)
-                    .reduce((a, b) -> a + "  ·  " + b).orElse("");
-            hCell.addElement(new Paragraph(subtitulo,
-                    new Font(Font.HELVETICA, 8, Font.ITALIC, pal.crema())));
-            header.addCell(hCell);
-            doc.add(header);
+                // Cabecera
+                PdfPTable header = new PdfPTable(1);
+                header.setWidthPercentage(100);
+                header.setSpacingAfter(14);
+                PdfPCell hCell = new PdfPCell();
+                hCell.setBackgroundColor(pal.verde());
+                hCell.setBorder(0);
+                hCell.setPadding(12);
+                hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                        new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+                Paragraph titulo = new Paragraph(t("pdf.title.comparativa_lotes"),
+                        new Font(Font.HELVETICA, 14, Font.BOLD, pal.crema()));
+                titulo.setSpacingBefore(4);
+                hCell.addElement(titulo);
+                String subtitulo = lotes.stream().map(LoteCerveza::getCodigoLote)
+                        .reduce((a, b) -> a + "  ·  " + b).orElse("");
+                hCell.addElement(new Paragraph(subtitulo,
+                        new Font(Font.HELVETICA, 8, Font.ITALIC, pal.crema())));
+                header.addCell(hCell);
+                doc.add(header);
 
-            // Tabla de métricas (filas = métricas, columnas = lotes)
-            int cols = lotes.size() + 1;
-            PdfPTable tabla = new PdfPTable(cols);
-            float[] anchos = new float[cols];
-            anchos[0] = 2.5f;
-            for (int i = 1; i < cols; i++) anchos[i] = 1.5f;
-            tabla.setWidths(anchos);
-            tabla.setWidthPercentage(100);
-            tabla.setSpacingAfter(14);
+                // Tabla de métricas (filas = métricas, columnas = lotes)
+                int cols = lotes.size() + 1;
+                PdfPTable tabla = new PdfPTable(cols);
+                float[] anchos = new float[cols];
+                anchos[0] = 2.5f;
+                for (int i = 1; i < cols; i++) anchos[i] = 1.5f;
+                tabla.setWidths(anchos);
+                tabla.setWidthPercentage(100);
+                tabla.setSpacingAfter(14);
 
-            Font fHeader   = new Font(Font.HELVETICA, 8, Font.BOLD,  pal.crema());
-            Font fLabel    = new Font(Font.HELVETICA, 7, Font.BOLD,  pal.verde());
-            Font fValor    = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.BLACK);
-            Font fMejorMax = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(180, 130, 0));
-            Font fMejorMin = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(25, 135, 84));
+                Font fHeader   = new Font(Font.HELVETICA, 8, Font.BOLD,  pal.crema());
+                Font fLabel    = new Font(Font.HELVETICA, 7, Font.BOLD,  pal.verde());
+                Font fValor    = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.BLACK);
+                Font fMejorMax = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(180, 130, 0));
+                Font fMejorMin = new Font(Font.HELVETICA, 8, Font.BOLD, new Color(25, 135, 84));
 
-            addCeldaHeader(tabla, "Métrica", fHeader, pal);
-            for (LoteCerveza l : lotes) addCeldaHeader(tabla, l.getCodigoLote(), fHeader, pal);
+                addCeldaHeader(tabla, t("pdf.header.metrica"), fHeader, pal);
+                for (LoteCerveza l : lotes) addCeldaHeader(tabla, l.getCodigoLote(), fHeader, pal);
 
-            String[][] metricas = {
-                {"Estilo",          null},
-                {"OG",              null},
-                {"FG",              null},
-                {"ABV (%)",         "abv"},
-                {"Atenuación (%)",  "atenuacion"},
-                {"Eficiencia (%)",  "eficiencia"},
-                {"Litros",          "litros"},
-                {"Costo total",     null},
-                {"Costo/litro",     "cpl"}
-            };
+                // codes: internal key used for valorMetrica switch + pdf.metric.{code} for display
+                String[][] metricas = {
+                    {"estilo",      null},
+                    {"og",          null},
+                    {"fg",          null},
+                    {"abv",         "abv"},
+                    {"atenuacion",  "atenuacion"},
+                    {"eficiencia",  "eficiencia"},
+                    {"litros",      "litros"},
+                    {"costo_total", null},
+                    {"cpl",         "cpl"}
+                };
 
-            boolean alt = false;
-            for (String[] m : metricas) {
-                Color bg = alt ? pal.fondo() : Color.WHITE;
-                alt = !alt;
-                addCeldaLabel(tabla, m[0], fLabel, bg);
-                for (LoteCerveza l : lotes) {
-                    String texto = valorMetrica(l, m[0]);
-                    boolean esMejorMax = m[1] != null && !m[1].equals("cpl")
-                            && mejoresMax.containsKey(m[1]) && mejoresMax.get(m[1]).equals(l.getId());
-                    boolean esMejorMin = "cpl".equals(m[1]) && l.getId().equals(mejorCpl);
-                    Font f = esMejorMax ? fMejorMax : esMejorMin ? fMejorMin : fValor;
-                    String celText = texto + (esMejorMax ? " ★" : esMejorMin ? " ↓" : "");
-                    PdfPCell c = new PdfPCell(new Phrase(celText, f));
-                    c.setHorizontalAlignment(Element.ALIGN_CENTER);
-                    c.setVerticalAlignment(Element.ALIGN_MIDDLE);
-                    c.setBackgroundColor(bg);
-                    c.setBorderColor(C_BORDE);
-                    c.setPadding(5);
-                    tabla.addCell(c);
-                }
-            }
-            doc.add(tabla);
-
-            // Notas de cata
-            boolean hayNotas = lotes.stream().anyMatch(l ->
-                    l.getNotasCata() != null && !l.getNotasCata().isBlank());
-            if (hayNotas) {
-                doc.add(new Paragraph("Notas de cata",
-                        new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde())));
-                for (LoteCerveza l : lotes) {
-                    if (l.getNotasCata() != null && !l.getNotasCata().isBlank()) {
-                        doc.add(new Paragraph(l.getCodigoLote() + ": " + l.getNotasCata(),
-                                new Font(Font.HELVETICA, 7, Font.NORMAL, C_GRIS)));
+                boolean alt = false;
+                for (String[] m : metricas) {
+                    Color bg = alt ? pal.fondo() : Color.WHITE;
+                    alt = !alt;
+                    addCeldaLabel(tabla, t("pdf.metric." + m[0]), fLabel, bg);
+                    for (LoteCerveza l : lotes) {
+                        String texto = valorMetrica(l, m[0]);
+                        boolean esMejorMax = m[1] != null && !m[1].equals("cpl")
+                                && mejoresMax.containsKey(m[1]) && mejoresMax.get(m[1]).equals(l.getId());
+                        boolean esMejorMin = "cpl".equals(m[1]) && l.getId().equals(mejorCpl);
+                        Font f = esMejorMax ? fMejorMax : esMejorMin ? fMejorMin : fValor;
+                        String celText = texto + (esMejorMax ? " ★" : esMejorMin ? " ↓" : "");
+                        PdfPCell c = new PdfPCell(new Phrase(celText, f));
+                        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+                        c.setVerticalAlignment(Element.ALIGN_MIDDLE);
+                        c.setBackgroundColor(bg);
+                        c.setBorderColor(C_BORDE);
+                        c.setPadding(5);
+                        tabla.addCell(c);
                     }
                 }
+                doc.add(tabla);
+
+                // Notas de cata
+                boolean hayNotas = lotes.stream().anyMatch(l ->
+                        l.getNotasCata() != null && !l.getNotasCata().isBlank());
+                if (hayNotas) {
+                    doc.add(new Paragraph(t("pdf.label.notas_cata"),
+                            new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde())));
+                    for (LoteCerveza l : lotes) {
+                        if (l.getNotasCata() != null && !l.getNotasCata().isBlank()) {
+                            doc.add(new Paragraph(l.getCodigoLote() + ": " + l.getNotasCata(),
+                                    new Font(Font.HELVETICA, 7, Font.NORMAL, C_GRIS)));
+                        }
+                    }
+                }
+
+                // Pie
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie_corto", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF de comparativa", e);
             }
-
-            // Pie
-            Paragraph pie = new Paragraph(
-                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName,
-                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
-            pie.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(pie);
-
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF de comparativa", e);
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     // ── Helpers PDF Lote ─────────────────────────────────────────────
@@ -431,10 +468,10 @@ public class PdfExportService {
 
         Paragraph brand = new Paragraph(brandName.toUpperCase(),
                 new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado()));
-        Paragraph tituloP = new Paragraph("FICHA DE TRAZABILIDAD",
+        Paragraph tituloP = new Paragraph(t("pdf.title.ficha_trazabilidad"),
                 new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
         tituloP.setSpacingBefore(4);
-        String fase = lote.isCompletado() ? "COMPLETADO" : lote.getFaseActual().toUpperCase();
+        String fase = lote.isCompletado() ? t("pdf.text.completado") : lote.getFaseActual().toUpperCase();
         Paragraph faseP = new Paragraph(fase,
                 new Font(Font.HELVETICA, 8, Font.NORMAL, pal.verdeClaro()));
         faseP.setSpacingBefore(6);
@@ -483,15 +520,15 @@ public class PdfExportService {
         Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
         PdfPTable t = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
         t.setWidthPercentage(100);
-        par(t, "Código",  lote.getCodigoLote(), lbl, val, pal);
-        par(t, "Estilo",  lote.getEstilo(), lbl, val, pal);
-        par(t, "Fecha elaboración",
+        par(t, t("pdf.label.codigo"),  lote.getCodigoLote(), lbl, val, pal);
+        par(t, t("pdf.label.estilo"),  lote.getEstilo(), lbl, val, pal);
+        par(t, t("pdf.label.fecha_elaboracion"),
                 lote.getFechaElaboracion() != null ? lote.getFechaElaboracion().format(FMT_FECHA) : "—", lbl, val, pal);
-        par(t, "Fermentador",
+        par(t, t("pdf.label.fermentador"),
                 lote.getEquipoFermentador() != null ? lote.getEquipoFermentador().getNombre() : "—", lbl, val, pal);
-        par(t, "Receta",
+        par(t, t("pdf.label.receta"),
                 lote.getReceta() != null ? lote.getReceta().getNombre() : "—", lbl, val, pal);
-        par(t, "Creado por",
+        par(t, t("pdf.label.creado_por"),
                 lote.getCreatedBy() != null ? lote.getCreatedBy() : "—", lbl, val, pal);
         doc.add(t);
     }
@@ -505,26 +542,27 @@ public class PdfExportService {
 
         PdfPTable tp = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
         tp.setWidthPercentage(100); tp.setSpacingAfter(6);
-        par(tp, "Agua utilizada",
+        par(tp, t("pdf.label.agua_utilizada"),
                 lote.getAguaUtilizada() != null ? lote.getAguaUtilizada() + " L" : "—", lblP, valP, pal);
-        par(tp, "pH agua",
+        par(tp, t("pdf.label.ph_agua"),
                 lote.getPhAgua() != null ? lote.getPhAgua().toString() : "—", lblP, valP, pal);
-        par(tp, "Vol. final",
+        par(tp, t("pdf.label.vol_final"),
                 lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", lblP, valP, pal);
-        par(tp, "Clarificante",
+        par(tp, t("pdf.label.clarificante"),
                 notBlank(lote.getClarificante()) ? lote.getClarificante() : "—", lblP, valP, pal);
         doc.add(tp);
 
         PdfPTable tm = new PdfPTable(6);
         tm.setWidthPercentage(100);
-        metricaCell(tm, "OG",         lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—",    lbl, val, sub, "Densidad inicial", pal);
+        metricaCell(tm, "OG",         lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—",    lbl, val, sub, t("pdf.label.gravedad_inicial"), pal);
         String fgSub = lote.getDensidadFinalFecha() != null
-                ? "Densidad final · " + lote.getDensidadFinalFecha().format(FMT_FECHA) : "Densidad final";
-        metricaCell(tm, "FG",         lote.getDensidadFinal()   != null ? String.valueOf(lote.getDensidadFinal())   : "Pendiente", lbl, val, sub, fgSub, pal);
-        metricaCell(tm, "ABV",        lote.getAbv()               != null ? lote.getAbv()               + "%" : "—", lbl, val, sub, "% vol.",   pal);
-        metricaCell(tm, "Atenuación", lote.getAtenuacionAparente()  != null ? lote.getAtenuacionAparente()  + "%" : "—", lbl, val, sub, "Aparente", pal);
-        metricaCell(tm, "Eficiencia", lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", lbl, val, sub, "Macerado", pal);
-        metricaCell(tm, "Litros",     lote.getLitrosFinales()      != null ? lote.getLitrosFinales()      + " L" : "—", lbl, val, sub, "Vol. final", pal);
+                ? tf("pdf.text.gravedad_final_fecha", lote.getDensidadFinalFecha().format(FMT_FECHA))
+                : t("pdf.label.gravedad_final");
+        metricaCell(tm, "FG",         lote.getDensidadFinal()   != null ? String.valueOf(lote.getDensidadFinal())   : t("pdf.text.pendiente"), lbl, val, sub, fgSub, pal);
+        metricaCell(tm, "ABV",        lote.getAbv()               != null ? lote.getAbv()               + "%" : "—", lbl, val, sub, t("pdf.label.pct_vol"),   pal);
+        metricaCell(tm, t("pdf.label.atenuacion"), lote.getAtenuacionAparente()  != null ? lote.getAtenuacionAparente()  + "%" : "—", lbl, val, sub, t("pdf.label.aparente"), pal);
+        metricaCell(tm, t("pdf.label.eficiencia"), lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", lbl, val, sub, t("pdf.label.macerado"), pal);
+        metricaCell(tm, t("pdf.label.litros"),     lote.getLitrosFinales()      != null ? lote.getLitrosFinales()      + " L" : "—", lbl, val, sub, t("pdf.label.vol_final"), pal);
         doc.add(tm);
     }
 
@@ -545,13 +583,13 @@ public class PdfExportService {
     private void addIngredientes(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
         Font grupoFont = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
         Font ingFont   = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
-        PdfPTable t = new PdfPTable(new float[]{1, 4});
-        t.setWidthPercentage(100);
-        addGrupoIngredientes(t, "MALTAS",        lote.getMaltas(),        grupoFont, ingFont, pal);
-        addGrupoIngredientes(t, "LÚPULOS",       lote.getLupulos(),       grupoFont, ingFont, pal);
-        addGrupoIngredientes(t, "LEVADURAS",     lote.getLevaduras(),     grupoFont, ingFont, pal);
-        addGrupoIngredientes(t, "CLARIFICANTES", lote.getClarificantes(), grupoFont, ingFont, pal);
-        doc.add(t);
+        PdfPTable tbl = new PdfPTable(new float[]{1, 4});
+        tbl.setWidthPercentage(100);
+        addGrupoIngredientes(tbl, t("pdf.group.maltas"),        lote.getMaltas(),        grupoFont, ingFont, pal);
+        addGrupoIngredientes(tbl, t("pdf.group.lupulos"),       lote.getLupulos(),       grupoFont, ingFont, pal);
+        addGrupoIngredientes(tbl, t("pdf.group.levaduras"),     lote.getLevaduras(),     grupoFont, ingFont, pal);
+        addGrupoIngredientes(tbl, t("pdf.group.clarificantes"), lote.getClarificantes(), grupoFont, ingFont, pal);
+        doc.add(tbl);
     }
 
     private void addGrupoIngredientes(PdfPTable t, String grupo, List<Ingrediente> lista,
@@ -572,13 +610,13 @@ public class PdfExportService {
     private void addIngredientesReceta(Document doc, Receta receta, Pal pal) throws DocumentException {
         Font grupoFont = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
         Font ingFont   = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
-        PdfPTable t = new PdfPTable(new float[]{1, 4});
-        t.setWidthPercentage(100);
-        addGrupoRecetaIngredientes(t, "MALTAS",        receta.getMaltas(),        grupoFont, ingFont, pal);
-        addGrupoRecetaIngredientes(t, "LÚPULOS",       receta.getLupulos(),       grupoFont, ingFont, pal);
-        addGrupoRecetaIngredientes(t, "LEVADURAS",     receta.getLevaduras(),     grupoFont, ingFont, pal);
-        addGrupoRecetaIngredientes(t, "CLARIFICANTES", receta.getClarificantes(), grupoFont, ingFont, pal);
-        doc.add(t);
+        PdfPTable tbl = new PdfPTable(new float[]{1, 4});
+        tbl.setWidthPercentage(100);
+        addGrupoRecetaIngredientes(tbl, t("pdf.group.maltas"),        receta.getMaltas(),        grupoFont, ingFont, pal);
+        addGrupoRecetaIngredientes(tbl, t("pdf.group.lupulos"),       receta.getLupulos(),       grupoFont, ingFont, pal);
+        addGrupoRecetaIngredientes(tbl, t("pdf.group.levaduras"),     receta.getLevaduras(),     grupoFont, ingFont, pal);
+        addGrupoRecetaIngredientes(tbl, t("pdf.group.clarificantes"), receta.getClarificantes(), grupoFont, ingFont, pal);
+        doc.add(tbl);
     }
 
     private void addGrupoRecetaIngredientes(PdfPTable t, String grupo,
@@ -606,29 +644,29 @@ public class PdfExportService {
         t1.setWidthPercentage(100); t1.setSpacingAfter(6);
 
         String metodoTexto = lote.getCarbMetodo() == null ? "—"
-                : "NATURAL".equals(lote.getCarbMetodo()) ? "Natural / Priming" : "Forzada / Inyección CO₂";
-        par(t1, "Método", metodoTexto, lbl, val, pal);
+                : "NATURAL".equals(lote.getCarbMetodo()) ? t("pdf.text.carb_natural") : t("pdf.text.carb_forzada");
+        par(t1, t("pdf.label.metodo"), metodoTexto, lbl, val, pal);
 
         String co2 = "—";
         if (lote.getCarbCo2Objetivo() != null && lote.getCarbCo2Real() != null)
-            co2 = lote.getCarbCo2Objetivo() + " vol → " + lote.getCarbCo2Real() + " vol (real)";
+            co2 = lote.getCarbCo2Objetivo() + " vol → " + lote.getCarbCo2Real() + " vol (" + t("pdf.text.real_lc") + ")";
         else if (lote.getCarbCo2Objetivo() != null)
-            co2 = lote.getCarbCo2Objetivo() + " vol (objetivo)";
+            co2 = lote.getCarbCo2Objetivo() + " vol (" + t("pdf.text.objetivo_lc") + ")";
         else if (lote.getCarbCo2Real() != null)
-            co2 = lote.getCarbCo2Real() + " vol (real)";
-        par(t1, "CO₂", co2, lbl, val, pal);
+            co2 = lote.getCarbCo2Real() + " vol (" + t("pdf.text.real_lc") + ")";
+        par(t1, t("pdf.label.co2"), co2, lbl, val, pal);
 
         String validacion = lote.getCarbValidacion() == null ? "—" : switch (lote.getCarbValidacion()) {
-            case "ADECUADA"           -> "Espuma y retención adecuadas";
-            case "RETENCION_CORRECTA" -> "Retención correcta";
-            case "SOBRECARBONATADA"   -> "Sobrecarbonatada";
-            case "BAJA_CARBONATACION" -> "Baja carbonatación";
+            case "ADECUADA"           -> t("pdf.text.carb_adecuada");
+            case "RETENCION_CORRECTA" -> t("pdf.text.carb_retencion");
+            case "SOBRECARBONATADA"   -> t("pdf.text.carb_sobre");
+            case "BAJA_CARBONATACION" -> t("pdf.text.carb_baja");
             default                   -> lote.getCarbValidacion();
         };
-        par(t1, "Validación organoléptica", validacion, lbl, val, pal);
+        par(t1, t("pdf.label.validacion"), validacion, lbl, val, pal);
         String destinoPdf = lote.getCarbDestino() == null ? "—"
                 : lote.getCarbDestino().replace(" | ", "\n");
-        par(t1, "Destino / empaque", destinoPdf, lbl, val, pal);
+        par(t1, t("pdf.label.destino_empaque"), destinoPdf, lbl, val, pal);
         doc.add(t1);
 
         // Fila 2: parámetros específicos del método
@@ -636,9 +674,9 @@ public class PdfExportService {
                 && (lote.getCarbAzucarTipo() != null || lote.getCarbAzucarGramos() != null)) {
             PdfPTable t2 = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
             t2.setWidthPercentage(100); t2.setSpacingAfter(4);
-            par(t2, "Tipo de azúcar",
+            par(t2, t("pdf.label.tipo_azucar"),
                     lote.getCarbAzucarTipo() != null ? lote.getCarbAzucarTipo() : "—", lbl, val, pal);
-            par(t2, "Gramos añadidos",
+            par(t2, t("pdf.label.gramos_anadidos"),
                     lote.getCarbAzucarGramos() != null ? lote.getCarbAzucarGramos() + " g" : "—", lbl, val, pal);
             doc.add(t2);
         }
@@ -648,13 +686,13 @@ public class PdfExportService {
                     || lote.getCarbTecnica() != null)) {
             PdfPTable t2 = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
             t2.setWidthPercentage(100); t2.setSpacingAfter(4);
-            par(t2, "Presión",
+            par(t2, t("pdf.label.presion"),
                     lote.getCarbPresionPsi() != null ? lote.getCarbPresionPsi() + " PSI" : "—", lbl, val, pal);
-            par(t2, "Tiempo exposición",
+            par(t2, t("pdf.label.tiempo_exposicion"),
                     lote.getCarbTiempoHoras() != null ? lote.getCarbTiempoHoras() + " horas" : "—", lbl, val, pal);
             String tecnica = lote.getCarbTecnica() == null ? "—"
-                    : "PIEDRA".equals(lote.getCarbTecnica()) ? "Piedra de difusión" : "Presión fija (superficie / agitación)";
-            par(t2, "Técnica", tecnica, lbl, val, pal);
+                    : "PIEDRA".equals(lote.getCarbTecnica()) ? t("pdf.text.carb_piedra") : t("pdf.text.carb_presion_fija");
+            par(t2, t("pdf.label.tecnica"), tecnica, lbl, val, pal);
             doc.add(t2);
         }
     }
@@ -664,27 +702,27 @@ public class PdfExportService {
         Font lblFont = new Font(Font.HELVETICA, 7, Font.BOLD,   C_GRIS);
         Font valFont = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
 
-        PdfPTable t = new PdfPTable(new float[]{1.2f, 1, 1, 1, 1});
-        t.setWidthPercentage(100);
-        for (String h : new String[]{"", "Fermentación", "Acondic.", "Maduración", "Carbonatación"}) {
+        PdfPTable tbl = new PdfPTable(new float[]{1.2f, 1, 1, 1, 1});
+        tbl.setWidthPercentage(100);
+        for (String h : new String[]{"", t("pdf.header.fermentacion"), t("pdf.header.acondic"), t("pdf.header.maduracion"), t("pdf.header.carbonatacion")}) {
             PdfPCell c = new PdfPCell(new Phrase(h, thFont));
             c.setBackgroundColor(pal.verde()); c.setBorder(0);
             c.setPadding(5); c.setHorizontalAlignment(Element.ALIGN_CENTER);
-            t.addCell(c);
+            tbl.addCell(c);
         }
-        faseRow(t, "Inicio",
+        faseRow(tbl, t("pdf.header.inicio"),
                 fmt(lote.getFermFechaInicial()),    fmt(lote.getAcondFechaInicial()),
                 fmt(lote.getMadurFechaInicial()),   fmt(lote.getCarbFechaInicial()),    lblFont, valFont, pal);
-        faseRow(t, "Fin ideal",
+        faseRow(tbl, t("pdf.header.fin_ideal"),
                 fmt(lote.getFermFechaFinalIdeal()), fmt(lote.getAcondFechaFinalIdeal()),
                 fmt(lote.getMadurFechaFinalIdeal()), fmt(lote.getCarbFechaFinalIdeal()), lblFont, valFont, pal);
-        faseRow(t, "Fin real",
+        faseRow(tbl, t("pdf.header.fin_real"),
                 fmt(lote.getFermFechaFinal()),      fmt(lote.getAcondFechaFinal()),
                 fmt(lote.getMadurFechaFinal()),     fmt(lote.getCarbFechaFinal()),      lblFont, valFont, pal);
-        faseRow(t, "Temperatura",
+        faseRow(tbl, t("pdf.header.temperatura"),
                 temp(lote.getFermTemperatura()),    temp(lote.getAcondTemperatura()),
                 temp(lote.getMadurTemperatura()),   temp(lote.getCarbTemperatura()),    lblFont, valFont, pal);
-        doc.add(t);
+        doc.add(tbl);
     }
 
     private void faseRow(PdfPTable t, String label,
@@ -702,7 +740,7 @@ public class PdfExportService {
 
     private void addCurvaFermentacion(Document doc, LoteCerveza lote,
                                       List<LecturaFermentacion> lecturas, Pal pal) throws Exception {
-        addTituloPdf(doc, "CURVA DE FERMENTACIÓN", pal);
+        addTituloPdf(doc, t("pdf.title.curva_fermentacion"), pal);
 
         List<LecturaFermentacion> conD = lecturas.stream()
                 .filter(l -> l.getDensidad() != null).collect(Collectors.toList());
@@ -845,13 +883,13 @@ public class PdfExportService {
             g.setColor(pal.dorado());
             g.fillOval(plotLeft, 2, r * 2, r * 2);
             g.setColor(C_GRIS);
-            g.drawString("Densidad", plotLeft + r * 2 + 3, 10);
+            g.drawString(t("pdf.text.densidad_leyenda"), plotLeft + r * 2 + 3, 10);
             if (hayTemp2) {
                 int lx2 = plotLeft + r * 2 + 58 * sc;
                 g.setColor(new java.awt.Color(2, 136, 209));
                 g.fillOval(lx2, 2, r * 2, r * 2);
                 g.setColor(C_GRIS);
-                g.drawString("Temp. (°C)", lx2 + r * 2 + 3, 10);
+                g.drawString(t("pdf.text.temp_leyenda"), lx2 + r * 2 + 3, 10);
             }
 
             g.dispose();
@@ -869,25 +907,25 @@ public class PdfExportService {
 
         String[] headers = buildHeaders(hayTemp, hayNotas);
         float[]  widths  = buildWidths(hayTemp, hayNotas);
-        PdfPTable t = new PdfPTable(widths);
-        t.setWidthPercentage(100); t.setSpacingBefore(6);
+        PdfPTable tbl = new PdfPTable(widths);
+        tbl.setWidthPercentage(100); tbl.setSpacingBefore(6);
         for (String h : headers) {
             PdfPCell c = new PdfPCell(new Phrase(h, thF));
             c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(4);
-            t.addCell(c);
+            tbl.addCell(c);
         }
         for (LecturaFermentacion lec : lecturas) {
             boolean tieneAbv = lec.getDensidad() != null && lote.getDensidadInicial() != null
                                && lec.getDensidad() < lote.getDensidadInicial();
             String abvStr = tieneAbv
                     ? lec.getAbvParcial(lote.getDensidadInicial()).toPlainString() + "%" : "—";
-            tableCell(t, FMT_FECHA.format(lec.getFecha()), tdF);
-            tableCell(t, lec.getDensidad() != null ? String.valueOf(lec.getDensidad()) : "—", tdF);
-            tableCell(t, abvStr, tdF);
-            if (hayTemp)  tableCell(t, lec.getTemperatura() != null ? lec.getTemperatura() + " °C" : "—", tdF);
-            if (hayNotas) tableCell(t, notBlank(lec.getNotas()) ? lec.getNotas() : "—", tdF);
+            tableCell(tbl, FMT_FECHA.format(lec.getFecha()), tdF);
+            tableCell(tbl, lec.getDensidad() != null ? String.valueOf(lec.getDensidad()) : "—", tdF);
+            tableCell(tbl, abvStr, tdF);
+            if (hayTemp)  tableCell(tbl, lec.getTemperatura() != null ? lec.getTemperatura() + " °C" : "—", tdF);
+            if (hayNotas) tableCell(tbl, notBlank(lec.getNotas()) ? lec.getNotas() : "—", tdF);
         }
-        doc.add(t);
+        doc.add(tbl);
     }
 
     private void addCostos(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
@@ -896,10 +934,10 @@ public class PdfExportService {
 
         PdfPTable resumen = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
         resumen.setWidthPercentage(100); resumen.setSpacingAfter(6);
-        par(resumen, "Costo total",     "$" + fmt2(lote.getCostoTotal()), lbl, val, pal);
-        par(resumen, "Costo por litro",
+        par(resumen, t("pdf.label.costo_total"),     "$" + fmt2(lote.getCostoTotal()), lbl, val, pal);
+        par(resumen, t("pdf.label.costo_por_litro"),
                 lote.getCostoPorLitro() != null ? "$" + fmt2(lote.getCostoPorLitro()) : "—", lbl, val, pal);
-        par(resumen, "Ítems asignados", String.valueOf(lote.getItemsFactura().size()), lbl, val, pal);
+        par(resumen, t("pdf.label.items_asignados"), String.valueOf(lote.getItemsFactura().size()), lbl, val, pal);
         par(resumen, "", "", lbl, val, pal);
         doc.add(resumen);
 
@@ -907,7 +945,7 @@ public class PdfExportService {
         Font tdF = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
         PdfPTable dt = new PdfPTable(new float[]{1.5f, 1.5f, 2, 1, 1});
         dt.setWidthPercentage(100);
-        for (String h : new String[]{"Factura", "Proveedor", "Ítem", "Cantidad", "Valor"}) {
+        for (String h : new String[]{t("pdf.header.factura"), t("pdf.label.proveedor"), t("pdf.header.item"), t("pdf.header.cantidad"), t("pdf.header.valor")}) {
             PdfPCell c = new PdfPCell(new Phrase(h, thF));
             c.setBackgroundColor(pal.verdeOscuro()); c.setBorder(0); c.setPadding(4);
             dt.addCell(c);
@@ -916,7 +954,7 @@ public class PdfExportService {
             String nroFact = li.getItem().getFactura().getNumeroFactura();
             if (nroFact == null || nroFact.isBlank()) nroFact = "#" + li.getItem().getFactura().getId();
             String cant = li.getCantidadAsignada().doubleValue() == 0.0
-                    ? "Total"
+                    ? t("pdf.text.total_completo")
                     : li.getCantidadAsignada() + " " + (li.getItem().getUnidad() != null ? li.getItem().getUnidad() : "");
             for (String v : new String[]{nroFact, li.getItem().getFactura().getProveedor(),
                     li.getItem().getNombre(), cant, "$" + fmt2(li.getValorAsignado())}) {
@@ -942,54 +980,54 @@ public class PdfExportService {
         int cols = (tieneOg ? 1 : 0) + (tieneFg ? 1 : 0) + (tieneAbv ? 1 : 0);
         if (cols == 0) return;
 
-        PdfPTable t = new PdfPTable(cols);
-        t.setWidthPercentage(cols == 1 ? 35 : cols == 2 ? 60 : 90);
-        t.setSpacingAfter(6);
+        PdfPTable tbl = new PdfPTable(cols);
+        tbl.setWidthPercentage(cols == 1 ? 35 : cols == 2 ? 60 : 90);
+        tbl.setSpacingAfter(6);
 
         if (tieneOg) {
             PdfPCell cell = comparativaCell(lblF, valF, subF,
-                    "OG OBJETIVO", String.valueOf(r.getOgObjetivo()), pal);
+                    t("pdf.label.og_objetivo"), String.valueOf(r.getOgObjetivo()), pal);
             if (lote.getDensidadInicial() != null) {
                 int diff = lote.getDensidadInicial() - r.getOgObjetivo();
                 String diffStr = (diff > 0 ? "+" : "") + diff;
-                Paragraph p = new Paragraph("Real: " + lote.getDensidadInicial() + "  (" + diffStr + ")",
+                Paragraph p = new Paragraph(tf("pdf.text.real_con_diff", lote.getDensidadInicial(), diffStr),
                         diff >= 0 ? posF : negF);
                 p.setAlignment(Element.ALIGN_CENTER);
                 cell.addElement(p);
             } else {
                 addPendiente(cell, subF);
             }
-            t.addCell(cell);
+            tbl.addCell(cell);
         }
 
         if (tieneFg) {
             PdfPCell cell = comparativaCell(lblF, valF, subF,
-                    "FG OBJETIVO", String.valueOf(r.getFgObjetivo()), pal);
+                    t("pdf.label.fg_objetivo"), String.valueOf(r.getFgObjetivo()), pal);
             if (lote.getDensidadFinal() != null) {
-                Paragraph p = new Paragraph("Real: " + lote.getDensidadFinal(), subF);
+                Paragraph p = new Paragraph(tf("pdf.text.real", lote.getDensidadFinal()), subF);
                 p.setAlignment(Element.ALIGN_CENTER);
                 cell.addElement(p);
             } else {
                 addPendiente(cell, subF);
             }
-            t.addCell(cell);
+            tbl.addCell(cell);
         }
 
         if (tieneAbv) {
             double abvObj = (r.getOgObjetivo() - r.getFgObjetivo()) * 0.13125;
             PdfPCell cell = comparativaCell(lblF, valF, subF,
-                    "ABV OBJETIVO", String.format(java.util.Locale.US, "%.2f%%", abvObj), pal);
+                    t("pdf.label.abv_objetivo"), String.format(java.util.Locale.US, "%.2f%%", abvObj), pal);
             if (lote.getAbv() != null) {
-                Paragraph p = new Paragraph("Real: " + lote.getAbv() + "%", subF);
+                Paragraph p = new Paragraph(tf("pdf.text.real", lote.getAbv() + "%"), subF);
                 p.setAlignment(Element.ALIGN_CENTER);
                 cell.addElement(p);
             } else {
                 addPendiente(cell, subF);
             }
-            t.addCell(cell);
+            tbl.addCell(cell);
         }
 
-        doc.add(t);
+        doc.add(tbl);
     }
 
     private PdfPCell comparativaCell(Font lbl, Font val, Font sub,
@@ -1006,7 +1044,7 @@ public class PdfExportService {
     }
 
     private void addPendiente(PdfPCell cell, Font font) {
-        Paragraph p = new Paragraph("Pendiente", font);
+        Paragraph p = new Paragraph(t("pdf.text.pendiente"), font);
         p.setAlignment(Element.ALIGN_CENTER);
         cell.addElement(p);
     }
@@ -1016,11 +1054,11 @@ public class PdfExportService {
         Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.verde());
         Font txt = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
         if (hayObs) {
-            Paragraph p = new Paragraph("Observaciones", lbl); p.setSpacingBefore(4);
+            Paragraph p = new Paragraph(t("pdf.label.observaciones"), lbl); p.setSpacingBefore(4);
             doc.add(p); doc.add(new Paragraph(lote.getObservaciones(), txt));
         }
         if (hayCata) {
-            Paragraph p = new Paragraph("Notas de cata", lbl); p.setSpacingBefore(hayObs ? 8 : 4);
+            Paragraph p = new Paragraph(t("pdf.label.notas_cata"), lbl); p.setSpacingBefore(hayObs ? 8 : 4);
             doc.add(p); doc.add(new Paragraph(lote.getNotasCata(), txt));
         }
     }
@@ -1043,16 +1081,16 @@ public class PdfExportService {
 
     private String valorMetrica(LoteCerveza l, String metrica) {
         return switch (metrica) {
-            case "Estilo"          -> l.getEstilo() != null ? l.getEstilo() : "—";
-            case "OG"              -> l.getDensidadInicial() != null ? String.valueOf(l.getDensidadInicial()) : "—";
-            case "FG"              -> l.getDensidadFinal()   != null ? String.valueOf(l.getDensidadFinal())   : "—";
-            case "ABV (%)"         -> l.getAbv()               != null ? l.getAbv()               + "%" : "—";
-            case "Atenuación (%)"  -> l.getAtenuacionAparente()  != null ? l.getAtenuacionAparente()  + "%" : "—";
-            case "Eficiencia (%)"  -> l.getEficienciaMacerado() != null ? l.getEficienciaMacerado() + "%" : "—";
-            case "Litros"          -> l.getLitrosFinales()      != null ? l.getLitrosFinales()      + " L" : "—";
-            case "Costo total"     -> l.getCostoTotal()         != null
+            case "estilo"      -> l.getEstilo() != null ? l.getEstilo() : "—";
+            case "og"          -> l.getDensidadInicial() != null ? String.valueOf(l.getDensidadInicial()) : "—";
+            case "fg"          -> l.getDensidadFinal()   != null ? String.valueOf(l.getDensidadFinal())   : "—";
+            case "abv"         -> l.getAbv()               != null ? l.getAbv()               + "%" : "—";
+            case "atenuacion"  -> l.getAtenuacionAparente()  != null ? l.getAtenuacionAparente()  + "%" : "—";
+            case "eficiencia"  -> l.getEficienciaMacerado() != null ? l.getEficienciaMacerado() + "%" : "—";
+            case "litros"      -> l.getLitrosFinales()      != null ? l.getLitrosFinales()      + " L" : "—";
+            case "costo_total" -> l.getCostoTotal()         != null
                     ? "$ " + l.getCostoTotal().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
-            case "Costo/litro"     -> l.getCostoPorLitro()      != null
+            case "cpl"         -> l.getCostoPorLitro()      != null
                     ? "$ " + l.getCostoPorLitro().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
             default -> "—";
         };
@@ -1076,10 +1114,15 @@ public class PdfExportService {
     }
 
     private String[] buildHeaders(boolean hayTemp, boolean hayNotas) {
-        if (hayTemp && hayNotas) return new String[]{"Fecha", "Densidad", "ABV parcial", "Temp.", "Notas"};
-        if (hayTemp)  return new String[]{"Fecha", "Densidad", "ABV parcial", "Temp."};
-        if (hayNotas) return new String[]{"Fecha", "Densidad", "ABV parcial", "Notas"};
-        return new String[]{"Fecha", "Densidad", "ABV parcial"};
+        String fecha     = t("pdf.header.fecha");
+        String densidad  = t("pdf.header.densidad");
+        String abvParcial = t("pdf.header.abv_parcial");
+        String temp      = t("pdf.header.temp");
+        String notas     = t("pdf.header.notas");
+        if (hayTemp && hayNotas) return new String[]{fecha, densidad, abvParcial, temp, notas};
+        if (hayTemp)  return new String[]{fecha, densidad, abvParcial, temp};
+        if (hayNotas) return new String[]{fecha, densidad, abvParcial, notas};
+        return new String[]{fecha, densidad, abvParcial};
     }
 
     private float[] buildWidths(boolean hayTemp, boolean hayNotas) {
@@ -1094,156 +1137,164 @@ public class PdfExportService {
     public byte[] generarPdfReporteProduccion(List<LoteCerveza> lotes,
                                                LocalDate desde, LocalDate hasta,
                                                String estiloFiltro,
-                                               ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        String brandName = branding.name();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4.rotate(), 36, 36, 45, 40);
+                                               ExportBranding branding,
+                                               Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
-            PdfWriter.getInstance(doc, baos);
-            doc.open();
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4.rotate(), 36, 36, 45, 40);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
 
-            // ── Cabecera ──────────────────────────────────────────────
-            PdfPTable header = new PdfPTable(1);
-            header.setWidthPercentage(100);
-            header.setSpacingAfter(10);
-            PdfPCell hCell = new PdfPCell();
-            hCell.setBackgroundColor(pal.verde()); hCell.setBorder(0);
-            hCell.setPaddingTop(10); hCell.setPaddingBottom(10); hCell.setPaddingLeft(14);
-            hCell.addElement(new Paragraph(brandName.toUpperCase(),
-                    new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
-            Paragraph tituloH = new Paragraph("REPORTE DE PRODUCCIÓN",
-                    new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
-            tituloH.setSpacingBefore(3);
-            hCell.addElement(tituloH);
-            String periodoStr = desde.format(FMT_FECHA) + " — " + hasta.format(FMT_FECHA);
-            if (estiloFiltro != null && !estiloFiltro.isBlank()) periodoStr += "  ·  " + estiloFiltro;
-            hCell.addElement(new Paragraph(periodoStr,
-                    new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro())));
-            header.addCell(hCell);
-            doc.add(header);
+                // ── Cabecera ──────────────────────────────────────────────
+                PdfPTable header = new PdfPTable(1);
+                header.setWidthPercentage(100);
+                header.setSpacingAfter(10);
+                PdfPCell hCell = new PdfPCell();
+                hCell.setBackgroundColor(pal.verde()); hCell.setBorder(0);
+                hCell.setPaddingTop(10); hCell.setPaddingBottom(10); hCell.setPaddingLeft(14);
+                hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                        new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+                Paragraph tituloH = new Paragraph(t("pdf.title.reporte_produccion"),
+                        new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
+                tituloH.setSpacingBefore(3);
+                hCell.addElement(tituloH);
+                String periodoStr = desde.format(FMT_FECHA) + " — " + hasta.format(FMT_FECHA);
+                if (estiloFiltro != null && !estiloFiltro.isBlank()) periodoStr += "  ·  " + estiloFiltro;
+                hCell.addElement(new Paragraph(periodoStr,
+                        new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro())));
+                header.addCell(hCell);
+                doc.add(header);
 
-            // ── Estadísticas del período ──────────────────────────────
-            long totalLotes = lotes.size();
-            BigDecimal totalLitros = lotes.stream()
-                    .map(l -> l.getLitrosFinales() != null ? l.getLitrosFinales() : BigDecimal.ZERO)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            long completados = lotes.stream().filter(LoteCerveza::isCompletado).count();
-            int tasaComp = totalLotes > 0 ? (int)(completados * 100 / totalLotes) : 0;
-            OptionalDouble avgAbvOpt = lotes.stream()
-                    .filter(l -> l.getAbv() != null)
-                    .mapToDouble(l -> l.getAbv().doubleValue()).average();
-            String avgAbvStr = avgAbvOpt.isPresent()
-                    ? String.format("%.2f%%", avgAbvOpt.getAsDouble()) : "—";
-            OptionalDouble avgEfOpt = lotes.stream()
-                    .filter(l -> l.getEficienciaMacerado() != null)
-                    .mapToDouble(l -> l.getEficienciaMacerado().doubleValue()).average();
-            String avgEfStr = avgEfOpt.isPresent()
-                    ? String.format("%.1f%%", avgEfOpt.getAsDouble()) : "—";
-            boolean hayCostos = lotes.stream().anyMatch(l -> l.getCostoTotal() != null);
-            BigDecimal costoTotal = hayCostos
-                    ? lotes.stream().map(l -> l.getCostoTotal() != null ? l.getCostoTotal() : BigDecimal.ZERO)
-                            .reduce(BigDecimal.ZERO, BigDecimal::add) : null;
+                // ── Estadísticas del período ──────────────────────────────
+                long totalLotes = lotes.size();
+                BigDecimal totalLitros = lotes.stream()
+                        .map(l -> l.getLitrosFinales() != null ? l.getLitrosFinales() : BigDecimal.ZERO)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                long completados = lotes.stream().filter(LoteCerveza::isCompletado).count();
+                int tasaComp = totalLotes > 0 ? (int)(completados * 100 / totalLotes) : 0;
+                OptionalDouble avgAbvOpt = lotes.stream()
+                        .filter(l -> l.getAbv() != null)
+                        .mapToDouble(l -> l.getAbv().doubleValue()).average();
+                String avgAbvStr = avgAbvOpt.isPresent()
+                        ? String.format("%.2f%%", avgAbvOpt.getAsDouble()) : "—";
+                OptionalDouble avgEfOpt = lotes.stream()
+                        .filter(l -> l.getEficienciaMacerado() != null)
+                        .mapToDouble(l -> l.getEficienciaMacerado().doubleValue()).average();
+                String avgEfStr = avgEfOpt.isPresent()
+                        ? String.format("%.1f%%", avgEfOpt.getAsDouble()) : "—";
+                boolean hayCostos = lotes.stream().anyMatch(l -> l.getCostoTotal() != null);
+                BigDecimal costoTotal = hayCostos
+                        ? lotes.stream().map(l -> l.getCostoTotal() != null ? l.getCostoTotal() : BigDecimal.ZERO)
+                                .reduce(BigDecimal.ZERO, BigDecimal::add) : null;
 
-            addTituloPdf(doc, "RESUMEN DEL PERÍODO", pal);
-            Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
-            Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
-            PdfPTable stats = new PdfPTable(new float[]{1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f});
-            stats.setWidthPercentage(100);
-            par(stats, "Total Lotes",       String.valueOf(totalLotes),       lbl, val, pal);
-            par(stats, "Litros Producidos", fmt2(totalLitros) + " L",          lbl, val, pal);
-            par(stats, "ABV Promedio",      avgAbvStr,                         lbl, val, pal);
-            par(stats, "Eficiencia Prom.",  avgEfStr,                          lbl, val, pal);
-            par(stats, "Estilos Distintos", String.valueOf(lotes.stream().map(LoteCerveza::getEstilo).distinct().count()), lbl, val, pal);
-            par(stats, "Completados",       completados + " (" + tasaComp + "%)", lbl, val, pal);
-            par(stats, "Costo Total",       costoTotal != null ? "$" + fmt2(costoTotal) : "—", lbl, val, pal);
-            par(stats, "Generado",          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
-            doc.add(stats);
+                addTituloPdf(doc, t("pdf.title.resumen_periodo"), pal);
+                Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable stats = new PdfPTable(new float[]{1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f, 1.2f, 1.5f});
+                stats.setWidthPercentage(100);
+                par(stats, t("pdf.label.total_lotes"),       String.valueOf(totalLotes),       lbl, val, pal);
+                par(stats, t("pdf.label.litros_producidos"), fmt2(totalLitros) + " L",          lbl, val, pal);
+                par(stats, t("pdf.label.abv_promedio"),      avgAbvStr,                         lbl, val, pal);
+                par(stats, t("pdf.label.eficiencia_prom"),   avgEfStr,                          lbl, val, pal);
+                par(stats, t("pdf.label.estilos_distintos"), String.valueOf(lotes.stream().map(LoteCerveza::getEstilo).distinct().count()), lbl, val, pal);
+                par(stats, t("pdf.label.completados"),       completados + " (" + tasaComp + "%)", lbl, val, pal);
+                par(stats, t("pdf.label.costo_total"),       costoTotal != null ? "$" + fmt2(costoTotal) : "—", lbl, val, pal);
+                par(stats, t("pdf.label.generado"),          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
+                doc.add(stats);
 
-            // ── Tabla de lotes ────────────────────────────────────────
-            if (!lotes.isEmpty()) {
-                addTituloPdf(doc, "LOTES EN EL PERÍODO", pal);
-                PdfPTable tabla = new PdfPTable(new float[]{1.4f, 1.5f, 1.8f, 1f, 0.8f, 0.8f, 0.9f, 0.9f, 1.2f});
-                tabla.setWidthPercentage(100);
-                Font th = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
-                Font td = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
-                Font tdGreen = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
-                for (String h : new String[]{"Código","Estilo","Receta","Fecha","Litros","OG","ABV","Efic.","Estado"}) {
-                    PdfPCell c = new PdfPCell(new Phrase(h, th));
-                    c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
-                    c.setPadding(4); tabla.addCell(c);
+                // ── Tabla de lotes ────────────────────────────────────────
+                if (!lotes.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.lotes_periodo"), pal);
+                    PdfPTable tabla = new PdfPTable(new float[]{1.4f, 1.5f, 1.8f, 1f, 0.8f, 0.8f, 0.9f, 0.9f, 1.2f});
+                    tabla.setWidthPercentage(100);
+                    Font th = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                    Font td = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                    Font tdGreen = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
+                    for (String h : new String[]{t("pdf.label.codigo"), t("pdf.label.estilo"), t("pdf.label.receta"),
+                            t("pdf.header.fecha"), t("pdf.label.litros"), "OG", "ABV",
+                            t("pdf.header.efic"), t("pdf.label.estado")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, th));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
+                        c.setPadding(4); tabla.addCell(c);
+                    }
+                    boolean alt = false;
+                    for (LoteCerveza lote : lotes) {
+                        Color bg = alt ? pal.fondo() : Color.WHITE;
+                        alt = !alt;
+                        PdfPCell codCell = new PdfPCell(new Phrase(lote.getCodigoLote(), tdGreen));
+                        codCell.setBackgroundColor(bg); codCell.setBorderColor(C_BORDE); codCell.setPadding(4);
+                        tabla.addCell(codCell);
+                        tablaCelda(tabla, lote.getEstilo(), td, bg);
+                        tablaCelda(tabla, lote.getReceta() != null ? lote.getReceta().getNombre() : "—", td, bg);
+                        tablaCelda(tabla, fmt(lote.getFechaElaboracion()), td, bg);
+                        tablaCelda(tabla, lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", td, bg);
+                        tablaCelda(tabla, lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—", td, bg);
+                        String abvTxt = lote.getAbv() != null ? lote.getAbv() + "%" : "—";
+                        PdfPCell abvCell = new PdfPCell(new Phrase(abvTxt, lote.getAbv() != null ? tdGreen : td));
+                        abvCell.setBackgroundColor(bg); abvCell.setBorderColor(C_BORDE); abvCell.setPadding(4);
+                        tabla.addCell(abvCell);
+                        tablaCelda(tabla, lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", td, bg);
+                        tablaCelda(tabla, lote.getFaseActual() != null ? lote.getFaseActual() : "—", td, bg);
+                    }
+                    doc.add(tabla);
                 }
-                boolean alt = false;
-                for (LoteCerveza lote : lotes) {
-                    Color bg = alt ? pal.fondo() : Color.WHITE;
-                    alt = !alt;
-                    PdfPCell codCell = new PdfPCell(new Phrase(lote.getCodigoLote(), tdGreen));
-                    codCell.setBackgroundColor(bg); codCell.setBorderColor(C_BORDE); codCell.setPadding(4);
-                    tabla.addCell(codCell);
-                    tablaCelda(tabla, lote.getEstilo(), td, bg);
-                    tablaCelda(tabla, lote.getReceta() != null ? lote.getReceta().getNombre() : "—", td, bg);
-                    tablaCelda(tabla, fmt(lote.getFechaElaboracion()), td, bg);
-                    tablaCelda(tabla, lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", td, bg);
-                    tablaCelda(tabla, lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—", td, bg);
-                    String abvTxt = lote.getAbv() != null ? lote.getAbv() + "%" : "—";
-                    PdfPCell abvCell = new PdfPCell(new Phrase(abvTxt, lote.getAbv() != null ? tdGreen : td));
-                    abvCell.setBackgroundColor(bg); abvCell.setBorderColor(C_BORDE); abvCell.setPadding(4);
-                    tabla.addCell(abvCell);
-                    tablaCelda(tabla, lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", td, bg);
-                    tablaCelda(tabla, lote.getFaseActual() != null ? lote.getFaseActual() : "—", td, bg);
+
+                // ── Resumen por estilo ────────────────────────────────────
+                Map<String, BigDecimal[]> resAgg = new LinkedHashMap<>();
+                for (var lote : lotes) {
+                    String est = lote.getEstilo() != null ? lote.getEstilo() : t("pdf.text.sin_estilo");
+                    BigDecimal[] agg = resAgg.computeIfAbsent(est, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
+                    agg[0] = agg[0].add(BigDecimal.ONE);
+                    agg[1] = agg[1].add(lote.getLitrosFinales() != null ? lote.getLitrosFinales() : BigDecimal.ZERO);
                 }
-                doc.add(tabla);
+                if (resAgg.size() > 1) {
+                    addTituloPdf(doc, t("pdf.title.resumen_estilo"), pal);
+                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 1f});
+                    resTabla.setWidthPercentage(60);
+                    resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
+                    Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                    for (String h : new String[]{t("pdf.label.estilo"), t("pdf.header.lotes"), t("pdf.label.litros"), t("pdf.header.pct_vol")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, rth));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
+                        resTabla.addCell(c);
+                    }
+                    boolean a2 = false;
+                    for (var e : resAgg.entrySet().stream()
+                            .sorted((x, y) -> y.getValue()[1].compareTo(x.getValue()[1]))
+                            .collect(Collectors.toList())) {
+                        Color bg = a2 ? pal.fondo() : Color.WHITE; a2 = !a2;
+                        BigDecimal litE = e.getValue()[1];
+                        int pct = totalLitros.compareTo(BigDecimal.ZERO) > 0
+                                ? litE.multiply(BigDecimal.valueOf(100))
+                                        .divide(totalLitros, 0, java.math.RoundingMode.HALF_UP).intValue() : 0;
+                        Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                        tablaCelda(resTabla, e.getKey(), rtd, bg);
+                        tablaCelda(resTabla, String.valueOf(e.getValue()[0].intValue()), rtd, bg);
+                        tablaCelda(resTabla, fmt2(litE) + " L", rtd, bg);
+                        tablaCelda(resTabla, pct + "%", rtd, bg);
+                    }
+                    doc.add(resTabla);
+                }
+
+                // ── Pie ───────────────────────────────────────────────────
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF del reporte de producción", e);
             }
-
-            // ── Resumen por estilo ────────────────────────────────────
-            Map<String, BigDecimal[]> resAgg = new LinkedHashMap<>();
-            for (var lote : lotes) {
-                String est = lote.getEstilo() != null ? lote.getEstilo() : "Sin estilo";
-                BigDecimal[] agg = resAgg.computeIfAbsent(est, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
-                agg[0] = agg[0].add(BigDecimal.ONE);
-                agg[1] = agg[1].add(lote.getLitrosFinales() != null ? lote.getLitrosFinales() : BigDecimal.ZERO);
-            }
-            if (resAgg.size() > 1) {
-                addTituloPdf(doc, "RESUMEN POR ESTILO", pal);
-                PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 1f});
-                resTabla.setWidthPercentage(60);
-                resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
-                Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
-                for (String h : new String[]{"Estilo","Lotes","Litros","% Vol."}) {
-                    PdfPCell c = new PdfPCell(new Phrase(h, rth));
-                    c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
-                    resTabla.addCell(c);
-                }
-                boolean a2 = false;
-                for (var e : resAgg.entrySet().stream()
-                        .sorted((x, y) -> y.getValue()[1].compareTo(x.getValue()[1]))
-                        .collect(Collectors.toList())) {
-                    Color bg = a2 ? pal.fondo() : Color.WHITE; a2 = !a2;
-                    BigDecimal litE = e.getValue()[1];
-                    int pct = totalLitros.compareTo(BigDecimal.ZERO) > 0
-                            ? litE.multiply(BigDecimal.valueOf(100))
-                                    .divide(totalLitros, 0, java.math.RoundingMode.HALF_UP).intValue() : 0;
-                    Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
-                    tablaCelda(resTabla, e.getKey(), rtd, bg);
-                    tablaCelda(resTabla, String.valueOf(e.getValue()[0].intValue()), rtd, bg);
-                    tablaCelda(resTabla, fmt2(litE) + " L", rtd, bg);
-                    tablaCelda(resTabla, pct + "%", rtd, bg);
-                }
-                doc.add(resTabla);
-            }
-
-            // ── Pie ───────────────────────────────────────────────────
-            doc.add(new Paragraph("\n"));
-            Paragraph pie = new Paragraph(
-                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
-                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
-            pie.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(pie);
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF del reporte de producción", e);
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void tablaCelda(PdfPTable t, String text, Font font, Color bg) {
@@ -1263,161 +1314,167 @@ public class PdfExportService {
 
     // ── PDF Venta (Remisión) ─────────────────────────────────────────
 
-    public byte[] generarPdfVenta(Venta venta, ExportBranding branding) {
-        Pal pal = Pal.of(branding);
-        String brandName = branding.name();
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+    public byte[] generarPdfVenta(Venta venta, ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
-            PdfWriter.getInstance(doc, baos);
-            doc.open();
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
 
-            // ── Cabecera ─────────────────────────────────────────────
-            Font fBrand  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal.verde());
-            Font fSub    = new Font(Font.HELVETICA,  9, Font.NORMAL, C_GRIS);
-            Font fTitulo = new Font(Font.HELVETICA, 13, Font.BOLD,  pal.verde());
+                // ── Cabecera ─────────────────────────────────────────────
+                Font fBrand  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal.verde());
+                Font fSub    = new Font(Font.HELVETICA,  9, Font.NORMAL, C_GRIS);
+                Font fTitulo = new Font(Font.HELVETICA, 13, Font.BOLD,  pal.verde());
 
-            Paragraph cabBrand = new Paragraph(brandName.toUpperCase(), fBrand);
-            cabBrand.setAlignment(Element.ALIGN_LEFT);
-            doc.add(cabBrand);
+                Paragraph cabBrand = new Paragraph(brandName.toUpperCase(), fBrand);
+                cabBrand.setAlignment(Element.ALIGN_LEFT);
+                doc.add(cabBrand);
 
-            Paragraph cabTipo = new Paragraph("REMISIÓN / NOTA DE DESPACHO", fTitulo);
-            cabTipo.setAlignment(Element.ALIGN_LEFT);
-            doc.add(cabTipo);
+                Paragraph cabTipo = new Paragraph(t("pdf.title.remision"), fTitulo);
+                cabTipo.setAlignment(Element.ALIGN_LEFT);
+                doc.add(cabTipo);
 
-            Paragraph cabNum = new Paragraph("Ref. Venta #" + venta.getId(), fSub);
-            cabNum.setAlignment(Element.ALIGN_LEFT);
-            doc.add(cabNum);
+                Paragraph cabNum = new Paragraph(tf("pdf.text.ref_venta", venta.getId()), fSub);
+                cabNum.setAlignment(Element.ALIGN_LEFT);
+                doc.add(cabNum);
 
-            // línea divisora
-            PdfPTable linea = new PdfPTable(1);
-            linea.setWidthPercentage(100);
-            linea.setSpacingBefore(8f);
-            linea.setSpacingAfter(12f);
-            PdfPCell lineaCell = new PdfPCell(new Phrase(""));
-            lineaCell.setBackgroundColor(pal.verde());
-            lineaCell.setBorder(PdfPCell.NO_BORDER);
-            lineaCell.setFixedHeight(2f);
-            linea.addCell(lineaCell);
-            doc.add(linea);
+                // línea divisora
+                PdfPTable linea = new PdfPTable(1);
+                linea.setWidthPercentage(100);
+                linea.setSpacingBefore(8f);
+                linea.setSpacingAfter(12f);
+                PdfPCell lineaCell = new PdfPCell(new Phrase(""));
+                lineaCell.setBackgroundColor(pal.verde());
+                lineaCell.setBorder(PdfPCell.NO_BORDER);
+                lineaCell.setFixedHeight(2f);
+                linea.addCell(lineaCell);
+                doc.add(linea);
 
-            // ── Datos del cliente y despacho ─────────────────────────
-            addTituloPdf(doc, "DATOS DEL DESPACHO", pal);
+                // ── Datos del cliente y despacho ─────────────────────────
+                addTituloPdf(doc, t("pdf.title.datos_despacho"), pal);
 
-            PdfPTable datos = new PdfPTable(new float[]{2f, 3f, 2f, 3f});
-            datos.setWidthPercentage(100);
-            datos.setSpacingAfter(12f);
+                PdfPTable datos = new PdfPTable(new float[]{2f, 3f, 2f, 3f});
+                datos.setWidthPercentage(100);
+                datos.setSpacingAfter(12f);
 
-            Font fLbl = new Font(Font.HELVETICA, 8, Font.BOLD, C_GRIS);
-            Font fVal = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                Font fLbl = new Font(Font.HELVETICA, 8, Font.BOLD, C_GRIS);
+                Font fVal = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
 
-            par(datos, "Cliente",         venta.getCliente(), fLbl, fVal, pal);
-            par(datos, "Fecha de Despacho",
-                venta.getFechaDespacho() != null ? venta.getFechaDespacho().format(FMT_FECHA) : "—",
-                fLbl, fVal, pal);
-            String primerLote = venta.getPrimerCodigoLote();
-            par(datos, "Lote",   primerLote != null ? primerLote : "Sin lote",
-                fLbl, fVal, pal);
-            par(datos, "Estado", venta.getEstado().getDisplayName(), fLbl, fVal, pal);
-            doc.add(datos);
+                par(datos, t("pdf.label.cliente"),         venta.getCliente(), fLbl, fVal, pal);
+                par(datos, t("pdf.label.fecha_despacho"),
+                    venta.getFechaDespacho() != null ? venta.getFechaDespacho().format(FMT_FECHA) : "—",
+                    fLbl, fVal, pal);
+                String primerLote = venta.getPrimerCodigoLote();
+                par(datos, t("pdf.label.lote"), primerLote != null ? primerLote : t("pdf.text.sin_lote"),
+                    fLbl, fVal, pal);
+                par(datos, t("pdf.label.estado"), venta.getEstado().getDisplayName(), fLbl, fVal, pal);
+                doc.add(datos);
 
-            // ── Tabla de ítems ────────────────────────────────────────
-            addTituloPdf(doc, "DETALLE DE LA VENTA", pal);
+                // ── Tabla de ítems ────────────────────────────────────────
+                addTituloPdf(doc, t("pdf.title.detalle_venta"), pal);
 
-            PdfPTable tabla = new PdfPTable(new float[]{1.8f, 2.2f, 1.2f, 1.8f, 1.2f, 1.8f});
-            tabla.setWidthPercentage(100);
-            tabla.setSpacingAfter(8f);
+                PdfPTable tabla = new PdfPTable(new float[]{1.8f, 2.2f, 1.2f, 1.8f, 1.2f, 1.8f});
+                tabla.setWidthPercentage(100);
+                tabla.setSpacingAfter(8f);
 
-            Font fTh = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
-            for (String h : new String[]{"Lote", "Descripción", "Cantidad", "Precio Unit.", "Desc.%", "Total"}) {
-                PdfPCell c = new PdfPCell(new Phrase(h, fTh));
-                c.setBackgroundColor(pal.verde());
-                c.setBorderColor(C_BORDE);
-                c.setPadding(5);
-                tabla.addCell(c);
-            }
-
-            Font fTd     = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
-            Font fTdBold = new Font(Font.HELVETICA, 9, Font.BOLD,   pal.verde());
-            Font fTdMono = new Font(Font.HELVETICA, 9, Font.NORMAL, pal.verde());
-
-            java.util.List<VentaItem> itemsVenta = venta.getItems();
-            if (itemsVenta == null || itemsVenta.isEmpty()) {
-                PdfPCell emptyCell = new PdfPCell(new Phrase("Sin ítems registrados", fTd));
-                emptyCell.setColspan(6);
-                emptyCell.setPadding(6);
-                emptyCell.setBorderColor(C_BORDE);
-                emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
-                tabla.addCell(emptyCell);
-            } else {
-                for (VentaItem item : itemsVenta) {
-                    String loteCol = item.getCodigoLote() != null ? item.getCodigoLote() : "—";
-                    String descCol = item.getDescripcion() != null && !item.getDescripcion().isBlank()
-                            ? item.getDescripcion() : "—";
-                    String cantCol = item.getCantidad() != null
-                            ? String.format("%,.3f", item.getCantidad())
-                              + (item.getUnidad() != null ? " " + item.getUnidad() : "")
-                            : "—";
-                    String precCol = item.getPrecioUnitario() != null
-                            ? "$" + String.format("%,.2f", item.getPrecioUnitario()) : "—";
-                    String descPctCol = item.getDescuentoPct() != null
-                            && item.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
-                            ? item.getDescuentoPct() + "%" : "—";
-                    String linTotCol = "$" + String.format("%,.0f", item.getValorLinea());
-
-                    tableCell(tabla, loteCol,    fTdMono, Color.WHITE, Element.ALIGN_LEFT);
-                    tableCell(tabla, descCol,    fTd,     Color.WHITE, Element.ALIGN_LEFT);
-                    tableCell(tabla, cantCol,    fTd,     Color.WHITE, Element.ALIGN_CENTER);
-                    tableCell(tabla, precCol,    fTd,     Color.WHITE, Element.ALIGN_RIGHT);
-                    tableCell(tabla, descPctCol, fTd,     Color.WHITE, Element.ALIGN_CENTER);
-                    tableCell(tabla, linTotCol,  fTdBold, Color.WHITE, Element.ALIGN_RIGHT);
+                Font fTh = new Font(Font.HELVETICA, 8, Font.BOLD, pal.crema());
+                for (String h : new String[]{t("pdf.label.lote"), t("pdf.header.descripcion"), t("pdf.header.cantidad"),
+                        t("pdf.header.precio_unit"), t("pdf.header.descuento_pct"), t("pdf.header.total")}) {
+                    PdfPCell c = new PdfPCell(new Phrase(h, fTh));
+                    c.setBackgroundColor(pal.verde());
+                    c.setBorderColor(C_BORDE);
+                    c.setPadding(5);
+                    tabla.addCell(c);
                 }
+
+                Font fTd     = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                Font fTdBold = new Font(Font.HELVETICA, 9, Font.BOLD,   pal.verde());
+                Font fTdMono = new Font(Font.HELVETICA, 9, Font.NORMAL, pal.verde());
+
+                java.util.List<VentaItem> itemsVenta = venta.getItems();
+                if (itemsVenta == null || itemsVenta.isEmpty()) {
+                    PdfPCell emptyCell = new PdfPCell(new Phrase(t("pdf.text.sin_items"), fTd));
+                    emptyCell.setColspan(6);
+                    emptyCell.setPadding(6);
+                    emptyCell.setBorderColor(C_BORDE);
+                    emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                    tabla.addCell(emptyCell);
+                } else {
+                    for (VentaItem item : itemsVenta) {
+                        String loteCol = item.getCodigoLote() != null ? item.getCodigoLote() : "—";
+                        String descCol = item.getDescripcion() != null && !item.getDescripcion().isBlank()
+                                ? item.getDescripcion() : "—";
+                        String cantCol = item.getCantidad() != null
+                                ? String.format("%,.3f", item.getCantidad())
+                                  + (item.getUnidad() != null ? " " + item.getUnidad() : "")
+                                : "—";
+                        String precCol = item.getPrecioUnitario() != null
+                                ? "$" + String.format("%,.2f", item.getPrecioUnitario()) : "—";
+                        String descPctCol = item.getDescuentoPct() != null
+                                && item.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
+                                ? item.getDescuentoPct() + "%" : "—";
+                        String linTotCol = "$" + String.format("%,.0f", item.getValorLinea());
+
+                        tableCell(tabla, loteCol,    fTdMono, Color.WHITE, Element.ALIGN_LEFT);
+                        tableCell(tabla, descCol,    fTd,     Color.WHITE, Element.ALIGN_LEFT);
+                        tableCell(tabla, cantCol,    fTd,     Color.WHITE, Element.ALIGN_CENTER);
+                        tableCell(tabla, precCol,    fTd,     Color.WHITE, Element.ALIGN_RIGHT);
+                        tableCell(tabla, descPctCol, fTd,     Color.WHITE, Element.ALIGN_CENTER);
+                        tableCell(tabla, linTotCol,  fTdBold, Color.WHITE, Element.ALIGN_RIGHT);
+                    }
+                }
+                doc.add(tabla);
+
+                // ── Total destacado ───────────────────────────────────────
+                String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
+
+                PdfPTable totBox = new PdfPTable(new float[]{3f, 1f});
+                totBox.setWidthPercentage(50);
+                totBox.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                totBox.setSpacingAfter(14f);
+
+                Font fTotLbl = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
+                Font fTotVal = new Font(Font.HELVETICA, 11, Font.BOLD, pal.verde());
+
+                PdfPCell lblCell = new PdfPCell(new Phrase(t("pdf.text.total_cobrar"), fTotLbl));
+                lblCell.setBackgroundColor(pal.fondo()); lblCell.setBorderColor(C_BORDE); lblCell.setPadding(6);
+                totBox.addCell(lblCell);
+
+                PdfPCell valCell = new PdfPCell(new Phrase(totalStr, fTotVal));
+                valCell.setBackgroundColor(pal.fondo()); valCell.setBorderColor(C_BORDE);
+                valCell.setPadding(6); valCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
+                totBox.addCell(valCell);
+                doc.add(totBox);
+
+                // ── Notas ─────────────────────────────────────────────────
+                if (venta.getNotas() != null && !venta.getNotas().isBlank()) {
+                    addTituloPdf(doc, t("pdf.title.notas"), pal);
+                    Paragraph notaP = new Paragraph(venta.getNotas(),
+                            new Font(Font.HELVETICA, 9, Font.ITALIC, C_GRIS));
+                    notaP.setSpacingAfter(12f);
+                    doc.add(notaP);
+                }
+
+                // ── Pie ───────────────────────────────────────────────────
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF de venta #" + venta.getId(), e);
             }
-            doc.add(tabla);
-
-            // ── Total destacado ───────────────────────────────────────
-            String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
-
-            PdfPTable totBox = new PdfPTable(new float[]{3f, 1f});
-            totBox.setWidthPercentage(50);
-            totBox.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totBox.setSpacingAfter(14f);
-
-            Font fTotLbl = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
-            Font fTotVal = new Font(Font.HELVETICA, 11, Font.BOLD, pal.verde());
-
-            PdfPCell lblCell = new PdfPCell(new Phrase("TOTAL A COBRAR", fTotLbl));
-            lblCell.setBackgroundColor(pal.fondo()); lblCell.setBorderColor(C_BORDE); lblCell.setPadding(6);
-            totBox.addCell(lblCell);
-
-            PdfPCell valCell = new PdfPCell(new Phrase(totalStr, fTotVal));
-            valCell.setBackgroundColor(pal.fondo()); valCell.setBorderColor(C_BORDE);
-            valCell.setPadding(6); valCell.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            totBox.addCell(valCell);
-            doc.add(totBox);
-
-            // ── Notas ─────────────────────────────────────────────────
-            if (venta.getNotas() != null && !venta.getNotas().isBlank()) {
-                addTituloPdf(doc, "NOTAS", pal);
-                Paragraph notaP = new Paragraph(venta.getNotas(),
-                        new Font(Font.HELVETICA, 9, Font.ITALIC, C_GRIS));
-                notaP.setSpacingAfter(12f);
-                doc.add(notaP);
-            }
-
-            // ── Pie ───────────────────────────────────────────────────
-            doc.add(new Paragraph("\n"));
-            Paragraph pie = new Paragraph(
-                    "Generado el " + LocalDateTime.now().format(FMT_DT) + "  ·  " + brandName + " — Sistema de Trazabilidad",
-                    new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
-            pie.setAlignment(Element.ALIGN_RIGHT);
-            doc.add(pie);
-
-            doc.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error generando PDF de venta #" + venta.getId(), e);
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
         }
-        return baos.toByteArray();
     }
 
     private void tableCell(PdfPTable t, String text, Font font, Color bg, int align) {
@@ -1429,47 +1486,48 @@ public class PdfExportService {
 
     // ── PDF Orden de Compra ──────────────────────────────────────────────
 
-    public byte[] generarPdfOrdenCompra(com.alera.model.OrdenCompra oc, ExportBranding branding) {
-        Pal pal = Pal.of(branding);
+    public byte[] generarPdfOrdenCompra(com.alera.model.OrdenCompra oc, ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Document doc = new Document(PageSize.A4, 40, 40, 50, 50);
             PdfWriter.getInstance(doc, out);
             doc.open();
 
-            Font fTitulo  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal.verde());
+            Font fTitulo  = new Font(Font.HELVETICA, 18, Font.BOLD,  pal(branding).verde());
             Font fSub     = new Font(Font.HELVETICA, 10, Font.NORMAL, C_GRIS);
-            Font fLabel   = new Font(Font.HELVETICA,  9, Font.BOLD,  pal.verdeOscuro());
-            Font fVal     = new Font(Font.HELVETICA,  9, Font.NORMAL, pal.verdeOscuro());
+            Font fLabel   = new Font(Font.HELVETICA,  9, Font.BOLD,  pal(branding).verdeOscuro());
+            Font fVal     = new Font(Font.HELVETICA,  9, Font.NORMAL, pal(branding).verdeOscuro());
             Font fHead    = new Font(Font.HELVETICA,  9, Font.BOLD,  Color.WHITE);
-            Font fData    = new Font(Font.HELVETICA,  8, Font.NORMAL, pal.verdeOscuro());
-            Font fTotal   = new Font(Font.HELVETICA, 10, Font.BOLD,  pal.verde());
+            Font fData    = new Font(Font.HELVETICA,  8, Font.NORMAL, pal(branding).verdeOscuro());
+            Font fTotal   = new Font(Font.HELVETICA, 10, Font.BOLD,  pal(branding).verde());
+            Pal pal       = pal(branding);
 
             // Cabecera
-            Paragraph titulo = new Paragraph("ORDEN DE COMPRA", fTitulo);
+            Paragraph titulo = new Paragraph(t("pdf.title.orden_compra"), fTitulo);
             titulo.setAlignment(Element.ALIGN_CENTER);
             doc.add(titulo);
             Paragraph numOc = new Paragraph(
-                    (oc.getNumeroOc() != null ? oc.getNumeroOc() : "Sin número") + "  ·  " + branding.name(),
+                    (oc.getNumeroOc() != null ? oc.getNumeroOc() : t("pdf.text.sin_numero")) + "  ·  " + branding.name(),
                     fSub);
             numOc.setAlignment(Element.ALIGN_CENTER);
             numOc.setSpacingAfter(12);
             doc.add(numOc);
 
             // Info general
-            addTituloPdf(doc, "INFORMACIÓN GENERAL", pal);
+            addTituloPdf(doc, t("pdf.title.info_general"), pal);
             PdfPTable info = new PdfPTable(4);
             info.setWidthPercentage(100);
             info.setWidths(new float[]{1.5f, 2f, 1.5f, 2f});
             info.setSpacingAfter(10);
-            par(info, "Proveedor",      oc.getProveedor() != null ? oc.getProveedor() : "—", fLabel, fVal, pal);
-            par(info, "Estado",         oc.getEstado().getDisplayName(),                       fLabel, fVal, pal);
-            par(info, "F. Emisión",     fmt(oc.getFechaEmision()),                             fLabel, fVal, pal);
-            par(info, "F. Requerida",   oc.getFechaRequerida() != null ? fmt(oc.getFechaRequerida()) : "—", fLabel, fVal, pal);
+            par(info, t("pdf.label.proveedor"),      oc.getProveedor() != null ? oc.getProveedor() : "—", fLabel, fVal, pal);
+            par(info, t("pdf.label.estado"),         oc.getEstado().getDisplayName(),                       fLabel, fVal, pal);
+            par(info, t("pdf.label.fecha_emision"),  fmt(oc.getFechaEmision()),                             fLabel, fVal, pal);
+            par(info, t("pdf.label.fecha_requerida"), oc.getFechaRequerida() != null ? fmt(oc.getFechaRequerida()) : "—", fLabel, fVal, pal);
             doc.add(info);
 
             // Tabla de ítems
             if (!oc.getItems().isEmpty()) {
-                addTituloPdf(doc, "ÍTEMS DE LA ORDEN", pal);
+                addTituloPdf(doc, t("pdf.title.items_orden"), pal);
                 boolean hayPrecio = oc.getItems().stream().anyMatch(i -> i.getPrecioUnitarioEstimado() != null);
                 int cols = hayPrecio ? 6 : 4;
                 PdfPTable items = new PdfPTable(cols);
@@ -1481,15 +1539,14 @@ public class PdfExportService {
                 }
                 items.setSpacingAfter(10);
 
-                // Cabeceras
                 Color bg = pal.verde();
-                ocHead(items, "Tipo",       fHead, bg);
-                ocHead(items, "Nombre / Descripción", fHead, bg);
-                ocHead(items, "Cantidad",   fHead, bg);
-                ocHead(items, "Unidad",     fHead, bg);
+                ocHead(items, t("pdf.header.tipo"),              fHead, bg);
+                ocHead(items, t("pdf.header.nombre_descripcion"), fHead, bg);
+                ocHead(items, t("pdf.header.cantidad"),           fHead, bg);
+                ocHead(items, t("pdf.header.unidad"),             fHead, bg);
                 if (hayPrecio) {
-                    ocHead(items, "P. Unit. Est.", fHead, bg);
-                    ocHead(items, "Total Est.",   fHead, bg);
+                    ocHead(items, t("pdf.header.precio_unit_est"), fHead, bg);
+                    ocHead(items, t("pdf.header.total_est"),       fHead, bg);
                 }
 
                 Color bgPar = new Color(248, 249, 250);
@@ -1517,15 +1574,15 @@ public class PdfExportService {
                     totales.setHorizontalAlignment(Element.ALIGN_RIGHT);
                     totales.setWidths(new float[]{2f, 1.5f});
                     totales.setSpacingAfter(12);
-                    par(totales, "Subtotal estimado:", fmt2(oc.getSubtotalEstimado()), fLabel, fVal, pal);
-                    par(totales, "Total estimado (con IVA):", fmt2(oc.getTotalEstimado()), fTotal, fTotal, pal);
+                    par(totales, t("pdf.label.subtotal_estimado"), fmt2(oc.getSubtotalEstimado()), fLabel, fVal, pal);
+                    par(totales, t("pdf.label.total_estimado_iva"), fmt2(oc.getTotalEstimado()), fTotal, fTotal, pal);
                     doc.add(totales);
                 }
             }
 
             // Notas
             if (notBlank(oc.getNotas())) {
-                addTituloPdf(doc, "NOTAS", pal);
+                addTituloPdf(doc, t("pdf.title.notas"), pal);
                 Paragraph nota = new Paragraph(oc.getNotas(), fVal);
                 nota.setSpacingAfter(10);
                 doc.add(nota);
@@ -1533,7 +1590,7 @@ public class PdfExportService {
 
             // Pie de página
             Paragraph pie = new Paragraph(
-                    "Generado por " + branding.name() + "  ·  " + LocalDateTime.now().format(FMT_DT),
+                    tf("pdf.text.pie_oc", branding.name(), LocalDateTime.now().format(FMT_DT)),
                     new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
             pie.setAlignment(Element.ALIGN_CENTER);
             pie.setSpacingBefore(16);
@@ -1543,8 +1600,13 @@ public class PdfExportService {
             return out.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Error generando PDF de OC", e);
+        } finally {
+            LOCALE_HOLDER.remove();
         }
     }
+
+    /** Helper para obtener la paleta dentro de generarPdfOrdenCompra sin un campo previo. */
+    private Pal pal(ExportBranding b) { return Pal.of(b); }
 
     private void ocHead(PdfPTable t, String text, Font font, Color bg) {
         PdfPCell c = new PdfPCell(new Phrase(text, font));

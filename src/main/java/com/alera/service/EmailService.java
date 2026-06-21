@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class EmailService {
@@ -32,6 +34,9 @@ public class EmailService {
     @Autowired
     private SpringTemplateEngine templateEngine;
 
+    @Autowired
+    private MessageSource messageSource;
+
     @Value("${app.alert.from:noreply@alera.app}")
     private String fromAddress;
 
@@ -40,6 +45,15 @@ public class EmailService {
 
     public boolean mailConfigurado() {
         return mailSender != null;
+    }
+
+    private Locale localeFrom(Tenant tenant) {
+        String tag = tenant.getLocale();
+        return (tag != null && !tag.isBlank()) ? Locale.forLanguageTag(tag) : Locale.forLanguageTag("es");
+    }
+
+    private String t(String key, Locale locale, Object... args) {
+        return messageSource.getMessage(key, args.length == 0 ? null : args, key, locale);
     }
 
     /**
@@ -55,13 +69,16 @@ public class EmailService {
         if (bajoStock.isEmpty() && proximosAVencer.isEmpty() && mantenimientoPendiente.isEmpty()) return false;
 
         try {
-            Context ctx = new Context();
+            Locale locale = localeFrom(tenant);
+            String fechaStr = LocalDate.now().format(FMT);
+
+            Context ctx = new Context(locale);
             ctx.setVariable("tenant",                tenant);
             ctx.setVariable("bajoStock",             bajoStock);
             ctx.setVariable("proximosAVencer",       proximosAVencer);
             ctx.setVariable("mantenimientoPendiente",mantenimientoPendiente);
             ctx.setVariable("baseUrl",               baseUrl);
-            ctx.setVariable("fecha",                 LocalDate.now().format(FMT));
+            ctx.setVariable("fecha",                 fechaStr);
             ctx.setVariable("hoy",                   LocalDate.now());
 
             String html = templateEngine.process("emails/alertas", ctx);
@@ -70,7 +87,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(fromAddress);
             helper.setTo(tenant.getEmailAdmin());
-            helper.setSubject("[" + tenant.getName() + "] Alertas del día — " + LocalDate.now().format(FMT));
+            helper.setSubject(t("email.subject.alertas", locale, tenant.getName(), fechaStr));
             helper.setText(html, true);
             mailSender.send(msg);
 
@@ -118,7 +135,9 @@ public class EmailService {
         if (tenant.getEmailAdmin() == null || tenant.getEmailAdmin().isBlank()) return false;
 
         try {
-            Context ctx = new Context();
+            Locale locale = localeFrom(tenant);
+
+            Context ctx = new Context(locale);
             ctx.setVariable("tenant",   tenant);
             ctx.setVariable("username", username);
             ctx.setVariable("password", password);
@@ -130,7 +149,7 @@ public class EmailService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(fromAddress);
             helper.setTo(tenant.getEmailAdmin());
-            helper.setSubject("¡Bienvenido a " + tenant.getName() + "! — Tus credenciales de acceso");
+            helper.setSubject(t("email.subject.bienvenida", locale, tenant.getName()));
             helper.setText(html, true);
             mailSender.send(msg);
 

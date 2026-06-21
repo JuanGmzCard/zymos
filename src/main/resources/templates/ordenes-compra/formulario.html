@@ -181,7 +181,7 @@
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row"
-                                                title="Eliminar">
+                                                th:title="#{action.delete}">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </td>
@@ -235,7 +235,9 @@
         tipoEquipo:    /*[[#{oc.js.tipo.equipo}]]*/ 'Equipo',
         catPh:         /*[[#{oc.form.cat.ph}]]*/ '-- Categoría --',
         nombrePh:      /*[[#{oc.form.nombre.ph}]]*/ 'Nombre del producto',
-        descripcionPh: /*[[#{oc.form.descripcion.ph}]]*/ 'Descripción (opcional)'
+        descripcionPh: /*[[#{oc.form.descripcion.ph}]]*/ 'Descripción (opcional)',
+        eliminarTitle: /*[[#{action.delete}]]*/ 'Eliminar',
+        nitPrefix:     /*[[#{label.nit}]]*/ 'NIT'
     };
 /*]]>*/
 </script>
@@ -259,7 +261,7 @@ document.getElementById('proveedorSearch').addEventListener('input', function() 
                     var a = document.createElement('a');
                     a.href = '#';
                     a.className = 'list-group-item list-group-item-action py-1';
-                    a.innerHTML = '<strong>' + p.nombre + '</strong>' + (p.nit ? ' <small class="text-muted">NIT: ' + p.nit + '</small>' : '');
+                    a.innerHTML = '<strong>' + p.nombre + '</strong>' + (p.nit ? ' <small class="text-muted">' + OC_MSG.nitPrefix + ': ' + p.nit + '</small>' : '');
                     a.addEventListener('click', function(e) {
                         e.preventDefault();
                         document.getElementById('proveedorSearch').value = p.nombre;
@@ -340,7 +342,7 @@ function addItemRow() {
         '<td><select class="form-select form-select-sm" name="' + p + 'unidad">' + buildUnidadOpts('') + '</select></td>' +
         '<td><input type="number" class="form-control form-control-sm item-precio" name="' + p + 'precioUnitarioEstimado" min="0" step="any" placeholder="0"/></td>' +
         '<td class="text-center"><input type="number" class="form-control form-control-sm item-iva" name="' + p + 'porcentajeIvaItem" min="0" max="100" step="any" placeholder="0"/></td>' +
-        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="Eliminar"><i class="bi bi-trash"></i></button></td>';
+        '<td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" title="' + OC_MSG.eliminarTitle + '"><i class="bi bi-trash"></i></button></td>';
     document.getElementById('itemsBody').appendChild(row);
     updateEmptyMsg();
     recalcular();

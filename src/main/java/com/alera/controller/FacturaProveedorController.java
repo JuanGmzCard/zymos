@@ -108,11 +108,11 @@ public class FacturaProveedorController {
             @RequestParam(required = false) EstadoFactura estado,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
         var facturas = service.listarParaExport(estado, desde, hasta);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
-        byte[] bytes = excelService.generarExcelFacturas(facturas, estado, desde, hasta, branding);
+        byte[] bytes = excelService.generarExcelFacturas(facturas, estado, desde, hasta, branding, locale);
         String filename = "facturas-" + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) + ".xlsx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

@@ -197,7 +197,7 @@ class OrdenCompraControllerTest {
         oc.setEstado(EstadoOrdenCompra.BORRADOR);
         oc.setFechaEmision(LocalDate.now());
         when(service.buscarPorId(1L)).thenReturn(oc);
-        when(pdfExportService.generarPdfOrdenCompra(any(), any()))
+        when(pdfExportService.generarPdfOrdenCompra(any(), any(), any()))
                 .thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
 
         mockMvc.perform(get("/ordenes-compra/1/pdf"))

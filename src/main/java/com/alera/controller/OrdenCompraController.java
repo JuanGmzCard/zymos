@@ -13,6 +13,7 @@ import com.alera.config.ExportBranding;
 import com.alera.model.Tenant;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import java.util.Locale;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -231,11 +232,11 @@ public class OrdenCompraController {
     // ── PDF ───────────────────────────────────────────────────────────────
 
     @GetMapping("/{id}/pdf")
-    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdf(@PathVariable Long id, HttpServletRequest request, Locale locale) {
         OrdenCompra oc = service.buscarPorId(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding branding = (tenant != null) ? ExportBranding.from(tenant) : ExportBranding.defaults("Zymos");
-        byte[] bytes = pdfExportService.generarPdfOrdenCompra(oc, branding);
+        byte[] bytes = pdfExportService.generarPdfOrdenCompra(oc, branding, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"oc-" + (oc.getNumeroOc() != null ? oc.getNumeroOc() : id) + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF)

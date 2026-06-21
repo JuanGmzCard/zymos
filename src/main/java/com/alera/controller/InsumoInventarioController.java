@@ -211,7 +211,7 @@ public class InsumoInventarioController {
             @RequestParam(required = false) String tipo,
             @RequestParam(defaultValue = "false") boolean filtroBajoStock,
             @RequestParam(defaultValue = "false") boolean filtroPorVencer,
-            HttpServletRequest request) {
+            HttpServletRequest request, Locale locale) {
         List<InsumoInventario> insumos;
         if (filtroBajoStock) {
             insumos = service.listarBajoStock();
@@ -224,7 +224,7 @@ public class InsumoInventarioController {
         }
         com.alera.model.Tenant tenant = (com.alera.model.Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
-        byte[] bytes = excelService.generarExcelInventario(insumos, branding);
+        byte[] bytes = excelService.generarExcelInventario(insumos, branding, locale);
         String filename = "inventario-" + java.time.LocalDate.now() + ".xlsx";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

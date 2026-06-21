@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
+import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -30,6 +32,15 @@ import static org.mockito.Mockito.*;
 @DisplayName("EmailService")
 class EmailServiceTest {
 
+    private static final MessageSource MSG;
+    static {
+        var ms = new ResourceBundleMessageSource();
+        ms.setBasename("messages");
+        ms.setDefaultEncoding("UTF-8");
+        ms.setFallbackToSystemLocale(false);
+        MSG = ms;
+    }
+
     @Mock JavaMailSender      mailSender;
     @Mock SpringTemplateEngine templateEngine;
 
@@ -39,15 +50,17 @@ class EmailServiceTest {
     @BeforeEach
     void setUp() {
         service = new EmailService();
-        ReflectionTestUtils.setField(service, "mailSender",   mailSender);
-        ReflectionTestUtils.setField(service, "templateEngine", templateEngine);
-        ReflectionTestUtils.setField(service, "fromAddress",  "noreply@alera.app");
-        ReflectionTestUtils.setField(service, "baseUrl",      "http://localhost:8080");
+        ReflectionTestUtils.setField(service, "mailSender",      mailSender);
+        ReflectionTestUtils.setField(service, "templateEngine",  templateEngine);
+        ReflectionTestUtils.setField(service, "messageSource",   MSG);
+        ReflectionTestUtils.setField(service, "fromAddress",     "noreply@alera.app");
+        ReflectionTestUtils.setField(service, "baseUrl",         "http://localhost:8080");
 
         serviceSinSmtp = new EmailService();
         ReflectionTestUtils.setField(serviceSinSmtp, "templateEngine", templateEngine);
-        ReflectionTestUtils.setField(serviceSinSmtp, "fromAddress",  "noreply@alera.app");
-        ReflectionTestUtils.setField(serviceSinSmtp, "baseUrl",      "http://localhost:8080");
+        ReflectionTestUtils.setField(serviceSinSmtp, "messageSource",  MSG);
+        ReflectionTestUtils.setField(serviceSinSmtp, "fromAddress",    "noreply@alera.app");
+        ReflectionTestUtils.setField(serviceSinSmtp, "baseUrl",        "http://localhost:8080");
         // mailSender queda null — simula que SMTP_HOST no está configurado
     }
 

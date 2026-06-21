@@ -379,6 +379,14 @@ document.addEventListener('click', function(e) {
     if (btn) abrirAjusteDesdeBtn(btn);
 });
 </script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var INV_MSG = {
+    sinResultados: /*[[#{traz.index.js.sin.resultados}]]*/ 'Sin resultados para',
+    bajoStock:     /*[[#{inv.filter.bajo.stock}]]*/ 'Bajo Stock'
+};
+/*]]>*/
+</script>
 <script th:attr="nonce=${cspNonce}">
 (function() {
     var debTimer, activeIdx = -1;
@@ -441,7 +449,7 @@ document.addEventListener('click', function(e) {
 
     function render(items, q) {
         if (!items.length) {
-            suggest.innerHTML = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
+            suggest.innerHTML = '<div class="ss-empty">' + INV_MSG.sinResultados + ' &ldquo;' + esc(q) + '&rdquo;</div>';
             suggest.style.display = 'block';
             return;
         }
@@ -451,7 +459,7 @@ document.addEventListener('click', function(e) {
                 '<i class="bi bi-box-seam ss-icon"></i>' +
                 '<span class="ss-title">' + esc(item.nombre) + '</span>' +
                 '<span class="badge bg-' + esc(item.colorTipo) + ' ms-1" style="font-size:.68rem;">' + esc(item.tipoNombre) + '</span>' +
-                (item.bajoStock ? '<i class="bi bi-exclamation-triangle text-danger ms-1" title="Bajo stock"></i>' : '') +
+                (item.bajoStock ? '<i class="bi bi-exclamation-triangle text-danger ms-1" title="' + INV_MSG.bajoStock + '"></i>' : '') +
                 '</a>';
         });
         suggest.innerHTML = html;

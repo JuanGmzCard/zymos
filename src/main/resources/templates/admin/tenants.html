@@ -196,7 +196,7 @@
                             <i class="bi bi-calendar-check me-1"></i><span th:text="${#temporals.format(t.planFin,'dd/MM/yy')}"></span>
                         </span>
                         <i th:if="${!#strings.isEmpty(t.logoUrl)}"
-                           class="bi bi-image text-muted ms-auto" title="Tiene logo configurado"
+                           class="bi bi-image text-muted ms-auto" th:title="#{admin.ten.title.logo}"
                            style="font-size:.85rem;"></i>
                     </div>
 
@@ -265,10 +265,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
+var TXT_VERIFICANDO = [[#{admin.ten.verificando}]];
+var TXT_ALERTAS_OK  = [[#{admin.ten.alertas.ok}]];
+var TXT_VERIFICAR   = [[#{admin.ten.btn.alertas}]];
 function verificarAlertas() {
     var btn = document.getElementById('btnVerificarAlertas');
     btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Verificando...';
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + TXT_VERIFICANDO;
     fetch('/alertas/ejecutar', {
         method: 'POST',
         credentials: 'same-origin',
@@ -276,17 +279,17 @@ function verificarAlertas() {
     })
     .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
     .then(function() {
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Alertas verificadas';
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>' + TXT_ALERTAS_OK;
         btn.className = 'btn btn-outline-success btn-sm';
         setTimeout(function() {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
+            btn.innerHTML = '<i class="bi bi-bell me-1"></i>' + TXT_VERIFICAR;
             btn.className = 'btn btn-outline-secondary btn-sm';
         }, 3000);
     })
     .catch(function() {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-bell me-1"></i>Verificar alertas';
+        btn.innerHTML = '<i class="bi bi-bell me-1"></i>' + TXT_VERIFICAR;
         btn.className = 'btn btn-outline-danger btn-sm';
         setTimeout(function() { btn.className = 'btn btn-outline-secondary btn-sm'; }, 3000);
     });

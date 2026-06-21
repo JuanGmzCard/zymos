@@ -209,13 +209,13 @@
                     <button type="submit" class="btn btn-primary btn-sm px-3" th:text="#{action.search}">Buscar</button>
                     <a th:if="${nombre != null or activo != null}"
                        th:href="@{/clientes}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-x"></i> Limpiar
+                        <i class="bi bi-x"></i> <span th:text="#{action.limpiar}">Limpiar</span>
                     </a>
                 </form>
                 <!-- Typeahead -->
                 <div class="position-relative">
                     <input type="search" id="clienteSearch" class="form-control form-control-sm"
-                           placeholder="Búsqueda rápida…" autocomplete="off"
+                           th:placeholder="#{clientes.typeahead.ph}" placeholder="Búsqueda rápida…" autocomplete="off"
                            style="width:200px;" th:value="${nombre}">
                     <div id="clienteSuggestHeader" class="search-suggest" style="display:none;"></div>
                 </div>

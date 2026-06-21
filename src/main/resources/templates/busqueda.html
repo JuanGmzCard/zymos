@@ -191,7 +191,7 @@
                        class="list-group-item list-group-item-action">
                         <div class="fw-semibold small" th:text="${prov.nombre}">—</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted small" th:text="${prov.nit != null} ? 'NIT: ' + ${prov.nit} : ''">—</span>
+                            <span class="text-muted small" th:text="${prov.nit != null} ? |#{label.nit}: ${prov.nit}| : ''">—</span>
                             <span th:if="${!prov.activo}" class="badge bg-secondary" style="font-size:.65rem;"
                                   th:text="#{badge.inactivo}">Inactivo</span>
                         </div>

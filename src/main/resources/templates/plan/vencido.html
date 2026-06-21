@@ -52,7 +52,8 @@
     </div>
     <div class="plan-title" th:text="#{plan.vencido.title}">Plan vencido</div>
     <p class="plan-desc">
-        El plan de <span th:text="${branding != null ? branding.name : 'tu cuenta'}">tu cuenta</span>
+        <span th:text="#{plan.vencido.de}">El plan de</span>
+        <span th:text="${branding != null} ? ${branding.name} : #{plan.vencido.tu.cuenta}">tu cuenta</span>
         <span th:text="#{plan.vencido.desc}">venció y el período de gracia finalizó. Contacta al administrador para renovarlo y recuperar el acceso.</span>
     </p>
     <a th:href="@{/logout}" class="btn btn-primary px-4">

@@ -372,6 +372,15 @@
     const tenantSubdomain = [[${tenant.subdomain}]];
     const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
     const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+    const MSG_COPIAR_CONFIRM = [[#{admin.tform.confirm.copiar}]];
+    const MSG_COPIAR_ERROR   = [[#{admin.tform.error.copiar}]];
+    const MSG_FILE_FIRST     = [[#{admin.tform.error.import.file}]];
+    const MSG_JSON_INVALID   = [[#{admin.tform.error.import.json}]];
+    const MSG_NET_ERROR      = [[#{admin.tform.error.import.net}]];
+    const MSG_EMAIL_VACIO    = [[#{admin.tform.error.email.vacio}]];
+    const MSG_ENVIANDO       = [[#{admin.tform.btn.enviando}]];
+    const MSG_NET_EMAIL      = [[#{admin.tform.error.email.red}]];
+    const MSG_BTN_PROBAR     = [[#{admin.tform.btn.probar}]];
 
     function aplicarConfig(config) {
         ['name','tagline','logoUrl','colorNavbar','colorPrimary',
@@ -391,17 +400,17 @@
     function copiarConfigDeTenant() {
         const origen = document.getElementById('copiarDeTenant')?.value;
         if (!origen) return;
-        if (!confirm('¿Copiar el branding de "' + origen + '" a este tenant? Se sobreescribirán colores, fuentes y nombre.')) return;
+        if (!confirm(MSG_COPIAR_CONFIRM.replace('{0}', origen))) return;
         fetch('/admin/tenants/' + origen + '/config')
             .then(r => r.json())
             .then(config => aplicarConfig(config))
-            .catch(() => alert('No se pudo obtener la configuración del tenant origen.'));
+            .catch(() => alert(MSG_COPIAR_ERROR));
     }
 
     function importarConfig() {
         const fileInput = document.getElementById('importJsonFile');
         if (!fileInput || !fileInput.files.length) {
-            alert('Selecciona un archivo JSON primero.');
+            alert(MSG_FILE_FIRST);
             return;
         }
         // Tenant nuevo: leer JSON en el cliente y poblar formulario directamente
@@ -412,7 +421,7 @@
                     const config = JSON.parse(e.target.result);
                     aplicarConfig(config);
                 } catch (err) {
-                    alert('El archivo no es un JSON válido:\n' + err.message);
+                    alert(MSG_JSON_INVALID + '\n' + err.message);
                 }
             };
             reader.readAsText(fileInput.files[0]);
@@ -436,7 +445,7 @@
                 alert('Error al importar:\n' + data.message);
             }
         })
-        .catch(() => alert('Error de conexión al importar.'));
+        .catch(() => alert(MSG_NET_ERROR));
     }
 
     function enviarEmailPrueba() {
@@ -446,11 +455,11 @@
         if (!email) {
             result.style.display = 'block';
             result.className = 'mt-1 small text-danger';
-            result.textContent = 'Ingresa un email antes de probar.';
+            result.textContent = MSG_EMAIL_VACIO;
             return;
         }
         btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>' + MSG_ENVIANDO;
         result.style.display = 'none';
 
         const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
@@ -470,11 +479,11 @@
         .catch(() => {
             result.style.display = 'block';
             result.className = 'mt-1 small text-danger';
-            result.textContent = 'Error de conexión al enviar el email.';
+            result.textContent = MSG_NET_EMAIL;
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-send me-1"></i>Probar';
+            btn.innerHTML = '<i class="bi bi-send me-1"></i>' + MSG_BTN_PROBAR;
         });
     }
 </script>
@@ -607,6 +616,9 @@
 (function() {
     var MESES_POR_TIPO = { MENSUAL:1, TRIMESTRAL:3, SEMESTRAL:6, ANUAL:12, BIANUAL:24 };
     var LABEL_TIPO     = { MENSUAL:'1 mes', TRIMESTRAL:'3 meses', SEMESTRAL:'6 meses', ANUAL:'1 año', BIANUAL:'2 años' };
+    var MSG_PLAN_VENCIDO = [[#{admin.tform.plan.vencido}]];
+    var MSG_PLAN_VENCE   = [[#{admin.tform.plan.vence.en}]];
+    var MSG_PLAN_VIGENTE = [[#{admin.tform.plan.vigente}]];
 
     /* Fecha de fin guardada (edición de tenant existente) */
     var planFinGuardado = /*[[${tenant.planFin}]]*/ null;
@@ -647,12 +659,12 @@
         var estado  = document.getElementById('planFinEstado');
         display.value = fmtDisplay(fin);
         if (fin < hoy) {
-            estado.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Plan vencido</span>';
+            estado.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>' + MSG_PLAN_VENCIDO + '</span>';
         } else {
             var diff = Math.ceil((fin - hoy) / 86400000);
             estado.innerHTML = diff <= 7
-                ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Vence en ' + diff + ' día(s)</span>'
-                : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>Vigente — ' + LABEL_TIPO[tipo] + '</span>';
+                ? '<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>' + MSG_PLAN_VENCE.replace('{0}', diff) + '</span>'
+                : '<span class="text-success"><i class="bi bi-check-circle me-1"></i>' + MSG_PLAN_VIGENTE + ' ' + LABEL_TIPO[tipo] + '</span>';
         }
     };
 

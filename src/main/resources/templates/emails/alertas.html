@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${tenant.name} + ' — Alertas del día'">Alertas del día</title>
+    <title th:text="#{email.alerta.title(${tenant.name})}">Alertas del día</title>
 </head>
 <body style="margin:0;padding:0;background-color:#F0EDE2;font-family:'Segoe UI',Arial,sans-serif;color:#333;">
 
@@ -23,11 +23,11 @@
                   <div th:style="'font-family:Georgia,serif;font-size:22px;font-weight:700;color:' + ${tenant.colorAccent} + ';'"
                        style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#C9A028;"
                        th:text="${tenant.name}">Alera</div>
-                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;">Sistema de Trazabilidad Cervecera</div>
+                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;" th:text="#{email.common.subtitulo}">Sistema de Trazabilidad Cervecera</div>
                 </td>
                 <td align="right">
                   <div style="font-size:12px;color:#c0c0a0;" th:text="${fecha}">01/01/2025</div>
-                  <div style="font-size:11px;color:#909080;margin-top:2px;">Resumen diario de alertas</div>
+                  <div style="font-size:11px;color:#909080;margin-top:2px;" th:text="#{email.alerta.resumen.diario}">Resumen diario de alertas</div>
                 </td>
               </tr>
             </table>
@@ -43,21 +43,21 @@
                     th:if="${!#lists.isEmpty(bajoStock)}">
                   <div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
                     <div style="font-size:28px;font-weight:700;color:#856404;" th:text="${#lists.size(bajoStock)}">0</div>
-                    <div style="font-size:12px;color:#856404;margin-top:2px;">Bajo stock</div>
+                    <div style="font-size:12px;color:#856404;margin-top:2px;" th:text="#{email.alerta.badge.bajo_stock}">Bajo stock</div>
                   </div>
                 </td>
                 <td align="center" style="padding:4px 8px;"
                     th:if="${!#lists.isEmpty(proximosAVencer)}">
                   <div style="background:#f8d7da;border:1px solid #f5c6cb;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
                     <div style="font-size:28px;font-weight:700;color:#721c24;" th:text="${#lists.size(proximosAVencer)}">0</div>
-                    <div style="font-size:12px;color:#721c24;margin-top:2px;">Próx. a vencer</div>
+                    <div style="font-size:12px;color:#721c24;margin-top:2px;" th:text="#{email.alerta.badge.prox_vencer}">Próx. a vencer</div>
                   </div>
                 </td>
                 <td align="center" style="padding:4px 8px;"
                     th:if="${!#lists.isEmpty(mantenimientoPendiente)}">
                   <div style="background:#d1ecf1;border:1px solid #bee5eb;border-radius:8px;padding:12px 16px;display:inline-block;min-width:130px;text-align:center;">
                     <div style="font-size:28px;font-weight:700;color:#0c5460;" th:text="${#lists.size(mantenimientoPendiente)}">0</div>
-                    <div style="font-size:12px;color:#0c5460;margin-top:2px;">Mantenimiento</div>
+                    <div style="font-size:12px;color:#0c5460;margin-top:2px;" th:text="#{email.alerta.badge.mantenimiento}">Mantenimiento</div>
                   </div>
                 </td>
               </tr>
@@ -69,16 +69,16 @@
         <tr th:if="${!#lists.isEmpty(bajoStock)}">
           <td style="padding:20px 32px 0;">
             <div style="border-left:4px solid #ffc107;padding-left:12px;margin-bottom:12px;">
-              <div style="font-size:14px;font-weight:700;color:#856404;">⚠ Inventario bajo stock mínimo</div>
+              <div style="font-size:14px;font-weight:700;color:#856404;" th:text="#{email.alerta.seccion.bajo_stock}">⚠ Inventario bajo stock mínimo</div>
             </div>
             <table width="100%" cellpadding="0" cellspacing="0" border="0"
                    style="border-collapse:collapse;font-size:13px;">
               <thead>
                 <tr style="background:#f8f9fa;">
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Insumo</th>
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
-                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Stock actual</th>
-                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Stock mínimo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.insumo}">Insumo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.tipo}">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.stock_actual}">Stock actual</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.stock_minimo}">Stock mínimo</th>
                 </tr>
               </thead>
               <tbody>
@@ -102,16 +102,16 @@
         <tr th:if="${!#lists.isEmpty(proximosAVencer)}">
           <td style="padding:20px 32px 0;">
             <div style="border-left:4px solid #dc3545;padding-left:12px;margin-bottom:12px;">
-              <div style="font-size:14px;font-weight:700;color:#721c24;">🗓 Vencimientos próximos (30 días)</div>
+              <div style="font-size:14px;font-weight:700;color:#721c24;" th:text="#{email.alerta.seccion.vencimientos}">📅 Vencimientos próximos (30 días)</div>
             </div>
             <table width="100%" cellpadding="0" cellspacing="0" border="0"
                    style="border-collapse:collapse;font-size:13px;">
               <thead>
                 <tr style="background:#f8f9fa;">
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Insumo</th>
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
-                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Vence</th>
-                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Días</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.insumo}">Insumo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.tipo}">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.vence}">Vence</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.dias}">Días</th>
                 </tr>
               </thead>
               <tbody>
@@ -126,7 +126,7 @@
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;"
                       th:with="dias=${T(com.alera.service.EmailService).diasHasta(ins.fechaVencimiento)}"
                       th:style="${dias <= 7} ? 'color:#cc0000;font-weight:700;' : 'color:#856404;'"
-                      th:text="${dias} + 'd'">—</td>
+                      th:text="${dias} + #{email.alerta.dias_sufijo}">—</td>
                 </tr>
               </tbody>
             </table>
@@ -137,15 +137,15 @@
         <tr th:if="${!#lists.isEmpty(mantenimientoPendiente)}">
           <td style="padding:20px 32px 0;">
             <div style="border-left:4px solid #17a2b8;padding-left:12px;margin-bottom:12px;">
-              <div style="font-size:14px;font-weight:700;color:#0c5460;">🔧 Mantenimiento próximo (7 días)</div>
+              <div style="font-size:14px;font-weight:700;color:#0c5460;" th:text="#{email.alerta.seccion.mantenimiento}">🔧 Mantenimiento próximo (7 días)</div>
             </div>
             <table width="100%" cellpadding="0" cellspacing="0" border="0"
                    style="border-collapse:collapse;font-size:13px;">
               <thead>
                 <tr style="background:#f8f9fa;">
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Equipo</th>
-                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Tipo</th>
-                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;">Próximo mantenimiento</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.equipo}">Equipo</th>
+                  <th style="text-align:left;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.tipo}">Tipo</th>
+                  <th style="text-align:right;padding:6px 10px;color:#555;font-weight:600;border-bottom:1px solid #dee2e6;" th:text="#{email.alerta.th.prox_mantenimiento}">Próximo mantenimiento</th>
                 </tr>
               </thead>
               <tbody>
@@ -156,7 +156,7 @@
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
                       th:text="${equipo.tipo != null} ? ${equipo.tipo} : '—'">—</td>
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#0c5460;font-weight:600;"
-                      th:text="${equipo.proximoMantenimiento != null} ? ${#temporals.format(equipo.proximoMantenimiento,'dd/MM/yyyy')} : 'Sin fecha'">—</td>
+                      th:text="${equipo.proximoMantenimiento != null} ? ${#temporals.format(equipo.proximoMantenimiento,'dd/MM/yyyy')} : #{email.alerta.sin_fecha}">—</td>
                 </tr>
               </tbody>
             </table>
@@ -166,10 +166,10 @@
         <!-- BOTÓN CTA -->
         <tr>
           <td style="padding:28px 32px;" align="center">
-            <a th:href="${baseUrl}" th:style="'background-color:' + ${tenant.colorAccent} + ';color:' + ${tenant.colorNavbar} + ';padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;'"
-               style="background-color:#C9A028;color:#242E0D;padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;">
-              Ver en la aplicación →
-            </a>
+            <a th:href="${baseUrl}"
+               th:style="'background-color:' + ${tenant.colorAccent} + ';color:' + ${tenant.colorNavbar} + ';padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;'"
+               style="background-color:#C9A028;color:#242E0D;padding:12px 28px;border-radius:6px;font-weight:700;font-size:14px;text-decoration:none;display:inline-block;"
+               th:text="#{email.alerta.cta}">Ver en la aplicación →</a>
           </td>
         </tr>
 
@@ -178,9 +178,9 @@
           <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:18px 32px;'"
               style="background-color:#242E0D;padding:18px 32px;">
             <div style="font-size:11px;color:#909080;text-align:center;">
-              Este email fue generado automáticamente por
+              <span th:text="#{email.common.auto_generado}">Este email fue generado automáticamente por</span>
               <span th:text="${tenant.name}" style="color:#c0c0a0;">Alera</span>.
-              Para dejar de recibirlo, eliminá el email en la configuración del tenant.
+              <span th:text="#{email.alerta.pie.dejar}">Para dejar de recibirlo, eliminá el email en la configuración del tenant.</span>
             </div>
           </td>
         </tr>

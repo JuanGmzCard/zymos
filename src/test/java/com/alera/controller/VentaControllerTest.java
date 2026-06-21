@@ -128,7 +128,7 @@ class VentaControllerTest {
         v.setCliente("Cliente Test");
         v.setEstado(EstadoVenta.DESPACHADO);
         when(ventaService.buscarPorId(1L)).thenReturn(Optional.of(v));
-        when(pdfExportService.generarPdfVenta(any(), any())).thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
+        when(pdfExportService.generarPdfVenta(any(), any(), any())).thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
 
         mockMvc.perform(get("/ventas/1/pdf"))
                 .andExpect(status().isOk())

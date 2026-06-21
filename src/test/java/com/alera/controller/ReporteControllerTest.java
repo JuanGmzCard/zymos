@@ -58,12 +58,12 @@ class ReporteControllerTest {
         when(loteRepo.findResumenPorEstilo(any(), any(), any())).thenReturn(List.of());
         when(loteItemFacturaRepo.sumCostosPorLote()).thenReturn(List.of());
         when(ventaItemRepo.sumIngresosDespachadosPorLote()).thenReturn(List.of());
-        when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), any()))
+        when(excelService.generarExcelReporteProduccion(any(), any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x50, 0x4B});
-        when(pdfService.generarPdfReporteProduccion(any(), any(), any(), any(), any()))
+        when(pdfService.generarPdfReporteProduccion(any(), any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x25, 0x50, 0x44, 0x46});
         when(ventaService.listarParaExport(any(), any(), any())).thenReturn(List.of());
-        when(excelService.generarExcelVentas(any(), any(), any(), any(), any()))
+        when(excelService.generarExcelVentas(any(), any(), any(), any(), any(), any()))
                 .thenReturn(new byte[]{0x50, 0x4B});
     }
 
