@@ -132,7 +132,7 @@
                                 <label for="cotizacionExpiraEn" class="form-label detail-label" th:text="#{ventas.form.expira.label}">Válida hasta</label>
                                 <input type="date" id="cotizacionExpiraEn" th:field="*{cotizacionExpiraEn}"
                                        class="form-control"
-                                       placeholder="Fecha de vencimiento de la cotización">
+                                       th:placeholder="#{ventas.form.expira.date.ph}">
                                 <div class="form-text text-muted" style="font-size:0.78rem;">
                                     <i class="bi bi-info-circle me-1"></i><span th:text="#{ventas.form.expira.hint.prefix}">Si no se define, vence en</span>
                                     <span id="expiracionDiasHint">15</span> <span th:text="#{ventas.form.expira.hint.suffix}">días por defecto.</span>
@@ -322,7 +322,8 @@ var VENTAS_MSG = {
     unitBarriles: /*[[#{ventas.unit.barriles}]]*/ 'Barriles / Kegs',
     unitGrowlers: /*[[#{ventas.unit.growlers}]]*/ 'Growlers',
     unitOtros:    /*[[#{ventas.unit.otros}]]*/ 'Otros',
-    selectPh:     /*[[#{label.select}]]*/ '— seleccionar —'
+    selectPh:     /*[[#{label.select}]]*/ '— seleccionar —',
+    nit:          /*[[#{label.nit}]]*/ 'NIT'
 };
 /*]]>*/
 </script>
@@ -622,7 +623,7 @@ function seleccionarLote(el, cell) {
     var selUnidad = row ? row.querySelector('.item-unidad') : null;
     if (selUnidad) {
         if (entries.length > 0) {
-            var html = '<option value="">— seleccionar —</option>';
+            var html = '<option value="">' + VENTAS_MSG.selectPh + '</option>';
             entries.forEach(function(e) {
                 html += '<option value="' + e.formato.replace(/"/g,'&quot;') + '">'
                       + e.formato
@@ -722,7 +723,7 @@ actualizarTotales();
         if (!clientes.length) { cerrar(); return; }
         suggest.innerHTML = clientes.map(function(c) {
             var sub = [];
-            if (c.nit)        sub.push('NIT: ' + c.nit);
+            if (c.nit)        sub.push(VENTAS_MSG.nit + ': ' + c.nit);
             if (c.ciudad)     sub.push(c.ciudad);
             if (c.listaPrecio) sub.push(c.listaPrecio);
             return '<a href="#" class="cs-item"' +

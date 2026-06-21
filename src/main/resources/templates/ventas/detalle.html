@@ -79,9 +79,8 @@
                         <div class="small text-muted" th:text="#{label.cliente}">Cliente</div>
                         <div class="fw-semibold" th:text="${venta.cliente}">—</div>
                         <div th:if="${venta.clienteRef != null}" class="mt-1 d-flex flex-wrap gap-2">
-                            <span th:if="${venta.clienteRef.nit != null}" class="text-muted small">
-                                NIT: <span th:text="${venta.clienteRef.nit}"></span>
-                            </span>
+                            <span th:if="${venta.clienteRef.nit != null}" class="text-muted small"
+                                  th:text="#{label.nit} + ': ' + ${venta.clienteRef.nit}">—</span>
                             <span th:if="${venta.clienteRef.listaPrecio != null}"
                                   class="badge bg-light text-dark border"
                                   style="font-size:0.72rem;"
@@ -124,7 +123,7 @@
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
                     <span><i class="bi bi-list-check me-2"></i><span th:text="#{ventas.detalle.items.section}">ÍTEMS DE LA VENTA</span></span>
-                    <span class="badge bg-secondary fw-normal" th:text="${venta.items.size()} + ' ítem(s)'">0</span>
+                    <span class="badge bg-secondary fw-normal" th:text="${venta.items.size()} + ' ' + #{ventas.items.count}">0</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-sm mb-0 align-middle">
