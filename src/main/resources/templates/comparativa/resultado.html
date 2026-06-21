@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Comparativa'">Alera - Comparativa</title>
+    <title th:text="${branding.name} + ' - ' + #{comp.res.title}">Alera - Comparativa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -37,8 +37,8 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
-            <h1><i class="bi bi-bar-chart-steps me-2" style="color:var(--verde-zymos,#2563eb);"></i>Comparativa de Lotes</h1>
-            <p class="subtitle" th:text="${#lists.size(lotes)} + ' lotes comparados'">N lotes comparados</p>
+            <h1><i class="bi bi-bar-chart-steps me-2" style="color:var(--verde-zymos,#2563eb);"></i><span th:text="#{comp.h1}">Comparativa de Lotes</span></h1>
+            <p class="subtitle" th:text="${#lists.size(lotes)} + ' ' + #{comp.res.subtitle}">N lotes comparados</p>
         </div>
         <div class="d-flex gap-2">
             <a th:href="@{/comparativa/resultado/pdf(ids=${lotes.![id]})}"
@@ -46,14 +46,14 @@
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
             <a th:href="@{/comparativa}" class="btn btn-sm btn-primary">
-                <i class="bi bi-arrow-left me-1"></i>Nueva comparativa
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{comp.res.btn.nueva}">Nueva comparativa</span>
             </a>
         </div>
     </div>
 
     <!-- Gráfico de métricas -->
     <div class="content-card mb-3">
-        <div class="content-card-title"><i class="bi bi-graph-up me-2"></i>Métricas de calidad (%)</div>
+        <div class="content-card-title"><i class="bi bi-graph-up me-2"></i><span th:text="#{comp.res.chart.title}">Métricas de calidad (%)</span></div>
         <div style="max-height:280px;">
             <canvas id="chartComparativa"></canvas>
         </div>
@@ -65,7 +65,7 @@
             <table class="table tabla-comparativa mb-0" style="font-size:0.85rem;">
                 <thead>
                     <tr>
-                        <th style="min-width:160px; background:#f8fafc !important; color:#64748b !important;">Métrica</th>
+                        <th style="min-width:160px; background:#f8fafc !important; color:#64748b !important;" th:text="#{comp.res.col.metrica}">Métrica</th>
                         <th class="lote-header" th:each="lote : ${lotes}"
                             style="background:#f8fafc !important; color:#64748b !important;">
                             <a th:href="@{/ver/{id}(id=${lote.id})}"
@@ -79,27 +79,27 @@
                     <!-- IDENTIFICACIÓN -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-tag me-1"></i>Identificación
+                            <i class="bi bi-tag me-1"></i><span th:text="#{comp.sec.identificacion}">Identificación</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Estilo</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{traz.table.estilo}">Estilo</td>
                         <td class="valor-celda" th:each="lote : ${lotes}" th:text="${lote.estilo}">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Receta</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.receta}">Receta</td>
                         <td class="valor-celda" th:each="lote : ${lotes}">
                             <span th:if="${lote.receta != null}" th:text="${lote.receta.nombre}">—</span>
                             <span th:unless="${lote.receta != null}" class="text-secondary">—</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Fecha elaboración</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.fecha.elab}">Fecha elaboración</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Fase actual</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.fase.actual}">Fase actual</td>
                         <td class="valor-celda" th:each="lote : ${lotes}">
                             <span class="phase-badge"
                                   th:text="${lote.faseActual}"
@@ -115,16 +115,16 @@
                     <!-- DENSIDADES -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-moisture me-1"></i>Densidades
+                            <i class="bi bi-moisture me-1"></i><span th:text="#{comp.sec.densidades}">Densidades</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">OG (densidad inicial)</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.og}">OG (densidad inicial)</td>
                         <td class="valor-celda font-monospace" th:each="lote : ${lotes}"
                             th:text="${lote.densidadInicial != null} ? ${lote.densidadInicial} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">FG (densidad final)</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.fg}">FG (densidad final)</td>
                         <td class="valor-celda font-monospace" th:each="lote : ${lotes}"
                             th:text="${lote.densidadFinal != null} ? ${lote.densidadFinal} : '—'">—</td>
                     </tr>
@@ -132,14 +132,14 @@
                     <!-- MÉTRICAS DE CALIDAD -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-award me-1"></i>Calidad
+                            <i class="bi bi-award me-1"></i><span th:text="#{comp.sec.calidad}">Calidad</span>
                             <span class="fw-normal" style="opacity:.7; font-size:.85em;">
-                                — <i class="bi bi-star-fill" style="font-size:.7em;"></i> = mejor valor
+                                — <i class="bi bi-star-fill" style="font-size:.7em;"></i> <span th:text="#{comp.sec.calidad.nota}">= mejor valor</span>
                             </span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">ABV <span class="text-secondary">(% vol.)</span></td>
+                        <td class="text-secondary" style="font-size:0.8rem;"><span th:text="#{comp.row.abv}">ABV</span> <span class="text-secondary" th:text="#{comp.row.abv.unit}">(% vol.)</span></td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['abv'] != null and mejores['abv'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.abv != null}">
@@ -151,7 +151,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Atenuación aparente</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.atenuacion}">Atenuación aparente</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['atenuacion'] != null and mejores['atenuacion'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.atenuacionAparente != null}">
@@ -163,7 +163,7 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Eficiencia macerado</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.eficiencia}">Eficiencia macerado</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['eficiencia'] != null and mejores['eficiencia'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.eficienciaMacerado != null}">
@@ -178,11 +178,11 @@
                     <!-- PRODUCCIÓN -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-droplet me-1"></i>Producción
+                            <i class="bi bi-droplet me-1"></i><span th:text="#{comp.sec.produccion}">Producción</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Litros finales</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.litros}">Litros finales</td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['litros'] != null and mejores['litros'] == lote.id} ? 'mejor-valor' : ''">
                             <span th:if="${lote.litrosFinales != null}">
@@ -194,17 +194,17 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Agua utilizada</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.agua}">Agua utilizada</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">pH agua</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.ph}">pH agua</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.phAgua != null} ? ${lote.phAgua} : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Clarificante</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.clarificante}">Clarificante</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${!#strings.isEmpty(lote.clarificante)} ? ${lote.clarificante} : '—'">—</td>
                     </tr>
@@ -212,16 +212,16 @@
                     <!-- FERMENTACIÓN -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-thermometer-half me-1"></i>Fermentación
+                            <i class="bi bi-thermometer-half me-1"></i><span th:text="#{comp.sec.fermentacion}">Fermentación</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Temperatura ferm.</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.temp.ferm}">Temperatura ferm.</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fermTemperatura != null} ? ${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Inicio fermentación</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.inicio.ferm}">Inicio fermentación</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}"
                             th:text="${lote.fermFechaInicial != null} ? ${#temporals.format(lote.fermFechaInicial,'dd/MM/yyyy')} : '—'">—</td>
                     </tr>
@@ -229,20 +229,20 @@
                     <!-- COSTOS -->
                     <tr>
                         <td colspan="99" class="seccion-header py-1 px-3">
-                            <i class="bi bi-cash-stack me-1"></i>Costos
+                            <i class="bi bi-cash-stack me-1"></i><span th:text="#{comp.sec.costos}">Costos</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Costo total</td>
+                        <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.costo.total}">Costo total</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}">
                             <span th:if="${lote.costoTotal != null}"
                                   th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal, 1, 'COMMA', 0, 'POINT')}">—</span>
-                            <span th:unless="${lote.costoTotal != null}" class="text-secondary fst-italic" style="font-size:.8em;">sin costo asignado</span>
+                            <span th:unless="${lote.costoTotal != null}" class="text-secondary fst-italic" style="font-size:.8em;" th:text="#{comp.row.sin.costo}">sin costo asignado</span>
                         </td>
                     </tr>
                     <tr>
-                        <td class="text-secondary" style="font-size:0.8rem;">Costo por litro
-                            <span class="text-secondary" style="font-size:.8em;">(↓ mejor)</span>
+                        <td class="text-secondary" style="font-size:0.8rem;"><span th:text="#{comp.row.costo.litro}">Costo por litro</span>
+                            <span class="text-secondary" style="font-size:.8em;" th:text="#{comp.row.costo.litro.nota}">(↓ mejor)</span>
                         </td>
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['cpl'] != null and mejores['cpl'] == lote.id} ? 'cpl-mejor' : ''">
@@ -262,7 +262,7 @@
     <!-- Notas de cata -->
     <div th:if="${!#lists.isEmpty(lotes.?[notasCata != null and !notasCata.isEmpty()])}" class="mb-4">
         <div class="content-card-title mb-3" style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:#94a3b8;">
-            <i class="bi bi-journal-text me-2"></i>Notas de cata
+            <i class="bi bi-journal-text me-2"></i><span th:text="#{comp.res.notas.cata}">Notas de cata</span>
         </div>
         <div class="row g-3">
             <div class="col-md-6 col-xl-4" th:each="lote : ${lotes}" th:if="${!#strings.isEmpty(lote.notasCata)}">
@@ -287,6 +287,13 @@ const LABELS    = /*[[${chartLabels}]]*/    [];
 const ABV       = /*[[${chartAbv}]]*/       [];
 const ATENUAC   = /*[[${chartAtenuacion}]]*/ [];
 const EFIC      = /*[[${chartEficiencia}]]*/ [];
+const COMP_MSG = {
+    abvLabel:        /*[[#{comp.js.abv}]]*/ 'ABV (%)',
+    atenuacionLabel: /*[[#{comp.js.atenuacion}]]*/ 'Atenuación (%)',
+    eficienciaLabel: /*[[#{comp.js.eficiencia}]]*/ 'Eficiencia (%)',
+    pctLabel:        /*[[#{comp.js.pct}]]*/ 'Porcentaje (%)',
+    nd:              /*[[#{comp.js.nd}]]*/ 'N/D'
+};
 
 const dorado        = getComputedStyle(document.documentElement).getPropertyValue('--dorado').trim()       || '#C9A028';
 const verdeZymos    = getComputedStyle(document.documentElement).getPropertyValue('--verde-zymos').trim()  || '#364318';
@@ -298,7 +305,7 @@ new Chart(document.getElementById('chartComparativa'), {
         labels: LABELS,
         datasets: [
             {
-                label: 'ABV (%)',
+                label: COMP_MSG.abvLabel,
                 data: ABV,
                 backgroundColor: dorado + 'cc',
                 borderColor: dorado,
@@ -306,7 +313,7 @@ new Chart(document.getElementById('chartComparativa'), {
                 borderRadius: 4
             },
             {
-                label: 'Atenuación (%)',
+                label: COMP_MSG.atenuacionLabel,
                 data: ATENUAC,
                 backgroundColor: verdeZymos + 'cc',
                 borderColor: verdeZymos,
@@ -314,7 +321,7 @@ new Chart(document.getElementById('chartComparativa'), {
                 borderRadius: 4
             },
             {
-                label: 'Eficiencia (%)',
+                label: COMP_MSG.eficienciaLabel,
                 data: EFIC,
                 backgroundColor: verdeOscuro + 'cc',
                 borderColor: verdeOscuro,
@@ -330,7 +337,7 @@ new Chart(document.getElementById('chartComparativa'), {
             legend: { position: 'top' },
             tooltip: {
                 callbacks: {
-                    label: ctx => ctx.dataset.label + ': ' + (ctx.raw != null ? ctx.raw.toFixed(1) + '%' : 'N/D')
+                    label: ctx => ctx.dataset.label + ': ' + (ctx.raw != null ? ctx.raw.toFixed(1) + '%' : COMP_MSG.nd)
                 }
             }
         },
@@ -339,7 +346,7 @@ new Chart(document.getElementById('chartComparativa'), {
                 beginAtZero: true,
                 max: 100,
                 ticks: { callback: v => v + '%' },
-                title: { display: true, text: 'Porcentaje (%)' }
+                title: { display: true, text: COMP_MSG.pctLabel }
             }
         }
     }
