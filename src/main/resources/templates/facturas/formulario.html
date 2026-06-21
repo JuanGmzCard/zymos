@@ -142,7 +142,7 @@
                         <!-- CATEGORÍA -->
                         <div class="col-md-2 subtipo-col">
                             <div th:if="${itemF.tipoItem == null}" class="subtipo-placeholder">
-                                <i class="bi bi-arrow-left-short"></i> Elige tipo
+                                <i class="bi bi-arrow-left-short"></i> <span th:text="#{fact.form.js.elige.tipo}">Elige tipo</span>
                             </div>
                             <select th:if="${itemF.tipoItem != null and itemF.tipoItem.name() == 'INSUMO'}"
                                     th:name="'items[' + ${itemStat.index} + '].tipoInsumo'"
@@ -176,7 +176,7 @@
                                        autocomplete="off">
                                 <button type="button"
                                         class="btn btn-outline-secondary btn-sm px-1 btn-crear-item"
-                                        title="Crear si no existe">
+                                        th:title="#{fact.form.js.crear.tooltip}">
                                     <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
                                 </button>
                             </div>
@@ -344,6 +344,25 @@ const EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
 const TIPOS_INSUMO = /*[[${tiposInsumo}]]*/ [];
 const TIPOS_EQUIPO = /*[[${tiposEquipo}]]*/ [];
 </script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var FACT_FORM_MSG = {
+    selTipo:     /*[[#{fact.form.sel.tipo}]]*/ '-- Tipo --',
+    selCat:      /*[[#{fact.form.sel.cat}]]*/ '-- Categoría --',
+    unitario:    /*[[#{fact.form.col.unitario}]]*/ 'V. UNITARIO',
+    unitarioIva: /*[[#{fact.form.col.unitario.iva}]]*/ 'V. UNITARIO (c/IVA)',
+    nombrePh:    /*[[#{fact.form.ph.nombre.item}]]*/ 'Nombre',
+    eligeTipo:   /*[[#{fact.form.js.elige.tipo}]]*/ 'Elige tipo',
+    insumo:      /*[[#{fact.form.js.insumo}]]*/ 'Insumo',
+    equipo:      /*[[#{fact.form.js.equipo}]]*/ 'Equipo',
+    crearTooltip:/*[[#{fact.form.js.crear.tooltip}]]*/ 'Crear si no existe',
+    selTipoAlert:/*[[#{fact.form.js.sel.tipo.alert}]]*/ 'Selecciona primero el Tipo de Item (Insumo o Equipo)',
+    nombreReq:   /*[[#{fact.form.js.nombre.req}]]*/ 'El nombre es obligatorio',
+    errorCrear:  /*[[#{fact.form.js.error.crear}]]*/ 'Error al crear',
+    errorConn:   /*[[#{fact.form.js.error.conn}]]*/ 'Error de conexión'
+};
+/*]]>*/
+</script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:attr="nonce=${cspNonce}">
@@ -400,7 +419,7 @@ function onTipoChange(tipoSelect) {
 
 function renderSubtipoField(container, tipo, idx) {
     if (tipo === 'INSUMO') {
-        let opts = '<option value="">-- Categoría --</option>';
+        let opts = '<option value="">' + FACT_FORM_MSG.selCat + '</option>';
         TIPOS_INSUMO.forEach(cat => {
             opts += `<option value="${cat}">${cat}</option>`;
         });
@@ -408,7 +427,7 @@ function renderSubtipoField(container, tipo, idx) {
             `<select name="items[${idx}].tipoInsumo"
                      class="form-select form-select-sm categoria-select">${opts}</select>`;
     } else if (tipo === 'EQUIPO') {
-        let opts = '<option value="">-- Categoría --</option>';
+        let opts = '<option value="">' + FACT_FORM_MSG.selCat + '</option>';
         TIPOS_EQUIPO.forEach(cat => {
             opts += `<option value="${cat}">${cat}</option>`;
         });
@@ -417,7 +436,7 @@ function renderSubtipoField(container, tipo, idx) {
                      class="form-select form-select-sm categoria-select">${opts}</select>`;
     } else {
         container.innerHTML =
-            `<div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> Elige tipo</div>`;
+            '<div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> ' + FACT_FORM_MSG.eligeTipo + '</div>';
     }
 }
 
@@ -465,7 +484,7 @@ function calcularTotalFila(input) {
 function recalcularTodo() {
     const ivainc = document.getElementById('ivaIncluido')?.checked;
     const lbl = document.getElementById('colUnitarioHeader');
-    if (lbl) lbl.textContent = ivainc ? 'V. UNITARIO (c/IVA)' : 'V. UNITARIO';
+    if (lbl) lbl.textContent = ivainc ? FACT_FORM_MSG.unitarioIva : FACT_FORM_MSG.unitario;
     document.querySelectorAll('#items-container .ingrediente-row').forEach(row => {
         const ref = row.querySelector('input[name*=".cantidad"]');
         if (ref) calcularTotalFila(ref);
@@ -538,23 +557,23 @@ function addItem() {
         <div class="row g-2 align-items-center">
             <div class="col-md-1">
                 <select name="items[${idx}].tipoItem" class="form-select form-select-sm tipo-select">
-                    <option value="">-- Tipo --</option>
-                    <option value="INSUMO">Insumo</option>
-                    <option value="EQUIPO">Equipo</option>
+                    <option value="">${FACT_FORM_MSG.selTipo}</option>
+                    <option value="INSUMO">${FACT_FORM_MSG.insumo}</option>
+                    <option value="EQUIPO">${FACT_FORM_MSG.equipo}</option>
                 </select>
             </div>
             <div class="col-md-2 subtipo-col">
-                <div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> Elige tipo</div>
+                <div class="subtipo-placeholder"><i class="bi bi-arrow-left-short"></i> ${FACT_FORM_MSG.eligeTipo}</div>
             </div>
             <div class="col-md-2">
                 <div class="input-group input-group-sm">
                     <input type="text" name="items[${idx}].nombre"
                            class="form-control form-control-sm nombre-item"
-                           placeholder="Nombre"
+                           placeholder="${FACT_FORM_MSG.nombrePh}"
                            list="datalist-item-nombres"
                            autocomplete="off">
                     <button type="button" class="btn btn-outline-secondary btn-sm px-1 btn-crear-item"
-                            title="Crear si no existe">
+                            title="${FACT_FORM_MSG.crearTooltip}">
                         <i class="bi bi-plus-square" style="font-size:0.8rem;"></i>
                     </button>
                 </div>
@@ -629,7 +648,7 @@ function abrirModalCrearItem(btn) {
         new bootstrap.Modal(document.getElementById('modalCrearEquipo')).show();
         setTimeout(() => document.getElementById('nuevoEquipoNombreF').focus(), 300);
     } else {
-        alert('Selecciona primero el Tipo de Item (Insumo o Equipo)');
+        alert(FACT_FORM_MSG.selTipoAlert);
     }
 }
 
@@ -668,17 +687,17 @@ document.getElementById('btnCrearInsumoF').addEventListener('click', async () =>
     const unidad  = document.getElementById('nuevoInsumoUnidadF').value;
     const errorEl = document.getElementById('errorInsumoF');
     errorEl.classList.add('d-none');
-    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+    if (!nombre) { errorEl.textContent = FACT_FORM_MSG.nombreReq; errorEl.classList.remove('d-none'); return; }
     try {
         const data = await postRapido('/facturas/guardar-insumo-rapido', { nombre, tipo, unidad });
         if (data.success) {
             agregarAlDatalist(data.nombre, data.tipo);
             bootstrap.Modal.getInstance(document.getElementById('modalCrearInsumo')).hide();
         } else {
-            errorEl.textContent = data.error || 'Error al crear';
+            errorEl.textContent = data.error || FACT_FORM_MSG.errorCrear;
             errorEl.classList.remove('d-none');
         }
-    } catch { errorEl.textContent = 'Error de conexión'; errorEl.classList.remove('d-none'); }
+    } catch { errorEl.textContent = FACT_FORM_MSG.errorConn; errorEl.classList.remove('d-none'); }
 });
 
 // Guardar equipo
@@ -687,17 +706,17 @@ document.getElementById('btnCrearEquipoF').addEventListener('click', async () =>
     const tipo    = document.getElementById('nuevoEquipoTipoF').value;
     const errorEl = document.getElementById('errorEquipoF');
     errorEl.classList.add('d-none');
-    if (!nombre) { errorEl.textContent = 'El nombre es obligatorio'; errorEl.classList.remove('d-none'); return; }
+    if (!nombre) { errorEl.textContent = FACT_FORM_MSG.nombreReq; errorEl.classList.remove('d-none'); return; }
     try {
         const data = await postRapido('/facturas/guardar-equipo-rapido', { nombre, tipo });
         if (data.success) {
             agregarAlDatalist(data.nombre, data.tipo);
             bootstrap.Modal.getInstance(document.getElementById('modalCrearEquipo')).hide();
         } else {
-            errorEl.textContent = data.error || 'Error al crear';
+            errorEl.textContent = data.error || FACT_FORM_MSG.errorCrear;
             errorEl.classList.remove('d-none');
         }
-    } catch { errorEl.textContent = 'Error de conexión'; errorEl.classList.remove('d-none'); }
+    } catch { errorEl.textContent = FACT_FORM_MSG.errorConn; errorEl.classList.remove('d-none'); }
 });
 
 // ── Event delegation: reemplaza todos los inline handlers ────────────────────
