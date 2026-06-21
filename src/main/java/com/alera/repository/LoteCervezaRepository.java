@@ -31,8 +31,8 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
            "  (:fase = 'FERMENTACION'      AND l.fermFechaInicial  IS NOT NULL AND l.acondFechaInicial IS NULL) OR " +
            "  (:fase = 'INICIO'            AND l.fermFechaInicial  IS NULL)" +
            ") " +
-           "AND (:desde IS NULL OR l.fechaElaboracion >= :desde) " +
-           "AND (:hasta IS NULL OR l.fechaElaboracion <= :hasta) " +
+           "AND (CAST(:desde AS LocalDate) IS NULL OR l.fechaElaboracion >= :desde) " +
+           "AND (CAST(:hasta AS LocalDate) IS NULL OR l.fechaElaboracion <= :hasta) " +
            "ORDER BY l.createdAt DESC")
     Page<LoteCerveza> findByFiltros(@Param("estilo") String estilo,
                                     @Param("fase")   String fase,
@@ -113,7 +113,7 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     List<LoteCerveza> findParaKanban(@Param("limite") LocalDate limite);
 
     // Reporte de producción por período (desde/hasta nullable — null = sin restricción)
-    @Query("SELECT l FROM LoteCerveza l WHERE (:desde IS NULL OR l.fechaElaboracion >= :desde) AND (:hasta IS NULL OR l.fechaElaboracion <= :hasta) ORDER BY l.fechaElaboracion DESC")
+    @Query("SELECT l FROM LoteCerveza l WHERE (CAST(:desde AS LocalDate) IS NULL OR l.fechaElaboracion >= :desde) AND (CAST(:hasta AS LocalDate) IS NULL OR l.fechaElaboracion <= :hasta) ORDER BY l.fechaElaboracion DESC")
     List<LoteCerveza> findByPeriodo(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta);
 
     @Query(value = "SELECT estilo, COUNT(*) as cantidad, COALESCE(SUM(litros_finales),0) as litros " +
