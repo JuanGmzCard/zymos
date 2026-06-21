@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${branding.name} + (${ocId} != null ? ' - Editar OC' : ' - Nueva OC')">Zymos - Nueva OC</title>
+    <title th:text="${branding.name} + ' - ' + (${ocId} != null ? #{oc.form.title.editar} : #{oc.form.title.nuevo})">Zymos - Nueva OC</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
@@ -25,19 +25,19 @@
 
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1 th:text="${ocId} != null ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'">Nueva Orden de Compra</h1>
-            <p class="subtitle mb-0">Solicitud de compra a proveedor</p>
+            <h1 th:text="${ocId} != null ? #{oc.form.h1.editar} : #{oc.form.h1.nuevo}">Nueva Orden de Compra</h1>
+            <p class="subtitle mb-0" th:text="#{oc.form.subtitle}">Solicitud de compra a proveedor</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/ordenes-compra}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
 
     <div class="content-card mb-4">
         <div class="content-card-title pb-2 mb-3">
-            <i class="bi bi-cart-check me-2"></i>DATOS DE LA ORDEN
+            <i class="bi bi-cart-check me-2"></i><span th:text="#{oc.form.sec.datos}">DATOS DE LA ORDEN</span>
         </div>
 
             <form th:action="${ocId} != null ? @{/ordenes-compra/actualizar/{id}(id=${ocId})} : @{/ordenes-compra/guardar}"
@@ -46,15 +46,15 @@
                 <!-- SECCIÓN: Datos generales -->
                 <div class="row g-3 mb-4">
                     <div class="col-12">
-                        <div class="content-card-title pb-1 mb-2"><i class="bi bi-info-circle me-1"></i>DATOS GENERALES</div>
+                        <div class="content-card-title pb-1 mb-2"><i class="bi bi-info-circle me-1"></i><span th:text="#{oc.form.sec.generales}">DATOS GENERALES</span></div>
                     </div>
 
                     <!-- Proveedor typeahead -->
                     <div class="col-md-6">
-                        <label for="proveedorSearch" class="form-label">Proveedor</label>
+                        <label for="proveedorSearch" class="form-label" th:text="#{oc.form.proveedor}">Proveedor</label>
                         <div class="input-group">
                             <input type="text" id="proveedorSearch" class="form-control"
-                                   placeholder="Buscar proveedor..."
+                                   th:placeholder="#{oc.form.proveedor.ph}"
                                    th:value="${oc.proveedor}"
                                    autocomplete="off"/>
                             <input type="hidden" th:field="*{proveedorId}" id="proveedorId"/>
@@ -67,7 +67,7 @@
 
                     <!-- Fecha emisión -->
                     <div class="col-md-3">
-                        <label for="fechaEmision" class="form-label">Fecha de Emisión <span class="text-danger">*</span></label>
+                        <label for="fechaEmision" class="form-label"><span th:text="#{oc.form.fecha.emision}">Fecha de Emisión</span> <span class="text-danger">*</span></label>
                         <input type="date" id="fechaEmision" th:field="*{fechaEmision}"
                                class="form-control" th:classappend="${#fields.hasErrors('fechaEmision')} ? 'is-invalid' : ''"/>
                         <div class="invalid-feedback" th:errors="*{fechaEmision}"></div>
@@ -75,24 +75,24 @@
 
                     <!-- Fecha requerida -->
                     <div class="col-md-3">
-                        <label for="fechaRequerida" class="form-label">Fecha Requerida</label>
+                        <label for="fechaRequerida" class="form-label" th:text="#{oc.form.fecha.requerida}">Fecha Requerida</label>
                         <input type="date" id="fechaRequerida" th:field="*{fechaRequerida}" class="form-control"/>
                     </div>
 
                     <!-- Notas -->
                     <div class="col-12">
-                        <label for="notas" class="form-label">Notas / Observaciones</label>
+                        <label for="notas" class="form-label" th:text="#{oc.form.notas}">Notas / Observaciones</label>
                         <textarea id="notas" th:field="*{notas}" class="form-control" rows="2"
-                                  placeholder="Condiciones de entrega, instrucciones especiales..."></textarea>
+                                  th:placeholder="#{oc.form.notas.ph}"></textarea>
                     </div>
                 </div>
 
                 <!-- SECCIÓN: Ítems -->
                 <div class="mb-4">
                     <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="content-card-title pb-0"><i class="bi bi-list-ul me-1"></i>ÍTEMS DE LA ORDEN</div>
+                        <div class="content-card-title pb-0"><i class="bi bi-list-ul me-1"></i><span th:text="#{oc.form.sec.items}">ÍTEMS DE LA ORDEN</span></div>
                         <button type="button" id="btnAddItemRow" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-plus-lg me-1"></i>Agregar ítem
+                            <i class="bi bi-plus-lg me-1"></i><span th:text="#{oc.form.btn.agregar}">Agregar ítem</span>
                         </button>
                     </div>
 
@@ -100,13 +100,13 @@
                         <table class="table table-sm table-hover mb-0" id="itemsTable">
                             <thead>
                                 <tr>
-                                    <th style="width:110px">Tipo</th>
-                                    <th style="width:130px">Categoría</th>
-                                    <th>Nombre / Descripción</th>
-                                    <th style="width:90px">Cantidad</th>
-                                    <th style="width:80px">Unidad</th>
-                                    <th style="width:130px">Precio Est.</th>
-                                    <th style="width:70px" class="text-center">IVA%</th>
+                                    <th style="width:110px" th:text="#{oc.form.col.tipo}">Tipo</th>
+                                    <th style="width:130px" th:text="#{oc.form.col.categoria}">Categoría</th>
+                                    <th th:text="#{oc.form.col.nombre}">Nombre / Descripción</th>
+                                    <th style="width:90px" th:text="#{oc.form.col.cantidad}">Cantidad</th>
+                                    <th style="width:80px" th:text="#{oc.form.col.unidad}">Unidad</th>
+                                    <th style="width:130px" th:text="#{oc.form.col.precio}">Precio Est.</th>
+                                    <th style="width:70px" class="text-center" th:text="#{oc.form.col.iva}">IVA%</th>
                                     <th style="width:50px"></th>
                                 </tr>
                             </thead>
@@ -126,7 +126,7 @@
                                         <select class="form-select form-select-sm tipo-extra insumo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoInsumo'"
                                                 th:style="${item.tipoItem != null and item.tipoItem.name() == 'INSUMO'} ? 'display:block' : 'display:none'">
-                                            <option value="">-- Categoría --</option>
+                                            <option value="" th:text="#{oc.form.cat.ph}">-- Categoría --</option>
                                             <option th:each="ti : ${tiposInsumo}" th:value="${ti}"
                                                     th:text="${ti}"
                                                     th:selected="${item.tipoInsumo == ti}"></option>
@@ -135,7 +135,7 @@
                                         <select class="form-select form-select-sm tipo-extra equipo-extra"
                                                 th:name="'items[' + ${stat.index} + '].tipoEquipo'"
                                                 th:style="${item.tipoItem != null and item.tipoItem.name() == 'EQUIPO'} ? 'display:block' : 'display:none'">
-                                            <option value="">-- Categoría --</option>
+                                            <option value="" th:text="#{oc.form.cat.ph}">-- Categoría --</option>
                                             <option th:each="te : ${tiposEquipo}" th:value="${te}"
                                                     th:text="${te}"
                                                     th:selected="${item.tipoEquipo == te}"></option>
@@ -146,11 +146,11 @@
                                                th:name="'items[' + ${stat.index} + '].nombre'"
                                                th:value="${item.nombre}"
                                                list="datalist-item-nombres"
-                                               placeholder="Nombre del producto" required/>
+                                               th:placeholder="#{oc.form.nombre.ph}" required/>
                                         <input type="text" class="form-control form-control-sm mt-1"
                                                th:name="'items[' + ${stat.index} + '].descripcion'"
                                                th:value="${item.descripcion}"
-                                               placeholder="Descripción (opcional)"/>
+                                               th:placeholder="#{oc.form.descripcion.ph}"/>
                                     </td>
                                     <td>
                                         <input type="number" class="form-control form-control-sm item-cantidad"
@@ -189,12 +189,12 @@
                             </tbody>
                             <tfoot>
                                 <tr>
-                                    <td colspan="5" class="text-end fw-bold text-muted small">Subtotal estimado:</td>
+                                    <td colspan="5" class="text-end fw-bold text-muted small" th:text="#{oc.form.subtotal}">Subtotal estimado:</td>
                                     <td colspan="2" class="text-end fw-bold" id="subtotalDisplay">$0</td>
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="5" class="text-end fw-bold text-muted small">Total estimado (con IVA):</td>
+                                    <td colspan="5" class="text-end fw-bold text-muted small" th:text="#{oc.form.total}">Total estimado (con IVA):</td>
                                     <td colspan="2" class="text-end fw-bold" id="totalDisplay" style="color:var(--verde-alera)">$0</td>
                                     <td></td>
                                 </tr>
@@ -202,16 +202,16 @@
                         </table>
                     </div>
                     <div id="emptyMsg" class="text-center text-muted py-3" style="display:none">
-                        <i class="bi bi-cart-x me-1"></i> Agrega al menos un ítem a la orden.
+                        <i class="bi bi-cart-x me-1"></i> <span th:text="#{oc.form.empty}">Agrega al menos un ítem a la orden.</span>
                     </div>
                 </div>
 
                 <!-- Botones -->
                 <div class="d-flex gap-2 justify-content-end">
-                    <a th:href="@{/ordenes-compra}" class="btn btn-secondary">Cancelar</a>
+                    <a th:href="@{/ordenes-compra}" class="btn btn-secondary" th:text="#{action.cancel}">Cancelar</a>
                     <button type="submit" class="btn btn-success">
                         <i class="bi bi-check-lg me-1"></i>
-                        <span th:text="${ocId} != null ? 'Guardar cambios' : 'Crear OC'">Crear OC</span>
+                        <span th:text="${ocId} != null ? #{oc.form.btn.guardar} : #{oc.form.btn.crear}">Crear OC</span>
                     </button>
                 </div>
 
@@ -224,11 +224,20 @@
 
 <!-- Datos para JS -->
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
     var TIPOS_INSUMO    = /*[[${tiposInsumo}]]*/ [];
     var TIPOS_EQUIPO    = /*[[${tiposEquipo}]]*/ [];
     var INSUMOS_POR_TIPO = /*[[${insumosPorTipo}]]*/ {};
     var EQUIPOS_POR_TIPO = /*[[${equiposPorTipo}]]*/ {};
     var rowCount         = /*[[${oc.items != null ? oc.items.size() : 0}]]*/ 0;
+    var OC_MSG = {
+        tipoInsumo:    /*[[#{oc.js.tipo.insumo}]]*/ 'Insumo',
+        tipoEquipo:    /*[[#{oc.js.tipo.equipo}]]*/ 'Equipo',
+        catPh:         /*[[#{oc.form.cat.ph}]]*/ '-- Categoría --',
+        nombrePh:      /*[[#{oc.form.nombre.ph}]]*/ 'Nombre del producto',
+        descripcionPh: /*[[#{oc.form.descripcion.ph}]]*/ 'Descripción (opcional)'
+    };
+/*]]>*/
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -274,8 +283,8 @@ function hideSuggest() { document.getElementById('proveedorSuggest').style.displ
 // ── Filas dinámicas de ítems ──────────────────────────────────────────
 var UNIDADES = ['','gr','kg','mL','L','gal','und','pkg','ton'];
 var TIPO_ITEM_OPTS = [
-    {val:'INSUMO', label:'Insumo'},
-    {val:'EQUIPO', label:'Equipo'}
+    {val:'INSUMO', label: OC_MSG.tipoInsumo},
+    {val:'EQUIPO', label: OC_MSG.tipoEquipo}
 ];
 
 function buildUnidadOpts(selected) {
@@ -285,11 +294,11 @@ function buildUnidadOpts(selected) {
 }
 
 function buildInsumoOpts() {
-    return '<option value="">-- Categoría --</option>' +
+    return '<option value="">' + OC_MSG.catPh + '</option>' +
         TIPOS_INSUMO.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
 }
 function buildEquipoOpts() {
-    return '<option value="">-- Categoría --</option>' +
+    return '<option value="">' + OC_MSG.catPh + '</option>' +
         TIPOS_EQUIPO.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
 }
 
@@ -324,8 +333,8 @@ function addItemRow() {
           '</select>' +
         '</td>' +
         '<td>' +
-          '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" list="datalist-item-nombres" placeholder="Nombre del producto" required/>' +
-          '<input type="text" class="form-control form-control-sm mt-1" name="' + p + 'descripcion" placeholder="Descripción (opcional)"/>' +
+          '<input type="text" class="form-control form-control-sm item-nombre" name="' + p + 'nombre" list="datalist-item-nombres" placeholder="' + OC_MSG.nombrePh + '" required/>' +
+          '<input type="text" class="form-control form-control-sm mt-1" name="' + p + 'descripcion" placeholder="' + OC_MSG.descripcionPh + '"/>' +
         '</td>' +
         '<td><input type="number" class="form-control form-control-sm item-cantidad" name="' + p + 'cantidad" min="0.001" step="any" required/></td>' +
         '<td><select class="form-select form-select-sm" name="' + p + 'unidad">' + buildUnidadOpts('') + '</select></td>' +

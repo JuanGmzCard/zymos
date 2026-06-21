@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - Barriles'">Alera - Barriles</title>
+    <title th:text="${branding.name} + ' - ' + #{barriles.title}">Alera - Barriles</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -156,13 +156,13 @@
     <!-- Cabecera de página -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-bucket me-2"></i>Barriles / Kegs</h1>
-            <p class="subtitle mb-0">Control de inventario y movimiento de barriles</p>
+            <h1><i class="bi bi-bucket me-2"></i><span th:text="#{barriles.lista.h1}">Barriles / Kegs</span></h1>
+            <p class="subtitle mb-0" th:text="#{barriles.lista.subtitle}">Control de inventario y movimiento de barriles</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <i class="bi bi-plus-lg me-1"></i>Nuevo Barril
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{barriles.action.nuevo}">Nuevo Barril</span>
             </a>
         </div>
     </div>
@@ -175,19 +175,19 @@
     <!-- Stat-cards -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total</div>
+            <div class="stat-label" th:text="#{barriles.stat.total}">Total</div>
             <div class="stat-value" th:text="${statsTotal}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Disponibles</div>
+            <div class="stat-label" th:text="#{barriles.stat.disponibles}">Disponibles</div>
             <div class="stat-value success" th:text="${statsDisponibles}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Llenos</div>
+            <div class="stat-label" th:text="#{barriles.stat.llenos}">Llenos</div>
             <div class="stat-value info" th:text="${statsLlenos}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Despachados</div>
+            <div class="stat-label" th:text="#{barriles.stat.despachados}">Despachados</div>
             <div class="stat-value warning" th:text="${statsDespachados}">0</div>
         </div>
     </div>
@@ -198,22 +198,21 @@
             <div class="col-auto">
                 <input type="hidden" th:if="${estadoFiltro != null}" name="estado" th:value="${estadoFiltro.name()}">
                 <input type="text" name="codigo" class="form-control form-control-sm"
-                       style="width:220px;" placeholder="Buscar por código..."
+                       style="width:220px;" th:placeholder="#{barriles.filter.codigo.ph}"
                        th:value="${codigo}">
             </div>
             <div class="col-auto">
-                <button type="submit" class="btn btn-primary btn-sm px-3">Buscar</button>
+                <button type="submit" class="btn btn-primary btn-sm px-3" th:text="#{action.buscar}">Buscar</button>
             </div>
             <div class="col-auto">
                 <a th:href="@{/barriles}" class="btn btn-outline-secondary btn-sm px-3"
-                   th:if="${codigo != ''}">Limpiar</a>
+                   th:if="${codigo != ''}" th:text="#{action.limpiar}">Limpiar</a>
             </div>
         </form>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/barriles(codigo=${codigo})}"
-               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
-                Todos
-            </a>
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{filter.todos}">Todos</a>
             <a th:each="est : ${estados}"
                th:href="@{/barriles(codigo=${codigo}, estado=${est.name()})}"
                th:classappend="${estadoFiltro == est} ? 'filter-tab active' : 'filter-tab inactive'"
@@ -225,16 +224,16 @@
     <div class="table-card mb-4">
         <div class="table-count">
             <span th:text="${#lists.size(barriles)}">0</span>
-            <span th:text="${#lists.size(barriles) != 1} ? ' barriles' : ' barril'">barriles</span>
+            <span th:text="${#lists.size(barriles) != 1} ? ' ' + #{barriles.count.plural} : ' ' + #{barriles.count.singular}">barriles</span>
         </div>
 
         <div th:if="${#lists.isEmpty(barriles)}" class="text-center py-5 text-muted">
             <i class="bi bi-bucket fs-1 d-block mb-2"></i>
-            <p th:if="${codigo != '' or estadoFiltro != null}">No hay resultados para los filtros aplicados.</p>
-            <p th:unless="${codigo != '' or estadoFiltro != null}">No hay barriles registrados.</p>
+            <p th:if="${codigo != '' or estadoFiltro != null}" th:text="#{barriles.empty.filter}">No hay resultados para los filtros aplicados.</p>
+            <p th:unless="${codigo != '' or estadoFiltro != null}" th:text="#{barriles.empty}">No hay barriles registrados.</p>
             <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm mt-1"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <i class="bi bi-plus-lg me-1"></i>Registrar Barril
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{barriles.action.registrar}">Registrar Barril</span>
             </a>
         </div>
 
@@ -242,13 +241,13 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">Código</th>
-                    <th>Tipo</th>
-                    <th>Capacidad</th>
-                    <th>Estado</th>
-                    <th>Lote / Cerveza</th>
-                    <th>Cliente</th>
-                    <th>Despacho</th>
+                    <th style="padding-left:1.25rem;" th:text="#{traz.table.codigo}">Código</th>
+                    <th th:text="#{barriles.col.tipo}">Tipo</th>
+                    <th th:text="#{barriles.col.capacidad}">Capacidad</th>
+                    <th th:text="#{traz.table.estado}">Estado</th>
+                    <th th:text="#{barriles.col.lote}">Lote / Cerveza</th>
+                    <th th:text="#{barriles.col.cliente}">Cliente</th>
+                    <th th:text="#{barriles.col.despacho}">Despacho</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -290,18 +289,19 @@
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
-                           class="action-link view" title="Ver detalle">Ver</a>
+                           class="action-link view" th:text="#{action.ver}">Ver</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
-                           class="action-link edit" title="Editar"
-                           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Editar</a>
+                           class="action-link edit" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                           th:text="#{action.edit}">Editar</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
                         <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post"
                               class="d-inline"
                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
-                                    th:attr="data-confirm=|¿Eliminar barril ${barril.codigo}?|">Eliminar</button>
+                                    th:attr="data-confirm=|#{barriles.confirm.del} ${barril.codigo}?|"
+                                    th:text="#{action.eliminar}">Eliminar</button>
                         </form>
                     </td>
                 </tr>

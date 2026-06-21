@@ -6,7 +6,7 @@
     <meta name="_csrf"        th:content="${_csrf.token}"/>
     <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${branding.name} + ' - ' + (${oc.numeroOc} != null ? ${oc.numeroOc} : 'OC sin número')">Zymos - Detalle OC</title>
+    <title th:text="${branding.name} + ' - ' + (${oc.numeroOc} != null ? ${oc.numeroOc} : #{oc.det.sin.numero})">Zymos - Detalle OC</title>
     <link rel="stylesheet" th:href="@{/css/style.css}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
@@ -25,7 +25,7 @@
     <!-- Cabecera -->
     <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
         <div>
-            <h1 class="mb-1" th:text="${oc.numeroOc != null ? oc.numeroOc : 'Sin número'}">OC-001</h1>
+            <h1 class="mb-1" th:text="${oc.numeroOc != null ? oc.numeroOc : #{oc.sin.numero}}">OC-001</h1>
             <p class="subtitle mb-0">
                 <span class="badge rounded-pill" th:classappend="${oc.estado.badgeClass}"
                       th:text="${oc.estado.displayName}">Estado</span>
@@ -40,10 +40,10 @@
             <a th:if="${oc.editable}"
                th:href="@{/ordenes-compra/editar/{id}(id=${oc.id})}"
                class="btn btn-sm btn-primary">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/ordenes-compra}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -56,30 +56,30 @@
             <!-- Info general -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-cart-check me-2"></i>INFORMACIÓN GENERAL
+                    <i class="bi bi-cart-check me-2"></i><span th:text="#{oc.det.sec.info}">INFORMACIÓN GENERAL</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-sm-4">
-                        <div class="small text-muted">Proveedor</div>
+                        <div class="small text-muted" th:text="#{oc.det.field.proveedor}">Proveedor</div>
                         <div class="fw-semibold" th:text="${oc.proveedor != null ? oc.proveedor : '—'}">—</div>
                     </div>
                     <div class="col-sm-4">
-                        <div class="small text-muted">Fecha de Emisión</div>
+                        <div class="small text-muted" th:text="#{oc.det.field.femision}">Fecha de Emisión</div>
                         <div class="fw-semibold"
                              th:text="${oc.fechaEmision != null ? #temporals.format(oc.fechaEmision,'dd/MM/yyyy') : '—'}">—</div>
                     </div>
                     <div class="col-sm-4">
-                        <div class="small text-muted">Fecha Requerida</div>
+                        <div class="small text-muted" th:text="#{oc.det.field.frequerida}">Fecha Requerida</div>
                         <div class="fw-semibold"
                              th:text="${oc.fechaRequerida != null ? #temporals.format(oc.fechaRequerida,'dd/MM/yyyy') : '—'}">—</div>
                     </div>
                     <div th:if="${oc.notas}" class="col-12">
-                        <div class="small text-muted">Notas</div>
+                        <div class="small text-muted" th:text="#{oc.det.field.notas}">Notas</div>
                         <div th:text="${oc.notas}" class="small">—</div>
                     </div>
                     <th:block th:if="${oc.facturaId != null}">
                         <div class="col-12">
-                            <div class="small text-muted">Factura generada</div>
+                            <div class="small text-muted" th:text="#{oc.det.field.factura}">Factura generada</div>
                             <div class="fw-semibold">
                                 <a th:href="@{/facturas/ver/{id}(id=${oc.facturaId})}"
                                    class="text-decoration-none" style="color:var(--verde-alera)">
@@ -94,23 +94,23 @@
             <!-- Tabla de ítems -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3 d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-list-ul me-2"></i>ÍTEMS DE LA ORDEN</span>
-                    <span class="badge bg-secondary fw-normal" th:text="${oc.items.size()} + ' ítem(s)'"></span>
+                    <span><i class="bi bi-list-ul me-2"></i><span th:text="#{oc.det.sec.items}">ÍTEMS DE LA ORDEN</span></span>
+                    <span class="badge bg-secondary fw-normal" th:text="${oc.items.size()} + ' ' + #{oc.det.items.badge}"></span>
                 </div>
                 <div th:if="${oc.items.isEmpty()}" class="text-center py-4 text-muted">
-                    <i class="bi bi-cart-x fs-2 d-block mb-1"></i>Esta orden no tiene ítems.
+                    <i class="bi bi-cart-x fs-2 d-block mb-1"></i><span th:text="#{oc.det.items.empty}">Esta orden no tiene ítems.</span>
                 </div>
                 <div th:unless="${oc.items.isEmpty()}" class="table-responsive">
                     <table class="table table-sm table-hover mb-0">
                         <thead class="table-light">
                             <tr>
-                                <th class="small text-muted fw-semibold">Tipo</th>
-                                <th class="small text-muted fw-semibold">Nombre</th>
-                                <th class="small text-muted fw-semibold">Descripción</th>
-                                <th class="text-center small text-muted fw-semibold">Cantidad</th>
-                                <th class="text-end small text-muted fw-semibold">P. Unitario Est.</th>
-                                <th class="text-center small text-muted fw-semibold">IVA%</th>
-                                <th class="text-end small text-muted fw-semibold">Total Est.</th>
+                                <th class="small text-muted fw-semibold" th:text="#{oc.det.col.tipo}">Tipo</th>
+                                <th class="small text-muted fw-semibold" th:text="#{oc.det.col.nombre}">Nombre</th>
+                                <th class="small text-muted fw-semibold" th:text="#{oc.det.col.descripcion}">Descripción</th>
+                                <th class="text-center small text-muted fw-semibold" th:text="#{oc.det.col.cantidad}">Cantidad</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{oc.det.col.precio}">P. Unitario Est.</th>
+                                <th class="text-center small text-muted fw-semibold" th:text="#{oc.det.col.iva}">IVA%</th>
+                                <th class="text-end small text-muted fw-semibold" th:text="#{oc.det.col.total}">Total Est.</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,12 +138,12 @@
                         </tbody>
                         <tfoot>
                             <tr th:if="${oc.totalEstimado > 0}" class="table-light">
-                                <td colspan="6" class="text-end small text-muted">Subtotal estimado:</td>
+                                <td colspan="6" class="text-end small text-muted" th:text="#{oc.det.subtotal}">Subtotal estimado:</td>
                                 <td class="text-end fw-semibold"
                                     th:text="${'$' + #numbers.formatDecimal(oc.subtotalEstimado,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
                             <tr th:if="${oc.totalEstimado > 0}" class="table-light">
-                                <td colspan="6" class="text-end fw-bold">Total estimado (con IVA):</td>
+                                <td colspan="6" class="text-end fw-bold" th:text="#{oc.det.total}">Total estimado (con IVA):</td>
                                 <td class="text-end fw-bold"
                                     th:text="${'$' + #numbers.formatDecimal(oc.totalEstimado,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
@@ -157,15 +157,15 @@
                 <th:block th:if="${oc.createdAt != null}">
                     <span>
                         <i class="bi bi-person-plus me-1"></i>
-                        Creado
-                        <span th:text="${#temporals.format(oc.createdAt,'dd/MM/yyyy HH:mm')} + ' por ' + ${oc.createdBy}">—</span>
+                        <span th:text="#{oc.det.audit.creado}">Creado</span>
+                        <span th:text="${#temporals.format(oc.createdAt,'dd/MM/yyyy HH:mm')} + ' ' + #{oc.det.audit.por} + ' ' + ${oc.createdBy}">—</span>
                     </span>
                 </th:block>
                 <th:block th:if="${oc.lastModifiedAt != null}">
                     <span>
                         <i class="bi bi-pencil me-1"></i>
-                        Últ. mod.
-                        <span th:text="${#temporals.format(oc.lastModifiedAt,'dd/MM/yyyy HH:mm')} + ' por ' + ${oc.lastModifiedBy}">—</span>
+                        <span th:text="#{oc.det.audit.mod}">Últ. mod.</span>
+                        <span th:text="${#temporals.format(oc.lastModifiedAt,'dd/MM/yyyy HH:mm')} + ' ' + #{oc.det.audit.por} + ' ' + ${oc.lastModifiedBy}">—</span>
                     </span>
                 </th:block>
             </div>
@@ -178,9 +178,9 @@
             <!-- Cambiar estado -->
             <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-arrow-repeat me-2"></i>CAMBIAR ESTADO
+                    <i class="bi bi-arrow-repeat me-2"></i><span th:text="#{oc.det.sec.estado}">CAMBIAR ESTADO</span>
                 </div>
-                <div th:if="${transicionesValidas.isEmpty()}" class="text-muted small">
+                <div th:if="${transicionesValidas.isEmpty()}" class="text-muted small" th:text="#{oc.det.estado.sin.transicion}">
                     No hay transiciones disponibles desde el estado actual.
                 </div>
                 <div th:unless="${transicionesValidas.isEmpty()}">
@@ -190,7 +190,7 @@
                                     th:value="${t.name()}"
                                     th:text="${t.displayName}"></option>
                         </select>
-                        <button type="submit" class="btn btn-sm btn-primary">
+                        <button type="submit" class="btn btn-sm btn-primary" th:text="#{action.apply}">
                             Aplicar
                         </button>
                     </form>
@@ -202,14 +202,14 @@
                  th:if="${oc.convertible}"
                  sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-receipt me-2"></i>GENERAR FACTURA
+                    <i class="bi bi-receipt me-2"></i><span th:text="#{oc.det.sec.factura}">GENERAR FACTURA</span>
                 </div>
-                <p class="small text-muted mb-3">
+                <p class="small text-muted mb-3" th:text="#{oc.det.convertir.desc}">
                     Esta orden fue recibida. Puedes convertirla en una factura de proveedor para registrar el costo real.
                 </p>
                 <form th:action="@{/ordenes-compra/{id}/convertir(id=${oc.id})}" method="post">
                     <button type="submit" class="btn btn-success btn-sm w-100">
-                        <i class="bi bi-receipt me-1"></i>Convertir a Factura
+                        <i class="bi bi-receipt me-1"></i><span th:text="#{oc.det.btn.convertir}">Convertir a Factura</span>
                     </button>
                 </form>
             </div>
@@ -217,31 +217,31 @@
             <!-- Ver factura generada -->
             <div class="content-card mb-3" th:if="${oc.facturaId != null}">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-receipt-cutoff me-2"></i>FACTURA ASOCIADA
+                    <i class="bi bi-receipt-cutoff me-2"></i><span th:text="#{oc.det.sec.factura.asoc}">FACTURA ASOCIADA</span>
                 </div>
                 <a th:href="@{/facturas/ver/{id}(id=${oc.facturaId})}"
                    class="btn btn-sm btn-outline-secondary w-100">
-                    <i class="bi bi-box-arrow-up-right me-1"></i>Ver Factura →
+                    <i class="bi bi-box-arrow-up-right me-1"></i><span th:text="#{oc.det.btn.ver.factura}">Ver Factura →</span>
                 </a>
             </div>
 
             <!-- Acciones rápidas -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-lightning me-2"></i>ACCIONES
+                    <i class="bi bi-lightning me-2"></i><span th:text="#{oc.det.sec.acciones}">ACCIONES</span>
                 </div>
                 <div class="d-grid gap-2">
                     <a th:href="@{/ordenes-compra/{id}/pdf(id=${oc.id})}"
                        class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-file-pdf me-1"></i>Descargar PDF
+                        <i class="bi bi-file-pdf me-1"></i><span th:text="#{oc.det.btn.pdf}">Descargar PDF</span>
                     </a>
                     <a th:if="${oc.editable}"
                        th:href="@{/ordenes-compra/editar/{id}(id=${oc.id})}"
                        class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil me-1"></i>Editar OC
+                        <i class="bi bi-pencil me-1"></i><span th:text="#{oc.det.btn.editar}">Editar OC</span>
                     </a>
                     <a th:href="@{/ordenes-compra}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-arrow-left me-1"></i>Volver a la lista
+                        <i class="bi bi-arrow-left me-1"></i><span th:text="#{oc.det.btn.volver}">Volver a la lista</span>
                     </a>
                 </div>
             </div>
@@ -251,11 +251,11 @@
                  th:if="${oc.editable or oc.estado.name() == 'CANCELADA'}"
                  sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
-                    <i class="bi bi-exclamation-triangle me-2"></i>ZONA DE PELIGRO
+                    <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{oc.det.sec.peligro}">ZONA DE PELIGRO</span>
                 </div>
                 <form th:action="@{/ordenes-compra/{id}/eliminar(id=${oc.id})}" method="post">
-                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" data-confirm="¿Eliminar esta orden de compra? Esta acción no se puede deshacer.">
-                        <i class="bi bi-trash me-1"></i>Eliminar OC
+                    <button type="submit" class="btn btn-sm btn-outline-danger w-100" th:attr="data-confirm=#{oc.det.confirm.del}">
+                        <i class="bi bi-trash me-1"></i><span th:text="#{oc.det.btn.eliminar}">Eliminar OC</span>
                     </button>
                 </form>
             </div>

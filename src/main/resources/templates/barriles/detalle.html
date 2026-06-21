@@ -42,10 +42,10 @@
             <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
                class="btn btn-sm btn-outline-secondary"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/barriles}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -58,19 +58,19 @@
             <!-- Datos del barril -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-info-circle me-2"></i>INFORMACIÓN DEL BARRIL
+                    <i class="bi bi-info-circle me-2"></i><span th:text="#{barriles.det.sec.info}">INFORMACIÓN DEL BARRIL</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Código</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.codigo}">Código</div>
                         <div class="fw-semibold" th:text="${barril.codigo}">—</div>
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Tipo</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.tipo}">Tipo</div>
                         <div class="fw-semibold" th:text="${barril.tipo ?: '—'}">—</div>
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Capacidad</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.capacidad}">Capacidad</div>
                         <div class="fw-semibold">
                             <span th:if="${barril.capacidadLitros != null}"
                                   th:text="${barril.capacidadLitros.stripTrailingZeros().toPlainString()} + ' L'">—</span>
@@ -78,7 +78,7 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Lote asociado</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.lote}">Lote asociado</div>
                         <div class="fw-semibold">
                             <span th:if="${barril.codigoLote != null}">
                                 <a th:href="@{/ver/{id}(id=${barril.loteId})}"
@@ -92,11 +92,11 @@
                         </div>
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Cliente / Destino</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.cliente}">Cliente / Destino</div>
                         <div class="fw-semibold" th:text="${barril.clienteNombre ?: '—'}">—</div>
                     </div>
                     <div class="col-sm-6 col-md-4">
-                        <div class="small text-muted">Fecha de despacho</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.despacho}">Fecha de despacho</div>
                         <div class="fw-semibold">
                             <span th:if="${barril.fechaDespacho != null}"
                                   th:text="${#temporals.format(barril.fechaDespacho,'dd/MM/yyyy')}">—</span>
@@ -104,7 +104,7 @@
                         </div>
                     </div>
                     <div class="col-12" th:if="${barril.observaciones != null}">
-                        <div class="small text-muted">Observaciones</div>
+                        <div class="small text-muted" th:text="#{barriles.det.field.obs}">Observaciones</div>
                         <div class="small" th:text="${barril.observaciones}">—</div>
                     </div>
                 </div>
@@ -113,21 +113,21 @@
             <!-- Historial de movimientos -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-clock-history me-2"></i>HISTORIAL DE MOVIMIENTOS
+                    <i class="bi bi-clock-history me-2"></i><span th:text="#{barriles.det.sec.historial}">HISTORIAL DE MOVIMIENTOS</span>
                 </div>
                 <div th:if="${#lists.isEmpty(movimientos)}" class="text-muted text-center py-4">
                     <i class="bi bi-inbox fs-3 d-block mb-2"></i>
-                    Sin movimientos registrados.
+                    <span th:text="#{barriles.det.historial.empty}">Sin movimientos registrados.</span>
                 </div>
                 <div th:unless="${#lists.isEmpty(movimientos)}" class="table-responsive">
                     <table class="table table-sm mb-0">
                         <thead>
                             <tr>
-                                <th>Fecha</th>
-                                <th>Estado anterior</th>
-                                <th>Estado nuevo</th>
-                                <th>Usuario</th>
-                                <th>Notas</th>
+                                <th th:text="#{barriles.det.col.fecha}">Fecha</th>
+                                <th th:text="#{barriles.det.col.estado.ant}">Estado anterior</th>
+                                <th th:text="#{barriles.det.col.estado.nuevo}">Estado nuevo</th>
+                                <th th:text="#{barriles.det.col.usuario}">Usuario</th>
+                                <th th:text="#{barriles.det.col.notas}">Notas</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -137,7 +137,7 @@
                                     <span th:if="${mov.estadoAnterior != null}"
                                           class="badge" th:classappend="${mov.estadoAnterior.badgeClass}"
                                           th:text="${mov.estadoAnterior.displayName}">—</span>
-                                    <span th:if="${mov.estadoAnterior == null}" class="badge bg-light text-dark">Nuevo</span>
+                                    <span th:if="${mov.estadoAnterior == null}" class="badge bg-light text-dark" th:text="#{barriles.det.estado.nuevo}">Nuevo</span>
                                 </td>
                                 <td>
                                     <span class="badge" th:classappend="${mov.estadoNuevo.badgeClass}"
@@ -159,12 +159,12 @@
             <!-- Cambiar estado -->
             <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-arrow-left-right me-2"></i>CAMBIAR ESTADO
+                    <i class="bi bi-arrow-left-right me-2"></i><span th:text="#{barriles.det.sec.estado}">CAMBIAR ESTADO</span>
                 </div>
                 <form th:action="@{/barriles/{id}/estado(id=${barril.id})}" method="post">
                     <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                     <div class="mb-3">
-                        <label for="nuevoEstado" class="form-label small fw-semibold">Nuevo estado</label>
+                        <label for="nuevoEstado" class="form-label small fw-semibold" th:text="#{barriles.det.nuevo.estado}">Nuevo estado</label>
                         <select id="nuevoEstado" name="estado" class="form-select form-select-sm">
                             <option th:each="est : ${estados}"
                                     th:value="${est.name()}"
@@ -173,12 +173,12 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="notas" class="form-label small fw-semibold">Notas (opcional)</label>
+                        <label for="notas" class="form-label small fw-semibold" th:text="#{barriles.det.notas.label}">Notas (opcional)</label>
                         <textarea id="notas" name="notas" class="form-control form-control-sm" rows="2"
-                                  placeholder="Motivo del cambio..."></textarea>
+                                  th:placeholder="#{barriles.det.notas.ph}"></textarea>
                     </div>
                     <button type="submit" class="btn btn-sm btn-primary w-100">
-                        <i class="bi bi-arrow-left-right me-1"></i>Actualizar estado
+                        <i class="bi bi-arrow-left-right me-1"></i><span th:text="#{barriles.det.btn.actualizar}">Actualizar estado</span>
                     </button>
                 </form>
             </div>
@@ -186,19 +186,19 @@
             <!-- Registro de auditoría -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-card-text me-2"></i>REGISTRO
+                    <i class="bi bi-card-text me-2"></i><span th:text="#{barriles.det.sec.registro}">REGISTRO</span>
                 </div>
                 <div class="mb-2">
-                    <div class="small text-muted">Creado</div>
+                    <div class="small text-muted" th:text="#{barriles.det.reg.creado}">Creado</div>
                     <div class="small fw-semibold">
                         <span th:if="${barril.createdAt != null}"
                               th:text="${#temporals.format(barril.createdAt,'dd/MM/yyyy HH:mm')}">—</span>
                         <span th:if="${barril.createdBy != null}" class="text-muted ms-1"
-                              th:text="'por ' + ${barril.createdBy}">—</span>
+                              th:text="#{barriles.det.reg.por} + ' ' + ${barril.createdBy}">—</span>
                     </div>
                 </div>
                 <div>
-                    <div class="small text-muted">Modificado</div>
+                    <div class="small text-muted" th:text="#{barriles.det.reg.modificado}">Modificado</div>
                     <div class="small fw-semibold">
                         <span th:if="${barril.lastModifiedAt != null}"
                               th:text="${#temporals.format(barril.lastModifiedAt,'dd/MM/yyyy HH:mm')}">—</span>
@@ -211,14 +211,14 @@
             <div class="content-card mb-3" style="border-color:#fecaca;"
                  sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
-                    <i class="bi bi-exclamation-triangle me-2"></i>ZONA DE PELIGRO
+                    <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{barriles.det.sec.peligro}">ZONA DE PELIGRO</span>
                 </div>
-                <p class="small text-muted mb-3">Esta acción no se puede deshacer.</p>
+                <p class="small text-muted mb-3" th:text="#{barriles.det.peligro.warning}">Esta acción no se puede deshacer.</p>
                 <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post">
                     <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                     <button type="submit" class="btn btn-sm btn-outline-danger w-100"
-                            th:attr="data-confirm=|¿Eliminar el barril ${barril.codigo}? Esta acción no se puede deshacer.|">
-                        <i class="bi bi-trash me-1"></i>Eliminar barril
+                            th:attr="data-confirm=|#{barriles.det.confirm.prefix} ${barril.codigo}? #{barriles.det.peligro.warning}|">
+                        <i class="bi bi-trash me-1"></i><span th:text="#{barriles.det.btn.eliminar}">Eliminar barril</span>
                     </button>
                 </form>
             </div>

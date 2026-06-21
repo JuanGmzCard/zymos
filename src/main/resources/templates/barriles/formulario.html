@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + (${barril.id != null} ? ' - Editar Barril' : ' - Nuevo Barril')">Alera - Barril</title>
+    <title th:text="${branding.name} + ' - ' + (${barril.id != null} ? #{barriles.form.title.editar} : #{barriles.form.title.nuevo})">Alera - Barril</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -18,17 +18,17 @@
         <div>
             <h1>
                 <i class="bi bi-bucket me-2"></i>
-                <span th:text="${barril.id != null} ? 'Editar Barril' : 'Registrar Barril'">Barril</span>
+                <span th:text="${barril.id != null} ? #{barriles.form.title.editar} : #{barriles.form.title.nuevo}">Barril</span>
             </h1>
             <p class="subtitle mb-0"
-               th:text="${barril.id != null} ? 'Modifica los datos del barril ' + ${barril.codigo} : 'Ingresa los datos del nuevo barril'">
+               th:text="${barril.id != null} ? #{barriles.form.sub.editar} + ' ' + ${barril.codigo} : #{barriles.form.sub.nuevo}">
                 Gestión de barriles
             </p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="${barril.id != null} ? @{/barriles/ver/{id}(id=${barril.id})} : @{/barriles}"
                class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.cancel}">Cancelar</span>
             </a>
         </div>
     </div>
@@ -42,25 +42,25 @@
 
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-info-circle me-2"></i>DATOS DEL BARRIL
+                        <i class="bi bi-info-circle me-2"></i><span th:text="#{barriles.form.sec.datos}">DATOS DEL BARRIL</span>
                     </div>
 
                     <div class="row g-3 mb-4">
 
                         <div class="col-md-4">
-                            <label for="codigo" class="form-label">Código <span class="text-danger">*</span></label>
+                            <label for="codigo" class="form-label"><span th:text="#{barriles.form.codigo}">Código</span> <span class="text-danger">*</span></label>
                             <input type="text" id="codigo" name="codigo" class="form-control"
                                    th:value="*{codigo}" th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'"
-                                   placeholder="Ej: KEG-001" required>
+                                   th:placeholder="#{barriles.form.codigo.ph}" required>
                             <div class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}"
                                  th:errors="*{codigo}">Error</div>
-                            <div class="form-text">Código único para identificar el barril</div>
+                            <div class="form-text" th:text="#{barriles.form.codigo.hint}">Código único para identificar el barril</div>
                         </div>
 
                         <div class="col-md-4">
-                            <label for="tipo" class="form-label">Tipo</label>
+                            <label for="tipo" class="form-label" th:text="#{barriles.form.tipo}">Tipo</label>
                             <select id="tipo" name="tipo" class="form-select">
-                                <option value="">— Sin especificar —</option>
+                                <option value="" th:text="#{clientes.form.regimen.sin}">— Sin especificar —</option>
                                 <option th:each="t : ${tiposBarril}"
                                         th:value="${t}"
                                         th:text="${t}"
@@ -69,7 +69,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="capacidadLitros" class="form-label">Capacidad (L)</label>
+                            <label for="capacidadLitros" class="form-label" th:text="#{barriles.form.capacidad}">Capacidad (L)</label>
                             <input type="number" id="capacidadLitros" name="capacidadLitros"
                                    class="form-control" step="0.5" min="1" max="999"
                                    th:value="${barril.capacidadLitros != null ? barril.capacidadLitros.stripTrailingZeros().toPlainString() : ''}"
@@ -77,7 +77,7 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="estado" class="form-label">Estado</label>
+                            <label for="estado" class="form-label" th:text="#{barriles.form.estado}">Estado</label>
                             <select id="estado" name="estado" class="form-select">
                                 <option th:each="est : ${estados}"
                                         th:value="${est.name()}"
@@ -87,30 +87,30 @@
                         </div>
 
                         <div class="col-md-4">
-                            <label for="codigoLote" class="form-label">Lote asociado</label>
+                            <label for="codigoLote" class="form-label" th:text="#{barriles.form.lote}">Lote asociado</label>
                             <input type="text" id="codigoLote" name="codigoLote" class="form-control"
                                    th:value="*{codigoLote}"
-                                   placeholder="Ej: IPA-003" autocomplete="off">
-                            <div class="form-text">Código del lote de cerveza cargado</div>
+                                   th:placeholder="#{barriles.form.lote.ph}" autocomplete="off">
+                            <div class="form-text" th:text="#{barriles.form.lote.hint}">Código del lote de cerveza cargado</div>
                         </div>
 
                         <div class="col-md-4">
-                            <label for="clienteNombre" class="form-label">Cliente / Destino</label>
+                            <label for="clienteNombre" class="form-label" th:text="#{barriles.form.cliente}">Cliente / Destino</label>
                             <input type="text" id="clienteNombre" name="clienteNombre" class="form-control"
                                    th:value="*{clienteNombre}"
-                                   placeholder="Nombre del cliente">
+                                   th:placeholder="#{barriles.form.cliente.ph}">
                         </div>
 
                         <div class="col-md-4">
-                            <label for="fechaDespacho" class="form-label">Fecha de despacho</label>
+                            <label for="fechaDespacho" class="form-label" th:text="#{barriles.form.fecha.despacho}">Fecha de despacho</label>
                             <input type="date" id="fechaDespacho" name="fechaDespacho" class="form-control"
                                    th:value="${barril.fechaDespacho != null ? #temporals.format(barril.fechaDespacho,'yyyy-MM-dd') : ''}">
                         </div>
 
                         <div class="col-12">
-                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <label for="observaciones" class="form-label" th:text="#{barriles.form.observaciones}">Observaciones</label>
                             <textarea id="observaciones" name="observaciones" class="form-control" rows="3"
-                                      placeholder="Estado físico, daños, notas de mantenimiento..."
+                                      th:placeholder="#{barriles.form.obs.ph}"
                                       th:text="*{observaciones}"></textarea>
                         </div>
 
@@ -119,11 +119,11 @@
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-floppy me-1"></i>
-                            <span th:text="${barril.id != null} ? 'Guardar cambios' : 'Registrar barril'">Guardar</span>
+                            <span th:text="${barril.id != null} ? #{barriles.form.btn.guardar} : #{barriles.form.btn.registrar}">Guardar</span>
                         </button>
                         <a th:href="${barril.id != null} ? @{/barriles/ver/{id}(id=${barril.id})} : @{/barriles}"
                            class="btn btn-outline-secondary">
-                            <i class="bi bi-x me-1"></i>Cancelar
+                            <i class="bi bi-x me-1"></i><span th:text="#{action.cancel}">Cancelar</span>
                         </a>
                     </div>
 

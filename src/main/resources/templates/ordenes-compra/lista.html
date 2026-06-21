@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title th:text="${branding.name} + ' - Órdenes de Compra'">Zymos - Órdenes de Compra</title>
+    <title th:text="${branding.name} + ' - ' + #{oc.title}">Zymos - Órdenes de Compra</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -155,13 +155,13 @@
     <!-- Cabecera de página -->
     <div class="page-header d-flex justify-content-between align-items-start">
         <div>
-            <h1><i class="bi bi-cart-check me-2"></i>Órdenes de Compra</h1>
-            <p class="subtitle mb-0">Gestión de órdenes a proveedores</p>
+            <h1><i class="bi bi-cart-check me-2"></i><span th:text="#{oc.lista.h1}">Órdenes de Compra</span></h1>
+            <p class="subtitle mb-0" th:text="#{oc.lista.subtitle}">Gestión de órdenes a proveedores</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/ordenes-compra/nueva}" class="btn btn-primary btn-sm"
                sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
-                <i class="bi bi-plus-lg me-1"></i>Nueva OC
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{oc.action.nueva}">Nueva OC</span>
             </a>
         </div>
     </div>
@@ -177,19 +177,19 @@
     <!-- Stat-cards -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         <div class="stat-card-simple">
-            <div class="stat-label">Total OC</div>
+            <div class="stat-label" th:text="#{oc.stat.total}">Total OC</div>
             <div class="stat-value" th:text="${statsTotal}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Borrador</div>
+            <div class="stat-label" th:text="#{oc.stat.borrador}">Borrador</div>
             <div class="stat-value warning" th:text="${statsBorrador}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Enviadas</div>
+            <div class="stat-label" th:text="#{oc.stat.enviadas}">Enviadas</div>
             <div class="stat-value" th:text="${statsEnviadas}">0</div>
         </div>
         <div class="stat-card-simple">
-            <div class="stat-label">Recibidas</div>
+            <div class="stat-label" th:text="#{oc.stat.recibidas}">Recibidas</div>
             <div class="stat-value success" th:text="${statsRecibidas}">0</div>
         </div>
     </div>
@@ -200,7 +200,7 @@
             <div class="col-auto">
                 <select name="estado" class="form-select form-select-sm" style="width:auto"
                         data-auto-submit="true">
-                    <option value="" th:selected="${estadoFiltro == null}">Todos los estados</option>
+                    <option value="" th:selected="${estadoFiltro == null}" th:text="#{oc.filter.todos}">Todos los estados</option>
                     <option th:each="e : ${estados}" th:value="${e.name()}"
                             th:text="${e.displayName}"
                             th:selected="${estadoFiltro != null and estadoFiltro == e}"></option>
@@ -209,14 +209,13 @@
             <div class="col-auto">
                 <a th:if="${estadoFiltro != null}"
                    th:href="@{/ordenes-compra}"
-                   class="btn btn-outline-secondary btn-sm">Limpiar</a>
+                   class="btn btn-outline-secondary btn-sm" th:text="#{action.limpiar}">Limpiar</a>
             </div>
         </form>
         <div class="d-flex gap-2 flex-wrap align-items-center">
             <a th:href="@{/ordenes-compra}"
-               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'">
-                Todos
-            </a>
+               th:classappend="${estadoFiltro == null} ? 'filter-tab active' : 'filter-tab inactive'"
+               th:text="#{filter.todos}">Todos</a>
             <a th:each="e : ${estados}"
                th:href="@{/ordenes-compra(estado=${e.name()})}"
                th:classappend="${estadoFiltro == e} ? 'filter-tab active' : 'filter-tab inactive'"
@@ -227,13 +226,15 @@
     <!-- Tabla -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span th:text="${ordenes.totalElements}">0</span> órdenes de compra
+            <span th:text="${ordenes.totalElements}">0</span> <span th:text="#{oc.count}">órdenes de compra</span>
         </div>
 
         <div th:if="${ordenes.isEmpty()}" class="text-center py-5 text-muted">
             <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
-            <p>No hay órdenes de compra
-                <th:block th:if="${estadoFiltro != null}"> con estado "<span th:text="${estadoFiltro.displayName}"></span>"</th:block>.
+            <p th:if="${estadoFiltro == null}" th:text="#{oc.empty}">No hay órdenes de compra.</p>
+            <p th:if="${estadoFiltro != null}">
+                <span th:text="#{oc.empty.filter.prefix}">No hay órdenes de compra con estado</span>
+                "<span th:text="${estadoFiltro.displayName}"></span>".
             </p>
         </div>
 
@@ -241,13 +242,13 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th style="padding-left:1.25rem;">N° OC</th>
-                    <th>Proveedor</th>
-                    <th>F. Emisión</th>
-                    <th>F. Requerida</th>
-                    <th class="text-center">Estado</th>
-                    <th class="text-center d-none d-md-table-cell">Ítems</th>
-                    <th class="text-end d-none d-lg-table-cell">Total Est.</th>
+                    <th style="padding-left:1.25rem;" th:text="#{oc.col.numero}">N° OC</th>
+                    <th th:text="#{oc.col.proveedor}">Proveedor</th>
+                    <th th:text="#{oc.col.femision}">F. Emisión</th>
+                    <th th:text="#{oc.col.frequerida}">F. Requerida</th>
+                    <th class="text-center" th:text="#{traz.table.estado}">Estado</th>
+                    <th class="text-center d-none d-md-table-cell" th:text="#{oc.col.items}">Ítems</th>
+                    <th class="text-end d-none d-lg-table-cell" th:text="#{oc.col.total}">Total Est.</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -257,7 +258,7 @@
                         <a th:href="@{/ordenes-compra/ver/{id}(id=${oc.id})}"
                            class="text-decoration-none"
                            style="color:var(--verde-zymos, #2563eb);"
-                           th:text="${oc.numeroOc != null ? oc.numeroOc : 'Sin número'}">OC-001</a>
+                           th:text="${oc.numeroOc != null ? oc.numeroOc : #{oc.sin.numero}}">OC-001</a>
                     </td>
                     <td th:text="${oc.proveedor != null ? oc.proveedor : '—'}">Proveedor</td>
                     <td th:text="${oc.fechaEmision != null ? #temporals.format(oc.fechaEmision,'dd/MM/yyyy') : '—'}"></td>
@@ -271,11 +272,11 @@
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/ordenes-compra/ver/{id}(id=${oc.id})}"
-                           class="action-link view" title="Ver detalle">Ver</a>
+                           class="action-link view" th:text="#{action.ver}">Ver</a>
                         <span class="action-sep" th:if="${oc.editable}">·</span>
                         <a th:if="${oc.editable}"
                            th:href="@{/ordenes-compra/editar/{id}(id=${oc.id})}"
-                           class="action-link edit" title="Editar">Editar</a>
+                           class="action-link edit" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/ordenes-compra/{id}/pdf(id=${oc.id})}"
                            class="action-link edit" title="Descargar PDF">
