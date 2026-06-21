@@ -53,12 +53,12 @@
                     <label class="form-label" for="unidad" th:text="#{inv.form.label.unidad}">Unidad</label>
                     <select id="unidad" th:field="*{unidad}" class="form-select">
                         <option value="" th:text="#{label.select}">-- Seleccionar --</option>
-                        <option value="gr">gr — gramos</option>
-                        <option value="kg">kg — kilogramos</option>
-                        <option value="mL">mL — mililitros</option>
-                        <option value="L">L — litros</option>
-                        <option value="gal">gal — galones</option>
-                        <option value="und">und — unidades</option>
+                        <option value="gr" th:text="#{label.unidad.gr}">gr — gramos</option>
+                        <option value="kg" th:text="#{label.unidad.kg}">kg — kilogramos</option>
+                        <option value="mL" th:text="#{label.unidad.ml}">mL — mililitros</option>
+                        <option value="L" th:text="#{label.unidad.l}">L — litros</option>
+                        <option value="gal" th:text="#{label.unidad.gal}">gal — galones</option>
+                        <option value="und" th:text="#{label.unidad.und}">und — unidades</option>
                     </select>
                 </div>
             </div>

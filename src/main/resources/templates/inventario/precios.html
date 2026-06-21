@@ -76,7 +76,7 @@
                              th:text="'$' + ${#numbers.formatDecimal(precioUltimo,1,'COMMA',0,'POINT')}">—</div>
                         <div class="stat-label"
                              th:if="${historial[0].unidad != null}"
-                             th:text="'por ' + ${historial[0].unidad}">—</div>
+                             th:text="#{inv.prec.por.unidad} + ' ' + ${historial[0].unidad}">—</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -187,6 +187,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
 /*<![CDATA[*/
+var INV_PREC_MSG = {
+    puLabel:   /*[[#{inv.prec.js.pu.label}]]*/ 'Precio unitario ($)',
+    proveedor: /*[[#{inv.prec.js.proveedor}]]*/ 'Proveedor'
+};
 (function () {
     var canvas = document.getElementById('chartPrecios');
     if (!canvas) return;
@@ -205,7 +209,7 @@
         data: {
             labels: fechas,
             datasets: [{
-                label: 'Precio unitario ($)',
+                label: INV_PREC_MSG.puLabel,
                 data: precios,
                 backgroundColor: dorado + 'bb',
                 borderColor: dorado,
@@ -224,7 +228,7 @@
                         label: function(ctx) {
                             var p = proveedores[ctx.dataIndex] || '';
                             return ['$' + ctx.raw.toLocaleString('es-AR', {minimumFractionDigits:2}),
-                                    p ? 'Proveedor: ' + p : ''];
+                                    p ? INV_PREC_MSG.proveedor + ': ' + p : ''];
                         }
                     }
                 }
@@ -232,7 +236,7 @@
             scales: {
                 y: {
                     beginAtZero: false,
-                    title: { display: true, text: 'Precio unitario ($)' },
+                    title: { display: true, text: INV_PREC_MSG.puLabel },
                     ticks: {
                         callback: function(v) {
                             return '$' + v.toLocaleString('es-AR');

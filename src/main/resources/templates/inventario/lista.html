@@ -196,7 +196,7 @@
         <form th:action="@{/inventario}" method="get" class="d-flex gap-2 flex-wrap align-items-center mb-3">
             <div class="position-relative">
                 <input type="text" name="nombre" id="insumoNombreInput" class="form-control form-control-sm"
-                       style="width:220px;" placeholder="Buscar por nombre..."
+                       style="width:220px;" th:placeholder="#{inv.filter.buscar}"
                        th:value="${nombreFiltro}" autocomplete="off">
                 <div id="insumoSuggest" class="search-suggest" style="display:none;"></div>
             </div>
