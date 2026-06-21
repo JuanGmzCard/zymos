@@ -20,13 +20,13 @@
         <div>
             <h1 th:text="${cliente.nombre}">Cliente</h1>
             <p class="subtitle mb-0">
-                <span th:if="${cliente.activo}" class="badge bg-success me-2">Activo</span>
-                <span th:if="${!cliente.activo}" class="badge bg-secondary me-2">Inactivo</span>
+                <span th:if="${cliente.activo}" class="badge bg-success me-2" th:text="#{clientes.det.activo}">Activo</span>
+                <span th:if="${!cliente.activo}" class="badge bg-secondary me-2" th:text="#{clientes.det.inactivo}">Inactivo</span>
                 <span th:if="${cliente.listaPrecio != null}"
                       class="badge bg-light text-dark border me-2"
                       th:text="${cliente.listaPrecio.displayName}">—</span>
                 <span th:if="${cliente.nit != null}">
-                    <i class="bi bi-card-text me-1"></i>NIT: <span th:text="${cliente.nit}"></span>
+                    <i class="bi bi-card-text me-1"></i><span th:text="#{clientes.det.nit.prefix}">NIT:</span> <span th:text="${cliente.nit}"></span>
                 </span>
             </p>
             <p class="subtitle mb-0 mt-1"
@@ -35,13 +35,13 @@
         </div>
         <div class="d-flex gap-2 pt-1 flex-wrap" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
             <a th:href="@{/ventas/nuevo}" class="btn btn-sm btn-primary">
-                <i class="bi bi-bag-plus me-1"></i>Nueva Venta
+                <i class="bi bi-bag-plus me-1"></i><span th:text="#{clientes.det.nueva.venta}">Nueva Venta</span>
             </a>
             <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-pencil me-1"></i>Editar
+                <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/clientes}" class="btn btn-sm btn-outline-secondary">
-                <i class="bi bi-arrow-left me-1"></i>Volver
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
             </a>
         </div>
     </div>
@@ -54,29 +54,29 @@
             <!-- Identificación fiscal -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-building me-2"></i>IDENTIFICACIÓN FISCAL
+                    <i class="bi bi-building me-2"></i><span th:text="#{clientes.det.sec.identificacion}">IDENTIFICACIÓN FISCAL</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <div class="small text-muted">Nombre comercial</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.nombre}">Nombre comercial</div>
                         <div class="fw-semibold" th:text="${cliente.nombre}">—</div>
                     </div>
                     <div th:if="${cliente.razonSocial != null and !cliente.razonSocial.isBlank()}"
                          class="col-md-6">
-                        <div class="small text-muted">Razón Social</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.razon.social}">Razón Social</div>
                         <div class="fw-semibold" th:text="${cliente.razonSocial}">—</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-muted">NIT / Cédula</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.nit}">NIT / Cédula</div>
                         <div class="fw-semibold" th:text="${cliente.nit ?: '—'}">—</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-muted">Régimen Tributario</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.regimen}">Régimen Tributario</div>
                         <div class="fw-semibold"
                              th:text="${cliente.regimenTributario != null} ? ${cliente.regimenTributario.displayName} : '—'">—</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="small text-muted">Lista de Precio</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.lista}">Lista de Precio</div>
                         <div>
                             <span th:if="${cliente.listaPrecio != null}"
                                   class="badge bg-light text-dark border"
@@ -90,28 +90,28 @@
             <!-- Contacto y ubicación -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-envelope me-2"></i>CONTACTO Y UBICACIÓN
+                    <i class="bi bi-envelope me-2"></i><span th:text="#{clientes.det.sec.contacto}">CONTACTO Y UBICACIÓN</span>
                 </div>
                 <div class="row g-3">
                     <div class="col-md-6" th:if="${cliente.email != null and !cliente.email.isBlank()}">
-                        <div class="small text-muted">Email</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.email}">Email</div>
                         <div class="fw-semibold">
                             <a th:href="'mailto:' + ${cliente.email}" th:text="${cliente.email}"
                                class="text-decoration-none" style="color:var(--verde-zymos,#2563eb);">—</a>
                         </div>
                     </div>
                     <div class="col-md-6" th:if="${cliente.telefono != null and !cliente.telefono.isBlank()}">
-                        <div class="small text-muted">Teléfono</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.telefono}">Teléfono</div>
                         <div class="fw-semibold" th:text="${cliente.telefono}">—</div>
                     </div>
                     <div class="col-md-8"
                          th:if="${cliente.direccionDespacho != null and !cliente.direccionDespacho.isBlank()}">
-                        <div class="small text-muted">Dirección de Despacho</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.direccion}">Dirección de Despacho</div>
                         <div class="fw-semibold" th:text="${cliente.direccionDespacho}">—</div>
                     </div>
                     <div class="col-md-4"
                          th:if="${cliente.ciudad != null or cliente.departamento != null}">
-                        <div class="small text-muted">Ciudad / Departamento</div>
+                        <div class="small text-muted" th:text="#{clientes.det.field.ciudad.dep}">Ciudad / Departamento</div>
                         <div class="fw-semibold">
                             <span th:if="${cliente.ciudad != null}" th:text="${cliente.ciudad}"></span>
                             <span th:if="${cliente.ciudad != null and cliente.departamento != null}">, </span>
@@ -125,7 +125,7 @@
             <div class="content-card mb-3"
                  th:if="${cliente.notas != null and !cliente.notas.isBlank()}">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-sticky me-2"></i>NOTAS INTERNAS
+                    <i class="bi bi-sticky me-2"></i><span th:text="#{clientes.det.sec.notas}">NOTAS INTERNAS</span>
                 </div>
                 <p class="small mb-0" th:text="${cliente.notas}">—</p>
             </div>
@@ -138,19 +138,19 @@
             <!-- Acciones -->
             <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-gear me-2"></i>ACCIONES
+                    <i class="bi bi-gear me-2"></i><span th:text="#{clientes.det.sec.acciones}">ACCIONES</span>
                 </div>
                 <div class="d-flex flex-column gap-2">
                     <a th:href="@{/ventas/nuevo}" class="btn btn-sm btn-primary">
-                        <i class="bi bi-bag-plus me-1"></i>Registrar Venta
+                        <i class="bi bi-bag-plus me-1"></i><span th:text="#{clientes.det.acciones.registrar}">Registrar Venta</span>
                     </a>
                     <a th:href="@{/clientes/editar/{id}(id=${cliente.id})}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil me-1"></i>Editar datos
+                        <i class="bi bi-pencil me-1"></i><span th:text="#{clientes.det.acciones.editar}">Editar datos</span>
                     </a>
                     <form th:action="@{/clientes/{id}/toggle(id=${cliente.id})}" method="post">
                         <button type="submit" class="btn btn-sm w-100"
                                 th:classappend="${cliente.activo} ? 'btn-outline-warning' : 'btn-outline-success'"
-                                th:text="${cliente.activo} ? 'Desactivar cliente' : 'Activar cliente'">—</button>
+                                th:text="${cliente.activo} ? #{clientes.det.acciones.desactivar} : #{clientes.det.acciones.activar}">—</button>
                     </form>
                 </div>
             </div>
@@ -158,20 +158,20 @@
             <!-- Registro de auditoría -->
             <div class="content-card mb-3">
                 <div class="content-card-title pb-2 mb-3">
-                    <i class="bi bi-clock-history me-2"></i>REGISTRO
+                    <i class="bi bi-clock-history me-2"></i><span th:text="#{clientes.det.sec.registro}">REGISTRO</span>
                 </div>
                 <div th:if="${cliente.createdAt != null}" class="mb-2">
-                    <div class="small text-muted">Creado por</div>
+                    <div class="small text-muted" th:text="#{clientes.det.reg.creado}">Creado por</div>
                     <div class="small fw-semibold">
                         <span th:text="${cliente.createdBy ?: 'sistema'}"></span>
-                        el <span th:text="${#temporals.format(cliente.createdAt,'dd/MM/yyyy')}"></span>
+                        <span th:text="#{clientes.det.reg.el}">el</span> <span th:text="${#temporals.format(cliente.createdAt,'dd/MM/yyyy')}"></span>
                     </div>
                 </div>
                 <div th:if="${cliente.lastModifiedAt != null}">
-                    <div class="small text-muted">Última modificación</div>
+                    <div class="small text-muted" th:text="#{clientes.det.reg.modificado}">Última modificación</div>
                     <div class="small fw-semibold">
                         <span th:text="${cliente.lastModifiedBy ?: 'sistema'}"></span>
-                        el <span th:text="${#temporals.format(cliente.lastModifiedAt,'dd/MM/yyyy')}"></span>
+                        <span th:text="#{clientes.det.reg.el}">el</span> <span th:text="${#temporals.format(cliente.lastModifiedAt,'dd/MM/yyyy')}"></span>
                     </div>
                 </div>
             </div>

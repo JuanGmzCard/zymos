@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + (${cliente.id != null} ? ' - Editar Cliente' : ' - Nuevo Cliente')">Alera - Cliente</title>
+    <title th:text="${branding.name} + ' - ' + (${cliente.id != null} ? #{clientes.form.title.editar} : #{clientes.form.title.nuevo})">Alera - Cliente</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -18,13 +18,13 @@
         <div>
             <h1>
                 <i class="bi bi-person-vcard me-2"></i>
-                <span th:text="${cliente.id != null} ? 'Editar Cliente' : 'Nuevo Cliente'">Nuevo Cliente</span>
+                <span th:text="${cliente.id != null} ? #{clientes.form.title.editar} : #{clientes.form.title.nuevo}">Nuevo Cliente</span>
             </h1>
-            <p class="subtitle mb-0">Registra los datos fiscales y de contacto del cliente</p>
+            <p class="subtitle mb-0" th:text="#{clientes.form.subtitle}">Registra los datos fiscales y de contacto del cliente</p>
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/clientes}" class="btn btn-outline-secondary btn-sm">
-                <i class="bi bi-arrow-left me-1"></i>Cancelar
+                <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.cancel}">Cancelar</span>
             </a>
         </div>
     </div>
@@ -38,25 +38,25 @@
                 <!-- ─── Identificación ─────────────────────── -->
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-building me-2"></i>IDENTIFICACIÓN
+                        <i class="bi bi-building me-2"></i><span th:text="#{clientes.form.sec.identificacion}">IDENTIFICACIÓN</span>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="nombre" class="form-label">Nombre comercial <span class="text-danger">*</span></label>
+                            <label for="nombre" class="form-label"><span th:text="#{clientes.form.nombre}">Nombre comercial</span> <span class="text-danger">*</span></label>
                             <input type="text" id="nombre" th:field="*{nombre}"
                                    class="form-control"
                                    th:classappend="${#fields.hasErrors('nombre')} ? 'is-invalid' : ''"
-                                   placeholder="Nombre del negocio o persona">
+                                   th:placeholder="#{clientes.form.nombre.ph}" placeholder="Nombre del negocio o persona">
                             <div class="invalid-feedback" th:errors="*{nombre}">—</div>
                         </div>
                         <div class="col-md-6">
-                            <label for="razonSocial" class="form-label">Razón social</label>
+                            <label for="razonSocial" class="form-label" th:text="#{clientes.form.razon.social}">Razón social</label>
                             <input type="text" id="razonSocial" th:field="*{razonSocial}"
                                    class="form-control"
-                                   placeholder="Razón social (si aplica)">
+                                   th:placeholder="#{clientes.form.razon.social.ph}" placeholder="Razón social (si aplica)">
                         </div>
                         <div class="col-md-4">
-                            <label for="nit" class="form-label">NIT / Cédula</label>
+                            <label for="nit" class="form-label" th:text="#{clientes.form.nit}">NIT / Cédula</label>
                             <input type="text" id="nit" th:field="*{nit}"
                                    class="form-control"
                                    th:classappend="${#fields.hasErrors('nit')} ? 'is-invalid' : ''"
@@ -64,18 +64,18 @@
                             <div class="invalid-feedback" th:errors="*{nit}">—</div>
                         </div>
                         <div class="col-md-4">
-                            <label for="regimenTributario" class="form-label">Régimen tributario</label>
+                            <label for="regimenTributario" class="form-label" th:text="#{clientes.form.regimen}">Régimen tributario</label>
                             <select id="regimenTributario" th:field="*{regimenTributario}" class="form-select">
-                                <option value="">— Sin especificar —</option>
+                                <option value="" th:text="#{clientes.form.regimen.sin}">— Sin especificar —</option>
                                 <option th:each="r : ${regimenes}"
                                         th:value="${r.name()}"
                                         th:text="${r.displayName}">—</option>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label for="listaPrecio" class="form-label">Lista de precio</label>
+                            <label for="listaPrecio" class="form-label" th:text="#{clientes.form.lista.precio}">Lista de precio</label>
                             <select id="listaPrecio" th:field="*{listaPrecio}" class="form-select">
-                                <option value="">— Sin especificar —</option>
+                                <option value="" th:text="#{clientes.form.regimen.sin}">— Sin especificar —</option>
                                 <option th:each="lp : ${listasPrecio}"
                                         th:value="${lp.name()}"
                                         th:text="${lp.displayName}">—</option>
@@ -87,21 +87,21 @@
                 <!-- ─── Contacto ───────────────────────────── -->
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-envelope me-2"></i>CONTACTO
+                        <i class="bi bi-envelope me-2"></i><span th:text="#{clientes.form.sec.contacto}">CONTACTO</span>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="email" class="form-label" th:text="#{clientes.form.email}">Email</label>
                             <input type="email" id="email" th:field="*{email}"
                                    class="form-control"
                                    th:classappend="${#fields.hasErrors('email')} ? 'is-invalid' : ''"
-                                   placeholder="contacto@empresa.com">
+                                   th:placeholder="#{clientes.form.email.ph}" placeholder="contacto@empresa.com">
                             <div class="invalid-feedback" th:errors="*{email}">—</div>
                         </div>
                         <div class="col-md-6">
-                            <label for="telefono" class="form-label">Teléfono</label>
+                            <label for="telefono" class="form-label" th:text="#{clientes.form.telefono}">Teléfono</label>
                             <input type="text" id="telefono" th:field="*{telefono}"
-                                   class="form-control" placeholder="+57 300 000 0000">
+                                   class="form-control" th:placeholder="#{clientes.form.telefono.ph}" placeholder="+57 300 000 0000">
                         </div>
                     </div>
                 </div>
@@ -109,23 +109,23 @@
                 <!-- ─── Dirección de despacho ──────────────── -->
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-geo-alt me-2"></i>DIRECCIÓN DE DESPACHO
+                        <i class="bi bi-geo-alt me-2"></i><span th:text="#{clientes.form.sec.direccion}">DIRECCIÓN DE DESPACHO</span>
                     </div>
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <label for="direccionDespacho" class="form-label">Dirección</label>
+                            <label for="direccionDespacho" class="form-label" th:text="#{clientes.form.direccion}">Dirección</label>
                             <input type="text" id="direccionDespacho" th:field="*{direccionDespacho}"
-                                   class="form-control" placeholder="Calle, carrera, avenida…">
+                                   class="form-control" th:placeholder="#{clientes.form.direccion.ph}" placeholder="Calle, carrera, avenida…">
                         </div>
                         <div class="col-md-4">
-                            <label for="ciudad" class="form-label">Ciudad</label>
+                            <label for="ciudad" class="form-label" th:text="#{clientes.form.ciudad}">Ciudad</label>
                             <input type="text" id="ciudad" th:field="*{ciudad}"
-                                   class="form-control" placeholder="Ciudad">
+                                   class="form-control" th:placeholder="#{clientes.form.ciudad}" placeholder="Ciudad">
                         </div>
                         <div class="col-md-4">
-                            <label for="departamento" class="form-label">Departamento</label>
+                            <label for="departamento" class="form-label" th:text="#{clientes.form.departamento}">Departamento</label>
                             <input type="text" id="departamento" th:field="*{departamento}"
-                                   class="form-control" placeholder="Departamento">
+                                   class="form-control" th:placeholder="#{clientes.form.departamento}" placeholder="Departamento">
                         </div>
                     </div>
                 </div>
@@ -133,21 +133,21 @@
                 <!-- ─── Notas ──────────────────────────────── -->
                 <div class="content-card mb-4">
                     <div class="content-card-title pb-2 mb-3">
-                        <i class="bi bi-sticky me-2"></i>NOTAS INTERNAS
+                        <i class="bi bi-sticky me-2"></i><span th:text="#{clientes.form.sec.notas}">NOTAS INTERNAS</span>
                     </div>
                     <div>
-                        <label for="notas" class="form-label">Notas</label>
+                        <label for="notas" class="form-label" th:text="#{clientes.form.notas}">Notas</label>
                         <textarea id="notas" th:field="*{notas}"
                                   class="form-control" rows="2"
-                                  placeholder="Condiciones de pago, notas de crédito, observaciones…"></textarea>
+                                  th:placeholder="#{clientes.form.notas.ph}" placeholder="Condiciones de pago, notas de crédito, observaciones…"></textarea>
                     </div>
                 </div>
 
                 <div class="d-flex gap-2 justify-content-end mb-4">
-                    <a th:href="@{/clientes}" class="btn btn-outline-secondary">Cancelar</a>
+                    <a th:href="@{/clientes}" class="btn btn-outline-secondary" th:text="#{action.cancel}">Cancelar</a>
                     <button type="submit" class="btn btn-primary">
                         <i class="bi bi-check-lg me-1"></i>
-                        <span th:text="${cliente.id != null} ? 'Actualizar' : 'Crear Cliente'">Guardar</span>
+                        <span th:text="${cliente.id != null} ? #{clientes.form.btn.actualizar} : #{clientes.form.btn.crear}">Guardar</span>
                     </button>
                 </div>
 

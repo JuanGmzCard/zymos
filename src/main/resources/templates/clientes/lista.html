@@ -226,7 +226,7 @@
     <!-- Tabla -->
     <div class="table-card mb-4">
         <div class="table-count">
-            <span th:text="${totalClientes}">0</span> clientes
+            <span th:text="${totalClientes}">0</span> <span th:text="#{clientes.count}">clientes</span>
         </div>
 
         <div class="table-responsive">
@@ -269,16 +269,16 @@
                         <span th:if="${c.listaPrecio == null}" class="text-muted">—</span>
                     </td>
                     <td class="text-center">
-                        <span th:if="${c.activo}" class="badge bg-success">Activo</span>
-                        <span th:if="${!c.activo}" class="badge bg-secondary">Inactivo</span>
+                        <span th:if="${c.activo}" class="badge bg-success" th:text="#{clientes.badge.activo}">Activo</span>
+                        <span th:if="${!c.activo}" class="badge bg-secondary" th:text="#{clientes.badge.inactivo}">Inactivo</span>
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/clientes/ver/{id}(id=${c.id})}"
-                           class="action-link view" title="Ver ficha">Ver</a>
+                           class="action-link view" th:title="#{clientes.action.ver.ficha}" th:text="#{action.ver}">Ver</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
                         <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
                            th:href="@{/clientes/editar/{id}(id=${c.id})}"
-                           class="action-link edit">Editar</a>
+                           class="action-link edit" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
                         <form sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
                               th:action="@{/clientes/{id}/toggle(id=${c.id})}" method="post"
@@ -286,7 +286,7 @@
                             <button type="submit"
                                     class="action-link border-0 bg-transparent p-0"
                                     th:classappend="${c.activo} ? 'del' : 'view'"
-                                    th:title="${c.activo} ? 'Desactivar' : 'Activar'">
+                                    th:title="${c.activo} ? #{clientes.action.toggle.desactivar} : #{clientes.action.toggle.activar}">
                                 <i class="bi" th:classappend="${c.activo} ? 'bi-toggle-on' : 'bi-toggle-off'"></i>
                             </button>
                         </form>
@@ -311,6 +311,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var CLIENTES_MSG = {
+    nitPrefix: /*[[#{clientes.lista.nit.prefix}]]*/ 'NIT:'
+};
+/*]]>*/
+</script>
 <script th:attr="nonce=${cspNonce}">
 (function () {
     const input = document.getElementById('clienteSearch');
@@ -326,7 +333,7 @@
                 .then(r => r.json()).then(items => {
                     if (!items.length) { box.style.display = 'none'; return; }
                     box.innerHTML = items.map(i => {
-                        const sub = [i.nit ? 'NIT: ' + i.nit : '', i.ciudad || ''].filter(Boolean).join(' · ');
+                        const sub = [i.nit ? CLIENTES_MSG.nitPrefix + ' ' + i.nit : '', i.ciudad || ''].filter(Boolean).join(' · ');
                         return `<a href="/clientes/ver/${i.id}" class="ss-item">
                             <i class="bi bi-person ss-icon"></i>
                             <span class="ss-title">${i.nombre}</span>
