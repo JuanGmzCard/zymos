@@ -117,19 +117,25 @@ public class TrazabilidadController {
     @GetMapping(value = "/envases-para-destino", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public Map<String, Object> envasesParaDestino() {
-        var insumos = insumoRepo
-                .findByFiltros("", "ENVASE", org.springframework.data.domain.PageRequest.of(0, 200))
-                .getContent().stream()
-                .map(i -> Map.of("nombre", i.getNombre(),
-                                 "unidad",  i.getUnidad()  != null ? i.getUnidad()  : ""))
+        // Inventario: primero ENVASE, luego el resto ordenado por nombre
+        var todosInsumos = insumoRepo.findAllByOrderByNombreAsc();
+        var insumos = todosInsumos.stream()
+                .map(i -> {
+                    var m = new LinkedHashMap<String, Object>();
+                    m.put("nombre", i.getNombre());
+                    m.put("unidad", i.getUnidad() != null ? i.getUnidad() : "");
+                    m.put("tipo",   i.getTipo()   != null ? i.getTipo()   : "");
+                    return (Map<String, Object>) m;
+                })
                 .toList();
+        // Facturas: ítems con tipoInsumo=ENVASE primero (tienen data-item-id para enlace directo)
         var facturaItems = facturaItemRepo
                 .findEnvases(org.springframework.data.domain.PageRequest.of(0, 100)).stream()
                 .map(fi -> {
                     var m = new LinkedHashMap<String, Object>();
                     m.put("id",        fi.getId());
                     m.put("nombre",    fi.getNombre());
-                    m.put("unidad",    fi.getUnidad()  != null ? fi.getUnidad()  : "");
+                    m.put("unidad",    fi.getUnidad() != null ? fi.getUnidad() : "");
                     m.put("proveedor", fi.getFactura().getProveedor() != null
                                        ? fi.getFactura().getProveedor() : "");
                     return (Map<String, Object>) m;
