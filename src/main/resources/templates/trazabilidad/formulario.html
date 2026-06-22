@@ -1133,6 +1133,44 @@
                         if (btn) btn.classList.toggle('d-none', !tieneEnvases);
                     }
 
+                    // Devuelve true si el nombre del ítem de factura coincide con el formato de envase.
+                    // Usa matching bidireccional Y por tokens para cubrir variantes de nombre
+                    // (ej. "Botella de vidrio 330ml" coincide con "Botella 330ml").
+                    function envaseCoincide(itemNombre, formato) {
+                        if (!itemNombre) return false;
+                        var itL = itemNombre.toLowerCase().replace(/\s+/g, ' ').trim();
+                        var fmtL = formato.toLowerCase().replace(/\s+/g, ' ').trim();
+                        if (itL === fmtL) return true;
+                        if (itL.includes(fmtL) || fmtL.includes(itL)) return true;
+                        // Token match: todos los tokens del formato (>1 car.) están en el nombre
+                        var tokens = fmtL.split(/\s+/).filter(function(t) { return t.length > 1; });
+                        return tokens.length > 0 && tokens.every(function(t) { return itL.includes(t); });
+                    }
+
+                    // Extrae la medida numérica del formato (ej. "330ml" de "Botella 330ml")
+                    function extraerMedidaEnvase(nombre) {
+                        var m = nombre.match(/(\d+(?:[.,]\d+)?)\s*(ml|mL|ML|L)\b/i);
+                        return m ? (m[1].replace(',', '.') + m[2].toLowerCase()) : null;
+                    }
+
+                    // Búsqueda en dos pasos: nombre completo → solo medida si falla
+                    function buscarEnvaseEnFactura(e) {
+                        return fetch('/suggest-items?q=' + encodeURIComponent(e.nombre))
+                            .then(function(r) { return r.json(); })
+                            .then(function(items) {
+                                var match = items.find(function(it) { return envaseCoincide(it.nombre, e.nombre); });
+                                if (match) return { entrada: e, match: match };
+                                var medida = extraerMedidaEnvase(e.nombre);
+                                if (!medida) return { entrada: e, match: null };
+                                return fetch('/suggest-items?q=' + encodeURIComponent(medida))
+                                    .then(function(r2) { return r2.json(); })
+                                    .then(function(items2) {
+                                        var match2 = items2.find(function(it) { return envaseCoincide(it.nombre, e.nombre); });
+                                        return { entrada: e, match: match2 || null };
+                                    });
+                            });
+                    }
+
                     function agregarEnvasesCosto() {
                         var entradas = [];
                         document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
@@ -1151,22 +1189,7 @@
                             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Buscando...';
                         }
 
-                        var promesas = entradas.map(function(e) {
-                            return fetch('/suggest-items?q=' + encodeURIComponent(e.nombre))
-                                .then(function(r) { return r.json(); })
-                                .then(function(items) {
-                                    var nombreLower = e.nombre.toLowerCase();
-                                    // Coincidencia bidireccional: el nombre del ítem contiene el formato, o viceversa
-                                    var match = items.find(function(it) {
-                                        if (!it.nombre) return false;
-                                        var itLower = it.nombre.toLowerCase();
-                                        return itLower.includes(nombreLower) || nombreLower.includes(itLower);
-                                    });
-                                    return { entrada: e, match: match };
-                                });
-                        });
-
-                        Promise.all(promesas).then(function(resultados) {
+                        Promise.all(entradas.map(buscarEnvaseEnFactura)).then(function(resultados) {
                             var agregados = 0, actualizados = 0, noEncontrados = [];
                             resultados.forEach(function(r) {
                                 if (!r.match) { noEncontrados.push(r.entrada.nombre); return; }
@@ -1182,10 +1205,18 @@
                             });
                             if (typeof renderizarAsignados === 'function') renderizarAsignados();
 
-                            if ((agregados + actualizados) > 0) {
-                                var collapse = document.getElementById('costos-collapse');
-                                if (collapse && !collapse.classList.contains('show')) {
-                                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+                            // Abrir panel de costos siempre que haya algo que mostrar
+                            var collapse = document.getElementById('costos-collapse');
+                            if (collapse && !collapse.classList.contains('show')) {
+                                bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+                            }
+
+                            // Fallback: pre-rellenar buscador con el primer formato no encontrado
+                            if (noEncontrados.length && typeof buscarItemsCosto === 'function') {
+                                var input = document.getElementById('costo-search');
+                                if (input) {
+                                    input.value = noEncontrados[0];
+                                    buscarItemsCosto();
                                 }
                             }
 
@@ -1193,14 +1224,14 @@
                             if (!noEncontrados.length) {
                                 msg = '✓ ' + (agregados + actualizados) + ' envase(s) agregado(s)';
                             } else if (agregados + actualizados > 0) {
-                                msg = '✓ ' + (agregados + actualizados) + ' · ✗ sin factura: ' + noEncontrados.join(', ');
+                                msg = '✓ ' + (agregados + actualizados) + ' · busca: ' + noEncontrados.join(', ');
                             } else {
-                                msg = '✗ No se encontraron ítems: ' + noEncontrados.join(', ');
+                                msg = '→ busca en costos: ' + noEncontrados.join(', ');
                             }
                             if (btn) {
                                 btn.disabled = false;
                                 btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
-                                setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 4000);
+                                setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 5000);
                             }
                         });
                     }
