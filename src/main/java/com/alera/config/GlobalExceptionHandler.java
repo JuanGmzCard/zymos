@@ -2,6 +2,7 @@ package com.alera.config;
 
 import com.alera.exception.EquipoEnUsoException;
 import com.alera.exception.LoteNoEncontradoException;
+import io.sentry.Sentry;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public String handleGeneral(Exception ex, Model model) {
         log.error("Error interno del servidor", ex);
+        Sentry.captureException(ex);
         model.addAttribute("codigo", 500);
         model.addAttribute("titulo", "Error interno del servidor");
         model.addAttribute("descripcion", "Ocurrió un error inesperado. Por favor intenta de nuevo o contacta al administrador.");
