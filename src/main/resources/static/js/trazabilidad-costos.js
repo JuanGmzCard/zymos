@@ -80,7 +80,7 @@ function removerItemCosto(itemId) {
 
 function actualizarCantidadCosto(itemId, val) {
     var a = asignados.find(function(x) { return x.itemId == itemId; });
-    if (a) a.cantidadAsignada = (window.numVal ? window.numVal(val) : parseFloat(val)) || 0;
+    if (a) a.cantidadAsignada = parseFloat(val) || 0;
     var tr = document.querySelector('[data-item-id="' + itemId + '"]');
     if (tr) {
         var td = tr.closest('tr').querySelector('.costo-valor');
@@ -124,7 +124,7 @@ function renderizarAsignados() {
             '<td>' +
                 '<div class="input-group input-group-sm">' +
                     '<input type="number" class="form-control form-control-sm costo-cantidad-input" min="0" step="0.001" ' +
-                        'data-item-id="' + a.itemId + '" value="' + a.cantidadAsignada + '">' +
+                        'data-num-fmt="skip" data-item-id="' + a.itemId + '" value="' + a.cantidadAsignada + '">' +
                     '<span class="input-group-text">' + esc(a.itemData.unidad || '') + '</span>' +
                 '</div>' +
                 (esCostoTotal ? '<small class="text-muted d-block mt-1">Costo total del ítem</small>' : '') +
