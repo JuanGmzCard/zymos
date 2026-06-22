@@ -151,6 +151,41 @@ public class InsumoInventarioService {
         });
     }
 
+    public void ingresarDeFactura(String nombre, BigDecimal cantidad, String unidad,
+                                  String tipoInsumo, String proveedor, String referencia) {
+        if (nombre == null || nombre.isBlank() || cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
+        InsumoInventario insumo = repo.findByNombreExacto(nombre).orElseGet(() -> {
+            InsumoInventario nuevo = new InsumoInventario();
+            nuevo.setNombre(nombre);
+            nuevo.setTipo(tipoInsumo != null ? tipoInsumo : detectarTipo(nombre));
+            nuevo.setCantidad(BigDecimal.ZERO);
+            nuevo.setUnidad(unidad != null ? unidad : "und");
+            nuevo.setStockMinimo(BigDecimal.ZERO);
+            nuevo.setProveedor(proveedor);
+            return repo.save(nuevo);
+        });
+        BigDecimal anterior = insumo.getCantidad();
+        BigDecimal posterior = anterior.add(cantidad);
+        insumo.setCantidad(posterior);
+        repo.save(insumo);
+        registrarMovimiento(insumo.getId(), insumo.getNombre(), TipoMovimiento.INGRESO_FACTURA,
+                cantidad, anterior, posterior, null, referencia);
+        log.info("Ingreso factura '{}': +{} {} | nuevo stock={}", nombre, cantidad, insumo.getUnidad(), posterior);
+    }
+
+    public void revertirEntradaFactura(String nombre, BigDecimal cantidad, String referencia) {
+        if (nombre == null || nombre.isBlank() || cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
+        repo.findByNombreExacto(nombre).ifPresent(insumo -> {
+            BigDecimal anterior = insumo.getCantidad();
+            BigDecimal posterior = anterior.subtract(cantidad).max(BigDecimal.ZERO);
+            insumo.setCantidad(posterior);
+            repo.save(insumo);
+            registrarMovimiento(insumo.getId(), insumo.getNombre(), TipoMovimiento.REVERSION_FACTURA,
+                    cantidad, anterior, posterior, null, referencia);
+            log.info("Reversión factura '{}': -{} | nuevo stock={}", nombre, cantidad, posterior);
+        });
+    }
+
     public BigDecimal parsearCantidad(String texto) {
         if (texto == null || texto.isBlank()) return BigDecimal.ZERO;
         try {

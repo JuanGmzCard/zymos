@@ -5,7 +5,9 @@ public enum TipoMovimiento {
     SALIDA("Salida manual", "danger"),
     AJUSTE("Ajuste de stock", "warning"),
     DESCUENTO_LOTE("Descuento por lote", "secondary"),
-    RESTAURACION_LOTE("Restauración de lote", "info");
+    RESTAURACION_LOTE("Restauración de lote", "info"),
+    INGRESO_FACTURA("Ingreso por factura", "primary"),
+    REVERSION_FACTURA("Reversión de factura", "warning");
 
     private final String displayName;
     private final String badgeClass;

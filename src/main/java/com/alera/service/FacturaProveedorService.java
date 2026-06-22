@@ -34,20 +34,17 @@ public class FacturaProveedorService {
 
     private final FacturaProveedorRepository repo;
     private final FacturaHistorialEstadoRepository historialRepo;
-    private final InsumoInventarioRepository insumoRepo;
     private final EquipoRepository equipoRepo;
     private final InsumoInventarioService insumoService;
     private final ProveedorRepository proveedorRepo;
 
     public FacturaProveedorService(FacturaProveedorRepository repo,
                                     FacturaHistorialEstadoRepository historialRepo,
-                                    InsumoInventarioRepository insumoRepo,
                                     EquipoRepository equipoRepo,
                                     InsumoInventarioService insumoService,
                                     ProveedorRepository proveedorRepo) {
         this.repo = repo;
         this.historialRepo = historialRepo;
-        this.insumoRepo = insumoRepo;
         this.equipoRepo = equipoRepo;
         this.proveedorRepo = proveedorRepo;
         this.insumoService = insumoService;
@@ -138,7 +135,7 @@ public class FacturaProveedorService {
         calcularTotales(factura);
         FacturaProveedor saved = repo.save(factura);
         historialRepo.save(FacturaHistorialEstado.of(saved.getId(), null, saved.getEstado(), usuarioActual()));
-        procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura());
+        procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura(), refFactura(saved));
         log.info("Factura creada: id={} | proveedor={} | items={} | total={}",
                 saved.getId(), saved.getProveedor(), saved.getItems().size(), saved.getValorTotal());
         return saved;
@@ -149,12 +146,12 @@ public class FacturaProveedorService {
         FacturaProveedor factura = repo.findByIdWithItems(id)
                 .orElseThrow(() -> new RuntimeException("Factura no encontrada"));
         log.info("Actualizando factura id={} | proveedor={}", id, factura.getProveedor());
-        revertirInventario(factura.getItems());
+        revertirInventario(factura.getItems(), refFactura(factura));
         factura.getItems().clear();
         mapearDto(factura, dto);
         calcularTotales(factura);
         FacturaProveedor saved = repo.save(factura);
-        procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura());
+        procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura(), refFactura(saved));
         log.info("Factura actualizada: id={} | total={}", saved.getId(), saved.getValorTotal());
         return saved;
     }
@@ -162,7 +159,7 @@ public class FacturaProveedorService {
     @CacheEvict(value = "dashboard-stats", allEntries = true)
     public void eliminar(Long id) {
         repo.findByIdWithItems(id).ifPresent(f -> {
-            revertirInventario(f.getItems());
+            revertirInventario(f.getItems(), refFactura(f));
             repo.delete(f);
         });
     }
@@ -229,26 +226,13 @@ public class FacturaProveedorService {
         f.setValorTotal(subtotal.add(totalIva).add(totalImpConsumo).add(envio));
     }
 
-    private void procesarInventario(List<FacturaItem> items, String proveedor, java.time.LocalDate fecha) {
+    private void procesarInventario(List<FacturaItem> items, String proveedor, java.time.LocalDate fecha, String referencia) {
         for (FacturaItem item : items) {
             if (item.getTipoItem() == TipoItemFactura.INSUMO) {
                 BigDecimal cantNorm = normalizarCantidad(item.getCantidad(), item.getUnidad());
                 String unidadNorm = normalizeUnit(item.getUnidad());
-                Optional<InsumoInventario> existing = insumoRepo.findByNombreExacto(item.getNombre());
-                if (existing.isPresent()) {
-                    InsumoInventario ins = existing.get();
-                    ins.setCantidad(ins.getCantidad().add(cantNorm));
-                    insumoRepo.save(ins);
-                } else {
-                    InsumoInventario nuevo = new InsumoInventario();
-                    nuevo.setNombre(item.getNombre());
-                    nuevo.setTipo(item.getTipoInsumo() != null ? item.getTipoInsumo() : insumoService.detectarTipo(item.getNombre()));
-                    nuevo.setCantidad(cantNorm);
-                    nuevo.setUnidad(unidadNorm);
-                    nuevo.setStockMinimo(BigDecimal.ZERO);
-                    nuevo.setProveedor(proveedor);
-                    insumoRepo.save(nuevo);
-                }
+                insumoService.ingresarDeFactura(item.getNombre(), cantNorm, unidadNorm,
+                        item.getTipoInsumo(), proveedor, referencia);
             } else if (item.getTipoItem() == TipoItemFactura.EQUIPO) {
                 Optional<Equipo> existing = equipoRepo.findByNombreIgnoreCase(item.getNombre());
                 if (existing.isPresent()) {
@@ -268,17 +252,18 @@ public class FacturaProveedorService {
         }
     }
 
-    private void revertirInventario(List<FacturaItem> items) {
+    private void revertirInventario(List<FacturaItem> items, String referencia) {
         for (FacturaItem item : items) {
             if (item.getTipoItem() == TipoItemFactura.INSUMO) {
                 BigDecimal cantNorm = normalizarCantidad(item.getCantidad(), item.getUnidad());
-                insumoRepo.findByNombreExacto(item.getNombre()).ifPresent(ins -> {
-                    BigDecimal nueva = ins.getCantidad().subtract(cantNorm).max(BigDecimal.ZERO);
-                    ins.setCantidad(nueva);
-                    insumoRepo.save(ins);
-                });
+                insumoService.revertirEntradaFactura(item.getNombre(), cantNorm, referencia);
             }
         }
+    }
+
+    private String refFactura(FacturaProveedor f) {
+        return (f.getNumeroFactura() != null && !f.getNumeroFactura().isBlank())
+               ? f.getNumeroFactura() : "#" + f.getId();
     }
 
     // DRY: delegado a UnidadUtils centralizado
@@ -353,6 +338,7 @@ public class FacturaProveedorService {
         calcularTotales(factura);
         FacturaProveedor saved = repo.save(factura);
         historialRepo.save(FacturaHistorialEstado.of(saved.getId(), null, saved.getEstado(), usuarioActual()));
+        procesarInventario(saved.getItems(), saved.getProveedor(), saved.getFechaFactura(), "OC-" + oc.getNumeroOc());
         log.info("Factura creada desde OC {}: id={}", oc.getNumeroOc(), saved.getId());
         return saved.getId();
     }
