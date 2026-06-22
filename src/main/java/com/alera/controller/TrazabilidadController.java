@@ -452,6 +452,10 @@ public class TrazabilidadController {
                 .filter(i -> "Clarificante".equals(i.getTipo())).toList());
         model.addAttribute("agentesCarbonatacion", todosInsumos.stream()
                 .filter(i -> "Agente de Carbonatación".equals(i.getTipo())).toList());
+        model.addAttribute("envasesInventario", todosInsumos.stream()
+                .filter(i -> i.getTipo() != null && i.getTipo().toLowerCase().contains("envase"))
+                .sorted(java.util.Comparator.comparing(i -> i.getNombre().toLowerCase()))
+                .toList());
         var stockList = todosInsumos.stream().map(i -> {
             var ms = new java.util.LinkedHashMap<String, Object>();
             ms.put("nombre", i.getNombre() != null ? i.getNombre().toLowerCase().trim() : "");
