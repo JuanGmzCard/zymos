@@ -36,7 +36,7 @@ public class MigracionTemplateService {
                 {"*", "Campo obligatorio"},
                 {"tipo", "FERMENTADOR | OLLA_MACERADO | OLLA_HERVOR | ENFRIADOR | BOMBA | FILTRO | MEDIDOR_PH | DENSIMETRO | BASCULA | COMPRESOR | OTRO"},
                 {"estado", "OPERATIVO | MANTENIMIENTO | INACTIVO  (default: OPERATIVO)"},
-                {"fecha_adquisicion / fecha_proximo_mant", "Formato: YYYY-MM-DD"},
+                {"fechas", "Formato: YYYY-MM-DD  (adquisicion, proximo_mant, ultimo_mant)"},
                 {"capacidad", "Número decimal en la unidad indicada (ej: 300  para 300 L)"}
             });
         hojaEquipos(wb, es);
@@ -54,9 +54,11 @@ public class MigracionTemplateService {
                 {"numero_factura (Factura_Items)", "Debe coincidir con el numero_factura de la hoja Facturas"},
                 {"tipo_item", "INSUMO | EQUIPO"},
                 {"estado (Facturas)", "RECIBIDA | VERIFICADA | PAGADA  (default: RECIBIDA)"},
+                {"iva_incluido (Facturas)", "TRUE si los valores unitarios ya incluyen IVA | FALSE (default)"},
                 {"fecha_factura", "Formato: YYYY-MM-DD"},
                 {"valores monetarios", "Número decimal sin separadores de miles (ej: 85000.50)"},
-                {"iva_pct / descuento_pct", "Porcentaje como número (ej: 19 para 19%)"}
+                {"iva_pct / descuento_pct", "Porcentaje como número (ej: 19 para 19%)"},
+                {"impuesto_consumo", "Valor en pesos del impuesto al consumo por ítem (ej: 490 para $490/unidad)"}
             });
         hojaProveedores(wb, es);
         hojaFacturas(wb, es);
@@ -89,7 +91,7 @@ public class MigracionTemplateService {
                 {"referencia_venta", "Clave de cruce entre hojas. Debe ser única en Ventas y coincidir exactamente en Venta_Items (ej: V001, V002…)"},
                 {"cliente_nit", "NIT del cliente registrado en el sistema. Si coincide, vincula automáticamente al cliente. Si no, se usa cliente_nombre como texto libre"},
                 {"estado", "COTIZACION | PENDIENTE | DESPACHADO | CANCELADO  (default: DESPACHADO)"},
-                {"fecha_despacho", "Formato: YYYY-MM-DD"},
+                {"fecha_despacho / cotizacion_expira_en", "Formato: YYYY-MM-DD. cotizacion_expira_en solo aplica si estado=COTIZACION"},
                 {"valores monetarios", "Número decimal sin separadores de miles (ej: 35000.50)"},
                 {"descuento_pct", "Porcentaje como número (ej: 10 para 10%)"},
                 {"Sin validación de stock", "La importación es histórica: no se verifica disponibilidad de litros por lote"}
@@ -112,14 +114,15 @@ public class MigracionTemplateService {
                 {"cantidad_con_unidad", "Número + espacio + unidad  (ej: 5000 gr  |  4.5 kg  |  11.5 gr)"},
                 {"og_objetivo / fg_objetivo", "Densidad en formato XXXX  (ej: 1058 para 1.058)"},
                 {"densidad_inicial / densidad_final", "Densidad en formato XXXX  (ej: 1056 para 1.056)"},
-                {"fecha_elaboracion", "Formato: YYYY-MM-DD"},
+                {"fechas (Lotes)", "Formato: YYYY-MM-DD  (fecha_elaboracion, fase_inicial, fase_final, densidad_final_fecha)"},
                 {"activa (Recetas)", "TRUE o FALSE  (default: TRUE)"},
                 {"minutos_restantes (Adiciones Hervor)", "0 = flameout/apagado"},
                 {"carb_metodo", "NATURAL (priming con azúcar) | FORZADA (inyección CO₂) | vacío = sin registrar"},
                 {"carb_azucar_tipo", "dextrosa | sacarosa | extracto | miel  (solo si carb_metodo = NATURAL)"},
                 {"carb_tecnica", "PIEDRA | PRESION_FIJA  (solo si carb_metodo = FORZADA)"},
                 {"carb_validacion", "ADECUADA | RETENCION_CORRECTA | SOBRECARBONATADA | BAJA_CARBONATACION"},
-                {"carb_co2_objetivo / carb_co2_real", "Volúmenes de CO₂ en formato decimal  (ej: 2.5)"}
+                {"og_brix / fg_brix", "Lectura en °Brix (decimal, ej: 14.5). Terrill calcula densidad corregida automáticamente"},
+                {"fermentador_nombre", "Nombre exacto del equipo fermentador registrado en el sistema (tolerante si no existe)"}
             });
         hojaRecetas(wb, es);
         hojaRecetaIngredientes(wb, es);
@@ -163,6 +166,38 @@ public class MigracionTemplateService {
         return bytes(wb);
     }
 
+    public byte[] plantillaCatalogos() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Catálogos",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"Idempotencia", "Si el nombre ya existe para el tenant, se omite sin error"},
+                {"activo", "TRUE | FALSE  (default: TRUE)"},
+                {"Hojas independientes", "Tipos_Cerveza, Tipos_Insumo y Tipos_Equipo son independientes entre sí"}
+            });
+        hojaTiposCerveza(wb, es);
+        hojaTiposInsumo(wb, es);
+        hojaTiposEquipo(wb, es);
+        return bytes(wb);
+    }
+
+    public byte[] plantillaMantenimientos() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Mantenimientos de Equipos",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"nombre_equipo", "Debe coincidir exactamente con el nombre del equipo en el sistema"},
+                {"tipo", "PREVENTIVO | CORRECTIVO | CALIBRACION | LIMPIEZA"},
+                {"fecha / proximo_mantenimiento", "Formato: YYYY-MM-DD"},
+                {"costo", "Número decimal sin separadores de miles (ej: 85000.50)"},
+                {"fecha_ultimo_mant auto", "Al importar, se actualiza automáticamente fecha_ultimo_mantenimiento en el equipo"}
+            });
+        hojaMantenimientos(wb, es);
+        return bytes(wb);
+    }
+
     public byte[] plantillaSeguimiento() throws IOException {
         XSSFWorkbook wb = new XSSFWorkbook();
         Estilos es = estilos(wb);
@@ -193,20 +228,21 @@ public class MigracionTemplateService {
         XSSFSheet sh = wb.createSheet("Ventas");
         wb.setSheetOrder("Ventas", 1);
         String[][] cols = {
-            {"referencia_venta", "req"},
-            {"cliente_nombre",   "req"},
-            {"cliente_nit",      "opt"},
-            {"fecha_despacho",   "req"},
-            {"estado",           "opt"},
-            {"notas",            "opt"},
-            {"remision_numero",  "opt"}
+            {"referencia_venta",      "req"},
+            {"cliente_nombre",        "req"},
+            {"cliente_nit",           "opt"},
+            {"fecha_despacho",        "req"},
+            {"estado",                "opt"},
+            {"notas",                 "opt"},
+            {"remision_numero",       "opt"},
+            {"cotizacion_expira_en",  "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"V001","Cervecería El Mosto","900123456-1","2024-03-15","DESPACHADO","Despacho mensual","REM-001"});
+        ejemplo(sh, es, new Object[]{"V001","Cervecería El Mosto","900123456-1","2024-03-15","DESPACHADO","Despacho mensual","REM-001",""});
         Row ej2 = sh.createRow(3);
-        fila(ej2, es.example(), new Object[]{"V002","Bar La Espuma","","2024-03-20","DESPACHADO","",""});
+        fila(ej2, es.example(), new Object[]{"V002","Bar La Espuma","","2024-03-20","COTIZACION","","","2024-04-05"});
         dropdown(sh, 1, 9999, 4, "COTIZACION","PENDIENTE","DESPACHADO","CANCELADO");
-        anchos(sh, 170, 230, 170, 160, 150, 280, 160);
+        anchos(sh, 170, 230, 170, 160, 150, 280, 160, 170);
     }
 
     private void hojaVentaItems(XSSFWorkbook wb, Estilos es) {
@@ -264,14 +300,15 @@ public class MigracionTemplateService {
             {"unidad_capacidad",      "opt"},
             {"fecha_adquisicion",     "opt"},
             {"fecha_proximo_mant",    "opt"},
+            {"fecha_ultimo_mant",     "opt"},
             {"observaciones",         "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"Fermentador 1","FERMENTADOR","OPERATIVO",300,"L","2023-01-15","","Estado ideal"});
+        ejemplo(sh, es, new Object[]{"Fermentador 1","FERMENTADOR","OPERATIVO",300,"L","2023-01-15","2024-01-15","2023-07-10","Estado ideal"});
         dropdown(sh, 1, 9999, 1, "FERMENTADOR","OLLA_MACERADO","OLLA_HERVOR","ENFRIADOR","BOMBA","FILTRO","MEDIDOR_PH","DENSIMETRO","BASCULA","COMPRESOR","OTRO");
         dropdown(sh, 1, 9999, 2, "OPERATIVO","MANTENIMIENTO","INACTIVO");
         dropdown(sh, 1, 9999, 4, "L","mL","gal","und");
-        anchos(sh, 220, 180, 150, 120, 160, 170, 180, 300);
+        anchos(sh, 220, 180, 150, 120, 160, 170, 180, 170, 300);
     }
 
     private void hojaProveedores(XSSFWorkbook wb, Estilos es) {
@@ -296,35 +333,38 @@ public class MigracionTemplateService {
             {"fecha_factura",   "req"},
             {"descripcion",     "opt"},
             {"costo_envio",     "opt"},
-            {"estado",          "opt"}
+            {"estado",          "opt"},
+            {"iva_incluido",    "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"FAC-2024-001","MaltaCo SA","2024-01-15","Compra insumos enero",15000,"PAGADA"});
+        ejemplo(sh, es, new Object[]{"FAC-2024-001","MaltaCo SA","2024-01-15","Compra insumos enero",15000,"PAGADA","FALSE"});
         dropdown(sh, 1, 9999, 5, "RECIBIDA","VERIFICADA","PAGADA");
-        anchos(sh, 180, 220, 160, 300, 140, 130);
+        dropdown(sh, 1, 9999, 6, "TRUE","FALSE");
+        anchos(sh, 180, 220, 160, 300, 140, 130, 130);
     }
 
     private void hojaFacturaItems(XSSFWorkbook wb, Estilos es) {
         XSSFSheet sh = wb.createSheet("Factura_Items");
         String[][] cols = {
-            {"numero_factura",  "req"},
-            {"tipo_item",       "req"},
-            {"nombre",          "req"},
-            {"tipo_insumo",     "opt"},
-            {"tipo_equipo",     "opt"},
-            {"cantidad",        "req"},
-            {"unidad",          "opt"},
-            {"valor_unitario",  "req"},
-            {"descuento_pct",   "opt"},
-            {"iva_pct",         "opt"}
+            {"numero_factura",   "req"},
+            {"tipo_item",        "req"},
+            {"nombre",           "req"},
+            {"tipo_insumo",      "opt"},
+            {"tipo_equipo",      "opt"},
+            {"cantidad",         "req"},
+            {"unidad",           "opt"},
+            {"valor_unitario",   "req"},
+            {"descuento_pct",    "opt"},
+            {"iva_pct",          "opt"},
+            {"impuesto_consumo", "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"FAC-2024-001","INSUMO","Pale Ale 2-Row","MALTA","",25,"kg",8500,0,19});
+        ejemplo(sh, es, new Object[]{"FAC-2024-001","INSUMO","Pale Ale 2-Row","MALTA","",25,"kg",8500,0,19,0});
         dropdown(sh, 1, 9999, 1, "INSUMO","EQUIPO");
         dropdown(sh, 1, 9999, 3, "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGUA","QUIMICO","ENVASE","OTRO");
         dropdown(sh, 1, 9999, 4, "FERMENTADOR","OLLA_MACERADO","OLLA_HERVOR","ENFRIADOR","BOMBA","FILTRO","MEDIDOR_PH","DENSIMETRO","BASCULA","COMPRESOR","OTRO");
         dropdown(sh, 1, 9999, 6, "gr","kg","mL","L","gal","und");
-        anchos(sh, 180, 130, 220, 160, 180, 110, 100, 150, 130, 110);
+        anchos(sh, 180, 130, 220, 160, 180, 110, 100, 150, 130, 110, 160);
     }
 
     private void hojaRecetas(XSSFWorkbook wb, Estilos es) {
@@ -408,39 +448,69 @@ public class MigracionTemplateService {
     private void hojaLotes(XSSFWorkbook wb, Estilos es) {
         XSSFSheet sh = wb.createSheet("Lotes");
         String[][] cols = {
-            {"codigo_lote",        "req"},
-            {"estilo",             "req"},
-            {"fecha_elaboracion",  "req"},
-            {"litros_finales",     "opt"},
-            {"densidad_inicial",   "opt"},
-            {"densidad_final",     "opt"},
-            {"agua_utilizada",     "opt"},
-            {"ph_agua",            "opt"},
-            {"clarificante",       "opt"},
-            {"observaciones",      "opt"},
-            {"notas_cata",         "opt"},
-            {"nombre_receta",      "opt"},
-            {"carb_metodo",        "opt"},
-            {"carb_co2_objetivo",  "opt"},
-            {"carb_co2_real",      "opt"},
-            {"carb_azucar_tipo",   "opt"},
-            {"carb_azucar_gramos", "opt"},
-            {"carb_presion_psi",   "opt"},
-            {"carb_tiempo_horas",  "opt"},
-            {"carb_tecnica",       "opt"},
-            {"carb_validacion",    "opt"},
-            {"carb_destino",       "opt"}
+            {"codigo_lote",          "req"},
+            {"estilo",               "req"},
+            {"fecha_elaboracion",    "req"},
+            {"litros_finales",       "opt"},
+            {"densidad_inicial",     "opt"},
+            {"densidad_final",       "opt"},
+            {"agua_utilizada",       "opt"},
+            {"ph_agua",              "opt"},
+            {"clarificante",         "opt"},
+            {"observaciones",        "opt"},
+            {"notas_cata",           "opt"},
+            {"nombre_receta",        "opt"},
+            {"carb_metodo",          "opt"},
+            {"carb_co2_objetivo",    "opt"},
+            {"carb_co2_real",        "opt"},
+            {"carb_azucar_tipo",     "opt"},
+            {"carb_azucar_gramos",   "opt"},
+            {"carb_presion_psi",     "opt"},
+            {"carb_tiempo_horas",    "opt"},
+            {"carb_tecnica",         "opt"},
+            {"carb_validacion",      "opt"},
+            {"carb_destino",         "opt"},
+            {"og_brix",              "opt"},
+            {"fg_brix",              "opt"},
+            {"fermentador_nombre",   "opt"},
+            {"densidad_final_fecha", "opt"},
+            {"ferm_fecha_inicial",   "opt"},
+            {"ferm_fecha_final_ideal","opt"},
+            {"ferm_temperatura",     "opt"},
+            {"ferm_fecha_final",     "opt"},
+            {"acond_fecha_inicial",  "opt"},
+            {"acond_fecha_final_ideal","opt"},
+            {"acond_temperatura",    "opt"},
+            {"acond_fecha_final",    "opt"},
+            {"madur_fecha_inicial",  "opt"},
+            {"madur_fecha_final_ideal","opt"},
+            {"madur_temperatura",    "opt"},
+            {"madur_fecha_final",    "opt"},
+            {"carb_fecha_inicial",   "opt"},
+            {"carb_fecha_final_ideal","opt"},
+            {"carb_temperatura",     "opt"},
+            {"carb_fecha_final",     "opt"}
         };
         cabecera(sh, es, cols);
         ejemplo(sh, es, new Object[]{
             "IPA-001","IPA","2024-01-20",19.5,1058,1012,25,5.3,"","","","IPA Clásica",
-            "NATURAL",2.5,2.4,"dextrosa",120.5,"","","","ADECUADA","Botella 330mL"});
+            "NATURAL",2.5,2.4,"dextrosa",120.5,"","","","ADECUADA","Botella 330mL",
+            14.5,3.5,"Fermentador 1","2024-02-15",
+            "2024-01-21","2024-02-04",18.0,"2024-02-03",
+            "2024-02-04","2024-02-11",12.0,"2024-02-11",
+            "2024-02-12","2024-03-12",5.0,"2024-03-10",
+            "2024-03-11","2024-03-18",4.0,"2024-03-17"});
         dropdown(sh, 1, 9999, 12, "NATURAL", "FORZADA");
         dropdown(sh, 1, 9999, 15, "dextrosa", "sacarosa", "extracto", "miel");
         dropdown(sh, 1, 9999, 19, "PIEDRA", "PRESION_FIJA");
         dropdown(sh, 1, 9999, 20, "ADECUADA", "RETENCION_CORRECTA", "SOBRECARBONATADA", "BAJA_CARBONATACION");
         anchos(sh, 140, 140, 170, 140, 160, 150, 140, 110, 180, 280, 280, 200,
-               150, 160, 120, 160, 170, 140, 160, 150, 200, 280);
+               150, 160, 120, 160, 170, 140, 160, 150, 200, 280,
+               110, 110, 200, 170,
+               160, 180, 150, 150,
+               160, 180, 150, 150,
+               160, 180, 150, 150,
+               160, 180, 150, 150);
     }
 
     private void hojaLoteIngredientes(XSSFWorkbook wb, Estilos es) {
@@ -760,6 +830,70 @@ public class MigracionTemplateService {
         fila(ej2, es.example(), new Object[]{"2024-10-15","Stout Navidad","","200","COMPLETADA",""});
         dropdown(sh, 1, 9999, 4, "PLANIFICADA","EN_PROCESO","COMPLETADA","CANCELADA");
         anchos(sh, 150, 230, 220, 150, 150, 280);
+    }
+
+    private void hojaTiposCerveza(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Tipos_Cerveza");
+        wb.setSheetOrder("Tipos_Cerveza", 1);
+        String[][] cols = {
+            {"nombre",      "req"},
+            {"descripcion", "opt"},
+            {"activo",      "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"IPA","India Pale Ale — lúpulo aromático y amargo","TRUE"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"Stout","Cerveza oscura con notas a café y chocolate","TRUE"});
+        dropdown(sh, 1, 9999, 2, "TRUE","FALSE");
+        anchos(sh, 200, 350, 100);
+    }
+
+    private void hojaTiposInsumo(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Tipos_Insumo");
+        String[][] cols = {
+            {"nombre", "req"},
+            {"activo", "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"Lúpulo fresco","TRUE"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"Extracto de malta","TRUE"});
+        dropdown(sh, 1, 9999, 1, "TRUE","FALSE");
+        anchos(sh, 280, 100);
+    }
+
+    private void hojaTiposEquipo(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Tipos_Equipo");
+        String[][] cols = {
+            {"nombre", "req"},
+            {"activo", "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"Conical fermenter","TRUE"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"Chiller de placas","TRUE"});
+        dropdown(sh, 1, 9999, 1, "TRUE","FALSE");
+        anchos(sh, 280, 100);
+    }
+
+    private void hojaMantenimientos(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Mantenimientos");
+        wb.setSheetOrder("Mantenimientos", 1);
+        String[][] cols = {
+            {"nombre_equipo",         "req"},
+            {"fecha",                 "req"},
+            {"tipo",                  "req"},
+            {"descripcion",           "opt"},
+            {"tecnico",               "opt"},
+            {"costo",                 "opt"},
+            {"proximo_mantenimiento", "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"Fermentador 1","2024-06-10","PREVENTIVO","Limpieza y sanitización mensual","Carlos M.",45000,"2024-07-10"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"Olla de Hervor","2024-05-20","CORRECTIVO","Reemplazo válvula de salida","Técnico externo",120000,""});
+        dropdown(sh, 1, 9999, 2, "PREVENTIVO","CORRECTIVO","CALIBRACION","LIMPIEZA");
+        anchos(sh, 220, 140, 150, 350, 200, 140, 200);
     }
 
     private byte[] bytes(XSSFWorkbook wb) throws IOException {

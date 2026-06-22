@@ -127,14 +127,15 @@ public class MigracionService {
                 if (vacio(row, 0)) continue;
                 total++;
                 try {
-                    String nombre   = texto(row, 0);
-                    String tipo     = texto(row, 1).toUpperCase();
-                    String estado   = textoODefault(row, 2, "OPERATIVO").toUpperCase();
-                    BigDecimal cap  = decimal(row, 3);
-                    String unidCap  = texto(row, 4);
-                    LocalDate fecAdq  = fecha(row, 5);
-                    LocalDate fecProx = fecha(row, 6);
-                    String obs        = texto(row, 7);
+                    String nombre      = texto(row, 0);
+                    String tipo        = texto(row, 1).toUpperCase();
+                    String estado      = textoODefault(row, 2, "OPERATIVO").toUpperCase();
+                    BigDecimal cap     = decimal(row, 3);
+                    String unidCap     = texto(row, 4);
+                    LocalDate fecAdq   = fecha(row, 5);
+                    LocalDate fecProx  = fecha(row, 6);
+                    LocalDate fecUltMant = fecha(row, 7);
+                    String obs         = texto(row, 8);
 
                     if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                     validarEnum(tipo, "tipo",
@@ -144,11 +145,12 @@ public class MigracionService {
                     String tipoDisplay = TIPO_EQUIPO_DISPLAY.getOrDefault(tipo, tipo);
 
                     jdbc.update("INSERT INTO equipos " +
-                            "(nombre,tipo,estado,capacidad,unidad_capacidad,fecha_adquisicion,proximo_mantenimiento,observaciones," +
+                            "(nombre,tipo,estado,capacidad,unidad_capacidad,fecha_adquisicion,proximo_mantenimiento," +
+                            "fecha_ultimo_mantenimiento,observaciones," +
                             "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                            "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                             nombre, tipoDisplay, estado, cap, unidadNula(unidCap),
-                            fecAdq, fecProx, obsNula(obs), tenantId, usuario, usuario);
+                            fecAdq, fecProx, fecUltMant, obsNula(obs), tenantId, usuario, usuario);
                     ok++;
                 } catch (Exception e) {
                     errores.add("Fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
@@ -208,16 +210,18 @@ public class MigracionService {
                     if (row.getRowNum() < 3 || vacio(row, 1)) continue;
                     total++;
                     try {
-                        String numFac    = texto(row, 0);
-                        String provNombre= texto(row, 1);
-                        LocalDate fecha  = fecha(row, 2);
-                        String desc      = texto(row, 3);
-                        BigDecimal envio = decimal(row, 4);
-                        String estado    = textoODefault(row, 5, "RECIBIDA").toUpperCase();
+                        String numFac      = texto(row, 0);
+                        String provNombre  = texto(row, 1);
+                        LocalDate fecha    = fecha(row, 2);
+                        String desc        = texto(row, 3);
+                        BigDecimal envio   = decimal(row, 4);
+                        String estado      = textoODefault(row, 5, "RECIBIDA").toUpperCase();
+                        String ivaInclStr  = textoODefault(row, 6, "FALSE").toUpperCase();
 
                         if (provNombre.isBlank()) throw new IllegalArgumentException("proveedor_nombre es obligatorio");
                         if (fecha == null)        throw new IllegalArgumentException("fecha_factura es obligatoria");
                         validarEnum(estado, "estado", "RECIBIDA","VERIFICADA","PAGADA");
+                        boolean ivaIncluido = "TRUE".equals(ivaInclStr) || "SI".equals(ivaInclStr) || "1".equals(ivaInclStr);
 
                         Long provId = jdbc.queryForObject(
                                 "SELECT id FROM proveedores WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
@@ -226,13 +230,13 @@ public class MigracionService {
                         long factId = insertarYRetornarId(
                                 "INSERT INTO facturas_proveedor " +
                                 "(numero_factura,proveedor,proveedor_id,fecha_factura,descripcion," +
-                                "costo_envio,subtotal,porcentaje_iva,valor_iva,valor_total,estado," +
+                                "costo_envio,subtotal,porcentaje_iva,valor_iva,valor_total,estado,iva_incluido," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,0,19,0,0,?,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,0,19,0,0,?,?,?,NOW(),?,NOW(),?)",
                                 nulaSiBlank(numFac), provNombre, provId, fecha,
                                 nulaSiBlank(desc),
                                 envio != null ? envio : BigDecimal.ZERO,
-                                estado, tenantId, usuario, usuario);
+                                estado, ivaIncluido, tenantId, usuario, usuario);
 
                         if (!numFac.isBlank()) facturaIds.put(numFac, factId);
                         ok++;
@@ -249,16 +253,17 @@ public class MigracionService {
                     if (row.getRowNum() < 3 || vacio(row, 0)) continue;
                     total++;
                     try {
-                        String numFac   = texto(row, 0);
-                        String tipoItem = texto(row, 1).toUpperCase();
-                        String nombre   = texto(row, 2);
-                        String tipoIns  = texto(row, 3).toUpperCase();
-                        String tipoEq   = texto(row, 4).toUpperCase();
-                        BigDecimal cant = decimal(row, 5);
-                        String unidad   = texto(row, 6);
-                        BigDecimal valU = decimal(row, 7);
-                        BigDecimal desc = decimal(row, 8);
-                        BigDecimal iva  = decimal(row, 9);
+                        String numFac     = texto(row, 0);
+                        String tipoItem   = texto(row, 1).toUpperCase();
+                        String nombre     = texto(row, 2);
+                        String tipoIns    = texto(row, 3).toUpperCase();
+                        String tipoEq     = texto(row, 4).toUpperCase();
+                        BigDecimal cant   = decimal(row, 5);
+                        String unidad     = texto(row, 6);
+                        BigDecimal valU   = decimal(row, 7);
+                        BigDecimal desc   = decimal(row, 8);
+                        BigDecimal iva    = decimal(row, 9);
+                        BigDecimal impCon = decimal(row, 10);
 
                         if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                         if (valU == null)     throw new IllegalArgumentException("valor_unitario es obligatorio");
@@ -281,16 +286,18 @@ public class MigracionService {
                         BigDecimal valLinea = valBase.add(
                                 valBase.multiply(ivaPct.divide(BigDecimal.valueOf(100), 4, java.math.RoundingMode.HALF_UP)));
 
+                        BigDecimal impConVal = impCon != null ? impCon : BigDecimal.ZERO;
+
                         jdbc.update("INSERT INTO factura_items " +
                                 "(tipo_item,nombre,tipo_insumo,tipo_equipo,cantidad,unidad," +
                                 "valor_unitario,porcentaje_descuento,porcentaje_iva_item,valor_linea," +
-                                "factura_id,tenant_id) " +
-                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                                "impuesto_consumo,factura_id,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                                 tipoItem, nombre,
                                 tipoInsDisplay, tipoEqDisplay,
                                 cantidad, unidadNula(unidad),
                                 valU, descPct, ivaPct, valLinea,
-                                factId, tenantId);
+                                impConVal, factId, tenantId);
 
                         // Actualizar subtotal y total de la factura si tenemos id
                         if (factId != null) {
@@ -494,6 +501,30 @@ public class MigracionService {
                         String carbTecnica       = nulaSiBlank(texto(row, 19));
                         String carbValidacion    = nulaSiBlank(texto(row, 20));
                         String carbDestino       = obsNula(texto(row, 21));
+                        // Brix / Terrill
+                        BigDecimal ogBrix        = decimal(row, 22);
+                        BigDecimal fgBrix        = decimal(row, 23);
+                        // Fermentador (por nombre)
+                        String fermNombre        = nulaSiBlank(texto(row, 24));
+                        // Densidad final fecha
+                        LocalDate densFinalFecha = fecha(row, 25);
+                        // Fechas de fases
+                        LocalDate fermFecIni   = fecha(row, 26);
+                        LocalDate fermFecIdeal = fecha(row, 27);
+                        BigDecimal fermTemp    = decimal(row, 28);
+                        LocalDate fermFecFin   = fecha(row, 29);
+                        LocalDate acondFecIni  = fecha(row, 30);
+                        LocalDate acondFecIdeal= fecha(row, 31);
+                        BigDecimal acondTemp   = decimal(row, 32);
+                        LocalDate acondFecFin  = fecha(row, 33);
+                        LocalDate madurFecIni  = fecha(row, 34);
+                        LocalDate madurFecIdeal= fecha(row, 35);
+                        BigDecimal madurTemp   = decimal(row, 36);
+                        LocalDate madurFecFin  = fecha(row, 37);
+                        LocalDate carbFecIni   = fecha(row, 38);
+                        LocalDate carbFecIdeal = fecha(row, 39);
+                        BigDecimal carbTemp    = decimal(row, 40);
+                        LocalDate carbFecFin   = fecha(row, 41);
 
                         Long recId = null;
                         if (!recNom.isBlank()) {
@@ -506,19 +537,37 @@ public class MigracionService {
                             }
                         }
 
+                        Long fermId = null;
+                        if (fermNombre != null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM equipos WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
+                                    Long.class, fermNombre, tenantId);
+                            if (!ids.isEmpty()) fermId = ids.get(0);
+                        }
+
                         long loteId = insertarYRetornarId(
                                 "INSERT INTO lotes_cerveza " +
                                 "(codigo_lote,estilo,fecha_elaboracion,litros_finales,densidad_inicial,densidad_final," +
                                 "agua_utilizada,ph_agua,clarificante,observaciones,notas_cata,receta_id," +
                                 "carb_metodo,carb_co2_objetivo,carb_co2_real,carb_azucar_tipo,carb_azucar_gramos," +
                                 "carb_presion_psi,carb_tiempo_horas,carb_tecnica,carb_validacion,carb_destino," +
+                                "og_brix,fg_brix,equipo_fermentador_id,densidad_final_fecha," +
+                                "ferm_fecha_inicial,ferm_fecha_final_ideal,ferm_temperatura,ferm_fecha_final," +
+                                "acond_fecha_inicial,acond_fecha_final_ideal,acond_temperatura,acond_fecha_final," +
+                                "madur_fecha_inicial,madur_fecha_final_ideal,madur_temperatura,madur_fecha_final," +
+                                "carb_fecha_inicial,carb_fecha_final_ideal,carb_temperatura,carb_fecha_final," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 codigo, estilo, fecEl, litros, ogObj, fgObj,
                                 agua, phAgua, nulaSiBlank(clar), obsNula(obs), obsNula(notasCata),
                                 recId,
                                 carbMetodo, carbCo2Obj, carbCo2Real, carbAzucarTipo, carbAzucarGr,
                                 carbPresionPsi, carbTiempoHoras, carbTecnica, carbValidacion, carbDestino,
+                                ogBrix, fgBrix, fermId, densFinalFecha,
+                                fermFecIni, fermFecIdeal, fermTemp, fermFecFin,
+                                acondFecIni, acondFecIdeal, acondTemp, acondFecFin,
+                                madurFecIni, madurFecIdeal, madurTemp, madurFecFin,
+                                carbFecIni, carbFecIdeal, carbTemp, carbFecFin,
                                 tenantId, usuario, usuario);
 
                         loteIds.put(codigo, loteId);
@@ -656,6 +705,7 @@ public class MigracionService {
                         String estado        = textoODefault(row, 4, "DESPACHADO").toUpperCase();
                         String notas         = texto(row, 5);
                         String remisionNum   = texto(row, 6);
+                        LocalDate cotizExpira = fecha(row, 7);
 
                         if (refVenta.isBlank())       throw new IllegalArgumentException("referencia_venta es obligatorio");
                         if (clienteNombre.isBlank())  throw new IllegalArgumentException("cliente_nombre es obligatorio");
@@ -681,10 +731,12 @@ public class MigracionService {
                         long ventaId = insertarYRetornarId(
                                 "INSERT INTO ventas " +
                                 "(cliente,cliente_id,fecha_despacho,estado,notas,remision_numero," +
+                                "cotizacion_expira_en," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 clienteNombre, clienteId, fechaDesp, estado,
                                 nulaSiBlank(notas), nulaSiBlank(remisionNum),
+                                cotizExpira,
                                 tenantId, usuario, usuario);
 
                         ventaIds.put(refVenta, ventaId);
@@ -1029,6 +1081,153 @@ public class MigracionService {
             }
         }
         return guardarLog(tenantId, "seguimiento", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
+    // ── Catálogos ─────────────────────────────────────────────────────────────
+
+    public Resultado importarCatalogos(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+
+            // 1) Tipos de Cerveza
+            Sheet shTC = wb.getSheet("Tipos_Cerveza");
+            if (shTC != null) {
+                for (Row row : shTC) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String nombre = texto(row, 0);
+                        if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
+                        String desc   = texto(row, 1);
+                        boolean activo = !"FALSE".equalsIgnoreCase(textoODefault(row, 2, "TRUE"))
+                                      && !"NO".equalsIgnoreCase(textoODefault(row, 2, "TRUE"));
+
+                        long existe = jdbc.queryForObject(
+                                "SELECT COUNT(*) FROM tipos_cerveza WHERE LOWER(nombre)=LOWER(?) AND tenant_id=?",
+                                Long.class, nombre, tenantId);
+                        if (existe > 0) { ok++; continue; }
+
+                        jdbc.update("INSERT INTO tipos_cerveza (nombre,descripcion,activo,tenant_id) VALUES (?,?,?,?)",
+                                nombre, nulaSiBlank(desc), activo, tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Tipos_Cerveza fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 2) Tipos de Insumo
+            Sheet shTI = wb.getSheet("Tipos_Insumo");
+            if (shTI != null) {
+                for (Row row : shTI) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String nombre = texto(row, 0);
+                        if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
+                        boolean activo = !"FALSE".equalsIgnoreCase(textoODefault(row, 1, "TRUE"))
+                                      && !"NO".equalsIgnoreCase(textoODefault(row, 1, "TRUE"));
+
+                        long existe = jdbc.queryForObject(
+                                "SELECT COUNT(*) FROM tipos_insumo WHERE LOWER(nombre)=LOWER(?) AND tenant_id=?",
+                                Long.class, nombre, tenantId);
+                        if (existe > 0) { ok++; continue; }
+
+                        jdbc.update("INSERT INTO tipos_insumo (nombre,activo,tenant_id) VALUES (?,?,?)",
+                                nombre, activo, tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Tipos_Insumo fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 3) Tipos de Equipo
+            Sheet shTE = wb.getSheet("Tipos_Equipo");
+            if (shTE != null) {
+                for (Row row : shTE) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String nombre = texto(row, 0);
+                        if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
+                        boolean activo = !"FALSE".equalsIgnoreCase(textoODefault(row, 1, "TRUE"))
+                                      && !"NO".equalsIgnoreCase(textoODefault(row, 1, "TRUE"));
+
+                        long existe = jdbc.queryForObject(
+                                "SELECT COUNT(*) FROM tipos_equipo WHERE LOWER(nombre)=LOWER(?) AND tenant_id=?",
+                                Long.class, nombre, tenantId);
+                        if (existe > 0) { ok++; continue; }
+
+                        jdbc.update("INSERT INTO tipos_equipo (nombre,activo,tenant_id) VALUES (?,?,?)",
+                                nombre, activo, tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Tipos_Equipo fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return guardarLog(tenantId, "catalogos", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
+    // ── Mantenimientos ────────────────────────────────────────────────────────
+
+    public Resultado importarMantenimientos(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sh = wb.getSheet("Mantenimientos");
+            if (sh == null) throw new IllegalArgumentException("No se encontró la hoja 'Mantenimientos'");
+
+            for (Row row : sh) {
+                if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                total++;
+                try {
+                    String nombreEquipo = texto(row, 0);
+                    LocalDate fecha     = fecha(row, 1);
+                    String tipo         = texto(row, 2).toUpperCase();
+                    String descripcion  = texto(row, 3);
+                    String tecnico      = texto(row, 4);
+                    BigDecimal costo    = decimal(row, 5);
+                    LocalDate proxMant  = fecha(row, 6);
+
+                    if (nombreEquipo.isBlank()) throw new IllegalArgumentException("nombre_equipo es obligatorio");
+                    if (fecha == null)          throw new IllegalArgumentException("fecha es obligatoria");
+                    if (tipo.isBlank())         throw new IllegalArgumentException("tipo es obligatorio");
+                    validarEnum(tipo, "tipo", "PREVENTIVO","CORRECTIVO","CALIBRACION","LIMPIEZA");
+
+                    List<Long> ids = jdbc.queryForList(
+                            "SELECT id FROM equipos WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
+                            Long.class, nombreEquipo, tenantId);
+                    if (ids.isEmpty())
+                        throw new IllegalArgumentException("Equipo '" + nombreEquipo + "' no encontrado");
+                    long equipoId = ids.get(0);
+
+                    jdbc.update("INSERT INTO mantenimientos_equipo " +
+                            "(equipo_id,fecha,tipo,descripcion,tecnico,costo,proximo_mantenimiento,created_at,tenant_id) " +
+                            "VALUES (?,?,?,?,?,?,?,NOW(),?)",
+                            equipoId, fecha, tipo, nulaSiBlank(descripcion),
+                            nulaSiBlank(tecnico), costo, proxMant, tenantId);
+
+                    // Actualizar fecha_ultimo_mantenimiento en el equipo
+                    jdbc.update("UPDATE equipos SET fecha_ultimo_mantenimiento=? " +
+                            "WHERE id=? AND tenant_id=? AND (fecha_ultimo_mantenimiento IS NULL OR fecha_ultimo_mantenimiento < ?)",
+                            fecha, equipoId, tenantId, fecha);
+                    ok++;
+                } catch (Exception e) {
+                    errores.add("Fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                }
+            }
+        }
+        return guardarLog(tenantId, "mantenimientos", file.getOriginalFilename(),
                           total, ok, errores, usuario);
     }
 
