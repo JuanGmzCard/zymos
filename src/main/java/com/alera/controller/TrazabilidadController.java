@@ -125,6 +125,19 @@ public class TrazabilidadController {
                 .toList();
     }
 
+    @GetMapping(value = "/stock-envases", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> stockEnvases(@RequestParam(required = false) List<String> nombres) {
+        if (nombres == null || nombres.isEmpty()) return Map.of();
+        var result = new java.util.HashMap<String, Object>();
+        for (String nombre : nombres) {
+            String n = nombre.trim();
+            result.put(n, insumoRepo.findByNombreExacto(n)
+                    .map(i -> (Object) i.getCantidad()).orElse(null));
+        }
+        return result;
+    }
+
     @GetMapping(value = "/suggest-items", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public List<Map<String, Object>> suggestItems(@RequestParam(defaultValue = "") String q,

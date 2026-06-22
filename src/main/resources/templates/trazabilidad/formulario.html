@@ -1062,7 +1062,8 @@
                             + DESTINO_OPTS + '</select>'
                             + '<input type="number" class="form-control form-control-sm destino-cantidad" style="width:75px;display:none" placeholder="Uds" min="1">'
                             + '<input type="text" class="form-control form-control-sm destino-otro" style="display:none;max-width:160px" placeholder="Personalizado...">'
-                            + '<button type="button" class="btn btn-sm btn-outline-danger px-1 btn-remove-destino"><i class="bi bi-x"></i></button>';
+                            + '<button type="button" class="btn btn-sm btn-outline-danger px-1 btn-remove-destino"><i class="bi bi-x"></i></button>'
+                            + '<span class="destino-stock-warn text-danger small d-none" style="align-self:center;white-space:nowrap"><i class="bi bi-exclamation-triangle-fill me-1"></i><span class="destino-stock-msg"></span></span>';
                         document.getElementById('destinoList').appendChild(row);
                         row.querySelector('.destino-formato').addEventListener('change', function() { onDestinoRowChange(this); });
                         row.querySelector('.destino-cantidad').addEventListener('input', componerDestino);
@@ -1120,6 +1121,8 @@
                         });
                         document.getElementById('carbDestino').value = partes.join(' | ');
                         mostrarBtnEnvases();
+                        clearTimeout(_stockEnvasesTimer);
+                        _stockEnvasesTimer = setTimeout(validarStockEnvases, 400);
                     }
 
                     function mostrarBtnEnvases() {
@@ -1133,6 +1136,36 @@
                         });
                         var btn = document.getElementById('btnAgregarEnvasesCosto');
                         if (btn) btn.classList.toggle('d-none', !tieneEnvases);
+                    }
+
+                    var _stockEnvasesTimer;
+                    function validarStockEnvases() {
+                        var formatos = [];
+                        document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
+                            var formato  = row.querySelector('.destino-formato').value;
+                            var cantidad = parseInt(row.querySelector('.destino-cantidad').value) || 0;
+                            if (formato && formato !== 'A granel' && formato !== '__otro__' && cantidad > 0)
+                                formatos.push({ row: row, formato: formato, cantidad: cantidad });
+                        });
+                        if (!formatos.length) return;
+                        var params = formatos.map(function(f) { return 'nombres=' + encodeURIComponent(f.formato); }).join('&');
+                        fetch('/stock-envases?' + params)
+                            .then(function(r) { return r.json(); })
+                            .then(function(stock) {
+                                formatos.forEach(function(f) {
+                                    var warn = f.row.querySelector('.destino-stock-warn');
+                                    if (!warn) return;
+                                    var disponible = stock[f.formato];
+                                    if (disponible !== null && disponible !== undefined && f.cantidad > parseFloat(disponible)) {
+                                        warn.querySelector('.destino-stock-msg').textContent =
+                                            'Insuficiente: hay ' + parseFloat(disponible) + ' und disponibles';
+                                        warn.classList.remove('d-none');
+                                    } else {
+                                        warn.classList.add('d-none');
+                                    }
+                                });
+                            })
+                            .catch(function() {});
                     }
 
                     // Devuelve true si el nombre del ítem de factura coincide con el formato de envase.
@@ -1215,6 +1248,17 @@
                         Promise.all(promesas).then(function(resultados) {
                             var agregados = 0;
                             var primerNombre = null;
+
+                            // Reset previo: poner a 0 los items que vamos a recalcular
+                            // (evita sumar encima de valores anteriores en ediciones)
+                            if (typeof asignados !== 'undefined') {
+                                resultados.forEach(function(r) {
+                                    if (!r || !r.exacto) return;
+                                    var existente = asignados.find(function(a) { return a.itemId == r.exacto.id; });
+                                    if (existente) existente.cantidadAsignada = 0;
+                                });
+                            }
+
                             resultados.forEach(function(r) {
                                 if (!r) return;
                                 if (!primerNombre) primerNombre = r.nombre;
@@ -1223,10 +1267,14 @@
                                     (r.items || []).forEach(function(it) { ultimosResultados[it.id] = it; });
                                 }
                                 // Auto-agregar solo el que coincide exactamente
+                                // Si el mismo envase aparece en varias filas de Destino, sumar cantidades
                                 if (r.exacto && typeof asignados !== 'undefined') {
                                     var it = r.exacto;
-                                    var existe = asignados.some(function(a) { return a.itemId == it.id; });
-                                    if (!existe) {
+                                    var existente = asignados.find(function(a) { return a.itemId == it.id; });
+                                    if (existente) {
+                                        existente.cantidadAsignada = (parseFloat(existente.cantidadAsignada) || 0) + r.cantidad;
+                                        agregados++;
+                                    } else {
                                         asignados.push({ itemId: it.id, cantidadAsignada: r.cantidad, itemData: it });
                                         agregados++;
                                     }
@@ -1245,6 +1293,14 @@
                             if (btn) {
                                 btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
                                 setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 5000);
+                            }
+                            // Si no hay coincidencia exacta, navegar a panel-0 donde está el buscador de costos
+                            if (agregados === 0 && typeof goTab === 'function') {
+                                goTab(0);
+                                setTimeout(function() {
+                                    var el = document.getElementById('costos-collapse');
+                                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 350);
                             }
                         });
                     }
@@ -1316,6 +1372,7 @@
                         }
 
                         initDestino();
+                        validarStockEnvases();
 
                         document.getElementById('carbMetodoSelect').addEventListener('change', toggleMetodoCarb);
                         document.getElementById('carbCo2ObjetivoInput').addEventListener('input', actualizarCalculadora);

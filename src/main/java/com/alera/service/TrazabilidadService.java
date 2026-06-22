@@ -117,7 +117,8 @@ public class TrazabilidadService {
         loteRepo.save(lote);
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "CREADO", currentUser(), lote.getEstilo()));
-        List<String> advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
+        List<String> advertencias = new ArrayList<>(descontarInventario(lote.getIngredientes(), lote.getCodigoLote()));
+        advertencias.addAll(descontarEnvases(lote.getItemsFactura(), lote.getCodigoLote()));
         if (advertencias.isEmpty()) {
             log.info("Lote creado: {} | estilo={} | ingredientes={}",
                     lote.getCodigoLote(), lote.getEstilo(), lote.getIngredientes().size());
@@ -138,8 +139,12 @@ public class TrazabilidadService {
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
         log.info("Actualizando lote: {}", lote.getCodigoLote());
 
-        // Copia la lista vieja ANTES de limpiarla para poder comparar luego.
+        // Copia las listas viejas ANTES de limpiarlas para poder comparar luego.
         List<Ingrediente> ingredientesAntes = new ArrayList<>(lote.getIngredientes());
+        // Acceder a itemsFactura antes del clear para forzar la lazy-load
+        List<LoteItemFactura> envasesAntes = lote.getItemsFactura().stream()
+                .filter(lif -> lif.getItem() != null && "ENVASE".equals(lif.getItem().getTipoInsumo()))
+                .toList();
 
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
@@ -151,10 +156,17 @@ public class TrazabilidadService {
         // Solo ajusta inventario si los ingredientes cambiaron efectivamente.
         // Si el usuario editó fechas, notas u otros campos sin tocar ingredientes,
         // no se generan movimientos innecesarios en movimientos_inventario.
-        List<String> advertencias = List.of();
+        List<String> advertencias = new ArrayList<>();
         if (ingredientesModificados(ingredientesAntes, lote.getIngredientes())) {
             restaurarInventario(ingredientesAntes, lote.getCodigoLote());
-            advertencias = descontarInventario(lote.getIngredientes(), lote.getCodigoLote());
+            advertencias.addAll(descontarInventario(lote.getIngredientes(), lote.getCodigoLote()));
+        }
+        List<LoteItemFactura> envasesNuevos = lote.getItemsFactura().stream()
+                .filter(lif -> lif.getItem() != null && "ENVASE".equals(lif.getItem().getTipoInsumo()))
+                .toList();
+        if (!envasesIguales(envasesAntes, envasesNuevos)) {
+            restaurarEnvases(envasesAntes, lote.getCodigoLote());
+            advertencias.addAll(descontarEnvases(envasesNuevos, lote.getCodigoLote()));
         }
 
         log.info("Lote actualizado: {}", lote.getCodigoLote());
@@ -260,6 +272,7 @@ public class TrazabilidadService {
         LoteCerveza lote = loteRepo.findByIdWithIngredientes(id)
                 .orElseThrow(() -> new LoteNoEncontradoException(id));
         restaurarInventario(lote.getIngredientes(), lote.getCodigoLote());
+        restaurarEnvases(lote.getItemsFactura(), lote.getCodigoLote());
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "ARCHIVADO", currentUser(), null));
         lote.setDeletedAt(java.time.LocalDateTime.now());
@@ -427,6 +440,40 @@ public class TrazabilidadService {
                 m.put("litrosFinales", l.getLitrosFinales() != null ? l.getLitrosFinales() : "");
                 return m;
             }).toList();
+    }
+
+    private List<String> descontarEnvases(java.util.Collection<LoteItemFactura> items, String codigoLote) {
+        var insuficientes = new ArrayList<String>();
+        for (LoteItemFactura lif : items) {
+            if (lif.getItem() == null || !"ENVASE".equals(lif.getItem().getTipoInsumo())) continue;
+            String nombre   = lif.getItem().getNombre();
+            String cantidad = lif.getCantidadAsignada() != null
+                    ? lif.getCantidadAsignada().toPlainString() : "0";
+            Optional.ofNullable(insumoService.descontarIngrediente(nombre, cantidad, codigoLote))
+                    .ifPresent(insuficientes::add);
+        }
+        return insuficientes;
+    }
+
+    private void restaurarEnvases(java.util.Collection<LoteItemFactura> items, String codigoLote) {
+        for (LoteItemFactura lif : items) {
+            if (lif.getItem() == null || !"ENVASE".equals(lif.getItem().getTipoInsumo())) continue;
+            String nombre   = lif.getItem().getNombre();
+            String cantidad = lif.getCantidadAsignada() != null
+                    ? lif.getCantidadAsignada().toPlainString() : "0";
+            insumoService.restaurarIngrediente(nombre, cantidad, codigoLote);
+        }
+    }
+
+    private boolean envasesIguales(List<LoteItemFactura> antes, List<LoteItemFactura> despues) {
+        if (antes.size() != despues.size()) return false;
+        var keysBefore = antes.stream()
+                .map(l -> l.getItem().getId() + "|" + l.getCantidadAsignada())
+                .sorted().toList();
+        var keysAfter = despues.stream()
+                .map(l -> l.getItem().getId() + "|" + l.getCantidadAsignada())
+                .sorted().toList();
+        return keysBefore.equals(keysAfter);
     }
 
     private String currentUser() {
