@@ -1055,48 +1055,20 @@
 
                     var DESTINO_OPTS = DESTINO_OPTS_FALLBACK;
 
-                    // Construye DESTINO_OPTS con datos reales del inventario y facturas
-                    function buildDestinoOpts(insumos, facturaItems) {
-                        var e = function(s) {
+                    // Construye DESTINO_OPTS con insumos tipo ENVASE del inventario
+                    function buildDestinoOpts(envases) {
+                        var esc = function(s) {
                             return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
                         };
                         var opts = '<option value="">-- Tipo de envase --</option>';
-
-                        // Ítems de facturas con tipoInsumo=ENVASE (data-item-id para enlace directo)
-                        if (facturaItems && facturaItems.length) {
-                            opts += '<optgroup label="Facturas de compra">';
-                            facturaItems.forEach(function(fi) {
-                                var label = e(fi.nombre) + (fi.proveedor ? ' — ' + e(fi.proveedor) : '');
-                                opts += '<option value="' + e(fi.nombre) + '" data-item-id="' + fi.id + '">' + label + '</option>';
+                        if (envases && envases.length) {
+                            envases.forEach(function(ins) {
+                                opts += '<option value="' + esc(ins.nombre) + '">' + esc(ins.nombre) + '</option>';
                             });
-                            opts += '</optgroup>';
-                        }
-
-                        // Inventario: agrupar por tipo, ENVASE primero
-                        if (insumos && insumos.length) {
-                            var grupos = {};
-                            insumos.forEach(function(ins) {
-                                var t = ins.tipo || 'OTRO';
-                                if (!grupos[t]) grupos[t] = [];
-                                grupos[t].push(ins);
-                            });
-                            // ENVASE primero, luego el resto en orden
-                            var orden = ['ENVASE'].concat(Object.keys(grupos).filter(function(k) { return k !== 'ENVASE'; }).sort());
-                            orden.forEach(function(tipo) {
-                                if (!grupos[tipo] || !grupos[tipo].length) return;
-                                opts += '<optgroup label="Inventario — ' + e(tipo) + '">';
-                                grupos[tipo].forEach(function(ins) {
-                                    opts += '<option value="' + e(ins.nombre) + '">' + e(ins.nombre) + '</option>';
-                                });
-                                opts += '</optgroup>';
-                            });
-                        }
-
-                        // Si no hay datos reales, incluir opciones genéricas de fallback
-                        if ((!insumos || !insumos.length) && (!facturaItems || !facturaItems.length)) {
+                        } else {
+                            // Fallback si no hay insumos tipo ENVASE en inventario
                             opts += DESTINO_OPTS_FALLBACK.replace('<option value="">-- Tipo de envase --</option>', '');
                         }
-
                         opts += '<option value="A granel">A granel</option>'
                              + '<option value="__otro__">Otro (personalizado)...</option>';
                         return opts;
@@ -1320,11 +1292,11 @@
                         toggleMetodoCarb();
                         sugerirCo2PorEstilo();
 
-                        // Carga opciones de envases desde inventario + facturas, luego inicia el select
+                        // Carga insumos tipo ENVASE del inventario para el select de destino
                         fetch('/envases-para-destino')
                             .then(function(r) { return r.json(); })
-                            .then(function(data) {
-                                DESTINO_OPTS = buildDestinoOpts(data.insumos || [], data.facturaItems || []);
+                            .then(function(envases) {
+                                DESTINO_OPTS = buildDestinoOpts(envases);
                             })
                             .catch(function() {})
                             .finally(function() { initDestino(); });
