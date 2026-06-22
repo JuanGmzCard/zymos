@@ -91,6 +91,16 @@
                         bajo stock, vencimientos próximos y mantenimientos. Requiere SMTP configurado en el servidor.
                     </div>
                 </div>
+                <!-- Idioma por defecto -->
+                <div class="col-md-4">
+                    <label class="form-label detail-label" th:text="#{admin.tform.label.idioma}">Idioma por defecto</label>
+                    <select th:field="*{locale}" class="form-select">
+                        <option value="es" th:text="#{admin.tform.idioma.es}">🇪🇸 Español</option>
+                        <option value="en" th:text="#{admin.tform.idioma.en}">🇬🇧 English</option>
+                    </select>
+                    <div class="form-text" th:text="#{admin.tform.hint.idioma}">Idioma de la interfaz para los usuarios de este tenant (pueden cambiarlo manualmente).</div>
+                </div>
+
                 <!-- Límites de plan -->
                 <div class="col-12">
                     <hr class="my-1">

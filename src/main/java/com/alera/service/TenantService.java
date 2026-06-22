@@ -82,6 +82,7 @@ public class TenantService {
         agregarCambio(cambios, "planTipo", antes.getPlanTipo(), despues.getPlanTipo());
         agregarCambio(cambios, "planInicio", antes.getPlanInicio(), despues.getPlanInicio());
         agregarCambio(cambios, "planFin", antes.getPlanFin(), despues.getPlanFin());
+        agregarCambio(cambios, "locale", antes.getLocale(), despues.getLocale());
 
         if (cambios.isEmpty()) return null;
         String resumen = String.join("; ", cambios);
