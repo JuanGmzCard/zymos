@@ -919,7 +919,8 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddDestinoRow">
                                 <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.carbon.destino.btn}">Agregar formato</span>
                             </button>
-                            <button type="button" class="btn btn-sm btn-outline-warning d-none" id="btnAgregarEnvasesCosto">
+                            <button type="button" class="btn btn-sm btn-outline-warning d-none" id="btnAgregarEnvasesCosto"
+                                    th:attr="data-label=#{traz.form.carbon.destino.costos.btn}">
                                 <i class="bi bi-box-seam me-1"></i><span th:text="#{traz.form.carbon.destino.costos.btn}">Agregar envases al costo</span>
                             </button>
                         </div>
@@ -1144,19 +1145,22 @@
                         if (!entradas.length) return;
 
                         var btn = document.getElementById('btnAgregarEnvasesCosto');
-                        var textoOriginal = btn ? btn.innerHTML : '';
+                        var labelOriginal = btn ? ('<i class="bi bi-box-seam me-1"></i>' + (btn.dataset.label || 'Agregar envases al costo')) : '';
                         if (btn) {
                             btn.disabled = true;
                             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Buscando...';
                         }
 
                         var promesas = entradas.map(function(e) {
-                            return fetch('/suggest-items?q=' + encodeURIComponent(e.nombre) + '&tipo=ENVASE')
+                            return fetch('/suggest-items?q=' + encodeURIComponent(e.nombre))
                                 .then(function(r) { return r.json(); })
                                 .then(function(items) {
                                     var nombreLower = e.nombre.toLowerCase();
+                                    // Coincidencia bidireccional: el nombre del ítem contiene el formato, o viceversa
                                     var match = items.find(function(it) {
-                                        return it.nombre && it.nombre.toLowerCase().includes(nombreLower);
+                                        if (!it.nombre) return false;
+                                        var itLower = it.nombre.toLowerCase();
+                                        return itLower.includes(nombreLower) || nombreLower.includes(itLower);
                                     });
                                     return { entrada: e, match: match };
                                 });
@@ -1187,16 +1191,16 @@
 
                             var msg;
                             if (!noEncontrados.length) {
-                                msg = '✓ ' + (agregados + actualizados) + ' envase(s) al costo';
+                                msg = '✓ ' + (agregados + actualizados) + ' envase(s) agregado(s)';
                             } else if (agregados + actualizados > 0) {
-                                msg = '✓ ' + (agregados + actualizados) + ' agregados · ✗ sin facturas: ' + noEncontrados.join(', ');
+                                msg = '✓ ' + (agregados + actualizados) + ' · ✗ sin factura: ' + noEncontrados.join(', ');
                             } else {
-                                msg = '✗ Sin coincidencias en facturas';
+                                msg = '✗ No se encontraron ítems: ' + noEncontrados.join(', ');
                             }
                             if (btn) {
                                 btn.disabled = false;
                                 btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
-                                setTimeout(function() { if (btn) btn.innerHTML = textoOriginal; }, 3000);
+                                setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 4000);
                             }
                         });
                     }
