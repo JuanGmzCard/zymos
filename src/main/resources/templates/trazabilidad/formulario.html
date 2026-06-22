@@ -915,9 +915,14 @@
                     <div class="col-md-6">
                         <label class="form-label" th:text="#{traz.form.carbon.destino}">Destino y Empaque del Lote</label>
                         <div id="destinoList" class="mb-2"></div>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddDestinoRow">
-                            <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.carbon.destino.btn}">Agregar formato</span>
-                        </button>
+                        <div class="d-flex gap-2 flex-wrap mt-1">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddDestinoRow">
+                                <i class="bi bi-plus me-1"></i><span th:text="#{traz.form.carbon.destino.btn}">Agregar formato</span>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-warning d-none" id="btnAgregarEnvasesCosto">
+                                <i class="bi bi-box-seam me-1"></i><span th:text="#{traz.form.carbon.destino.costos.btn}">Agregar envases al costo</span>
+                            </button>
+                        </div>
                         <input type="hidden" th:field="*{carbDestino}" id="carbDestino">
                     </div>
                 </div>
@@ -1111,6 +1116,89 @@
                             else if (formato) { partes.push(cantidad > 0 ? (cantidad + ' × ' + formato) : formato); }
                         });
                         document.getElementById('carbDestino').value = partes.join(' | ');
+                        mostrarBtnEnvases();
+                    }
+
+                    function mostrarBtnEnvases() {
+                        var tieneEnvases = false;
+                        document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
+                            var formato  = row.querySelector('.destino-formato').value;
+                            var cantidad = parseInt(row.querySelector('.destino-cantidad').value) || 0;
+                            if (formato && formato !== 'A granel' && formato !== '__otro__' && formato !== '' && cantidad > 0) {
+                                tieneEnvases = true;
+                            }
+                        });
+                        var btn = document.getElementById('btnAgregarEnvasesCosto');
+                        if (btn) btn.classList.toggle('d-none', !tieneEnvases);
+                    }
+
+                    function agregarEnvasesCosto() {
+                        var entradas = [];
+                        document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
+                            var formato  = row.querySelector('.destino-formato').value;
+                            var cantidad = parseInt(row.querySelector('.destino-cantidad').value) || 0;
+                            if (formato && formato !== 'A granel' && formato !== '__otro__' && formato !== '' && cantidad > 0) {
+                                entradas.push({ nombre: formato, cantidad: cantidad });
+                            }
+                        });
+                        if (!entradas.length) return;
+
+                        var btn = document.getElementById('btnAgregarEnvasesCosto');
+                        var textoOriginal = btn ? btn.innerHTML : '';
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Buscando...';
+                        }
+
+                        var promesas = entradas.map(function(e) {
+                            return fetch('/suggest-items?q=' + encodeURIComponent(e.nombre) + '&tipo=ENVASE')
+                                .then(function(r) { return r.json(); })
+                                .then(function(items) {
+                                    var nombreLower = e.nombre.toLowerCase();
+                                    var match = items.find(function(it) {
+                                        return it.nombre && it.nombre.toLowerCase().includes(nombreLower);
+                                    });
+                                    return { entrada: e, match: match };
+                                });
+                        });
+
+                        Promise.all(promesas).then(function(resultados) {
+                            var agregados = 0, actualizados = 0, noEncontrados = [];
+                            resultados.forEach(function(r) {
+                                if (!r.match) { noEncontrados.push(r.entrada.nombre); return; }
+                                if (typeof asignados === 'undefined') return;
+                                var existente = asignados.find(function(a) { return a.itemId == r.match.id; });
+                                if (existente) {
+                                    existente.cantidadAsignada = r.entrada.cantidad;
+                                    actualizados++;
+                                } else {
+                                    asignados.push({ itemId: r.match.id, cantidadAsignada: r.entrada.cantidad, itemData: r.match });
+                                    agregados++;
+                                }
+                            });
+                            if (typeof renderizarAsignados === 'function') renderizarAsignados();
+
+                            if ((agregados + actualizados) > 0) {
+                                var collapse = document.getElementById('costos-collapse');
+                                if (collapse && !collapse.classList.contains('show')) {
+                                    bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
+                                }
+                            }
+
+                            var msg;
+                            if (!noEncontrados.length) {
+                                msg = '✓ ' + (agregados + actualizados) + ' envase(s) al costo';
+                            } else if (agregados + actualizados > 0) {
+                                msg = '✓ ' + (agregados + actualizados) + ' agregados · ✗ sin facturas: ' + noEncontrados.join(', ');
+                            } else {
+                                msg = '✗ Sin coincidencias en facturas';
+                            }
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
+                                setTimeout(function() { if (btn) btn.innerHTML = textoOriginal; }, 3000);
+                            }
+                        });
                     }
 
                     function initDestino() {
@@ -1123,6 +1211,7 @@
                             if (match) { addDestinoRow(match[2].trim(), match[1]); }
                             else { addDestinoRow(entrada); }
                         });
+                        mostrarBtnEnvases();
                     }
 
                     function agregarAgenteCostoSugerido() {
@@ -1176,6 +1265,9 @@
 
                         var btnAgente = document.getElementById('btnAgregarAgenteCosto');
                         if (btnAgente) btnAgente.addEventListener('click', agregarAgenteCostoSugerido);
+
+                        var btnEnvases = document.getElementById('btnAgregarEnvasesCosto');
+                        if (btnEnvases) btnEnvases.addEventListener('click', agregarEnvasesCosto);
                     });
 
                     document.addEventListener('click', function(e) {
