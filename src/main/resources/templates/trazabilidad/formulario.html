@@ -1197,29 +1197,34 @@
                             bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
                         }
 
-                        // Para cada formato buscar el mejor ítem de factura por nombre y agregarlo
+                        // Para cada formato: buscar ítem de factura con nombre exacto (case-insensitive)
+                        // Si hay coincidencia exacta → auto-agregar; siempre mostrar resultados en el buscador
                         var promesas = formatos.map(function(f) {
                             return fetch('/suggest-items?q=' + encodeURIComponent(f.nombre))
                                 .then(function(r) { return r.json(); })
                                 .then(function(items) {
-                                    if (!items || !items.length) return null;
-                                    // Buscar coincidencia: el ítem cuyo nombre contiene el formato o viceversa
-                                    var mejor = items.find(function(it) {
-                                        var n = (it.nombre || '').toLowerCase();
-                                        var q = f.nombre.toLowerCase();
-                                        return n.includes(q) || q.includes(n);
-                                    }) || items[0];
-                                    return { item: mejor, cantidad: f.cantidad };
+                                    if (!items || !items.length) return { items: [], cantidad: f.cantidad, nombre: f.nombre };
+                                    // Solo auto-agregar si el nombre es una coincidencia exacta
+                                    var exacto = items.find(function(it) {
+                                        return (it.nombre || '').toLowerCase().trim() === f.nombre.toLowerCase().trim();
+                                    });
+                                    return { items: items, exacto: exacto || null, cantidad: f.cantidad, nombre: f.nombre };
                                 });
                         });
 
                         Promise.all(promesas).then(function(resultados) {
                             var agregados = 0;
+                            var primerNombre = null;
                             resultados.forEach(function(r) {
-                                if (!r || !r.item) return;
-                                var it = r.item;
-                                if (typeof ultimosResultados !== 'undefined') ultimosResultados[it.id] = it;
-                                if (typeof asignados !== 'undefined') {
+                                if (!r) return;
+                                if (!primerNombre) primerNombre = r.nombre;
+                                // Registrar todos los resultados en ultimosResultados para que el panel los muestre
+                                if (typeof ultimosResultados !== 'undefined') {
+                                    (r.items || []).forEach(function(it) { ultimosResultados[it.id] = it; });
+                                }
+                                // Auto-agregar solo el que coincide exactamente
+                                if (r.exacto && typeof asignados !== 'undefined') {
+                                    var it = r.exacto;
                                     var existe = asignados.some(function(a) { return a.itemId == it.id; });
                                     if (!existe) {
                                         asignados.push({ itemId: it.id, cantidadAsignada: r.cantidad, itemData: it });
@@ -1228,17 +1233,19 @@
                                 }
                             });
                             if (agregados > 0 && typeof renderizarAsignados === 'function') renderizarAsignados();
+
+                            // Siempre pre-rellenar el buscador y mostrar resultados para selección manual
+                            var input = document.getElementById('costo-search');
+                            if (input) { input.value = primerNombre || ''; }
+                            if (typeof buscarItemsCosto === 'function') buscarItemsCosto();
+
                             var msg = agregados > 0
-                                ? '✓ ' + agregados + ' agregado(s)'
-                                : '↓ Sin coincidencias — busca manualmente';
+                                ? '✓ ' + agregados + ' agregado(s) automáticamente'
+                                : '↓ Selecciona el ítem correcto en el panel';
                             if (btn) {
                                 btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
-                                setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 4000);
+                                setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 5000);
                             }
-                            // Pre-rellenar buscador con el primer formato para búsqueda manual
-                            var input = document.getElementById('costo-search');
-                            if (input && !input.value && formatos.length) { input.value = formatos[0].nombre; }
-                            if (typeof buscarItemsCosto === 'function') buscarItemsCosto();
                         });
                     }
 
