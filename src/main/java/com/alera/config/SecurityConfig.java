@@ -21,6 +21,11 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.Arrays;
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -103,6 +108,24 @@ public class SecurityConfig {
     }
 
     @Bean
+    public CorsConfigurationSource corsConfigurationSource(
+            @Value("${app.cors.allowed-origins:}") String allowedOriginsStr) {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        if (allowedOriginsStr == null || allowedOriginsStr.isBlank()) return source;
+        List<String> origins = Arrays.stream(allowedOriginsStr.split(","))
+                .map(String::trim).filter(s -> !s.isBlank()).toList();
+        if (origins.isEmpty()) return source;
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(origins);
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-CSRF-TOKEN", "X-Requested-With"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
+
+    @Bean
     public DaoAuthenticationProvider authProvider(UsuarioService usuarioService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(usuarioService);
@@ -120,8 +143,10 @@ public class SecurityConfig {
                                             ApiRateLimitFilter apiRateLimitFilter,
                                             ZymosAuthSuccessHandler successHandler,
                                             ZymosAuthFailureHandler failureHandler,
-                                            ZymosAccessDeniedHandler accessDeniedHandler) throws Exception {
+                                            ZymosAccessDeniedHandler accessDeniedHandler,
+                                            CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .addFilterBefore(cspNonceFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(tenantFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
