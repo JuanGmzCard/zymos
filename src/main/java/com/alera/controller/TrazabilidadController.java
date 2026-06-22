@@ -454,7 +454,7 @@ public class TrazabilidadController {
     }
 
     private void agregarInventarioAlModelo(Model model) {
-        var todosInsumos = insumoRepo.findAll();
+        var todosInsumos = insumoRepo.findAllByOrderByNombreAsc();
         model.addAttribute("maltasInventario", todosInsumos.stream()
                 .filter(i -> "Malta".equals(i.getTipo())).toList());
         model.addAttribute("lupulosInventario", todosInsumos.stream()

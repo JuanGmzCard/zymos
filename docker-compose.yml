@@ -10,7 +10,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-alera} -d trazabilidad_cervezas"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d trazabilidad_cervezas"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -27,11 +27,11 @@ services:
       DB_URL:             jdbc:postgresql://db:5432/trazabilidad_cervezas
       DB_USERNAME:        ${DB_USERNAME:?DB_USERNAME must be set}
       DB_PASSWORD:        ${DB_PASSWORD:?DB_PASSWORD must be set}
-      # Rol con DDL para Flyway (si no se define, usa DB_USERNAME como fallback)
-      FLYWAY_USERNAME:    ${FLYWAY_USERNAME:-${DB_USERNAME:-alera}}
-      FLYWAY_PASSWORD:    ${FLYWAY_PASSWORD:-${DB_PASSWORD:-alera2024}}
-      ADMIN_USERNAME:     ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD:     ${ADMIN_PASSWORD:-alera2024}
+      # Rol con DDL para Flyway (si no se define, hereda las credenciales de la app)
+      FLYWAY_USERNAME:    ${FLYWAY_USERNAME:-${DB_USERNAME}}
+      FLYWAY_PASSWORD:    ${FLYWAY_PASSWORD:-${DB_PASSWORD}}
+      ADMIN_USERNAME:     ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ADMIN_PASSWORD:     ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       # Usuarios adicionales por rol (opcional)
       INVENTARIO_USERNAME: ${INVENTARIO_USERNAME:-}
       INVENTARIO_PASSWORD: ${INVENTARIO_PASSWORD:-}
