@@ -114,6 +114,30 @@ public class TrazabilidadController {
         return service.suggest(q);
     }
 
+    @GetMapping(value = "/envases-para-destino", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> envasesParaDestino() {
+        var insumos = insumoRepo
+                .findByFiltros("", "ENVASE", org.springframework.data.domain.PageRequest.of(0, 200))
+                .getContent().stream()
+                .map(i -> Map.of("nombre", i.getNombre(),
+                                 "unidad",  i.getUnidad()  != null ? i.getUnidad()  : ""))
+                .toList();
+        var facturaItems = facturaItemRepo
+                .findEnvases(org.springframework.data.domain.PageRequest.of(0, 100)).stream()
+                .map(fi -> {
+                    var m = new LinkedHashMap<String, Object>();
+                    m.put("id",        fi.getId());
+                    m.put("nombre",    fi.getNombre());
+                    m.put("unidad",    fi.getUnidad()  != null ? fi.getUnidad()  : "");
+                    m.put("proveedor", fi.getFactura().getProveedor() != null
+                                       ? fi.getFactura().getProveedor() : "");
+                    return (Map<String, Object>) m;
+                })
+                .toList();
+        return Map.of("insumos", insumos, "facturaItems", facturaItems);
+    }
+
     @GetMapping(value = "/suggest-items", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public List<Map<String, Object>> suggestItems(@RequestParam(defaultValue = "") String q,

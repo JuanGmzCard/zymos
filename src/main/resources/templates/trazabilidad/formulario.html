@@ -1026,7 +1026,8 @@
                         if (btnCosto) btnCosto.classList.toggle('d-none', parseFloat(gramos) <= 0 || !tipoAzucar);
                     }
 
-                    var DESTINO_OPTS = '<option value="">-- Tipo de envase --</option>'
+                    // Opciones estáticas de fallback — se reemplaza con datos reales al cargar
+                    var DESTINO_OPTS_FALLBACK = '<option value="">-- Tipo de envase --</option>'
                         + '<optgroup label="Botellas">'
                         + '<option value="Botella 330ml">Botella 330ml</option>'
                         + '<option value="Botella 500ml">Botella 500ml</option>'
@@ -1051,6 +1052,40 @@
                         + '</optgroup>'
                         + '<option value="A granel">A granel</option>'
                         + '<option value="__otro__">Otro (personalizado)...</option>';
+
+                    var DESTINO_OPTS = DESTINO_OPTS_FALLBACK;
+
+                    // Construye DESTINO_OPTS con datos reales del inventario y facturas
+                    function buildDestinoOpts(insumos, facturaItems) {
+                        var escHtml = function(s) {
+                            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                        };
+                        var opts = '<option value="">-- Tipo de envase --</option>';
+                        // Ítems de facturas con tipoInsumo=ENVASE (llevan data-item-id para enlace directo)
+                        if (facturaItems && facturaItems.length) {
+                            opts += '<optgroup label="Facturas de compra">';
+                            facturaItems.forEach(function(fi) {
+                                var label = escHtml(fi.nombre) + (fi.proveedor ? ' — ' + escHtml(fi.proveedor) : '');
+                                opts += '<option value="' + escHtml(fi.nombre) + '" data-item-id="' + fi.id + '">' + label + '</option>';
+                            });
+                            opts += '</optgroup>';
+                        }
+                        // Insumos del inventario tipo ENVASE
+                        if (insumos && insumos.length) {
+                            opts += '<optgroup label="Inventario (envases)">';
+                            insumos.forEach(function(ins) {
+                                opts += '<option value="' + escHtml(ins.nombre) + '">' + escHtml(ins.nombre) + '</option>';
+                            });
+                            opts += '</optgroup>';
+                        }
+                        // Siempre incluir opciones comunes de fallback si no hay datos suficientes
+                        if ((!insumos || !insumos.length) && (!facturaItems || !facturaItems.length)) {
+                            opts += DESTINO_OPTS_FALLBACK.replace('<option value="">-- Tipo de envase --</option>', '');
+                        }
+                        opts += '<option value="A granel">A granel</option>'
+                             + '<option value="__otro__">Otro (personalizado)...</option>';
+                        return opts;
+                    }
 
                     function addDestinoRow(formato, cantidad) {
                         var row = document.createElement('div');
@@ -1172,67 +1207,84 @@
                     }
 
                     function agregarEnvasesCosto() {
-                        var entradas = [];
+                        var entradasConId = [];   // {nombre, cantidad, itemId} — ID directo desde factura
+                        var entradasSinId = [];   // {nombre, cantidad}        — requieren búsqueda
                         document.querySelectorAll('#destinoList .destino-row').forEach(function(row) {
-                            var formato  = row.querySelector('.destino-formato').value;
+                            var sel      = row.querySelector('.destino-formato');
+                            var formato  = sel ? sel.value : '';
                             var cantidad = parseInt(row.querySelector('.destino-cantidad').value) || 0;
-                            if (formato && formato !== 'A granel' && formato !== '__otro__' && formato !== '' && cantidad > 0) {
-                                entradas.push({ nombre: formato, cantidad: cantidad });
+                            if (!formato || formato === 'A granel' || formato === '__otro__' || !cantidad) return;
+                            // Leer data-item-id del option seleccionado (solo si vino de factura)
+                            var opt    = sel.options[sel.selectedIndex];
+                            var itemId = opt ? opt.dataset.itemId : null;
+                            if (itemId) {
+                                entradasConId.push({ nombre: formato, cantidad: cantidad, itemId: parseInt(itemId) });
+                            } else {
+                                entradasSinId.push({ nombre: formato, cantidad: cantidad });
                             }
                         });
+                        if (!entradasConId.length && !entradasSinId.length) return;
                         if (!entradas.length) return;
 
                         var btn = document.getElementById('btnAgregarEnvasesCosto');
                         var labelOriginal = btn ? ('<i class="bi bi-box-seam me-1"></i>' + (btn.dataset.label || 'Agregar envases al costo')) : '';
-                        if (btn) {
-                            btn.disabled = true;
-                            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Buscando...';
+                        if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span>Buscando...'; }
+
+                        function aplicarEntrada(itemId, itemData, cantidad) {
+                            if (typeof asignados === 'undefined') return false;
+                            var existente = asignados.find(function(a) { return a.itemId == itemId; });
+                            if (existente) { existente.cantidadAsignada = cantidad; return 'actualizado'; }
+                            asignados.push({ itemId: itemId, cantidadAsignada: cantidad, itemData: itemData });
+                            return 'agregado';
                         }
 
-                        Promise.all(entradas.map(buscarEnvaseEnFactura)).then(function(resultados) {
-                            var agregados = 0, actualizados = 0, noEncontrados = [];
-                            resultados.forEach(function(r) {
-                                if (!r.match) { noEncontrados.push(r.entrada.nombre); return; }
-                                if (typeof asignados === 'undefined') return;
-                                var existente = asignados.find(function(a) { return a.itemId == r.match.id; });
-                                if (existente) {
-                                    existente.cantidadAsignada = r.entrada.cantidad;
-                                    actualizados++;
-                                } else {
-                                    asignados.push({ itemId: r.match.id, cantidadAsignada: r.entrada.cantidad, itemData: r.match });
-                                    agregados++;
-                                }
-                            });
+                        function finalizarEnvases(agregados, actualizados, noEncontrados) {
                             if (typeof renderizarAsignados === 'function') renderizarAsignados();
-
-                            // Abrir panel de costos siempre que haya algo que mostrar
                             var collapse = document.getElementById('costos-collapse');
                             if (collapse && !collapse.classList.contains('show')) {
                                 bootstrap.Collapse.getOrCreateInstance(collapse, { toggle: false }).show();
                             }
-
-                            // Fallback: pre-rellenar buscador con el primer formato no encontrado
                             if (noEncontrados.length && typeof buscarItemsCosto === 'function') {
                                 var input = document.getElementById('costo-search');
-                                if (input) {
-                                    input.value = noEncontrados[0];
-                                    buscarItemsCosto();
-                                }
+                                if (input) { input.value = noEncontrados[0]; buscarItemsCosto(); }
                             }
-
-                            var msg;
-                            if (!noEncontrados.length) {
-                                msg = '✓ ' + (agregados + actualizados) + ' envase(s) agregado(s)';
-                            } else if (agregados + actualizados > 0) {
-                                msg = '✓ ' + (agregados + actualizados) + ' · busca: ' + noEncontrados.join(', ');
-                            } else {
-                                msg = '→ busca en costos: ' + noEncontrados.join(', ');
-                            }
+                            var total = agregados + actualizados;
+                            var msg = !noEncontrados.length
+                                ? '✓ ' + total + ' envase(s) agregado(s)'
+                                : total > 0
+                                    ? '✓ ' + total + ' · busca: ' + noEncontrados.join(', ')
+                                    : '→ busca en costos: ' + noEncontrados.join(', ');
                             if (btn) {
                                 btn.disabled = false;
                                 btn.innerHTML = '<i class="bi bi-box-seam me-1"></i>' + msg;
                                 setTimeout(function() { if (btn) btn.innerHTML = labelOriginal; }, 5000);
                             }
+                        }
+
+                        // 1) Procesar entradas con ID directo (sin búsqueda)
+                        var agregadosDir = 0, actualizadosDir = 0;
+                        entradasConId.forEach(function(e) {
+                            // itemData mínimo para renderizar — el buscador de facturas lo enriquecerá si abre
+                            var itemData = { id: e.itemId, nombre: e.nombre, unidad: '', facturaNumero: '', proveedor: '' };
+                            var res = aplicarEntrada(e.itemId, itemData, e.cantidad);
+                            if (res === 'agregado') agregadosDir++;
+                            else if (res === 'actualizado') actualizadosDir++;
+                        });
+
+                        // 2) Procesar entradas sin ID: buscar en facturas por nombre
+                        if (!entradasSinId.length) {
+                            finalizarEnvases(agregadosDir, actualizadosDir, []);
+                            return;
+                        }
+                        Promise.all(entradasSinId.map(buscarEnvaseEnFactura)).then(function(resultados) {
+                            var agregados = agregadosDir, actualizados = actualizadosDir, noEncontrados = [];
+                            resultados.forEach(function(r) {
+                                if (!r.match) { noEncontrados.push(r.entrada.nombre); return; }
+                                var res = aplicarEntrada(r.match.id, r.match, r.entrada.cantidad);
+                                if (res === 'agregado') agregados++;
+                                else if (res === 'actualizado') actualizados++;
+                            });
+                            finalizarEnvases(agregados, actualizados, noEncontrados);
                         });
                     }
 
@@ -1285,7 +1337,15 @@
                     document.addEventListener('DOMContentLoaded', function() {
                         toggleMetodoCarb();
                         sugerirCo2PorEstilo();
-                        initDestino();
+
+                        // Carga opciones de envases desde inventario + facturas, luego inicia el select
+                        fetch('/envases-para-destino')
+                            .then(function(r) { return r.json(); })
+                            .then(function(data) {
+                                DESTINO_OPTS = buildDestinoOpts(data.insumos || [], data.facturaItems || []);
+                            })
+                            .catch(function() {})
+                            .finally(function() { initDestino(); });
 
                         document.getElementById('carbMetodoSelect').addEventListener('change', toggleMetodoCarb);
                         document.getElementById('carbCo2ObjetivoInput').addEventListener('input', actualizarCalculadora);

@@ -39,6 +39,12 @@ public interface FacturaItemRepository extends JpaRepository<FacturaItem, Long> 
            "ORDER BY f.fechaFactura DESC NULLS LAST, fi.id DESC")
     List<FacturaItem> findByNombresIn(@Param("nombres") List<String> nombres);
 
+    // Ítems de facturas categorizados como ENVASE — para el select dinámico de destino/empaque
+    @Query("SELECT fi FROM FacturaItem fi JOIN FETCH fi.factura f " +
+           "WHERE fi.tipoInsumo = 'ENVASE' " +
+           "ORDER BY f.fechaFactura DESC NULLS LAST, fi.id DESC")
+    List<FacturaItem> findEnvases(org.springframework.data.domain.Pageable pageable);
+
     // Búsqueda paginada para el buscador AJAX de "Costos de Producción" del formulario de lote
     @Query("SELECT fi FROM FacturaItem fi JOIN FETCH fi.factura f " +
            "WHERE (:q = '' OR LOWER(fi.nombre) LIKE LOWER(CONCAT('%',:q,'%')) " +
