@@ -18,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -63,7 +62,6 @@ class FacturaProveedorServiceTest {
             return f;
         });
         when(historialRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(insumoRepo.findByNombreExacto(any())).thenReturn(Optional.empty());
     }
 
     @Test
