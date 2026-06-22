@@ -1,7 +1,9 @@
 package com.alera;
 
 import com.alera.config.TenantContext;
+import com.alera.model.InsumoInventario;
 import com.alera.model.TipoCerveza;
+import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.repository.UsuarioRepository;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import java.math.BigDecimal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,15 +33,17 @@ class TenantIsolationIntegrationTest extends AbstractIntegrationTest {
     static final String TENANT_A = "test-iso-a";
     static final String TENANT_B = "test-iso-b";
 
-    @Autowired TipoCervezaRepository tipoCervezaRepo;
-    @Autowired UsuarioRepository     usuarioRepo;
-    @Autowired JdbcTemplate          jdbc;
+    @Autowired TipoCervezaRepository      tipoCervezaRepo;
+    @Autowired UsuarioRepository          usuarioRepo;
+    @Autowired InsumoInventarioRepository insumoRepo;
+    @Autowired JdbcTemplate               jdbc;
 
     @AfterEach
     void cleanup() {
         TenantContext.clear();
-        jdbc.update("DELETE FROM tipos_cerveza WHERE tenant_id IN (?, ?)", TENANT_A, TENANT_B);
-        jdbc.update("DELETE FROM usuarios WHERE tenant_id IN (?, ?)", TENANT_A, TENANT_B);
+        jdbc.update("DELETE FROM tipos_cerveza       WHERE tenant_id IN (?, ?)", TENANT_A, TENANT_B);
+        jdbc.update("DELETE FROM usuarios            WHERE tenant_id IN (?, ?)", TENANT_A, TENANT_B);
+        jdbc.update("DELETE FROM insumos_inventario  WHERE tenant_id IN (?, ?)", TENANT_A, TENANT_B);
     }
 
     // ── @TenantId — aislamiento automático en SELECT ─────────────────────
@@ -160,6 +165,93 @@ class TenantIsolationIntegrationTest extends AbstractIntegrationTest {
                 .as("Lista de A no debe contener usuarios de B").isFalse();
         assertThat(usuariosB.stream().anyMatch(u -> "isol-admin-a".equals(u.getUsername())))
                 .as("Lista de B no debe contener usuarios de A").isFalse();
+    }
+
+    // ── InsumoInventario — aislamiento de datos de inventario ────────────
+
+    @Test
+    @DisplayName("InsumoInventario creado en tenant A no es visible desde tenant B")
+    void insumo_noEsVisibleDesdeOtroTenant() {
+        TenantContext.setCurrentTenant(TENANT_A);
+        InsumoInventario insumo = new InsumoInventario();
+        insumo.setNombre("IsolMaltaPilsner");
+        insumo.setTipo("Malta");
+        insumo.setCantidad(BigDecimal.valueOf(50));
+        insumo.setUnidad("kg");
+        insumo.setStockMinimo(BigDecimal.ZERO);
+        insumoRepo.save(insumo);
+        TenantContext.clear();
+
+        TenantContext.setCurrentTenant(TENANT_B);
+        assertThat(insumoRepo.findByNombreExacto("IsolMaltaPilsner"))
+                .as("Tenant B no debe ver insumos de tenant A")
+                .isEmpty();
+        TenantContext.clear();
+
+        TenantContext.setCurrentTenant(TENANT_A);
+        assertThat(insumoRepo.findByNombreExacto("IsolMaltaPilsner"))
+                .as("Tenant A sí ve su propio insumo")
+                .isPresent();
+        TenantContext.clear();
+    }
+
+    @Test
+    @DisplayName("count() de insumos solo cuenta los del tenant activo")
+    void insumos_countAisladoPorTenant() {
+        TenantContext.setCurrentTenant(TENANT_A);
+        for (int i = 1; i <= 3; i++) {
+            InsumoInventario ins = new InsumoInventario();
+            ins.setNombre("IsolMaltaA-" + i);
+            ins.setTipo("Malta");
+            ins.setCantidad(BigDecimal.TEN);
+            ins.setUnidad("kg");
+            ins.setStockMinimo(BigDecimal.ZERO);
+            insumoRepo.save(ins);
+        }
+        long countA = insumoRepo.count();
+        TenantContext.clear();
+
+        TenantContext.setCurrentTenant(TENANT_B);
+        InsumoInventario insB = new InsumoInventario();
+        insB.setNombre("IsolLupuloB-1");
+        insB.setTipo("Lúpulo");
+        insB.setCantidad(BigDecimal.valueOf(200));
+        insB.setUnidad("gr");
+        insB.setStockMinimo(BigDecimal.ZERO);
+        insumoRepo.save(insB);
+        long countB = insumoRepo.count();
+        TenantContext.clear();
+
+        assertThat(countA).as("Tenant A ve exactamente sus 3 insumos").isEqualTo(3);
+        assertThat(countB).as("Tenant B ve exactamente su 1 insumo").isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("findAllByOrderByNombreAsc no mezcla insumos entre tenants")
+    void insumos_listadoOrdenadoNoMezclaEntreTenants() {
+        TenantContext.setCurrentTenant(TENANT_A);
+        for (String nombre : new String[]{"IsolZymos-A", "IsolAlera-A"}) {
+            InsumoInventario ins = new InsumoInventario();
+            ins.setNombre(nombre);
+            ins.setTipo("Malta");
+            ins.setCantidad(BigDecimal.ONE);
+            ins.setUnidad("kg");
+            ins.setStockMinimo(BigDecimal.ZERO);
+            insumoRepo.save(ins);
+        }
+        var listA = insumoRepo.findAllByOrderByNombreAsc();
+        TenantContext.clear();
+
+        TenantContext.setCurrentTenant(TENANT_B);
+        var listB = insumoRepo.findAllByOrderByNombreAsc();
+        TenantContext.clear();
+
+        assertThat(listA).hasSize(2)
+                .extracting(InsumoInventario::getNombre)
+                .as("Lista de A solo contiene sus insumos en orden")
+                .containsExactly("IsolAlera-A", "IsolZymos-A");
+
+        assertThat(listB).as("Tenant B no tiene insumos — lista vacía").isEmpty();
     }
 
     @Test

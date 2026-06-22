@@ -1,0 +1,63 @@
+# Stack de monitoreo opcional (Prometheus + Grafana)
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.monitoring.yml up -d
+#
+# Variables requeridas adicionales:
+#   GRAFANA_PASSWORD   — contraseña del admin de Grafana
+#
+# Prometheus usa las mismas credenciales de ADMIN_USERNAME/ADMIN_PASSWORD
+# para autenticarse contra /actuator/prometheus.
+#
+# Dashboards recomendados para importar en Grafana (grafana.com/dashboards):
+#   4701 — JVM (Micrometer) — métricas de heap, threads, GC
+#   6756 — Spring Boot Statistics — HTTP requests, errores, latencia
+#  12900 — Spring Boot 3.x / Micrometer — actualizado para SB3
+
+services:
+
+  prometheus:
+    image: prom/prometheus:v2.53.1
+    restart: unless-stopped
+    environment:
+      ZYMOS_SCRAPE_USER:     ${ADMIN_USERNAME:?ADMIN_USERNAME required}
+      ZYMOS_SCRAPE_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml.tmpl:ro
+      - prometheus_data:/prometheus
+    entrypoint:
+      - sh
+      - -c
+      - |
+        envsubst < /etc/prometheus/prometheus.yml.tmpl > /tmp/prometheus.yml
+        /bin/prometheus \
+          --config.file=/tmp/prometheus.yml \
+          --storage.tsdb.path=/prometheus \
+          --storage.tsdb.retention.time=15d \
+          --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    depends_on:
+      app:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER:          ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD:      ${GRAFANA_PASSWORD:?GRAFANA_PASSWORD must be set}
+      GF_USERS_ALLOW_SIGN_UP:          "false"
+      GF_ANALYTICS_REPORTING_ENABLED:  "false"
+      GF_SERVER_ROOT_URL:              "%(protocol)s://%(domain)s:%(http_port)s/grafana/"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus_data:
+  grafana_data:

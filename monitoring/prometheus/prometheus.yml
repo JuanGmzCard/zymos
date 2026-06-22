@@ -1,0 +1,33 @@
+# Plantilla de configuración de Prometheus para Zymos
+# Las variables $ZYMOS_SCRAPE_USER y $ZYMOS_SCRAPE_PASSWORD son sustituidas
+# por envsubst al iniciar el contenedor (heredadas de ADMIN_USERNAME/PASSWORD).
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+  external_labels:
+    app: zymos
+
+scrape_configs:
+
+  # Métricas de la aplicación (JVM, HTTP, pool de conexiones, cache, etc.)
+  - job_name: 'zymos-app'
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: ['app:8080']
+        labels:
+          instance: 'zymos-prod'
+    basic_auth:
+      username: $ZYMOS_SCRAPE_USER
+      password: $ZYMOS_SCRAPE_PASSWORD
+
+  # Health check como métrica (útil para alertas de disponibilidad)
+  - job_name: 'zymos-health'
+    metrics_path: '/actuator/health'
+    scrape_interval: 30s
+    static_configs:
+      - targets: ['app:8080']
+    basic_auth:
+      username: $ZYMOS_SCRAPE_USER
+      password: $ZYMOS_SCRAPE_PASSWORD
