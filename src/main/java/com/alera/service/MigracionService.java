@@ -747,6 +747,291 @@ public class MigracionService {
                           total, ok, errores, usuario);
     }
 
+    // ── Barriles ──────────────────────────────────────────────────────────────
+
+    public Resultado importarBarriles(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sh = wb.getSheet("Barriles");
+            if (sh == null) throw new IllegalArgumentException("No se encontró la hoja 'Barriles'");
+
+            for (Row row : sh) {
+                if (row.getRowNum() < 3) continue;
+                if (vacio(row, 0)) continue;
+                total++;
+                try {
+                    String codigo         = texto(row, 0);
+                    String tipo           = texto(row, 1);
+                    BigDecimal capacidad  = decimal(row, 2);
+                    String estado         = textoODefault(row, 3, "DISPONIBLE").toUpperCase();
+                    String codigoLote     = texto(row, 4);
+                    String clienteNombre  = texto(row, 5);
+                    LocalDate fechaDesp   = fecha(row, 6);
+                    String obs            = texto(row, 7);
+
+                    if (codigo.isBlank()) throw new IllegalArgumentException("codigo es obligatorio");
+                    validarEnum(estado, "estado", "DISPONIBLE","LLENO","DESPACHADO","VACIO","LIMPIEZA","BAJA");
+
+                    // Resolver lote_id por codigo_lote (tolerante)
+                    Long loteId = null;
+                    String codigoLoteN = nulaSiBlank(codigoLote);
+                    if (codigoLoteN != null) {
+                        List<Long> ids = jdbc.queryForList(
+                                "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                Long.class, codigoLoteN, tenantId);
+                        if (!ids.isEmpty()) loteId = ids.get(0);
+                    }
+
+                    jdbc.update("INSERT INTO barriles " +
+                            "(codigo,tipo,capacidad_litros,estado,lote_id,codigo_lote,cliente_nombre,fecha_despacho,observaciones," +
+                            "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                            codigo, nulaSiBlank(tipo), capacidad, estado,
+                            loteId, codigoLoteN, nulaSiBlank(clienteNombre), fechaDesp, nulaSiBlank(obs),
+                            tenantId, usuario, usuario);
+                    ok++;
+                } catch (Exception e) {
+                    errores.add("Barriles fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                }
+            }
+        }
+        return guardarLog(tenantId, "barriles", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
+    // ── Órdenes de Compra ─────────────────────────────────────────────────────
+
+    public Resultado importarOrdenes(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+
+            // 1) OC — mapa numeroOc → id generado
+            Map<String, Long> ocIds = new HashMap<>();
+            Sheet shOc = wb.getSheet("OC");
+            if (shOc != null) {
+                for (Row row : shOc) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String numeroOc       = texto(row, 0);
+                        String proveedor      = texto(row, 1);
+                        LocalDate fechaEmis   = fecha(row, 2);
+                        LocalDate fechaReq    = fecha(row, 3);
+                        String estado         = textoODefault(row, 4, "BORRADOR").toUpperCase();
+                        String notas          = texto(row, 5);
+
+                        if (numeroOc.isBlank())   throw new IllegalArgumentException("numero_oc es obligatorio");
+                        if (fechaEmis == null)     throw new IllegalArgumentException("fecha_emision es obligatoria");
+                        validarEnum(estado, "estado", "BORRADOR","ENVIADA","RECIBIDA_PARCIAL","RECIBIDA","CANCELADA");
+
+                        // Resolver proveedor_id (tolerante)
+                        Long proveedorId = null;
+                        String proveedorN = nulaSiBlank(proveedor);
+                        if (proveedorN != null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM proveedores WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
+                                    Long.class, proveedorN, tenantId);
+                            if (!ids.isEmpty()) proveedorId = ids.get(0);
+                        }
+
+                        long ocId = insertarYRetornarId(
+                                "INSERT INTO ordenes_compra " +
+                                "(numero_oc,proveedor,proveedor_id,fecha_emision,fecha_requerida,estado,notas," +
+                                "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
+                                "VALUES (?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                numeroOc, proveedorN, proveedorId, fechaEmis, fechaReq, estado,
+                                nulaSiBlank(notas), tenantId, usuario, usuario);
+
+                        ocIds.put(numeroOc, ocId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("OC fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 2) OC_Items
+            Sheet shItems = wb.getSheet("OC_Items");
+            if (shItems != null) {
+                for (Row row : shItems) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String numeroOc   = texto(row, 0);
+                        String tipoItem   = texto(row, 1).toUpperCase();
+                        String nombre     = texto(row, 2);
+                        String tipoInsumo = texto(row, 3);
+                        String tipoEquipo = texto(row, 4);
+                        BigDecimal cant   = decimal(row, 5);
+                        String unidad     = texto(row, 6);
+                        BigDecimal precio = decimal(row, 7);
+                        BigDecimal iva    = decimal(row, 8);
+                        String desc       = texto(row, 9);
+
+                        if (numeroOc.isBlank()) throw new IllegalArgumentException("numero_oc es obligatorio");
+                        if (nombre.isBlank())   throw new IllegalArgumentException("nombre es obligatorio");
+                        if (cant == null)        throw new IllegalArgumentException("cantidad es obligatoria");
+                        if (!tipoItem.isBlank()) validarEnum(tipoItem, "tipo_item", "INSUMO","EQUIPO");
+
+                        Long ocId = ocIds.get(numeroOc);
+                        if (ocId == null)
+                            throw new IllegalArgumentException("numero_oc '" + numeroOc + "' no encontrado en hoja OC");
+
+                        jdbc.update("INSERT INTO orden_compra_items " +
+                                "(orden_id,tipo_item,nombre,descripcion,cantidad,unidad,precio_unitario_estimado," +
+                                "porcentaje_iva_item,tipo_insumo,tipo_equipo,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                                ocId,
+                                nulaSiBlank(tipoItem), nombre, nulaSiBlank(desc),
+                                cant, nulaSiBlank(unidad), precio,
+                                iva != null ? iva : BigDecimal.ZERO,
+                                nulaSiBlank(tipoInsumo), nulaSiBlank(tipoEquipo),
+                                tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("OC_Items fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return guardarLog(tenantId, "ordenes", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
+    // ── Seguimiento (Lecturas + Evaluaciones + Planificación) ─────────────────
+
+    public Resultado importarSeguimiento(MultipartFile file, String tenantId, String usuario)
+            throws IOException {
+        List<String> errores = new ArrayList<>();
+        int ok = 0, total = 0;
+
+        try (Workbook wb = new XSSFWorkbook(file.getInputStream())) {
+
+            // 1) Lote_Lecturas → lecturas_fermentacion
+            Sheet shLect = wb.getSheet("Lote_Lecturas");
+            if (shLect != null) {
+                for (Row row : shLect) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String codigoLote  = texto(row, 0);
+                        LocalDate fechaL   = fecha(row, 1);
+                        Integer densidad   = entero(row, 2);
+                        BigDecimal temp    = decimal(row, 3);
+                        String notas       = texto(row, 4);
+
+                        if (codigoLote.isBlank()) throw new IllegalArgumentException("codigo_lote es obligatorio");
+                        if (fechaL == null)        throw new IllegalArgumentException("fecha es obligatoria");
+
+                        List<Long> ids = jdbc.queryForList(
+                                "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                Long.class, codigoLote, tenantId);
+                        if (ids.isEmpty())
+                            throw new IllegalArgumentException("Lote '" + codigoLote + "' no encontrado");
+                        long loteId = ids.get(0);
+
+                        jdbc.update("INSERT INTO lecturas_fermentacion " +
+                                "(lote_id,fecha,densidad,temperatura,notas,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?)",
+                                loteId, fechaL, densidad, temp, nulaSiBlank(notas), tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Lote_Lecturas fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 2) Lote_Evaluaciones → evaluaciones_sensoriales
+            Sheet shEval = wb.getSheet("Lote_Evaluaciones");
+            if (shEval != null) {
+                for (Row row : shEval) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String codigoLote = texto(row, 0);
+                        LocalDate fechaE  = fecha(row, 1);
+                        String catador    = texto(row, 2);
+                        Integer aroma     = entero(row, 3);
+                        Integer apariencia= entero(row, 4);
+                        Integer sabor     = entero(row, 5);
+                        Integer sensacion = entero(row, 6);
+                        Integer impresion = entero(row, 7);
+                        String notas      = texto(row, 8);
+
+                        if (codigoLote.isBlank()) throw new IllegalArgumentException("codigo_lote es obligatorio");
+                        if (fechaE == null)        throw new IllegalArgumentException("fecha es obligatoria");
+
+                        List<Long> ids = jdbc.queryForList(
+                                "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                Long.class, codigoLote, tenantId);
+                        if (ids.isEmpty())
+                            throw new IllegalArgumentException("Lote '" + codigoLote + "' no encontrado");
+                        long loteId = ids.get(0);
+
+                        jdbc.update("INSERT INTO evaluaciones_sensoriales " +
+                                "(lote_id,fecha,catador,aroma,apariencia,sabor,sensacion_boca,impresion_general,notas,creado_at,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?)",
+                                loteId, fechaE, nulaSiBlank(catador),
+                                aroma, apariencia, sabor, sensacion, impresion,
+                                nulaSiBlank(notas), tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Lote_Evaluaciones fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 3) Planificacion → elaboraciones_planificadas
+            Sheet shPlan = wb.getSheet("Planificacion");
+            if (shPlan != null) {
+                Map<String, Long> recetaCache = new HashMap<>();
+                for (Row row : shPlan) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        LocalDate fechaPlan   = fecha(row, 0);
+                        String nombreElab     = texto(row, 1);
+                        String nombreReceta   = texto(row, 2);
+                        BigDecimal volumen    = decimal(row, 3);
+                        String estado         = textoODefault(row, 4, "PLANIFICADA").toUpperCase();
+                        String notas          = texto(row, 5);
+
+                        if (fechaPlan == null)     throw new IllegalArgumentException("fecha_planeada es obligatoria");
+                        if (nombreElab.isBlank())  throw new IllegalArgumentException("nombre_elaboracion es obligatorio");
+                        validarEnum(estado, "estado", "PLANIFICADA","EN_PROCESO","COMPLETADA","CANCELADA");
+
+                        Long recetaId = null;
+                        if (!nombreReceta.isBlank()) {
+                            recetaId = recetaCache.computeIfAbsent(nombreReceta, n -> {
+                                List<Long> ids2 = jdbc.queryForList(
+                                        "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                        Long.class, n, tenantId);
+                                return ids2.isEmpty() ? null : ids2.get(0);
+                            });
+                        }
+
+                        jdbc.update("INSERT INTO elaboraciones_planificadas " +
+                                "(fecha_planeada,nombre_elaboracion,receta_id,volumen_estimado,estado,notas,creado_at,tenant_id) " +
+                                "VALUES (?,?,?,?,?,?,NOW(),?)",
+                                fechaPlan, nombreElab, recetaId, volumen, estado,
+                                nulaSiBlank(notas), tenantId);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Planificacion fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return guardarLog(tenantId, "seguimiento", file.getOriginalFilename(),
+                          total, ok, errores, usuario);
+    }
+
     // ── Log ───────────────────────────────────────────────────────────────────
 
     public List<MigracionLog> historial(String tenantId) {

@@ -130,6 +130,63 @@ public class MigracionTemplateService {
         return bytes(wb);
     }
 
+    public byte[] plantillaBarriles() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Barriles",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"estado", "DISPONIBLE | LLENO | DESPACHADO | VACIO | LIMPIEZA | BAJA  (default: DISPONIBLE)"},
+                {"codigo_lote", "Código del lote asignado (opcional). Si el lote no existe, se deja sin vincular."},
+                {"fecha_despacho", "Formato: YYYY-MM-DD"},
+                {"capacidad_litros", "Número decimal (ej: 20 o 50.5)"}
+            });
+        hojaBarriles(wb, es);
+        return bytes(wb);
+    }
+
+    public byte[] plantillaOrdenes() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Órdenes de Compra",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"Orden de llenado", "1) OC  →  2) OC_Items"},
+                {"numero_oc (hoja OC_Items)", "Debe coincidir con el numero_oc de la hoja OC"},
+                {"estado", "BORRADOR | ENVIADA | RECIBIDA_PARCIAL | RECIBIDA | CANCELADA  (default: BORRADOR)"},
+                {"tipo_item", "INSUMO | EQUIPO  (opcional)"},
+                {"fecha_emision / fecha_requerida", "Formato: YYYY-MM-DD"},
+                {"cantidad", "Número decimal  (ej: 25  o  0.5)"}
+            });
+        hojaOC(wb, es);
+        hojaOCItems(wb, es);
+        return bytes(wb);
+    }
+
+    public byte[] plantillaSeguimiento() throws IOException {
+        XSSFWorkbook wb = new XSSFWorkbook();
+        Estilos es = estilos(wb);
+        hojaInstrucciones(wb, es, "Seguimiento de Lotes",
+            new String[][]{
+                {"*", "Campo obligatorio"},
+                {"Orden de llenado", "Las 3 hojas son independientes entre sí"},
+                {"codigo_lote", "Debe coincidir con el codigo_lote existente en el sistema"},
+                {"densidad (Lecturas)", "Densidad en formato XXXX  (ej: 1020 para 1.020)"},
+                {"temperatura (Lecturas)", "Temperatura en °C  (ej: 18.5)"},
+                {"aroma", "0 – 12  (escala BJCP)"},
+                {"apariencia", "0 – 3"},
+                {"sabor", "0 – 20"},
+                {"sensacion_boca", "0 – 5"},
+                {"impresion_general", "0 – 10"},
+                {"estado (Planificacion)", "PLANIFICADA | EN_PROCESO | COMPLETADA | CANCELADA  (default: PLANIFICADA)"},
+                {"fecha_planeada / fecha (Lecturas/Eval.)", "Formato: YYYY-MM-DD"}
+            });
+        hojaLoteLecturas(wb, es);
+        hojaLoteEvaluaciones(wb, es);
+        hojaPlanificacion(wb, es);
+        return bytes(wb);
+    }
+
     // ── Sheet builders ────────────────────────────────────────────────────────
 
     private void hojaVentas(XSSFWorkbook wb, Estilos es) {
@@ -587,6 +644,122 @@ public class MigracionTemplateService {
         for (int i = 0; i < chars.length; i++) {
             sh.setColumnWidth(i, chars[i] * 37);
         }
+    }
+
+    private void hojaBarriles(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Barriles");
+        wb.setSheetOrder("Barriles", 1);
+        String[][] cols = {
+            {"codigo",          "req"},
+            {"tipo",            "opt"},
+            {"capacidad_litros","opt"},
+            {"estado",          "opt"},
+            {"codigo_lote",     "opt"},
+            {"cliente_nombre",  "opt"},
+            {"fecha_despacho",  "opt"},
+            {"observaciones",   "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"BAR-001","Acero inox",20,"DISPONIBLE","","","",""});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"BAR-002","Plástico",50,"LLENO","IPA-003","Bar La Espuma","2024-09-15","Despacho octubre"});
+        dropdown(sh, 1, 9999, 3, "DISPONIBLE","LLENO","DESPACHADO","VACIO","LIMPIEZA","BAJA");
+        anchos(sh, 140, 170, 150, 150, 140, 230, 150, 270);
+    }
+
+    private void hojaOC(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("OC");
+        wb.setSheetOrder("OC", 1);
+        String[][] cols = {
+            {"numero_oc",      "req"},
+            {"proveedor",      "opt"},
+            {"fecha_emision",  "req"},
+            {"fecha_requerida","opt"},
+            {"estado",         "opt"},
+            {"notas",          "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"OC-2024-001","Maltería del Sur","2024-08-10","2024-08-25","RECIBIDA","Pedido mensual de malta"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"OC-2024-002","Lúpulos Andinos","2024-09-01","","ENVIADA",""});
+        dropdown(sh, 1, 9999, 4, "BORRADOR","ENVIADA","RECIBIDA_PARCIAL","RECIBIDA","CANCELADA");
+        anchos(sh, 160, 230, 150, 150, 160, 280);
+    }
+
+    private void hojaOCItems(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("OC_Items");
+        String[][] cols = {
+            {"numero_oc",             "req"},
+            {"tipo_item",             "opt"},
+            {"nombre",                "req"},
+            {"tipo_insumo",           "opt"},
+            {"tipo_equipo",           "opt"},
+            {"cantidad",              "req"},
+            {"unidad",                "opt"},
+            {"precio_unitario",       "opt"},
+            {"porcentaje_iva",        "opt"},
+            {"descripcion",           "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"OC-2024-001","INSUMO","Malta Pilsner","MALTA","",50,"kg",4800,19,"Lote fresco"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"OC-2024-001","INSUMO","Lúpulo Cascade","LUPULO","",500,"gr",12000,19,""});
+        dropdown(sh, 1, 9999, 1, "INSUMO","EQUIPO");
+        dropdown(sh, 1, 9999, 3, "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
+        anchos(sh, 160, 110, 230, 150, 150, 110, 100, 160, 130, 230);
+    }
+
+    private void hojaLoteLecturas(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Lote_Lecturas");
+        wb.setSheetOrder("Lote_Lecturas", 1);
+        String[][] cols = {
+            {"codigo_lote", "req"},
+            {"fecha",       "req"},
+            {"densidad",    "opt"},
+            {"temperatura", "opt"},
+            {"notas",       "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"IPA-001","2024-06-15",1045,18.5,"Fermentación activa"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"IPA-001","2024-06-20",1015,17.0,"Densidad estable — listo para acondicionamiento"});
+        anchos(sh, 140, 140, 130, 130, 280);
+    }
+
+    private void hojaLoteEvaluaciones(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Lote_Evaluaciones");
+        String[][] cols = {
+            {"codigo_lote",      "req"},
+            {"fecha",            "req"},
+            {"catador",          "opt"},
+            {"aroma",            "opt"},
+            {"apariencia",       "opt"},
+            {"sabor",            "opt"},
+            {"sensacion_boca",   "opt"},
+            {"impresion_general","opt"},
+            {"notas",            "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"IPA-001","2024-07-05","Juan P.",10,3,18,4,9,"Excelente balance, lúpulo floral persistente"});
+        anchos(sh, 140, 130, 160, 100, 110, 100, 140, 155, 280);
+    }
+
+    private void hojaPlanificacion(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Planificacion");
+        String[][] cols = {
+            {"fecha_planeada",      "req"},
+            {"nombre_elaboracion",  "req"},
+            {"nombre_receta",       "opt"},
+            {"volumen_estimado",    "opt"},
+            {"estado",              "opt"},
+            {"notas",               "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"2024-10-01","Lote Otoño IPA","Receta IPA Clásica",300,"PLANIFICADA","Preparar grist con 48h de anticipación"});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"2024-10-15","Stout Navidad","","200","COMPLETADA",""});
+        dropdown(sh, 1, 9999, 4, "PLANIFICADA","EN_PROCESO","COMPLETADA","CANCELADA");
+        anchos(sh, 150, 230, 220, 150, 150, 280);
     }
 
     private byte[] bytes(XSSFWorkbook wb) throws IOException {

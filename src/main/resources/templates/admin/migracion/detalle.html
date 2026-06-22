@@ -51,6 +51,8 @@
                     <li th:text="#{admin.mig.instr.6}">Para el módulo Comercial, llene en orden: Proveedores → Facturas → Factura_Items.</li>
                     <li th:text="#{admin.mig.instr.7}">Para el módulo Producción, llene en orden: Recetas → Ingredientes → Escalones → Adiciones → Lotes → Lote_Ingredientes.</li>
                     <li th:text="#{admin.mig.instr.8}">Para el módulo Ventas, llene en orden: Ventas → Venta_Items.</li>
+                    <li th:text="#{admin.mig.instr.9}">Para el módulo Órdenes de Compra, llene en orden: OC → OC_Items.</li>
+                    <li th:text="#{admin.mig.instr.10}">Para el módulo Seguimiento, las 3 hojas son independientes.</li>
                 </ol>
             </div>
         </div>
@@ -281,6 +283,117 @@
             </div>
         </div>
 
+        <!-- Barriles -->
+        <div class="col-xl-6">
+            <div class="content-card h-100" style="padding:0; margin-bottom:0;">
+                <div class="d-flex align-items-center gap-3 px-4 py-3"
+                     style="border-bottom:1px solid #e2e8f0; background:#f8fafc; border-radius:8px 8px 0 0;">
+                    <div class="d-flex align-items-center justify-content-center rounded"
+                         style="width:36px; height:36px; background:#f0fdf4; flex-shrink:0;">
+                        <i class="bi bi-bucket" style="color:#15803d; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.barriles}">Barriles</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.barriles.desc}">Inventario de barriles y estado de despacho</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/barriles(s=${tenant.subdomain})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
+                        </a>
+                        <span class="text-secondary" style="font-size:0.775rem;">plantilla-barriles.xlsx</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/barriles(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Órdenes de Compra -->
+        <div class="col-xl-6">
+            <div class="content-card h-100" style="padding:0; margin-bottom:0;">
+                <div class="d-flex align-items-center gap-3 px-4 py-3"
+                     style="border-bottom:1px solid #e2e8f0; background:#f8fafc; border-radius:8px 8px 0 0;">
+                    <div class="d-flex align-items-center justify-content-center rounded"
+                         style="width:36px; height:36px; background:#fef3c7; flex-shrink:0;">
+                        <i class="bi bi-cart3" style="color:#b45309; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.ordenes}">Órdenes de Compra</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.ordenes.desc}">Órdenes de compra a proveedores con sus ítems</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/ordenes(s=${tenant.subdomain})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
+                        </a>
+                        <span class="text-secondary" style="font-size:0.775rem;">plantilla-ordenes.xlsx (2 hojas)</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/ordenes(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seguimiento de Lotes -->
+        <div class="col-xl-6">
+            <div class="content-card h-100" style="padding:0; margin-bottom:0;">
+                <div class="d-flex align-items-center gap-3 px-4 py-3"
+                     style="border-bottom:1px solid #e2e8f0; background:#f8fafc; border-radius:8px 8px 0 0;">
+                    <div class="d-flex align-items-center justify-content-center rounded"
+                         style="width:36px; height:36px; background:#f0f9ff; flex-shrink:0;">
+                        <i class="bi bi-graph-up" style="color:#0284c7; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.seguimiento}">Seguimiento de Lotes</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.seguimiento.desc}">Lecturas de fermentación, evaluaciones sensoriales y planificación</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/seguimiento(s=${tenant.subdomain})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
+                        </a>
+                        <span class="text-secondary" style="font-size:0.775rem;">plantilla-seguimiento.xlsx (3 hojas)</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/seguimiento(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Historial de migraciones -->
@@ -322,7 +435,10 @@
                                                    log.modulo == 'comercial'  ? 'bg-warning text-dark' :
                                                    log.modulo == 'clientes'   ? 'bg-secondary' :
                                                    log.modulo == 'ventas'     ? 'bg-dark' :
-                                                                                'bg-info text-dark'}"
+                                                   log.modulo == 'barriles'   ? 'bg-success' :
+                                                   log.modulo == 'ordenes'    ? 'bg-warning text-dark' :
+                                                   log.modulo == 'seguimiento'? 'bg-info text-dark' :
+                                                                                'bg-secondary'}"
                                   th:text="${log.modulo}">mod</span>
                         </td>
                         <td class="text-secondary text-truncate" style="max-width:180px;"
