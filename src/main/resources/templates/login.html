@@ -87,13 +87,13 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:attr="nonce=${cspNonce}">
-function togglePwd(btn) {
-  const inp = btn.closest('.input-group').querySelector('input');
-  const ico = btn.querySelector('i');
+document.querySelector('.btn-toggle-pwd').addEventListener('click', function() {
+  const inp = this.closest('.input-group').querySelector('input');
+  const ico = this.querySelector('i');
   const show = inp.type === 'password';
   inp.type = show ? 'text' : 'password';
   ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
-}
+});
 </script>
 </body>
 </html>
