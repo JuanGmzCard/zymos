@@ -20,16 +20,18 @@ services:
   app:
     build: .
     restart: unless-stopped
+    env_file: .env           # pasa todas las vars del .env, incluidos FLYWAY_*, SMTP_*, APP_BASE_URL, fuentes
     ports:
       - "8080:8080"
     environment:
+      # Las vars de 'environment' sobreescriben las de env_file donde hay conflicto
       SPRING_PROFILES_ACTIVE: prod
-      DB_URL:             jdbc:postgresql://db:5432/trazabilidad_cervezas
+      DB_URL:             jdbc:postgresql://db:5432/trazabilidad_cervezas   # sobreescribe el localhost del .env
       DB_USERNAME:        ${DB_USERNAME:?DB_USERNAME must be set}
       DB_PASSWORD:        ${DB_PASSWORD:?DB_PASSWORD must be set}
-      # Rol con DDL para Flyway (si no se define, hereda las credenciales de la app)
-      FLYWAY_USERNAME:    ${FLYWAY_USERNAME:-${DB_USERNAME}}
-      FLYWAY_PASSWORD:    ${FLYWAY_PASSWORD:-${DB_PASSWORD}}
+      # FLYWAY_USERNAME / FLYWAY_PASSWORD vienen de env_file.
+      # Si no están definidos en .env, la var queda ausente del contenedor y
+      # application-prod.properties hace el fallback a DB_USERNAME/DB_PASSWORD.
       ADMIN_USERNAME:     ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
       ADMIN_PASSWORD:     ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       # Usuarios adicionales por rol (opcional)
