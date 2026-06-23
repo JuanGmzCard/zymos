@@ -7,7 +7,6 @@ ${project.build.directory}/
 .vscode/
 *.class
 .env
-.env.Zymos
 application-prod.properties
 application-local.properties
 logs/
