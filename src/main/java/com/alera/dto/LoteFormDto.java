@@ -18,52 +18,59 @@ public class LoteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaElaboracion;
 
-    @Min(value = 1, message = "El número de cocciones debe ser entre 1 y 3")
-    @Max(value = 3, message = "El número de cocciones debe ser entre 1 y 3")
-    private Integer numeroCocciones = 1;
+    @Min(value = 1, message = "El número de elaboraciones debe ser entre 1 y 3")
+    @Max(value = 3, message = "El número de elaboraciones debe ser entre 1 y 3")
+    private Integer numeroElaboraciones = 1;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate fechaSegundaCoccion;
+    private LocalDate fechaSegundaElaboracion;
 
-    @DecimalMin(value = "0.0", message = "El agua de la segunda cocción no puede ser negativa")
-    @DecimalMax(value = "99999.999", message = "El agua de la segunda cocción es demasiado alta")
-    private BigDecimal aguaSegundaCoccion;
+    @DecimalMin(value = "0.0", message = "El agua de la segunda elaboración no puede ser negativa")
+    @DecimalMax(value = "99999.999", message = "El agua de la segunda elaboración es demasiado alta")
+    private BigDecimal aguaSegundaElaboracion;
 
-    @Min(value = 1000, message = "La densidad de la primera cocción mínima es 1000")
-    @Max(value = 1150, message = "La densidad de la primera cocción máxima es 1150")
-    private Integer ogPrimeraCoccion;
+    @Min(value = 1000, message = "La densidad de la primera elaboración mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la primera elaboración máxima es 1150")
+    private Integer ogPrimeraElaboracion;
 
-    @Min(value = 1000, message = "La densidad de la segunda cocción mínima es 1000")
-    @Max(value = 1150, message = "La densidad de la segunda cocción máxima es 1150")
-    private Integer ogSegundaCoccion;
+    @Min(value = 1000, message = "La densidad de la segunda elaboración mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la segunda elaboración máxima es 1150")
+    private Integer ogSegundaElaboracion;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-    private LocalDate fechaTerceraCoccion;
+    private LocalDate fechaTerceraElaboracion;
 
-    @DecimalMin(value = "0.0", message = "El agua de la tercera cocción no puede ser negativa")
-    @DecimalMax(value = "99999.999", message = "El agua de la tercera cocción es demasiado alta")
-    private BigDecimal aguaTerceraCoccion;
+    @DecimalMin(value = "0.0", message = "El agua de la tercera elaboración no puede ser negativa")
+    @DecimalMax(value = "99999.999", message = "El agua de la tercera elaboración es demasiado alta")
+    private BigDecimal aguaTerceraElaboracion;
 
-    @Min(value = 1000, message = "La densidad de la tercera cocción mínima es 1000")
-    @Max(value = 1150, message = "La densidad de la tercera cocción máxima es 1150")
-    private Integer ogTerceraCoccion;
+    @Min(value = 1000, message = "La densidad de la tercera elaboración mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la tercera elaboración máxima es 1150")
+    private Integer ogTerceraElaboracion;
 
-    @DecimalMin(value = "1.0", message = "El °Brix de la segunda cocción debe ser mayor a 1")
-    @DecimalMax(value = "40.0", message = "El °Brix de la segunda cocción no puede superar 40")
-    private BigDecimal ogBrixSegundaCoccion;
+    @DecimalMin(value = "1.0", message = "El °Brix de la segunda elaboración debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix de la segunda elaboración no puede superar 40")
+    private BigDecimal ogBrixSegundaElaboracion;
 
-    @DecimalMin(value = "1.0", message = "El °Brix de la tercera cocción debe ser mayor a 1")
-    @DecimalMax(value = "40.0", message = "El °Brix de la tercera cocción no puede superar 40")
-    private BigDecimal ogBrixTerceraCoccion;
+    @DecimalMin(value = "1.0", message = "El °Brix de la tercera elaboración debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix de la tercera elaboración no puede superar 40")
+    private BigDecimal ogBrixTerceraElaboracion;
 
-    @DecimalMin(value = "0.0", message = "El volumen final de la primera cocción no puede ser negativo")
-    private BigDecimal volumenFinalPrimeraCoccion;
+    @DecimalMin(value = "0.0", message = "El volumen final de la primera elaboración no puede ser negativo")
+    private BigDecimal volumenFinalPrimeraElaboracion;
 
-    @DecimalMin(value = "0.0", message = "El volumen final de la segunda cocción no puede ser negativo")
-    private BigDecimal volumenFinalSegundaCoccion;
+    @DecimalMin(value = "0.0", message = "El volumen final de la segunda elaboración no puede ser negativo")
+    private BigDecimal volumenFinalSegundaElaboracion;
 
-    @DecimalMin(value = "0.0", message = "El volumen final de la tercera cocción no puede ser negativo")
-    private BigDecimal volumenFinalTerceraCoccion;
+    @DecimalMin(value = "0.0", message = "El volumen final de la tercera elaboración no puede ser negativo")
+    private BigDecimal volumenFinalTerceraElaboracion;
+
+    private java.time.LocalTime horaInicioPrimeraElaboracion;
+    private java.time.LocalTime horaFinPrimeraElaboracion;
+    private java.time.LocalTime horaInicioSegundaElaboracion;
+    private java.time.LocalTime horaFinSegundaElaboracion;
+    private java.time.LocalTime horaInicioTerceraElaboracion;
+    private java.time.LocalTime horaFinTerceraElaboracion;
 
     @DecimalMin(value = "0.0", message = "El agua utilizada no puede ser negativa")
     @DecimalMax(value = "99999.999", message = "El agua utilizada es demasiado alta")
@@ -186,32 +193,44 @@ public class LoteFormDto {
     public void setEquipoFermentadorId(Long equipoFermentadorId) { this.equipoFermentadorId = equipoFermentadorId; }
     public LocalDate getFechaElaboracion() { return fechaElaboracion; }
     public void setFechaElaboracion(LocalDate fechaElaboracion) { this.fechaElaboracion = fechaElaboracion; }
-    public Integer getNumeroCocciones() { return numeroCocciones; }
-    public void setNumeroCocciones(Integer numeroCocciones) { this.numeroCocciones = numeroCocciones; }
-    public LocalDate getFechaSegundaCoccion() { return fechaSegundaCoccion; }
-    public void setFechaSegundaCoccion(LocalDate fechaSegundaCoccion) { this.fechaSegundaCoccion = fechaSegundaCoccion; }
-    public BigDecimal getAguaSegundaCoccion() { return aguaSegundaCoccion; }
-    public void setAguaSegundaCoccion(BigDecimal aguaSegundaCoccion) { this.aguaSegundaCoccion = aguaSegundaCoccion; }
-    public Integer getOgSegundaCoccion() { return ogSegundaCoccion; }
-    public void setOgSegundaCoccion(Integer ogSegundaCoccion) { this.ogSegundaCoccion = ogSegundaCoccion; }
-    public LocalDate getFechaTerceraCoccion() { return fechaTerceraCoccion; }
-    public void setFechaTerceraCoccion(LocalDate fechaTerceraCoccion) { this.fechaTerceraCoccion = fechaTerceraCoccion; }
-    public BigDecimal getAguaTerceraCoccion() { return aguaTerceraCoccion; }
-    public void setAguaTerceraCoccion(BigDecimal aguaTerceraCoccion) { this.aguaTerceraCoccion = aguaTerceraCoccion; }
-    public Integer getOgTerceraCoccion() { return ogTerceraCoccion; }
-    public void setOgTerceraCoccion(Integer ogTerceraCoccion) { this.ogTerceraCoccion = ogTerceraCoccion; }
-    public Integer getOgPrimeraCoccion() { return ogPrimeraCoccion; }
-    public void setOgPrimeraCoccion(Integer v) { this.ogPrimeraCoccion = v; }
-    public BigDecimal getVolumenFinalPrimeraCoccion() { return volumenFinalPrimeraCoccion; }
-    public void setVolumenFinalPrimeraCoccion(BigDecimal v) { this.volumenFinalPrimeraCoccion = v; }
-    public BigDecimal getOgBrixSegundaCoccion() { return ogBrixSegundaCoccion; }
-    public void setOgBrixSegundaCoccion(BigDecimal v) { this.ogBrixSegundaCoccion = v; }
-    public BigDecimal getOgBrixTerceraCoccion() { return ogBrixTerceraCoccion; }
-    public void setOgBrixTerceraCoccion(BigDecimal v) { this.ogBrixTerceraCoccion = v; }
-    public BigDecimal getVolumenFinalSegundaCoccion() { return volumenFinalSegundaCoccion; }
-    public void setVolumenFinalSegundaCoccion(BigDecimal v) { this.volumenFinalSegundaCoccion = v; }
-    public BigDecimal getVolumenFinalTerceraCoccion() { return volumenFinalTerceraCoccion; }
-    public void setVolumenFinalTerceraCoccion(BigDecimal v) { this.volumenFinalTerceraCoccion = v; }
+    public Integer getNumeroElaboraciones() { return numeroElaboraciones; }
+    public void setNumeroElaboraciones(Integer numeroElaboraciones) { this.numeroElaboraciones = numeroElaboraciones; }
+    public LocalDate getFechaSegundaElaboracion() { return fechaSegundaElaboracion; }
+    public void setFechaSegundaElaboracion(LocalDate fechaSegundaElaboracion) { this.fechaSegundaElaboracion = fechaSegundaElaboracion; }
+    public BigDecimal getAguaSegundaElaboracion() { return aguaSegundaElaboracion; }
+    public void setAguaSegundaElaboracion(BigDecimal aguaSegundaElaboracion) { this.aguaSegundaElaboracion = aguaSegundaElaboracion; }
+    public Integer getOgSegundaElaboracion() { return ogSegundaElaboracion; }
+    public void setOgSegundaElaboracion(Integer ogSegundaElaboracion) { this.ogSegundaElaboracion = ogSegundaElaboracion; }
+    public LocalDate getFechaTerceraElaboracion() { return fechaTerceraElaboracion; }
+    public void setFechaTerceraElaboracion(LocalDate fechaTerceraElaboracion) { this.fechaTerceraElaboracion = fechaTerceraElaboracion; }
+    public BigDecimal getAguaTerceraElaboracion() { return aguaTerceraElaboracion; }
+    public void setAguaTerceraElaboracion(BigDecimal aguaTerceraElaboracion) { this.aguaTerceraElaboracion = aguaTerceraElaboracion; }
+    public Integer getOgTerceraElaboracion() { return ogTerceraElaboracion; }
+    public void setOgTerceraElaboracion(Integer ogTerceraElaboracion) { this.ogTerceraElaboracion = ogTerceraElaboracion; }
+    public Integer getOgPrimeraElaboracion() { return ogPrimeraElaboracion; }
+    public void setOgPrimeraElaboracion(Integer v) { this.ogPrimeraElaboracion = v; }
+    public BigDecimal getVolumenFinalPrimeraElaboracion() { return volumenFinalPrimeraElaboracion; }
+    public void setVolumenFinalPrimeraElaboracion(BigDecimal v) { this.volumenFinalPrimeraElaboracion = v; }
+    public BigDecimal getOgBrixSegundaElaboracion() { return ogBrixSegundaElaboracion; }
+    public void setOgBrixSegundaElaboracion(BigDecimal v) { this.ogBrixSegundaElaboracion = v; }
+    public BigDecimal getOgBrixTerceraElaboracion() { return ogBrixTerceraElaboracion; }
+    public void setOgBrixTerceraElaboracion(BigDecimal v) { this.ogBrixTerceraElaboracion = v; }
+    public BigDecimal getVolumenFinalSegundaElaboracion() { return volumenFinalSegundaElaboracion; }
+    public void setVolumenFinalSegundaElaboracion(BigDecimal v) { this.volumenFinalSegundaElaboracion = v; }
+    public BigDecimal getVolumenFinalTerceraElaboracion() { return volumenFinalTerceraElaboracion; }
+    public void setVolumenFinalTerceraElaboracion(BigDecimal v) { this.volumenFinalTerceraElaboracion = v; }
+    public java.time.LocalTime getHoraInicioPrimeraElaboracion() { return horaInicioPrimeraElaboracion; }
+    public void setHoraInicioPrimeraElaboracion(java.time.LocalTime v) { this.horaInicioPrimeraElaboracion = v; }
+    public java.time.LocalTime getHoraFinPrimeraElaboracion() { return horaFinPrimeraElaboracion; }
+    public void setHoraFinPrimeraElaboracion(java.time.LocalTime v) { this.horaFinPrimeraElaboracion = v; }
+    public java.time.LocalTime getHoraInicioSegundaElaboracion() { return horaInicioSegundaElaboracion; }
+    public void setHoraInicioSegundaElaboracion(java.time.LocalTime v) { this.horaInicioSegundaElaboracion = v; }
+    public java.time.LocalTime getHoraFinSegundaElaboracion() { return horaFinSegundaElaboracion; }
+    public void setHoraFinSegundaElaboracion(java.time.LocalTime v) { this.horaFinSegundaElaboracion = v; }
+    public java.time.LocalTime getHoraInicioTerceraElaboracion() { return horaInicioTerceraElaboracion; }
+    public void setHoraInicioTerceraElaboracion(java.time.LocalTime v) { this.horaInicioTerceraElaboracion = v; }
+    public java.time.LocalTime getHoraFinTerceraElaboracion() { return horaFinTerceraElaboracion; }
+    public void setHoraFinTerceraElaboracion(java.time.LocalTime v) { this.horaFinTerceraElaboracion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }

@@ -302,7 +302,7 @@ public class TrazabilidadController {
             ra.addFlashAttribute("mensaje", "Error al actualizar: " + e.getMessage());
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
-        return "redirect:/";
+        return "redirect:/editar/" + id;
     }
 
     @GetMapping("/ver/{id}")

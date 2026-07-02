@@ -144,6 +144,23 @@ function sincronizarIngredientesDesdeItems() {
         poblarDesdeReceta('levaduras-container',     'levaduras',     'lista-levaduras',     'Levadura',     _recetaPendiente.levaduras     || []);
         poblarDesdeReceta('clarificantes-container', 'clarificantes', 'lista-clarificantes', 'Clarificante', _recetaPendiente.clarificantes || []);
         _recetaPendiente = null;
+        // Re-agregar ingredientes de sesiones 2 y 3 que poblarDesdeReceta acaba de borrar
+        var _gruposAd = [
+            { key: 'maltas',        containerId: 'maltas-container',        tipo: 'maltas',        listId: 'lista-maltas',        ph: 'Malta' },
+            { key: 'lupulos',       containerId: 'lupulos-container',       tipo: 'lupulos',       listId: 'lista-lupulos',       ph: 'Lúpulo' },
+            { key: 'levaduras',     containerId: 'levaduras-container',     tipo: 'levaduras',     listId: 'lista-levaduras',     ph: 'Levadura' },
+            { key: 'clarificantes', containerId: 'clarificantes-container', tipo: 'clarificantes', listId: 'lista-clarificantes', ph: 'Clarificante' }
+        ];
+        [_recetaData2, _recetaData3].forEach(function(rdata) {
+            if (!rdata) return;
+            _gruposAd.forEach(function(cfg) {
+                (rdata[cfg.key] || []).forEach(function(item) {
+                    if (item.nombre || item.cantidad) sumarOAgregarIngrediente(cfg.containerId, cfg.tipo, cfg.listId, cfg.ph, item);
+                });
+            });
+        });
+        _recetaData2 = null;
+        _recetaData3 = null;
         goTab(1);
         return;
     }
@@ -159,9 +176,12 @@ function sincronizarIngredientesDesdeItems() {
     asignados.forEach(function(a) {
         var tipo = (a.itemData.tipoInsumo || '').toUpperCase();
         if (!grupos[tipo]) return;
-        var inp = document.querySelector('[data-item-id="' + a.itemId + '"]');
-        var cant = inp ? (window.numVal ? window.numVal(inp.value) : parseFloat(inp.value)) : a.cantidadAsignada;
-        if (!cant || cant <= 0) return;
+        // cantidadAsignada is a float kept in sync by actualizarCantidadCosto.
+        // Reading inp.value via numVal was wrong: the input is type="number" so
+        // inp.value is always "1.35" (standard), but numVal("1.35") strips the
+        // dot as a thousands separator → 135. Use the float directly instead.
+        var cant = parseFloat(a.cantidadAsignada) || 0;
+        if (cant <= 0) return;
         grupos[tipo].push({ nombre: a.itemData.nombre, cantidad: String(cant), unidad: a.itemData.unidad || 'gr' });
     });
     var alguno = Object.keys(grupos).some(function(k) { return grupos[k].length > 0; });
@@ -205,7 +225,7 @@ function autoAgregarCostosReceta(costosSugeridos, advertencias, acumular) {
             asignados.push({ itemId: it.id, cantidadAsignada: cantNueva, itemData: itemData });
             agregados++;
         } else if (acumular) {
-            // Cocción adicional: sumar cantidad al ítem ya asignado
+            // Elaboración adicional: sumar cantidad al ítem ya asignado
             existente.cantidadAsignada = (existente.cantidadAsignada || 0) + cantNueva;
             agregados++;
         }
@@ -304,9 +324,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Wire "Aplicar a Receta e Insumos" button
+    // Wire "Aplicar a Receta e Insumos" button — one-shot persistente via localStorage
     var btnAplicar = document.getElementById('btnAplicarReceta');
-    if (btnAplicar) btnAplicar.addEventListener('click', sincronizarIngredientesDesdeItems);
+    var _costoLsKey = (typeof INIT_LOTE_ID !== 'undefined' && INIT_LOTE_ID)
+        ? 'costos-aplicados-' + INIT_LOTE_ID
+        : null;
+
+    function _marcarCostosAplicados() {
+        var msgIng = btnAplicar.dataset.msgIng || 'Ingredientes agregados';
+        var msgCos = btnAplicar.dataset.msgCos || 'Costos asignados';
+        btnAplicar.parentNode.innerHTML =
+            '<span class="text-success small me-3"><i class="bi bi-check-circle-fill me-1"></i>' + msgIng + '</span>' +
+            '<span class="text-success small"><i class="bi bi-check-circle-fill me-1"></i>' + msgCos + '</span>';
+    }
+
+    if (btnAplicar) {
+        // Restaurar estado al cargar (edición de lote ya procesado)
+        if (_costoLsKey && localStorage.getItem(_costoLsKey)) {
+            _marcarCostosAplicados();
+        }
+
+        btnAplicar.addEventListener('click', function() {
+            sincronizarIngredientesDesdeItems();
+            if (_costoLsKey) localStorage.setItem(_costoLsKey, '1');
+            _marcarCostosAplicados();
+        });
+    }
 
     // Wire costo search inputs
     var costoSearch = document.getElementById('costo-search');

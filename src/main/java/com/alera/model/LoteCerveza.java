@@ -29,24 +29,31 @@ public class LoteCerveza extends AuditableEntity {
 
     private LocalDate fechaElaboracion;
 
-    private Integer numeroCocciones = 1;
-    @Column(name = "og_primera_coccion")
-    private Integer ogPrimeraCoccion;
-    private LocalDate fechaSegundaCoccion;
-    private BigDecimal aguaSegundaCoccion;
-    @Column(name = "og_segunda_coccion")
-    private Integer ogSegundaCoccion;
-    @Column(name = "og_brix_segunda_coccion", precision = 5, scale = 2)
-    private BigDecimal ogBrixSegundaCoccion;
-    private LocalDate fechaTerceraCoccion;
-    private BigDecimal aguaTerceraCoccion;
-    @Column(name = "og_tercera_coccion")
-    private Integer ogTerceraCoccion;
-    @Column(name = "og_brix_tercera_coccion", precision = 5, scale = 2)
-    private BigDecimal ogBrixTerceraCoccion;
-    private BigDecimal volumenFinalPrimeraCoccion;
-    private BigDecimal volumenFinalSegundaCoccion;
-    private BigDecimal volumenFinalTerceraCoccion;
+    private Integer numeroElaboraciones = 1;
+    @Column(name = "og_primera_elaboracion")
+    private Integer ogPrimeraElaboracion;
+    private LocalDate fechaSegundaElaboracion;
+    private BigDecimal aguaSegundaElaboracion;
+    @Column(name = "og_segunda_elaboracion")
+    private Integer ogSegundaElaboracion;
+    @Column(name = "og_brix_segunda_elaboracion", precision = 5, scale = 2)
+    private BigDecimal ogBrixSegundaElaboracion;
+    private LocalDate fechaTerceraElaboracion;
+    private BigDecimal aguaTerceraElaboracion;
+    @Column(name = "og_tercera_elaboracion")
+    private Integer ogTerceraElaboracion;
+    @Column(name = "og_brix_tercera_elaboracion", precision = 5, scale = 2)
+    private BigDecimal ogBrixTerceraElaboracion;
+    private BigDecimal volumenFinalPrimeraElaboracion;
+    private BigDecimal volumenFinalSegundaElaboracion;
+    private BigDecimal volumenFinalTerceraElaboracion;
+
+    private java.time.LocalTime horaInicioPrimeraElaboracion;
+    private java.time.LocalTime horaFinPrimeraElaboracion;
+    private java.time.LocalTime horaInicioSegundaElaboracion;
+    private java.time.LocalTime horaFinSegundaElaboracion;
+    private java.time.LocalTime horaInicioTerceraElaboracion;
+    private java.time.LocalTime horaFinTerceraElaboracion;
 
     private BigDecimal aguaUtilizada;
     private BigDecimal phAgua;
@@ -285,32 +292,44 @@ public class LoteCerveza extends AuditableEntity {
     public void setEstilo(String estilo) { this.estilo = estilo; }
     public LocalDate getFechaElaboracion() { return fechaElaboracion; }
     public void setFechaElaboracion(LocalDate fechaElaboracion) { this.fechaElaboracion = fechaElaboracion; }
-    public Integer getNumeroCocciones() { return numeroCocciones; }
-    public void setNumeroCocciones(Integer numeroCocciones) { this.numeroCocciones = numeroCocciones; }
-    public LocalDate getFechaSegundaCoccion() { return fechaSegundaCoccion; }
-    public void setFechaSegundaCoccion(LocalDate fechaSegundaCoccion) { this.fechaSegundaCoccion = fechaSegundaCoccion; }
-    public BigDecimal getAguaSegundaCoccion() { return aguaSegundaCoccion; }
-    public void setAguaSegundaCoccion(BigDecimal aguaSegundaCoccion) { this.aguaSegundaCoccion = aguaSegundaCoccion; }
-    public Integer getOgSegundaCoccion() { return ogSegundaCoccion; }
-    public void setOgSegundaCoccion(Integer ogSegundaCoccion) { this.ogSegundaCoccion = ogSegundaCoccion; }
-    public LocalDate getFechaTerceraCoccion() { return fechaTerceraCoccion; }
-    public void setFechaTerceraCoccion(LocalDate fechaTerceraCoccion) { this.fechaTerceraCoccion = fechaTerceraCoccion; }
-    public BigDecimal getAguaTerceraCoccion() { return aguaTerceraCoccion; }
-    public void setAguaTerceraCoccion(BigDecimal aguaTerceraCoccion) { this.aguaTerceraCoccion = aguaTerceraCoccion; }
-    public Integer getOgTerceraCoccion() { return ogTerceraCoccion; }
-    public void setOgTerceraCoccion(Integer ogTerceraCoccion) { this.ogTerceraCoccion = ogTerceraCoccion; }
-    public Integer getOgPrimeraCoccion() { return ogPrimeraCoccion; }
-    public void setOgPrimeraCoccion(Integer v) { this.ogPrimeraCoccion = v; }
-    public BigDecimal getVolumenFinalPrimeraCoccion() { return volumenFinalPrimeraCoccion; }
-    public void setVolumenFinalPrimeraCoccion(BigDecimal v) { this.volumenFinalPrimeraCoccion = v; }
-    public BigDecimal getOgBrixSegundaCoccion() { return ogBrixSegundaCoccion; }
-    public void setOgBrixSegundaCoccion(BigDecimal v) { this.ogBrixSegundaCoccion = v; }
-    public BigDecimal getOgBrixTerceraCoccion() { return ogBrixTerceraCoccion; }
-    public void setOgBrixTerceraCoccion(BigDecimal v) { this.ogBrixTerceraCoccion = v; }
-    public BigDecimal getVolumenFinalSegundaCoccion() { return volumenFinalSegundaCoccion; }
-    public void setVolumenFinalSegundaCoccion(BigDecimal v) { this.volumenFinalSegundaCoccion = v; }
-    public BigDecimal getVolumenFinalTerceraCoccion() { return volumenFinalTerceraCoccion; }
-    public void setVolumenFinalTerceraCoccion(BigDecimal v) { this.volumenFinalTerceraCoccion = v; }
+    public Integer getNumeroElaboraciones() { return numeroElaboraciones; }
+    public void setNumeroElaboraciones(Integer numeroElaboraciones) { this.numeroElaboraciones = numeroElaboraciones; }
+    public LocalDate getFechaSegundaElaboracion() { return fechaSegundaElaboracion; }
+    public void setFechaSegundaElaboracion(LocalDate fechaSegundaElaboracion) { this.fechaSegundaElaboracion = fechaSegundaElaboracion; }
+    public BigDecimal getAguaSegundaElaboracion() { return aguaSegundaElaboracion; }
+    public void setAguaSegundaElaboracion(BigDecimal aguaSegundaElaboracion) { this.aguaSegundaElaboracion = aguaSegundaElaboracion; }
+    public Integer getOgSegundaElaboracion() { return ogSegundaElaboracion; }
+    public void setOgSegundaElaboracion(Integer ogSegundaElaboracion) { this.ogSegundaElaboracion = ogSegundaElaboracion; }
+    public LocalDate getFechaTerceraElaboracion() { return fechaTerceraElaboracion; }
+    public void setFechaTerceraElaboracion(LocalDate fechaTerceraElaboracion) { this.fechaTerceraElaboracion = fechaTerceraElaboracion; }
+    public BigDecimal getAguaTerceraElaboracion() { return aguaTerceraElaboracion; }
+    public void setAguaTerceraElaboracion(BigDecimal aguaTerceraElaboracion) { this.aguaTerceraElaboracion = aguaTerceraElaboracion; }
+    public Integer getOgTerceraElaboracion() { return ogTerceraElaboracion; }
+    public void setOgTerceraElaboracion(Integer ogTerceraElaboracion) { this.ogTerceraElaboracion = ogTerceraElaboracion; }
+    public Integer getOgPrimeraElaboracion() { return ogPrimeraElaboracion; }
+    public void setOgPrimeraElaboracion(Integer v) { this.ogPrimeraElaboracion = v; }
+    public BigDecimal getVolumenFinalPrimeraElaboracion() { return volumenFinalPrimeraElaboracion; }
+    public void setVolumenFinalPrimeraElaboracion(BigDecimal v) { this.volumenFinalPrimeraElaboracion = v; }
+    public BigDecimal getOgBrixSegundaElaboracion() { return ogBrixSegundaElaboracion; }
+    public void setOgBrixSegundaElaboracion(BigDecimal v) { this.ogBrixSegundaElaboracion = v; }
+    public BigDecimal getOgBrixTerceraElaboracion() { return ogBrixTerceraElaboracion; }
+    public void setOgBrixTerceraElaboracion(BigDecimal v) { this.ogBrixTerceraElaboracion = v; }
+    public BigDecimal getVolumenFinalSegundaElaboracion() { return volumenFinalSegundaElaboracion; }
+    public void setVolumenFinalSegundaElaboracion(BigDecimal v) { this.volumenFinalSegundaElaboracion = v; }
+    public BigDecimal getVolumenFinalTerceraElaboracion() { return volumenFinalTerceraElaboracion; }
+    public void setVolumenFinalTerceraElaboracion(BigDecimal v) { this.volumenFinalTerceraElaboracion = v; }
+    public java.time.LocalTime getHoraInicioPrimeraElaboracion() { return horaInicioPrimeraElaboracion; }
+    public void setHoraInicioPrimeraElaboracion(java.time.LocalTime v) { this.horaInicioPrimeraElaboracion = v; }
+    public java.time.LocalTime getHoraFinPrimeraElaboracion() { return horaFinPrimeraElaboracion; }
+    public void setHoraFinPrimeraElaboracion(java.time.LocalTime v) { this.horaFinPrimeraElaboracion = v; }
+    public java.time.LocalTime getHoraInicioSegundaElaboracion() { return horaInicioSegundaElaboracion; }
+    public void setHoraInicioSegundaElaboracion(java.time.LocalTime v) { this.horaInicioSegundaElaboracion = v; }
+    public java.time.LocalTime getHoraFinSegundaElaboracion() { return horaFinSegundaElaboracion; }
+    public void setHoraFinSegundaElaboracion(java.time.LocalTime v) { this.horaFinSegundaElaboracion = v; }
+    public java.time.LocalTime getHoraInicioTerceraElaboracion() { return horaInicioTerceraElaboracion; }
+    public void setHoraInicioTerceraElaboracion(java.time.LocalTime v) { this.horaInicioTerceraElaboracion = v; }
+    public java.time.LocalTime getHoraFinTerceraElaboracion() { return horaFinTerceraElaboracion; }
+    public void setHoraFinTerceraElaboracion(java.time.LocalTime v) { this.horaFinTerceraElaboracion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }

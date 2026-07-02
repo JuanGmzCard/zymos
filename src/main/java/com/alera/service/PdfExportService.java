@@ -52,6 +52,7 @@ public class PdfExportService {
 
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_DT    = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+    private static final DateTimeFormatter FMT_HORA  = DateTimeFormatter.ofPattern("HH:mm");
 
     private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
 
@@ -522,12 +523,56 @@ public class PdfExportService {
         t.setWidthPercentage(100);
         par(t, t("pdf.label.codigo"),  lote.getCodigoLote(), lbl, val, pal);
         par(t, t("pdf.label.estilo"),  lote.getEstilo(), lbl, val, pal);
-        par(t, t("pdf.label.fecha_elaboracion"),
+
+        int numCoc = lote.getNumeroElaboraciones() != null ? lote.getNumeroElaboraciones() : 1;
+        String fechaLabel = numCoc >= 2
+                ? t("pdf.label.fecha_elaboracion") + " (S1)"
+                : t("pdf.label.fecha_elaboracion");
+        par(t, fechaLabel,
                 lote.getFechaElaboracion() != null ? lote.getFechaElaboracion().format(FMT_FECHA) : "—", lbl, val, pal);
         par(t, t("pdf.label.fermentador"),
                 lote.getEquipoFermentador() != null ? lote.getEquipoFermentador().getNombre() : "—", lbl, val, pal);
+
+        if (numCoc >= 2) {
+            par(t, t("pdf.label.elaboraciones"), String.valueOf(numCoc), lbl, val, pal);
+            par(t, t("pdf.label.fecha_s2"),
+                    lote.getFechaSegundaElaboracion() != null ? lote.getFechaSegundaElaboracion().format(FMT_FECHA) : "—",
+                    lbl, val, pal);
+        }
+        if (numCoc >= 3) {
+            par(t, t("pdf.label.fecha_s3"),
+                    lote.getFechaTerceraElaboracion() != null ? lote.getFechaTerceraElaboracion().format(FMT_FECHA) : "—",
+                    lbl, val, pal);
+        }
+
+        // Hora inicio / fin por sesión
+        String horaIni1 = lote.getHoraInicioPrimeraElaboracion() != null ? lote.getHoraInicioPrimeraElaboracion().format(FMT_HORA) : "—";
+        String horaFin1 = lote.getHoraFinPrimeraElaboracion()    != null ? lote.getHoraFinPrimeraElaboracion().format(FMT_HORA)    : "—";
+        String labelIni = numCoc >= 2 ? t("pdf.label.hora_inicio") + " S1" : t("pdf.label.hora_inicio");
+        String labelFin = numCoc >= 2 ? t("pdf.label.hora_fin")    + " S1" : t("pdf.label.hora_fin");
+        par(t, labelIni, horaIni1, lbl, val, pal);
+        par(t, labelFin, horaFin1, lbl, val, pal);
+        if (numCoc >= 2) {
+            String horaIni2 = lote.getHoraInicioSegundaElaboracion() != null ? lote.getHoraInicioSegundaElaboracion().format(FMT_HORA) : "—";
+            String horaFin2 = lote.getHoraFinSegundaElaboracion()    != null ? lote.getHoraFinSegundaElaboracion().format(FMT_HORA)    : "—";
+            par(t, t("pdf.label.hora_inicio") + " S2", horaIni2, lbl, val, pal);
+            par(t, t("pdf.label.hora_fin")    + " S2", horaFin2, lbl, val, pal);
+        }
+        if (numCoc >= 3) {
+            String horaIni3 = lote.getHoraInicioTerceraElaboracion() != null ? lote.getHoraInicioTerceraElaboracion().format(FMT_HORA) : "—";
+            String horaFin3 = lote.getHoraFinTerceraElaboracion()    != null ? lote.getHoraFinTerceraElaboracion().format(FMT_HORA)    : "—";
+            par(t, t("pdf.label.hora_inicio") + " S3", horaIni3, lbl, val, pal);
+            par(t, t("pdf.label.hora_fin")    + " S3", horaFin3, lbl, val, pal);
+        }
+
         par(t, t("pdf.label.receta"),
                 lote.getReceta() != null ? lote.getReceta().getNombre() : "—", lbl, val, pal);
+        if (numCoc >= 2 && lote.getReceta2() != null) {
+            par(t, t("pdf.label.receta_s2"), lote.getReceta2().getNombre(), lbl, val, pal);
+        }
+        if (numCoc >= 3 && lote.getReceta3() != null) {
+            par(t, t("pdf.label.receta_s3"), lote.getReceta3().getNombre(), lbl, val, pal);
+        }
         par(t, t("pdf.label.creado_por"),
                 lote.getCreatedBy() != null ? lote.getCreatedBy() : "—", lbl, val, pal);
         doc.add(t);
@@ -540,14 +585,53 @@ public class PdfExportService {
         Font lblP = new Font(Font.HELVETICA, 8,  Font.BOLD,   pal.verde());
         Font valP = new Font(Font.HELVETICA, 9,  Font.NORMAL, Color.DARK_GRAY);
 
+        int numCoc = lote.getNumeroElaboraciones() != null ? lote.getNumeroElaboraciones() : 1;
+
         PdfPTable tp = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
         tp.setWidthPercentage(100); tp.setSpacingAfter(6);
-        par(tp, t("pdf.label.agua_utilizada"),
-                lote.getAguaUtilizada() != null ? lote.getAguaUtilizada() + " L" : "—", lblP, valP, pal);
+
+        String aguaS1Label = numCoc >= 2 ? t("pdf.label.agua_s1") : t("pdf.label.agua_utilizada");
+        par(tp, aguaS1Label,
+                lote.getAguaUtilizada() != null
+                        ? lote.getAguaUtilizada().stripTrailingZeros().toPlainString() + " L" : "—",
+                lblP, valP, pal);
         par(tp, t("pdf.label.ph_agua"),
                 lote.getPhAgua() != null ? lote.getPhAgua().toString() : "—", lblP, valP, pal);
-        par(tp, t("pdf.label.vol_final"),
-                lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", lblP, valP, pal);
+        if (numCoc >= 2) {
+            par(tp, t("pdf.label.agua_s2"),
+                    lote.getAguaSegundaElaboracion() != null
+                            ? lote.getAguaSegundaElaboracion().stripTrailingZeros().toPlainString() + " L" : "—",
+                    lblP, valP, pal);
+        }
+        if (numCoc >= 3) {
+            par(tp, t("pdf.label.agua_s3"),
+                    lote.getAguaTerceraElaboracion() != null
+                            ? lote.getAguaTerceraElaboracion().stripTrailingZeros().toPlainString() + " L" : "—",
+                    lblP, valP, pal);
+        }
+
+        String volLabel = numCoc >= 2 ? t("pdf.label.vol_final") + " (Total)" : t("pdf.label.vol_final");
+        par(tp, volLabel,
+                lote.getLitrosFinales() != null
+                        ? lote.getLitrosFinales().stripTrailingZeros().toPlainString() + " L" : "—",
+                lblP, valP, pal);
+        if (numCoc >= 2) {
+            par(tp, t("pdf.label.vol_s1"),
+                    lote.getVolumenFinalPrimeraElaboracion() != null
+                            ? lote.getVolumenFinalPrimeraElaboracion().stripTrailingZeros().toPlainString() + " L" : "—",
+                    lblP, valP, pal);
+            par(tp, t("pdf.label.vol_s2"),
+                    lote.getVolumenFinalSegundaElaboracion() != null
+                            ? lote.getVolumenFinalSegundaElaboracion().stripTrailingZeros().toPlainString() + " L" : "—",
+                    lblP, valP, pal);
+        }
+        if (numCoc >= 3) {
+            par(tp, t("pdf.label.vol_s3"),
+                    lote.getVolumenFinalTerceraElaboracion() != null
+                            ? lote.getVolumenFinalTerceraElaboracion().stripTrailingZeros().toPlainString() + " L" : "—",
+                    lblP, valP, pal);
+        }
+
         par(tp, t("pdf.label.clarificante"),
                 notBlank(lote.getClarificante()) ? lote.getClarificante() : "—", lblP, valP, pal);
         doc.add(tp);
@@ -564,6 +648,30 @@ public class PdfExportService {
         metricaCell(tm, t("pdf.label.eficiencia"), lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", lbl, val, sub, t("pdf.label.macerado"), pal);
         metricaCell(tm, t("pdf.label.litros"),     lote.getLitrosFinales()      != null ? lote.getLitrosFinales()      + " L" : "—", lbl, val, sub, t("pdf.label.vol_final"), pal);
         doc.add(tm);
+
+        if (numCoc >= 2) {
+            int numOgCols = numCoc >= 3 ? 3 : 2;
+            PdfPTable tog = new PdfPTable(numOgCols);
+            tog.setWidthPercentage(100); tog.setSpacingBefore(6);
+
+            String ogS1Val = lote.getOgPrimeraElaboracion() != null ? String.valueOf(lote.getOgPrimeraElaboracion()) : "—";
+            metricaCell(tog, t("pdf.label.og_s1"), ogS1Val, lbl, val, sub, "S1", pal);
+
+            String ogS2Val = lote.getOgSegundaElaboracion() != null ? String.valueOf(lote.getOgSegundaElaboracion()) : "—";
+            String ogS2Sub = lote.getOgBrixSegundaElaboracion() != null
+                    ? lote.getOgBrixSegundaElaboracion().stripTrailingZeros().toPlainString() + " °Brix"
+                    : "S2";
+            metricaCell(tog, t("pdf.label.og_s2"), ogS2Val, lbl, val, sub, ogS2Sub, pal);
+
+            if (numCoc >= 3) {
+                String ogS3Val = lote.getOgTerceraElaboracion() != null ? String.valueOf(lote.getOgTerceraElaboracion()) : "—";
+                String ogS3Sub = lote.getOgBrixTerceraElaboracion() != null
+                        ? lote.getOgBrixTerceraElaboracion().stripTrailingZeros().toPlainString() + " °Brix"
+                        : "S3";
+                metricaCell(tog, t("pdf.label.og_s3"), ogS3Val, lbl, val, sub, ogS3Sub, pal);
+            }
+            doc.add(tog);
+        }
     }
 
     private void metricaCell(PdfPTable t, String label, String value,

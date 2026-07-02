@@ -2,6 +2,8 @@
 const TOTAL_TABS = 6;
 let currentTab = 0;
 var _recetaPendiente = null; // receta cargada pero aún no aplicada a panel-1
+var _recetaData2 = null;    // datos de receta sesión 2 (para re-append tras poblarDesdeReceta)
+var _recetaData3 = null;    // datos de receta sesión 3
 
 function goTab(idx) {
     document.getElementById('panel-' + currentTab).classList.add('d-none');
@@ -65,7 +67,7 @@ function volUpdate(field) {
 }
 
 function sincronizarVolumenFinalTotal() {
-    var sel = document.getElementById('numeroCoccionesSelect');
+    var sel = document.getElementById('numeroElaboracionesSelect');
     if (!sel) return;
     var n = parseInt(sel.value, 10) || 1;
     var displayEl = document.getElementById('litros-display');
@@ -230,6 +232,10 @@ function procesarRecetaAdicional(data, btn, originalHtml, sesion) {
     if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
     mostrarFeedbackReceta(btn, totalAgregados);
 
+    // Guardar datos para re-append si poblarDesdeReceta borra las filas
+    if (sesion === 2) _recetaData2 = data;
+    if (sesion === 3) _recetaData3 = data;
+
     // Poblar agua y volumen final para la sesión adicional
     if (sesion === 2 || sesion === 3) {
         var _mL = 0, _sL = 0;
@@ -259,6 +265,7 @@ function procesarRecetaAdicional(data, btn, originalHtml, sesion) {
                 document.getElementById(_lf + '-display').value = parseFloat(data.volumenBase);
                 document.getElementById(_lf + '-value').value = parseFloat(data.volumenBase);
                 showEquiv(_lf, parseFloat(data.volumenBase));
+                sincronizarVolumenFinalTotal();
             }
         }
     }
@@ -307,7 +314,7 @@ function procesarRecetaAdicional(data, btn, originalHtml, sesion) {
             var totalSugeridos = costosSugeridos.length;
             var costosAgregados = 0;
             if (typeof autoAgregarCostosReceta === 'function') {
-                // acumular=true: cocción adicional suma cantidad a ítems ya asignados
+                // acumular=true: elaboración adicional suma cantidad a ítems ya asignados
                 costosAgregados = autoAgregarCostosReceta(costosSugeridos, advertencias, true) || 0;
             }
             mostrarFeedbackCostos(btn, costosAgregados, hayPanel, totalSugeridos);
@@ -353,6 +360,28 @@ function mostrarFeedbackCostos(btn, agregados, hayPanel, totalSugeridos) {
     }
     parent.appendChild(span);
     setTimeout(function() { if (span.parentNode) span.remove(); }, 6000);
+}
+
+// Suma cantidad si el ingrediente ya existe con la misma unidad; si no, agrega nueva fila.
+function sumarOAgregarIngrediente(containerId, tipo, listId, ph, item) {
+    var container = document.getElementById(containerId);
+    var nombreNorm = (item.nombre || '').trim().toLowerCase();
+    var itemCant   = parseFloat(item.cantidad) || 0;
+    var itemUnit   = item.unidad || 'gr';
+    var found = false;
+    container.querySelectorAll('.ingrediente-row').forEach(function(row) {
+        if (found) return;
+        var nameInp = row.querySelector('input[name*=".nombre"]');
+        var cantInp = row.querySelector('input[name*=".cantidad"]');
+        var unitSel = row.querySelector('select[name*=".unidad"]');
+        if (nameInp && cantInp && unitSel
+                && nameInp.value.trim().toLowerCase() === nombreNorm
+                && unitSel.value === itemUnit) {
+            cantInp.value = String((parseFloat(cantInp.value) || 0) + itemCant);
+            found = true;
+        }
+    });
+    if (!found) appendIngredienteRow(containerId, tipo, listId, ph, item);
 }
 
 function appendIngredienteRow(containerId, tipo, listId, placeholder, item) {
@@ -421,9 +450,9 @@ function cargarRecetaEnLote() {
                 showEquiv('agua', _totalAguaL);
             }
 
-            // 3. Volumen base → litros (1 cocción) o litros1 (multicocción)
+            // 3. Volumen base → litros (1 elaboración) o litros1 (multielaboración)
             if (data.volumenBase != null) {
-                var _numCoc = parseInt((document.getElementById('numeroCoccionesSelect') || {}).value) || 1;
+                var _numCoc = parseInt((document.getElementById('numeroElaboracionesSelect') || {}).value) || 1;
                 var _vKey = _numCoc >= 2 ? 'litros1' : 'litros';
                 var _vDisp = document.getElementById(_vKey + '-display');
                 var _vUnit = document.getElementById(_vKey + '-unit');
@@ -433,6 +462,7 @@ function cargarRecetaEnLote() {
                     _vDisp.value  = data.volumenBase;
                     _vVal.value   = parseFloat(data.volumenBase);
                     showEquiv(_vKey, parseFloat(data.volumenBase));
+                    if (_numCoc >= 2) sincronizarVolumenFinalTotal();
                 }
             }
 
@@ -717,9 +747,9 @@ document.addEventListener('change', function(e) {
         if (_prev) _prev.addEventListener('click', prevTab);
         if (_next) _next.addEventListener('click', nextTab);
         if (_cargar) _cargar.addEventListener('click', function() {
-            var modalEl = document.getElementById('modalNumeroCocciones');
+            var modalEl = document.getElementById('modalNumeroElaboraciones');
             if (!modalEl) { cargarRecetaEnLote(); return; }
-            var curN = (document.getElementById('numeroCoccionesSelect') || {}).value || '1';
+            var curN = (document.getElementById('numeroElaboracionesSelect') || {}).value || '1';
             modalEl.querySelectorAll('.modal-coc-btn').forEach(function(btn) {
                 var isActive = btn.getAttribute('data-coc-n') === curN;
                 btn.classList.toggle('btn-primary', isActive);
@@ -730,12 +760,12 @@ document.addEventListener('change', function(e) {
         document.querySelectorAll('.modal-coc-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 var n = this.getAttribute('data-coc-n');
-                var sel = document.getElementById('numeroCoccionesSelect');
+                var sel = document.getElementById('numeroElaboracionesSelect');
                 if (sel && sel.value !== n) {
                     sel.value = n;
                     sel.dispatchEvent(new Event('change'));
                 }
-                bootstrap.Modal.getInstance(document.getElementById('modalNumeroCocciones')).hide();
+                bootstrap.Modal.getInstance(document.getElementById('modalNumeroElaboraciones')).hide();
                 cargarRecetaEnLote();
             });
         });

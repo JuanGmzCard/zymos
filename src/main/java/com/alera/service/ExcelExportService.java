@@ -44,6 +44,7 @@ public class ExcelExportService {
 
     private static final Color C_BORDE = new Color(222, 226, 230);
     private static final DateTimeFormatter FMT_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final DateTimeFormatter FMT_HORA  = DateTimeFormatter.ofPattern("HH:mm");
 
     private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
 
@@ -528,11 +529,12 @@ public class ExcelExportService {
             t("xls.header.fg"),          t("xls.header.abv_pct"),      t("xls.header.atenuacion_pct"),
             t("xls.header.eficiencia_pct"), t("xls.header.litros"),   t("xls.header.costo_total"),
             t("xls.header.costo_litro"), t("xls.header.creado_por"),   t("xls.header.metodo_carb"),
-            t("xls.header.co2_obj"),     t("xls.header.co2_real"),     t("xls.header.destino_empaque")
+            t("xls.header.co2_obj"),     t("xls.header.co2_real"),     t("xls.header.destino_empaque"),
+            t("xls.header.hora_inicio"), t("xls.header.hora_fin")
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        int[] widths = {14, 16, 20, 12, 14, 8, 8, 9, 13, 13, 9, 14, 13, 14, 16, 14, 14, 24};
+        int[] widths = {14, 16, 20, 12, 14, 8, 8, 9, 13, 13, 9, 14, 13, 14, 16, 14, 14, 24, 12, 12};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         for (int i = 0; i < lotes.size(); i++) {
@@ -563,6 +565,8 @@ public class ExcelExportService {
             celdaNum(fila, 15, l.getCarbCo2Objetivo() != null ? l.getCarbCo2Objetivo().doubleValue() : null, sN);
             celdaNum(fila, 16, l.getCarbCo2Real()     != null ? l.getCarbCo2Real().doubleValue()     : null, sN);
             celda(fila, 17, l.getCarbDestino() != null ? l.getCarbDestino() : "", sD);
+            celda(fila, 18, l.getHoraInicioPrimeraElaboracion() != null ? l.getHoraInicioPrimeraElaboracion().format(FMT_HORA) : "", sD);
+            celda(fila, 19, l.getHoraFinPrimeraElaboracion()    != null ? l.getHoraFinPrimeraElaboracion().format(FMT_HORA)    : "", sD);
         }
 
         if (!lotes.isEmpty()) {
