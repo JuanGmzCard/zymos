@@ -27,13 +27,13 @@ public class MovimientoInventario {
     @Column(nullable = false, length = 30)
     private TipoMovimiento tipo;
 
-    @Column(nullable = false, precision = 10, scale = 3)
+    @Column(nullable = false, precision = 14, scale = 3)
     private BigDecimal cantidad;
 
-    @Column(name = "cantidad_anterior", precision = 10, scale = 3)
+    @Column(name = "cantidad_anterior", precision = 14, scale = 3)
     private BigDecimal cantidadAnterior;
 
-    @Column(name = "cantidad_posterior", precision = 10, scale = 3)
+    @Column(name = "cantidad_posterior", precision = 14, scale = 3)
     private BigDecimal cantidadPosterior;
 
     @Column(length = 300)

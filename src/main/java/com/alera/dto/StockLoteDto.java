@@ -24,4 +24,12 @@ public record StockLoteDto(
     public boolean conStock() {
         return !agotado();
     }
+
+    public java.math.BigDecimal displayValor(java.math.BigDecimal valor) {
+        return com.alera.config.UnidadUtils.displayValor(valor, unidad);
+    }
+
+    public String displayUnidad(java.math.BigDecimal valor) {
+        return com.alera.config.UnidadUtils.displayUnidad(valor, unidad);
+    }
 }

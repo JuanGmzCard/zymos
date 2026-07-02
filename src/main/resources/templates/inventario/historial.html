@@ -18,7 +18,7 @@
         <div>
             <h1><i class="bi bi-clock-history me-2"></i><span th:text="#{inv.hist.title}">Movimientos de Stock</span></h1>
             <p class="subtitle mb-0"
-               th:text="${insumo.nombre} + ' — ' + ${insumo.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">Insumo</p>
+               th:text="${insumo.nombre} + ' — ' + ${insumo.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidadDisplay} != null ? ${insumo.unidadDisplay} : '')">Insumo</p>
         </div>
         <div class="pt-1">
             <a th:href="@{/inventario}" class="btn btn-outline-secondary btn-sm">
@@ -38,11 +38,11 @@
             <div>
                 <div class="content-card-title pb-0 mb-1" th:text="#{inv.hist.label.stock}">Stock actual</div>
                 <span class="fw-semibold"
-                      th:text="${insumo.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</span>
+                      th:text="${insumo.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidadDisplay} != null ? ${insumo.unidadDisplay} : '')">—</span>
             </div>
             <div>
                 <div class="content-card-title pb-0 mb-1" th:text="#{inv.hist.label.min}">Stock mínimo</div>
-                <span th:text="${insumo.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</span>
+                <span th:text="${insumo.stockMinimoDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidadStockMinimoDisplay} != null ? ${insumo.unidadStockMinimoDisplay} : '')">—</span>
             </div>
             <div th:if="${insumo.bajoStock}">
                 <span class="badge bg-danger"><i class="bi bi-exclamation-triangle me-1"></i><span th:text="#{inv.hist.badge.bajo}">Bajo stock</span></span>
@@ -84,12 +84,9 @@
                         <span class="badge" th:classappend="'bg-' + ${mov.tipo.badgeClass}"
                               th:text="${mov.tipo.displayName}">—</span>
                     </td>
-                    <td class="fw-semibold"
-                        th:text="${mov.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${insumo.unidad} != null ? ${insumo.unidad} : '')">—</td>
-                    <td class="text-muted small"
-                        th:text="${mov.cantidadAnterior != null ? mov.cantidadAnterior.stripTrailingZeros().toPlainString() : '—'}">—</td>
-                    <td class="text-muted small"
-                        th:text="${mov.cantidadPosterior != null ? mov.cantidadPosterior.stripTrailingZeros().toPlainString() : '—'}">—</td>
+                    <td class="fw-semibold" th:text="${insumo.formatearCantidad(mov.cantidad)}">—</td>
+                    <td class="text-muted small" th:text="${mov.cantidadAnterior != null ? insumo.formatearCantidad(mov.cantidadAnterior) : '—'}">—</td>
+                    <td class="text-muted small" th:text="${mov.cantidadPosterior != null ? insumo.formatearCantidad(mov.cantidadPosterior) : '—'}">—</td>
                     <td>
                         <span th:if="${mov.referencia != null}"
                               class="badge bg-secondary me-1" th:text="${mov.referencia}">—</span>

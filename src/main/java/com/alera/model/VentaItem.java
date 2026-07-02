@@ -70,6 +70,8 @@ public class VentaItem {
     public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
     public String getUnidad() { return unidad; }
     public void setUnidad(String unidad) { this.unidad = unidad; }
+    public BigDecimal getCantidadDisplay() { return com.alera.config.UnidadUtils.displayValor(cantidad, unidad); }
+    public String     getUnidadDisplay()  { return com.alera.config.UnidadUtils.displayUnidad(cantidad, unidad); }
     public BigDecimal getPrecioUnitario() { return precioUnitario; }
     public void setPrecioUnitario(BigDecimal precioUnitario) { this.precioUnitario = precioUnitario; }
     public BigDecimal getDescuentoPct() { return descuentoPct; }

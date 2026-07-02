@@ -18,12 +18,12 @@ public class InsumoInventario extends AuditableEntity {
     @Column(nullable = false)
     private String tipo;
 
-    @Column(precision = 10, scale = 3)
+    @Column(precision = 14, scale = 3)
     private BigDecimal cantidad = BigDecimal.ZERO;
 
     private String unidad;
 
-    @Column(precision = 10, scale = 3)
+    @Column(precision = 14, scale = 3)
     private BigDecimal stockMinimo = BigDecimal.ZERO;
 
     private String proveedor;
@@ -86,6 +86,17 @@ public class InsumoInventario extends AuditableEntity {
             case "Envase"                  -> "secondary";
             default                        -> "dark";
         };
+    }
+
+    // ── Display inteligente (delega a UnidadUtils) ───────────────────────────
+
+    public BigDecimal getCantidadDisplay()          { return com.alera.config.UnidadUtils.displayValor(cantidad,    unidad); }
+    public String     getUnidadDisplay()            { return com.alera.config.UnidadUtils.displayUnidad(cantidad,   unidad); }
+    public BigDecimal getStockMinimoDisplay()       { return com.alera.config.UnidadUtils.displayValor(stockMinimo, unidad); }
+    public String     getUnidadStockMinimoDisplay() { return com.alera.config.UnidadUtils.displayUnidad(stockMinimo, unidad); }
+
+    public String formatearCantidad(BigDecimal valor) {
+        return com.alera.config.UnidadUtils.displayTexto(valor, unidad);
     }
 
     // Getters & Setters

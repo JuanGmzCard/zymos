@@ -170,7 +170,7 @@
                                           th:text="${adic.minutosRestantes} + ' min'">—</span>
                                     <span th:if="${adic.minutosRestantes == null}" class="text-muted">—</span>
                                 </td>
-                                <td th:text="${adic.cantidad != null} ? ${adic.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${adic.unidad} ?: '') : '—'">—</td>
+                                <td th:text="${adic.cantidad != null} ? ${adic.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${adic.unidadDisplay} ?: '') : '—'">—</td>
                             </tr>
                         </tbody>
                     </table>

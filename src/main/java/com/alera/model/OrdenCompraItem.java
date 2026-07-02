@@ -72,6 +72,8 @@ public class OrdenCompraItem {
     public void setCantidad(BigDecimal cantidad)             { this.cantidad = cantidad; }
     public String getUnidad()                                { return unidad; }
     public void setUnidad(String unidad)                     { this.unidad = unidad; }
+    public BigDecimal getCantidadDisplay() { return com.alera.config.UnidadUtils.displayValor(cantidad, unidad); }
+    public String     getUnidadDisplay()  { return com.alera.config.UnidadUtils.displayUnidad(cantidad, unidad); }
     public BigDecimal getPrecioUnitarioEstimado()            { return precioUnitarioEstimado; }
     public void setPrecioUnitarioEstimado(BigDecimal p)      { this.precioUnitarioEstimado = p; }
     public BigDecimal getPorcentajeIvaItem()                 { return porcentajeIvaItem; }

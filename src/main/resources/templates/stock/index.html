@@ -180,18 +180,18 @@
                         <td th:text="${s.estilo}">IPA</td>
                         <td th:text="${s.fechaCompletado != null ? #temporals.format(s.fechaCompletado, 'dd/MM/yyyy') : '—'}">—</td>
                         <td class="text-end text-muted">
-                            <span th:text="${s.producido != null ? s.producido.stripTrailingZeros().toPlainString() + ' ' + s.unidad : '—'}">—</span>
+                            <span th:text="${s.producido != null ? s.displayValor(s.producido).stripTrailingZeros().toPlainString() + ' ' + s.displayUnidad(s.producido) : '—'}">—</span>
                         </td>
                         <td class="text-end text-muted">
                             <span th:if="${s.despachado != null and s.despachado.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
-                                  th:text="${s.despachado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">0 L</span>
+                                  th:text="${s.displayValor(s.despachado).stripTrailingZeros().toPlainString() + ' ' + s.displayUnidad(s.despachado)}">0 L</span>
                             <span th:if="${s.despachado == null or s.despachado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
                                   class="text-muted">—</span>
                         </td>
                         <td class="text-end">
                             <span th:if="${s.reservado != null and s.reservado.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
                                   class="text-warning fw-semibold"
-                                  th:text="${s.reservado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}"
+                                  th:text="${s.displayValor(s.reservado).stripTrailingZeros().toPlainString() + ' ' + s.displayUnidad(s.reservado)}"
                                   th:title="'Cotizaciones/ventas pendientes de despacho'">0 L</span>
                             <span th:if="${s.reservado == null or s.reservado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
                                   class="text-muted">—</span>
@@ -199,14 +199,14 @@
                         <td class="text-end">
                             <span th:if="${s.ajustado != null and s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) != 0}"
                                   th:classappend="${s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'text-success' : 'text-danger'"
-                                  th:text="${(s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? '+' : '') + s.ajustado.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">—</span>
+                                  th:text="${(s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? '+' : '') + s.displayValor(s.ajustado).stripTrailingZeros().toPlainString() + ' ' + s.displayUnidad(s.ajustado)}">—</span>
                             <span th:if="${s.ajustado == null or s.ajustado.compareTo(T(java.math.BigDecimal).ZERO) == 0}"
                                   class="text-muted">—</span>
                         </td>
                         <td class="text-end">
                             <span th:if="${s.disponible != null}"
                                   th:classappend="${s.disponible.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? 'disponible-col positivo' : 'disponible-col negativo'"
-                                  th:text="${s.disponible.stripTrailingZeros().toPlainString() + ' ' + s.unidad}">—</span>
+                                  th:text="${s.displayValor(s.disponible).stripTrailingZeros().toPlainString() + ' ' + s.displayUnidad(s.disponible)}">—</span>
                             <span th:if="${s.disponible == null}" class="text-muted">—</span>
                         </td>
                         <td>

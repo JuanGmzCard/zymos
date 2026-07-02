@@ -53,7 +53,12 @@ public class InsumoInventarioService {
     }
 
     public Optional<InsumoInventario> buscarPorNombreExacto(String nombre) {
-        return repo.findByNombreExacto(nombre);
+        return findUnico(nombre);
+    }
+
+    private Optional<InsumoInventario> findUnico(String nombre) {
+        List<InsumoInventario> lista = repo.findByNombreExacto(nombre);
+        return lista.isEmpty() ? Optional.empty() : Optional.of(lista.get(0));
     }
 
     public InsumoInventario guardar(InsumoInventario insumo) {
@@ -109,7 +114,7 @@ public class InsumoInventarioService {
         BigDecimal cantidad = parsearCantidad(cantidadTexto);
         if (cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return null;
 
-        Optional<InsumoInventario> opt = repo.findByNombreExacto(nombre);
+        Optional<InsumoInventario> opt = findUnico(nombre);
         if (opt.isEmpty()) return null;
 
         InsumoInventario insumo = opt.get();
@@ -141,7 +146,7 @@ public class InsumoInventarioService {
         if (nombre == null || nombre.isBlank()) return;
         BigDecimal cantidad = parsearCantidad(cantidadTexto);
         if (cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
-        repo.findByNombreExacto(nombre).ifPresent(insumo -> {
+        findUnico(nombre).ifPresent(insumo -> {
             BigDecimal anterior  = insumo.getCantidad();
             BigDecimal posterior = anterior.add(cantidad);
             insumo.setCantidad(posterior);
@@ -154,7 +159,7 @@ public class InsumoInventarioService {
     public void ingresarDeFactura(String nombre, BigDecimal cantidad, String unidad,
                                   String tipoInsumo, String proveedor, String referencia) {
         if (nombre == null || nombre.isBlank() || cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
-        InsumoInventario insumo = repo.findByNombreExacto(nombre).orElseGet(() -> {
+        InsumoInventario insumo = findUnico(nombre).orElseGet(() -> {
             InsumoInventario nuevo = new InsumoInventario();
             nuevo.setNombre(nombre);
             nuevo.setTipo(tipoInsumo != null ? tipoInsumo : detectarTipo(nombre));
@@ -175,7 +180,7 @@ public class InsumoInventarioService {
 
     public void revertirEntradaFactura(String nombre, BigDecimal cantidad, String referencia) {
         if (nombre == null || nombre.isBlank() || cantidad == null || cantidad.compareTo(BigDecimal.ZERO) <= 0) return;
-        repo.findByNombreExacto(nombre).ifPresent(insumo -> {
+        findUnico(nombre).ifPresent(insumo -> {
             BigDecimal anterior = insumo.getCantidad();
             BigDecimal posterior = anterior.subtract(cantidad).max(BigDecimal.ZERO);
             insumo.setCantidad(posterior);

@@ -127,7 +127,7 @@
                                 <td class="fw-semibold" th:text="${item.nombre}">—</td>
                                 <td class="small text-muted" th:text="${item.descripcion != null ? item.descripcion : '—'}">—</td>
                                 <td class="text-center"
-                                    th:text="${item.cantidad != null ? item.cantidad.stripTrailingZeros().toPlainString() + (item.unidad != null ? ' ' + item.unidad : '') : '—'}">—</td>
+                                    th:text="${item.cantidad != null ? item.cantidadDisplay.stripTrailingZeros().toPlainString() + (item.unidadDisplay != null ? ' ' + item.unidadDisplay : '') : '—'}">—</td>
                                 <td class="text-end"
                                     th:text="${item.precioUnitarioEstimado != null ? '$' + #numbers.formatDecimal(item.precioUnitarioEstimado,1,'COMMA',0,'POINT') : '—'}">—</td>
                                 <td class="text-center"

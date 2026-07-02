@@ -29,6 +29,25 @@ public class LoteCerveza extends AuditableEntity {
 
     private LocalDate fechaElaboracion;
 
+    private Integer numeroCocciones = 1;
+    @Column(name = "og_primera_coccion")
+    private Integer ogPrimeraCoccion;
+    private LocalDate fechaSegundaCoccion;
+    private BigDecimal aguaSegundaCoccion;
+    @Column(name = "og_segunda_coccion")
+    private Integer ogSegundaCoccion;
+    @Column(name = "og_brix_segunda_coccion", precision = 5, scale = 2)
+    private BigDecimal ogBrixSegundaCoccion;
+    private LocalDate fechaTerceraCoccion;
+    private BigDecimal aguaTerceraCoccion;
+    @Column(name = "og_tercera_coccion")
+    private Integer ogTerceraCoccion;
+    @Column(name = "og_brix_tercera_coccion", precision = 5, scale = 2)
+    private BigDecimal ogBrixTerceraCoccion;
+    private BigDecimal volumenFinalPrimeraCoccion;
+    private BigDecimal volumenFinalSegundaCoccion;
+    private BigDecimal volumenFinalTerceraCoccion;
+
     private BigDecimal aguaUtilizada;
     private BigDecimal phAgua;
     private BigDecimal litrosFinales;
@@ -110,6 +129,14 @@ public class LoteCerveza extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta_id")
     private Receta receta;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receta2_id")
+    private Receta receta2;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receta3_id")
+    private Receta receta3;
 
 
     // Filtros de ingredientes
@@ -258,6 +285,32 @@ public class LoteCerveza extends AuditableEntity {
     public void setEstilo(String estilo) { this.estilo = estilo; }
     public LocalDate getFechaElaboracion() { return fechaElaboracion; }
     public void setFechaElaboracion(LocalDate fechaElaboracion) { this.fechaElaboracion = fechaElaboracion; }
+    public Integer getNumeroCocciones() { return numeroCocciones; }
+    public void setNumeroCocciones(Integer numeroCocciones) { this.numeroCocciones = numeroCocciones; }
+    public LocalDate getFechaSegundaCoccion() { return fechaSegundaCoccion; }
+    public void setFechaSegundaCoccion(LocalDate fechaSegundaCoccion) { this.fechaSegundaCoccion = fechaSegundaCoccion; }
+    public BigDecimal getAguaSegundaCoccion() { return aguaSegundaCoccion; }
+    public void setAguaSegundaCoccion(BigDecimal aguaSegundaCoccion) { this.aguaSegundaCoccion = aguaSegundaCoccion; }
+    public Integer getOgSegundaCoccion() { return ogSegundaCoccion; }
+    public void setOgSegundaCoccion(Integer ogSegundaCoccion) { this.ogSegundaCoccion = ogSegundaCoccion; }
+    public LocalDate getFechaTerceraCoccion() { return fechaTerceraCoccion; }
+    public void setFechaTerceraCoccion(LocalDate fechaTerceraCoccion) { this.fechaTerceraCoccion = fechaTerceraCoccion; }
+    public BigDecimal getAguaTerceraCoccion() { return aguaTerceraCoccion; }
+    public void setAguaTerceraCoccion(BigDecimal aguaTerceraCoccion) { this.aguaTerceraCoccion = aguaTerceraCoccion; }
+    public Integer getOgTerceraCoccion() { return ogTerceraCoccion; }
+    public void setOgTerceraCoccion(Integer ogTerceraCoccion) { this.ogTerceraCoccion = ogTerceraCoccion; }
+    public Integer getOgPrimeraCoccion() { return ogPrimeraCoccion; }
+    public void setOgPrimeraCoccion(Integer v) { this.ogPrimeraCoccion = v; }
+    public BigDecimal getVolumenFinalPrimeraCoccion() { return volumenFinalPrimeraCoccion; }
+    public void setVolumenFinalPrimeraCoccion(BigDecimal v) { this.volumenFinalPrimeraCoccion = v; }
+    public BigDecimal getOgBrixSegundaCoccion() { return ogBrixSegundaCoccion; }
+    public void setOgBrixSegundaCoccion(BigDecimal v) { this.ogBrixSegundaCoccion = v; }
+    public BigDecimal getOgBrixTerceraCoccion() { return ogBrixTerceraCoccion; }
+    public void setOgBrixTerceraCoccion(BigDecimal v) { this.ogBrixTerceraCoccion = v; }
+    public BigDecimal getVolumenFinalSegundaCoccion() { return volumenFinalSegundaCoccion; }
+    public void setVolumenFinalSegundaCoccion(BigDecimal v) { this.volumenFinalSegundaCoccion = v; }
+    public BigDecimal getVolumenFinalTerceraCoccion() { return volumenFinalTerceraCoccion; }
+    public void setVolumenFinalTerceraCoccion(BigDecimal v) { this.volumenFinalTerceraCoccion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }
@@ -340,6 +393,10 @@ public class LoteCerveza extends AuditableEntity {
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
     public Receta getReceta() { return receta; }
     public void setReceta(Receta receta) { this.receta = receta; }
+    public Receta getReceta2() { return receta2; }
+    public void setReceta2(Receta receta2) { this.receta2 = receta2; }
+    public Receta getReceta3() { return receta3; }
+    public void setReceta3(Receta receta3) { this.receta3 = receta3; }
     public List<LoteItemFactura> getItemsFactura() { return itemsFactura; }
     public void setItemsFactura(List<LoteItemFactura> itemsFactura) { this.itemsFactura = itemsFactura; }
 }

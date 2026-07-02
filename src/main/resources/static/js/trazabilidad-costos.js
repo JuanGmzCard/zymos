@@ -188,21 +188,25 @@ function convertirCantidadUnidades(cantidad, unidadOrigen, unidadDestino) {
 }
 
 // ── Auto-agregar ítems de factura desde receta con bajo stock ─────
-function autoAgregarCostosReceta(costosSugeridos, advertencias) {
+function autoAgregarCostosReceta(costosSugeridos, advertencias, acumular) {
     var agregados = 0;
     (costosSugeridos || []).forEach(function(it) {
-        if (!asignados.some(function(a) { return a.itemId == it.id; })) {
-            var cantAsignada;
-            if (it.cantidadReceta != null && it.cantidadReceta > 0) {
-                cantAsignada = convertirCantidadUnidades(it.cantidadReceta, it.unidadReceta, it.unidad);
-            } else {
-                cantAsignada = parseFloat(it.cantidad) || 0;
-            }
-            // itemData debe ser el ítem de factura original (sin los campos extra de receta)
+        var cantNueva;
+        if (it.cantidadReceta != null && it.cantidadReceta > 0) {
+            cantNueva = convertirCantidadUnidades(it.cantidadReceta, it.unidadReceta, it.unidad);
+        } else {
+            cantNueva = parseFloat(it.cantidad) || 0;
+        }
+        var existente = asignados.find(function(a) { return a.itemId == it.id; });
+        if (!existente) {
             var itemData = Object.assign({}, it);
             delete itemData.cantidadReceta;
             delete itemData.unidadReceta;
-            asignados.push({ itemId: it.id, cantidadAsignada: cantAsignada, itemData: itemData });
+            asignados.push({ itemId: it.id, cantidadAsignada: cantNueva, itemData: itemData });
+            agregados++;
+        } else if (acumular) {
+            // Cocción adicional: sumar cantidad al ítem ya asignado
+            existente.cantidadAsignada = (existente.cantidadAsignada || 0) + cantNueva;
             agregados++;
         }
     });
@@ -216,29 +220,29 @@ function autoAgregarCostosReceta(costosSugeridos, advertencias) {
     }
 
     var warn = document.getElementById('stock-warnings');
-    if (!warn) return;
-    warn.innerHTML = '';
-    if (!advertencias || !advertencias.length) return;
-
-    var badge = document.getElementById('costo-count-badge');
-    var msgCostos = agregados
-        ? ' Se agregaron <strong>' + agregados + ' ítem(s)</strong> en Costos de Producción para su seguimiento.'
-        : ' No se encontraron ítems en facturas para estos ingredientes.';
-
-    warn.innerHTML =
-        '<div class="alert alert-warning gap-2 p-2 mb-0 mt-1" style="font-size:0.82rem;">' +
-        '<div class="d-flex align-items-start gap-2">' +
-        '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
-        '<div class="flex-grow-1"><strong>Stock insuficiente</strong> para: ' +
-        advertencias.map(function(n) { return '<em>' + esc(n) + '</em>'; }).join(', ') +
-        '.' + msgCostos + '</div>' +
-        '<button type="button" class="btn-close btn-sm btn-cerrar-stock-alert"></button>' +
-        '</div>' +
-        '<div class="mt-2 ps-4">' +
-        '<button type="button" class="btn btn-sm btn-warning py-0 px-2 btn-ignorar-stock">' +
-        '<i class="bi bi-arrow-right-circle me-1"></i>Ignorar advertencias y continuar</button>' +
-        '</div>' +
-        '</div>';
+    if (warn) {
+        warn.innerHTML = '';
+        if (advertencias && advertencias.length) {
+            var msgCostos = agregados
+                ? ' Se agregaron <strong>' + agregados + ' ítem(s)</strong> en Costos de Producción para su seguimiento.'
+                : ' No se encontraron ítems en facturas para estos ingredientes.';
+            warn.innerHTML =
+                '<div class="alert alert-warning gap-2 p-2 mb-0 mt-1" style="font-size:0.82rem;">' +
+                '<div class="d-flex align-items-start gap-2">' +
+                '<i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>' +
+                '<div class="flex-grow-1"><strong>Stock insuficiente</strong> para: ' +
+                advertencias.map(function(n) { return '<em>' + esc(n) + '</em>'; }).join(', ') +
+                '.' + msgCostos + '</div>' +
+                '<button type="button" class="btn-close btn-sm btn-cerrar-stock-alert"></button>' +
+                '</div>' +
+                '<div class="mt-2 ps-4">' +
+                '<button type="button" class="btn btn-sm btn-warning py-0 px-2 btn-ignorar-stock">' +
+                '<i class="bi bi-arrow-right-circle me-1"></i>Ignorar advertencias y continuar</button>' +
+                '</div>' +
+                '</div>';
+        }
+    }
+    return agregados;
 }
 
 document.getElementById('loteForm').addEventListener('submit', function(e) {

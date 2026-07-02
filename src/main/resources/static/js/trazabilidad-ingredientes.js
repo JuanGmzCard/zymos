@@ -59,6 +59,32 @@ function volUpdate(field) {
     const liters = displayVal * TO_LITERS[unit];
     document.getElementById(field + '-value').value = parseFloat(liters.toFixed(6));
     showEquiv(field, liters);
+    if (field === 'litros1' || field === 'litros2' || field === 'litros3') {
+        sincronizarVolumenFinalTotal();
+    }
+}
+
+function sincronizarVolumenFinalTotal() {
+    var sel = document.getElementById('numeroCoccionesSelect');
+    if (!sel) return;
+    var n = parseInt(sel.value, 10) || 1;
+    var displayEl = document.getElementById('litros-display');
+    var hiddenEl  = document.getElementById('litros-value');
+    if (!displayEl || !hiddenEl) return;
+    if (n < 2) {
+        displayEl.removeAttribute('readonly');
+        return;
+    }
+    var v1 = parseFloat(document.getElementById('litros1-value').value) || 0;
+    var v2 = parseFloat(document.getElementById('litros2-value').value) || 0;
+    var v3 = n >= 3 ? (parseFloat(document.getElementById('litros3-value').value) || 0) : 0;
+    var totalLiters = v1 + v2 + v3;
+    hiddenEl.value = parseFloat(totalLiters.toFixed(6));
+    var unitEl = document.getElementById('litros-unit');
+    var unit = unitEl ? unitEl.value : 'L';
+    displayEl.value = parseFloat((totalLiters / TO_LITERS[unit]).toFixed(4));
+    displayEl.setAttribute('readonly', '');
+    showEquiv('litros', totalLiters);
 }
 
 function volUnitChange(field) {
@@ -82,10 +108,13 @@ function showEquiv(field, liters) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    ['agua', 'litros'].forEach(field => {
-        const val = parseFloat(document.getElementById(field + '-value').value);
+    ['agua', 'litros', 'agua2', 'agua3', 'litros1', 'litros2', 'litros3'].forEach(field => {
+        const el = document.getElementById(field + '-value');
+        if (!el) return;
+        const val = parseFloat(el.value);
         if (!isNaN(val) && val > 0) showEquiv(field, val);
     });
+    sincronizarVolumenFinalTotal();
 });
 
 // ── Ingredientes dinámicos ────────────────────────────────────────
@@ -155,6 +184,205 @@ function baseUnitOf(unit) {
     return BASE_UNIT_STOCK[u] || 'gr';
 }
 
+// ── Cargar receta adicional (sesión 2 / 3) — hace append, no reemplaza ───────
+function cargarRecetaAdicional(selId, hiddenId, btn) {
+    var sel = document.getElementById(selId);
+    if (!sel) return;
+    var id = sel.value;
+    if (!id) { alert('Seleccioná una receta primero'); return; }
+    document.getElementById(hiddenId).value = id;
+
+    var sesion = selId.indexOf('3') !== -1 ? 3 : 2;
+    var originalHtml = btn ? btn.innerHTML : '';
+    if (btn) { btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Cargando...'; btn.disabled = true; }
+
+    fetch('/recetas/api/' + id)
+        .then(function(r) { return r.json(); })
+        .then(function(data) { procesarRecetaAdicional(data, btn, originalHtml, sesion); })
+        .catch(function() {
+            if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+            alert('Error al cargar la receta');
+        });
+}
+
+function procesarRecetaAdicional(data, btn, originalHtml, sesion) {
+    var grupos = [
+        { key: 'maltas',        containerId: 'maltas-container',        tipo: 'MALTA',        listId: 'lista-maltas',        ph: 'Malta' },
+        { key: 'lupulos',       containerId: 'lupulos-container',       tipo: 'LUPULO',       listId: 'lista-lupulos',       ph: 'Lúpulo' },
+        { key: 'levaduras',     containerId: 'levaduras-container',     tipo: 'LEVADURA',     listId: 'lista-levaduras',     ph: 'Levadura' },
+        { key: 'clarificantes', containerId: 'clarificantes-container', tipo: 'CLARIFICANTE', listId: 'lista-clarificantes', ph: 'Clarificante' }
+    ];
+
+    // Fase 1: append sincrónico — contar filas agregadas y guardar referencias
+    var totalAgregados = 0;
+    var nuevasFilas = {};
+    grupos.forEach(function(cfg) {
+        nuevasFilas[cfg.tipo] = [];
+        (data[cfg.key] || []).forEach(function(item) {
+            if (!item.nombre && !item.cantidad) return;
+            var row = appendIngredienteRow(cfg.containerId, cfg.key, cfg.listId, cfg.ph, item);
+            nuevasFilas[cfg.tipo].push({ row: row, item: item });
+            totalAgregados++;
+        });
+    });
+
+    // Restaurar botón y mostrar feedback inmediatamente
+    if (btn) { btn.innerHTML = originalHtml; btn.disabled = false; }
+    mostrarFeedbackReceta(btn, totalAgregados);
+
+    // Poblar agua y volumen final para la sesión adicional
+    if (sesion === 2 || sesion === 3) {
+        var _mL = 0, _sL = 0;
+        if (data.aguaMacerado != null) {
+            var _ru = (data.unidadAguaMacerado || 'L');
+            var _um = _ru === 'mL' ? 'mL' : _ru === 'gal' ? 'gal' : 'L';
+            _mL = parseFloat(data.aguaMacerado) * TO_LITERS[_um];
+        }
+        if (data.aguaSparge != null) {
+            var _rus = (data.unidadAguaSparge || 'L');
+            var _us = _rus === 'mL' ? 'mL' : _rus === 'gal' ? 'gal' : 'L';
+            _sL = parseFloat(data.aguaSparge) * TO_LITERS[_us];
+        }
+        var _tL = _mL + _sL;
+        var _af = 'agua' + sesion;
+        if (_tL > 0 && document.getElementById(_af + '-unit')) {
+            document.getElementById(_af + '-unit').value = 'L';
+            document.getElementById(_af + '-display').value = parseFloat(_tL.toFixed(3));
+            document.getElementById(_af + '-value').value = _tL.toFixed(6);
+            showEquiv(_af, _tL);
+        }
+        if (data.volumenBase != null) {
+            var _lf = 'litros' + sesion;
+            var _lfUnit = document.getElementById(_lf + '-unit');
+            if (_lfUnit) {
+                _lfUnit.value = 'L';
+                document.getElementById(_lf + '-display').value = parseFloat(data.volumenBase);
+                document.getElementById(_lf + '-value').value = parseFloat(data.volumenBase);
+                showEquiv(_lf, parseFloat(data.volumenBase));
+            }
+        }
+    }
+
+    // Fase 2: verificar stock y agregar costos (asíncrono)
+    var nombres = [];
+    grupos.forEach(function(cfg) {
+        (data[cfg.key] || []).forEach(function(item) { if (item.nombre) nombres.push(item.nombre); });
+    });
+
+    if (!nombres.length) {
+        if (typeof autoAgregarCostosReceta === 'function') autoAgregarCostosReceta([], []);
+        mostrarFeedbackCostos(btn, 0, !!document.getElementById('costos-collapse'), 0);
+        return;
+    }
+
+    var qs = nombres.map(function(n) { return 'nombres=' + encodeURIComponent(n); }).join('&');
+    fetch('/suggest-items-por-nombre?' + qs)
+        .then(function(r) { return r.json(); })
+        .then(function(costosPorNombre) {
+            var costosSugeridos = [], advertencias = [];
+            grupos.forEach(function(cfg) {
+                (nuevasFilas[cfg.tipo] || []).forEach(function(entry) {
+                    var item = entry.item;
+                    if (!item.nombre || !item.cantidad) return;
+                    var nombreNorm = item.nombre.toLowerCase().trim();
+                    var stockItem = (INVENTARIO_STOCK || []).find(function(s) { return s.nombre === nombreNorm; });
+                    var cantBase = toBaseStock(parseFloat(item.cantidad) || 0, item.unidad);
+                    var baseR = baseUnitOf(item.unidad);
+                    var cantStock = stockItem ? toBaseStock(parseFloat(stockItem.cantidad) || 0, stockItem.unidad) : 0;
+                    var baseS = stockItem ? baseUnitOf(stockItem.unidad) : baseR;
+                    if (!stockItem || (baseR === baseS && cantStock < cantBase)) {
+                        advertencias.push(item.nombre);
+                        marcarIngredienteBajoStock(entry.row, item, stockItem, cfg.tipo);
+                    }
+                    var costoItem = (costosPorNombre || {})[nombreNorm] || null;
+                    if (costoItem) {
+                        costosSugeridos.push(Object.assign({}, costoItem, {
+                            cantidadReceta: parseFloat(item.cantidad) || 0,
+                            unidadReceta:   item.unidad || 'gr'
+                        }));
+                    }
+                });
+            });
+            var hayPanel = !!document.getElementById('costos-collapse');
+            var totalSugeridos = costosSugeridos.length;
+            var costosAgregados = 0;
+            if (typeof autoAgregarCostosReceta === 'function') {
+                // acumular=true: cocción adicional suma cantidad a ítems ya asignados
+                costosAgregados = autoAgregarCostosReceta(costosSugeridos, advertencias, true) || 0;
+            }
+            mostrarFeedbackCostos(btn, costosAgregados, hayPanel, totalSugeridos);
+        })
+        .catch(function() {
+            if (typeof autoAgregarCostosReceta === 'function') autoAgregarCostosReceta([], []);
+            mostrarFeedbackCostos(btn, 0, !!document.getElementById('costos-collapse'), 0);
+        });
+}
+
+function mostrarFeedbackReceta(btn, count) {
+    if (!btn) return;
+    var parent = btn.parentNode;
+    var existing = parent.querySelector('.receta-sesion-feedback');
+    if (existing) existing.remove();
+    var span = document.createElement('span');
+    span.className = 'receta-sesion-feedback ms-2 badge';
+    if (count > 0) {
+        span.style.cssText = 'background:#27ae60;color:#fff;font-size:0.75rem;';
+        span.innerHTML = '<i class="bi bi-check-lg me-1"></i>' + count + ' ingrediente' + (count > 1 ? 's' : '') + ' agregado' + (count > 1 ? 's' : '');
+    } else {
+        span.style.cssText = 'background:#6c757d;color:#fff;font-size:0.75rem;';
+        span.innerHTML = '<i class="bi bi-info-circle me-1"></i>La receta no tiene ingredientes';
+    }
+    parent.appendChild(span);
+    setTimeout(function() { if (span.parentNode) span.remove(); }, 6000);
+}
+
+function mostrarFeedbackCostos(btn, agregados, hayPanel, totalSugeridos) {
+    if (!btn) return;
+    var parent = btn.parentNode;
+    var existing = parent.querySelector('.costos-sesion-feedback');
+    if (existing) existing.remove();
+    if (!hayPanel) return;
+    var span = document.createElement('span');
+    span.className = 'costos-sesion-feedback ms-1 badge';
+    if (agregados > 0) {
+        span.style.cssText = 'background:#2563eb;color:#fff;font-size:0.72rem;';
+        span.innerHTML = '<i class="bi bi-receipt me-1"></i>' + agregados + ' costo' + (agregados > 1 ? 's' : '') + ' actualizado' + (agregados > 1 ? 's' : '');
+    } else {
+        span.style.cssText = 'background:#6c757d;color:#fff;font-size:0.72rem;';
+        span.innerHTML = '<i class="bi bi-info-circle me-1"></i>Sin ítems de factura coincidentes';
+    }
+    parent.appendChild(span);
+    setTimeout(function() { if (span.parentNode) span.remove(); }, 6000);
+}
+
+function appendIngredienteRow(containerId, tipo, listId, placeholder, item) {
+    var container = document.getElementById(containerId);
+    var idx = container.querySelectorAll('.ingrediente-row').length;
+    var nombre   = (item.nombre   || '').replace(/"/g, '&quot;');
+    var cantidad = (item.cantidad || '').replace(/"/g, '&quot;');
+    var unidad   = item.unidad || 'gr';
+    container.insertAdjacentHTML('beforeend',
+        '<div class="ingrediente-row">' +
+        '<div class="row g-2 align-items-center">' +
+        '<div class="col-md-5">' +
+        '<input type="text" name="' + tipo + '[' + idx + '].nombre" value="' + nombre + '"' +
+        ' class="form-control form-control-sm" placeholder="' + placeholder + '" list="' + listId + '">' +
+        '</div>' +
+        '<div class="col-md-3">' +
+        '<input type="text" name="' + tipo + '[' + idx + '].cantidad" value="' + cantidad + '"' +
+        ' class="form-control form-control-sm" placeholder="Cantidad">' +
+        '</div>' +
+        '<div class="col-md-3">' +
+        '<select name="' + tipo + '[' + idx + '].unidad" class="form-select form-select-sm">' +
+        unitOptionsSelected(unidad, tipo === 'clarificantes') +
+        '</select>' +
+        '</div>' +
+        '<div class="col-md-1 text-end">' +
+        '<button type="button" class="btn-remove-ingrediente"><i class="bi bi-x"></i></button>' +
+        '</div></div></div>');
+    return container.lastElementChild;
+}
+
 // ── Cargar receta en lote ─────────────────────────────────────────
 function cargarRecetaEnLote() {
     var sel = document.getElementById('recetaSelectLote');
@@ -173,23 +401,39 @@ function cargarRecetaEnLote() {
                 if (estiloEl && !estiloEl.value) estiloEl.value = data.estilo;
             }
 
-            // 2. Agua de macerado
+            // 2. Agua Utilizada = Agua Macerado + Agua Sparge (ambas a litros antes de sumar)
+            var _aguaMaceradoL = 0, _aguaSpargeL = 0;
             if (data.aguaMacerado != null) {
-                var rawU = (data.unidadAguaMacerado || 'L');
-                var unit = rawU === 'mL' ? 'mL' : rawU === 'gal' ? 'gal' : 'L';
-                document.getElementById('agua-unit').value = unit;
-                document.getElementById('agua-display').value = data.aguaMacerado;
-                var liters = parseFloat(data.aguaMacerado) * TO_LITERS[unit];
-                document.getElementById('agua-value').value = liters.toFixed(6);
-                showEquiv('agua', liters);
+                var _rawU = (data.unidadAguaMacerado || 'L');
+                var _unitM = _rawU === 'mL' ? 'mL' : _rawU === 'gal' ? 'gal' : 'L';
+                _aguaMaceradoL = parseFloat(data.aguaMacerado) * TO_LITERS[_unitM];
+            }
+            if (data.aguaSparge != null) {
+                var _rawUS = (data.unidadAguaSparge || 'L');
+                var _unitS = _rawUS === 'mL' ? 'mL' : _rawUS === 'gal' ? 'gal' : 'L';
+                _aguaSpargeL = parseFloat(data.aguaSparge) * TO_LITERS[_unitS];
+            }
+            var _totalAguaL = _aguaMaceradoL + _aguaSpargeL;
+            if (_totalAguaL > 0) {
+                document.getElementById('agua-unit').value = 'L';
+                document.getElementById('agua-display').value = parseFloat(_totalAguaL.toFixed(3));
+                document.getElementById('agua-value').value = _totalAguaL.toFixed(6);
+                showEquiv('agua', _totalAguaL);
             }
 
-            // 3. Volumen base → litros finales
+            // 3. Volumen base → litros (1 cocción) o litros1 (multicocción)
             if (data.volumenBase != null) {
-                document.getElementById('litros-unit').value = 'L';
-                document.getElementById('litros-display').value = data.volumenBase;
-                document.getElementById('litros-value').value = parseFloat(data.volumenBase);
-                showEquiv('litros', parseFloat(data.volumenBase));
+                var _numCoc = parseInt((document.getElementById('numeroCoccionesSelect') || {}).value) || 1;
+                var _vKey = _numCoc >= 2 ? 'litros1' : 'litros';
+                var _vDisp = document.getElementById(_vKey + '-display');
+                var _vUnit = document.getElementById(_vKey + '-unit');
+                var _vVal  = document.getElementById(_vKey + '-value');
+                if (_vDisp && _vUnit && _vVal) {
+                    _vUnit.value  = 'L';
+                    _vDisp.value  = data.volumenBase;
+                    _vVal.value   = parseFloat(data.volumenBase);
+                    showEquiv(_vKey, parseFloat(data.volumenBase));
+                }
             }
 
             // 4. Densidades
@@ -472,7 +716,33 @@ document.addEventListener('change', function(e) {
         var _cargar = document.getElementById('btnCargarReceta');
         if (_prev) _prev.addEventListener('click', prevTab);
         if (_next) _next.addEventListener('click', nextTab);
-        if (_cargar) _cargar.addEventListener('click', cargarRecetaEnLote);
+        if (_cargar) _cargar.addEventListener('click', function() {
+            var modalEl = document.getElementById('modalNumeroCocciones');
+            if (!modalEl) { cargarRecetaEnLote(); return; }
+            var curN = (document.getElementById('numeroCoccionesSelect') || {}).value || '1';
+            modalEl.querySelectorAll('.modal-coc-btn').forEach(function(btn) {
+                var isActive = btn.getAttribute('data-coc-n') === curN;
+                btn.classList.toggle('btn-primary', isActive);
+                btn.classList.toggle('btn-outline-secondary', !isActive);
+            });
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+        document.querySelectorAll('.modal-coc-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var n = this.getAttribute('data-coc-n');
+                var sel = document.getElementById('numeroCoccionesSelect');
+                if (sel && sel.value !== n) {
+                    sel.value = n;
+                    sel.dispatchEvent(new Event('change'));
+                }
+                bootstrap.Modal.getInstance(document.getElementById('modalNumeroCocciones')).hide();
+                cargarRecetaEnLote();
+            });
+        });
+        var _cargar2 = document.getElementById('btnCargarReceta2');
+        if (_cargar2) _cargar2.addEventListener('click', function() { cargarRecetaAdicional('recetaSelect2', 'receta2IdHidden', this); });
+        var _cargar3 = document.getElementById('btnCargarReceta3');
+        if (_cargar3) _cargar3.addEventListener('click', function() { cargarRecetaAdicional('recetaSelect3', 'receta3IdHidden', this); });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initIngredientesListeners);

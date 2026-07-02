@@ -132,8 +132,8 @@ public class TrazabilidadController {
         var result = new java.util.HashMap<String, Object>();
         for (String nombre : nombres) {
             String n = nombre.trim();
-            result.put(n, insumoRepo.findByNombreExacto(n)
-                    .map(i -> (Object) i.getCantidad()).orElse(null));
+            List<com.alera.model.InsumoInventario> hits = insumoRepo.findByNombreExacto(n);
+            result.put(n, hits.isEmpty() ? null : (Object) hits.get(0).getCantidad());
         }
         return result;
     }

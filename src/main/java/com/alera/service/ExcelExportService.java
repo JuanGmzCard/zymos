@@ -133,9 +133,9 @@ public class ExcelExportService {
 
             celda(fila, 0, ins.getNombre(), sD);
             celda(fila, 1, ins.getTipo() != null ? ins.getTipo() : "", sD);
-            celdaNum(fila, 2, ins.getCantidad() != null ? ins.getCantidad().doubleValue() : null, sN);
-            celda(fila, 3, ins.getUnidad() != null ? ins.getUnidad() : "", sD);
-            celdaNum(fila, 4, ins.getStockMinimo() != null ? ins.getStockMinimo().doubleValue() : null, sN);
+            celdaNum(fila, 2, ins.getCantidadDisplay() != null ? ins.getCantidadDisplay().doubleValue() : null, sN);
+            celda(fila, 3, ins.getUnidadDisplay() != null ? ins.getUnidadDisplay() : "", sD);
+            celdaNum(fila, 4, ins.getStockMinimoDisplay() != null ? ins.getStockMinimoDisplay().doubleValue() : null, sN);
             celda(fila, 5, ins.isBajoStock() ? t("xls.text.bajo_stock") : t("xls.text.ok"), sD);
             celda(fila, 6, ins.getFechaVencimiento() != null
                     ? ins.getFechaVencimiento().format(FMT_FECHA) : "", sD);
@@ -412,8 +412,8 @@ public class ExcelExportService {
                 celda(fila, 2, fecha, sD);
                 celda(fila, 3, item.getTipoItem() != null ? item.getTipoItem().getDisplayName() : "", sD);
                 celda(fila, 4, item.getNombre() != null ? item.getNombre() : "", sD);
-                celdaNum(fila, 5, toDouble(item.getCantidad()), sN);
-                celda(fila, 6, item.getUnidad() != null ? item.getUnidad() : "", sD);
+                celdaNum(fila, 5, toDouble(item.getCantidadDisplay()), sN);
+                celda(fila, 6, item.getUnidadDisplay() != null ? item.getUnidadDisplay() : "", sD);
                 celdaNum(fila, 7, toDouble(item.getValorUnitario()), sN);
                 celdaNum(fila, 8, item.getPorcentajeDescuento() != null
                         ? item.getPorcentajeDescuento().doubleValue() : null, sN);
@@ -766,8 +766,8 @@ public class ExcelExportService {
                 celda(fila, 3, v.getEstado() != null ? v.getEstado().getDisplayName() : "", sD);
                 celda(fila, 4, item.getCodigoLote() != null ? item.getCodigoLote() : "", sD);
                 celda(fila, 5, item.getDescripcion() != null ? item.getDescripcion() : "", sD);
-                celdaNum(fila, 6, toDouble(item.getCantidad()), sN);
-                celda(fila, 7, item.getUnidad() != null ? item.getUnidad() : "", sD);
+                celdaNum(fila, 6, toDouble(item.getCantidadDisplay()), sN);
+                celda(fila, 7, item.getUnidadDisplay() != null ? item.getUnidadDisplay() : "", sD);
                 celdaNum(fila, 8, toDouble(item.getPrecioUnitario()), sN);
                 celdaNum(fila, 9, toDouble(item.getDescuentoPct()), sN);
                 celdaNum(fila, 10, toDouble(item.getValorLinea()), sN);

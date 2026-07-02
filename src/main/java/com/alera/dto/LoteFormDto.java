@@ -18,6 +18,53 @@ public class LoteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaElaboracion;
 
+    @Min(value = 1, message = "El número de cocciones debe ser entre 1 y 3")
+    @Max(value = 3, message = "El número de cocciones debe ser entre 1 y 3")
+    private Integer numeroCocciones = 1;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate fechaSegundaCoccion;
+
+    @DecimalMin(value = "0.0", message = "El agua de la segunda cocción no puede ser negativa")
+    @DecimalMax(value = "99999.999", message = "El agua de la segunda cocción es demasiado alta")
+    private BigDecimal aguaSegundaCoccion;
+
+    @Min(value = 1000, message = "La densidad de la primera cocción mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la primera cocción máxima es 1150")
+    private Integer ogPrimeraCoccion;
+
+    @Min(value = 1000, message = "La densidad de la segunda cocción mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la segunda cocción máxima es 1150")
+    private Integer ogSegundaCoccion;
+
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate fechaTerceraCoccion;
+
+    @DecimalMin(value = "0.0", message = "El agua de la tercera cocción no puede ser negativa")
+    @DecimalMax(value = "99999.999", message = "El agua de la tercera cocción es demasiado alta")
+    private BigDecimal aguaTerceraCoccion;
+
+    @Min(value = 1000, message = "La densidad de la tercera cocción mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la tercera cocción máxima es 1150")
+    private Integer ogTerceraCoccion;
+
+    @DecimalMin(value = "1.0", message = "El °Brix de la segunda cocción debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix de la segunda cocción no puede superar 40")
+    private BigDecimal ogBrixSegundaCoccion;
+
+    @DecimalMin(value = "1.0", message = "El °Brix de la tercera cocción debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix de la tercera cocción no puede superar 40")
+    private BigDecimal ogBrixTerceraCoccion;
+
+    @DecimalMin(value = "0.0", message = "El volumen final de la primera cocción no puede ser negativo")
+    private BigDecimal volumenFinalPrimeraCoccion;
+
+    @DecimalMin(value = "0.0", message = "El volumen final de la segunda cocción no puede ser negativo")
+    private BigDecimal volumenFinalSegundaCoccion;
+
+    @DecimalMin(value = "0.0", message = "El volumen final de la tercera cocción no puede ser negativo")
+    private BigDecimal volumenFinalTerceraCoccion;
+
     @DecimalMin(value = "0.0", message = "El agua utilizada no puede ser negativa")
     @DecimalMax(value = "99999.999", message = "El agua utilizada es demasiado alta")
     private BigDecimal aguaUtilizada;
@@ -117,6 +164,8 @@ public class LoteFormDto {
     private String observaciones;
     private String notasCata;
     private Long recetaId;
+    private Long receta2Id;
+    private Long receta3Id;
     private List<Long> itemsIds = new ArrayList<>();
     private List<BigDecimal> itemsCantidades = new ArrayList<>();
 
@@ -137,6 +186,32 @@ public class LoteFormDto {
     public void setEquipoFermentadorId(Long equipoFermentadorId) { this.equipoFermentadorId = equipoFermentadorId; }
     public LocalDate getFechaElaboracion() { return fechaElaboracion; }
     public void setFechaElaboracion(LocalDate fechaElaboracion) { this.fechaElaboracion = fechaElaboracion; }
+    public Integer getNumeroCocciones() { return numeroCocciones; }
+    public void setNumeroCocciones(Integer numeroCocciones) { this.numeroCocciones = numeroCocciones; }
+    public LocalDate getFechaSegundaCoccion() { return fechaSegundaCoccion; }
+    public void setFechaSegundaCoccion(LocalDate fechaSegundaCoccion) { this.fechaSegundaCoccion = fechaSegundaCoccion; }
+    public BigDecimal getAguaSegundaCoccion() { return aguaSegundaCoccion; }
+    public void setAguaSegundaCoccion(BigDecimal aguaSegundaCoccion) { this.aguaSegundaCoccion = aguaSegundaCoccion; }
+    public Integer getOgSegundaCoccion() { return ogSegundaCoccion; }
+    public void setOgSegundaCoccion(Integer ogSegundaCoccion) { this.ogSegundaCoccion = ogSegundaCoccion; }
+    public LocalDate getFechaTerceraCoccion() { return fechaTerceraCoccion; }
+    public void setFechaTerceraCoccion(LocalDate fechaTerceraCoccion) { this.fechaTerceraCoccion = fechaTerceraCoccion; }
+    public BigDecimal getAguaTerceraCoccion() { return aguaTerceraCoccion; }
+    public void setAguaTerceraCoccion(BigDecimal aguaTerceraCoccion) { this.aguaTerceraCoccion = aguaTerceraCoccion; }
+    public Integer getOgTerceraCoccion() { return ogTerceraCoccion; }
+    public void setOgTerceraCoccion(Integer ogTerceraCoccion) { this.ogTerceraCoccion = ogTerceraCoccion; }
+    public Integer getOgPrimeraCoccion() { return ogPrimeraCoccion; }
+    public void setOgPrimeraCoccion(Integer v) { this.ogPrimeraCoccion = v; }
+    public BigDecimal getVolumenFinalPrimeraCoccion() { return volumenFinalPrimeraCoccion; }
+    public void setVolumenFinalPrimeraCoccion(BigDecimal v) { this.volumenFinalPrimeraCoccion = v; }
+    public BigDecimal getOgBrixSegundaCoccion() { return ogBrixSegundaCoccion; }
+    public void setOgBrixSegundaCoccion(BigDecimal v) { this.ogBrixSegundaCoccion = v; }
+    public BigDecimal getOgBrixTerceraCoccion() { return ogBrixTerceraCoccion; }
+    public void setOgBrixTerceraCoccion(BigDecimal v) { this.ogBrixTerceraCoccion = v; }
+    public BigDecimal getVolumenFinalSegundaCoccion() { return volumenFinalSegundaCoccion; }
+    public void setVolumenFinalSegundaCoccion(BigDecimal v) { this.volumenFinalSegundaCoccion = v; }
+    public BigDecimal getVolumenFinalTerceraCoccion() { return volumenFinalTerceraCoccion; }
+    public void setVolumenFinalTerceraCoccion(BigDecimal v) { this.volumenFinalTerceraCoccion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }
@@ -223,6 +298,10 @@ public class LoteFormDto {
     public void setNotasCata(String notasCata) { this.notasCata = notasCata; }
     public Long getRecetaId() { return recetaId; }
     public void setRecetaId(Long recetaId) { this.recetaId = recetaId; }
+    public Long getReceta2Id() { return receta2Id; }
+    public void setReceta2Id(Long receta2Id) { this.receta2Id = receta2Id; }
+    public Long getReceta3Id() { return receta3Id; }
+    public void setReceta3Id(Long receta3Id) { this.receta3Id = receta3Id; }
     public List<Long> getItemsIds() { return itemsIds; }
     public void setItemsIds(List<Long> itemsIds) { this.itemsIds = itemsIds; }
     public List<BigDecimal> getItemsCantidades() { return itemsCantidades; }

@@ -160,9 +160,26 @@
                             <div class="detail-value" th:text="${lote.estilo}">—</div>
                         </div>
                         <div class="col-6">
-                            <div class="detail-label" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</div>
-                            <div class="detail-value"
-                                 th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</div>
+                            <div class="detail-label">
+                                <span th:text="${lote.numeroCocciones != null and lote.numeroCocciones == 2} ? #{traz.det.label.coccion1.fecha} : #{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones == 2}"
+                                      class="badge ms-1" style="background:#dbeafe;color:#1d4ed8;font-size:0.6rem;">2 cocciones</span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones == 3}"
+                                      class="badge ms-1" style="background:#dcfce7;color:#15803d;font-size:0.6rem;">3 cocciones</span>
+                            </div>
+                            <div class="detail-value">
+                                <span th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 2}"
+                                      class="d-block small text-muted mt-0">
+                                    <span th:text="#{traz.det.label.coccion2.fecha}">Sesión 2</span><span>: </span>
+                                    <span th:text="${lote.fechaSegundaCoccion != null} ? ${#temporals.format(lote.fechaSegundaCoccion,'dd/MM/yyyy')} : '—'">—</span>
+                                </span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 3}"
+                                      class="d-block small text-muted mt-0">
+                                    <span th:text="#{traz.det.label.coccion3.fecha}">Sesión 3</span><span>: </span>
+                                    <span th:text="${lote.fechaTerceraCoccion != null} ? ${#temporals.format(lote.fechaTerceraCoccion,'dd/MM/yyyy')} : '—'">—</span>
+                                </span>
+                            </div>
                         </div>
                         <div class="col-6">
                             <div class="detail-label" th:text="#{traz.form.ferm.fermentador}">Fermentador</div>
@@ -180,8 +197,19 @@
                     <div class="row g-3">
                         <div class="col-4">
                             <div class="detail-label" th:text="#{traz.det.label.agua}">Agua</div>
-                            <div class="detail-value"
-                                 th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</div>
+                            <div class="detail-value">
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones == 2}"
+                                      class="text-muted small me-1">S1:</span>
+                                <span th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 2 and lote.aguaSegundaCoccion != null}"
+                                      class="d-block small text-muted mt-0">
+                                    <span class="me-1">S2:</span><span th:text="${lote.aguaSegundaCoccion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                </span>
+                                <span th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 3 and lote.aguaTerceraCoccion != null}"
+                                      class="d-block small text-muted mt-0">
+                                    <span class="me-1">S3:</span><span th:text="${lote.aguaTerceraCoccion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                </span>
+                            </div>
                         </div>
                         <div class="col-4">
                             <div class="detail-label" th:text="#{traz.det.label.ph.agua}">pH Agua</div>
@@ -207,6 +235,20 @@
                                           th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
                                           class="text-info"></span>
                                 </div>
+                            </div>
+                        </div>
+                        <div class="col-6" th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 2 and lote.ogSegundaCoccion != null}">
+                            <div class="densidad-box">
+                                <div class="densidad-tag">OG S2</div>
+                                <div class="densidad-valor" th:text="${lote.ogSegundaCoccion}">—</div>
+                                <div class="detail-label" th:text="#{traz.det.label.coccion2.og}">OG Sesión 2 (pre-mezcla)</div>
+                            </div>
+                        </div>
+                        <div class="col-6" th:if="${lote.numeroCocciones != null and lote.numeroCocciones >= 3 and lote.ogTerceraCoccion != null}">
+                            <div class="densidad-box">
+                                <div class="densidad-tag">OG S3</div>
+                                <div class="densidad-valor" th:text="${lote.ogTerceraCoccion}">—</div>
+                                <div class="detail-label" th:text="#{traz.det.label.coccion3.og}">OG Sesión 3 (pre-mezcla)</div>
                             </div>
                         </div>
                         <div class="col-6" th:if="${lote.densidadFinal != null}">
@@ -950,7 +992,7 @@
                         </td>
                         <td th:text="${asig.item.factura.proveedor}">—</td>
                         <td th:text="${asig.item.nombre}">—</td>
-                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? #{traz.det.costo.total.item} : ${asig.cantidadAsignada.stripTrailingZeros().toPlainString()} + ' ' + (${asig.item.unidad ?: ''})">—</td>
+                        <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? #{traz.det.costo.total.item} : ${asig.cantidadAsignadaDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${asig.unidadAsignadaDisplay ?: ''})">—</td>
                         <td class="text-end pe-3 fw-bold"
                             th:text="'$' + ${#numbers.formatDecimal(asig.valorAsignado,1,'COMMA',0,'POINT')}">—</td>
                     </tr>

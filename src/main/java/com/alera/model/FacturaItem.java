@@ -99,6 +99,8 @@ public class FacturaItem {
     public void setCantidad(BigDecimal cantidad) { this.cantidad = cantidad; }
     public String getUnidad() { return unidad; }
     public void setUnidad(String unidad) { this.unidad = unidad; }
+    public BigDecimal getCantidadDisplay() { return com.alera.config.UnidadUtils.displayValor(cantidad, unidad); }
+    public String     getUnidadDisplay()  { return com.alera.config.UnidadUtils.displayUnidad(cantidad, unidad); }
     public BigDecimal getValorUnitario() { return valorUnitario; }
     public void setValorUnitario(BigDecimal valorUnitario) { this.valorUnitario = valorUnitario; }
     public BigDecimal getPorcentajeDescuento() { return porcentajeDescuento; }

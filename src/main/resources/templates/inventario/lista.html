@@ -260,12 +260,12 @@
                         <span class="badge" th:classappend="'bg-' + ${ins.colorTipo}" th:text="${ins.tipo}">-</span>
                     </td>
                     <td>
-                        <span th:text="${ins.cantidad.stripTrailingZeros().toPlainString()}">0</span>
-                        <small class="text-muted" th:text="${ins.unidad != null ? ins.unidad : ''}"></small>
+                        <span th:text="${ins.cantidadDisplay.stripTrailingZeros().toPlainString()}">0</span>
+                        <small class="text-muted" th:text="${ins.unidadDisplay != null ? ins.unidadDisplay : ''}"></small>
                     </td>
                     <td>
-                        <span th:text="${ins.stockMinimo.stripTrailingZeros().toPlainString()}">0</span>
-                        <small class="text-muted" th:text="${ins.unidad != null ? ins.unidad : ''}"></small>
+                        <span th:text="${ins.stockMinimoDisplay.stripTrailingZeros().toPlainString()}">0</span>
+                        <small class="text-muted" th:text="${ins.unidadStockMinimoDisplay != null ? ins.unidadStockMinimoDisplay : ''}"></small>
                     </td>
                     <td>
                         <span th:class="${ins.claseVencimiento}" th:text="${ins.textoVencimiento}">-</span>

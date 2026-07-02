@@ -18,8 +18,8 @@ public interface InsumoInventarioRepository extends JpaRepository<InsumoInventar
     @Query("SELECT COUNT(i) FROM InsumoInventario i WHERE i.cantidad <= i.stockMinimo")
     long countBajoStock();
 
-    @Query("SELECT i FROM InsumoInventario i WHERE LOWER(TRIM(i.nombre)) = LOWER(TRIM(:nombre))")
-    Optional<InsumoInventario> findByNombreExacto(@Param("nombre") String nombre);
+    @Query("SELECT i FROM InsumoInventario i WHERE LOWER(TRIM(i.nombre)) = LOWER(TRIM(:nombre)) ORDER BY i.id ASC")
+    List<InsumoInventario> findByNombreExacto(@Param("nombre") String nombre);
 
     @Query("SELECT i FROM InsumoInventario i WHERE i.fechaVencimiento <= :fecha ORDER BY i.fechaVencimiento ASC")
     List<InsumoInventario> findProximosAVencer(@Param("fecha") LocalDate fecha);

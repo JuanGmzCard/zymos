@@ -955,7 +955,8 @@ public class PdfExportService {
             if (nroFact == null || nroFact.isBlank()) nroFact = "#" + li.getItem().getFactura().getId();
             String cant = li.getCantidadAsignada().doubleValue() == 0.0
                     ? t("pdf.text.total_completo")
-                    : li.getCantidadAsignada() + " " + (li.getItem().getUnidad() != null ? li.getItem().getUnidad() : "");
+                    : li.getCantidadAsignadaDisplay().stripTrailingZeros().toPlainString()
+                      + " " + (li.getUnidadAsignadaDisplay() != null ? li.getUnidadAsignadaDisplay() : "");
             for (String v : new String[]{nroFact, li.getItem().getFactura().getProveedor(),
                     li.getItem().getNombre(), cant, "$" + fmt2(li.getValorAsignado())}) {
                 PdfPCell c = new PdfPCell(new Phrase(v != null ? v : "—", tdF));

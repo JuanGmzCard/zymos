@@ -155,9 +155,9 @@
                                 <td class="text-muted small"
                                     th:text="${item.descripcion ?: '—'}">—</td>
                                 <td class="text-end"
-                                    th:text="${item.cantidad.stripTrailingZeros().toPlainString()}">—</td>
+                                    th:text="${item.cantidadDisplay.stripTrailingZeros().toPlainString()}">—</td>
                                 <td class="text-muted small"
-                                    th:text="${item.unidad ?: '—'}">—</td>
+                                    th:text="${item.unidadDisplay ?: '—'}">—</td>
                                 <td class="text-end"
                                     th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario,1,'COMMA',2,'POINT')}">—</td>
                                 <td class="text-end text-muted small"

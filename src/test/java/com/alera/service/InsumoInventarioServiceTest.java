@@ -12,7 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
-import java.util.Optional;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -84,7 +84,7 @@ class InsumoInventarioServiceTest {
     @Test
     @DisplayName("descontarIngrediente con stock suficiente retorna null y descuenta")
     void descontarIngrediente_stockSuficiente() {
-        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(Optional.of(insumoConStock));
+        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(List.of(insumoConStock));
 
         String advertencia = service.descontarIngrediente("Swaen Ale", "3000 gr");
 
@@ -96,7 +96,7 @@ class InsumoInventarioServiceTest {
     @Test
     @DisplayName("descontarIngrediente con stock insuficiente retorna nombre del insumo")
     void descontarIngrediente_stockInsuficiente() {
-        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(Optional.of(insumoConStock));
+        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(List.of(insumoConStock));
 
         String advertencia = service.descontarIngrediente("Swaen Ale", "9000 gr");
 
@@ -109,7 +109,7 @@ class InsumoInventarioServiceTest {
     @Test
     @DisplayName("descontarIngrediente ignora insumo no registrado en inventario")
     void descontarIngrediente_noExiste() {
-        when(repo.findByNombreExacto("Ingrediente Desconocido")).thenReturn(Optional.empty());
+        when(repo.findByNombreExacto("Ingrediente Desconocido")).thenReturn(List.of());
 
         String advertencia = service.descontarIngrediente("Ingrediente Desconocido", "100 gr");
 
@@ -132,7 +132,7 @@ class InsumoInventarioServiceTest {
     @DisplayName("restaurarIngrediente suma cantidad al stock existente")
     void restaurarIngrediente_suma() {
         insumoConStock.setCantidad(new BigDecimal("2000"));
-        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(Optional.of(insumoConStock));
+        when(repo.findByNombreExacto("Swaen Ale")).thenReturn(List.of(insumoConStock));
 
         service.restaurarIngrediente("Swaen Ale", "3000 gr");
 

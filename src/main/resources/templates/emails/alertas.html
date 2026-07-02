@@ -89,9 +89,9 @@
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;color:#666;"
                       th:text="${ins.tipo != null} ? ${ins.tipo} : '—'">—</td>
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#cc0000;font-weight:600;"
-                      th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidad} ?: '')">—</td>
+                      th:text="${ins.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidadDisplay} ?: '')">—</td>
                   <td style="padding:6px 10px;border-bottom:1px solid #f0f0f0;text-align:right;color:#666;"
-                      th:text="${ins.stockMinimo.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidad} ?: '')">—</td>
+                      th:text="${ins.stockMinimoDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${ins.unidadStockMinimoDisplay} ?: '')">—</td>
                 </tr>
               </tbody>
             </table>

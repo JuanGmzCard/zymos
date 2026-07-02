@@ -66,6 +66,47 @@ public final class UnidadUtils {
         }
     }
 
+    // ── Display inteligente ──────────────────────────────────────────────────
+    // Regla: < 1 kg → gr ; ≥ 1 kg → kg  |  < 1 L → mL ; ≥ 1 L → L
+    //        ≥ 1000 gr → kg              |  ≥ 1000 mL → L
+
+    public static BigDecimal displayValor(BigDecimal valor, String unidad) {
+        if (valor == null || unidad == null) return valor != null ? valor : BigDecimal.ZERO;
+        return switch (unidad) {
+            case "kg" -> valor.compareTo(BigDecimal.ONE) < 0
+                    ? valor.multiply(BigDecimal.valueOf(1000))
+                    : valor;
+            case "gr" -> valor.compareTo(BigDecimal.valueOf(1000)) >= 0
+                    ? valor.divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP)
+                    : valor;
+            case "L"  -> valor.compareTo(BigDecimal.ONE) < 0
+                    ? valor.multiply(BigDecimal.valueOf(1000))
+                    : valor;
+            case "mL" -> valor.compareTo(BigDecimal.valueOf(1000)) >= 0
+                    ? valor.divide(BigDecimal.valueOf(1000), 3, RoundingMode.HALF_UP)
+                    : valor;
+            default   -> valor;
+        };
+    }
+
+    public static String displayUnidad(BigDecimal valor, String unidad) {
+        if (valor == null || unidad == null) return unidad;
+        return switch (unidad) {
+            case "kg" -> valor.compareTo(BigDecimal.ONE) < 0         ? "gr" : "kg";
+            case "gr" -> valor.compareTo(BigDecimal.valueOf(1000)) >= 0 ? "kg" : "gr";
+            case "L"  -> valor.compareTo(BigDecimal.ONE) < 0         ? "mL" : "L";
+            case "mL" -> valor.compareTo(BigDecimal.valueOf(1000)) >= 0 ? "L"  : "mL";
+            default   -> unidad;
+        };
+    }
+
+    public static String displayTexto(BigDecimal valor, String unidad) {
+        if (valor == null) return "—";
+        BigDecimal v = displayValor(valor, unidad);
+        String u = displayUnidad(valor, unidad);
+        return v.stripTrailingZeros().toPlainString() + (u != null && !u.isBlank() ? " " + u : "");
+    }
+
     /**
      * Formatea valor + unidad como texto normalizado para almacenar en Ingrediente.cantidad.
      * Ej: "5000", "kg" → "5000000 gr"  |  "2", "L" → "2000 mL"

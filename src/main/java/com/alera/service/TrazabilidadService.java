@@ -283,6 +283,38 @@ public class TrazabilidadService {
     private void mapearDto(LoteCerveza lote, LoteFormDto dto) {
         lote.setEstilo(dto.getEstilo());
         lote.setFechaElaboracion(dto.getFechaElaboracion());
+        int numCoc = dto.getNumeroCocciones() != null ? dto.getNumeroCocciones() : 1;
+        lote.setNumeroCocciones(numCoc);
+        if (numCoc >= 2) {
+            lote.setFechaSegundaCoccion(dto.getFechaSegundaCoccion());
+            lote.setAguaSegundaCoccion(dto.getAguaSegundaCoccion());
+            lote.setOgSegundaCoccion(dto.getOgSegundaCoccion());
+            lote.setOgPrimeraCoccion(dto.getOgPrimeraCoccion());
+            lote.setVolumenFinalPrimeraCoccion(dto.getVolumenFinalPrimeraCoccion());
+            lote.setVolumenFinalSegundaCoccion(dto.getVolumenFinalSegundaCoccion());
+            lote.setOgBrixSegundaCoccion(dto.getOgBrixSegundaCoccion());
+        } else {
+            lote.setFechaSegundaCoccion(null);
+            lote.setAguaSegundaCoccion(null);
+            lote.setOgSegundaCoccion(null);
+            lote.setOgPrimeraCoccion(null);
+            lote.setVolumenFinalPrimeraCoccion(null);
+            lote.setVolumenFinalSegundaCoccion(null);
+            lote.setOgBrixSegundaCoccion(null);
+        }
+        if (numCoc >= 3) {
+            lote.setFechaTerceraCoccion(dto.getFechaTerceraCoccion());
+            lote.setAguaTerceraCoccion(dto.getAguaTerceraCoccion());
+            lote.setOgTerceraCoccion(dto.getOgTerceraCoccion());
+            lote.setVolumenFinalTerceraCoccion(dto.getVolumenFinalTerceraCoccion());
+            lote.setOgBrixTerceraCoccion(dto.getOgBrixTerceraCoccion());
+        } else {
+            lote.setFechaTerceraCoccion(null);
+            lote.setAguaTerceraCoccion(null);
+            lote.setOgTerceraCoccion(null);
+            lote.setVolumenFinalTerceraCoccion(null);
+            lote.setOgBrixTerceraCoccion(null);
+        }
         lote.setAguaUtilizada(dto.getAguaUtilizada());
         lote.setPhAgua(dto.getPhAgua());
         lote.setLitrosFinales(dto.getLitrosFinales());
@@ -348,6 +380,18 @@ public class TrazabilidadService {
             recetaRepo.findById(dto.getRecetaId()).ifPresent(lote::setReceta);
         } else {
             lote.setReceta(null);
+        }
+
+        if (dto.getReceta2Id() != null && numCoc >= 2) {
+            recetaRepo.findById(dto.getReceta2Id()).ifPresent(lote::setReceta2);
+        } else {
+            lote.setReceta2(null);
+        }
+
+        if (dto.getReceta3Id() != null && numCoc >= 3) {
+            recetaRepo.findById(dto.getReceta3Id()).ifPresent(lote::setReceta3);
+        } else {
+            lote.setReceta3(null);
         }
 
         if (dto.getEquipoFermentadorId() != null) {

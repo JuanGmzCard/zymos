@@ -201,6 +201,9 @@ public class RecetaController {
         if (r.getAguaMacerado() != null) resp.put("aguaMacerado", r.getAguaMacerado());
         if (r.getUnidadAguaMacerado() != null && !r.getUnidadAguaMacerado().isBlank())
             resp.put("unidadAguaMacerado", r.getUnidadAguaMacerado());
+        if (r.getAguaSparge() != null) resp.put("aguaSparge", r.getAguaSparge());
+        if (r.getUnidadAguaSparge() != null && !r.getUnidadAguaSparge().isBlank())
+            resp.put("unidadAguaSparge", r.getUnidadAguaSparge());
         if (r.getVolumenBase() != null) resp.put("volumenBase", r.getVolumenBase());
         if (r.getPhAgua() != null)      resp.put("phAgua", r.getPhAgua());
         return resp;

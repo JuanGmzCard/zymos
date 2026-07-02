@@ -191,7 +191,7 @@ class TenantIsolationIntegrationTest extends AbstractIntegrationTest {
         TenantContext.setCurrentTenant(TENANT_A);
         assertThat(insumoRepo.findByNombreExacto("IsolMaltaPilsner"))
                 .as("Tenant A sí ve su propio insumo")
-                .isPresent();
+                .isNotEmpty();
         TenantContext.clear();
     }
 

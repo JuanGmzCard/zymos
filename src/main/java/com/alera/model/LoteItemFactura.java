@@ -25,7 +25,7 @@ public class LoteItemFactura {
     @JoinColumn(name = "factura_item_id", nullable = false)
     private FacturaItem item;
 
-    @Column(name = "cantidad_asignada", nullable = false, precision = 10, scale = 3)
+    @Column(name = "cantidad_asignada", nullable = false, precision = 14, scale = 3)
     private BigDecimal cantidadAsignada;
 
     // Costo proporcional: (cantidadAsignada / item.cantidad) × item.valorLinea
@@ -52,4 +52,12 @@ public class LoteItemFactura {
     public void setItem(FacturaItem item) { this.item = item; }
     public BigDecimal getCantidadAsignada() { return cantidadAsignada; }
     public void setCantidadAsignada(BigDecimal cantidadAsignada) { this.cantidadAsignada = cantidadAsignada; }
+    public BigDecimal getCantidadAsignadaDisplay() {
+        String u = item != null ? item.getUnidad() : null;
+        return com.alera.config.UnidadUtils.displayValor(cantidadAsignada, u);
+    }
+    public String getUnidadAsignadaDisplay() {
+        String u = item != null ? item.getUnidad() : null;
+        return com.alera.config.UnidadUtils.displayUnidad(cantidadAsignada, u);
+    }
 }

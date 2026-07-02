@@ -166,7 +166,7 @@
                             <span class="badge bg-secondary" style="font-size:.7rem;" th:text="${ins.tipo}">—</span>
                             <span class="small fw-semibold"
                                   th:classappend="${ins.bajoStock} ? 'text-danger' : 'text-muted'"
-                                  th:text="${ins.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidad}">—</span>
+                                  th:text="${ins.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidadDisplay}">—</span>
                         </div>
                     </a>
                 </div>

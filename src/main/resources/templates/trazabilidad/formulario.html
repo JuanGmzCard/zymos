@@ -185,7 +185,9 @@
 <div class="container-fluid px-4 pb-4">
     <form th:action="${loteId != null} ? @{/actualizar/{id}(id=${loteId})} : @{/guardar}"
           th:object="${loteForm}" method="post" id="loteForm">
-        <input type="hidden" th:field="*{recetaId}" id="recetaIdHidden">
+        <input type="hidden" th:field="*{recetaId}"  id="recetaIdHidden">
+        <input type="hidden" th:field="*{receta2Id}" id="receta2IdHidden">
+        <input type="hidden" th:field="*{receta3Id}" id="receta3IdHidden">
 
         <!-- Banner duplicado -->
         <div class="alert alert-info d-flex align-items-center gap-2 mb-3" th:if="${duplicadoDe != null}">
@@ -265,8 +267,19 @@
                         <label class="form-label" for="fechaElaboracion" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</label>
                         <input type="date" th:field="*{fechaElaboracion}" class="form-control">
                     </div>
-                    <div class="col-md-5">
-                        <label class="form-label" for="agua-display" th:text="#{traz.form.label.agua}">Agua Utilizada</label>
+                    <div class="col-md-4">
+                        <label class="form-label" for="numeroCoccionesSelect" th:text="#{traz.form.doble.coccion.select.label}">Número de cocciones</label>
+                        <select id="numeroCoccionesSelect" name="numeroCocciones" class="form-select">
+                            <option value="1" th:text="#{traz.form.doble.coccion.select.1}"
+                                    th:selected="${loteForm.numeroCocciones == null or loteForm.numeroCocciones == 1}">1 cocción (estándar)</option>
+                            <option value="2" th:text="#{traz.form.doble.coccion.select.2}"
+                                    th:selected="${loteForm.numeroCocciones == 2}">2 cocciones</option>
+                            <option value="3" th:text="#{traz.form.doble.coccion.select.3}"
+                                    th:selected="${loteForm.numeroCocciones == 3}">3 cocciones</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5" id="agua-general-col">
+                        <label class="form-label" id="agua-label" for="agua-display" th:text="#{traz.form.label.agua}">Agua Utilizada</label>
                         <div class="input-group">
                             <input type="number" step="0.001" id="agua-display" class="form-control"
                                    placeholder="0.00" th:value="${loteForm.aguaUtilizada}"
@@ -303,6 +316,265 @@
                                th:value="${loteForm.litrosFinales}">
                         <small class="text-muted" id="litros-equiv"></small>
                     </div>
+
+                    <!-- Primera sesión de cocción — visible solo en multicocción -->
+                    <div class="col-12" id="primera-coccion-section" style="display:none;">
+                        <div class="card border-0" style="background:#fff7ed;border:1px solid #fed7aa!important;">
+                            <div class="card-header py-2 d-flex align-items-center gap-2"
+                                 style="background:#ffedd5;border-bottom:1px solid #fed7aa;">
+                                <i class="bi bi-layers" style="color:#c2410c;"></i>
+                                <span class="fw-600 small" style="color:#c2410c;" th:text="#{traz.form.doble.coccion.sec1.titulo}">Primera Sesión de Cocción</span>
+                                <span class="ms-auto badge" style="background:#ea580c;color:#fff;font-size:0.65rem;">Sesión 1</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <!-- OG Sesión 1: Modo SG -->
+                                        <div id="og1-sg-modo-card">
+                                            <label class="form-label small" th:text="#{traz.form.doble.coccion.sec1.og}">OG Sesión 1 (pre-mezcla)</label>
+                                            <input type="number" step="1" min="1000" max="1150" th:field="*{ogPrimeraCoccion}" class="form-control"
+                                                   placeholder="1060" inputmode="numeric">
+                                            <small class="text-muted" th:text="#{traz.form.doble.coccion.sec2.og.hint}">Densidad antes de combinar</small>
+                                        </div>
+                                        <!-- OG Sesión 1: Modo Brix -->
+                                        <div id="og1-brix-modo-card" class="d-none">
+                                            <label class="form-label small" th:text="#{traz.form.doble.coccion.sec1.og}">OG Sesión 1 (pre-mezcla)</label>
+                                            <input type="number" step="0.1" min="1" max="40" id="ogBrixCard" name="ogBrix"
+                                                   th:value="${loteForm.ogBrix}" class="form-control" placeholder="14.6" disabled>
+                                            <small class="text-muted" th:text="#{traz.form.brix.og.hint}">Lectura del mosto sin fermentar</small>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <small class="text-muted">SG:</small>
+                                                <input type="number" id="og1CardSgPreview" class="form-control form-control-sm" readonly tabindex="-1"
+                                                       placeholder="—" style="width:90px;background:#f8fafc;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div id="agua-sesion1-anchor" style="display:none;"></div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="litros1-display" th:text="#{traz.form.doble.coccion.sec1.vol.final}">Volumen Final Sesión 1</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="litros1-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.volumenFinalPrimeraCoccion}"
+                                                   data-vol-field="litros1">
+                                            <select id="litros1-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="litros1">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="volumenFinalPrimeraCoccion" id="litros1-value"
+                                               th:value="${loteForm.volumenFinalPrimeraCoccion}">
+                                        <small class="text-muted" id="litros1-equiv"></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sesiones adicionales de cocción — visibles según numeroCoccionesSelect -->
+                    <div class="col-12" id="segunda-coccion-section" style="display:none;">
+                        <div class="card border-0" style="background:#eff6ff;border:1px solid #bfdbfe!important;">
+                            <div class="card-header py-2 d-flex align-items-center gap-2"
+                                 style="background:#dbeafe;border-bottom:1px solid #bfdbfe;">
+                                <i class="bi bi-layers text-primary"></i>
+                                <span class="fw-600 small text-primary" th:text="#{traz.form.doble.coccion.sec2.titulo}">Segunda Sesión de Cocción</span>
+                                <span class="ms-auto badge" style="background:#1d4ed8;color:#fff;font-size:0.65rem;">Sesión 2</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small" for="fechaSegundaCoccion" th:text="#{traz.form.doble.coccion.sec2.fecha}">Fecha Sesión 2</label>
+                                        <input type="date" th:field="*{fechaSegundaCoccion}" class="form-control">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="agua2-display" th:text="#{traz.form.doble.coccion.sec2.agua}">Agua Sesión 2</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="agua2-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.aguaSegundaCoccion}"
+                                                   data-vol-field="agua2">
+                                            <select id="agua2-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="agua2">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="aguaSegundaCoccion" id="agua2-value"
+                                               th:value="${loteForm.aguaSegundaCoccion}">
+                                        <small class="text-muted" id="agua2-equiv"></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <!-- Modo SG -->
+                                        <div class="og-sesion-sg" id="og2-sg-modo">
+                                            <label class="form-label small" for="ogSegundaCoccion" th:text="#{traz.form.doble.coccion.sec2.og}">OG pre-mezcla Sesión 2</label>
+                                            <input type="number" step="1" min="1000" max="1150"
+                                                   th:field="*{ogSegundaCoccion}" class="form-control"
+                                                   placeholder="1050">
+                                            <small class="text-muted" th:text="#{traz.form.doble.coccion.sec2.og.hint}">Densidad antes de combinar</small>
+                                        </div>
+                                        <!-- Modo Brix -->
+                                        <div class="og-sesion-brix d-none" id="og2-brix-modo">
+                                            <label class="form-label small" th:text="#{traz.form.doble.coccion.sec2.og.brix}">OG Sesión 2 (°Brix)</label>
+                                            <input type="number" step="0.1" min="1" max="40" id="ogBrix2"
+                                                   th:field="*{ogBrixSegundaCoccion}" class="form-control"
+                                                   placeholder="14.6">
+                                            <small class="text-muted" th:text="#{traz.form.doble.coccion.sec2.og.brix.hint}">Lectura del mosto sin fermentar</small>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <small class="text-muted">SG:</small>
+                                                <input type="number" id="og2SgPreview" class="form-control form-control-sm" readonly tabindex="-1"
+                                                       placeholder="—" style="width:90px;background:#f8fafc;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="litros2-display" th:text="#{traz.form.doble.coccion.sec2.vol.final}">Volumen Final Sesión 2</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="litros2-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.volumenFinalSegundaCoccion}"
+                                                   data-vol-field="litros2">
+                                            <select id="litros2-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="litros2">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="volumenFinalSegundaCoccion" id="litros2-value"
+                                               th:value="${loteForm.volumenFinalSegundaCoccion}">
+                                        <small class="text-muted" id="litros2-equiv"></small>
+                                    </div>
+                                </div>
+                                <!-- Receta sesión 2 -->
+                                <div class="row g-2 mt-2 align-items-end" th:if="${!#lists.isEmpty(recetasActivas)}">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600" th:text="#{traz.form.doble.coccion.sec2.receta}">Receta Sesión 2</label>
+                                        <select id="recetaSelect2" class="form-select form-select-sm">
+                                            <option value="" th:text="#{traz.form.doble.coccion.sec2.receta.select}">— Seleccionar receta sesión 2 —</option>
+                                            <option th:each="rec : ${recetasActivas}"
+                                                    th:value="${rec.id}"
+                                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
+                                                    th:selected="${loteForm.receta2Id != null and rec.id == loteForm.receta2Id}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-zymos" id="btnCargarReceta2">
+                                            <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.doble.coccion.sec2.receta.btn}">Agregar ingredientes al lote</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.doble.coccion.sec2.receta.hint}">Añade los ingredientes de esta receta a la lista de insumos</span></small>
+                                    </div>
+                                </div>
+                                <div class="mt-2 small text-muted">
+                                    <i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.doble.coccion.sec2.info}">El OG final y agua de Sesión 1 corresponden al resultado combinado en el fermentador.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tercera sesión de cocción -->
+                    <div class="col-12" id="tercera-coccion-section" style="display:none;">
+                        <div class="card border-0" style="background:#f0fdf4;border:1px solid #bbf7d0!important;">
+                            <div class="card-header py-2 d-flex align-items-center gap-2"
+                                 style="background:#dcfce7;border-bottom:1px solid #bbf7d0;">
+                                <i class="bi bi-layers text-success"></i>
+                                <span class="fw-600 small text-success" th:text="#{traz.form.doble.coccion.sec3.titulo}">Tercera Sesión de Cocción</span>
+                                <span class="ms-auto badge" style="background:#15803d;color:#fff;font-size:0.65rem;">Sesión 3</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small" for="fechaTerceraCoccion" th:text="#{traz.form.doble.coccion.sec3.fecha}">Fecha Sesión 3</label>
+                                        <input type="date" th:field="*{fechaTerceraCoccion}" class="form-control">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="agua3-display" th:text="#{traz.form.doble.coccion.sec3.agua}">Agua Sesión 3</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="agua3-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.aguaTerceraCoccion}"
+                                                   data-vol-field="agua3">
+                                            <select id="agua3-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="agua3">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="aguaTerceraCoccion" id="agua3-value"
+                                               th:value="${loteForm.aguaTerceraCoccion}">
+                                        <small class="text-muted" id="agua3-equiv"></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <!-- Modo SG -->
+                                        <div class="og-sesion-sg" id="og3-sg-modo">
+                                            <label class="form-label small" for="ogTerceraCoccion" th:text="#{traz.form.doble.coccion.sec3.og}">OG pre-mezcla Sesión 3</label>
+                                            <input type="number" step="1" min="1000" max="1150"
+                                                   th:field="*{ogTerceraCoccion}" class="form-control"
+                                                   placeholder="1050">
+                                            <small class="text-muted" th:text="#{traz.form.doble.coccion.sec2.og.hint}">Densidad antes de combinar</small>
+                                        </div>
+                                        <!-- Modo Brix -->
+                                        <div class="og-sesion-brix d-none" id="og3-brix-modo">
+                                            <label class="form-label small" th:text="#{traz.form.doble.coccion.sec3.og.brix}">OG Sesión 3 (°Brix)</label>
+                                            <input type="number" step="0.1" min="1" max="40" id="ogBrix3"
+                                                   th:field="*{ogBrixTerceraCoccion}" class="form-control"
+                                                   placeholder="14.6">
+                                            <small class="text-muted" th:text="#{traz.form.doble.coccion.sec3.og.brix.hint}">Lectura del mosto sin fermentar</small>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <small class="text-muted">SG:</small>
+                                                <input type="number" id="og3SgPreview" class="form-control form-control-sm" readonly tabindex="-1"
+                                                       placeholder="—" style="width:90px;background:#f8fafc;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="litros3-display" th:text="#{traz.form.doble.coccion.sec3.vol.final}">Volumen Final Sesión 3</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="litros3-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.volumenFinalTerceraCoccion}"
+                                                   data-vol-field="litros3">
+                                            <select id="litros3-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="litros3">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="volumenFinalTerceraCoccion" id="litros3-value"
+                                               th:value="${loteForm.volumenFinalTerceraCoccion}">
+                                        <small class="text-muted" id="litros3-equiv"></small>
+                                    </div>
+                                </div>
+                                <!-- Receta sesión 3 -->
+                                <div class="row g-2 mt-2 align-items-end" th:if="${!#lists.isEmpty(recetasActivas)}">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600" th:text="#{traz.form.doble.coccion.sec3.receta}">Receta Sesión 3</label>
+                                        <select id="recetaSelect3" class="form-select form-select-sm">
+                                            <option value="" th:text="#{traz.form.doble.coccion.sec3.receta.select}">— Seleccionar receta sesión 3 —</option>
+                                            <option th:each="rec : ${recetasActivas}"
+                                                    th:value="${rec.id}"
+                                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
+                                                    th:selected="${loteForm.receta3Id != null and rec.id == loteForm.receta3Id}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-zymos" id="btnCargarReceta3">
+                                            <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.doble.coccion.sec3.receta.btn}">Agregar ingredientes al lote</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.doble.coccion.sec3.receta.hint}">Añade los ingredientes de esta receta a la lista de insumos</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-12"><hr class="my-1"></div>
 
                     <!-- Costos de Producción — buscador de ítems de factura -->
@@ -420,32 +692,33 @@
                         </div>
                     </div>
 
+                    <!-- OG Final — siempre visible; editable en SG, readonly en Brix -->
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label" for="densidadInicial" id="og-final-label" th:text="#{traz.form.label.og}">Densidad Inicial (OG)</label>
+                            <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
+                                   placeholder="1060" inputmode="numeric">
+                            <small class="text-muted" id="og-final-hint" th:text="#{traz.form.og.rango}">Rango: 1000–1150</small>
+                        </div>
+                    </div>
+
                     <!-- Modo SG (hidrómetro) -->
                     <div id="modo-sg">
                         <div class="row g-3">
-                            <div class="col-md-4">
-                                <label class="form-label" for="densidadInicial" th:text="#{traz.form.label.og}">Densidad Inicial (OG)</label>
-                                <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
-                                       placeholder="1060" inputmode="numeric">
-                                <small class="text-muted" th:text="#{traz.form.og.rango}">Rango: 1000–1150</small>
-                            </div>
                             <div class="col-md-4">
                                 <label class="form-label" for="densidadFinal" th:text="#{traz.form.label.fg}">Densidad Final (FG)</label>
                                 <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
                                        placeholder="1014" inputmode="numeric">
                                 <small class="text-muted" th:text="#{traz.form.fg.rango}">Rango: 990–1060</small>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label" for="densidadFinalFecha" th:text="#{traz.form.label.fecha.fg}">Fecha Densidad Final</label>
-                                <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
-                            </div>
                         </div>
                     </div>
 
                     <!-- Modo Brix (refractómetro) -->
                     <div id="modo-brix" class="d-none">
-                        <div class="row g-3">
-                            <div class="col-md-3">
+                        <!-- Fila OG — oculta en multicocción (el card de Sesión 1 lo reemplaza) -->
+                        <div class="row g-3 mb-2" id="brix-og-row">
+                            <div class="col-md-4">
                                 <label class="form-label" for="ogBrix" th:text="#{traz.form.brix.og}">OG en °Brix</label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{ogBrix}" class="form-control"
                                        placeholder="14.6">
@@ -457,6 +730,9 @@
                                        placeholder="—" style="background:#f8fafc;">
                                 <small class="text-muted" th:text="#{traz.form.brix.og.sg.hint}">Calculado automáticamente</small>
                             </div>
+                        </div>
+                        <!-- Fila FG -->
+                        <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label" for="fgBrix"><span th:text="#{traz.form.brix.fg}">FG en °Brix</span> <small class="text-muted">(lectura cruda)</small></label>
                                 <input type="number" step="0.1" min="1" max="40" th:field="*{fgBrix}" class="form-control"
@@ -473,6 +749,35 @@
                                 <div id="brix-abv-preview" class="text-muted small pt-3"></div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Fecha Densidad Final — común a ambos modos -->
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-4">
+                            <label class="form-label" for="densidadFinalFecha" th:text="#{traz.form.label.fecha.fg}">Fecha Densidad Final</label>
+                            <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
+                        </div>
+                    </div>
+
+                    <!-- OG Combinado — visible cuando multicocción con datos suficientes -->
+                    <div id="og-combinado-box" class="mt-3" style="display:none;">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded"
+                             style="background:#eff6ff;border:1px solid #bfdbfe;">
+                            <i class="bi bi-calculator-fill text-primary fs-4"></i>
+                            <div class="flex-grow-1">
+                                <div class="small fw-600 text-primary" th:text="#{traz.form.og.combinado.label}">OG Combinado — ponderación por puntos de gravedad</div>
+                                <div class="d-flex align-items-baseline gap-2 mt-1">
+                                    <span class="fs-4 fw-700 text-primary" id="og-combinado-preview">—</span>
+                                    <small class="text-muted" id="og-combinado-detalle"></small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" id="btnAplicarOgCombinado">
+                                <i class="bi bi-arrow-down-circle me-1"></i><span th:text="#{traz.form.og.combinado.btn}">Aplicar a OG Final</span>
+                            </button>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.og.combinado.hint}">Se calcula automáticamente. Puedes sobreescribir el OG final si mediste directamente en el fermentador.</span>
+                        </small>
                     </div>
                 </div>
             </div>
@@ -827,7 +1132,7 @@
                                         <optgroup th:attr="label='📦 ' + #{traz.form.carbon.priming.inv}">
                                             <option th:each="ag : ${agentesCarbonatacion}"
                                                     th:value="${ag.nombre}"
-                                                    th:text="${ag.nombre} + ' (' + ${ag.cantidad.stripTrailingZeros().toPlainString()} + ' ' + ${ag.unidad} + ')'">
+                                                    th:text="${ag.nombre} + ' (' + ${ag.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ag.unidadDisplay} + ')'">
                                             </option>
                                         </optgroup>
                                         <optgroup th:attr="label=#{traz.form.carbon.priming.otro}">
@@ -1382,6 +1687,72 @@
                         const estiloInput = document.getElementById('estilo') || document.querySelector('[name=estilo]');
                         if (estiloInput) estiloInput.addEventListener('input', sugerirCo2PorEstilo);
 
+                        // Múltiples cocciones — mostrar/ocultar secciones según el select
+                        (function() {
+                            var sel  = document.getElementById('numeroCoccionesSelect');
+                            var sec2 = document.getElementById('segunda-coccion-section');
+                            var sec3 = document.getElementById('tercera-coccion-section');
+                            if (!sel) return;
+                            var aguaCol       = document.getElementById('agua-general-col');
+                            var aguaOrigPar   = aguaCol && aguaCol.parentNode;
+                            var aguaOrigNext  = aguaCol && aguaCol.nextSibling;
+                            var aguaAnchor    = document.getElementById('agua-sesion1-anchor');
+                            var aguaLabel     = document.getElementById('agua-label');
+                            function clearSection(secNum) {
+                                var ids = secNum === 2
+                                    ? ['fechaSegundaCoccion', 'agua2-display', 'agua2-value', 'ogSegundaCoccion', 'litros2-display', 'litros2-value']
+                                    : ['fechaTerceraCoccion', 'agua3-display', 'agua3-value', 'ogTerceraCoccion', 'litros3-display', 'litros3-value'];
+                                ids.forEach(function(id) {
+                                    var el = document.getElementById(id);
+                                    if (el) el.value = '';
+                                });
+                            }
+                            function applyCocciones() {
+                                var n = parseInt(sel.value, 10);
+                                sec2.style.display = n >= 2 ? '' : 'none';
+                                sec3.style.display = n >= 3 ? '' : 'none';
+                                if (n < 2) clearSection(2);
+                                if (n < 3) clearSection(3);
+
+                                // Sesión 1: mostrar tarjeta primera-coccion-section en multicocción
+                                var primeraSec = document.getElementById('primera-coccion-section');
+                                if (primeraSec) primeraSec.style.display = n >= 2 ? '' : 'none';
+                                // En Brix: ocultar brix-og-row cuando multicocción (el card lo reemplaza)
+                                // y manejar disabled del campo duplicado
+                                var brixOgRow  = document.getElementById('brix-og-row');
+                                var ogBrixMain = document.getElementById('ogBrix');
+                                var ogBrixCard = document.getElementById('ogBrixCard');
+                                if (brixOgRow)  brixOgRow.style.display  = n >= 2 ? 'none' : '';
+                                if (ogBrixMain) ogBrixMain.disabled       = n >= 2;
+                                if (ogBrixCard) {
+                                    ogBrixCard.disabled = n < 2;
+                                    if (n >= 2 && ogBrixMain) ogBrixCard.value = ogBrixMain.value;
+                                }
+                                if (n < 2) {
+                                    ['litros1-display', 'litros1-value', 'ogPrimeraCoccion'].forEach(function(id) {
+                                        var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+                                        if (el) el.value = '';
+                                    });
+                                    var box = document.getElementById('og-combinado-box');
+                                    if (box) box.style.display = 'none';
+                                }
+
+                                if (aguaCol && aguaOrigPar && aguaAnchor) {
+                                    if (n >= 2) {
+                                        aguaAnchor.after(aguaCol);
+                                        if (aguaLabel) { aguaLabel.classList.add('small'); }
+                                    } else {
+                                        aguaOrigPar.insertBefore(aguaCol, aguaOrigNext);
+                                        if (aguaLabel) { aguaLabel.classList.remove('small'); }
+                                    }
+                                }
+                                if (typeof calcularOgCombinado === 'function') calcularOgCombinado();
+                                if (typeof sincronizarVolumenFinalTotal === 'function') sincronizarVolumenFinalTotal();
+                            }
+                            sel.addEventListener('change', applyCocciones);
+                            applyCocciones();
+                        })();
+
                         var btnAdd = document.getElementById('btnAddDestinoRow');
                         if (btnAdd) btnAdd.addEventListener('click', function() { addDestinoRow(); });
 
@@ -1426,6 +1797,34 @@
                 </div>
             </div>
         </div><!-- /wizard-panel -->
+
+        <!-- Modal: número de cocciones antes de cargar receta principal -->
+        <div class="modal fade" id="modalNumeroCocciones" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+                <div class="modal-content">
+                    <div class="modal-header py-2 border-0">
+                        <h6 class="modal-title fw-semibold">
+                            <i class="bi bi-layers me-2 text-primary"></i><span th:text="#{traz.form.doble.coccion.select.label}">Número de cocciones</span>
+                        </h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-0">
+                        <p class="text-muted small mb-3" th:text="#{traz.form.modal.cocciones.hint}">El volumen final se asignará a la sesión correspondiente.</p>
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-secondary btn-sm modal-coc-btn" th:attr="data-coc-n=1">
+                                <i class="bi bi-1-circle me-1"></i><span th:text="#{traz.form.doble.coccion.select.1}">1 cocción (estándar)</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm modal-coc-btn" th:attr="data-coc-n=2">
+                                <i class="bi bi-2-circle me-1"></i><span th:text="#{traz.form.doble.coccion.select.2}">2 cocciones</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm modal-coc-btn" th:attr="data-coc-n=3">
+                                <i class="bi bi-3-circle me-1"></i><span th:text="#{traz.form.doble.coccion.select.3}">3 cocciones</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </form>
 </div>
 
@@ -1472,11 +1871,15 @@ function calcularSgDesdeBrix() {
 
     if (!isNaN(ogB) && ogB > 1) {
         var ogSg = Math.round(brixToSg(ogB) * 1000);
-        ogPrev.value = ogSg;
+        if (ogPrev) ogPrev.value = ogSg;
         if (inpOg) inpOg.value = ogSg;
+        var card1Prev = document.getElementById('og1CardSgPreview');
+        if (card1Prev) card1Prev.value = ogSg;
     } else {
-        ogPrev.value = '';
+        if (ogPrev) ogPrev.value = '';
         if (inpOg) inpOg.value = '';
+        var card1Prev = document.getElementById('og1CardSgPreview');
+        if (card1Prev) card1Prev.value = '';
     }
 
     if (!isNaN(ogB) && !isNaN(fgB) && ogB > 1 && fgB > 1) {
@@ -1493,24 +1896,124 @@ function calcularSgDesdeBrix() {
     }
 }
 
+// ── OG Combinado (multicocción) ───────────────────────────────────────────────
+function calcularOgCombinado() {
+    var numCocEl = document.getElementById('numeroCoccionesSelect');
+    var numCoc = parseInt(numCocEl ? numCocEl.value : 1) || 1;
+    var box = document.getElementById('og-combinado-box');
+    if (numCoc < 2) { if (box) box.style.display = 'none'; return; }
+
+    var isBrix = document.getElementById('instr-brix') && document.getElementById('instr-brix').checked;
+
+    function getSg(n) {
+        if (isBrix) {
+            var brixId = n === 1 ? 'ogBrix' : 'ogBrix' + n;
+            var brix = parseFloat((document.getElementById(brixId) || {}).value);
+            return (!isNaN(brix) && brix > 1) ? Math.round(brixToSg(brix) * 1000) : NaN;
+        }
+        var nameMap = { 1: 'ogPrimeraCoccion', 2: 'ogSegundaCoccion', 3: 'ogTerceraCoccion' };
+        var el = document.querySelector('[name="' + nameMap[n] + '"]');
+        return el ? parseInt(el.value) : NaN;
+    }
+
+    function getVol(n) {
+        var disp = parseFloat((document.getElementById('litros' + n + '-display') || {}).value);
+        var unit = ((document.getElementById('litros' + n + '-unit') || {}).value) || 'L';
+        return (!isNaN(disp) && disp > 0) ? disp * (TO_LITERS[unit] || 1) : 0;
+    }
+
+    var sesiones = [];
+    for (var n = 1; n <= numCoc; n++) {
+        var og = getSg(n), vol = getVol(n);
+        if (!isNaN(og) && og >= 1000 && vol > 0) sesiones.push({ og: og, vol: vol, n: n });
+    }
+
+    if (sesiones.length < 2) { if (box) box.style.display = 'none'; return; }
+
+    var totalPuntos = sesiones.reduce(function(s, x) { return s + (x.og - 1000) * x.vol; }, 0);
+    var totalVol    = sesiones.reduce(function(s, x) { return s + x.vol; }, 0);
+    var ogComb = Math.round(1000 + totalPuntos / totalVol);
+
+    var preview = document.getElementById('og-combinado-preview');
+    var detalle = document.getElementById('og-combinado-detalle');
+    if (preview) preview.textContent = ogComb;
+    if (detalle) {
+        var parts = sesiones.map(function(s) {
+            return 'S' + s.n + ': ' + Math.round(s.vol * 10) / 10 + 'L @ ' + s.og;
+        });
+        detalle.textContent = '(' + parts.join(' + ') + ')';
+    }
+    if (box) box.style.display = '';
+
+    var ogEl = document.getElementById('densidadInicial');
+    if (ogEl) ogEl.value = ogComb;
+}
+
+function calcularSgSesion(n) {
+    var brixEl = document.getElementById('ogBrix' + n);
+    if (!brixEl) return;
+    var brix = parseFloat(brixEl.value);
+    var previewEl = document.getElementById('og' + n + 'SgPreview');
+    var sgName = n === 2 ? 'ogSegundaCoccion' : 'ogTerceraCoccion';
+    var sgInput = document.querySelector('[name="' + sgName + '"]');
+    if (!isNaN(brix) && brix > 1) {
+        var sg = Math.round(brixToSg(brix) * 1000);
+        if (previewEl) previewEl.value = sg;
+        if (sgInput) sgInput.value = sg;
+    } else {
+        if (previewEl) previewEl.value = '';
+        if (sgInput) sgInput.value = '';
+    }
+}
+
 function toggleInstrumento(modo) {
     var modSg   = document.getElementById('modo-sg');
     var modBrix = document.getElementById('modo-brix');
     var inpOg   = document.getElementById('densidadInicial');
     var inpFg   = document.getElementById('densidadFinal');
 
-    if (modo === 'BRIX') {
+    // Divs OG de sesiones adicionales (2 y 3)
+    var isBrix = modo === 'BRIX';
+    [2, 3].forEach(function(n) {
+        var sgDiv   = document.getElementById('og' + n + '-sg-modo');
+        var brixDiv = document.getElementById('og' + n + '-brix-modo');
+        if (sgDiv)   { sgDiv.classList.toggle('d-none', isBrix); }
+        if (brixDiv) { brixDiv.classList.toggle('d-none', !isBrix); }
+        if (isBrix)  { calcularSgSesion(n); }
+    });
+
+    // Sesión 1 card: toggle SG ↔ Brix dentro de primera-coccion-section
+    var og1SgCard   = document.getElementById('og1-sg-modo-card');
+    var og1BrixCard = document.getElementById('og1-brix-modo-card');
+    if (og1SgCard)   og1SgCard.classList.toggle('d-none', isBrix);
+    if (og1BrixCard) og1BrixCard.classList.toggle('d-none', !isBrix);
+
+    // brix-og-row: visible solo en Brix + sesión única
+    var numCoc = parseInt((document.getElementById('numeroCoccionesSelect')||{}).value) || 1;
+    var brixOgRow  = document.getElementById('brix-og-row');
+    var ogBrixMain = document.getElementById('ogBrix');
+    var ogBrixCard = document.getElementById('ogBrixCard');
+    if (brixOgRow)  brixOgRow.style.display  = (isBrix && numCoc < 2) ? '' : 'none';
+    if (ogBrixMain) ogBrixMain.disabled       = isBrix && numCoc >= 2;
+    if (ogBrixCard) {
+        ogBrixCard.disabled = !isBrix || numCoc < 2;
+        if (isBrix && numCoc >= 2 && ogBrixMain) ogBrixCard.value = ogBrixMain.value;
+    }
+
+    var ogHint = document.getElementById('og-final-hint');
+    if (isBrix) {
         modSg.classList.add('d-none');
         modBrix.classList.remove('d-none');
-        // En modo Brix: el SG se deriva de Brix, los inputs SG son readonly
         if (inpOg) { inpOg.readOnly = true; inpOg.style.background = '#f8fafc'; }
         if (inpFg) { inpFg.readOnly = true; inpFg.style.background = '#f8fafc'; }
+        if (ogHint) ogHint.textContent = 'Calculado desde °Brix';
         calcularSgDesdeBrix();
     } else {
         modSg.classList.remove('d-none');
         modBrix.classList.add('d-none');
         if (inpOg) { inpOg.readOnly = false; inpOg.style.background = ''; }
         if (inpFg) { inpFg.readOnly = false; inpFg.style.background = ''; }
+        if (ogHint) ogHint.textContent = 'Rango: 1000–1150';
     }
 }
 
@@ -1528,11 +2031,49 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('instr-sg').addEventListener('change', function() { if (this.checked) toggleInstrumento('SG'); });
     document.getElementById('instr-brix').addEventListener('change', function() { if (this.checked) toggleInstrumento('BRIX'); });
 
-    // Brix oninput listeners
+    // Brix oninput listeners — sesión principal (modo-brix, sesión única)
     var ogBrixEl = document.getElementById('ogBrix');
     var fgBrixEl = document.getElementById('fgBrix');
     if (ogBrixEl) ogBrixEl.addEventListener('input', calcularSgDesdeBrix);
     if (fgBrixEl) fgBrixEl.addEventListener('input', calcularSgDesdeBrix);
+
+    // Brix card sesión 1 — sincroniza con ogBrix y recalcula
+    var ogBrixCardEl = document.getElementById('ogBrixCard');
+    if (ogBrixCardEl) ogBrixCardEl.addEventListener('input', function() {
+        var main = document.getElementById('ogBrix');
+        if (main) main.value = this.value;
+        calcularSgDesdeBrix();
+        calcularOgCombinado();
+    });
+
+    // Brix oninput listeners — sesiones adicionales
+    var ogBrix2El = document.getElementById('ogBrix2');
+    var ogBrix3El = document.getElementById('ogBrix3');
+    if (ogBrix2El) ogBrix2El.addEventListener('input', function() { calcularSgSesion(2); calcularOgCombinado(); });
+    if (ogBrix3El) ogBrix3El.addEventListener('input', function() { calcularSgSesion(3); calcularOgCombinado(); });
+    if (ogBrixEl)  ogBrixEl.addEventListener('input',  calcularOgCombinado);
+
+    // OG + Volumen inputs para cálculo combinado
+    ['ogPrimeraCoccion', 'ogSegundaCoccion', 'ogTerceraCoccion',
+     'litros1-display', 'litros2-display', 'litros3-display'].forEach(function(id) {
+        var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
+        if (el) el.addEventListener('input', calcularOgCombinado);
+    });
+
+    // Botón "Aplicar a OG Final"
+    var btnAplicar = document.getElementById('btnAplicarOgCombinado');
+    if (btnAplicar) btnAplicar.addEventListener('click', function() {
+        var prev = document.getElementById('og-combinado-preview');
+        var ogEl = document.getElementById('densidadInicial');
+        if (prev && ogEl && prev.textContent !== '—') ogEl.value = prev.textContent;
+    });
+
+    // Inicializar previsualización Brix sesiones si hay valor guardado
+    if (instrInicial === 'BRIX') {
+        calcularSgSesion(2);
+        calcularSgSesion(3);
+    }
+    calcularOgCombinado();
 });
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js}"></script>
