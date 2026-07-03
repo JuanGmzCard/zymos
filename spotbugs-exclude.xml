@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- Lombok @Getter genera getters que devuelven colecciones/arrays internos mutables.
+         En entidades JPA este patrón es intencional, no un bug. -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
+
+    <!-- MapStruct genera implementaciones en target/generated-sources — no es código nuestro. -->
+    <Match>
+        <Class name="~com\.alera\.mapper\..*Impl"/>
+    </Match>
+</FindBugsFilter>
