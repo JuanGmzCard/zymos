@@ -267,12 +267,12 @@
                         <label class="form-label" for="fechaElaboracion" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</label>
                         <input type="date" th:field="*{fechaElaboracion}" class="form-control">
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" th:text="#{traz.form.doble.elaboracion.sec1.hora.inicio}">Hora Inicio S1</label>
+                    <div class="col-md-4" id="hora-inicio-s1-col">
+                        <label class="form-label" th:text="#{traz.det.label.hora.inicio}">Hora Inicio</label>
                         <input type="time" th:field="*{horaInicioPrimeraElaboracion}" class="form-control">
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label" th:text="#{traz.form.doble.elaboracion.sec1.hora.fin}">Hora Fin S1</label>
+                    <div class="col-md-4" id="hora-fin-s1-col">
+                        <label class="form-label" th:text="#{traz.det.label.hora.fin}">Hora Fin</label>
                         <input type="time" th:field="*{horaFinPrimeraElaboracion}" class="form-control">
                     </div>
                     <div class="col-md-2">
@@ -475,6 +475,7 @@
                                                th:value="${loteForm.volumenFinalPrimeraElaboracion}">
                                         <small class="text-muted" id="litros1-equiv"></small>
                                     </div>
+                                    <div id="hora-s1-anchor" style="display:none;"></div>
                                 </div>
                             </div>
                         </div>
@@ -1718,6 +1719,11 @@
                             var aguaOrigNext  = aguaCol && aguaCol.nextSibling;
                             var aguaAnchor    = document.getElementById('agua-sesion1-anchor');
                             var aguaLabel     = document.getElementById('agua-label');
+                            var horaIniCol    = document.getElementById('hora-inicio-s1-col');
+                            var horaFinCol    = document.getElementById('hora-fin-s1-col');
+                            var horaOrigPar   = horaIniCol && horaIniCol.parentNode;
+                            var horaFinOrig   = horaFinCol && horaFinCol.nextSibling;
+                            var horaAnchor    = document.getElementById('hora-s1-anchor');
                             function clearSection(secNum) {
                                 var ids = secNum === 2
                                     ? ['fechaSegundaElaboracion', 'horaInicioSegundaElaboracion', 'horaFinSegundaElaboracion', 'agua2-display', 'agua2-value', 'ogSegundaElaboracion', 'litros2-display', 'litros2-value']
@@ -1764,6 +1770,19 @@
                                     } else {
                                         aguaOrigPar.insertBefore(aguaCol, aguaOrigNext);
                                         if (aguaLabel) { aguaLabel.classList.remove('small'); }
+                                    }
+                                }
+                                if (horaIniCol && horaFinCol && horaOrigPar && horaAnchor) {
+                                    if (n >= 2) {
+                                        horaAnchor.after(horaIniCol);
+                                        horaIniCol.after(horaFinCol);
+                                        horaIniCol.querySelector('label').classList.add('small');
+                                        horaFinCol.querySelector('label').classList.add('small');
+                                    } else {
+                                        horaOrigPar.insertBefore(horaFinCol, horaFinOrig);
+                                        horaOrigPar.insertBefore(horaIniCol, horaFinCol);
+                                        horaIniCol.querySelector('label').classList.remove('small');
+                                        horaFinCol.querySelector('label').classList.remove('small');
                                     }
                                 }
                                 if (typeof calcularOgCombinado === 'function') calcularOgCombinado();
