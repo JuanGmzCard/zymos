@@ -23,6 +23,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
 - JJWT 0.12.6 (`jjwt-api` + `jjwt-impl` + `jjwt-jackson`) — generación y validación de tokens JWT HS256 para la API REST
 - JUnit 5 + Mockito (unitarios) + Testcontainers (integración con PostgreSQL real)
+- SpotBugs 4.8.6.4 (`spotbugs-maven-plugin`) — análisis estático de bytecode. Exclusiones en `spotbugs-exclude.xml` (EI_EXPOSE_REP de Lombok + clases `*Impl` de MapStruct). **Solo corre en CI (Java 21)** — ASM no soporta class file v70 (JDK 26 local).
 - Tipografías: Cinzel (headings), Raleway (body)
 - `spring.thymeleaf.cache=false` | `spring.jpa.hibernate.ddl-auto=validate`
 
@@ -35,6 +36,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V65). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
+- **CI/CD**: `.github/workflows/ci.yml` — dos jobs paralelos en cada push: `Build & Test` (Java 21 + Postgres para Testcontainers) y `SpotBugs` (Java 21, sin Postgres, `mvn compile spotbugs:check`). **Dependabot**: `.github/dependabot.yml` — revisa Maven y GitHub Actions semanalmente con grupos `spring-boot`, `testcontainers`, `security`.
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
 - Swagger UI: `GET /swagger-ui.html` (requiere autenticación)
 - Paginación configurable: `app.page-size=15` (servicios), `app.log-page-size=25` (LogAccesoService)
