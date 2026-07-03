@@ -136,6 +136,50 @@ class LoteCervezaModelTest {
         assertThat(l.getAbvTerrill()).isGreaterThan(BigDecimal.ZERO);
     }
 
+    // ── getAbv ─────────────────────────────────────────────────────────────────
+
+    private LoteCerveza loteAbv(Integer og, Integer fg) {
+        LoteCerveza l = new LoteCerveza();
+        l.setDensidadInicial(og);
+        l.setDensidadFinal(fg);
+        return l;
+    }
+
+    @Test
+    void getAbv_densidadInicialNull_retornaNull() {
+        assertThat(loteAbv(null, 1012).getAbv()).isNull();
+    }
+
+    @Test
+    void getAbv_densidadFinalNull_retornaNull() {
+        assertThat(loteAbv(1060, null).getAbv()).isNull();
+    }
+
+    @Test
+    void getAbv_ambasNull_retornaNull() {
+        assertThat(loteAbv(null, null).getAbv()).isNull();
+    }
+
+    @Test
+    void getAbv_valoresNormales_retornaAbvCorrecto() {
+        // (1060 - 1012) * 131.25 / 1000 = 48 * 0.13125 = 6.30
+        BigDecimal abv = loteAbv(1060, 1012).getAbv();
+        assertThat(abv).isNotNull();
+        assertThat(abv).isEqualByComparingTo("6.30");
+    }
+
+    @Test
+    void getAbv_mismasDensidades_retornaCero() {
+        BigDecimal abv = loteAbv(1050, 1050).getAbv();
+        assertThat(abv).isNotNull();
+        assertThat(abv).isEqualByComparingTo("0.00");
+    }
+
+    @Test
+    void getAbv_tieneScale2() {
+        assertThat(loteAbv(1055, 1010).getAbv().scale()).isEqualTo(2);
+    }
+
     // ── Consistencia interna ───────────────────────────────────────────────────
 
     @Test

@@ -163,13 +163,14 @@ class TrazabilidadControllerTest {
     @WithMockUser(roles = "ADMIN")
     void guardarConDatosValidosRedirige() throws Exception {
         LoteCerveza lote = new LoteCerveza();
+        lote.setId(42L);
         when(service.guardar(any())).thenReturn(new LoteGuardadoResult(lote, List.of()));
 
         mockMvc.perform(post("/guardar")
                         .with(csrf())
                         .param("estilo", "IPA Americana"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/"))
+                .andExpect(redirectedUrl("/editar/42"))
                 .andExpect(flash().attributeExists("mensaje"));
     }
 
@@ -194,6 +195,7 @@ class TrazabilidadControllerTest {
     @WithMockUser(roles = "ADMIN")
     void guardarConAdvertenciasDeStockMuestraWarning() throws Exception {
         LoteCerveza lote = new LoteCerveza();
+        lote.setId(7L);
         when(service.guardar(any()))
                 .thenReturn(new LoteGuardadoResult(lote, List.of("Lúpulo Cascade")));
 

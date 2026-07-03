@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.dto.InsumoDto;
 import com.alera.dto.RecetaFormDto;
+import com.alera.model.AdicionHervor;
 import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.enums.TipoIngrediente;
@@ -307,5 +308,96 @@ class RecetaServiceTest {
 
         assertThat(dto.getMaltas()).hasSize(1);
         assertThat(dto.getMaltas().get(0).getNombre()).isNull();
+    }
+
+    // ── guardar — adicionesHervor ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("guardar — persiste adición de hervor con nombre, minutosRestantes, cantidad y unidad")
+    void guardar_persisteAdicionHervorConCamposCorrectos() {
+        RecetaFormDto dto = new RecetaFormDto();
+        dto.setNombre("IPA con lúpulo");
+        dto.setEstilo("IPA");
+
+        RecetaFormDto.AdicionHervorDto ad = new RecetaFormDto.AdicionHervorDto();
+        ad.setNombre("Cascade");
+        ad.setMinutosRestantes(60);
+        ad.setCantidad(new java.math.BigDecimal("30"));
+        ad.setUnidad("gr");
+        dto.getAdicionesHervor().add(ad);
+
+        when(repo.save(any(Receta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Receta resultado = service.guardar(dto);
+
+        assertThat(resultado.getAdicionesHervor()).hasSize(1);
+        AdicionHervor adicion = resultado.getAdicionesHervor().get(0);
+        assertThat(adicion.getNombre()).isEqualTo("Cascade");
+        assertThat(adicion.getMinutosRestantes()).isEqualTo(60);
+        assertThat(adicion.getCantidad()).isEqualByComparingTo("30");
+        assertThat(adicion.getUnidad()).isEqualTo("gr");
+    }
+
+    @Test
+    @DisplayName("guardar — ignora adición de hervor vacía (nombre null, minutosRestantes null, cantidad null)")
+    void guardar_ignoraAdicionHervorVacia() {
+        RecetaFormDto dto = new RecetaFormDto();
+        dto.setNombre("Pale Ale");
+        dto.setEstilo("Pale Ale");
+        dto.getAdicionesHervor().add(new RecetaFormDto.AdicionHervorDto()); // todos los campos null
+
+        when(repo.save(any(Receta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Receta resultado = service.guardar(dto);
+
+        assertThat(resultado.getAdicionesHervor()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("guardar — adición flameout (minutosRestantes=0) no se ignora")
+    void guardar_adicionFlameout_minutosRestantesCero_noSeIgnora() {
+        RecetaFormDto dto = new RecetaFormDto();
+        dto.setNombre("Stout con coco");
+        dto.setEstilo("Stout");
+
+        RecetaFormDto.AdicionHervorDto flameout = new RecetaFormDto.AdicionHervorDto();
+        flameout.setNombre("Coco tostado");
+        flameout.setMinutosRestantes(0); // flameout — minutosRestantes=0, no null
+        flameout.setCantidad(new java.math.BigDecimal("100"));
+        flameout.setUnidad("gr");
+        dto.getAdicionesHervor().add(flameout);
+
+        when(repo.save(any(Receta.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Receta resultado = service.guardar(dto);
+
+        assertThat(resultado.getAdicionesHervor()).hasSize(1);
+        assertThat(resultado.getAdicionesHervor().get(0).getMinutosRestantes()).isZero();
+    }
+
+    // ── toFormDto — adicionesHervor ───────────────────────────────────────────
+
+    @Test
+    @DisplayName("toFormDto mapea adicionesHervor de la entidad al DTO correctamente")
+    void toFormDto_mapeaAdicionesHervorDeEntidad() {
+        Receta receta = new Receta();
+        receta.setNombre("Double IPA");
+        receta.setEstilo("IPA");
+
+        AdicionHervor adicion = new AdicionHervor();
+        adicion.setNombre("Simcoe");
+        adicion.setMinutosRestantes(15);
+        adicion.setCantidad(new java.math.BigDecimal("20"));
+        adicion.setUnidad("gr");
+        receta.getAdicionesHervor().add(adicion);
+
+        RecetaFormDto dto = service.toFormDto(receta);
+
+        assertThat(dto.getAdicionesHervor()).hasSize(1);
+        RecetaFormDto.AdicionHervorDto adDto = dto.getAdicionesHervor().get(0);
+        assertThat(adDto.getNombre()).isEqualTo("Simcoe");
+        assertThat(adDto.getMinutosRestantes()).isEqualTo(15);
+        assertThat(adDto.getCantidad()).isEqualByComparingTo("20");
+        assertThat(adDto.getUnidad()).isEqualTo("gr");
     }
 }
