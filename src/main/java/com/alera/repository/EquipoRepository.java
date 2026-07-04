@@ -28,6 +28,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     List<Equipo> findByEstadoOrderByNombreAsc(EstadoEquipo estado);
     Page<Equipo> findByEstadoOrderByNombreAsc(EstadoEquipo estado, Pageable pageable);
+    List<Equipo> findAllByOrderByNombreAsc();
     Page<Equipo> findAllByOrderByNombreAsc(Pageable pageable);
 
     @Query("SELECT COUNT(e) FROM Equipo e WHERE e.estado = :estado")

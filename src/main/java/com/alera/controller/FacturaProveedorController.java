@@ -329,7 +329,7 @@ public class FacturaProveedorController {
             insumosPorTipo.put(tipo, nombres);
         }
 
-        List<Equipo> todosEquipos = equipoRepo.findAll();
+        List<Equipo> todosEquipos = equipoRepo.findAllByOrderByNombreAsc();
         Map<String, List<String>> equiposPorTipo = new LinkedHashMap<>();
         for (String tipo : tiposEquipo) {
             List<String> nombres = todosEquipos.stream()

@@ -262,7 +262,7 @@ public class OrdenCompraController {
                     .toList());
         }
 
-        List<Equipo> todosEquipos = equipoRepo.findAll();
+        List<Equipo> todosEquipos = equipoRepo.findAllByOrderByNombreAsc();
         Map<String, List<String>> equiposPorTipo = new LinkedHashMap<>();
         for (String tipo : tiposEquipo) {
             equiposPorTipo.put(tipo, todosEquipos.stream()
