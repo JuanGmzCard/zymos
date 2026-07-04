@@ -15,9 +15,6 @@ import java.util.Optional;
 
 public interface FacturaProveedorRepository extends JpaRepository<FacturaProveedor, Long> {
 
-    @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items ORDER BY f.fechaFactura DESC")
-    List<FacturaProveedor> findAllWithItems();
-
     @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items WHERE " +
            "(:estado IS NULL OR f.estado = :estado) AND " +
            "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
