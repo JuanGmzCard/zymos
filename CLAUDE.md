@@ -33,7 +33,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `PRODUCCION_USERNAME/PASSWORD`, `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V65). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V68). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - **CI/CD**: `.github/workflows/ci.yml` — dos jobs paralelos en cada push: `Build & Test` (Java 21 + Postgres para Testcontainers) y `SpotBugs` (Java 21, sin Postgres, `mvn compile spotbugs:check`). **Dependabot**: `.github/dependabot.yml` — revisa Maven y GitHub Actions semanalmente con grupos `spring-boot`, `testcontainers`, `security`.
