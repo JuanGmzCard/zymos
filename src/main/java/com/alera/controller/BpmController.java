@@ -182,6 +182,19 @@ public class BpmController {
                 .body(bytes);
     }
 
+    @GetMapping("/sintomas/{id}/pdf")
+    public ResponseEntity<byte[]> pdfSintomaIndividual(@PathVariable Long id, HttpServletRequest request) {
+        var r = service.buscarSintoma(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding b = ExportBranding.from(tenant);
+        String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        byte[] bytes = pdfService.generarSintomas(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
+                "Control Estado de Salud", sub);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-sintoma-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF).body(bytes);
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // SOLUCIONES DESINFECTANTES
     // ══════════════════════════════════════════════════════════════════════════
@@ -245,6 +258,19 @@ public class BpmController {
                 .body(bytes);
     }
 
+    @GetMapping("/soluciones/{id}/pdf")
+    public ResponseEntity<byte[]> pdfSolucionIndividual(@PathVariable Long id, HttpServletRequest request) {
+        var r = service.buscarSolucion(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding b = ExportBranding.from(tenant);
+        String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        byte[] bytes = pdfService.generarSoluciones(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
+                "Soluciones Desinfectantes", sub);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-solucion-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF).body(bytes);
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // PLAGAS
     // ══════════════════════════════════════════════════════════════════════════
@@ -306,6 +332,19 @@ public class BpmController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(bytes);
+    }
+
+    @GetMapping("/plagas/{id}/pdf")
+    public ResponseEntity<byte[]> pdfPlagaIndividual(@PathVariable Long id, HttpServletRequest request) {
+        var r = service.buscarPlaga(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding b = ExportBranding.from(tenant);
+        String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        byte[] bytes = pdfService.generarPlagas(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
+                "Control de Plagas", sub);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-plaga-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF).body(bytes);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -377,6 +416,19 @@ public class BpmController {
                 .body(bytes);
     }
 
+    @GetMapping("/residuos/{id}/pdf")
+    public ResponseEntity<byte[]> pdfResiduoIndividual(@PathVariable Long id, HttpServletRequest request) {
+        var r = service.buscarResiduo(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding b = ExportBranding.from(tenant);
+        String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        byte[] bytes = pdfService.generarResiduos(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
+                "Evacuación de Residuos", sub);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-residuo-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF).body(bytes);
+    }
+
     // ══════════════════════════════════════════════════════════════════════════
     // LIMPIEZA Y DESINFECCIÓN
     // ══════════════════════════════════════════════════════════════════════════
@@ -438,5 +490,18 @@ public class BpmController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(bytes);
+    }
+
+    @GetMapping("/limpieza/{id}/pdf")
+    public ResponseEntity<byte[]> pdfLimpiezaIndividual(@PathVariable Long id, HttpServletRequest request) {
+        var r = service.buscarLimpieza(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding b = ExportBranding.from(tenant);
+        String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
+        byte[] bytes = pdfService.generarLimpieza(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
+                "Limpieza y Desinfección", sub);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-limpieza-" + id + ".pdf\"")
+                .contentType(MediaType.APPLICATION_PDF).body(bytes);
     }
 }
