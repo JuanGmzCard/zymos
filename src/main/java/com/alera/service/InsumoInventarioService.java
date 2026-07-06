@@ -42,6 +42,10 @@ public class InsumoInventarioService {
         return repo.findAllByOrderByNombreAsc();
     }
 
+    public List<InsumoInventario> listarPorTipo(String tipo) {
+        return repo.findAllByTipoOrderByNombreAsc(tipo);
+    }
+
     public Page<InsumoInventario> listarPaginado(String nombre, String tipo, int page) {
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre.trim() : "";
         String tipoParam = (tipo != null && !tipo.isBlank()) ? tipo : null;

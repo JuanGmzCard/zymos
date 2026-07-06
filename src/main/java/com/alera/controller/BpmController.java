@@ -5,6 +5,7 @@ import com.alera.model.*;
 import com.alera.model.enums.TipoResiduo;
 import com.alera.service.BpmPdfService;
 import com.alera.service.BpmService;
+import com.alera.service.InsumoInventarioService;
 import com.alera.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -32,11 +33,14 @@ public class BpmController {
     private final BpmService service;
     private final BpmPdfService pdfService;
     private final UsuarioService usuarioService;
+    private final InsumoInventarioService inventarioService;
 
-    public BpmController(BpmService service, BpmPdfService pdfService, UsuarioService usuarioService) {
+    public BpmController(BpmService service, BpmPdfService pdfService,
+                         UsuarioService usuarioService, InsumoInventarioService inventarioService) {
         this.service = service;
         this.pdfService = pdfService;
         this.usuarioService = usuarioService;
+        this.inventarioService = inventarioService;
     }
 
     @ModelAttribute("usuarios")
@@ -208,12 +212,14 @@ public class BpmController {
     @GetMapping("/soluciones/nuevo")
     public String nuevaSolucion(Model model) {
         model.addAttribute("registro", new SolucionDesinfectante());
+        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
         return "bpm/soluciones/formulario";
     }
 
     @GetMapping("/soluciones/editar/{id}")
     public String editarSolucion(@PathVariable Long id, Model model) {
         model.addAttribute("registro", service.buscarSolucion(id));
+        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
         return "bpm/soluciones/formulario";
     }
 
@@ -221,7 +227,10 @@ public class BpmController {
     public String guardarSolucion(@Valid @ModelAttribute("registro") SolucionDesinfectante r,
                                    BindingResult br, Model model,
                                    RedirectAttributes flash) {
-        if (br.hasErrors()) return "bpm/soluciones/formulario";
+        if (br.hasErrors()) {
+            model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
+            return "bpm/soluciones/formulario";
+        }
         service.guardarSolucion(r);
         flash.addFlashAttribute("mensaje", "Solución desinfectante guardada correctamente");
         flash.addFlashAttribute("tipoMensaje", "success");

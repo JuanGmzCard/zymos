@@ -61,7 +61,14 @@
                             <label class="form-label fw-semibold">Producto <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" th:field="*{producto}"
                                    th:classappend="${#fields.hasErrors('producto')} ? 'is-invalid' : ''"
-                                   placeholder="Nombre del desinfectante">
+                                   placeholder="Nombre del desinfectante"
+                                   list="dl-productos-quimicos" autocomplete="off">
+                            <datalist id="dl-productos-quimicos">
+                                <option th:each="p : ${productosQuimicos}"
+                                        th:value="${p.nombre}"
+                                        th:label="${p.nombre + (p.cantidad != null ? ' (' + p.cantidad.stripTrailingZeros().toPlainString() + ' ' + p.unidad + ')' : '')}">
+                                </option>
+                            </datalist>
                             <div class="invalid-feedback" th:errors="*{producto}"></div>
                         </div>
                     </div>
