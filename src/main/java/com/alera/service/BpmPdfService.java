@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -39,7 +41,7 @@ public class BpmPdfService {
             Color dorado = b.accent();
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
-            addCabecera(doc, b.name(), titulo, subtitulo, verde, oscuro, dorado);
+            addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO CONTROL ESTADO DE SALUD MANIPULADORES DE ALIMENTOS", verde);
 
             String[] ths = {"Nombre Manipulador", "Fecha", "Diarrea", "Vómito", "Fiebre",
@@ -94,7 +96,7 @@ public class BpmPdfService {
             Color dorado = b.accent();
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
-            addCabecera(doc, b.name(), titulo, subtitulo, verde, oscuro, dorado);
+            addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE SOLUCIONES DESINFECTANTES", verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1f, 1.5f, 1f, 1.5f, 1.5f});
@@ -145,7 +147,7 @@ public class BpmPdfService {
             Color dorado = b.accent();
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
-            addCabecera(doc, b.name(), titulo, subtitulo, verde, oscuro, dorado);
+            addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE AVISTAMIENTO Y CONTROL DE PLAGAS", verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 1.5f, 1.5f, 2.5f, 1.5f});
@@ -193,7 +195,7 @@ public class BpmPdfService {
             Color dorado = b.accent();
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
-            addCabecera(doc, b.name(), titulo, subtitulo, verde, oscuro, dorado);
+            addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE EVACUACIÓN DE RESIDUOS", verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.5f, 1.2f, 2f, 1.5f, 2f});
@@ -239,7 +241,7 @@ public class BpmPdfService {
             Color dorado = b.accent();
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
-            addCabecera(doc, b.name(), titulo, subtitulo, verde, oscuro, dorado);
+            addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE LIMPIEZA Y DESINFECCIÓN", verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1.5f, 1f, 1.5f, 1f});
@@ -276,7 +278,7 @@ public class BpmPdfService {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private void addCabecera(Document doc, String brandName, String titulo, String subtitulo,
+    private void addCabecera(Document doc, String brandName, String logoUrl, String titulo, String subtitulo,
                               Color verde, Color oscuro, Color dorado) throws DocumentException {
         PdfPTable h = new PdfPTable(new float[]{3, 2});
         h.setWidthPercentage(100);
@@ -287,8 +289,15 @@ public class BpmPdfService {
         izq.setBorder(0);
         izq.setPaddingTop(10); izq.setPaddingBottom(10);
         izq.setPaddingLeft(12); izq.setPaddingRight(8);
-        izq.addElement(new Paragraph(brandName.toUpperCase(),
-                new Font(Font.HELVETICA, 7, Font.NORMAL, dorado)));
+
+        Image logo = cargarLogo(logoUrl);
+        if (logo != null) {
+            logo.scaleToFit(120, 36);
+            izq.addElement(logo);
+        } else {
+            izq.addElement(new Paragraph(brandName.toUpperCase(),
+                    new Font(Font.HELVETICA, 7, Font.NORMAL, dorado)));
+        }
         Paragraph t = new Paragraph(titulo, F_HEADER_TITLE);
         t.setSpacingBefore(4);
         izq.addElement(t);
@@ -374,6 +383,22 @@ public class BpmPdfService {
         c.setPadding(6);
         c.setHorizontalAlignment(Element.ALIGN_CENTER);
         tabla.addCell(c);
+    }
+
+    private Image cargarLogo(String logoUrl) {
+        if (logoUrl == null || logoUrl.isBlank()) return null;
+        try {
+            if (logoUrl.startsWith("http://") || logoUrl.startsWith("https://")) {
+                return Image.getInstance(new URL(logoUrl));
+            }
+            String path = "static/" + (logoUrl.startsWith("/") ? logoUrl.substring(1) : logoUrl);
+            try (InputStream is = getClass().getClassLoader().getResourceAsStream(path)) {
+                if (is == null) return null;
+                return Image.getInstance(is.readAllBytes());
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private static String nvl(String s) {
