@@ -3,6 +3,7 @@ package com.alera.model;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.TenantId;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -18,6 +19,7 @@ public class AvistamientoPlagas {
     private String tenantId;
 
     @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fecha;
 
     @Column(name = "presencia_plagas")

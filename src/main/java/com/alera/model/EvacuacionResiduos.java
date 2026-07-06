@@ -4,6 +4,7 @@ import com.alera.model.enums.TipoResiduo;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import org.hibernate.annotations.TenantId;
+import org.springframework.format.annotation.DateTimeFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -20,8 +21,10 @@ public class EvacuacionResiduos {
     private String tenantId;
 
     @NotNull
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fecha;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.TIME)
     @Column(name = "hora_salida")
     private LocalTime horaSalida;
 
