@@ -34,7 +34,7 @@ public class AvistamientoPlagas {
     @Column(name = "accion_tomada", columnDefinition = "TEXT")
     private String accionTomada;
 
-    @Column(length = 200)
+    @Column(columnDefinition = "TEXT")
     private String firma;
 
     @Column(name = "created_at")

@@ -40,10 +40,10 @@ public class RegistroSintomas {
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
-    @Column(name = "firma_manipulador", length = 200)
+    @Column(name = "firma_manipulador", columnDefinition = "TEXT")
     private String firmaManipulador;
 
-    @Column(name = "firma_responsable", length = 200)
+    @Column(name = "firma_responsable", columnDefinition = "TEXT")
     private String firmaResponsable;
 
     @Column(name = "autorizado_por_admin")

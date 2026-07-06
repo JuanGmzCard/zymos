@@ -66,8 +66,8 @@ public class BpmPdfService {
                 addTdBool(tabla, r.isInfeccionRespiratoria(), bg);
                 addTdBool(tabla, r.isLesionPiel(), bg);
                 addTd(tabla, nvl(r.getObservaciones()), bg);
-                addTd(tabla, nvl(r.getFirmaManipulador()), bg);
-                addTd(tabla, nvl(r.getFirmaResponsable()), bg);
+                addTdFirma(tabla, r.getFirmaManipulador(), bg);
+                addTdFirma(tabla, r.getFirmaResponsable(), bg);
                 alt = !alt;
             }
             if (registros.isEmpty()) addFilaVacia(tabla, 10);
@@ -99,12 +99,12 @@ public class BpmPdfService {
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE SOLUCIONES DESINFECTANTES", verde);
 
-            PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1f, 1.5f, 1f, 1.5f, 1.5f});
+            PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1f, 1.5f, 1f, 1.5f, 1.5f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
             String[] ths = {"Fecha", "Hora", "Producto", "Cant. Agua", "Unidad Agua",
-                    "Cant. Producto", "Unidad Prod.", "Conc. Final (%)", "Responsable"};
+                    "Cant. Producto", "Unidad Prod.", "Conc. Final (%)", "Responsable", "Firma"};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -119,9 +119,10 @@ public class BpmPdfService {
                 addTd(tabla, nvl(r.getUnidadProducto()), bg);
                 addTd(tabla, r.getConcentracionFinal() != null ? r.getConcentracionFinal().stripTrailingZeros().toPlainString() : "—", bg);
                 addTd(tabla, nvl(r.getResponsable()), bg);
+                addTdFirma(tabla, r.getFirma(), bg);
                 alt = !alt;
             }
-            if (registros.isEmpty()) addFilaVacia(tabla, 9);
+            if (registros.isEmpty()) addFilaVacia(tabla, 10);
 
             doc.add(tabla);
             addFirmas(doc, verde);
@@ -166,7 +167,7 @@ public class BpmPdfService {
                 addTd(tabla, nvl(r.getTipoPlagas()), bg);
                 addTd(tabla, nvl(r.getEstadoVentanasPuertas()), bg);
                 addTd(tabla, nvl(r.getAccionTomada()), bg);
-                addTd(tabla, nvl(r.getFirma()), bg);
+                addTdFirma(tabla, r.getFirma(), bg);
                 alt = !alt;
             }
             if (registros.isEmpty()) addFilaVacia(tabla, 6);
@@ -198,11 +199,11 @@ public class BpmPdfService {
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE EVACUACIÓN DE RESIDUOS", verde);
 
-            PdfPTable tabla = new PdfPTable(new float[]{1.5f, 1.2f, 2f, 1.5f, 2f});
+            PdfPTable tabla = new PdfPTable(new float[]{1.5f, 1.2f, 2f, 1.5f, 2f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
-            String[] ths = {"Fecha", "Hora Salida", "Tipo Residuo", "Recipientes Limpios", "Responsable"};
+            String[] ths = {"Fecha", "Hora Salida", "Tipo Residuo", "Recipientes Limpios", "Responsable", "Firma"};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -213,9 +214,10 @@ public class BpmPdfService {
                 addTd(tabla, r.getTipoResiduo() != null ? r.getTipoResiduo().getDisplayName() : "—", bg);
                 addTd(tabla, r.isRecipientesLimpios() ? "Sí" : "No", bg);
                 addTd(tabla, nvl(r.getResponsable()), bg);
+                addTdFirma(tabla, r.getFirma(), bg);
                 alt = !alt;
             }
-            if (registros.isEmpty()) addFilaVacia(tabla, 5);
+            if (registros.isEmpty()) addFilaVacia(tabla, 6);
 
             doc.add(tabla);
             addFirmas(doc, verde);
@@ -244,12 +246,12 @@ public class BpmPdfService {
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
             addSeccion(doc, "REGISTRO DE LIMPIEZA Y DESINFECCIÓN", verde);
 
-            PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1.5f, 1f, 1.5f, 1f});
+            PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1.5f, 1f, 1.5f, 1f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
             String[] ths = {"Fecha", "Día", "Área / Utensilio", "Detergente", "Sanitizador",
-                    "Concentración", "Responsable", "Visto Bueno"};
+                    "Concentración", "Responsable", "Visto Bueno", "Firma"};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -263,9 +265,10 @@ public class BpmPdfService {
                 addTd(tabla, nvl(r.getConcentracion()), bg);
                 addTd(tabla, nvl(r.getResponsable()), bg);
                 addTd(tabla, r.isVistoBueno() ? "✓" : "—", bg);
+                addTdFirma(tabla, r.getFirma(), bg);
                 alt = !alt;
             }
-            if (registros.isEmpty()) addFilaVacia(tabla, 8);
+            if (registros.isEmpty()) addFilaVacia(tabla, 9);
 
             doc.add(tabla);
             addFirmas(doc, verde);
@@ -399,6 +402,28 @@ public class BpmPdfService {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private void addTdFirma(PdfPTable tabla, String firmaData, Color bg) {
+        PdfPCell c = new PdfPCell();
+        c.setBackgroundColor(bg);
+        c.setBorderColor(new Color(210, 220, 200));
+        c.setPaddingTop(3); c.setPaddingBottom(3); c.setPaddingLeft(4); c.setPaddingRight(4);
+        c.setFixedHeight(28);
+        if (firmaData != null && firmaData.startsWith("data:image/")) {
+            try {
+                String base64 = firmaData.substring(firmaData.indexOf(',') + 1);
+                byte[] imgBytes = java.util.Base64.getDecoder().decode(base64);
+                Image img = Image.getInstance(imgBytes);
+                img.scaleToFit(60, 20);
+                c.addElement(img);
+            } catch (Exception e) {
+                c.addElement(new Phrase("Firmado", F_TD));
+            }
+        } else {
+            c.addElement(new Phrase(nvl(firmaData), F_TD));
+        }
+        tabla.addCell(c);
     }
 
     private static String nvl(String s) {

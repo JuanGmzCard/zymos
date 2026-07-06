@@ -45,6 +45,9 @@ public class LimpiezaDesinfeccion {
     @Column(name = "visto_bueno")
     private boolean vistoBueno;
 
+    @Column(columnDefinition = "TEXT")
+    private String firma;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -70,5 +73,7 @@ public class LimpiezaDesinfeccion {
     public void setResponsable(String v) { this.responsable = v; }
     public boolean isVistoBueno() { return vistoBueno; }
     public void setVistoBueno(boolean v) { this.vistoBueno = v; }
+    public String getFirma() { return firma; }
+    public void setFirma(String v) { this.firma = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }

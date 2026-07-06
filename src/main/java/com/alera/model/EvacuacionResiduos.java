@@ -39,6 +39,9 @@ public class EvacuacionResiduos {
     @Column(length = 200)
     private String responsable;
 
+    @Column(columnDefinition = "TEXT")
+    private String firma;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -58,5 +61,7 @@ public class EvacuacionResiduos {
     public void setRecipientesLimpios(boolean v) { this.recipientesLimpios = v; }
     public String getResponsable() { return responsable; }
     public void setResponsable(String v) { this.responsable = v; }
+    public String getFirma() { return firma; }
+    public void setFirma(String v) { this.firma = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
 }
