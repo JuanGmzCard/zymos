@@ -1,6 +1,8 @@
 package com.alera.controller;
 
 import com.alera.config.*;
+import com.alera.model.InsumoInventario;
+import com.alera.model.enums.TipoMovimiento;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.ExcelExportService;
@@ -26,7 +28,9 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(InsumoInventarioController.class)
@@ -109,5 +113,84 @@ class InsumoInventarioControllerTest {
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/inventario"))
                 .andExpect(flash().attribute("tipoMensaje", "danger"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("GET /inventario/nuevo retorna 200 con el formulario vacío")
+    void nuevo_conAdmin_retorna200() throws Exception {
+        mockMvc.perform(get("/inventario/nuevo"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("inventario/formulario"));
+    }
+
+    @Test
+    @WithMockUser(roles = "INVENTARIO")
+    @DisplayName("GET /inventario/editar/{id} con insumo existente retorna 200 con el formulario")
+    void editar_existe_retorna200() throws Exception {
+        InsumoInventario insumo = new InsumoInventario();
+        insumo.setId(1L);
+        insumo.setNombre("Malta Pilsen");
+        when(insumoService.buscarPorId(1L)).thenReturn(Optional.of(insumo));
+
+        mockMvc.perform(get("/inventario/editar/1"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("inventario/formulario"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /inventario/guardar redirige a /inventario con mensaje de éxito")
+    void guardar_redirige() throws Exception {
+        InsumoInventario saved = new InsumoInventario();
+        when(insumoService.guardar(any())).thenReturn(saved);
+
+        mockMvc.perform(post("/inventario/guardar").with(csrf())
+                        .param("nombre", "Malta Vienna")
+                        .param("tipo", "Malta")
+                        .param("unidad", "gr")
+                        .param("cantidad", "0")
+                        .param("stockMinimo", "0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"))
+                .andExpect(flash().attribute("tipoMensaje", "success"));
+    }
+
+    @Test
+    @WithMockUser(roles = "INVENTARIO")
+    @DisplayName("POST /inventario/actualizar/{id} redirige a /inventario con mensaje de éxito")
+    void actualizar_redirige() throws Exception {
+        InsumoInventario saved = new InsumoInventario();
+        when(insumoService.guardar(any())).thenReturn(saved);
+
+        mockMvc.perform(post("/inventario/actualizar/1").with(csrf())
+                        .param("nombre", "Malta Vienna")
+                        .param("tipo", "Malta")
+                        .param("unidad", "gr"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"))
+                .andExpect(flash().attribute("tipoMensaje", "success"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /inventario/eliminar/{id} redirige a /inventario con mensaje de éxito")
+    void eliminar_redirige() throws Exception {
+        mockMvc.perform(post("/inventario/eliminar/1").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"))
+                .andExpect(flash().attribute("tipoMensaje", "success"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /inventario/{id}/ajuste redirige a /inventario con mensaje de éxito")
+    void ajuste_redirige() throws Exception {
+        mockMvc.perform(post("/inventario/1/ajuste").with(csrf())
+                        .param("tipo", TipoMovimiento.ENTRADA.name())
+                        .param("cantidad", "500")
+                        .param("motivo", "Compra"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/inventario"));
     }
 }

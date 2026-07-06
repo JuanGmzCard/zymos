@@ -159,54 +159,61 @@
                             <div class="detail-label" th:text="#{label.estilo}">Estilo</div>
                             <div class="detail-value" th:text="${lote.estilo}">—</div>
                         </div>
-                        <div class="col-6">
-                            <div class="detail-label">
-                                <span th:text="${lote.numeroElaboraciones != null and lote.numeroElaboraciones == 2} ? #{traz.det.label.elaboracion1.fecha} : #{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones == 2}"
-                                      class="badge ms-1" style="background:#dbeafe;color:#1d4ed8;font-size:0.6rem;">2 elaboraciones</span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones == 3}"
-                                      class="badge ms-1" style="background:#dcfce7;color:#15803d;font-size:0.6rem;">3 elaboraciones</span>
-                            </div>
-                            <div class="detail-value">
-                                <span th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}"
-                                      class="d-block small text-muted mt-0">
-                                    <span th:text="#{traz.det.label.elaboracion2.fecha}">Sesión 2</span><span>: </span>
-                                    <span th:text="${lote.fechaSegundaElaboracion != null} ? ${#temporals.format(lote.fechaSegundaElaboracion,'dd/MM/yyyy')} : '—'">—</span>
-                                </span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3}"
-                                      class="d-block small text-muted mt-0">
-                                    <span th:text="#{traz.det.label.elaboracion3.fecha}">Sesión 3</span><span>: </span>
-                                    <span th:text="${lote.fechaTerceraElaboracion != null} ? ${#temporals.format(lote.fechaTerceraElaboracion,'dd/MM/yyyy')} : '—'">—</span>
-                                </span>
-                            </div>
+                        <!-- Fecha elaboración — solo para elaboración única -->
+                        <div class="col-6" th:if="${lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1}">
+                            <div class="detail-label" th:text="#{traz.det.label.fecha.elaboracion}">Fecha de Elaboración</div>
+                            <div class="detail-value" th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</div>
                         </div>
-                        <div class="col-6" th:if="${lote.horaInicioPrimeraElaboracion != null or lote.horaInicioSegundaElaboracion != null or lote.horaInicioTerceraElaboracion != null}">
+                        <!-- Hora inicio S1 — solo para elaboración única -->
+                        <div class="col-6" th:if="${(lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1) and lote.horaInicioPrimeraElaboracion != null}">
                             <div class="detail-label" th:text="#{traz.det.label.hora.inicio}">Hora Inicio</div>
-                            <div class="detail-value">
-                                <span th:text="${lote.horaInicioPrimeraElaboracion != null} ? ${#temporals.format(lote.horaInicioPrimeraElaboracion,'HH:mm')} : '—'">—</span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}"
-                                      class="d-block small text-muted mt-0">
-                                    S2: <span th:text="${lote.horaInicioSegundaElaboracion != null} ? ${#temporals.format(lote.horaInicioSegundaElaboracion,'HH:mm')} : '—'">—</span>
-                                </span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3}"
-                                      class="d-block small text-muted mt-0">
-                                    S3: <span th:text="${lote.horaInicioTerceraElaboracion != null} ? ${#temporals.format(lote.horaInicioTerceraElaboracion,'HH:mm')} : '—'">—</span>
-                                </span>
-                            </div>
+                            <div class="detail-value" th:text="${#temporals.format(lote.horaInicioPrimeraElaboracion,'HH:mm')}">—</div>
                         </div>
-                        <div class="col-6" th:if="${lote.horaFinPrimeraElaboracion != null or lote.horaFinSegundaElaboracion != null or lote.horaFinTerceraElaboracion != null}">
+                        <!-- Hora fin S1 — solo para elaboración única -->
+                        <div class="col-6" th:if="${(lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1) and lote.horaFinPrimeraElaboracion != null}">
                             <div class="detail-label" th:text="#{traz.det.label.hora.fin}">Hora Fin</div>
-                            <div class="detail-value">
-                                <span th:text="${lote.horaFinPrimeraElaboracion != null} ? ${#temporals.format(lote.horaFinPrimeraElaboracion,'HH:mm')} : '—'">—</span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}"
-                                      class="d-block small text-muted mt-0">
-                                    S2: <span th:text="${lote.horaFinSegundaElaboracion != null} ? ${#temporals.format(lote.horaFinSegundaElaboracion,'HH:mm')} : '—'">—</span>
-                                </span>
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3}"
-                                      class="d-block small text-muted mt-0">
-                                    S3: <span th:text="${lote.horaFinTerceraElaboracion != null} ? ${#temporals.format(lote.horaFinTerceraElaboracion,'HH:mm')} : '—'">—</span>
-                                </span>
+                            <div class="detail-value" th:text="${#temporals.format(lote.horaFinPrimeraElaboracion,'HH:mm')}">—</div>
+                        </div>
+                        <!-- Tabla de sesiones — solo para multi-elaboración -->
+                        <div class="col-12" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}">
+                            <div class="detail-label mb-2">
+                                Sesiones de elaboración
+                                <span class="badge ms-1" style="background:#dbeafe;color:#1d4ed8;font-size:0.6rem;"
+                                      th:if="${lote.numeroElaboraciones == 2}">2 elaboraciones</span>
+                                <span class="badge ms-1" style="background:#dcfce7;color:#15803d;font-size:0.6rem;"
+                                      th:if="${lote.numeroElaboraciones == 3}">3 elaboraciones</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-0" style="font-size:0.82rem;">
+                                    <thead>
+                                        <tr>
+                                            <th class="ps-2 py-1" style="width:14%;">Sesión</th>
+                                            <th class="py-1" th:text="#{traz.det.label.fecha.elaboracion}">Fecha</th>
+                                            <th class="py-1" th:text="#{traz.det.label.hora.inicio}">Hora Inicio</th>
+                                            <th class="py-1" th:text="#{traz.det.label.hora.fin}">Hora Fin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="ps-2 py-2 fw-semibold" style="font-size:0.78rem;">S1</td>
+                                            <td class="py-2" th:text="${lote.fechaElaboracion != null} ? ${#temporals.format(lote.fechaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaInicioPrimeraElaboracion != null} ? ${#temporals.format(lote.horaInicioPrimeraElaboracion,'HH:mm')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaFinPrimeraElaboracion != null} ? ${#temporals.format(lote.horaFinPrimeraElaboracion,'HH:mm')} : '—'">—</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="ps-2 py-2 fw-semibold" style="font-size:0.78rem;">S2</td>
+                                            <td class="py-2" th:text="${lote.fechaSegundaElaboracion != null} ? ${#temporals.format(lote.fechaSegundaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaInicioSegundaElaboracion != null} ? ${#temporals.format(lote.horaInicioSegundaElaboracion,'HH:mm')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaFinSegundaElaboracion != null} ? ${#temporals.format(lote.horaFinSegundaElaboracion,'HH:mm')} : '—'">—</td>
+                                        </tr>
+                                        <tr th:if="${lote.numeroElaboraciones >= 3}">
+                                            <td class="ps-2 py-2 fw-semibold" style="font-size:0.78rem;">S3</td>
+                                            <td class="py-2" th:text="${lote.fechaTerceraElaboracion != null} ? ${#temporals.format(lote.fechaTerceraElaboracion,'dd/MM/yyyy')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaInicioTerceraElaboracion != null} ? ${#temporals.format(lote.horaInicioTerceraElaboracion,'HH:mm')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaFinTerceraElaboracion != null} ? ${#temporals.format(lote.horaFinTerceraElaboracion,'HH:mm')} : '—'">—</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                         <div class="col-6">
@@ -292,17 +299,17 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.ogPrimeraElaboracion != null}">
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}">
                             <div class="densidad-box">
                                 <div class="densidad-tag">OG S1</div>
-                                <div class="densidad-valor" th:text="${lote.ogPrimeraElaboracion}">—</div>
+                                <div class="densidad-valor" th:text="${lote.ogPrimeraElaboracion != null} ? ${lote.ogPrimeraElaboracion} : '—'">—</div>
                                 <div class="detail-label" th:text="#{traz.det.label.elaboracion1.og}">OG Sesión 1 (pre-mezcla)</div>
                             </div>
                         </div>
-                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.ogSegundaElaboracion != null}">
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}">
                             <div class="densidad-box">
                                 <div class="densidad-tag">OG S2</div>
-                                <div class="densidad-valor" th:text="${lote.ogSegundaElaboracion}">—</div>
+                                <div class="densidad-valor" th:text="${lote.ogSegundaElaboracion != null} ? ${lote.ogSegundaElaboracion} : '—'">—</div>
                                 <div class="detail-label">
                                     <span th:text="#{traz.det.label.elaboracion2.og}">OG Sesión 2 (pre-mezcla)</span>
                                     <span th:if="${lote.ogBrixSegundaElaboracion != null}"
@@ -311,10 +318,10 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3 and lote.ogTerceraElaboracion != null}">
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3}">
                             <div class="densidad-box">
                                 <div class="densidad-tag">OG S3</div>
-                                <div class="densidad-valor" th:text="${lote.ogTerceraElaboracion}">—</div>
+                                <div class="densidad-valor" th:text="${lote.ogTerceraElaboracion != null} ? ${lote.ogTerceraElaboracion} : '—'">—</div>
                                 <div class="detail-label">
                                     <span th:text="#{traz.det.label.elaboracion3.og}">OG Sesión 3 (pre-mezcla)</span>
                                     <span th:if="${lote.ogBrixTerceraElaboracion != null}"
@@ -769,7 +776,7 @@
                     <div class="comparativa-box">
                         <div class="detail-label" th:text="#{traz.det.comp.abv}">ABV Objetivo</div>
                         <div class="comparativa-objetivo"
-                             th:text="${T(java.math.BigDecimal).valueOf((lote.receta.ogObjetivo - lote.receta.fgObjetivo) * 0.13125).stripTrailingZeros().toPlainString()} + ' %'">—</div>
+                             th:text="${#numbers.formatDecimal((lote.receta.ogObjetivo - lote.receta.fgObjetivo) * 0.13125, 1, 'POINT', 2, 'POINT')} + ' %'">—</div>
                         <div class="comparativa-real" th:if="${lote.abv != null}">
                             <span th:text="#{traz.det.comp.real}">Real:</span> <strong th:text="${lote.abv.stripTrailingZeros().toPlainString()} + ' %'"></strong>
                         </div>

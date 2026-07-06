@@ -526,6 +526,24 @@ public class TrazabilidadService {
         return keysBefore.equals(keysAfter);
     }
 
+    public void actualizarHora(Long id, String campo, String valor) {
+        LoteCerveza lote = loteRepo.findById(id)
+                .orElseThrow(() -> new LoteNoEncontradoException(id));
+        java.time.LocalTime hora = (valor != null && !valor.isBlank())
+                ? java.time.LocalTime.parse(valor) : null;
+        switch (campo) {
+            case "horaInicioPrimeraElaboracion"  -> lote.setHoraInicioPrimeraElaboracion(hora);
+            case "horaFinPrimeraElaboracion"     -> lote.setHoraFinPrimeraElaboracion(hora);
+            case "horaInicioSegundaElaboracion"  -> lote.setHoraInicioSegundaElaboracion(hora);
+            case "horaFinSegundaElaboracion"     -> lote.setHoraFinSegundaElaboracion(hora);
+            case "horaInicioTerceraElaboracion"  -> lote.setHoraInicioTerceraElaboracion(hora);
+            case "horaFinTerceraElaboracion"     -> lote.setHoraFinTerceraElaboracion(hora);
+            default -> throw new IllegalArgumentException("Campo de hora inválido: " + campo);
+        }
+        loteRepo.save(lote);
+        log.info("Hora actualizada en lote {}: {}={}", id, campo, valor);
+    }
+
     private String currentUser() {
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();

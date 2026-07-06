@@ -228,6 +228,14 @@
                     </a>
                 </li>
 
+                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN) -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')">
+                    <a class="nav-link" th:href="@{/bpm}"
+                       th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
+                        <i class="bi bi-clipboard2-check"></i> <span>BPM</span>
+                    </a>
+                </li>
+
                 <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"

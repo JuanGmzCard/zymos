@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}">
+    <meta name="_csrf_header" th:content="${_csrf.headerName}">
     <title th:text="${branding.name} + ' - ' + (${loteId != null} ? #{traz.form.title.editar} : #{traz.form.title.nuevo})">Alera - Lote</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
@@ -269,11 +271,27 @@
                     </div>
                     <div class="col-md-4" id="hora-inicio-s1-col">
                         <label class="form-label" th:text="#{traz.det.label.hora.inicio}">Hora Inicio</label>
-                        <input type="time" th:field="*{horaInicioPrimeraElaboracion}" class="form-control">
+                        <div class="input-group">
+                            <input type="time" th:field="*{horaInicioPrimeraElaboracion}" class="form-control hora-auto-input"
+                                   data-hora-campo="horaInicioPrimeraElaboracion">
+                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora"
+                                    data-hora-campo="horaInicioPrimeraElaboracion" title="Marcar hora actual">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                        </div>
+                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaInicioPrimeraElaboracion" style="min-height:1.2em"></div>
                     </div>
                     <div class="col-md-4" id="hora-fin-s1-col">
                         <label class="form-label" th:text="#{traz.det.label.hora.fin}">Hora Fin</label>
-                        <input type="time" th:field="*{horaFinPrimeraElaboracion}" class="form-control">
+                        <div class="input-group">
+                            <input type="time" th:field="*{horaFinPrimeraElaboracion}" class="form-control hora-auto-input"
+                                   data-hora-campo="horaFinPrimeraElaboracion">
+                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora"
+                                    data-hora-campo="horaFinPrimeraElaboracion" title="Marcar hora actual">
+                                <i class="bi bi-clock-history"></i>
+                            </button>
+                        </div>
+                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaFinPrimeraElaboracion" style="min-height:1.2em"></div>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label" for="numeroElaboracionesSelect" th:text="#{traz.form.doble.elaboracion.select.label.corto}">Elaboraciones</label>
@@ -498,11 +516,27 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec2.hora.inicio}">Hora Inicio S2</label>
-                                        <input type="time" th:field="*{horaInicioSegundaElaboracion}" class="form-control">
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaInicioSegundaElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaInicioSegundaElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaInicioSegundaElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaInicioSegundaElaboracion" style="min-height:1.2em"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec2.hora.fin}">Hora Fin S2</label>
-                                        <input type="time" th:field="*{horaFinSegundaElaboracion}" class="form-control">
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaFinSegundaElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaFinSegundaElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaFinSegundaElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaFinSegundaElaboracion" style="min-height:1.2em"></div>
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label small" for="agua2-display" th:text="#{traz.form.doble.elaboracion.sec2.agua}">Agua Sesión 2</label>
@@ -609,11 +643,27 @@
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec3.hora.inicio}">Hora Inicio S3</label>
-                                        <input type="time" th:field="*{horaInicioTerceraElaboracion}" class="form-control">
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaInicioTerceraElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaInicioTerceraElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaInicioTerceraElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaInicioTerceraElaboracion" style="min-height:1.2em"></div>
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec3.hora.fin}">Hora Fin S3</label>
-                                        <input type="time" th:field="*{horaFinTerceraElaboracion}" class="form-control">
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaFinTerceraElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaFinTerceraElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaFinTerceraElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaFinTerceraElaboracion" style="min-height:1.2em"></div>
                                     </div>
                                     <div class="col-md-5">
                                         <label class="form-label small" for="agua3-display" th:text="#{traz.form.doble.elaboracion.sec3.agua}">Agua Sesión 3</label>
@@ -1915,11 +1965,21 @@ function calcularSgDesdeBrix() {
         if (inpOg) inpOg.value = ogSg;
         var card1Prev = document.getElementById('og1CardSgPreview');
         if (card1Prev) card1Prev.value = ogSg;
+        var numCocSelBrix = document.getElementById('numeroElaboracionesSelect');
+        if (numCocSelBrix && parseInt(numCocSelBrix.value) >= 2) {
+            var ogS1Inp = document.querySelector('[name="ogPrimeraElaboracion"]');
+            if (ogS1Inp) ogS1Inp.value = ogSg;
+        }
     } else {
         if (ogPrev) ogPrev.value = '';
         if (inpOg) inpOg.value = '';
         var card1Prev = document.getElementById('og1CardSgPreview');
         if (card1Prev) card1Prev.value = '';
+        var numCocSelBrix = document.getElementById('numeroElaboracionesSelect');
+        if (numCocSelBrix && parseInt(numCocSelBrix.value) >= 2) {
+            var ogS1Inp = document.querySelector('[name="ogPrimeraElaboracion"]');
+            if (ogS1Inp) ogS1Inp.value = '';
+        }
     }
 
     if (!isNaN(ogB) && !isNaN(fgB) && ogB > 1 && fgB > 1) {
@@ -1953,7 +2013,7 @@ function calcularOgCombinado() {
         }
         var nameMap = { 1: 'ogPrimeraElaboracion', 2: 'ogSegundaElaboracion', 3: 'ogTerceraElaboracion' };
         var el = document.querySelector('[name="' + nameMap[n] + '"]');
-        return el ? parseInt(el.value) : NaN;
+        return el ? (Math.round(window.numVal(el.value)) || NaN) : NaN;
     }
 
     function getVol(n) {
@@ -2115,6 +2175,63 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     calcularOgCombinado();
 });
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var csrfToken  = (document.querySelector('meta[name="_csrf"]')        || {}).content;
+    var csrfHeader = (document.querySelector('meta[name="_csrf_header"]') || {}).content;
+
+    function guardarHora(campo, valor) {
+        if (!INIT_LOTE_ID) return Promise.resolve({ ok: false });
+        var body = 'campo=' + encodeURIComponent(campo);
+        if (valor) body += '&valor=' + encodeURIComponent(valor);
+        var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrfHeader && csrfToken) headers[csrfHeader] = csrfToken;
+        return fetch('/actualizar/' + INIT_LOTE_ID + '/hora', {
+            method: 'POST', headers: headers, body: body
+        }).then(function(r) { return r.json(); });
+    }
+
+    function setFeedback(campo, estado) {
+        var el = document.querySelector('.hora-feedback-msg[data-hora-campo="' + campo + '"]');
+        if (!el) return;
+        if (estado === 'saving') {
+            el.innerHTML = '<span class="text-secondary"><i class="bi bi-arrow-repeat"></i> Guardando...</span>';
+        } else if (estado === 'ok') {
+            el.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill"></i> Guardado</span>';
+            setTimeout(function() { el.innerHTML = ''; }, 3000);
+        } else if (estado === 'error') {
+            el.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill"></i> Error al guardar</span>';
+            setTimeout(function() { el.innerHTML = ''; }, 4000);
+        }
+    }
+
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.btn-marcar-hora');
+        if (!btn) return;
+        var campo = btn.dataset.horaCampo;
+        var input = document.querySelector('input.hora-auto-input[data-hora-campo="' + campo + '"]');
+        if (!input) return;
+        var now = new Date();
+        var horaStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        input.value = horaStr;
+        if (!INIT_LOTE_ID) return;
+        setFeedback(campo, 'saving');
+        guardarHora(campo, horaStr)
+            .then(function(d) { setFeedback(campo, d.ok ? 'ok' : 'error'); })
+            .catch(function() { setFeedback(campo, 'error'); });
+    });
+
+    document.addEventListener('blur', function(e) {
+        var input = e.target;
+        if (!input.classList.contains('hora-auto-input') || !INIT_LOTE_ID) return;
+        var campo = input.dataset.horaCampo;
+        setFeedback(campo, 'saving');
+        guardarHora(campo, input.value)
+            .then(function(d) { setFeedback(campo, d.ok ? 'ok' : 'error'); })
+            .catch(function() { setFeedback(campo, 'error'); });
+    }, true);
+})();
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js(v=20260702)}"></script>
 <script th:src="@{/js/trazabilidad-costos.js(v=20260702)}"></script>

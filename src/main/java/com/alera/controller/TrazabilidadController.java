@@ -394,7 +394,9 @@ public class TrazabilidadController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         com.alera.config.ExportBranding branding = com.alera.config.ExportBranding.from(tenant);
         List<LecturaFermentacion> lecturas = lecturaService.listarPorLote(id);
-        byte[] pdf = pdfExportService.generarPdfLote(lote, branding, lecturas, locale);
+        var evaluaciones = evaluacionService.listarPorLote(id);
+        var ventas = ventaService.listarPorLote(id);
+        byte[] pdf = pdfExportService.generarPdfLote(lote, branding, lecturas, evaluaciones, ventas, locale);
         String filename = "lote-" + lote.getCodigoLote().toLowerCase() + ".pdf";
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
@@ -426,6 +428,20 @@ public class TrazabilidadController {
         model.addAttribute("duplicadoDe", lote.getCodigoLote());
         agregarInventarioAlModelo(model);
         return "trazabilidad/formulario";
+    }
+
+    @PostMapping("/actualizar/{id}/hora")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> actualizarHora(
+            @PathVariable Long id,
+            @RequestParam String campo,
+            @RequestParam(required = false) String valor) {
+        try {
+            service.actualizarHora(id, campo, valor);
+            return ResponseEntity.ok(Map.of("ok", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", e.getMessage()));
+        }
     }
 
     @PostMapping("/actualizar/{id}/fase")

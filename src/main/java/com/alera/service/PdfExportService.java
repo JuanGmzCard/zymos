@@ -3,6 +3,7 @@ package com.alera.service;
 import com.alera.config.ExportBranding;
 import com.alera.model.AdicionHervor;
 import com.alera.model.EscalonMacerado;
+import com.alera.model.EvaluacionSensorial;
 import com.alera.model.Ingrediente;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
@@ -82,7 +83,10 @@ public class PdfExportService {
     // ── PDF Lote ─────────────────────────────────────────────────────
 
     public byte[] generarPdfLote(LoteCerveza lote, ExportBranding branding,
-                                  List<LecturaFermentacion> lecturas, Locale locale) {
+                                  List<LecturaFermentacion> lecturas,
+                                  List<EvaluacionSensorial> evaluaciones,
+                                  List<Venta> ventas,
+                                  Locale locale) {
         LOCALE_HOLDER.set(locale);
         try {
             Pal pal = Pal.of(branding);
@@ -137,6 +141,16 @@ public class PdfExportService {
                 if (hayObs || hayCata) {
                     addTituloPdf(doc, t("pdf.title.observaciones_cata"), pal);
                     addNotas(doc, lote, hayObs, hayCata, pal);
+                }
+
+                if (evaluaciones != null && !evaluaciones.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.evaluacion_sensorial"), pal);
+                    addEvaluaciones(doc, evaluaciones, pal);
+                }
+
+                if (ventas != null && !ventas.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.ventas_despacho"), pal);
+                    addVentas(doc, ventas, pal);
                 }
 
                 doc.add(new Paragraph("\n"));
@@ -1205,6 +1219,95 @@ public class PdfExportService {
         };
     }
 
+    private void addEvaluaciones(Document doc, List<EvaluacionSensorial> evaluaciones, Pal pal) throws DocumentException {
+        Font thFont   = new Font(Font.HELVETICA, 7, Font.BOLD,   pal.crema());
+        Font valFont  = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+        Font boldFont = new Font(Font.HELVETICA, 7, Font.BOLD,   pal.verdeOscuro());
+
+        // Promedio si hay más de una evaluación con puntaje
+        List<EvaluacionSensorial> conPuntaje = evaluaciones.stream()
+                .filter(e -> e.getPuntajeTotal() != null).collect(Collectors.toList());
+        if (conPuntaje.size() > 1) {
+            double avg = conPuntaje.stream().mapToInt(EvaluacionSensorial::getPuntajeTotal).average().orElse(0);
+            Font lbl2 = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.verde());
+            Font val2 = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            PdfPTable tp = new PdfPTable(new float[]{1.5f, 2, 1.5f, 2});
+            tp.setWidthPercentage(100); tp.setSpacingAfter(6);
+            par(tp, t("pdf.label.promedio_bjcp"), String.format("%.1f / 50", avg), lbl2, val2, pal);
+            par(tp, "", "", lbl2, val2, pal);
+            doc.add(tp);
+        }
+
+        // Tabla de evaluaciones
+        PdfPTable tbl = new PdfPTable(new float[]{1.5f, 1.5f, 0.85f, 0.85f, 0.85f, 0.85f, 0.85f, 1f, 2f});
+        tbl.setWidthPercentage(100);
+        for (String h : new String[]{
+                t("pdf.header.fecha"),         t("pdf.header.catador"),
+                t("pdf.header.aroma_bjcp"),    t("pdf.header.apariencia_bjcp"),
+                t("pdf.header.sabor_bjcp"),    t("pdf.header.boca_bjcp"),
+                t("pdf.header.general_bjcp"),  t("pdf.header.total"),
+                t("pdf.header.clasificacion")}) {
+            PdfPCell c = new PdfPCell(new Phrase(h, thFont));
+            c.setBackgroundColor(pal.verde()); c.setBorder(0);
+            c.setPadding(4); c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            tbl.addCell(c);
+        }
+        for (EvaluacionSensorial ev : evaluaciones) {
+            tableCell(tbl, ev.getFecha().format(FMT_FECHA),                                    valFont);
+            tableCell(tbl, ev.getCatador() != null ? ev.getCatador() : "—",                   valFont);
+            tableCellC(tbl, ev.getAroma()           != null ? String.valueOf(ev.getAroma())           : "—", valFont);
+            tableCellC(tbl, ev.getApariencia()      != null ? String.valueOf(ev.getApariencia())      : "—", valFont);
+            tableCellC(tbl, ev.getSabor()           != null ? String.valueOf(ev.getSabor())           : "—", valFont);
+            tableCellC(tbl, ev.getSensacionBoca()   != null ? String.valueOf(ev.getSensacionBoca())   : "—", valFont);
+            tableCellC(tbl, ev.getImpresionGeneral()!= null ? String.valueOf(ev.getImpresionGeneral()): "—", valFont);
+            tableCellC(tbl, ev.getPuntajeTotal()    != null ? String.valueOf(ev.getPuntajeTotal())    : "—", boldFont);
+            tableCell(tbl, ev.getClasificacion()   != null ? ev.getClasificacion()   : "—",   valFont);
+        }
+        doc.add(tbl);
+
+        // Notas de evaluación (solo si alguna tiene)
+        boolean hayNotas = evaluaciones.stream().anyMatch(e -> notBlank(e.getNotas()));
+        if (hayNotas) {
+            Font lblN = new Font(Font.HELVETICA, 7, Font.BOLD,   pal.verde());
+            Font valN = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+            PdfPTable tn = new PdfPTable(new float[]{2f, 6f});
+            tn.setWidthPercentage(100); tn.setSpacingBefore(4);
+            for (EvaluacionSensorial ev : evaluaciones) {
+                if (!notBlank(ev.getNotas())) continue;
+                String key = ev.getFecha().format(FMT_FECHA)
+                        + (notBlank(ev.getCatador()) ? " · " + ev.getCatador() : "");
+                par(tn, key, ev.getNotas(), lblN, valN, pal);
+            }
+            doc.add(tn);
+        }
+    }
+
+    private void addVentas(Document doc, List<Venta> ventas, Pal pal) throws DocumentException {
+        Font thFont  = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.crema());
+        Font valFont = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+        Font totFont = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.verdeOscuro());
+
+        PdfPTable tbl = new PdfPTable(new float[]{3, 1.5f, 1.5f, 1f, 2f});
+        tbl.setWidthPercentage(100);
+        for (String h : new String[]{
+                t("pdf.header.cliente"),       t("pdf.header.fecha"),
+                t("pdf.label.estado"),         t("pdf.header.cantidad"),
+                t("pdf.header.valor_total")}) {
+            PdfPCell c = new PdfPCell(new Phrase(h, thFont));
+            c.setBackgroundColor(pal.verde()); c.setBorder(0);
+            c.setPadding(5); c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            tbl.addCell(c);
+        }
+        for (Venta v : ventas) {
+            tableCell(tbl, v.getCliente(), valFont);
+            tableCell(tbl, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "—", valFont);
+            tableCell(tbl, v.getEstado().getDisplayName(), valFont);
+            tableCellC(tbl, String.valueOf(v.getItemsCount()), valFont);
+            tableCellR(tbl, "$ " + String.format("%,.0f", v.getValorTotal().doubleValue()), totFont);
+        }
+        doc.add(tbl);
+    }
+
     // ── Helpers comunes ──────────────────────────────────────────────
 
     private void par(PdfPTable t, String label, String value, Font lbl, Font val, Pal pal) {
@@ -1219,6 +1322,20 @@ public class PdfExportService {
     private void tableCell(PdfPTable t, String text, Font font) {
         PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "—", font));
         c.setBorderColor(C_BORDE); c.setPadding(4);
+        t.addCell(c);
+    }
+
+    private void tableCellC(PdfPTable t, String text, Font font) {
+        PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        c.setBorderColor(C_BORDE); c.setPadding(4);
+        c.setHorizontalAlignment(Element.ALIGN_CENTER);
+        t.addCell(c);
+    }
+
+    private void tableCellR(PdfPTable t, String text, Font font) {
+        PdfPCell c = new PdfPCell(new Phrase(text != null ? text : "—", font));
+        c.setBorderColor(C_BORDE); c.setPadding(4);
+        c.setHorizontalAlignment(Element.ALIGN_RIGHT);
         t.addCell(c);
     }
 

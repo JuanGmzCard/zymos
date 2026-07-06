@@ -90,7 +90,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lote mínimo y sin lecturas")
     void generarPdfLote_loteMinimo_sinLecturas_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
+        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -98,7 +98,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lote completo (densidades, fases, observaciones)")
     void generarPdfLote_loteCompleto_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteCompleto(), ExportBranding.defaults("Mosto Cervecería"), List.of(), ES);
+        byte[] resultado = service.generarPdfLote(loteCompleto(), ExportBranding.defaults("Mosto Cervecería"), List.of(), List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -114,7 +114,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 10), 1012, new BigDecimal("18.9"))
         );
 
-        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, ES);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -129,7 +129,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 10), 1012, null)
         );
 
-        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, ES);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -143,7 +143,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 5), null, new BigDecimal("19.5"))
         );
 
-        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, ES);
+        byte[] resultado = service.generarPdfLote(lote, BRANDING, lecturas, List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -151,7 +151,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF válido con lecturas null (trata igual que lista vacía)")
     void generarPdfLote_lecturasNull_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, null, ES);
+        byte[] resultado = service.generarPdfLote(loteMinimo(), BRANDING, null, List.of(), List.of(), ES);
 
         assertEsPdf(resultado);
     }
@@ -159,7 +159,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF generado tiene un tamaño razonable (mayor a 1KB)")
     void generarPdfLote_tamanioRazonable() {
-        byte[] resultado = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), ES);
+        byte[] resultado = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(resultado.length).isGreaterThan(1024);
     }
@@ -172,8 +172,8 @@ class PdfExportServiceTest {
         lote2.setCodigoLote("STOUT-001");
         lote2.setEstilo("Stout");
 
-        byte[] pdf1 = service.generarPdfLote(lote1, BRANDING, List.of(), ES);
-        byte[] pdf2 = service.generarPdfLote(lote2, BRANDING, List.of(), ES);
+        byte[] pdf1 = service.generarPdfLote(lote1, BRANDING, List.of(), List.of(), List.of(), ES);
+        byte[] pdf2 = service.generarPdfLote(lote2, BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(pdf1).isNotEqualTo(pdf2);
     }
@@ -181,7 +181,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("genera PDF en inglés sin excepciones")
     void generarPdfLote_localeIngles_producePdf() {
-        byte[] resultado = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), EN);
+        byte[] resultado = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), List.of(), List.of(), EN);
 
         assertEsPdf(resultado);
     }
@@ -191,7 +191,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene el código de lote en la cabecera")
     void generarPdfLote_contieneCodigoLote() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("IPA-001");
     }
@@ -199,7 +199,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene el estilo de la cerveza")
     void generarPdfLote_contieneEstilo() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("India Pale Ale");
     }
@@ -207,7 +207,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene la fecha de elaboración formateada dd/MM/yyyy")
     void generarPdfLote_contieneFechaElaboracion() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("01/03/2025");
     }
@@ -215,7 +215,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene el nombre del tenant en mayúsculas")
     void generarPdfLote_contieneBrandName() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), ExportBranding.defaults("Cervecería Mosto"), List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), ExportBranding.defaults("Cervecería Mosto"), List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).containsIgnoringCase("Cervecería Mosto");
     }
@@ -223,7 +223,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene el ABV calculado (OG=1058, FG=1012 → 6.04%)")
     void generarPdfLote_contieneAbvCalculado() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         // ABV = (1058 - 1012) * 131.25 / 1000 = 6.04
         assertThat(extractPdfText(pdf)).contains("6.04");
@@ -232,7 +232,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene el texto de observaciones cuando está presente")
     void generarPdfLote_contieneObservaciones() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("Sin observaciones relevantes");
     }
@@ -240,7 +240,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF contiene las notas de cata cuando están presentes")
     void generarPdfLote_contieneNotasCata() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteCompleto(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("Amargor equilibrado");
     }
@@ -248,7 +248,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF en español contiene el título de sección 'INFORMACIÓN DEL LOTE'")
     void generarPdfLote_esParanol_contieneTituloSeccionES() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf))
                 .contains(MSG.getMessage("pdf.title.info_lote", null, ES));
@@ -257,7 +257,7 @@ class PdfExportServiceTest {
     @Test
     @DisplayName("el PDF en inglés contiene el título de sección 'BATCH INFORMATION'")
     void generarPdfLote_ingles_contieneTituloSeccionEN() throws Exception {
-        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), EN);
+        byte[] pdf = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), EN);
 
         assertThat(extractPdfText(pdf))
                 .contains(MSG.getMessage("pdf.title.info_lote", null, EN));
@@ -269,8 +269,8 @@ class PdfExportServiceTest {
         String tituloES = MSG.getMessage("pdf.title.info_lote", null, ES);
         String tituloEN = MSG.getMessage("pdf.title.info_lote", null, EN);
 
-        byte[] pdfES = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), ES);
-        byte[] pdfEN = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), EN);
+        byte[] pdfES = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), ES);
+        byte[] pdfEN = service.generarPdfLote(loteMinimo(), BRANDING, List.of(), List.of(), List.of(), EN);
 
         assertThat(extractPdfText(pdfES)).contains(tituloES);
         assertThat(extractPdfText(pdfEN)).contains(tituloEN);
@@ -287,7 +287,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 10), 1012, new BigDecimal("18.9"))
         );
 
-        byte[] pdf = service.generarPdfLote(lote, BRANDING, lecturas, ES);
+        byte[] pdf = service.generarPdfLote(lote, BRANDING, lecturas, List.of(), List.of(), ES);
         String text = extractPdfText(pdf);
 
         // La tabla de lecturas incluye densidades y fechas
@@ -304,7 +304,7 @@ class PdfExportServiceTest {
                 lectura(LocalDate.of(2025, 3, 8),  1015, null)
         );
 
-        byte[] pdf = service.generarPdfLote(lote, BRANDING, lecturas, ES);
+        byte[] pdf = service.generarPdfLote(lote, BRANDING, lecturas, List.of(), List.of(), ES);
 
         assertThat(extractPdfText(pdf)).contains("08/03/2025");
     }
@@ -317,8 +317,8 @@ class PdfExportServiceTest {
         lote2.setCodigoLote("STOUT-007");
         lote2.setEstilo("Stout Imperial");
 
-        String text1 = extractPdfText(service.generarPdfLote(lote1, BRANDING, List.of(), ES));
-        String text2 = extractPdfText(service.generarPdfLote(lote2, BRANDING, List.of(), ES));
+        String text1 = extractPdfText(service.generarPdfLote(lote1, BRANDING, List.of(), List.of(), List.of(), ES));
+        String text2 = extractPdfText(service.generarPdfLote(lote2, BRANDING, List.of(), List.of(), List.of(), ES));
 
         assertThat(text1).contains("IPA-001").doesNotContain("STOUT-007");
         assertThat(text2).contains("STOUT-007").doesNotContain("IPA-001");
