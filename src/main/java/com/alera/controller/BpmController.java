@@ -212,14 +212,14 @@ public class BpmController {
     @GetMapping("/soluciones/nuevo")
     public String nuevaSolucion(Model model) {
         model.addAttribute("registro", new SolucionDesinfectante());
-        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
+        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("Químico"));
         return "bpm/soluciones/formulario";
     }
 
     @GetMapping("/soluciones/editar/{id}")
     public String editarSolucion(@PathVariable Long id, Model model) {
         model.addAttribute("registro", service.buscarSolucion(id));
-        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
+        model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("Químico"));
         return "bpm/soluciones/formulario";
     }
 
@@ -228,7 +228,7 @@ public class BpmController {
                                    BindingResult br, Model model,
                                    RedirectAttributes flash) {
         if (br.hasErrors()) {
-            model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("QUIMICO"));
+            model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("Químico"));
             return "bpm/soluciones/formulario";
         }
         service.guardarSolucion(r);
