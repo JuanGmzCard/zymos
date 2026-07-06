@@ -12,12 +12,14 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -40,6 +42,67 @@ public class BpmController {
     @ModelAttribute("usuarios")
     public List<Usuario> populateUsuarios() {
         return usuarioService.listarTodos();
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // SALUD DIARIO
+    // ══════════════════════════════════════════════════════════════════════════
+
+    @GetMapping("/salud/diario")
+    public String saludDiario(Model model, Principal principal) {
+        String username = principal.getName();
+        var existente = service.buscarHoyPorUsuario(username);
+        model.addAttribute("hoy", LocalDate.now());
+        if (existente.isPresent()) {
+            model.addAttribute("registro", existente.get());
+            model.addAttribute("yaCompletado", true);
+        } else {
+            RegistroSintomas nuevo = new RegistroSintomas();
+            nuevo.setNombreManipulador(username);
+            nuevo.setFecha(LocalDate.now());
+            model.addAttribute("registro", nuevo);
+            model.addAttribute("yaCompletado", false);
+        }
+        return "bpm/salud/diario";
+    }
+
+    @PostMapping("/salud/diario")
+    public String guardarSaludDiario(@ModelAttribute("registro") RegistroSintomas r,
+                                      Principal principal) {
+        String username = principal.getName();
+        // Si ya existe el registro de hoy, no guardar de nuevo
+        if (service.buscarHoyPorUsuario(username).isPresent()) {
+            return "redirect:/dashboard";
+        }
+        r.setNombreManipulador(username);
+        r.setFecha(LocalDate.now());
+        service.guardarSintoma(r);
+        return r.tieneSintomas() ? "redirect:/bpm/salud/bloqueado" : "redirect:/dashboard";
+    }
+
+    @GetMapping("/salud/bloqueado")
+    public String saludBloqueado(Model model, Principal principal) {
+        model.addAttribute("registro",
+                service.buscarHoyPorUsuario(principal.getName()).orElse(null));
+        return "bpm/salud/bloqueado";
+    }
+
+    @GetMapping("/salud/autorizaciones")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public String autorizaciones(Model model) {
+        model.addAttribute("registros", service.listarConSintomasHoy());
+        model.addAttribute("hoy", LocalDate.now());
+        return "bpm/salud/autorizaciones";
+    }
+
+    @PostMapping("/salud/autorizar/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
+    public String autorizar(@PathVariable Long id, Principal principal,
+                             RedirectAttributes flash) {
+        service.autorizarAcceso(id, principal.getName());
+        flash.addFlashAttribute("mensaje", "Acceso autorizado correctamente");
+        flash.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/bpm/salud/autorizaciones";
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────

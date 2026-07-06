@@ -44,6 +44,12 @@ public class RegistroSintomas {
     @Column(name = "firma_responsable", length = 200)
     private String firmaResponsable;
 
+    @Column(name = "autorizado_por_admin")
+    private boolean autorizadoPorAdmin = false;
+
+    @Column(name = "autorizado_por", length = 100)
+    private String autorizadoPor;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -74,6 +80,10 @@ public class RegistroSintomas {
     public String getFirmaResponsable() { return firmaResponsable; }
     public void setFirmaResponsable(String v) { this.firmaResponsable = v; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public boolean isAutorizadoPorAdmin() { return autorizadoPorAdmin; }
+    public void setAutorizadoPorAdmin(boolean v) { this.autorizadoPorAdmin = v; }
+    public String getAutorizadoPor() { return autorizadoPor; }
+    public void setAutorizadoPor(String v) { this.autorizadoPor = v; }
 
     public boolean tieneSintomas() {
         return diarrea || vomito || fiebre || infeccionRespiratoria || lesionPiel;

@@ -11,4 +11,6 @@ public interface RegistroSintomasRepository extends JpaRepository<RegistroSintom
     List<RegistroSintomas> findAllByOrderByFechaDescIdDesc();
     List<RegistroSintomas> findByFechaBetweenOrderByFechaAscNombreManipuladorAsc(LocalDate desde, LocalDate hasta);
     long countByFechaBetween(LocalDate desde, LocalDate hasta);
+    java.util.Optional<RegistroSintomas> findByNombreManipuladorAndFecha(String nombreManipulador, LocalDate fecha);
+    List<RegistroSintomas> findByFechaOrderByNombreManipuladorAsc(LocalDate fecha);
 }

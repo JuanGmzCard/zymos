@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -55,6 +57,28 @@ public class BpmService {
     public void guardarSintoma(RegistroSintomas r) {
         sintomasRepo.save(r);
         log.info("BPM síntomas guardado: {} - {}", r.getFecha(), r.getNombreManipulador());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RegistroSintomas> buscarHoyPorUsuario(String username) {
+        return sintomasRepo.findByNombreManipuladorAndFecha(username, LocalDate.now());
+    }
+
+    @Transactional(readOnly = true)
+    public List<RegistroSintomas> listarConSintomasHoy() {
+        return sintomasRepo.findByFechaOrderByNombreManipuladorAsc(LocalDate.now())
+                .stream()
+                .filter(RegistroSintomas::tieneSintomas)
+                .collect(Collectors.toList());
+    }
+
+    public void autorizarAcceso(Long id, String adminUsername) {
+        RegistroSintomas r = sintomasRepo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Registro no encontrado: " + id));
+        r.setAutorizadoPorAdmin(true);
+        r.setAutorizadoPor(adminUsername);
+        sintomasRepo.save(r);
+        log.info("BPM acceso autorizado por {} para registro {}", adminUsername, id);
     }
 
     public void eliminarSintoma(Long id) {

@@ -1,5 +1,6 @@
 package com.alera.config;
 
+import com.alera.repository.RegistroSintomasRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.JwtService;
 import com.alera.service.UsuarioService;
@@ -91,6 +92,18 @@ public class SecurityConfig {
     }
 
     @Bean
+    public BpmSaludFilter bpmSaludFilter(RegistroSintomasRepository sintomasRepo) {
+        return new BpmSaludFilter(sintomasRepo);
+    }
+
+    @Bean
+    public FilterRegistrationBean<BpmSaludFilter> bpmSaludFilterRegistration(BpmSaludFilter filter) {
+        FilterRegistrationBean<BpmSaludFilter> reg = new FilterRegistrationBean<>(filter);
+        reg.setEnabled(false);
+        return reg;
+    }
+
+    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
     }
@@ -141,6 +154,7 @@ public class SecurityConfig {
                                             LoginAttemptFilter loginAttemptFilter,
                                             JwtFilter jwtFilter,
                                             ApiRateLimitFilter apiRateLimitFilter,
+                                            BpmSaludFilter bpmSaludFilter,
                                             ZymosAuthSuccessHandler successHandler,
                                             ZymosAuthFailureHandler failureHandler,
                                             ZymosAccessDeniedHandler accessDeniedHandler,
@@ -152,6 +166,7 @@ public class SecurityConfig {
             .addFilterBefore(loginAttemptFilter, SecurityContextHolderFilter.class)
             .addFilterBefore(apiRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(bpmSaludFilter, UsernamePasswordAuthenticationFilter.class)
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
             .sessionManagement(session -> session
@@ -192,6 +207,9 @@ public class SecurityConfig {
                 .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "PRODUCCION", "SUPERADMIN")
                 .requestMatchers("/barriles/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
                 .requestMatchers("/ordenes-compra/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
+                .requestMatchers("/bpm/salud/autorizaciones", "/bpm/salud/autorizar/**")
+                    .hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/bpm/salud/**").authenticated()
                 .requestMatchers("/bpm/**").hasAnyRole("ADMIN", "PRODUCCION", "SUPERADMIN")
 
                 .anyRequest().authenticated()
