@@ -102,8 +102,9 @@ public class BpmController {
     @PostMapping("/salud/autorizar/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String autorizar(@PathVariable Long id, Principal principal,
+                             @RequestParam(required = false) String firmaResponsable,
                              RedirectAttributes flash) {
-        service.autorizarAcceso(id, principal.getName());
+        service.autorizarAcceso(id, principal.getName(), firmaResponsable);
         flash.addFlashAttribute("mensaje", "Acceso autorizado correctamente");
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/salud/autorizaciones";

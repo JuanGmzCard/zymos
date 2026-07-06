@@ -72,11 +72,14 @@ public class BpmService {
                 .collect(Collectors.toList());
     }
 
-    public void autorizarAcceso(Long id, String adminUsername) {
+    public void autorizarAcceso(Long id, String adminUsername, String firmaResponsable) {
         RegistroSintomas r = sintomasRepo.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Registro no encontrado: " + id));
         r.setAutorizadoPorAdmin(true);
         r.setAutorizadoPor(adminUsername);
+        if (firmaResponsable != null && !firmaResponsable.isBlank()) {
+            r.setFirmaResponsable(firmaResponsable);
+        }
         sintomasRepo.save(r);
         log.info("BPM acceso autorizado por {} para registro {}", adminUsername, id);
     }
