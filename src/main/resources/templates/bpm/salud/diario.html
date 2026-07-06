@@ -66,12 +66,20 @@
                 <a th:href="@{/bpm/salud/bloqueado}" class="btn btn-danger w-100">
                     <i class="bi bi-shield-x me-1"></i>Ver estado de acceso
                 </a>
+                <a th:href="@{/bpm/sintomas/{id}/pdf(id=${registro.id})}"
+                   class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Descargar mi registro en PDF
+                </a>
             </div>
 
             <!-- Sin síntomas o autorizado -->
             <div th:unless="${registro.tieneSintomas() and !registro.autorizadoPorAdmin}">
                 <a th:href="@{/dashboard}" class="btn btn-primary w-100 btn-lg">
                     <i class="bi bi-speedometer2 me-1"></i>Ir al Dashboard
+                </a>
+                <a th:href="@{/bpm/sintomas/{id}/pdf(id=${registro.id})}"
+                   class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Descargar mi registro en PDF
                 </a>
             </div>
         </div>
