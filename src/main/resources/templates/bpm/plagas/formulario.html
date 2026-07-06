@@ -87,8 +87,12 @@
 
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Firma Responsable</label>
-                        <input type="text" class="form-control" th:field="*{firma}"
-                               placeholder="Nombre o rúbrica">
+                        <select class="form-select" th:field="*{firma}">
+                            <option value="">— Seleccionar —</option>
+                            <option th:each="u : ${usuarios}"
+                                    th:value="${u.username}"
+                                    th:text="${u.username + ' — ' + u.rol.displayName + (!u.activo ? ' (inactivo)' : '')}"></option>
+                        </select>
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end pt-2">

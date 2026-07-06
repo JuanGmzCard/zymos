@@ -92,8 +92,12 @@
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Responsable</label>
-                            <input type="text" class="form-control" th:field="*{responsable}"
-                                   placeholder="Nombre del responsable">
+                            <select class="form-select" th:field="*{responsable}">
+                                <option value="">— Seleccionar —</option>
+                                <option th:each="u : ${usuarios}"
+                                        th:value="${u.username}"
+                                        th:text="${u.username + ' — ' + u.rol.displayName + (!u.activo ? ' (inactivo)' : '')}"></option>
+                            </select>
                         </div>
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">Visto Bueno</label>

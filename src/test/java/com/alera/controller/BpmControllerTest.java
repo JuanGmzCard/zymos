@@ -3,11 +3,7 @@ package com.alera.controller;
 import com.alera.config.*;
 import com.alera.model.*;
 import com.alera.repository.TenantRepository;
-import com.alera.service.BpmPdfService;
-import com.alera.service.BpmService;
-import com.alera.service.JwtService;
-import com.alera.service.LogAccesoService;
-import com.alera.service.UsuarioService;
+import com.alera.service.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +43,7 @@ class BpmControllerTest {
     @BeforeEach
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
+        when(usuarioService.listarTodos()).thenReturn(List.of());
         when(bpmService.contarSintomasMes(any(), any())).thenReturn(0L);
         when(bpmService.contarSolucionesMes(any(), any())).thenReturn(0L);
         when(bpmService.contarPlagasMes(any(), any())).thenReturn(0L);

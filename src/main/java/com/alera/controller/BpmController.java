@@ -5,6 +5,7 @@ import com.alera.model.*;
 import com.alera.model.enums.TipoResiduo;
 import com.alera.service.BpmPdfService;
 import com.alera.service.BpmService;
+import com.alera.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -19,6 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Locale;
 
 @Controller
@@ -27,10 +29,17 @@ public class BpmController {
 
     private final BpmService service;
     private final BpmPdfService pdfService;
+    private final UsuarioService usuarioService;
 
-    public BpmController(BpmService service, BpmPdfService pdfService) {
+    public BpmController(BpmService service, BpmPdfService pdfService, UsuarioService usuarioService) {
         this.service = service;
         this.pdfService = pdfService;
+        this.usuarioService = usuarioService;
+    }
+
+    @ModelAttribute("usuarios")
+    public List<Usuario> populateUsuarios() {
+        return usuarioService.listarTodos();
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
