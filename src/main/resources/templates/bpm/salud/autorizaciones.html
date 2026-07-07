@@ -137,9 +137,8 @@
                                 </a>
                                 <button th:unless="${r.autorizadoPorAdmin}"
                                         type="button"
-                                        class="btn btn-success btn-sm"
-                                        th:attr="data-id=${r.id},data-nombre=${r.nombreManipulador}"
-                                        onclick="abrirModalAutorizar(this)">
+                                        class="btn btn-success btn-sm btn-autorizar"
+                                        th:attr="data-id=${r.id},data-nombre=${r.nombreManipulador}">
                                     <i class="bi bi-pen me-1"></i>Firmar y autorizar
                                 </button>
                                 <span th:if="${r.autorizadoPorAdmin}" class="text-muted" style="font-size:.8rem;">—</span>
@@ -196,55 +195,52 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
-<script>
-(function () {
+<script th:attr="nonce=${cspNonce}">
+document.addEventListener('DOMContentLoaded', function () {
     var pad = null;
+    var canvas = document.getElementById('firma-canvas-autorizar');
+    var placeholder = document.getElementById('firma-placeholder-auto');
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var canvas = document.getElementById('firma-canvas-autorizar');
-        var placeholder = document.getElementById('firma-placeholder-auto');
-
-        function initPad() {
-            var ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width  = canvas.offsetWidth  * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext('2d').scale(ratio, ratio);
-            pad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)' });
-            canvas.addEventListener('pointerdown', function () {
-                if (placeholder) placeholder.style.display = 'none';
-            });
-        }
-
-        document.getElementById('modalAutorizar').addEventListener('shown.bs.modal', function () {
-            if (!pad) initPad(); else pad.clear();
-            if (placeholder) placeholder.style.display = '';
+    function initPad() {
+        var ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width  = canvas.offsetWidth  * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext('2d').scale(ratio, ratio);
+        pad = new SignaturePad(canvas, { backgroundColor: 'rgb(255,255,255)' });
+        canvas.addEventListener('pointerdown', function () {
+            if (placeholder) placeholder.style.display = 'none';
         });
+    }
 
-        document.getElementById('btn-limpiar-firma').addEventListener('click', function () {
-            if (pad) pad.clear();
-            if (placeholder) placeholder.style.display = '';
-            document.getElementById('firma-error').style.display = 'none';
-        });
-
-        document.getElementById('form-autorizar').addEventListener('submit', function (e) {
-            if (!pad || pad.isEmpty()) {
-                e.preventDefault();
-                document.getElementById('firma-error').style.display = '';
-                return;
-            }
-            document.getElementById('firma-responsable-input').value = pad.toDataURL('image/png');
-        });
-    });
-
-    window.abrirModalAutorizar = function (btn) {
-        var id     = btn.dataset.id;
-        var nombre = btn.dataset.nombre;
-        document.getElementById('modal-nombre-usuario').textContent = nombre;
-        document.getElementById('form-autorizar').action = '/bpm/salud/autorizar/' + id;
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn-autorizar');
+        if (!btn) return;
+        document.getElementById('modal-nombre-usuario').textContent = btn.dataset.nombre;
+        document.getElementById('form-autorizar').action = '/bpm/salud/autorizar/' + btn.dataset.id;
         document.getElementById('firma-error').style.display = 'none';
         new bootstrap.Modal(document.getElementById('modalAutorizar')).show();
-    };
-}());
+    });
+
+    document.getElementById('modalAutorizar').addEventListener('shown.bs.modal', function () {
+        if (!pad) initPad(); else pad.clear();
+        if (placeholder) placeholder.style.display = '';
+    });
+
+    document.getElementById('btn-limpiar-firma').addEventListener('click', function () {
+        if (pad) pad.clear();
+        if (placeholder) placeholder.style.display = '';
+        document.getElementById('firma-error').style.display = 'none';
+    });
+
+    document.getElementById('form-autorizar').addEventListener('submit', function (e) {
+        if (!pad || pad.isEmpty()) {
+            e.preventDefault();
+            document.getElementById('firma-error').style.display = '';
+            return;
+        }
+        document.getElementById('firma-responsable-input').value = pad.toDataURL('image/png');
+    });
+});
 </script>
 </body>
 </html>
