@@ -805,7 +805,7 @@ html.dark-mode .pagination .page-item.disabled .page-link {
 
 /* Hero section en dark mode — gradiente más profundo + textos interiores */
 html.dark-mode .hero-section {
-    background: linear-gradient(135deg, #1e2a0a 0%, #111606 100%) !important;
+    background: linear-gradient(135deg, var(--dm-card) 0%, var(--dm-bg) 100%) !important;
 }
 html.dark-mode .hero-section p,
 html.dark-mode .hero-section small {
