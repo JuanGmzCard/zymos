@@ -165,6 +165,21 @@
         html.dark-mode .wz-dot { background: var(--dm-border-heavy); }
         html.dark-mode .wz-tab.done { color: #6ee6a0 !important; }
         html.dark-mode .wz-tab.done .wz-num { background: #27ae60 !important; color: #fff !important; }
+        /* Secciones multi-elaboración */
+        html.dark-mode #primera-elaboracion-section .card.border-0,
+        html.dark-mode #segunda-elaboracion-section .card.border-0,
+        html.dark-mode #tercera-elaboracion-section .card.border-0 { background: var(--dm-card) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode #primera-elaboracion-section .card-header,
+        html.dark-mode #segunda-elaboracion-section .card-header,
+        html.dark-mode #tercera-elaboracion-section .card-header { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
+        /* OG combinado y costos de producción */
+        html.dark-mode #og-combinado-box > div { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode .card:has(#costos-collapse) { background: var(--dm-card) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode [data-bs-target="#costos-collapse"] { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode #costo-resultados table thead,
+        html.dark-mode #costo-asignados-wrap table thead { background: var(--dm-input) !important; }
+        /* Inputs readonly (OG calculados) */
+        html.dark-mode input[readonly] { background: var(--dm-input) !important; }
     </style>
 </head>
 <body>

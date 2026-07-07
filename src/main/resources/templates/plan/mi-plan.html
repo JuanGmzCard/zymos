@@ -87,6 +87,12 @@
         html.dark-mode .branding-row .br-label { color: var(--dm-text-muted); }
         html.dark-mode .branding-row { color: var(--dm-text); }
         html.dark-mode .color-swatch { border-color: var(--dm-border-med); }
+        html.dark-mode .stat-mini .sm-icon { background: var(--dm-input) !important; }
+        html.dark-mode .plan-badge-activo   { background: rgba(21,128,61,.25); color: #6ee6a0; }
+        html.dark-mode .plan-badge-vencer   { background: rgba(161,98,7,.25); color: #fbbf24; }
+        html.dark-mode .plan-badge-vencido  { background: rgba(220,38,38,.25); color: #fca5a5; }
+        html.dark-mode .plan-badge-sin-plan { background: var(--dm-input); color: var(--dm-text-muted); }
+        html.dark-mode .plan-info-note { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; }
     </style>
 </head>
 <body>
@@ -361,7 +367,7 @@
                     </div>
 
                     <!-- Nota para no-admin -->
-                    <div class="mt-3 p-2 rounded" style="background:#f8fafc; font-size:0.78rem; color:#64748b;"
+                    <div class="mt-3 p-2 rounded plan-info-note" style="font-size:0.78rem; color:#64748b;"
                          sec:authorize="!hasAnyRole('ADMIN','SUPERADMIN')">
                         <i class="bi bi-info-circle me-1"></i><span th:text="#{miplan.br.no.admin}">Contacta a tu administrador para actualizar el branding.</span>
                     </div>

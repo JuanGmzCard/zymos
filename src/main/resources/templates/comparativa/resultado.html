@@ -23,10 +23,12 @@
         }
         .cpl-mejor { color: #22c55e; font-weight: 700; }
 
+        .tabla-comparativa thead th { background: #f8fafc; color: #64748b; }
         html.dark-mode .tabla-comparativa .seccion-header {
             background: var(--dm-input);
             color: var(--dm-text-muted);
         }
+        html.dark-mode .tabla-comparativa thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; }
     </style>
 </head>
 <body>
@@ -65,9 +67,8 @@
             <table class="table tabla-comparativa mb-0" style="font-size:0.85rem;">
                 <thead>
                     <tr>
-                        <th style="min-width:160px; background:#f8fafc !important; color:#64748b !important;" th:text="#{comp.res.col.metrica}">Métrica</th>
-                        <th class="lote-header" th:each="lote : ${lotes}"
-                            style="background:#f8fafc !important; color:#64748b !important;">
+                        <th style="min-width:160px;" th:text="#{comp.res.col.metrica}">Métrica</th>
+                        <th class="lote-header" th:each="lote : ${lotes}">
                             <a th:href="@{/ver/{id}(id=${lote.id})}"
                                class="text-decoration-none fw-bold"
                                style="color:var(--verde-zymos,#2563eb);"
