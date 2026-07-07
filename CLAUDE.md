@@ -99,6 +99,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 ## REGLAS DE NEGOCIO IMPORTANTES
 
 1. **Disponibilidad fermentadores**: disponible cuando no hay lote activo con `carbFechaInicial = NULL` asignado.
+1b. **Prerequisito de recetas para crear lote**: `GET /` (TrazabilidadController) redirige a `redirect:/` con flash `sinRecetas=true` si `recetaService.listarActivas().isEmpty()`. `trazabilidad/index.html` muestra un banner de alerta con link a `/recetas/nueva` cuando `${sinRecetas}` es true. Ruta correcta del formulario de recetas: `/recetas/nueva` (femenino) — NO `/recetas/nuevo`.
 2. **Generación código lote**: 3 primeras letras del estilo → "IPA" → IPA-001, IPA-002...
 3. **Descuento automático inventario**: al crear/actualizar/eliminar lote. Retorna advertencias si stock insuficiente (no bloquea). Al crear/editar facturas, el inventario se actualiza automáticamente (suma en guardar, revierte + suma en actualizar, revierte en eliminar).
 4. **Normalización unidades** (via UnidadUtils): kg→gr (×1000), L→mL (×1000), gal→mL (×3785.41).
