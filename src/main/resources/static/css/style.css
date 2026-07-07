@@ -734,10 +734,15 @@ html.dark-mode .navbar-search:focus {
 html.dark-mode .navbar-search::placeholder { color: color-mix(in srgb, var(--crema) 45%, transparent) !important; }
 
 /* Tablas */
-html.dark-mode .table,
-html.dark-mode .table-zymos tbody tr {
+html.dark-mode .table {
     color: var(--dm-text);
+    --bs-table-bg: var(--dm-card);
+    --bs-table-color: var(--dm-text);
+    --bs-table-border-color: var(--dm-border-faint);
+    --bs-table-hover-bg: var(--dm-hover);
+    --bs-table-striped-bg: var(--dm-hover);
 }
+html.dark-mode .table-zymos tbody tr { color: var(--dm-text); }
 html.dark-mode .table tbody tr:hover td,
 html.dark-mode .traza-table tbody tr:hover td {
     background: var(--dm-hover) !important;
@@ -1300,8 +1305,8 @@ html.dark-mode .stat-card-simple .stat-label { color: var(--dm-text-muted); }
 html.dark-mode .filter-card { background: var(--dm-card); border-color: var(--dm-border-light); }
 html.dark-mode .table-card { background: var(--dm-card); border-color: var(--dm-border-light); }
 html.dark-mode .table-card table thead th { background: var(--dm-input) !important; color: var(--dm-text-muted) !important; border-color: var(--dm-border-light); }
-html.dark-mode .table-card table tbody td { color: var(--dm-text); border-color: var(--dm-border-faint); }
-html.dark-mode .table-card table tbody tr:hover { background: var(--dm-hover); }
+html.dark-mode .table-card table tbody td { background-color: var(--dm-card); color: var(--dm-text); border-color: var(--dm-border-faint); }
+html.dark-mode .table-card table tbody tr:hover td { background: var(--dm-hover) !important; }
 html.dark-mode .table-card .table-count { color: var(--dm-text-muted); border-color: var(--dm-border-light); }
 html.dark-mode .content-card { background: var(--dm-card); border-color: var(--dm-border-light); }
 html.dark-mode .content-card .content-card-title { color: var(--dm-text-muted); border-color: var(--dm-border-faint); }
