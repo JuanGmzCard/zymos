@@ -228,31 +228,6 @@
                     </a>
                 </li>
 
-                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
-                        <i class="bi bi-clipboard2-check"></i> <span>BPM</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm}"
-                               th:classappend="${currentUri != null and currentUri == '/bpm'} ? 'active' : ''">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard BPM
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <a class="dropdown-item" th:href="@{/bpm/salud/autorizaciones}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/autorizaciones')} ? 'active' : ''">
-                                <i class="bi bi-shield-check me-2 text-warning"></i>Autorizaciones de Salud
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
                 <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
@@ -307,6 +282,31 @@
                             <a class="dropdown-item" th:href="@{/proveedores}"
                                th:classappend="${currentUri != null and currentUri.contains('/proveedores')} ? 'active' : ''">
                                 <i class="bi bi-building me-2"></i><span th:text="#{nav.comercial.proveedores}">Proveedores</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
+                       th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
+                        <i class="bi bi-clipboard2-check"></i> <span>BPM</span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm}"
+                               th:classappend="${currentUri != null and currentUri == '/bpm'} ? 'active' : ''">
+                                <i class="bi bi-speedometer2 me-2"></i>Dashboard BPM
+                            </a>
+                        </li>
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <a class="dropdown-item" th:href="@{/bpm/salud/autorizaciones}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/autorizaciones')} ? 'active' : ''">
+                                <i class="bi bi-shield-check me-2 text-warning"></i>Autorizaciones de Salud
                             </a>
                         </li>
                     </ul>
