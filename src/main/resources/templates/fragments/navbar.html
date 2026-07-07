@@ -300,8 +300,45 @@
                                 <i class="bi bi-speedometer2 me-2"></i>Dashboard BPM
                             </a>
                         </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm/salud/diario}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? 'active' : ''">
+                                <i class="bi bi-person-heart me-2" style="color:#f59e0b;"></i>Control Estado de Salud
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm/soluciones}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/soluciones')} ? 'active' : ''">
+                                <i class="bi bi-droplet-half me-2" style="color:#3b82f6;"></i>Soluciones Desinfectantes
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm/plagas}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/plagas')} ? 'active' : ''">
+                                <i class="bi bi-bug me-2" style="color:#ef4444;"></i>Control de Plagas
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm/residuos}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/residuos')} ? 'active' : ''">
+                                <i class="bi bi-trash3 me-2" style="color:#16a34a;"></i>Evacuación de Residuos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/bpm/limpieza}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/limpieza')} ? 'active' : ''">
+                                <i class="bi bi-stars me-2" style="color:#7c3aed;"></i>Limpieza y Desinfección
+                            </a>
+                        </li>
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <hr class="dropdown-divider">
+                        </li>
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <a class="dropdown-item" th:href="@{/bpm/sintomas}"
+                               th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? 'active' : ''">
+                                <i class="bi bi-list-check me-2"></i>Todos los registros de salud
+                            </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/bpm/salud/autorizaciones}"
