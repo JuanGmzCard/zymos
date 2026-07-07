@@ -18,7 +18,7 @@
         html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
         .kanban-board { display: flex; gap: 1rem; overflow-x: auto; padding-bottom: 1rem; align-items: flex-start; }
         .kanban-col { flex: 0 0 260px; background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.07); overflow: hidden; }
-        html.dark-mode .kanban-col { background: #1c2410; }
+        html.dark-mode .kanban-col { background: var(--dm-card); }
         .kanban-col-header { padding: 0.75rem 1rem; font-family: 'Cinzel', serif; font-size: 0.82rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
         .kanban-col-body { padding: 0.6rem; min-height: 120px; transition: background 0.15s; }
         .kanban-col-body.drag-over { background: color-mix(in srgb, var(--dorado) 8%, transparent); border-radius: 6px; }
@@ -29,13 +29,13 @@
         .kanban-card.saving { opacity: 0.45; pointer-events: none; }
         .kanban-ghost { opacity: 0.3; border: 2px dashed var(--dorado) !important; }
         .kanban-drag { box-shadow: 0 8px 24px rgba(0,0,0,0.18) !important; transform: rotate(1.5deg); }
-        html.dark-mode .kanban-card { background: #242e12; border-color: color-mix(in srgb, var(--dorado) 15%, transparent); }
+        html.dark-mode .kanban-card { background: var(--dm-input); border-color: var(--dm-border-light); }
         .kanban-code { font-family: 'Cinzel', serif; font-size: 0.88rem; font-weight: 700; color: var(--verde-zymos); }
         html.dark-mode .kanban-code { color: var(--dorado-claro); }
         .kanban-estilo { font-size: 0.78rem; color: #6c757d; }
-        html.dark-mode .kanban-estilo { color: rgba(232,223,200,0.6); }
+        html.dark-mode .kanban-estilo { color: var(--dm-text-muted); }
         .kanban-meta { font-size: 0.72rem; color: #495057; margin-top: 4px; }
-        html.dark-mode .kanban-meta { color: rgba(232,223,200,0.55); }
+        html.dark-mode .kanban-meta { color: var(--dm-text-dim); }
         .kanban-dias { font-size: 0.7rem; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
         .col-inicio   .kanban-col-header { background: #f8f9fa; color: #495057; }
         .col-ferm     .kanban-col-header { background: #d4edda; color: #155724; }
@@ -44,7 +44,7 @@
         .col-carbon   .kanban-col-header { background: #cce5ff; color: #004085; }
         .col-completado .kanban-col-header { background: #e8d5f5; color: #6f2da8; }
         .kanban-empty { color: #adb5bd; font-size: 0.75rem; text-align: center; padding: 1rem 0; font-style: italic; }
-        html.dark-mode .kanban-empty { color: rgba(232,223,200,0.3); }
+        html.dark-mode .kanban-empty { color: var(--dm-text-dimmer); }
         /* Toast propio del kanban */
         #kanban-toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
         .kanban-toast { padding: 0.6rem 1.1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 500; color: #fff; opacity: 0; transform: translateY(8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
