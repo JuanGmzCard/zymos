@@ -219,9 +219,9 @@ Módulo de trazabilidad de inocuidad alimentaria. Ruta base: `/bpm`. Posición e
 
 ### Arquitectura BPM
 
-- **`BpmController`** — controller único para todos los submodulos. Inyecta `BpmService`, `BpmPdfService` e `InsumoInventarioService` (para datalist de productos químicos en soluciones).
+- **`BpmController`** — controller único para todos los submodulos. Inyecta `BpmService`, `BpmPdfService`, `InsumoInventarioService` y `MessageSource`. Flash messages y títulos de PDF resueltos con `messageSource.getMessage(key, args, key, locale)` via helpers privados `msg(key, locale)` / `msgf(key, locale, args...)`. Parámetro `Locale locale` en todos los POST y endpoints PDF.
 - **`BpmService`** — lógica de negocio para los 5 módulos. Método especial: `autorizarAcceso(Long id, String adminUsername, String firmaResponsable)` — guarda la firma del responsable al autorizar.
-- **`BpmPdfService`** — genera PDFs (OpenPDF) para cada submodulo y para el diario de salud. Método `addTdFirma(tabla, firmaData, bg)` decodifica base64 PNG y renderiza la imagen (60×20px) en la celda PDF. Cada registro tiene endpoint individual: `GET /bpm/{modulo}/{id}/pdf`.
+- **`BpmPdfService`** — genera PDFs (OpenPDF) para cada submodulo. Inyecta `MessageSource`. Usa `ThreadLocal<Locale> LOCALE_HOLDER` + helper `t(key)` (mismo patrón que `PdfExportService`). Todos los `generar*()` reciben `Locale locale` como último parámetro y llaman `LOCALE_HOLDER.set(locale)` al inicio. Método `addTdFirma(tabla, firmaData, bg)` decodifica base64 PNG y renderiza la imagen (60×20px) en la celda PDF. Cada registro tiene endpoint individual: `GET /bpm/{modulo}/{id}/pdf`.
 - **`BpmDashboardController`** — dashboard BPM en `/bpm` con métricas del mes actual.
 
 ### Firma Digital
@@ -266,6 +266,78 @@ El CSP enforced (activo desde 2026-07-03, Fase D) bloquea **todos** los event ha
 3. **Scripts CDN** (Bootstrap, SignaturePad, etc.) no necesitan nonce — están en la allowlist CSP por hash o por ser `cdn.jsdelivr.net`. Sí verificar que el CDN esté en la allowlist de `CspFilter`.
 
 4. **`bpm-firma.js`** ya sigue CSP: es un archivo estático servido por `/js/bpm-firma.js`, no inline. Cargarlo con `<script th:src="@{/js/bpm-firma.js}">` — no necesita nonce.
+
+---
+
+## INTERNACIONALIZACIÓN (i18n)
+
+**Estado (2026-07-07): cobertura completa** — todos los templates, servicios PDF y controllers están internacionalizados.
+
+### Archivos de mensajes
+- `src/main/resources/messages.properties` — idioma por defecto (español)
+- `src/main/resources/messages_en.properties` — inglés
+
+### Convención de keys
+| Módulo | Prefijo |
+|---|---|
+| Acciones genéricas | `action.*` |
+| Labels genéricos | `label.*` |
+| Navbar | `nav.*` |
+| BPM módulo | `bpm.*` |
+| BPM PDFs (columnas, secciones) | `bpm.pdf.*` |
+| PDFs de lotes/recetas | `pdf.*` |
+
+### Patrón en templates Thymeleaf
+```html
+<!-- Texto simple -->
+<span th:text="#{bpm.limp.title}">Limpieza y Desinfección</span>
+
+<!-- Parametrizado -->
+<p th:text="#{bpm.aut.subtitle(${#temporals.format(hoy,'dd/MM/yyyy')})}"></p>
+
+<!-- HTML en el mensaje (usar th:utext, NO th:text) -->
+<p th:utext="#{bpm.bloqueado.accion.texto}"></p>
+
+<!-- data-confirm (global handler en navbar.html) -->
+<form th:attr="data-confirm=#{action.delete} + ' ?'">
+```
+**CRÍTICO — `#{}` NUNCA dentro de comillas simples**: `th:text="'#{key} ' + ${var}"` → `#{}` no se resuelve. Forma correcta: `th:text="#{key} + ' ' + ${var}"`.
+
+### Patrón en servicios PDF (PdfExportService / BpmPdfService)
+```java
+private final MessageSource messageSource;
+private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
+
+private String t(String key) {
+    Locale loc = LOCALE_HOLDER.get();
+    return messageSource.getMessage(key, null, key, loc != null ? loc : Locale.forLanguageTag("es"));
+}
+
+// Al inicio de cada método público:
+public byte[] generarXxx(..., Locale locale) {
+    LOCALE_HOLDER.set(locale);
+    // usar t("bpm.pdf.col.xxx") internamente
+}
+```
+
+### Patrón en controllers (flash messages y PDF títulos)
+```java
+private final MessageSource messageSource;
+
+private String msg(String key, Locale locale) {
+    return messageSource.getMessage(key, null, key, locale);
+}
+private String msgf(String key, Locale locale, Object... args) {
+    return messageSource.getMessage(key, args, key, locale);
+}
+
+// Flash message:
+flash.addFlashAttribute("mensaje", msg("bpm.sint.guardado", locale));
+
+// PDF período parametrizado:
+String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
+```
+Spring MVC inyecta `Locale locale` automáticamente como parámetro de método — no requiere configuración adicional.
 
 ---
 

@@ -293,44 +293,44 @@
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
-                        <i class="bi bi-clipboard2-check"></i> <span>BPM</span>
+                        <i class="bi bi-clipboard2-check"></i> <span th:text="#{nav.bpm}">BPM</span>
                     </a>
                     <ul class="dropdown-menu">
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm}"
                                th:classappend="${currentUri != null and currentUri == '/bpm'} ? 'active' : ''">
-                                <i class="bi bi-speedometer2 me-2"></i>Dashboard BPM
+                                <i class="bi bi-speedometer2 me-2"></i><span th:text="#{nav.bpm.dashboard}">Dashboard BPM</span>
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm/salud/diario}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? 'active' : ''">
-                                <i class="bi bi-person-heart me-2" style="color:#f59e0b;"></i>Control Estado de Salud
+                                <i class="bi bi-person-heart me-2" style="color:#f59e0b;"></i><span th:text="#{nav.bpm.salud}">Control Estado de Salud</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm/soluciones}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/soluciones')} ? 'active' : ''">
-                                <i class="bi bi-droplet-half me-2" style="color:#3b82f6;"></i>Soluciones Desinfectantes
+                                <i class="bi bi-droplet-half me-2" style="color:#3b82f6;"></i><span th:text="#{nav.bpm.soluciones}">Soluciones Desinfectantes</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm/plagas}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/plagas')} ? 'active' : ''">
-                                <i class="bi bi-bug me-2" style="color:#ef4444;"></i>Control de Plagas
+                                <i class="bi bi-bug me-2" style="color:#ef4444;"></i><span th:text="#{nav.bpm.plagas}">Control de Plagas</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm/residuos}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/residuos')} ? 'active' : ''">
-                                <i class="bi bi-trash3 me-2" style="color:#16a34a;"></i>Evacuación de Residuos
+                                <i class="bi bi-trash3 me-2" style="color:#16a34a;"></i><span th:text="#{nav.bpm.residuos}">Evacuación de Residuos</span>
                             </a>
                         </li>
                         <li>
                             <a class="dropdown-item" th:href="@{/bpm/limpieza}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/limpieza')} ? 'active' : ''">
-                                <i class="bi bi-stars me-2" style="color:#7c3aed;"></i>Limpieza y Desinfección
+                                <i class="bi bi-stars me-2" style="color:#7c3aed;"></i><span th:text="#{nav.bpm.limpieza}">Limpieza y Desinfección</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
@@ -339,13 +339,13 @@
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/bpm/sintomas}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? 'active' : ''">
-                                <i class="bi bi-list-check me-2"></i>Todos los registros de salud
+                                <i class="bi bi-list-check me-2"></i><span th:text="#{nav.bpm.sintomas}">Todos los registros de salud</span>
                             </a>
                         </li>
                         <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                             <a class="dropdown-item" th:href="@{/bpm/salud/autorizaciones}"
                                th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/autorizaciones')} ? 'active' : ''">
-                                <i class="bi bi-shield-check me-2 text-warning"></i>Autorizaciones de Salud
+                                <i class="bi bi-shield-check me-2 text-warning"></i><span th:text="#{nav.bpm.autorizaciones}">Autorizaciones de Salud</span>
                             </a>
                         </li>
                     </ul>

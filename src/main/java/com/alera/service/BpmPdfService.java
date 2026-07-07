@@ -4,6 +4,7 @@ import com.alera.config.ExportBranding;
 import com.alera.model.*;
 import com.lowagie.text.*;
 import com.lowagie.text.pdf.*;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -12,9 +13,23 @@ import java.io.InputStream;
 import java.net.URL;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class BpmPdfService {
+
+    private final MessageSource messageSource;
+
+    public BpmPdfService(MessageSource messageSource) {
+        this.messageSource = messageSource;
+    }
+
+    private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
+
+    private String t(String key) {
+        Locale loc = LOCALE_HOLDER.get();
+        return messageSource.getMessage(key, null, key, loc != null ? loc : Locale.forLanguageTag("es"));
+    }
 
     private static final DateTimeFormatter FMT_DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     private static final DateTimeFormatter FMT_TIME = DateTimeFormatter.ofPattern("HH:mm");
@@ -29,7 +44,8 @@ public class BpmPdfService {
     // ── Registro de síntomas ─────────────────────────────────────────────────
 
     public byte[] generarSintomas(List<RegistroSintomas> registros, ExportBranding b, String logoUrl,
-                                   String titulo, String subtitulo) {
+                                   String titulo, String subtitulo, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4.rotate(), 30, 30, 45, 40);
@@ -42,11 +58,12 @@ public class BpmPdfService {
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
-            addSeccion(doc, "REGISTRO CONTROL ESTADO DE SALUD MANIPULADORES DE ALIMENTOS", verde);
+            addSeccion(doc, t("bpm.pdf.sec.sintomas"), verde);
 
-            String[] ths = {"Nombre Manipulador", "Fecha", "Diarrea", "Vómito", "Fiebre",
-                    "Inf. Resp.", "Lesión Piel", "Observaciones",
-                    "Firma Manipulador", "Firma Responsable"};
+            String[] ths = {t("bpm.pdf.col.nombre.manipulador"), t("bpm.pdf.col.fecha"),
+                    t("bpm.pdf.col.diarrea"), t("bpm.pdf.col.vomito"), t("bpm.pdf.col.fiebre"),
+                    t("bpm.pdf.col.inf.resp"), t("bpm.pdf.col.lesion.piel"), t("bpm.pdf.col.obs"),
+                    t("bpm.pdf.col.firma.manip"), t("bpm.pdf.col.firma.resp")};
             PdfPTable tabla = new PdfPTable(new float[]{2.5f, 1.2f, 0.8f, 0.8f, 0.8f, 0.8f, 0.9f, 2f, 1.8f, 1.8f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
@@ -84,7 +101,8 @@ public class BpmPdfService {
     // ── Soluciones desinfectantes ─────────────────────────────────────────────
 
     public byte[] generarSoluciones(List<SolucionDesinfectante> registros, ExportBranding b, String logoUrl,
-                                     String titulo, String subtitulo) {
+                                     String titulo, String subtitulo, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4.rotate(), 30, 30, 45, 40);
@@ -97,14 +115,16 @@ public class BpmPdfService {
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
-            addSeccion(doc, "REGISTRO DE SOLUCIONES DESINFECTANTES", verde);
+            addSeccion(doc, t("bpm.pdf.sec.soluciones"), verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1f, 1.5f, 1f, 1.5f, 1.5f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
-            String[] ths = {"Fecha", "Hora", "Producto", "Cant. Agua", "Unidad Agua",
-                    "Cant. Producto", "Unidad Prod.", "Conc. Final (%)", "Responsable", "Firma"};
+            String[] ths = {t("bpm.pdf.col.fecha"), t("bpm.pdf.col.hora"), t("bpm.pdf.col.producto"),
+                    t("bpm.pdf.col.cant.agua"), t("bpm.pdf.col.unidad.agua"),
+                    t("bpm.pdf.col.cant.prod"), t("bpm.pdf.col.unidad.prod"),
+                    t("bpm.pdf.col.conc.final"), t("bpm.pdf.col.responsable"), t("bpm.pdf.col.firma")};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -136,7 +156,8 @@ public class BpmPdfService {
     // ── Avistamiento de plagas ────────────────────────────────────────────────
 
     public byte[] generarPlagas(List<AvistamientoPlagas> registros, ExportBranding b, String logoUrl,
-                                 String titulo, String subtitulo) {
+                                 String titulo, String subtitulo, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4.rotate(), 30, 30, 45, 40);
@@ -149,21 +170,22 @@ public class BpmPdfService {
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
-            addSeccion(doc, "REGISTRO DE AVISTAMIENTO Y CONTROL DE PLAGAS", verde);
+            addSeccion(doc, t("bpm.pdf.sec.plagas"), verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 1.5f, 1.5f, 2.5f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
-            String[] ths = {"Fecha", "¿Plagas?", "Tipo de Plagas", "Estado Vent./Puertas",
-                    "Acción Tomada", "Firma"};
+            String[] ths = {t("bpm.pdf.col.fecha"), t("bpm.pdf.col.plagas"),
+                    t("bpm.pdf.col.tipo.plagas"), t("bpm.pdf.col.estado.vent"),
+                    t("bpm.pdf.col.accion"), t("bpm.pdf.col.firma")};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
             for (AvistamientoPlagas r : registros) {
                 Color bg = alt ? fondo : Color.WHITE;
                 addTd(tabla, r.getFecha() != null ? r.getFecha().format(FMT_DATE) : "—", bg);
-                addTd(tabla, r.isPresenciaPlagas() ? "Sí" : "No", bg);
+                addTd(tabla, r.isPresenciaPlagas() ? t("bpm.label.si") : t("bpm.label.no"), bg);
                 addTd(tabla, nvl(r.getTipoPlagas()), bg);
                 addTd(tabla, nvl(r.getEstadoVentanasPuertas()), bg);
                 addTd(tabla, nvl(r.getAccionTomada()), bg);
@@ -184,7 +206,8 @@ public class BpmPdfService {
     // ── Evacuación de residuos ────────────────────────────────────────────────
 
     public byte[] generarResiduos(List<EvacuacionResiduos> registros, ExportBranding b, String logoUrl,
-                                   String titulo, String subtitulo) {
+                                   String titulo, String subtitulo, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4, 36, 36, 50, 45);
@@ -197,13 +220,15 @@ public class BpmPdfService {
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
-            addSeccion(doc, "REGISTRO DE EVACUACIÓN DE RESIDUOS", verde);
+            addSeccion(doc, t("bpm.pdf.sec.residuos"), verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.5f, 1.2f, 2f, 1.5f, 2f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
-            String[] ths = {"Fecha", "Hora Salida", "Tipo Residuo", "Recipientes Limpios", "Responsable", "Firma"};
+            String[] ths = {t("bpm.pdf.col.fecha"), t("bpm.pdf.col.hora.salida"),
+                    t("bpm.pdf.col.tipo.residuo"), t("bpm.pdf.col.recipientes"),
+                    t("bpm.pdf.col.responsable"), t("bpm.pdf.col.firma")};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -212,7 +237,7 @@ public class BpmPdfService {
                 addTd(tabla, r.getFecha() != null ? r.getFecha().format(FMT_DATE) : "—", bg);
                 addTd(tabla, r.getHoraSalida() != null ? r.getHoraSalida().format(FMT_TIME) : "—", bg);
                 addTd(tabla, r.getTipoResiduo() != null ? r.getTipoResiduo().getDisplayName() : "—", bg);
-                addTd(tabla, r.isRecipientesLimpios() ? "Sí" : "No", bg);
+                addTd(tabla, r.isRecipientesLimpios() ? t("bpm.label.si") : t("bpm.label.no"), bg);
                 addTd(tabla, nvl(r.getResponsable()), bg);
                 addTdFirma(tabla, r.getFirma(), bg);
                 alt = !alt;
@@ -231,7 +256,8 @@ public class BpmPdfService {
     // ── Limpieza y desinfección ───────────────────────────────────────────────
 
     public byte[] generarLimpieza(List<LimpiezaDesinfeccion> registros, ExportBranding b, String logoUrl,
-                                   String titulo, String subtitulo) {
+                                   String titulo, String subtitulo, Locale locale) {
+        LOCALE_HOLDER.set(locale);
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             Document doc = new Document(PageSize.A4.rotate(), 30, 30, 45, 40);
@@ -244,14 +270,16 @@ public class BpmPdfService {
             Color fondo  = ExportBranding.lighten(b.background(), 0.3f);
 
             addCabecera(doc, b.name(), logoUrl, titulo, subtitulo, verde, oscuro, dorado);
-            addSeccion(doc, "REGISTRO DE LIMPIEZA Y DESINFECCIÓN", verde);
+            addSeccion(doc, t("bpm.pdf.sec.limpieza"), verde);
 
             PdfPTable tabla = new PdfPTable(new float[]{1.2f, 1f, 2f, 1.5f, 1.5f, 1f, 1.5f, 1f, 1.5f});
             tabla.setWidthPercentage(100);
             tabla.setSpacingBefore(4);
 
-            String[] ths = {"Fecha", "Día", "Área / Utensilio", "Detergente", "Sanitizador",
-                    "Concentración", "Responsable", "Visto Bueno", "Firma"};
+            String[] ths = {t("bpm.pdf.col.fecha"), t("bpm.pdf.col.dia"), t("bpm.pdf.col.area"),
+                    t("bpm.pdf.col.detergente"), t("bpm.pdf.col.sanitizador"),
+                    t("bpm.pdf.col.conc"), t("bpm.pdf.col.responsable"),
+                    t("bpm.pdf.col.vb"), t("bpm.pdf.col.firma")};
             for (String th : ths) addTh(tabla, th, ExportBranding.lighten(verde, 0.6f), F_TH);
 
             boolean alt = false;
@@ -320,7 +348,7 @@ public class BpmPdfService {
                 new Font(Font.HELVETICA, 22, Font.BOLD, dorado));
         code.setAlignment(Element.ALIGN_RIGHT);
         der.addElement(code);
-        Paragraph fecha = new Paragraph("Buenas Prácticas de Manufactura",
+        Paragraph fecha = new Paragraph(t("bpm.pdf.label.bpm"),
                 new Font(Font.HELVETICA, 7, Font.NORMAL, new Color(200, 220, 200)));
         fecha.setAlignment(Element.ALIGN_RIGHT); fecha.setSpacingBefore(4);
         der.addElement(fecha);
@@ -349,10 +377,10 @@ public class BpmPdfService {
         t.setWidthPercentage(60);
         t.setHorizontalAlignment(Element.ALIGN_LEFT);
         t.setSpacingBefore(20);
-        PdfPCell c1 = new PdfPCell(new Paragraph("Firma Manipulador: ___________________",
+        PdfPCell c1 = new PdfPCell(new Paragraph(t("bpm.pdf.firma.manipulador"),
                 new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(60, 60, 60))));
         c1.setBorder(0); c1.setPaddingBottom(4);
-        PdfPCell c2 = new PdfPCell(new Paragraph("Firma Responsable: ___________________",
+        PdfPCell c2 = new PdfPCell(new Paragraph(t("bpm.pdf.firma.responsable"),
                 new Font(Font.HELVETICA, 8, Font.NORMAL, new Color(60, 60, 60))));
         c2.setBorder(0); c2.setPaddingBottom(4);
         t.addCell(c1); t.addCell(c2);
@@ -376,11 +404,11 @@ public class BpmPdfService {
     }
 
     private void addTdBool(PdfPTable tabla, boolean val, Color bg) {
-        addTd(tabla, val ? "Sí" : "No", bg);
+        addTd(tabla, val ? t("bpm.label.si") : t("bpm.label.no"), bg);
     }
 
     private void addFilaVacia(PdfPTable tabla, int cols) {
-        PdfPCell c = new PdfPCell(new Phrase("Sin registros", new Font(Font.HELVETICA, 8, Font.ITALIC, Color.GRAY)));
+        PdfPCell c = new PdfPCell(new Phrase(t("bpm.pdf.sin.registros"), new Font(Font.HELVETICA, 8, Font.ITALIC, Color.GRAY)));
         c.setColspan(cols);
         c.setBorderColor(new Color(210, 220, 200));
         c.setPadding(6);
@@ -418,7 +446,7 @@ public class BpmPdfService {
                 img.scaleToFit(60, 20);
                 c.addElement(img);
             } catch (Exception e) {
-                c.addElement(new Phrase("Firmado", F_TD));
+                c.addElement(new Phrase(t("bpm.pdf.firmado"), F_TD));
             }
         } else {
             c.addElement(new Phrase(nvl(firmaData), F_TD));

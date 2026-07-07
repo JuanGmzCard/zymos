@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${branding.name} + ' - BPM Síntomas'">Zymos - BPM</title>
+    <title th:text="${branding.name} + ' - ' + #{bpm.salud.title}">Zymos - BPM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -34,13 +34,13 @@
     <div class="page-header">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1" style="font-size:.8rem;">
-                <li class="breadcrumb-item"><a th:href="@{/bpm}">BPM</a></li>
-                <li class="breadcrumb-item"><a th:href="@{/bpm/sintomas}">Control de Salud</a></li>
-                <li class="breadcrumb-item active" th:text="${registro.id != null} ? 'Editar' : 'Nuevo'">Nuevo</li>
+                <li class="breadcrumb-item"><a th:href="@{/bpm}" th:text="#{nav.bpm}">BPM</a></li>
+                <li class="breadcrumb-item"><a th:href="@{/bpm/sintomas}" th:text="#{bpm.salud.title}">Control de Salud</a></li>
+                <li class="breadcrumb-item active" th:text="${registro.id != null} ? #{action.edit} : #{action.new}">Nuevo</li>
             </ol>
         </nav>
-        <h1 th:text="${registro.id != null} ? 'Editar Registro de Síntomas' : 'Nuevo Registro de Síntomas'">Nuevo</h1>
-        <p class="subtitle">Estado de salud del manipulador de alimentos</p>
+        <h1 th:text="${registro.id != null} ? #{bpm.sint.form.title.editar} : #{bpm.sint.form.title.nuevo}">Nuevo</h1>
+        <p class="subtitle" th:text="#{bpm.sint.form.subtitle}">Estado de salud del manipulador de alimentos</p>
     </div>
 </div>
 
@@ -54,10 +54,13 @@
 
                     <div class="row g-3 mb-4">
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Nombre del Manipulador <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">
+                                <span th:text="#{bpm.sint.form.nombre}">Nombre del Manipulador</span>
+                                <span class="text-danger">*</span>
+                            </label>
                             <select class="form-select" th:field="*{nombreManipulador}"
                                     th:classappend="${#fields.hasErrors('nombreManipulador')} ? 'is-invalid' : ''">
-                                <option value="">— Seleccionar —</option>
+                                <option value="">— <span th:text="#{action.search}">Seleccionar</span> —</option>
                                 <option th:each="u : ${usuarios}"
                                         th:value="${u.username}"
                                         th:text="${u.username + ' — ' + u.rol.displayName + (!u.activo ? ' (inactivo)' : '')}"></option>
@@ -65,7 +68,10 @@
                             <div class="invalid-feedback" th:errors="*{nombreManipulador}"></div>
                         </div>
                         <div class="col-12 col-md-6">
-                            <label class="form-label fw-semibold">Fecha <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold">
+                                <span th:text="#{label.fecha}">Fecha</span>
+                                <span class="text-danger">*</span>
+                            </label>
                             <input type="date" class="form-control" th:field="*{fecha}"
                                    th:classappend="${#fields.hasErrors('fecha')} ? 'is-invalid' : ''">
                             <div class="invalid-feedback" th:errors="*{fecha}"></div>
@@ -73,47 +79,47 @@
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-semibold mb-2">Síntomas Presentes</label>
+                        <label class="form-label fw-semibold mb-2" th:text="#{bpm.sint.form.sintomas.label}">Síntomas Presentes</label>
                         <div class="check-grid">
                             <label class="check-item">
                                 <input type="checkbox" th:field="*{diarrea}">
-                                <span><i class="bi bi-activity me-1 text-danger"></i>Diarrea</span>
+                                <span><i class="bi bi-activity me-1 text-danger"></i><span th:text="#{bpm.sintoma.diarrea}">Diarrea</span></span>
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" th:field="*{vomito}">
-                                <span><i class="bi bi-activity me-1 text-danger"></i>Vómito</span>
+                                <span><i class="bi bi-activity me-1 text-danger"></i><span th:text="#{bpm.sintoma.vomito}">Vómito</span></span>
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" th:field="*{fiebre}">
-                                <span><i class="bi bi-thermometer-high me-1 text-danger"></i>Fiebre</span>
+                                <span><i class="bi bi-thermometer-high me-1 text-danger"></i><span th:text="#{bpm.sintoma.fiebre}">Fiebre</span></span>
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" th:field="*{infeccionRespiratoria}">
-                                <span><i class="bi bi-lungs me-1 text-danger"></i>Inf. Respiratoria</span>
+                                <span><i class="bi bi-lungs me-1 text-danger"></i><span th:text="#{bpm.sintoma.inf.resp}">Inf. Respiratoria</span></span>
                             </label>
                             <label class="check-item">
                                 <input type="checkbox" th:field="*{lesionPiel}">
-                                <span><i class="bi bi-bandaid me-1 text-danger"></i>Lesión Piel</span>
+                                <span><i class="bi bi-bandaid me-1 text-danger"></i><span th:text="#{bpm.sintoma.lesion.piel}">Lesión Piel</span></span>
                             </label>
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-semibold">Observaciones</label>
+                        <label class="form-label fw-semibold" th:text="#{bpm.sint.form.obs}">Observaciones</label>
                         <textarea class="form-control" th:field="*{observaciones}" rows="3"
-                                  placeholder="Detalles adicionales o notas relevantes"></textarea>
+                                  th:placeholder="#{bpm.diario.obs.placeholder}"></textarea>
                     </div>
 
                     <div class="row g-3 mb-3">
                         <div class="col-12 col-md-6">
                             <div class="firma-wrap">
-                                <label class="form-label fw-semibold">Firma del Manipulador</label>
+                                <label class="form-label fw-semibold" th:text="#{bpm.firma.manipulador}">Firma del Manipulador</label>
                                 <div class="firma-canvas-wrap">
                                     <canvas class="firma-canvas" data-input="firma-manipulador"></canvas>
-                                    <span class="firma-placeholder">Firme aquí</span>
+                                    <span class="firma-placeholder" th:text="#{bpm.firma.placeholder}">Firme aquí</span>
                                 </div>
                                 <button type="button" class="firma-clear btn btn-sm btn-outline-secondary mt-1">
-                                    <i class="bi bi-eraser me-1"></i>Limpiar
+                                    <i class="bi bi-eraser me-1"></i><span th:text="#{bpm.firma.limpiar}">Limpiar</span>
                                 </button>
                                 <input type="hidden" id="firma-manipulador" name="firmaManipulador"
                                        th:value="${registro.firmaManipulador}">
@@ -121,13 +127,13 @@
                         </div>
                         <div class="col-12 col-md-6">
                             <div class="firma-wrap">
-                                <label class="form-label fw-semibold">Firma del Responsable</label>
+                                <label class="form-label fw-semibold" th:text="#{bpm.firma.responsable}">Firma del Responsable</label>
                                 <div class="firma-canvas-wrap">
                                     <canvas class="firma-canvas" data-input="firma-responsable"></canvas>
-                                    <span class="firma-placeholder">Firme aquí</span>
+                                    <span class="firma-placeholder" th:text="#{bpm.firma.placeholder}">Firme aquí</span>
                                 </div>
                                 <button type="button" class="firma-clear btn btn-sm btn-outline-secondary mt-1">
-                                    <i class="bi bi-eraser me-1"></i>Limpiar
+                                    <i class="bi bi-eraser me-1"></i><span th:text="#{bpm.firma.limpiar}">Limpiar</span>
                                 </button>
                                 <input type="hidden" id="firma-responsable" name="firmaResponsable"
                                        th:value="${registro.firmaResponsable}">
@@ -136,9 +142,9 @@
                     </div>
 
                     <div class="d-flex gap-2 justify-content-end pt-2">
-                        <a th:href="@{/bpm/sintomas}" class="btn btn-outline-secondary btn-sm">Cancelar</a>
+                        <a th:href="@{/bpm/sintomas}" class="btn btn-outline-secondary btn-sm" th:text="#{action.cancel}">Cancelar</a>
                         <button type="submit" class="btn btn-primary btn-sm">
-                            <i class="bi bi-check2 me-1"></i>Guardar
+                            <i class="bi bi-check2 me-1"></i><span th:text="#{action.save}">Guardar</span>
                         </button>
                     </div>
                 </form>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${branding.name} + ' - Control de Salud'">Zymos - Control de Salud</title>
+    <title th:text="${branding.name} + ' - ' + #{bpm.salud.title}">Zymos - Control de Salud</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -41,9 +41,9 @@
     <div class="salud-card">
         <div class="salud-header">
             <div class="salud-icon"><i class="bi bi-heart-pulse-fill"></i></div>
-            <h1 class="salud-title">Control de Estado de Salud</h1>
+            <h1 class="salud-title" th:text="#{bpm.diario.title}">Control de Estado de Salud</h1>
             <p class="salud-sub">
-                Registro diario obligatorio —
+                <span th:text="#{bpm.diario.subtitle}">Registro diario obligatorio</span> —
                 <strong th:text="${#temporals.format(hoy, 'dd/MM/yyyy')}"></strong>
             </p>
         </div>
@@ -58,32 +58,32 @@
             </div>
             <div class="alert alert-info d-flex align-items-center gap-2 mb-3">
                 <i class="bi bi-check-circle-fill fs-5"></i>
-                <span>Ya completaste tu registro de salud hoy.</span>
+                <span th:text="#{bpm.diario.ya.completado}">Ya completaste tu registro de salud hoy.</span>
             </div>
 
             <!-- Con síntomas sin autorizar -->
             <div th:if="${registro.tieneSintomas() and !registro.autorizadoPorAdmin}">
                 <div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
                     <i class="bi bi-exclamation-triangle-fill fs-5"></i>
-                    <span>Has reportado síntomas. Comunícate con tu jefe inmediato.</span>
+                    <span th:text="#{bpm.diario.con.sintomas}">Has reportado síntomas. Comunícate con tu jefe inmediato.</span>
                 </div>
                 <a th:href="@{/bpm/salud/bloqueado}" class="btn btn-danger w-100">
-                    <i class="bi bi-shield-x me-1"></i>Ver estado de acceso
+                    <i class="bi bi-shield-x me-1"></i><span th:text="#{bpm.diario.btn.estado}">Ver estado de acceso</span>
                 </a>
                 <a th:href="@{/bpm/sintomas/{id}/pdf(id=${registro.id})}"
                    class="btn btn-outline-secondary w-100 mt-2">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>Descargar mi registro en PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i><span th:text="#{bpm.diario.btn.pdf}">Descargar mi registro en PDF</span>
                 </a>
             </div>
 
             <!-- Sin síntomas o autorizado -->
             <div th:unless="${registro.tieneSintomas() and !registro.autorizadoPorAdmin}">
                 <a th:href="@{/dashboard}" class="btn btn-primary w-100 btn-lg">
-                    <i class="bi bi-speedometer2 me-1"></i>Ir al Dashboard
+                    <i class="bi bi-speedometer2 me-1"></i><span th:text="#{bpm.diario.btn.dashboard}">Ir al Dashboard</span>
                 </a>
                 <a th:href="@{/bpm/sintomas/{id}/pdf(id=${registro.id})}"
                    class="btn btn-outline-secondary w-100 mt-2">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>Descargar mi registro en PDF
+                    <i class="bi bi-file-earmark-pdf me-1"></i><span th:text="#{bpm.diario.btn.pdf}">Descargar mi registro en PDF</span>
                 </a>
             </div>
         </div>
@@ -102,54 +102,57 @@
                 <input type="hidden" name="nombreManipulador" th:value="${registro.nombreManipulador}">
                 <input type="hidden" name="fecha" th:value="${#temporals.format(hoy, 'yyyy-MM-dd')}">
 
-                <p class="fw-semibold mb-2 text-secondary" style="font-size:.9rem;">
+                <p class="fw-semibold mb-2 text-secondary" style="font-size:.9rem;" th:text="#{bpm.diario.pregunta}">
                     ¿Presentas alguno de estos síntomas hoy?
                 </p>
                 <div class="check-grid mb-4">
                     <label class="check-item">
                         <input type="checkbox" th:field="*{diarrea}">
-                        <span><i class="bi bi-activity me-1 text-danger"></i>Diarrea</span>
+                        <span><i class="bi bi-activity me-1 text-danger"></i><span th:text="#{bpm.sintoma.diarrea}">Diarrea</span></span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" th:field="*{vomito}">
-                        <span><i class="bi bi-activity me-1 text-danger"></i>Vómito</span>
+                        <span><i class="bi bi-activity me-1 text-danger"></i><span th:text="#{bpm.sintoma.vomito}">Vómito</span></span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" th:field="*{fiebre}">
-                        <span><i class="bi bi-thermometer-high me-1 text-danger"></i>Fiebre</span>
+                        <span><i class="bi bi-thermometer-high me-1 text-danger"></i><span th:text="#{bpm.sintoma.fiebre}">Fiebre</span></span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" th:field="*{infeccionRespiratoria}">
-                        <span><i class="bi bi-lungs me-1 text-danger"></i>Inf. Respiratoria</span>
+                        <span><i class="bi bi-lungs me-1 text-danger"></i><span th:text="#{bpm.sintoma.inf.resp}">Inf. Respiratoria</span></span>
                     </label>
                     <label class="check-item">
                         <input type="checkbox" th:field="*{lesionPiel}">
-                        <span><i class="bi bi-bandaid me-1 text-danger"></i>Lesión Piel</span>
+                        <span><i class="bi bi-bandaid me-1 text-danger"></i><span th:text="#{bpm.sintoma.lesion.piel}">Lesión Piel</span></span>
                     </label>
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-semibold" style="font-size:.9rem;">Observaciones <span class="text-muted fw-normal">(opcional)</span></label>
+                    <label class="form-label fw-semibold" style="font-size:.9rem;">
+                        <span th:text="#{bpm.diario.obs.label}">Observaciones</span>
+                        <span class="text-muted fw-normal" th:text="#{bpm.diario.obs.opcional}">(opcional)</span>
+                    </label>
                     <textarea class="form-control" th:field="*{observaciones}" rows="2"
-                              placeholder="Notas sobre tu estado de salud"></textarea>
+                              th:placeholder="#{bpm.diario.obs.placeholder}"></textarea>
                 </div>
 
                 <div class="mb-4">
                     <div class="firma-wrap">
-                        <label class="form-label fw-semibold" style="font-size:.9rem;">Firma del Manipulador</label>
+                        <label class="form-label fw-semibold" style="font-size:.9rem;" th:text="#{bpm.firma.manipulador}">Firma del Manipulador</label>
                         <div class="firma-canvas-wrap">
                             <canvas class="firma-canvas" data-input="firma-manipulador-diario"></canvas>
-                            <span class="firma-placeholder">Firme aquí</span>
+                            <span class="firma-placeholder" th:text="#{bpm.firma.placeholder}">Firme aquí</span>
                         </div>
                         <button type="button" class="firma-clear btn btn-sm btn-outline-secondary mt-1">
-                            <i class="bi bi-eraser me-1"></i>Limpiar
+                            <i class="bi bi-eraser me-1"></i><span th:text="#{bpm.firma.limpiar}">Limpiar</span>
                         </button>
                         <input type="hidden" id="firma-manipulador-diario" name="firmaManipulador" value="">
                     </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100 btn-lg">
-                    <i class="bi bi-check2-circle me-1"></i>Registrar y continuar
+                    <i class="bi bi-check2-circle me-1"></i><span th:text="#{bpm.diario.btn.registrar}">Registrar y continuar</span>
                 </button>
             </form>
         </div>

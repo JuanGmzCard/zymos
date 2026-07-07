@@ -9,6 +9,7 @@ import com.alera.service.InsumoInventarioService;
 import com.alera.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -34,13 +35,24 @@ public class BpmController {
     private final BpmPdfService pdfService;
     private final UsuarioService usuarioService;
     private final InsumoInventarioService inventarioService;
+    private final MessageSource messageSource;
 
     public BpmController(BpmService service, BpmPdfService pdfService,
-                         UsuarioService usuarioService, InsumoInventarioService inventarioService) {
+                         UsuarioService usuarioService, InsumoInventarioService inventarioService,
+                         MessageSource messageSource) {
         this.service = service;
         this.pdfService = pdfService;
         this.usuarioService = usuarioService;
         this.inventarioService = inventarioService;
+        this.messageSource = messageSource;
+    }
+
+    private String msg(String key, Locale locale) {
+        return messageSource.getMessage(key, null, key, locale);
+    }
+
+    private String msgf(String key, Locale locale, Object... args) {
+        return messageSource.getMessage(key, args, key, locale);
     }
 
     @ModelAttribute("usuarios")
@@ -74,7 +86,6 @@ public class BpmController {
     public String guardarSaludDiario(@ModelAttribute("registro") RegistroSintomas r,
                                       Principal principal) {
         String username = principal.getName();
-        // Si ya existe el registro de hoy, no guardar de nuevo
         if (service.buscarHoyPorUsuario(username).isPresent()) {
             return "redirect:/dashboard";
         }
@@ -103,9 +114,9 @@ public class BpmController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN')")
     public String autorizar(@PathVariable Long id, Principal principal,
                              @RequestParam(required = false) String firmaResponsable,
-                             RedirectAttributes flash) {
+                             RedirectAttributes flash, Locale locale) {
         service.autorizarAcceso(id, principal.getName(), firmaResponsable);
-        flash.addFlashAttribute("mensaje", "Acceso autorizado correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.aut.autorizado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/salud/autorizaciones";
     }
@@ -149,18 +160,18 @@ public class BpmController {
     @PostMapping("/sintomas/guardar")
     public String guardarSintoma(@Valid @ModelAttribute("registro") RegistroSintomas r,
                                   BindingResult br, Model model,
-                                  RedirectAttributes flash) {
+                                  RedirectAttributes flash, Locale locale) {
         if (br.hasErrors()) return "bpm/sintomas/formulario";
         service.guardarSintoma(r);
-        flash.addFlashAttribute("mensaje", "Registro de síntomas guardado correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.sint.guardado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/sintomas";
     }
 
     @PostMapping("/sintomas/eliminar/{id}")
-    public String eliminarSintoma(@PathVariable Long id, RedirectAttributes flash) {
+    public String eliminarSintoma(@PathVariable Long id, RedirectAttributes flash, Locale locale) {
         service.eliminarSintoma(id);
-        flash.addFlashAttribute("mensaje", "Registro eliminado");
+        flash.addFlashAttribute("mensaje", msg("bpm.eliminado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/sintomas";
     }
@@ -176,10 +187,10 @@ public class BpmController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String logo = tenant != null ? tenant.getLogoUrl() : null;
-        String sub = "Período: " + desde.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — " + hasta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
         byte[] bytes = pdfService.generarSintomas(registros, b, logo,
-                "Control Estado de Salud", sub);
+                msg("bpm.pdf.titulo.sintomas", locale), sub, locale);
         String fn = "bpm-sintomas-" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
@@ -188,13 +199,14 @@ public class BpmController {
     }
 
     @GetMapping("/sintomas/{id}/pdf")
-    public ResponseEntity<byte[]> pdfSintomaIndividual(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdfSintomaIndividual(@PathVariable Long id,
+                                                        HttpServletRequest request, Locale locale) {
         var r = service.buscarSintoma(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
         byte[] bytes = pdfService.generarSintomas(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
-                "Control Estado de Salud", sub);
+                msg("bpm.pdf.titulo.sintomas", locale), sub, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-sintoma-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF).body(bytes);
@@ -227,21 +239,21 @@ public class BpmController {
     @PostMapping("/soluciones/guardar")
     public String guardarSolucion(@Valid @ModelAttribute("registro") SolucionDesinfectante r,
                                    BindingResult br, Model model,
-                                   RedirectAttributes flash) {
+                                   RedirectAttributes flash, Locale locale) {
         if (br.hasErrors()) {
             model.addAttribute("productosQuimicos", inventarioService.listarPorTipo("Químico"));
             return "bpm/soluciones/formulario";
         }
         service.guardarSolucion(r);
-        flash.addFlashAttribute("mensaje", "Solución desinfectante guardada correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.sol.guardado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/soluciones";
     }
 
     @PostMapping("/soluciones/eliminar/{id}")
-    public String eliminarSolucion(@PathVariable Long id, RedirectAttributes flash) {
+    public String eliminarSolucion(@PathVariable Long id, RedirectAttributes flash, Locale locale) {
         service.eliminarSolucion(id);
-        flash.addFlashAttribute("mensaje", "Registro eliminado");
+        flash.addFlashAttribute("mensaje", msg("bpm.eliminado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/soluciones";
     }
@@ -257,10 +269,10 @@ public class BpmController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String logo = tenant != null ? tenant.getLogoUrl() : null;
-        String sub = "Período: " + desde.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — " + hasta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
         byte[] bytes = pdfService.generarSoluciones(registros, b, logo,
-                "Soluciones Desinfectantes", sub);
+                msg("bpm.pdf.titulo.soluciones", locale), sub, locale);
         String fn = "bpm-soluciones-" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
@@ -269,13 +281,14 @@ public class BpmController {
     }
 
     @GetMapping("/soluciones/{id}/pdf")
-    public ResponseEntity<byte[]> pdfSolucionIndividual(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdfSolucionIndividual(@PathVariable Long id,
+                                                         HttpServletRequest request, Locale locale) {
         var r = service.buscarSolucion(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
         byte[] bytes = pdfService.generarSoluciones(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
-                "Soluciones Desinfectantes", sub);
+                msg("bpm.pdf.titulo.soluciones", locale), sub, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-solucion-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF).body(bytes);
@@ -306,18 +319,18 @@ public class BpmController {
     @PostMapping("/plagas/guardar")
     public String guardarPlaga(@Valid @ModelAttribute("registro") AvistamientoPlagas r,
                                 BindingResult br, Model model,
-                                RedirectAttributes flash) {
+                                RedirectAttributes flash, Locale locale) {
         if (br.hasErrors()) return "bpm/plagas/formulario";
         service.guardarPlaga(r);
-        flash.addFlashAttribute("mensaje", "Registro de plagas guardado correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.plagas.guardado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/plagas";
     }
 
     @PostMapping("/plagas/eliminar/{id}")
-    public String eliminarPlaga(@PathVariable Long id, RedirectAttributes flash) {
+    public String eliminarPlaga(@PathVariable Long id, RedirectAttributes flash, Locale locale) {
         service.eliminarPlaga(id);
-        flash.addFlashAttribute("mensaje", "Registro eliminado");
+        flash.addFlashAttribute("mensaje", msg("bpm.eliminado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/plagas";
     }
@@ -333,10 +346,10 @@ public class BpmController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String logo = tenant != null ? tenant.getLogoUrl() : null;
-        String sub = "Período: " + desde.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — " + hasta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
         byte[] bytes = pdfService.generarPlagas(registros, b, logo,
-                "Control de Plagas", sub);
+                msg("bpm.pdf.titulo.plagas", locale), sub, locale);
         String fn = "bpm-plagas-" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
@@ -345,13 +358,14 @@ public class BpmController {
     }
 
     @GetMapping("/plagas/{id}/pdf")
-    public ResponseEntity<byte[]> pdfPlagaIndividual(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdfPlagaIndividual(@PathVariable Long id,
+                                                      HttpServletRequest request, Locale locale) {
         var r = service.buscarPlaga(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
         byte[] bytes = pdfService.generarPlagas(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
-                "Control de Plagas", sub);
+                msg("bpm.pdf.titulo.plagas", locale), sub, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-plaga-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF).body(bytes);
@@ -385,21 +399,21 @@ public class BpmController {
     @PostMapping("/residuos/guardar")
     public String guardarResiduo(@Valid @ModelAttribute("registro") EvacuacionResiduos r,
                                   BindingResult br, Model model,
-                                  RedirectAttributes flash) {
+                                  RedirectAttributes flash, Locale locale) {
         if (br.hasErrors()) {
             model.addAttribute("tiposResiduo", TipoResiduo.values());
             return "bpm/residuos/formulario";
         }
         service.guardarResiduo(r);
-        flash.addFlashAttribute("mensaje", "Registro de residuos guardado correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.res.guardado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/residuos";
     }
 
     @PostMapping("/residuos/eliminar/{id}")
-    public String eliminarResiduo(@PathVariable Long id, RedirectAttributes flash) {
+    public String eliminarResiduo(@PathVariable Long id, RedirectAttributes flash, Locale locale) {
         service.eliminarResiduo(id);
-        flash.addFlashAttribute("mensaje", "Registro eliminado");
+        flash.addFlashAttribute("mensaje", msg("bpm.eliminado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/residuos";
     }
@@ -415,10 +429,10 @@ public class BpmController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String logo = tenant != null ? tenant.getLogoUrl() : null;
-        String sub = "Período: " + desde.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — " + hasta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
         byte[] bytes = pdfService.generarResiduos(registros, b, logo,
-                "Evacuación de Residuos", sub);
+                msg("bpm.pdf.titulo.residuos", locale), sub, locale);
         String fn = "bpm-residuos-" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
@@ -427,13 +441,14 @@ public class BpmController {
     }
 
     @GetMapping("/residuos/{id}/pdf")
-    public ResponseEntity<byte[]> pdfResiduoIndividual(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdfResiduoIndividual(@PathVariable Long id,
+                                                        HttpServletRequest request, Locale locale) {
         var r = service.buscarResiduo(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
         byte[] bytes = pdfService.generarResiduos(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
-                "Evacuación de Residuos", sub);
+                msg("bpm.pdf.titulo.residuos", locale), sub, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-residuo-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF).body(bytes);
@@ -464,18 +479,18 @@ public class BpmController {
     @PostMapping("/limpieza/guardar")
     public String guardarLimpieza(@Valid @ModelAttribute("registro") LimpiezaDesinfeccion r,
                                    BindingResult br, Model model,
-                                   RedirectAttributes flash) {
+                                   RedirectAttributes flash, Locale locale) {
         if (br.hasErrors()) return "bpm/limpieza/formulario";
         service.guardarLimpieza(r);
-        flash.addFlashAttribute("mensaje", "Registro de limpieza guardado correctamente");
+        flash.addFlashAttribute("mensaje", msg("bpm.limp.guardado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/limpieza";
     }
 
     @PostMapping("/limpieza/eliminar/{id}")
-    public String eliminarLimpieza(@PathVariable Long id, RedirectAttributes flash) {
+    public String eliminarLimpieza(@PathVariable Long id, RedirectAttributes flash, Locale locale) {
         service.eliminarLimpieza(id);
-        flash.addFlashAttribute("mensaje", "Registro eliminado");
+        flash.addFlashAttribute("mensaje", msg("bpm.eliminado", locale));
         flash.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/bpm/limpieza";
     }
@@ -491,10 +506,10 @@ public class BpmController {
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String logo = tenant != null ? tenant.getLogoUrl() : null;
-        String sub = "Período: " + desde.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-                + " — " + hasta.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
         byte[] bytes = pdfService.generarLimpieza(registros, b, logo,
-                "Limpieza y Desinfección", sub);
+                msg("bpm.pdf.titulo.limpieza", locale), sub, locale);
         String fn = "bpm-limpieza-" + LocalDate.now() + ".pdf";
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fn + "\"")
@@ -503,13 +518,14 @@ public class BpmController {
     }
 
     @GetMapping("/limpieza/{id}/pdf")
-    public ResponseEntity<byte[]> pdfLimpiezaIndividual(@PathVariable Long id, HttpServletRequest request) {
+    public ResponseEntity<byte[]> pdfLimpiezaIndividual(@PathVariable Long id,
+                                                         HttpServletRequest request, Locale locale) {
         var r = service.buscarLimpieza(id);
         Tenant tenant = (Tenant) request.getAttribute("currentTenant");
         ExportBranding b = ExportBranding.from(tenant);
         String sub = r.getFecha() != null ? r.getFecha().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) : "";
         byte[] bytes = pdfService.generarLimpieza(List.of(r), b, tenant != null ? tenant.getLogoUrl() : null,
-                "Limpieza y Desinfección", sub);
+                msg("bpm.pdf.titulo.limpieza", locale), sub, locale);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"bpm-limpieza-" + id + ".pdf\"")
                 .contentType(MediaType.APPLICATION_PDF).body(bytes);

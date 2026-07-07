@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${branding.name} + ' - Autorizaciones de Salud'">Zymos - Autorizaciones de Salud</title>
+    <title th:text="${branding.name} + ' - ' + #{bpm.aut.title}">Zymos - Autorizaciones de Salud</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
@@ -41,15 +41,13 @@
     <div class="page-header">
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-1" style="font-size:.8rem;">
-                <li class="breadcrumb-item"><a th:href="@{/bpm}">BPM</a></li>
-                <li class="breadcrumb-item active">Autorizaciones de Salud</li>
+                <li class="breadcrumb-item"><a th:href="@{/bpm}" th:text="#{nav.bpm}">BPM</a></li>
+                <li class="breadcrumb-item active" th:text="#{bpm.aut.title}">Autorizaciones de Salud</li>
             </ol>
         </nav>
-        <h1><i class="bi bi-shield-check me-2 text-warning"></i>Autorizaciones de Salud</h1>
-        <p class="subtitle">
-            Usuarios con síntomas declarados hoy
-            (<span th:text="${#temporals.format(hoy, 'dd/MM/yyyy')}"></span>)
-            — pendientes de autorización
+        <h1><i class="bi bi-shield-check me-2 text-warning"></i><span th:text="#{bpm.aut.title}">Autorizaciones de Salud</span></h1>
+        <p class="subtitle" th:text="#{bpm.aut.subtitle(${#temporals.format(hoy,'dd/MM/yyyy')})}">
+            Usuarios con síntomas declarados hoy — pendientes de autorización
         </p>
     </div>
 </div>
@@ -68,15 +66,15 @@
         <div class="tc-header">
             <span class="fw-semibold" style="font-size:.9rem; color:#475569;">
                 <i class="bi bi-person-x me-1 text-danger"></i>
-                Registros con síntomas de hoy
+                <span th:text="#{bpm.aut.registros.hoy}">Registros con síntomas de hoy</span>
             </span>
             <div class="d-flex gap-2">
                 <a th:href="@{/bpm/sintomas/pdf(desde=${#temporals.format(hoy,'yyyy-MM-dd')},hasta=${#temporals.format(hoy,'yyyy-MM-dd')})}"
                    class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-file-earmark-pdf me-1"></i>PDF del día
+                    <i class="bi bi-file-earmark-pdf me-1"></i><span th:text="#{bpm.aut.btn.pdf.dia}">PDF del día</span>
                 </a>
                 <a th:href="@{/bpm/sintomas}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-list-ul me-1"></i>Ver todos los registros
+                    <i class="bi bi-list-ul me-1"></i><span th:text="#{bpm.aut.btn.ver.todos}">Ver todos los registros</span>
                 </a>
             </div>
         </div>
@@ -84,8 +82,8 @@
         <!-- Sin registros -->
         <div th:if="${#lists.isEmpty(registros)}" class="empty-state">
             <i class="bi bi-check-circle text-success"></i>
-            <p class="mb-0 fw-semibold">Sin reportes de síntomas hoy</p>
-            <p class="mb-0" style="font-size:.85rem;">Todos los usuarios han declarado buenas condiciones de salud.</p>
+            <p class="mb-0 fw-semibold" th:text="#{bpm.aut.sin.reportes}">Sin reportes de síntomas hoy</p>
+            <p class="mb-0" style="font-size:.85rem;" th:text="#{bpm.aut.sin.reportes.sub}">Todos los usuarios han declarado buenas condiciones de salud.</p>
         </div>
 
         <!-- Tabla de registros -->
@@ -93,11 +91,11 @@
             <table class="table table-borderless mb-0">
                 <thead>
                     <tr>
-                        <th>Usuario</th>
-                        <th>Síntomas declarados</th>
-                        <th>Observaciones</th>
-                        <th>Estado</th>
-                        <th class="text-end">Acción</th>
+                        <th th:text="#{bpm.aut.col.usuario}">Usuario</th>
+                        <th th:text="#{bpm.aut.col.sintomas}">Síntomas declarados</th>
+                        <th th:text="#{bpm.sint.col.obs}">Observaciones</th>
+                        <th th:text="#{bpm.aut.col.estado}">Estado</th>
+                        <th class="text-end" th:text="#{bpm.aut.col.accion}">Acción</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,11 +106,11 @@
                                  th:text="${#temporals.format(r.createdAt, 'HH:mm')}">—</div>
                         </td>
                         <td>
-                            <span th:if="${r.diarrea}" class="sintoma-chip"><i class="bi bi-activity"></i>Diarrea</span>
-                            <span th:if="${r.vomito}" class="sintoma-chip"><i class="bi bi-activity"></i>Vómito</span>
-                            <span th:if="${r.fiebre}" class="sintoma-chip"><i class="bi bi-thermometer-high"></i>Fiebre</span>
-                            <span th:if="${r.infeccionRespiratoria}" class="sintoma-chip"><i class="bi bi-lungs"></i>Inf. Resp.</span>
-                            <span th:if="${r.lesionPiel}" class="sintoma-chip"><i class="bi bi-bandaid"></i>Lesión Piel</span>
+                            <span th:if="${r.diarrea}" class="sintoma-chip"><i class="bi bi-activity"></i><span th:text="#{bpm.sintoma.diarrea}">Diarrea</span></span>
+                            <span th:if="${r.vomito}" class="sintoma-chip"><i class="bi bi-activity"></i><span th:text="#{bpm.sintoma.vomito}">Vómito</span></span>
+                            <span th:if="${r.fiebre}" class="sintoma-chip"><i class="bi bi-thermometer-high"></i><span th:text="#{bpm.sintoma.fiebre}">Fiebre</span></span>
+                            <span th:if="${r.infeccionRespiratoria}" class="sintoma-chip"><i class="bi bi-lungs"></i><span th:text="#{bpm.sint.col.inf.resp}">Inf. Resp.</span></span>
+                            <span th:if="${r.lesionPiel}" class="sintoma-chip"><i class="bi bi-bandaid"></i><span th:text="#{bpm.sintoma.lesion.piel}">Lesión Piel</span></span>
                         </td>
                         <td style="font-size:.82rem; color:#64748b; max-width:180px;">
                             <span th:text="${r.observaciones != null and !r.observaciones.isBlank() ? r.observaciones : '—'}">—</span>
@@ -120,26 +118,26 @@
                         <td>
                             <span th:if="${r.autorizadoPorAdmin}"
                                   class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2">
-                                <i class="bi bi-check2 me-1"></i>Autorizado
+                                <i class="bi bi-check2 me-1"></i><span th:text="#{bpm.aut.estado.autorizado}">Autorizado</span>
                                 <span th:if="${r.autorizadoPor != null}"
-                                      th:text="'por ' + ${r.autorizadoPor}" style="font-size:.75em;"></span>
+                                      th:text="#{bpm.aut.estado.por} + ' ' + ${r.autorizadoPor}" style="font-size:.75em;"></span>
                             </span>
                             <span th:unless="${r.autorizadoPorAdmin}"
                                   class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2">
-                                <i class="bi bi-x me-1"></i>Bloqueado
+                                <i class="bi bi-x me-1"></i><span th:text="#{bpm.aut.estado.bloqueado}">Bloqueado</span>
                             </span>
                         </td>
                         <td class="text-end">
                             <div class="d-flex gap-1 justify-content-end">
                                 <a th:href="@{/bpm/sintomas/{id}/pdf(id=${r.id})}"
-                                   class="btn btn-outline-secondary btn-sm" title="Descargar PDF">
+                                   class="btn btn-outline-secondary btn-sm" th:title="#{action.download.pdf}">
                                     <i class="bi bi-file-earmark-pdf"></i>
                                 </a>
                                 <button th:unless="${r.autorizadoPorAdmin}"
                                         type="button"
                                         class="btn btn-success btn-sm btn-autorizar"
                                         th:attr="data-id=${r.id},data-nombre=${r.nombreManipulador}">
-                                    <i class="bi bi-pen me-1"></i>Firmar y autorizar
+                                    <i class="bi bi-pen me-1"></i><span th:text="#{bpm.aut.btn.firmar}">Firmar y autorizar</span>
                                 </button>
                                 <span th:if="${r.autorizadoPorAdmin}" class="text-muted" style="font-size:.8rem;">—</span>
                             </div>
@@ -157,7 +155,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="modalAutorizarLabel">
-                    <i class="bi bi-pen me-1 text-success"></i>Firmar Autorización
+                    <i class="bi bi-pen me-1 text-success"></i><span th:text="#{bpm.aut.modal.title}">Firmar Autorización</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
@@ -166,26 +164,28 @@
                 <input type="hidden" id="firma-responsable-input" name="firmaResponsable" value="">
                 <div class="modal-body">
                     <p class="text-muted mb-3" style="font-size:.875rem;">
-                        Autorizando acceso para: <strong id="modal-nombre-usuario"></strong>
+                        <span th:text="#{bpm.aut.modal.autorizando}">Autorizando acceso para:</span>
+                        <strong id="modal-nombre-usuario"></strong>
                     </p>
                     <label class="form-label fw-semibold">
-                        Firma del Responsable <span class="text-danger">*</span>
+                        <span th:text="#{bpm.aut.modal.firma.label}">Firma del Responsable</span>
+                        <span class="text-danger">*</span>
                     </label>
                     <div class="firma-canvas-wrap mb-2">
                         <canvas id="firma-canvas-autorizar" class="firma-canvas"></canvas>
-                        <span class="firma-placeholder" id="firma-placeholder-auto">Firme aquí para autorizar</span>
+                        <span class="firma-placeholder" id="firma-placeholder-auto" th:text="#{bpm.aut.modal.firma.placeholder}">Firme aquí para autorizar</span>
                     </div>
                     <button type="button" id="btn-limpiar-firma" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-eraser me-1"></i>Limpiar
+                        <i class="bi bi-eraser me-1"></i><span th:text="#{bpm.firma.limpiar}">Limpiar</span>
                     </button>
                     <div id="firma-error" class="text-danger mt-2" style="display:none; font-size:.85rem;">
-                        <i class="bi bi-exclamation-circle me-1"></i>Debe firmar antes de autorizar.
+                        <i class="bi bi-exclamation-circle me-1"></i><span th:text="#{bpm.aut.modal.firma.error}">Debe firmar antes de autorizar.</span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
                     <button type="submit" class="btn btn-success btn-sm">
-                        <i class="bi bi-unlock me-1"></i>Confirmar autorización
+                        <i class="bi bi-unlock me-1"></i><span th:text="#{bpm.aut.modal.btn.confirmar}">Confirmar autorización</span>
                     </button>
                 </div>
             </form>
