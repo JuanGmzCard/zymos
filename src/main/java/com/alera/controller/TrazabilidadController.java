@@ -173,7 +173,12 @@ public class TrazabilidadController {
     }
 
     @GetMapping("/nuevo")
-    public String nuevo(@RequestParam(required = false) Long planId, Model model) {
+    public String nuevo(@RequestParam(required = false) Long planId, Model model,
+                        RedirectAttributes flash) {
+        if (recetaService.listarActivas().isEmpty()) {
+            flash.addFlashAttribute("sinRecetas", true);
+            return "redirect:/";
+        }
         LoteFormDto dto = LoteFormDto.empty();
         if (planId != null) {
             planificacionService.buscarConRecetaEIngredientes(planId).ifPresent(plan -> {

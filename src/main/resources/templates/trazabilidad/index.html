@@ -152,6 +152,23 @@
         </div>
     </div>
 
+    <!-- Banner: sin recetas activas -->
+    <div th:if="${sinRecetas}"
+         class="alert d-flex align-items-center gap-3 mb-4 border-0 rounded-3"
+         style="background:#fff3cd; border-left:4px solid #ffc107 !important; border-left-width:4px !important;"
+         role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-4 text-warning flex-shrink-0"></i>
+        <div class="flex-grow-1">
+            <div class="fw-semibold" th:text="#{traz.sin.recetas.titulo}">No tienes recetas activas</div>
+            <div class="text-muted" style="font-size:.875rem;" th:text="#{traz.sin.recetas.texto}">
+                Para crear un nuevo lote necesitas tener al menos una receta activa.
+            </div>
+        </div>
+        <a th:href="@{/recetas/nuevo}" class="btn btn-warning btn-sm text-dark text-nowrap flex-shrink-0">
+            <i class="bi bi-plus-lg me-1"></i><span th:text="#{traz.sin.recetas.btn}">Crear receta</span>
+        </a>
+    </div>
+
     <!-- Stat cards -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         <a th:href="@{/}" class="stat-card-simple text-decoration-none">
