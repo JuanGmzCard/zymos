@@ -22,6 +22,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Spring Boot Starter Mail — envío de emails HTML vía SMTP. `JavaMailSender` solo se auto-configura si `spring.mail.host` está definido (no vacío). `EmailService` usa `@Autowired(required = false)` para soportar entornos sin SMTP.
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
 - JJWT 0.12.6 (`jjwt-api` + `jjwt-impl` + `jjwt-jackson`) — generación y validación de tokens JWT HS256 para la API REST
+- SignaturePad 4.1.7 (CDN: `cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js`) — firma digital canvas en módulo BPM. Integrado vía `static/js/bpm-firma.js`
 - JUnit 5 + Mockito (unitarios) + Testcontainers (integración con PostgreSQL real)
 - SpotBugs 4.8.6.4 (`spotbugs-maven-plugin`) — análisis estático de bytecode. Exclusiones en `spotbugs-exclude.xml` (EI_EXPOSE_REP de Lombok + clases `*Impl` de MapStruct). **Solo corre en CI (Java 21)** — ASM no soporta class file v70 (JDK 26 local).
 - Tipografías: Cinzel (headings), Raleway (body)
@@ -33,7 +34,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `PRODUCCION_USERNAME/PASSWORD`, `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V68). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V71). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - **CI/CD**: `.github/workflows/ci.yml` — dos jobs paralelos en cada push: `Build & Test` (Java 21 + Postgres para Testcontainers) y `SpotBugs` (Java 21, sin Postgres, `mvn compile spotbugs:check`). **Dependabot**: `.github/dependabot.yml` — revisa Maven y GitHub Actions semanalmente con grupos `spring-boot`, `testcontainers`, `security`.
@@ -60,7 +61,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Dorado claro: `#E0B840` (hover) — CSS var `--dorado-claro`
 - Crema: `#F5EDD0` (texto sobre fondos oscuros) — CSS var `--crema`
 - Fondo body: `#F0EDE2` — CSS var `--fondo`
-- Dark mode: fondo `#111606`, cards `#1c2410`, texto crema — activado con clase `html.dark-mode`. Variables centralizadas `--dm-*` en `style.css` (bloque `:root`): `--dm-bg`, `--dm-card`, `--dm-input`, `--dm-text`, `--dm-text-muted`, `--dm-text-dim`, `--dm-text-dimmer`, `--dm-border-faint`, `--dm-border-light`, `--dm-border-med`, `--dm-border-heavy`, `--dm-hover`, `--dm-verde-bg`, `--dm-verde-border`, `--dm-verde-faint`. Los templates con `<style>` inline propio incluyen también un bloque `html.dark-mode` local al final de ese `<style>`, usando las vars `--dm-*`.
+- Dark mode: fondo `#0f172a` (slate oscuro), cards `#1e293b`, inputs `#334155`, texto `#e2e8f0` — activado con clase `html.dark-mode`. **Paleta slate/azul-Zymos** (migrada de verde-Alera el 2026-07-06). Variables centralizadas `--dm-*` en `style.css` (bloque `:root`): `--dm-bg` (#0f172a), `--dm-bg-deep` (#080d1a), `--dm-card` (#1e293b), `--dm-input` (#334155), `--dm-input-focus` (#3d4f67), `--dm-text` (#e2e8f0), `--dm-text-strong`, `--dm-text-faint`, `--dm-text-muted`, `--dm-text-soft`, `--dm-text-dim`, `--dm-text-dimmer`, `--dm-border` (rgba slate 20%), `--dm-border-heavy`, `--dm-border-med`, `--dm-border-light`, `--dm-border-faint`, `--dm-border-focus` (blue focus), `--dm-hover`, `--dm-verde-bg` (blue accent rgba 12%), `--dm-verde-faint`, `--dm-verde-border`. Los templates con `<style>` inline propio incluyen también un bloque `html.dark-mode` local al final de ese `<style>`, usando las vars `--dm-*`.
 - Componentes clave en `style.css` (globales, no redefinir en `<style>` inline): `.phase-badge`, `.detail-label`, `.detail-value`, `.ingrediente-chip`, `.densidad-box`, `.fase-col`, `.comparativa-box`, `.kanban-card`, `.kanban-col`, `.badge-role` (pill dorado para rol de usuario en navbar), `.fase-pill` (6 variantes en `trazabilidad/index.html` con dark mode), `.kanban-col-header` (dark mode por columna con colores de fase usando `!important` sobre inline styles), `.wz-tab.done` (tab wizard completado — círculo verde con ✓ via CSS `::after { content:'✓' }`)
 - **Componentes UI modernos slate/azul** — definidos localmente en el `<style>` de cada template (NO en `style.css`). Todos incluyen bloque `html.dark-mode { ... }` al final usando vars `--dm-*`:
   - `.page-header` — cabecera de página: `padding:1.75rem 0 1rem`; h1 `font-size:1.5rem; font-weight:700; color:#1e293b`; `.subtitle` en `#94a3b8; font-size:0.875rem`. Siempre en `<div class="container-fluid px-4">` propio, antes del `container-fluid px-4 pb-4` del contenido.
@@ -125,6 +126,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 15. **Historial lotes**: `HistorialLote` sin FK intencionalmente — preserva historia tras borrar el lote.
 16. **Log accesos**: `LogAccesoService.registrar()` usa `REQUIRES_NEW` — se guarda aunque la tx principal haga rollback.
 17. **Proveedores**: campo `activo` (no `activa`) — Spring Data derivado debe ser `findAllByActivoTrue*`.
+17b. **InsumoInventario — campo `tipo` almacena display name**: `InsumoInventario.tipo` guarda el nombre visible del tipo (ej: `"Químico"`, `"Malta"`, `"Lúpulo"`), NO el nombre del enum Java. Fue migrado por V45/V47 desde enum names a los nombres de la tabla `tipos_insumo`. Al filtrar por tipo, usar siempre el display name con tilde y capitalización correcta. Ejemplo: `repo.findAllByTipoOrderByNombreAsc("Químico")` — nunca `"QUIMICO"`.
 18. **FacturaProveedor**: tiene dos campos de proveedor: `proveedor` (String original) y `proveedorRef` (FK LAZY nullable). Coexisten para compat. histórica. El campo de fecha es `fechaFactura` — **NO** `fecha`. En JPQL: `f.fechaFactura`; en Java: `getFechaFactura()`. Escribir `f.fecha` en un `@Query` provoca `UnknownPathException` al arrancar. El flag `ivaIncluido` (boolean, default false) indica si los valores unitarios de los ítems ya incluyen IVA — `FacturaItem.getValorUnitarioSinIva()` hace la extracción automáticamente consultando `factura.isIvaIncluido()`.
 19. **Fechas en filtros JPQL**: para `LocalDate` nullable usar `CAST(:param AS LocalDate) IS NULL OR campo >= :param` — el `CAST` fuerza el tipo del parámetro y evita el error de PostgreSQL `"no se pudo determinar el tipo del parámetro $N"` (SQLState 42P18) que ocurre cuando el parámetro es `null` sin contexto de tipo. Patrón sin `CAST` (`(:param IS NULL OR ...)`) no funciona con PostgreSQL + Hibernate 6.
 20. **AuditableEntity — error de compilación**: si una subclase declara `getCreatedAt()` / `setCreatedAt()` o cualquier getter/setter de los 4 campos auditados, el compilador lanza `createdAt has private access in AuditableEntity`. Solución: eliminar esos métodos de la subclase.
@@ -200,7 +202,74 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 ---
 
-## DOCUMENTACIÓN DETALLADA (`docs/`)
+## MÓDULO BPM (Buenas Prácticas de Manufactura)
+
+Módulo de trazabilidad de inocuidad alimentaria. Ruta base: `/bpm`. Posición en navbar: entre Comercial y Admin.
+
+### Submodulos
+
+| Submodulo | Ruta | Entidad | Tabla BD |
+|---|---|---|---|
+| Estado de Salud (diario) | `/bpm/salud/diario` | `RegistroSintomas` | `bpm_registros_sintomas` |
+| Autorizaciones de Salud | `/bpm/salud/autorizaciones` | `RegistroSintomas` | `bpm_registros_sintomas` |
+| Soluciones Desinfectantes | `/bpm/soluciones` | `SolucionDesinfectante` | `bpm_soluciones_desinfectantes` |
+| Control de Plagas | `/bpm/plagas` | `AvistamientoPlagas` | `bpm_avistamiento_plagas` |
+| Evacuación de Residuos | `/bpm/residuos` | `EvacuacionResiduos` | `bpm_evacuacion_residuos` |
+| Limpieza y Desinfección | `/bpm/limpieza` | `LimpiezaDesinfeccion` | `bpm_limpieza_desinfeccion` |
+
+### Arquitectura BPM
+
+- **`BpmController`** — controller único para todos los submodulos. Inyecta `BpmService`, `BpmPdfService` e `InsumoInventarioService` (para datalist de productos químicos en soluciones).
+- **`BpmService`** — lógica de negocio para los 5 módulos. Método especial: `autorizarAcceso(Long id, String adminUsername, String firmaResponsable)` — guarda la firma del responsable al autorizar.
+- **`BpmPdfService`** — genera PDFs (OpenPDF) para cada submodulo y para el diario de salud. Método `addTdFirma(tabla, firmaData, bg)` decodifica base64 PNG y renderiza la imagen (60×20px) en la celda PDF. Cada registro tiene endpoint individual: `GET /bpm/{modulo}/{id}/pdf`.
+- **`BpmDashboardController`** — dashboard BPM en `/bpm` con métricas del mes actual.
+
+### Firma Digital
+
+- **`bpm-firma.js`** (`static/js/`) — script global para todos los formularios BPM con firma. Inicializa `SignaturePad` en todos los `.firma-canvas`, restaura firma existente al editar, sincroniza al `<input type="hidden">` correspondiente vía `dataset.input` en el submit del form.
+- **HTML del canvas**: `<canvas class="firma-canvas" data-input="id-del-input-hidden">`. El input hidden tiene el `name` que recibe el controller (`@RequestParam String firma`).
+- **Base64 PNG**: las firmas se almacenan como `data:image/png;base64,...` en columnas `TEXT` en BD (V71: `ALTER COLUMN firma TYPE TEXT`).
+- **Autorizaciones**: botón "Firmar y autorizar" abre un modal con canvas dedicado. La firma es **obligatoria** — el submit está bloqueado si el pad está vacío (`pad.isEmpty()`). El controller recibe `@RequestParam(required = false) String firmaResponsable`.
+- **Inicializar con ratio**: `canvas.width = canvas.offsetWidth * devicePixelRatio; canvas.height = canvas.offsetHeight * ratio; canvas.getContext('2d').scale(ratio, ratio)` — necesario para evitar firmas borrosas en pantallas HiDPI.
+
+### Inventario Químico en Soluciones
+
+- El formulario "Nueva Solución Desinfectante" muestra un datalist con productos del inventario de tipo "Químico".
+- `InsumoInventarioService.listarPorTipo(String tipo)` — filtra por el campo `tipo` de `InsumoInventario`, que almacena el **nombre display** del tipo (ej: `"Químico"`), NO el nombre del enum Java (`"QUIMICO"`). Este campo fue migrado por V45/V47 de enum names a display names de `tipos_insumo`.
+- **CRÍTICO**: siempre pasar el display name: `listarPorTipo("Químico")`, nunca `"QUIMICO"`.
+- `InsumoInventarioRepository.findAllByTipoOrderByNombreAsc(String tipo)` — query derivada de Spring Data.
+
+### Migraciones BPM
+
+- V69: tablas BPM base (5 tablas con `tenant_id`)
+- V70: columnas de firma iniciales
+- V71: `firma` columns widened to `TEXT` en todas las tablas BPM para soportar base64 PNG completo
+
+---
+
+## MÓDULO BPM — REGLAS CSP
+
+El CSP enforced (activo desde 2026-07-03, Fase D) bloquea **todos** los event handlers inline y **todos** los `<script>` sin nonce. Reglas para templates BPM (y cualquier template nuevo):
+
+1. **NUNCA usar `onclick=`, `onsubmit=`, `onchange=`, `oninput=` inline** en ningún elemento HTML.
+   - Reemplazar con `addEventListener` en un `<script th:attr="nonce=${cspNonce}">`.
+   - Para confirmaciones de borrado: usar `data-confirm="¿mensaje?"` — navbar.html lo maneja globalmente en fase de captura.
+   - Para abrir modales desde botones: agregar clase CSS descriptiva + `data-*` attrs, escuchar con `document.addEventListener('click', fn)` buscando `e.target.closest('.clase')`.
+
+2. **TODO `<script>` inline DEBE llevar `th:attr="nonce=${cspNonce}"`** — si falta, el navegador bloquea el script silenciosamente y los botones no responden.
+   ```html
+   <script th:attr="nonce=${cspNonce}">
+   document.addEventListener('DOMContentLoaded', function () { ... });
+   </script>
+   ```
+
+3. **Scripts CDN** (Bootstrap, SignaturePad, etc.) no necesitan nonce — están en la allowlist CSP por hash o por ser `cdn.jsdelivr.net`. Sí verificar que el CDN esté en la allowlist de `CspFilter`.
+
+4. **`bpm-firma.js`** ya sigue CSP: es un archivo estático servido por `/js/bpm-firma.js`, no inline. Cargarlo con `<script th:src="@{/js/bpm-firma.js}">` — no necesita nonce.
+
+---
+
+## CONVENCIONES DEL PROYECTO
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:
 
