@@ -49,6 +49,10 @@
         .stat-value.warning { color:#f97316; }
         .stat-value.muted   { color:#64748b; }
 
+        .cal-wrapper { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; }
+        .proximas-wrapper { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; height:100%; }
+        html.dark-mode .cal-wrapper { background: var(--dm-card); border-color: var(--dm-border-light); }
+        html.dark-mode .proximas-wrapper { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .proxima-card { background: var(--dm-card); border-left-color: #0284c7; }
         html.dark-mode .page-header h1 { color: var(--dm-text); }
         html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
@@ -106,14 +110,14 @@
 
         <!-- Calendario FullCalendar -->
         <div class="col-lg-8">
-            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem;">
+            <div class="cal-wrapper">
                 <div id="calPlanificacion"></div>
             </div>
         </div>
 
         <!-- Panel de próximas -->
         <div class="col-lg-4">
-            <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1rem; height:100%;">
+            <div class="proximas-wrapper">
                 <h6 style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#64748b;" class="mb-3">
                     <i class="bi bi-list-check me-2"></i><span th:text="#{planif.proximas}">Próximas elaboraciones</span>
                 </h6>

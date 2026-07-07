@@ -15,6 +15,12 @@
         .page-header .subtitle { color: #94a3b8; font-size: 0.875rem; }
         html.dark-mode .page-header h1 { color: var(--dm-text); }
         html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
+        .form-section { background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem; }
+        .logo-preview-body { background:white; padding:10px; }
+        .font-preview-box { background:#f8fafc; border:1px solid #e2e8f0; }
+        html.dark-mode .form-section { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .logo-preview-body { background:var(--dm-input); }
+        html.dark-mode .font-preview-box { background:var(--dm-input); border-color:var(--dm-border-light); }
     </style>
 </head>
 <body>
@@ -45,7 +51,7 @@
         <input th:if="${!esNuevo}" type="hidden" th:field="*{subdomain}">
 
         <!-- SECCIÓN: Información básica -->
-        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+        <div class="form-section">
             <h6 class="detail-label mb-3"><i class="bi bi-info-circle me-2"></i><span th:text="#{admin.tform.seccion.info}">Información básica</span></h6>
 
             <div class="row g-3">
@@ -160,7 +166,7 @@
         </div>
 
         <!-- SECCIÓN: Importar / Exportar -->
-        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+        <div class="form-section">
             <h6 class="detail-label mb-3"><i class="bi bi-arrow-left-right me-2"></i><span th:text="#{admin.tform.seccion.import}">Importar / Exportar configuración</span></h6>
             <div class="d-flex flex-wrap gap-4 align-items-end">
 
@@ -205,7 +211,7 @@
         </div>
 
         <!-- SECCIÓN: Paleta de colores -->
-        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+        <div class="form-section">
             <h6 class="detail-label mb-3"><i class="bi bi-palette me-2"></i><span th:text="#{admin.tform.seccion.colores}">Paleta de colores</span></h6>
 
             <!-- Previews en vivo -->
@@ -248,7 +254,7 @@
                             <div id="loginPreviewTagline" style="font-size:.52rem;opacity:.85;"></div>
                         </div>
                         <!-- Body decorativo -->
-                        <div style="background:white;padding:10px;">
+                        <div class="logo-preview-body">
                             <div style="background:#f0f0f0;border-radius:4px;height:18px;margin-bottom:5px;display:flex;align-items:center;padding:0 7px;gap:5px;">
                                 <i class="bi bi-person" style="font-size:.55rem;color:#bbb;"></i>
                                 <span style="font-size:.5rem;color:#ccc;">Usuario</span>
@@ -319,11 +325,11 @@
         </div>
 
         <!-- SECCIÓN: Tipografías -->
-        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:8px; padding:1.5rem; margin-bottom:1rem;">
+        <div class="form-section">
             <h6 class="detail-label mb-3"><i class="bi bi-fonts me-2"></i><span th:text="#{admin.tform.seccion.tipografia}">Tipografías</span></h6>
 
             <!-- Preview de fuentes en vivo -->
-            <div class="mb-4 p-3 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;">
+            <div class="mb-4 p-3 rounded font-preview-box">
                 <div id="previewFontHeading"
                      style="font-size:1.4rem;font-weight:600;color:var(--verde-zymos);margin-bottom:4px;">
                     Cervecería Artesanal
