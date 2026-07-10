@@ -462,6 +462,16 @@ Prefijo `admin.mig.flash.*` — resueltos con `messageSource.getMessage(key, arg
 - **Badge módulo en historial**: ternario de 11 entradas — `catalogos` → `bg-secondary`, `mantenimientos` → `bg-danger`.
 - **Al agregar un módulo nuevo**: (1) añadir case en el switch del controller; (2) añadir card en el grid del template; (3) añadir instrucción en la lista; (4) añadir entrada al badge ternario; (5) añadir keys i18n `admin.mig.mod.*` en ambos `messages*.properties`.
 
+### Tests del módulo de migración
+
+- **`MigracionControllerTest`** (`@WebMvcTest`) — 46 tests organizados en 3 `@Nested`:
+  - `Detalle` (5 tests): autenticación, modelo con stats (totalImportaciones, exitosas, parciales), tenant inexistente → redirect danger.
+  - `DescargaPlantilla` (20 tests): 11 módulos vía `@ParameterizedTest` → 200 + content-type XLSX; `Content-Disposition` incluye tenant y módulo; módulo desconocido → 400 (GlobalExceptionHandler captura `RuntimeException`).
+  - `Importar` (21 tests): archivo vacío → warning sin llamar servicio; EXITOSO → success; PARCIAL → warning; FALLIDO → danger; excepción → danger; módulo desconocido → danger; 11 módulos `@ParameterizedTest` → todos enrutan al método correcto del servicio; usuario autenticado se pasa como parámetro.
+- **`MigracionServiceIntegrationTest`** — 9 tests con Testcontainers (PostgreSQL real): almacén happy path, tipo inválido, nombre vacío, equipos estado default, comercial con subtotal, proveedor duplicado, producción con receta/escalón/lote, código de lote duplicado, MigracionLog persistido.
+- **`MigracionTemplateServiceTest`** — 7 tests: 6 plantillas generan XLSX válido (magic bytes `PK\x03\x04`), archivos distintos entre módulos.
+- **`MigracionTestDataGenerator`** — clase utilitaria en `com.alera.util`. Ejecutar como test JUnit (`generarTodos()`) para generar los 11 archivos Excel de prueba en `src/test/resources/migracion-test/` (01-catalogos.xlsx … 11-mantenimientos.xlsx). Datos consistentes: ventas/barriles referencian lote `IPA-2024-001` de producción; mantenimientos referencian equipos del archivo 03. Orden recomendado: 01→02→03→04→05→06→07→08→09→10→11.
+
 ---
 
 ## CONVENCIONES DEL PROYECTO

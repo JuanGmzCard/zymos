@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zymos — Resumen Ejecutivo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+  :root {
+    --azul-oscuro: #1e293b;
+    --azul:        #2563eb;
+    --azul-cl:     #0ea5e9;
+    --azul-suave:  #38bdf8;
+    --crema:       #f8fafc;
+    --fondo:       #f1f5f9;
+    --gris:        #6b7280;
+    --gris-cl:     #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.65;
+  }
+
+  /* ── BOTÓN EXPORTAR (solo pantalla) ─────────────────────────── */
+  .export-btn {
+    position: fixed;
+    top: 1.25rem; right: 1.25rem;
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: .5rem 1.2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: .4rem;
+    box-shadow: 0 4px 16px rgba(37,99,235,.35);
+    z-index: 1000;
+    transition: background .2s, transform .15s;
+    letter-spacing: .02em;
+  }
+  .export-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+  /* ── PORTADA ─────────────────────────────────────────────────── */
+  .cover {
+    background: linear-gradient(160deg, var(--azul-oscuro) 0%, var(--azul) 60%, #1e40af 100%);
+    color: var(--crema);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: rgba(14,165,233,0.1);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(14,165,233,0.07);
+  }
+  .cover-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 64pt;
+    font-weight: 700;
+    color: var(--azul-suave);
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-drop {
+    font-size: 28pt;
+    margin-bottom: 24px;
+    opacity: 0.85;
+  }
+  .cover-tagline {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15pt;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--crema);
+    opacity: 0.85;
+    margin-bottom: 48px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-divider {
+    width: 80px;
+    height: 3px;
+    background: var(--azul-cl);
+    margin: 0 auto 40px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-doc-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 16pt;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--crema);
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-subtitle {
+    font-size: 11pt;
+    color: rgba(248,250,252,0.7);
+    position: relative;
+    z-index: 1;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 32px;
+    font-size: 9pt;
+    color: rgba(248,250,252,0.4);
+    letter-spacing: 1px;
+    z-index: 1;
+  }
+
+  /* ── PÁGINAS INTERIORES ──────────────────────────────────────── */
+  .page {
+    padding: 52px 56px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .page-break { page-break-before: always; }
+
+  /* ── ENCABEZADO DE SECCIÓN ───────────────────────────────────── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--azul-cl);
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    background: var(--azul);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 16pt;
+    font-weight: 600;
+    color: var(--azul);
+    letter-spacing: 1px;
+  }
+
+  /* ── TEXTO ───────────────────────────────────────────────────── */
+  p { margin-bottom: 14px; }
+  .lead {
+    font-size: 12pt;
+    font-weight: 500;
+    color: var(--azul);
+    margin-bottom: 18px;
+    line-height: 1.7;
+  }
+
+  /* ── MÓDULOS — 2 columnas ────────────────────────────────────── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .module-card {
+    border: 1px solid var(--gris-cl);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--fondo);
+    border-left: 4px solid var(--azul-cl);
+  }
+  .module-card h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .module-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .module-card ul li {
+    font-size: 9.5pt;
+    color: #374151;
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .module-card ul li::before {
+    content: '▸';
+    color: var(--azul-cl);
+    position: absolute;
+    left: 0;
+    font-size: 9pt;
+  }
+
+  /* ── BENEFICIOS ──────────────────────────────────────────────── */
+  .benefits-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 24px;
+  }
+  .benefits-list li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .benefit-icon {
+    width: 34px; height: 34px;
+    background: var(--azul);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .benefit-text strong {
+    display: block;
+    font-weight: 600;
+    color: var(--azul);
+    font-size: 10.5pt;
+    margin-bottom: 2px;
+  }
+  .benefit-text span {
+    font-size: 9.5pt;
+    color: #4b5563;
+  }
+
+  /* ── SEGURIDAD — 2 columnas ──────────────────────────────────── */
+  .seg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .seg-card {
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--fondo);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .seg-badge {
+    width: 30px; height: 30px;
+    background: #dbeafe;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .seg-card strong { display: block; font-size: 9.5pt; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .seg-card span { font-size: 8.5pt; color: #4b5563; line-height: 1.4; }
+
+  /* ── ARQUITECTURA ────────────────────────────────────────────── */
+  .arch-boxes {
+    display: flex;
+    gap: 0;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--gris-cl);
+  }
+  .arch-box {
+    flex: 1;
+    padding: 20px 16px;
+    text-align: center;
+    border-right: 1px solid var(--gris-cl);
+  }
+  .arch-box:last-child { border-right: none; }
+  .arch-box .arch-icon { font-size: 22px; margin-bottom: 8px; }
+  .arch-box h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .arch-box p { font-size: 8.5pt; color: #6b7280; margin: 0; }
+  .arch-box.highlight { background: var(--fondo); }
+
+  /* ── TABLA TECH ──────────────────────────────────────────────── */
+  .tech-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 9.5pt;
+  }
+  .tech-table thead tr {
+    background: var(--azul);
+    color: var(--crema);
+  }
+  .tech-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+  }
+  .tech-table tbody tr:nth-child(even) { background: var(--fondo); }
+  .tech-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gris-cl);
+    vertical-align: top;
+  }
+  .tech-table tbody td:first-child {
+    font-weight: 600;
+    color: var(--azul);
+    white-space: nowrap;
+  }
+
+  /* ── ESTADO ──────────────────────────────────────────────────── */
+  .estado-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 24px;
+  }
+  .estado-table thead tr {
+    background: var(--azul);
+    color: var(--crema);
+  }
+  .estado-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+  .estado-table tbody tr:nth-child(even) { background: var(--fondo); }
+  .estado-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gris-cl);
+    vertical-align: middle;
+  }
+  .estado-table tbody td:first-child { font-weight: 600; color: #111827; }
+  .badge-ok {
+    background: #d1fae5; color: #065f46;
+    border-radius: 50px; padding: 2px 10px;
+    font-size: 8.5pt; font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── CALLOUT ─────────────────────────────────────────────────── */
+  .callout {
+    background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+    color: var(--crema);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    text-align: center;
+  }
+  .callout h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14pt;
+    color: var(--azul-suave);
+    margin-bottom: 10px;
+  }
+  .callout p { font-size: 10pt; opacity: 0.9; margin: 0; }
+
+  /* ── STAT PILLS ──────────────────────────────────────────────── */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    flex: 1;
+    min-width: 120px;
+    background: var(--azul);
+    color: var(--crema);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-pill .stat-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 22pt;
+    color: var(--azul-suave);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-pill .stat-lbl {
+    font-size: 8.5pt;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── FLUJO ───────────────────────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 90px;
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--fondo);
+    border: 1px solid var(--gris-cl);
+    border-radius: 8px;
+    position: relative;
+  }
+  .flow-step .flow-num {
+    display: inline-block;
+    width: 24px; height: 24px;
+    background: var(--azul-cl);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 9pt;
+    line-height: 24px;
+    margin-bottom: 6px;
+  }
+  .flow-step p { font-size: 8.5pt; color: #374151; margin: 0; line-height: 1.4; }
+  .flow-arrow { color: var(--azul-cl); font-size: 16pt; padding: 0 4px; flex-shrink: 0; }
+
+  /* ── DIFERENCIADORES ─────────────────────────────────────────── */
+  .dif-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+  .dif-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: var(--fondo);
+  }
+  .dif-num {
+    width: 30px; height: 30px; flex-shrink: 0;
+    background: var(--azul);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt; font-weight: 700; color: #fff;
+    margin-top: 1px;
+  }
+  .dif-text strong { display: block; font-size: 10.5pt; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .dif-text span { font-size: 9pt; color: #4b5563; }
+
+  /* ── PIE DE PÁGINA ───────────────────────────────────────────── */
+  .page-footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gris-cl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: var(--gris);
+  }
+  .page-footer .footer-brand {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--azul);
+    letter-spacing: 2px;
+  }
+
+  /* ── CIERRE ──────────────────────────────────────────────────── */
+  .cierre-box {
+    text-align: center;
+    margin-top: 40px;
+    padding: 28px;
+    border: 1px solid var(--gris-cl);
+    border-radius: 12px;
+    background: var(--fondo);
+  }
+  .cierre-box .cierre-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 22pt; font-weight: 700;
+    color: var(--azul); letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+  .cierre-box .cierre-tag {
+    font-size: 9pt; color: var(--gris);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .cierre-box .cierre-div { width: 50px; height: 2px; background: var(--azul-cl); margin: 0 auto 16px; }
+  .cierre-box .cierre-cta { font-size: 9.5pt; color: #374151; }
+
+  /* ── PRINT ───────────────────────────────────────────────────── */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @media print {
+    body { font-size: 10pt; }
+    .export-btn { display: none !important; }
+    .cover { min-height: 100vh; }
+    .page { padding: 40px 48px; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Botón exportar -->
+<button class="export-btn" onclick="window.print()">
+  ⬇ Exportar PDF
+</button>
+
+<!-- ═══════════════════════════════════════════════════════ PORTADA -->
+<div class="cover">
+  <div class="cover-logo">ZYMOS</div>
+  <div class="cover-drop">🍺</div>
+  <div class="cover-tagline">Gestión y Trazabilidad para Cervecería Artesanal</div>
+  <div class="cover-divider"></div>
+  <div class="cover-doc-title">Resumen Ejecutivo</div>
+  <div class="cover-subtitle">Plataforma SaaS Multi-tenant · 2026</div>
+  <div class="cover-footer" id="cover-date">Confidencial · 2026</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 1: QUÉ ES ZYMOS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-icon">💡</div>
+    <h2 class="section-title">¿Qué es Zymos?</h2>
+  </div>
+
+  <p class="lead">Zymos es una plataforma de gestión integral diseñada exclusivamente para cervecerías artesanales. Centraliza en un solo lugar todos los procesos del negocio: producción, inventario, equipos, inocuidad alimentaria, ventas, facturación y análisis.</p>
+
+  <p>Las cervecerías artesanales gestionan simultáneamente recetas técnicas, lotes en distintas fases de fermentación, insumos perecederos, equipos con mantenimiento, clientes y proveedores — frecuentemente con hojas de cálculo y herramientas dispersas que no se comunican entre sí. Zymos resuelve este problema con una plataforma unificada, accesible desde cualquier navegador sin instalación de software.</p>
+
+  <p>Como plataforma <strong>SaaS multi-tenant</strong>, cada cervecería opera en su propio entorno aislado con su marca, colores y datos privados — mientras comparte la misma infraestructura robusta actualizada automáticamente.</p>
+
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="stat-num">12</span>
+      <span class="stat-lbl">Módulos integrados</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">100%</span>
+      <span class="stat-lbl">Web — sin instalación</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">∞</span>
+      <span class="stat-lbl">Roles por tenant</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">912</span>
+      <span class="stat-lbl">Tests automatizados</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h3>Un solo sistema. Todo el negocio.</h3>
+    <p>Producción · Recetas · Inventario · Equipos · BPM · Comercial · Ventas · Barriles · Planificación · Reportes</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>1</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 2: MÓDULOS A -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🧩</div>
+    <h2 class="section-title">Módulos del Sistema (1/2)</h2>
+  </div>
+
+  <div class="modules-grid">
+
+    <div class="module-card no-break">
+      <h3>🍻 Trazabilidad de Lotes</h3>
+      <ul>
+        <li>Ciclo de vida completo por lote: cocción (1-3 sesiones), fermentación, acondicionamiento, maduración y carbonatación</li>
+        <li>Tablero Kanban con drag &amp; drop por fase</li>
+        <li>Gráfica de fermentación densidad/temperatura en tiempo real</li>
+        <li>Cálculo automático de ABV, atenuación y eficiencia</li>
+        <li>Evaluaciones sensoriales BJCP</li>
+        <li>Exportación a PDF por lote</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📋 Recetas</h3>
+      <ul>
+        <li>Biblioteca con ingredientes, escalones de macerado y adiciones de hervor</li>
+        <li>Objetivos OG/FG/ABV e indicadores Brix (método Sean Terrill)</li>
+        <li>Cálculo de agua macerado y sparge</li>
+        <li>Calculadora de escala de volumen integrada</li>
+        <li>Datalist de insumos del inventario en formulario</li>
+        <li>Exportación a PDF</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📦 Inventario de Insumos</h3>
+      <ul>
+        <li>Control de stock con alertas de bajo inventario</li>
+        <li>Alertas de vencimiento próximo</li>
+        <li>Descuento automático al crear o actualizar lotes</li>
+        <li>9 tipos de insumo (maltas, lúpulos, levaduras, químicos, envases…)</li>
+        <li>Normalización de unidades (kg↔gr, L↔mL)</li>
+        <li>Exportación a Excel</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🔧 Equipos y Mantenimiento</h3>
+      <ul>
+        <li>Inventario de equipos con estado en tiempo real</li>
+        <li>Historial de mantenimientos preventivos, correctivos, calibraciones y limpieza</li>
+        <li>Alertas de próximo mantenimiento en dashboard</li>
+        <li>Disponibilidad de fermentadores en formulario de lote</li>
+        <li>Historial de costos por equipo</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🛡️ BPM — Inocuidad Alimentaria</h3>
+      <ul>
+        <li>Registro diario de estado de salud con firma digital</li>
+        <li>Bloqueo automático de operarios con síntomas no autorizados</li>
+        <li>Control de soluciones desinfectantes, plagas, limpieza y residuos</li>
+        <li>Autorización del administrador con SignaturePad</li>
+        <li>Notificación automática al equipo al detectar síntomas</li>
+        <li>Generación de PDF por registro</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📅 Planificación</h3>
+      <ul>
+        <li>Calendario visual con FullCalendar</li>
+        <li>Elaboraciones planificadas vinculadas a recetas</li>
+        <li>Estados: Planificada → En Proceso → Completada</li>
+        <li>Inicio directo desde el calendario al formulario de lote</li>
+        <li>Vista mensual y semanal</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>2</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 3: MÓDULOS B -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🧩</div>
+    <h2 class="section-title">Módulos del Sistema (2/2)</h2>
+  </div>
+
+  <div class="modules-grid">
+
+    <div class="module-card no-break">
+      <h3>🧾 Comercial — Proveedores y Facturas</h3>
+      <ul>
+        <li>Registro y seguimiento de facturas de compra</li>
+        <li>Estados: Recibida → Verificada → Pagada</li>
+        <li>IVA por ítem e impuesto al consumo independientes</li>
+        <li>Asignación de costos de factura directamente a lotes</li>
+        <li>Órdenes de compra a proveedores</li>
+        <li>Exportación a Excel con detalle de ítems</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>💰 Ventas y Clientes</h3>
+      <ul>
+        <li>Cotizaciones, pedidos y despachos</li>
+        <li>Ítems por lote con descuentos por línea</li>
+        <li>Ficha de clientes con datos fiscales y lista de precios</li>
+        <li>Exportación a PDF y Excel</li>
+        <li>Seguimiento de estado de cada venta</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🛢️ Barriles</h3>
+      <ul>
+        <li>Trazabilidad por código de barril</li>
+        <li>Asociación a lotes de producción y clientes</li>
+        <li>Estados: Disponible, Lleno, Despachado, Limpieza, Baja</li>
+        <li>Historial de movimientos por barril</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📊 Reportes y Dashboard</h3>
+      <ul>
+        <li>Dashboard personalizable con métricas en vivo (visibilidad y orden en localStorage)</li>
+        <li>Reporte de producción con gráficas por estilo y período</li>
+        <li>Comparativa entre lotes</li>
+        <li>Alertas diarias por email (inventario, equipos, facturas)</li>
+        <li>Exportación a PDF y Excel de todos los reportes</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>☁️ Migración de Datos</h3>
+      <ul>
+        <li>11 módulos importables desde plantillas XLSX</li>
+        <li>Almacén, Equipos, Comercial, Producción, Clientes, Ventas, Barriles, OC, Seguimiento, Catálogos, Mantenimientos</li>
+        <li>Log de auditoría por importación con estado y errores</li>
+        <li>Onboarding completo desde hojas de cálculo en minutos</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🔔 Notificaciones</h3>
+      <ul>
+        <li>Alertas in-app de bajo stock, vencimientos, mantenimientos y salud BPM</li>
+        <li>Filtradas según los permisos del rol del usuario</li>
+        <li>Deduplicación diaria — una alerta por evento por día</li>
+        <li>Alertas de plan (límite de lotes/usuarios, vencimiento)</li>
+        <li>Typeahead global de búsqueda en navbar</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 4: SEGURIDAD + RBAC -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🔒</div>
+    <h2 class="section-title">Seguridad y Control de Acceso</h2>
+  </div>
+
+  <p>Zymos implementa un modelo de seguridad en capas que cubre autenticación, autorización granular, aislamiento de datos y cumplimiento de inocuidad alimentaria:</p>
+
+  <div class="seg-grid">
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏷️</div>
+      <div>
+        <strong>RBAC dinámico por tenant</strong>
+        <span>Cada cervecería define sus propios roles con permisos granulares por módulo (Ver / Crear / Editar / Eliminar). 5 roles de sistema + roles custom ilimitados.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🔑</div>
+      <div>
+        <strong>Autenticación robusta</strong>
+        <span>Contraseñas BCrypt, bloqueo automático por intentos fallidos configurable (intentos y duración en minutos).</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🛡️</div>
+      <div>
+        <strong>CSP enforced</strong>
+        <span>Content Security Policy activa. Sin scripts inline. Nonces dinámicos en todos los bloques de código de cada página.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🍪</div>
+      <div>
+        <strong>Sesiones seguras</strong>
+        <span>Timeout de 30 min. Cookies HttpOnly + Secure + SameSite=Strict en producción. Sesión inválida → redirect a login.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏢</div>
+      <div>
+        <strong>Aislamiento multi-tenant</strong>
+        <span>Filtro @TenantId de Hibernate en todas las entidades. Imposible acceder a datos de otro tenant incluso con queries directas o tokens válidos.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏥</div>
+      <div>
+        <strong>Control de salud BPM</strong>
+        <span>El sistema verifica el registro diario de salud de cada operario y bloquea el acceso si hay síntomas pendientes de autorización por un administrador.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">⚡</div>
+      <div>
+        <strong>API JWT + Rate Limiting</strong>
+        <span>Tokens HS256 con TTL configurable. Límite de 100 req/min por IP con respuesta HTTP 429. SpringDoc OpenAPI para documentación.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">📝</div>
+      <div>
+        <strong>Auditoría de accesos</strong>
+        <span>Cada login registrado en base de datos en transacción independiente — persiste aunque la sesión falle o se revierta.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h3>Plan con límites y renovación automática</h3>
+    <p>Alertas al 90% y 100% de uso de lotes y usuarios · Bloqueo con 7 días de gracia post-vencimiento<br>Administración de tenants y planes desde panel de super-administrador</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>4</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 5: FLUJO + ARQUITECTURA -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🔄</div>
+    <h2 class="section-title">Flujo de Operación</h2>
+  </div>
+
+  <p>El flujo natural de trabajo en Zymos sigue el ciclo completo de la producción artesanal:</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <p><strong>Planificar</strong><br>Elaboración en calendario</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <p><strong>Producir</strong><br>Lote desde receta</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <p><strong>Fermentar</strong><br>Lecturas y fases</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <p><strong>Carbonatar</strong><br>Empacar y calcular</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <p><strong>Vender</strong><br>Cotización → Despacho</p>
+    </div>
+  </div>
+
+  <p>En cada paso el sistema actualiza automáticamente el inventario, registra el historial y calcula los costos asociados al lote.</p>
+
+  <div style="margin-top: 36px;">
+    <div class="section-header">
+      <div class="section-icon">🏗️</div>
+      <h2 class="section-title">Arquitectura SaaS Multi-Tenant</h2>
+    </div>
+  </div>
+
+  <p>Zymos opera como una plataforma compartida donde cada cervecería es un <em>tenant</em> independiente con total aislamiento de datos:</p>
+
+  <div class="arch-boxes">
+    <div class="arch-box highlight">
+      <div class="arch-icon">🌐</div>
+      <h4>Subdominio propio</h4>
+      <p>Cada cliente accede por<br><em>micerveceria.zymos.app</em></p>
+    </div>
+    <div class="arch-box">
+      <div class="arch-icon">🔒</div>
+      <h4>Datos aislados</h4>
+      <p>Filtro @TenantId en todas las entidades — sin mezcla posible</p>
+    </div>
+    <div class="arch-box highlight">
+      <div class="arch-icon">🎨</div>
+      <h4>Branding propio</h4>
+      <p>Logo, colores y tipografías configurables por cliente</p>
+    </div>
+    <div class="arch-box">
+      <div class="arch-icon">⚡</div>
+      <h4>Actualizaciones</h4>
+      <p>Mejoras desplegadas para todos los clientes simultáneamente</p>
+    </div>
+  </div>
+
+  <p>Esta arquitectura permite escalar el número de clientes sin incremento proporcional de costos operativos, manteniendo la seguridad y el rendimiento para todos.</p>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>5</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 6: TECH + ESTADO -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">⚙️</div>
+    <h2 class="section-title">Stack Tecnológico</h2>
+  </div>
+
+  <table class="tech-table">
+    <thead>
+      <tr>
+        <th>Capa</th>
+        <th>Tecnología</th>
+        <th>Propósito</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Backend</td><td>Spring Boot 3.4 + Java 21</td><td>Motor principal — LTS hasta 2031, Jakarta EE 10</td></tr>
+      <tr><td>Base de datos</td><td>PostgreSQL + Flyway (73 migraciones)</td><td>Almacenamiento relacional con control de versiones del schema</td></tr>
+      <tr><td>ORM</td><td>Hibernate 6 + Spring Data JPA</td><td>Filtro @TenantId, auditoría, migraciones seguras</td></tr>
+      <tr><td>Frontend</td><td>Thymeleaf 3.1 + Bootstrap 5.3</td><td>SSR responsivo, dark mode, i18n ES/EN</td></tr>
+      <tr><td>Gráficas / Calendario</td><td>Chart.js + FullCalendar</td><td>Visualizaciones interactivas y planificación</td></tr>
+      <tr><td>Seguridad</td><td>Spring Security + JJWT</td><td>Autenticación, RBAC, CSP, JWT HS256, rate limiting</td></tr>
+      <tr><td>Documentos</td><td>OpenPDF + Apache POI</td><td>Generación de PDFs y archivos Excel (.xlsx)</td></tr>
+      <tr><td>Cache</td><td>Caffeine + Spring Cache</td><td>Cache en memoria con TTL configurable, branding por tenant</td></tr>
+      <tr><td>Métricas</td><td>Micrometer + Prometheus + Actuator</td><td>Monitoreo de producción, health checks, endpoints de ops</td></tr>
+      <tr><td>Despliegue</td><td>Docker + Docker Compose</td><td>Contenedorización reproducible en cualquier proveedor de nube</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions + Dependabot</td><td>Build + Tests + SpotBugs en paralelo, dependencias actualizadas semanalmente</td></tr>
+      <tr><td>Tests</td><td>JUnit 5 + Mockito + Testcontainers</td><td>912 tests — unitarios e integración con PostgreSQL real</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-header" style="margin-top:32px;">
+    <div class="section-icon">✅</div>
+    <h2 class="section-title">Estado del Desarrollo</h2>
+  </div>
+
+  <table class="estado-table">
+    <thead><tr><th>Área</th><th>Estado</th><th>Detalle clave</th></tr></thead>
+    <tbody>
+      <tr><td>Trazabilidad + Recetas</td><td><span class="badge-ok">Completo</span></td><td>Multi-cocción, Brix/Terrill, BJCP, PDF</td></tr>
+      <tr><td>Inventario + Equipos</td><td><span class="badge-ok">Completo</span></td><td>Alertas, vencimientos, mantenimientos</td></tr>
+      <tr><td>Comercial + Ventas + Barriles + OC</td><td><span class="badge-ok">Completo</span></td><td>Ciclos de vida, IVA por ítem, PDFs y Excel</td></tr>
+      <tr><td>BPM — Inocuidad</td><td><span class="badge-ok">Completo</span></td><td>Firma digital, bloqueo por salud, 6 submódulos</td></tr>
+      <tr><td>RBAC dinámico</td><td><span class="badge-ok">Completo</span></td><td>Roles custom por tenant, 5 roles de sistema</td></tr>
+      <tr><td>i18n ES / EN</td><td><span class="badge-ok">Completo</span></td><td>Todos los templates, PDFs y controllers</td></tr>
+      <tr><td>Dark mode</td><td><span class="badge-ok">Completo</span></td><td>Auditoría completa en todos los templates</td></tr>
+      <tr><td>API REST + JWT</td><td><span class="badge-ok">Completo</span></td><td>HS256, rate limiting, SpringDoc OpenAPI</td></tr>
+      <tr><td>Migración de datos (11 módulos)</td><td><span class="badge-ok">Completo</span></td><td>Plantillas XLSX + log de auditoría</td></tr>
+      <tr><td>Suite de tests</td><td><span class="badge-ok">912 tests</span></td><td>Unitarios + integración con Testcontainers</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 7: DIFERENCIADORES + CIERRE -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">⚡</div>
+    <h2 class="section-title">Diferenciadores Clave</h2>
+  </div>
+
+  <div class="dif-list">
+    <div class="dif-item no-break">
+      <div class="dif-num">1</div>
+      <div class="dif-text">
+        <strong>Multi-tenant real — sin silos de instancias</strong>
+        <span>Un solo deploy sirve a N cervecerías con aislamiento completo de datos, branding propio y roles independientes por cliente. Sin multiplicar infraestructura por cada cliente nuevo.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">2</div>
+      <div class="dif-text">
+        <strong>BPM embebido en el flujo operativo diario</strong>
+        <span>El módulo de inocuidad alimentaria no es un addon externo. El sistema bloquea activamente el acceso de operarios con síntomas de salud pendientes — con firma digital del administrador para autorizar la excepción.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">3</div>
+      <div class="dif-text">
+        <strong>RBAC granular configurado por la cervecería</strong>
+        <span>Los roles no son fijos del sistema. Cada cliente los crea, nombra y configura con permisos por módulo (Ver / Crear / Editar / Eliminar). Un operario solo ve exactamente lo que necesita.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">4</div>
+      <div class="dif-text">
+        <strong>Onboarding acelerado desde datos existentes</strong>
+        <span>El migrador XLSX permite importar el historial completo — recetas, lotes, proveedores, facturas, clientes, equipos — en minutos desde las hojas de cálculo actuales de la cervecería.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">5</div>
+      <div class="dif-text">
+        <strong>Branding 100% personalizable por cliente</strong>
+        <span>Logo, colores primario, acento y navbar, tipografías — todo configurable desde el panel de administración sin reiniciar la aplicación. La plataforma se ve como si fuera desarrollada exclusivamente para la marca del cliente.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cierre-box">
+    <div class="cierre-logo">ZYMOS</div>
+    <div class="cierre-tag">Gestión y Trazabilidad para Cervecería Artesanal</div>
+    <div class="cierre-div"></div>
+    <div class="cierre-cta">
+      Para más información sobre planes, precios e implementación,<br>
+      contáctenos para agendar una demostración personalizada.
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumen Ejecutivo · 2026</span>
+    <span>7</span>
+  </div>
+</div>
+
+<script>
+  const d = new Date();
+  const m = d.toLocaleDateString('es-CO', { year:'numeric', month:'long' });
+  document.getElementById('cover-date').textContent = 'Confidencial · ' + m;
+</script>
+</body>
+</html>
