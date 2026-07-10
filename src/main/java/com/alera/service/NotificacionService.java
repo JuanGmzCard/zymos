@@ -15,11 +15,24 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
 public class NotificacionService {
+
+    // Qué authority de módulo debe tener el usuario para ver cada tipo de notificación.
+    // PLAN_* y tipos sin entrada → solo ROLE_ADMIN / ROLE_SUPERADMIN.
+    private static final Map<TipoNotificacion, String> TIPO_AUTHORITY = Map.of(
+        TipoNotificacion.BAJO_STOCK,   "MODULO_INVENTARIO_VER",
+        TipoNotificacion.VENCIMIENTO,  "MODULO_INVENTARIO_VER",
+        TipoNotificacion.MANTENIMIENTO,"MODULO_EQUIPOS_VER",
+        TipoNotificacion.SISTEMA,      "MODULO_FACTURACION_VER",
+        TipoNotificacion.BPM_SALUD,    "MODULO_BPM_VER"
+    );
 
     private final NotificacionRepository repo;
 
@@ -28,6 +41,19 @@ public class NotificacionService {
 
     public NotificacionService(NotificacionRepository repo) {
         this.repo = repo;
+    }
+
+    /** Calcula qué TipoNotificacion puede ver este usuario según sus authorities. */
+    public List<TipoNotificacion> tiposVisibles(Collection<String> authorities) {
+        boolean isAdmin = authorities.contains("ROLE_ADMIN") || authorities.contains("ROLE_SUPERADMIN");
+        return Arrays.stream(TipoNotificacion.values())
+                .filter(tipo -> {
+                    if (isAdmin) return true;
+                    String required = TIPO_AUTHORITY.get(tipo);
+                    // tipos sin entrada en el mapa (PLAN_*) → solo admins
+                    return required != null && authorities.contains(required);
+                })
+                .toList();
     }
 
     public void crear(TipoNotificacion tipo, String titulo, String mensaje, String urlAccion) {
@@ -92,18 +118,24 @@ public class NotificacionService {
     }
 
     @Transactional(readOnly = true)
-    public List<Notificacion> listarRecientes() {
-        return repo.findTop5ByLeidaFalseOrderByCreatedAtDesc();
+    public List<Notificacion> listarRecientes(Collection<String> authorities) {
+        List<TipoNotificacion> tipos = tiposVisibles(authorities);
+        if (tipos.isEmpty()) return List.of();
+        return repo.findTop5ByLeidaFalseAndTipoInOrderByCreatedAtDesc(tipos);
     }
 
     @Transactional(readOnly = true)
-    public long contarNoLeidas() {
-        return repo.countByLeidaFalse();
+    public long contarNoLeidas(Collection<String> authorities) {
+        List<TipoNotificacion> tipos = tiposVisibles(authorities);
+        if (tipos.isEmpty()) return 0;
+        return repo.countByLeidaFalseAndTipoIn(tipos);
     }
 
     @Transactional(readOnly = true)
-    public Page<Notificacion> listarTodas(int page) {
-        return repo.findAllOrdenadas(PageRequest.of(page, pageSize));
+    public Page<Notificacion> listarTodas(int page, Collection<String> authorities) {
+        List<TipoNotificacion> tipos = tiposVisibles(authorities);
+        if (tipos.isEmpty()) return Page.empty();
+        return repo.findByTiposOrdenadas(tipos, PageRequest.of(page, pageSize));
     }
 
     public void marcarLeida(Long id) {
@@ -172,6 +204,19 @@ public class NotificacionService {
                         "Se usaron " + totalUsuarios + " de " + maxUsuarios + " usuarios incluidos en el plan.",
                         null));
             }
+        }
+    }
+
+    public void crearAlertaBpmSalud(String nombreManipulador) {
+        LocalDateTime hoy     = LocalDate.now().atStartOfDay();
+        LocalDateTime maniana = hoy.plusDays(1);
+        // Una notificación por día máximo; si ya existe una hoy se actualiza el mensaje en la misma
+        if (!repo.existeEnPeriodo(TipoNotificacion.BPM_SALUD, hoy, maniana)) {
+            repo.save(Notificacion.of(
+                    TipoNotificacion.BPM_SALUD,
+                    "Síntomas reportados",
+                    nombreManipulador + " reportó síntomas hoy. Revisá las autorizaciones de salud.",
+                    "/bpm/salud/autorizaciones"));
         }
     }
 

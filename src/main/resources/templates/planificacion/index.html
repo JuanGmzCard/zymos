@@ -76,7 +76,7 @@
             <p class="subtitle mb-0" th:text="#{planif.subtitle}">Organizá tus próximas elaboraciones y hacé seguimiento del estado</p>
         </div>
         <div class="pt-1">
-            <button class="btn btn-primary btn-sm" id="btnNuevaPlanificacion" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <button class="btn btn-primary btn-sm" id="btnNuevaPlanificacion" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_PLANIFICACION_CREAR','MODULO_PLANIFICACION_EDITAR','MODULO_PLANIFICACION_ELIMINAR')">
                 <i class="bi bi-plus-circle me-1"></i><span th:text="#{planif.nuevo}">Nueva Planificación</span>
             </button>
         </div>
@@ -172,7 +172,7 @@
                         <th class="text-center" th:text="#{planif.table.vol}">Vol. estimado</th>
                         <th class="text-center" th:text="#{label.estado}">Estado</th>
                         <th th:text="#{label.notas}">Notas</th>
-                        <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:200px;"></th>
+                        <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_PLANIFICACION_CREAR','MODULO_PLANIFICACION_EDITAR','MODULO_PLANIFICACION_ELIMINAR')" style="width:200px;"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -194,7 +194,7 @@
                         </td>
                         <td class="text-muted small"
                             th:text="${p.notas != null} ? ${#strings.abbreviate(p.notas, 50)} : '—'">—</td>
-                        <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                        <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_PLANIFICACION_CREAR','MODULO_PLANIFICACION_EDITAR','MODULO_PLANIFICACION_ELIMINAR')">
                             <div class="d-flex gap-1 flex-wrap">
                                 <!-- Editar -->
                                 <button class="btn btn-sm btn-outline-secondary py-0 px-2 btn-editar-plan"
@@ -251,7 +251,7 @@
 </div>
 
 <!-- Marcador de permisos para JS (renderizado solo si es admin) -->
-<span id="adminMarker" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="display:none"></span>
+<span id="adminMarker" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_PLANIFICACION_CREAR','MODULO_PLANIFICACION_EDITAR','MODULO_PLANIFICACION_ELIMINAR')" style="display:none"></span>
 
 <!-- Modal crear / editar -->
 <div class="modal fade" id="modalPlan" tabindex="-1">

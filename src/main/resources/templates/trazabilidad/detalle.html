@@ -544,7 +544,7 @@
                             <th class="text-center" th:text="#{traz.det.curva.col.abv}">ABV parcial</th>
                             <th class="text-center" th:text="#{traz.form.ferm.temperatura}">Temperatura</th>
                             <th th:text="#{label.notas}">Notas</th>
-                            <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
+                            <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_TRAZABILIDAD_EDITAR','MODULO_TRAZABILIDAD_ELIMINAR')" style="width:40px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -562,7 +562,7 @@
                             <td class="text-center"
                                 th:text="${lec.temperatura != null} ? ${lec.temperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
                             <td class="text-muted small" th:text="${lec.notas ?: '—'}">—</td>
-                            <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_ELIMINAR')">
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
@@ -578,7 +578,7 @@
             </div>
 
             <!-- Formulario de nueva lectura -->
-            <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')">
                 <div class="detail-label mb-2">
                     <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.det.curva.form.registrar}">Registrar lectura</span>
                 </div>
@@ -824,7 +824,7 @@
                             <th class="text-center"><span th:text="#{traz.det.eval.col.general}">General</span><br><small class="fw-normal">/10</small></th>
                             <th class="text-center" th:text="#{label.total}">Total</th>
                             <th th:text="#{label.notas}">Notas</th>
-                            <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" style="width:40px;"></th>
+                            <th sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_TRAZABILIDAD_EDITAR','MODULO_TRAZABILIDAD_ELIMINAR')" style="width:40px;"></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -844,7 +844,7 @@
                             </td>
                             <td class="text-muted small" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
                                 th:text="${ev.notas ?: '—'}" th:title="${ev.notas}">—</td>
-                            <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                            <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_ELIMINAR')">
                                 <form th:action="@{/ver/{id}/evaluaciones/{eid}/eliminar(id=${lote.id},eid=${ev.id})}"
                                       method="post">
                                     <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1 border-0"
@@ -860,7 +860,7 @@
             </div>
 
             <!-- Formulario nueva evaluación (colapsable) -->
-            <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <div sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')">
                 <button class="btn btn-outline-secondary btn-sm mb-3" type="button"
                         data-bs-toggle="collapse" data-bs-target="#formEvaluacion" aria-expanded="false">
                     <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.det.eval.btn.nueva}">Nueva evaluación</span>
@@ -1081,7 +1081,7 @@
     </div>
 
     <!-- Ventas y Despacho de este lote -->
-    <div class="section-box mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+    <div class="section-box mb-4" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_VER','MODULO_COMERCIAL_CREAR')">
         <div class="sh d-flex justify-content-between align-items-center">
             <span><i class="bi bi-bag-check me-2"></i><span th:text="#{traz.det.sec.ventas}">Ventas y Despacho</span></span>
             <div class="d-flex gap-2 align-items-center">

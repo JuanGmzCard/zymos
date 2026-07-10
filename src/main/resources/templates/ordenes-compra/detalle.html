@@ -176,7 +176,7 @@
         <div class="col-lg-4">
 
             <!-- Cambiar estado -->
-            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_EDITAR')">
                 <div class="content-card-title pb-2 mb-3">
                     <i class="bi bi-arrow-repeat me-2"></i><span th:text="#{oc.det.sec.estado}">CAMBIAR ESTADO</span>
                 </div>
@@ -200,7 +200,7 @@
             <!-- Convertir a factura -->
             <div class="content-card mb-3"
                  th:if="${oc.convertible}"
-                 sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                 sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
                 <div class="content-card-title pb-2 mb-3">
                     <i class="bi bi-receipt me-2"></i><span th:text="#{oc.det.sec.factura}">GENERAR FACTURA</span>
                 </div>
@@ -249,7 +249,7 @@
             <!-- Zona de peligro -->
             <div class="content-card mb-3" style="border-color:#fecaca;"
                  th:if="${oc.editable or oc.estado.name() == 'CANCELADA'}"
-                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_ELIMINAR')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
                     <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{oc.det.sec.peligro}">ZONA DE PELIGRO</span>
                 </div>

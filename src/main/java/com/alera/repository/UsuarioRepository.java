@@ -52,4 +52,22 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     @Modifying
     @Query(value = "DELETE FROM usuarios WHERE id = :id AND tenant_id = :tenantId", nativeQuery = true)
     void deleteByIdAndTenantId(@Param("id") Long id, @Param("tenantId") String tenantId);
+
+    @Query(value = "SELECT COUNT(*) FROM usuarios WHERE rol_custom_id = :rolId", nativeQuery = true)
+    long countByRolCustomId(@Param("rolId") Long rolId);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE usuarios SET rol_custom_id = NULL WHERE rol_custom_id = :rolId", nativeQuery = true)
+    void limpiarRolCustom(@Param("rolId") Long rolId);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE usuarios SET rol_custom_id = :rolId, rol = 'ADMIN' WHERE id = :id AND tenant_id = :tenantId", nativeQuery = true)
+    void asignarRolCustomByIdAndTenantId(@Param("id") Long id, @Param("tenantId") String tenantId, @Param("rolId") Long rolId);
+
+    @Transactional
+    @Modifying
+    @Query(value = "UPDATE usuarios SET rol_custom_id = NULL WHERE id = :id AND tenant_id = :tenantId", nativeQuery = true)
+    void quitarRolCustomByIdAndTenantId(@Param("id") Long id, @Param("tenantId") String tenantId);
 }

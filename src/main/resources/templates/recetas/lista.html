@@ -156,7 +156,7 @@
             <p class="subtitle mb-0" th:text="#{recetas.subtitle}">Plantillas reutilizables para crear lotes de cerveza</p>
         </div>
         <div class="d-flex gap-2 pt-1">
-            <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+            <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
                class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.nueva}">Nueva Receta</span>
             </a>
@@ -209,7 +209,7 @@
         <div th:if="${#lists.isEmpty(recetas)}" class="text-center py-5 text-muted">
             <i class="bi bi-journal-bookmark fs-1 d-block mb-2"></i>
             <p th:text="#{recetas.empty}">No hay recetas registradas</p>
-            <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+            <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
                class="btn btn-primary btn-sm mt-1">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.crear}">Crear Receta</span>
             </a>
@@ -283,19 +283,19 @@
                     <td class="text-end pe-3">
                         <a th:href="@{/recetas/ver/{id}(id=${rec.id})}" class="action-link view"
                            th:text="#{recetas.action.ver}">Ver</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAnyAuthority('MODULO_RECETAS_EDITAR','MODULO_RECETAS_ELIMINAR')">·</span>
                         <a th:href="@{/recetas/editar/{id}(id=${rec.id})}"
-                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_EDITAR')"
                            class="action-link edit" th:text="#{action.edit}">Editar</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_EDITAR')">·</span>
                         <a th:href="@{/recetas/duplicar/{id}(id=${rec.id})}"
-                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
                            class="action-link edit" th:title="#{recetas.action.duplicar}" title="Duplicar">
                             <i class="bi bi-copy"></i>
                         </a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_ELIMINAR')">·</span>
                         <form th:action="@{/recetas/eliminar/{id}(id=${rec.id})}" method="post"
-                              sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                              sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_ELIMINAR')"
                               class="d-inline">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
                                     th:title="#{recetas.action.archivar}" title="Archivar"

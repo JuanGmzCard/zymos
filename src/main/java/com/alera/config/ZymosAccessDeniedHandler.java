@@ -26,7 +26,7 @@ public class ZymosAccessDeniedHandler implements AccessDeniedHandler {
         logService.registrar(usuario, "ACCESO_DENEGADO",
                 clientIp(req), req.getRequestURI(),
                 req.getHeader("User-Agent"), null);
-        resp.sendRedirect("/error?status=403");
+        resp.sendError(HttpServletResponse.SC_FORBIDDEN);
     }
 
     private String clientIp(HttpServletRequest req) {

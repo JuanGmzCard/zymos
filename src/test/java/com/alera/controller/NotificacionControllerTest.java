@@ -64,8 +64,8 @@ class NotificacionControllerTest {
     @Test
     @WithMockUser
     void paginaIndexCargaCorrectamente() throws Exception {
-        when(notificacionService.listarTodas(anyInt())).thenReturn(new PageImpl<>(List.of()));
-        when(notificacionService.contarNoLeidas()).thenReturn(0L);
+        when(notificacionService.listarTodas(anyInt(), any())).thenReturn(new PageImpl<>(List.of()));
+        when(notificacionService.contarNoLeidas(any())).thenReturn(0L);
 
         mockMvc.perform(get("/notificaciones"))
                 .andExpect(status().isOk())
@@ -89,8 +89,8 @@ class NotificacionControllerTest {
             f.set(n, LocalDateTime.now().minusHours(1));
         } catch (Exception ignored) {}
 
-        when(notificacionService.contarNoLeidas()).thenReturn(1L);
-        when(notificacionService.listarRecientes()).thenReturn(List.of(n));
+        when(notificacionService.contarNoLeidas(any())).thenReturn(1L);
+        when(notificacionService.listarRecientes(any())).thenReturn(List.of(n));
 
         mockMvc.perform(get("/notificaciones/recientes"))
                 .andExpect(status().isOk())
@@ -105,7 +105,7 @@ class NotificacionControllerTest {
     @WithMockUser
     void marcarLeidaDevuelveJsonConNoLeidas() throws Exception {
         doNothing().when(notificacionService).marcarLeida(anyLong());
-        when(notificacionService.contarNoLeidas()).thenReturn(2L);
+        when(notificacionService.contarNoLeidas(any())).thenReturn(2L);
 
         mockMvc.perform(post("/notificaciones/1/leer").with(csrf()))
                 .andExpect(status().isOk())

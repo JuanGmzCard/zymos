@@ -39,6 +39,7 @@ class BpmControllerTest {
     @MockBean JwtService                jwtService;
     @MockBean BpmService                bpmService;
     @MockBean BpmPdfService             bpmPdfService;
+    @MockBean InsumoInventarioService   insumoInventarioService;
 
     @BeforeEach
     void setUp() {

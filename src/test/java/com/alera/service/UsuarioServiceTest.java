@@ -3,6 +3,8 @@ package com.alera.service;
 import com.alera.model.SuperAdmin;
 import com.alera.model.Usuario;
 import com.alera.model.enums.RolUsuario;
+import com.alera.repository.RolModuloPermisoRepository;
+import com.alera.repository.RolTenantRepository;
 import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.UsuarioRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -27,9 +29,11 @@ import static org.mockito.Mockito.*;
 @DisplayName("UsuarioService")
 class UsuarioServiceTest {
 
-    @Mock UsuarioRepository    repo;
-    @Mock PasswordEncoder      encoder;
-    @Mock SuperAdminRepository superAdminRepo;
+    @Mock UsuarioRepository          repo;
+    @Mock PasswordEncoder            encoder;
+    @Mock SuperAdminRepository       superAdminRepo;
+    @Mock RolModuloPermisoRepository permisoRepo;
+    @Mock RolTenantRepository        rolTenantRepo;
 
     @InjectMocks
     UsuarioService service;
@@ -54,6 +58,7 @@ class UsuarioServiceTest {
         when(superAdminRepo.findByUsernameAndActivoTrue("admin")).thenReturn(Optional.empty());
         when(repo.findByUsername("admin")).thenReturn(Optional.of(
                 usuario(1L, "admin", RolUsuario.ADMIN, true)));
+        // Sin rolCustomId y TenantContext vacío en tests → fallback a ROLE_ADMIN enum
 
         var details = service.loadUserByUsername("admin");
 

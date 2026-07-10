@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.PasswordPolicy;
 import com.alera.model.enums.RolUsuario;
+import com.alera.service.RolTenantService;
 import com.alera.service.UsuarioService;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/usuarios")
@@ -18,15 +20,21 @@ public class UsuarioController {
 
 
     private final UsuarioService service;
+    private final RolTenantService rolTenantService;
 
-    public UsuarioController(UsuarioService service) {
+    public UsuarioController(UsuarioService service, RolTenantService rolTenantService) {
         this.service = service;
+        this.rolTenantService = rolTenantService;
     }
 
     @GetMapping
     public String lista(Model model) {
         model.addAttribute("usuarios", service.listarTodos());
         model.addAttribute("roles", RolUsuario.values());
+        var rolesCustom = rolTenantService.listarActivos();
+        model.addAttribute("rolesCustom", rolesCustom);
+        model.addAttribute("rolesCustomNombres",
+            rolesCustom.stream().collect(Collectors.toMap(r -> r.getId(), r -> r.getNombre())));
         return "usuarios";
     }
 
@@ -124,6 +132,22 @@ public class UsuarioController {
         }
         service.cambiarRol(id, rol);
         ra.addFlashAttribute("mensaje", "Rol actualizado a " + rol.getDisplayName());
+        ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/usuarios";
+    }
+
+    @PostMapping("/{id}/rol-custom")
+    public String asignarRolCustom(@PathVariable Long id,
+                                   @RequestParam(required = false) Long rolCustomId,
+                                   Authentication auth,
+                                   RedirectAttributes ra) {
+        if (service.esElMismoUsuario(id, auth.getName())) {
+            ra.addFlashAttribute("mensaje", "No puedes cambiar tu propio rol");
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/usuarios";
+        }
+        service.asignarRolCustom(id, rolCustomId);
+        ra.addFlashAttribute("mensaje", rolCustomId != null ? "Rol personalizado asignado" : "Rol personalizado removido");
         ra.addFlashAttribute("tipoMensaje", "success");
         return "redirect:/usuarios";
     }

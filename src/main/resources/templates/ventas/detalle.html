@@ -51,7 +51,7 @@
                th:title="#{ventas.detalle.pdf.title}">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')" class="d-flex gap-2">
+            <div sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_EDITAR','MODULO_COMERCIAL_CREAR')" class="d-flex gap-2">
                 <a th:href="@{/ventas/duplicar/{id}(id=${venta.id})}" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-copy me-1"></i><span th:text="#{ventas.detalle.duplicar}">Duplicar</span>
                 </a>
@@ -246,7 +246,7 @@
             </div>
 
             <!-- Cambiar estado -->
-            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_EDITAR')">
                 <div class="content-card-title pb-2 mb-3">
                     <i class="bi bi-arrow-repeat me-2"></i><span th:text="#{ventas.detalle.estado.section}">CAMBIAR ESTADO</span>
                 </div>
@@ -268,7 +268,7 @@
 
             <!-- Zona de peligro -->
             <div class="content-card mb-3" style="border-color:#fecaca;"
-                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_ELIMINAR')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
                     <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{ventas.detalle.peligro.section}">ZONA DE PELIGRO</span>
                 </div>

@@ -41,7 +41,7 @@
         <div class="d-flex gap-2 pt-1 flex-wrap">
             <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
                class="btn btn-sm btn-outline-secondary"
-               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_BARRILES_EDITAR')">
                 <i class="bi bi-pencil me-1"></i><span th:text="#{action.edit}">Editar</span>
             </a>
             <a th:href="@{/barriles}" class="btn btn-sm btn-outline-secondary">
@@ -157,7 +157,7 @@
         <div class="col-lg-4">
 
             <!-- Cambiar estado -->
-            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
+            <div class="content-card mb-3" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAnyAuthority('MODULO_BARRILES_EDITAR')">
                 <div class="content-card-title pb-2 mb-3">
                     <i class="bi bi-arrow-left-right me-2"></i><span th:text="#{barriles.det.sec.estado}">CAMBIAR ESTADO</span>
                 </div>
@@ -209,7 +209,7 @@
 
             <!-- Zona de peligro -->
             <div class="content-card mb-3" style="border-color:#fecaca;"
-                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                 sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_ELIMINAR')">
                 <div class="content-card-title pb-2 mb-3" style="color:#dc2626;border-color:#fecaca;">
                     <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{barriles.det.sec.peligro}">ZONA DE PELIGRO</span>
                 </div>

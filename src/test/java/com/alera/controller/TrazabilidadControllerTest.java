@@ -72,6 +72,8 @@ class TrazabilidadControllerTest {
         when(loteRepo.countEnProceso()).thenReturn(0L);
         when(loteRepo.countCompletados()).thenReturn(0L);
         when(loteRepo.countDistinctEstilos()).thenReturn(0L);
+        // Al menos una receta activa para que GET /nuevo no redirija (regla CLAUDE.md 1b)
+        when(recetaService.listarActivas()).thenReturn(List.of(new com.alera.model.Receta()));
     }
 
     // ── Seguridad ──────────────────────────────────────────────────────
@@ -138,7 +140,7 @@ class TrazabilidadControllerTest {
         when(insumoRepo.findAll()).thenReturn(List.of());
         when(equipoService.listarFermentadoresDisponibles()).thenReturn(List.of());
         when(tipoCervezaRepo.findByActivoTrueOrderByNombreAsc()).thenReturn(List.of());
-        when(recetaService.listarActivas()).thenReturn(List.of());
+        // recetaService.listarActivas() ya stubeado en setUp() con lista no vacía
 
         mockMvc.perform(get("/nuevo"))
                 .andExpect(status().isOk())

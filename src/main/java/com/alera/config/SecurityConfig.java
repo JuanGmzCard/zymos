@@ -22,6 +22,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.authorization.AuthorizationDecision;
+import org.springframework.security.authorization.AuthorizationManager;
+import org.springframework.security.web.access.intercept.RequestAuthorizationContext;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,6 +35,29 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    // Acceso solo para ADMIN o SUPERADMIN — idéntico al hasAnyRole DSL pero tipado para .access()
+    private static AuthorizationManager<RequestAuthorizationContext> adminOnly() {
+        return (auth, ctx) -> new AuthorizationDecision(
+                auth.get().getAuthorities().stream().anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN") ||
+                        a.getAuthority().equals("ROLE_SUPERADMIN")));
+    }
+
+    // ADMIN/SUPERADMIN O el authority MODULO_X_VER (lectura del módulo)
+    private static AuthorizationManager<RequestAuthorizationContext> modulo(String m) {
+        return moduloOp(m, "VER");
+    }
+
+    // ADMIN/SUPERADMIN O el authority MODULO_X_{OP}
+    private static AuthorizationManager<RequestAuthorizationContext> moduloOp(String m, String op) {
+        String authority = "MODULO_" + m + "_" + op;
+        return (auth, ctx) -> new AuthorizationDecision(
+                auth.get().getAuthorities().stream().anyMatch(a ->
+                        a.getAuthority().equals("ROLE_ADMIN") ||
+                        a.getAuthority().equals("ROLE_SUPERADMIN") ||
+                        a.getAuthority().equals(authority)));
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -191,26 +217,40 @@ public class SecurityConfig {
                 .requestMatchers("/admin/tenants/**").hasRole("SUPERADMIN")
                 .requestMatchers("/usuarios/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/tipos-cerveza/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/admin/roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
-                .requestMatchers(HttpMethod.POST,
-                        "/guardar", "/actualizar/**", "/eliminar/**",
-                        "/duplicar/**").hasAnyRole("ADMIN", "SUPERADMIN", "PRODUCCION")
-                .requestMatchers("/nuevo", "/editar/**").hasAnyRole("ADMIN", "SUPERADMIN", "PRODUCCION")
+                // Trazabilidad — granular por operación
+                .requestMatchers(HttpMethod.POST, "/guardar", "/duplicar/**")
+                    .access(moduloOp("TRAZABILIDAD", "CREAR"))
+                .requestMatchers(HttpMethod.POST, "/actualizar/**")
+                    .access(moduloOp("TRAZABILIDAD", "EDITAR"))
+                .requestMatchers(HttpMethod.POST, "/eliminar/**")
+                    .access(moduloOp("TRAZABILIDAD", "ELIMINAR"))
+                .requestMatchers("/nuevo", "/editar/**")
+                    .access(modulo("TRAZABILIDAD"))
 
-                .requestMatchers("/facturas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
-                .requestMatchers("/ventas/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
-                .requestMatchers("/clientes/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
-                .requestMatchers("/proveedores/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
-                .requestMatchers("/inventario/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
-                .requestMatchers("/recetas/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
-                .requestMatchers("/equipos/**").hasAnyRole("ADMIN", "EQUIPOS", "PRODUCCION", "SUPERADMIN")
-                .requestMatchers("/barriles/**").hasAnyRole("ADMIN", "INVENTARIO", "PRODUCCION", "SUPERADMIN")
-                .requestMatchers("/ordenes-compra/**").hasAnyRole("ADMIN", "FACTURACION", "SUPERADMIN")
+                // Módulos con acceso controlado por VER
+                .requestMatchers("/facturas/**")
+                    .access(modulo("FACTURACION"))
+                .requestMatchers("/ventas/**", "/clientes/**")
+                    .access(modulo("COMERCIAL"))
+                .requestMatchers("/proveedores/**", "/ordenes-compra/**")
+                    .access(modulo("FACTURACION"))
+                .requestMatchers("/inventario/**")
+                    .access(modulo("INVENTARIO"))
+                .requestMatchers("/recetas/**")
+                    .access(modulo("RECETAS"))
+                .requestMatchers("/equipos/**")
+                    .access(modulo("EQUIPOS"))
+                .requestMatchers("/barriles/**")
+                    .access(modulo("BARRILES"))
+
+                // BPM
                 .requestMatchers("/bpm/salud/autorizaciones", "/bpm/salud/autorizar/**")
                     .hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/bpm/salud/**").authenticated()
-                .requestMatchers("/bpm/**").hasAnyRole("ADMIN", "PRODUCCION", "SUPERADMIN")
+                .requestMatchers("/bpm/**").access(modulo("BPM"))
 
                 .anyRequest().authenticated()
             )

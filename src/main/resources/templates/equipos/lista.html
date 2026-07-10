@@ -22,7 +22,7 @@
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/equipos/nuevo}"
-               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')"
                class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{equipo.nuevo}">Nuevo Equipo</span>
             </a>
@@ -87,7 +87,7 @@
             <i class="bi bi-tools fs-1 text-muted d-block mb-2"></i>
             <p class="text-muted" th:text="#{equipo.empty}">No hay equipos registrados</p>
             <a th:href="@{/equipos/nuevo}" class="btn btn-primary btn-sm mt-1"
-               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{equipo.empty.action}">Agregar Equipo</span>
             </a>
         </div>
@@ -149,14 +149,14 @@
                            class="action-link edit" th:title="#{action.mantenimientos}">
                             <i class="bi bi-wrench"></i>
                         </a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_EQUIPOS_EDITAR','MODULO_EQUIPOS_ELIMINAR')">·</span>
                         <a th:href="@{/equipos/editar/{id}(id=${equipo.id})}"
-                           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_EDITAR')"
                            class="action-link edit" th:title="#{action.edit}" th:text="#{action.edit}">Editar</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_ELIMINAR')">·</span>
                         <form th:action="@{/equipos/eliminar/{id}(id=${equipo.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_ELIMINAR')">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
                                     th:attr="data-confirm=#{equipo.confirm.eliminar(${equipo.nombre})}"
                                     th:text="#{action.delete}">Eliminar</button>

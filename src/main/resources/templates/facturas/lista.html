@@ -26,7 +26,7 @@
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i><span th:text="#{fact.btn.excel}">Excel</span>
             </a>
             <a th:href="@{/facturas/nueva}"
-               sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+               sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')"
                class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{fact.btn.nueva}">Nueva Factura</span>
             </a>
@@ -45,7 +45,7 @@
         <i class="bi bi-receipt fs-1 d-block mb-2"></i>
         <p th:text="#{fact.empty}">No hay facturas registradas</p>
         <a th:href="@{/facturas/nueva}"
-           sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+           sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')"
            class="btn btn-primary btn-sm">
             <i class="bi bi-plus-lg me-1"></i><span th:text="#{fact.crear.primera}">Crear Primera Factura</span>
         </a>
@@ -162,12 +162,12 @@
                            class="action-link view" th:text="#{fact.action.ver}">Ver</a>
                         <span class="action-sep">·</span>
                         <a th:href="@{/facturas/editar/{id}(id=${factura.id})}"
-                           sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                           sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_EDITAR')"
                            class="action-link edit" th:text="#{action.edit}">Editar</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_ELIMINAR')">·</span>
                         <form th:action="@{/facturas/eliminar/{id}(id=${factura.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_ELIMINAR')">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
                                     th:attr="data-confirm=#{fact.confirm.eliminar}"
                                     th:text="#{action.delete}">Eliminar</button>

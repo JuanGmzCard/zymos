@@ -188,8 +188,8 @@
                     </ul>
                 </li>
 
-                <!-- Almacén (ADMIN / INVENTARIO / PRODUCCION / SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN')">
+                <!-- Almacén (ADMIN / INVENTARIO / PRODUCCION / SUPERADMIN / RBAC) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_VER','MODULO_RECETAS_VER','MODULO_BARRILES_VER')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas') or currentUri.contains('/barriles') or currentUri.startsWith('/stock'))} ? 'active' : ''">
                         <i class="bi bi-box-seam"></i> <span th:text="#{nav.almacen}">Almacén</span>
@@ -222,16 +222,16 @@
                     </ul>
                 </li>
 
-                <!-- Equipos (ADMIN / EQUIPOS / PRODUCCION / SUPERADMIN) -->
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN')">
+                <!-- Equipos (ADMIN / EQUIPOS / PRODUCCION / SUPERADMIN / RBAC) -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_VER')">
                     <a class="nav-link" th:href="@{/equipos}"
                        th:classappend="${currentUri != null and currentUri.contains('/equipos')} ? 'active' : ''">
                         <i class="bi bi-tools"></i> <span th:text="#{nav.equipos}">Equipos</span>
                     </a>
                 </li>
 
-                <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN / RBAC) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_FACTURACION_VER','MODULO_COMERCIAL_VER')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.startsWith('/stock') or currentUri.contains('/reportes/rentabilidad'))} ? 'active' : ''">
                         <i class="bi bi-receipt"></i> <span th:text="#{nav.comercial}">Comercial</span>
@@ -289,8 +289,8 @@
                     </ul>
                 </li>
 
-                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')">
+                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN / RBAC) -->
+                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_BPM_VER')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
                        th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
                         <i class="bi bi-clipboard2-check"></i> <span th:text="#{nav.bpm}">BPM</span>
@@ -380,6 +380,12 @@
                                 <i class="bi bi-collection me-2"></i><span th:text="#{nav.admin.categorias}">Categorías</span>
                             </a>
                         </li>
+                        <li>
+                            <a class="dropdown-item" th:href="@{/admin/roles}"
+                               th:classappend="${currentUri != null and currentUri.contains('/admin/roles')} ? 'active' : ''">
+                                <i class="bi bi-shield-lock me-2"></i><span th:text="#{nav.admin.roles}">Roles</span>
+                            </a>
+                        </li>
                         <!-- Sistema -->
                         <li><hr class="dropdown-divider mb-0"></li>
                         <li class="px-3 pt-2 pb-1">
@@ -440,32 +446,32 @@
                             <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.nuevo.crear}">Crear nuevo</small>
                         </li>
                         <li><hr class="dropdown-divider mt-1 mb-0"></li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION')">
+                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/nuevo}">
                                 <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.lote}">Lote de cerveza</span>
                             </a>
                         </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/recetas/nueva}">
                                 <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.receta}">Receta</span>
                             </a>
                         </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/inventario/nuevo}">
                                 <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.insumo}">Insumo</span>
                             </a>
                         </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/equipos/nuevo}">
                                 <i class="bi bi-tools me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.equipo}">Equipo</span>
                             </a>
                         </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
                                 <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.factura}">Factura</span>
                             </a>
                         </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_CREAR')">
                             <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
                                 <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.venta}">Venta</span>
                             </a>
@@ -522,6 +528,10 @@
                                 <span class="badge rounded-pill badge-role" sec:authorize="hasRole('FACTURACION')">Facturación</span>
                                 <span class="badge rounded-pill badge-role" sec:authorize="hasRole('EQUIPOS')">Equipos</span>
                                 <span class="badge rounded-pill badge-role" sec:authorize="hasRole('PRODUCCION')">Producción</span>
+                                <span class="badge rounded-pill badge-role"
+                                      th:if="${rolNombreCustom != null}"
+                                      sec:authorize="!hasRole('ADMIN')"
+                                      th:text="${rolNombreCustom}">Rol</span>
                             </div>
                         </li>
                         <li><hr class="dropdown-divider"></li>

@@ -23,17 +23,20 @@ public class BpmService {
     private final AvistamientoPlagasRepository plagasRepo;
     private final EvacuacionResiduosRepository residuosRepo;
     private final LimpiezaDesinfeccionRepository limpiezaRepo;
+    private final NotificacionService notificacionService;
 
     public BpmService(RegistroSintomasRepository sintomasRepo,
                       SolucionDesinfectanteRepository solucionesRepo,
                       AvistamientoPlagasRepository plagasRepo,
                       EvacuacionResiduosRepository residuosRepo,
-                      LimpiezaDesinfeccionRepository limpiezaRepo) {
+                      LimpiezaDesinfeccionRepository limpiezaRepo,
+                      NotificacionService notificacionService) {
         this.sintomasRepo = sintomasRepo;
         this.solucionesRepo = solucionesRepo;
         this.plagasRepo = plagasRepo;
         this.residuosRepo = residuosRepo;
         this.limpiezaRepo = limpiezaRepo;
+        this.notificacionService = notificacionService;
     }
 
     // ── Síntomas ──────────────────────────────────────────────────────────────
@@ -57,6 +60,9 @@ public class BpmService {
     public void guardarSintoma(RegistroSintomas r) {
         sintomasRepo.save(r);
         log.info("BPM síntomas guardado: {} - {}", r.getFecha(), r.getNombreManipulador());
+        if (r.tieneSintomas()) {
+            notificacionService.crearAlertaBpmSalud(r.getNombreManipulador());
+        }
     }
 
     @Transactional(readOnly = true)

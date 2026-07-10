@@ -4,6 +4,7 @@ import com.alera.config.*;
 import com.alera.repository.TenantRepository;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
+import com.alera.service.RolTenantService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,7 @@ class UsuarioControllerTest {
     @MockBean ZymosAuthFailureHandler    failureHandler;
     @MockBean ZymosAccessDeniedHandler   accessDeniedHandler;
     @MockBean UsuarioService             usuarioService;
+    @MockBean RolTenantService           rolTenantService;
     @MockBean LogAccesoService           logAccesoService;
     @MockBean LoginAttemptService        loginAttemptService;
     @MockBean JwtService                 jwtService;
@@ -42,6 +44,7 @@ class UsuarioControllerTest {
     void setUp() {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(usuarioService.listarTodos()).thenReturn(List.of());
+        when(rolTenantService.listarActivos()).thenReturn(List.of());
     }
 
     @Test

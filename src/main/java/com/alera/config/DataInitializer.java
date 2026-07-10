@@ -13,6 +13,7 @@ import com.alera.repository.SuperAdminRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.repository.UsuarioRepository;
+import com.alera.service.RolTenantService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     private final SuperAdminRepository superAdminRepo;
     private final CategoriaInsumoRepository categoriaInsumoRepo;
     private final CategoriaEquipoRepository categoriaEquipoRepo;
+    private final RolTenantService rolTenantService;
 
     @Value("${app.default-subdomain:default}")
     private String defaultSubdomain;
@@ -59,7 +61,8 @@ public class DataInitializer implements CommandLineRunner {
                             PasswordEncoder encoder,
                             SuperAdminRepository superAdminRepo,
                             CategoriaInsumoRepository categoriaInsumoRepo,
-                            CategoriaEquipoRepository categoriaEquipoRepo) {
+                            CategoriaEquipoRepository categoriaEquipoRepo,
+                            RolTenantService rolTenantService) {
         this.usuarioRepo         = usuarioRepo;
         this.tipoCervezaRepo     = tipoCervezaRepo;
         this.tenantRepo          = tenantRepo;
@@ -68,6 +71,7 @@ public class DataInitializer implements CommandLineRunner {
         this.superAdminRepo      = superAdminRepo;
         this.categoriaInsumoRepo = categoriaInsumoRepo;
         this.categoriaEquipoRepo = categoriaEquipoRepo;
+        this.rolTenantService    = rolTenantService;
     }
 
     @Override
@@ -83,6 +87,7 @@ public class DataInitializer implements CommandLineRunner {
                 crearUsuariosSiNoTiene(tenant.getSubdomain());
                 crearTiposCerveza(tenant.getSubdomain());
                 crearCategoriasSiNoTiene(tenant.getSubdomain());
+                rolTenantService.crearRolesPorDefectoSiNoTiene(tenant.getSubdomain());
             } finally {
                 TenantContext.clear();
             }

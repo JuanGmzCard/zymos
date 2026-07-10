@@ -33,4 +33,12 @@ public interface NotificacionRepository extends JpaRepository<Notificacion, Long
     boolean existeEnPeriodo(@Param("tipo") TipoNotificacion tipo,
                              @Param("desde") LocalDateTime desde,
                              @Param("hasta") LocalDateTime hasta);
+
+    // Queries filtradas por lista de tipos — para mostrar solo notificaciones relevantes al rol del usuario
+    List<Notificacion> findTop5ByLeidaFalseAndTipoInOrderByCreatedAtDesc(List<TipoNotificacion> tipos);
+
+    long countByLeidaFalseAndTipoIn(List<TipoNotificacion> tipos);
+
+    @Query("SELECT n FROM Notificacion n WHERE n.tipo IN :tipos ORDER BY n.leida ASC, n.createdAt DESC")
+    Page<Notificacion> findByTiposOrdenadas(@Param("tipos") List<TipoNotificacion> tipos, Pageable pageable);
 }

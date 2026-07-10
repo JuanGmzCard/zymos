@@ -195,7 +195,11 @@
                         </span>
                     </td>
                     <td>
-                        <span class="badge bg-light text-dark border" style="font-size:0.72rem;"
+                        <span th:if="${usuario.rolCustomId != null}"
+                              class="badge border" style="font-size:0.72rem;background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe !important;"
+                              th:text="${rolesCustomNombres[usuario.rolCustomId] ?: 'Rol custom'}">Custom</span>
+                        <span th:if="${usuario.rolCustomId == null}"
+                              class="badge bg-light text-dark border" style="font-size:0.72rem;"
                               th:text="${usuario.rol.displayName}">-</span>
                     </td>
                     <td class="text-center">
@@ -235,11 +239,11 @@
 
                         <span class="action-sep">·</span>
 
-                        <!-- Cambiar rol -->
+                        <!-- Cambiar rol (unificado — sistema + custom) -->
                         <button th:if="${usuario.username != #authentication.name}"
                                 class="action-link edit border-0 bg-transparent p-0"
                                 data-bs-toggle="modal"
-                                th:attr="data-bs-target='#modalRol' + ${usuario.id}"
+                                th:attr="data-bs-target='#modalRolCustom' + ${usuario.id}"
                                 th:title="#{usuarios.action.rol}" title="Cambiar rol">
                             <i class="bi bi-person-gear"></i>
                         </button>
@@ -309,9 +313,9 @@
                             </div>
                         </div>
 
-                        <!-- Modal cambiar rol -->
+                        <!-- Modal cambiar rol (unificado: muestra todos los roles del tenant) -->
                         <div th:if="${usuario.username != #authentication.name}"
-                             class="modal fade" th:id="'modalRol' + ${usuario.id}" tabindex="-1">
+                             class="modal fade" th:id="'modalRolCustom' + ${usuario.id}" tabindex="-1">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -320,18 +324,19 @@
                                         </h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                     </div>
-                                    <form th:action="@{/usuarios/{id}/rol(id=${usuario.id})}" method="post">
+                                    <form th:action="@{/usuarios/{id}/rol-custom(id=${usuario.id})}" method="post">
                                         <div class="modal-body">
                                             <p class="text-muted mb-3">
                                                 <span th:text="#{label.usuario}">Usuario</span>: <strong th:text="${usuario.username}"></strong>
                                             </p>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-semibold" th:text="#{usuarios.modal.label.rol}">Nuevo rol</label>
-                                                <select name="rol" class="form-select">
-                                                    <option th:each="rolOpc : ${roles}"
-                                                            th:value="${rolOpc.name()}"
-                                                            th:text="${rolOpc.displayName}"
-                                                            th:selected="${rolOpc == usuario.rol}">
+                                                <label class="form-label small fw-semibold" th:text="#{usuarios.modal.label.rol}">Rol</label>
+                                                <select name="rolCustomId" class="form-select">
+                                                    <option th:each="rc : ${rolesCustom}"
+                                                            th:value="${rc.id}"
+                                                            th:text="${rc.nombre}"
+                                                            th:classappend="${rc.esSistema} ? 'fw-semibold' : ''"
+                                                            th:selected="${rc.id == usuario.rolCustomId}">
                                                     </option>
                                                 </select>
                                             </div>

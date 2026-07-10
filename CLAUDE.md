@@ -174,6 +174,14 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 42. **Plan de tenant — alertas y bloqueo**: `AlertaScheduler` llama diariamente a `NotificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios)` para generar notificaciones in-app (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) cuando el plan está vencido/por vencer (`Tenant.isPlanVencido()`/`isPlanPorVencer()`, ≤7 días) o cerca/sobre los límites `maxLotes`/`maxUsuarios` (≥90%/100%). Si `planFin + app.plan.dias-gracia (def: 7)` ya pasó, `TenantFilter` redirige todas las rutas (excepto `/plan-vencido`, `/logout`, `/login*`) a `/plan-vencido` (`PlanController` + `templates/plan/vencido.html`).
 
+48. **`ZymosAccessDeniedHandler` — usar `sendError`, nunca `sendRedirect`**: el handler debe llamar `resp.sendError(HttpServletResponse.SC_FORBIDDEN)`. Un `sendRedirect("/error?status=403")` crea una nueva petición GET sin atributos `RequestDispatcher.ERROR_STATUS_CODE`, por lo que `CustomErrorController` lee `statusAttr == null` y defaultea a 500. Con `sendError(403)` el Servlet container hace un forward interno a `/error` con todos los atributos de error correctamente seteados.
+
+49. **`@WebMvcTest` — `TrazabilidadController.GET /nuevo` necesita receta activa**: el controller redirige a `redirect:/` si `recetaService.listarActivas().isEmpty()`. En tests de `@WebMvcTest`, stubear siempre en `@BeforeEach`: `when(recetaService.listarActivas()).thenReturn(List.of(new Receta()))`. Sin este stub, Mockito devuelve una lista vacía por defecto y el test obtiene 302 en vez de 200. NO usar `List.of()` en el stub de `nuevo()`-focused tests.
+
+50. **`display:contents` en `<form>` dentro de flex containers**: para que botones dentro de `<form>` participen directamente como flex items (sin que la caja del form rompa el layout), usar `style="display:contents"` en el `<form>`. El form sigue funcionando (submit, CSRF hidden input). Aplica cuando hay múltiples `<form>` inline dentro de `<div class="d-flex">` — el `class="d-inline"` en el form no funciona bien con flex y causa que elementos adicionales se caigan a una nueva línea.
+
+51. **Notificaciones — filtrado por rol**: `NotificacionService` filtra las notificaciones según las authorities del usuario. `TIPO_AUTHORITY` (Map estático) define qué authority requiere cada `TipoNotificacion`: `BAJO_STOCK`/`VENCIMIENTO` → `MODULO_INVENTARIO_VER`, `MANTENIMIENTO` → `MODULO_EQUIPOS_VER`, `SISTEMA` → `MODULO_FACTURACION_VER`, `BPM_SALUD` → `MODULO_BPM_VER`. Tipos sin entrada en el mapa (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) solo los ven ADMIN/SUPERADMIN. `tiposVisibles(Collection<String> authorities)` calcula la lista filtrada. Los métodos `listarRecientes`, `contarNoLeidas` y `listarTodas` reciben `Collection<String> authorities` como parámetro — obtenerlas en el controller con `auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet())`. **Al agregar un nuevo `TipoNotificacion`**: añadir entrada en `TIPO_AUTHORITY` si no es admin-only; si es admin-only, simplemente no agregar entrada. `TipoNotificacion.BPM_SALUD` se genera en `BpmService.guardarSintoma()` cuando `r.tieneSintomas()` es true, con deduplicación de 1 por día via `existeEnPeriodo()`.
+
 ---
 
 ## CONVENCIONES DEL PROYECTO
@@ -224,6 +232,7 @@ Módulo de trazabilidad de inocuidad alimentaria. Ruta base: `/bpm`. Posición e
 - **`BpmService`** — lógica de negocio para los 5 módulos. Método especial: `autorizarAcceso(Long id, String adminUsername, String firmaResponsable)` — guarda la firma del responsable al autorizar.
 - **`BpmPdfService`** — genera PDFs (OpenPDF) para cada submodulo. Inyecta `MessageSource`. Usa `ThreadLocal<Locale> LOCALE_HOLDER` + helper `t(key)` (mismo patrón que `PdfExportService`). Todos los `generar*()` reciben `Locale locale` como último parámetro y llaman `LOCALE_HOLDER.set(locale)` al inicio. Método `addTdFirma(tabla, firmaData, bg)` decodifica base64 PNG y renderiza la imagen (60×20px) en la celda PDF. Cada registro tiene endpoint individual: `GET /bpm/{modulo}/{id}/pdf`.
 - **`BpmDashboardController`** — dashboard BPM en `/bpm` con métricas del mes actual.
+- **`BpmSaludFilter`** (`OncePerRequestFilter`, registrado en `SecurityConfig`) — intercepta todos los requests de usuarios no-admin y verifica el registro diario de salud. Flujo: (1) sin registro hoy → redirige a `/bpm/salud/diario`; (2) registro con síntomas (`tieneSintomas()=true`) y sin autorizar → redirige a `/bpm/salud/bloqueado`; (3) registro OK o autorizado → deja pasar. ADMIN/SUPERADMIN saltean el filtro. `shouldSkip()` excluye: `/bpm/salud/**`, assets estáticos, `/login`, `/logout`, `/error`, `/api/**`, `/actuator/**`, `/plan-vencido`. Al guardar síntomas (`POST /salud/diario`): si `tieneSintomas()=true` → redirige a `/bpm/salud/bloqueado` + dispara `NotificacionService.crearAlertaBpmSalud()`. El desbloqueo lo hace el ADMIN desde `/bpm/salud/autorizaciones` (requiere `ROLE_ADMIN/SUPERADMIN`) firmando con `SignaturePad` → `autorizadoPorAdmin=true`.
 
 ### Firma Digital
 
@@ -339,6 +348,76 @@ flash.addFlashAttribute("mensaje", msg("bpm.sint.guardado", locale));
 String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
 ```
 Spring MVC inyecta `Locale locale` automáticamente como parámetro de método — no requiere configuración adicional.
+
+---
+
+## MÓDULO RBAC DINÁMICO (roles por tenant)
+
+Implementado en V72+V73 (2026-07-09). Permite a cada tenant crear y gestionar sus propios roles con permisos granulares por módulo. Ruta de administración: `/admin/roles` (solo ADMIN/SUPERADMIN).
+
+### Tablas
+- **`roles_tenant`** — roles por tenant: `id`, `tenant_id`, `nombre`, `descripcion`, `activo`, `es_sistema` (bool), `es_admin` (bool), `created_at`. Unique constraint `(tenant_id, nombre)`.
+- **`roles_modulos_permisos`** — permisos por rol: `id`, `rol_id`, `modulo` (enum name de `ModuloApp`), `puede_ver`, `puede_crear`, `puede_editar`, `puede_eliminar`. Unique constraint `(rol_id, modulo)`.
+- **`usuarios.rol_custom_id`** — FK nullable → `roles_tenant.id`. Fuente primaria de autorización (post-V73).
+
+### Flujo de autenticación (`UsuarioService.loadUserByUsername`)
+1. Si `rolCustomId != null` → `buildCustomAuthorities(rolCustomId)`.
+2. Si `rolCustomId == null` → buscar en `roles_tenant` por `ENUM_TO_SISTEMA.get(u.getRol())` (map enum→nombre sistema).
+3. Fallback: `ROLE_{enum.name()}` legacy (sin roles en BD).
+
+`buildCustomAuthorities(rolCustomId)` otorga: `ROLE_CUSTOM` siempre + `ROLE_ADMIN` si `es_admin=true` + `MODULO_X_VER/CREAR/EDITAR/ELIMINAR` por cada permiso activo.
+
+### Roles de sistema vs custom
+- **`es_sistema = true`**: los 5 roles migrados de enum (Administrador, Producción, Inventario, Facturación, Equipos). No se pueden eliminar desde la UI. Tienen la badge "Sistema".
+- **`es_admin = true`**: solo el rol "Administrador". Otorga `ROLE_ADMIN` para rutas `/admin/**`, `/usuarios/**`.
+- **`es_sistema = false`**: roles custom creados por el tenant (ej: "Recursos Humanos"). Pueden eliminarse. No tienen badge "Sistema".
+
+### Roles por defecto (creados por `RolTenantService.crearRolesPorDefectoSiNoTiene`)
+Solo actúa si `countByTenantId == 0`. Crea 6 roles: Administrador (es_admin=true, es_sistema=true), Producción, Inventario, Facturación, Equipos (todos es_sistema=true), Recursos Humanos (es_sistema=false, solo BPM). Llamado desde `DataInitializer` al arrancar para cada tenant.
+
+### SecurityConfig — helpers lambda
+**NUNCA** usar `WebExpressionAuthorizationManager` instanciado manualmente en helpers estáticos — `setExpressionHandler()` no se llama → `this.expression == null` → NPE → 302 en `@WebMvcTest`. Usar lambdas:
+```java
+private static AuthorizationManager<RequestAuthorizationContext> adminOnly() {
+    return (auth, ctx) -> new AuthorizationDecision(
+            auth.get().getAuthorities().stream().anyMatch(a ->
+                    a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPERADMIN")));
+}
+private static AuthorizationManager<RequestAuthorizationContext> modulo(String m) { return moduloOp(m, "VER"); }
+private static AuthorizationManager<RequestAuthorizationContext> moduloOp(String m, String op) {
+    String authority = "MODULO_" + m + "_" + op;
+    return (auth, ctx) -> new AuthorizationDecision(
+            auth.get().getAuthorities().stream().anyMatch(a ->
+                    a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_SUPERADMIN") ||
+                    a.getAuthority().equals(authority)));
+}
+```
+
+### Sincronización enum↔custom
+`sincronizarRolCustom(u)` — llamado en `guardar()` y `cambiarRol()`: busca el rol de sistema por `ENUM_TO_SISTEMA.get(u.getRol())` y setea `u.setRolCustomId(sid)`. Si no hay roles en BD (entorno de tests), deja `rolCustomId = null` (cae al fallback enum). `asignarRolCustom(id, rolCustomId)` — usada por `POST /usuarios/{id}/rol-custom` para asignar roles custom directamente.
+
+### Queries cross-tenant
+`RolTenantRepository` usa `nativeQuery = true` para todos los métodos de DataInitializer: `insertarRolNativo`, `insertarPermisoNativo`, `countByTenantId`, `findIdByTenantIdAndNombre`, `findEsAdminById` (bypasean el filtro `@TenantId` de Hibernate).
+
+### @WebMvcTest con RBAC
+`UsuarioService` es `@MockBean` en tests de controller → `RolTenantRepository` no necesita ser mocked (Spring no instancia el servicio real). Todos los controller tests que tengan `@MockBean UsuarioService` son compatibles con el RBAC sin cambios adicionales. `BpmControllerTest` requiere `@MockBean InsumoInventarioService` (inyectado en `BpmController`).
+
+### Nombre de rol visible en UI (`NOMBRE_ROL_*`)
+`buildCustomAuthorities(rolCustomId)` también emite la authority `NOMBRE_ROL_{nombre}` (ej: `NOMBRE_ROL_Producción`) para transportar el display name del rol sin consultar BD en cada request. `GlobalControllerAdvice.rolNombreCustom(Authentication)` es un `@ModelAttribute("rolNombreCustom")` que extrae ese nombre filtrando por `startsWith("NOMBRE_ROL_")` — disponible en todos los templates. En `navbar.html` se usa: `th:if="${rolNombreCustom != null}" sec:authorize="!hasRole('ADMIN')" th:text="${rolNombreCustom}"`. **CRÍTICO**: usuarios con `ROLE_ADMIN` no emiten este authority (se construyen con el fallback enum), por eso el `sec:authorize="!hasRole('ADMIN')"` evita mostrar null para admins.
+
+### `sec:authorize` en templates con RBAC
+Los templates usan `sec:authorize` para mostrar/ocultar botones. Con RBAC los usuarios no tienen `ROLE_PRODUCCION` etc. — tienen `ROLE_CUSTOM` + `MODULO_X_VER/CREAR/EDITAR/ELIMINAR`. **Patrón obligatorio**: extender las expresiones existentes con `or hasAuthority('MODULO_X_OPERACION')`:
+```html
+<!-- Ver sección -->
+sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_VER')"
+<!-- Botón crear -->
+sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')"
+<!-- Botón editar -->
+sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"
+<!-- Botón eliminar -->
+sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_ELIMINAR')"
+```
+Templates auditados (17): barriles, clientes, equipos, facturas, inventario, ordenes-compra, planificacion, recetas, stock, trazabilidad/detalle, trazabilidad/kanban, ventas. **NUNCA** usar solo los roles legacy en templates nuevos — los roles RBAC custom nunca tendrán `ROLE_X`.
 
 ---
 

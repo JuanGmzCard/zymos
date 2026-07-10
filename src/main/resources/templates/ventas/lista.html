@@ -205,7 +205,7 @@
             <h1><i class="bi bi-bag-check me-2"></i><span th:text="#{ventas.title}">Ventas</span></h1>
             <p class="subtitle mb-0" th:text="#{ventas.subtitle}">Registro de salidas y despachos por lote</p>
         </div>
-        <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">
+        <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_VER','MODULO_COMERCIAL_CREAR')">
             <a th:href="@{/ventas/export(estado=${estadoFiltro},desde=${desde},hasta=${hasta})}"
                class="btn btn-outline-secondary btn-sm" th:title="#{action.export}" title="Exportar Excel">
                 <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{action.export}">Excel</span>
@@ -339,14 +339,14 @@
                            class="action-link edit" th:title="#{action.download.pdf}">
                             <i class="bi bi-file-earmark-pdf"></i>
                         </a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')">·</span>
-                        <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_EDITAR','MODULO_COMERCIAL_ELIMINAR')">·</span>
+                        <a sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_EDITAR')"
                            th:href="@{/ventas/editar/{id}(id=${v.id})}"
                            class="action-link edit" th:title="#{action.edit}" th:text="#{action.edit}">Editar</a>
                         <span class="action-sep"
-                              sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                              sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_EDITAR')"
                               th:if="${v.estado.name() == 'PENDIENTE'}">·</span>
-                        <button sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN')"
+                        <button sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_EDITAR')"
                                 th:if="${v.estado.name() == 'PENDIENTE'}"
                                 type="button"
                                 class="action-link view border-0 bg-transparent p-0 btn-despachar"
@@ -354,8 +354,8 @@
                                 th:title="#{ventas.action.despachar}">
                             <i class="bi bi-check-lg"></i>
                         </button>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
-                        <form sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_ELIMINAR')">·</span>
+                        <form sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_ELIMINAR')"
                               th:action="@{/ventas/{id}/eliminar(id=${v.id})}" method="post"
                               class="d-inline">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"

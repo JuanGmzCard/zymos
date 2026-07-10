@@ -161,7 +161,7 @@
         </div>
         <div class="d-flex gap-2 pt-1">
             <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm"
-               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{barriles.action.nuevo}">Nuevo Barril</span>
             </a>
         </div>
@@ -232,7 +232,7 @@
             <p th:if="${codigo != '' or estadoFiltro != null}" th:text="#{barriles.empty.filter}">No hay resultados para los filtros aplicados.</p>
             <p th:unless="${codigo != '' or estadoFiltro != null}" th:text="#{barriles.empty}">No hay barriles registrados.</p>
             <a th:href="@{/barriles/nuevo}" class="btn btn-primary btn-sm mt-1"
-               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{barriles.action.registrar}">Registrar Barril</span>
             </a>
         </div>
@@ -290,14 +290,14 @@
                     <td class="text-end pe-3">
                         <a th:href="@{/barriles/ver/{id}(id=${barril.id})}"
                            class="action-link view" th:text="#{action.ver}">Ver</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_BARRILES_EDITAR','MODULO_BARRILES_ELIMINAR')">·</span>
                         <a th:href="@{/barriles/editar/{id}(id=${barril.id})}"
-                           class="action-link edit" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+                           class="action-link edit" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_EDITAR')"
                            th:text="#{action.edit}">Editar</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_ELIMINAR')">·</span>
                         <form th:action="@{/barriles/eliminar/{id}(id=${barril.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_BARRILES_ELIMINAR')">
                             <input type="hidden" name="_csrf" th:value="${_csrf.token}">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0"
                                     th:attr="data-confirm=|#{barriles.confirm.del} ${barril.codigo}?|"

@@ -4,15 +4,18 @@ import com.alera.model.Notificacion;
 import com.alera.service.NotificacionService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/notificaciones")
@@ -25,21 +28,24 @@ public class NotificacionController {
     }
 
     @GetMapping
-    public String index(@RequestParam(defaultValue = "0") int page, Model model) {
-        Page<Notificacion> pagina = service.listarTodas(page);
+    public String index(@RequestParam(defaultValue = "0") int page, Model model,
+                        Authentication auth) {
+        Collection<String> authorities = authorities(auth);
+        Page<Notificacion> pagina = service.listarTodas(page, authorities);
         model.addAttribute("notificaciones", pagina);
-        model.addAttribute("totalNoLeidas",  service.contarNoLeidas());
+        model.addAttribute("totalNoLeidas",  service.contarNoLeidas(authorities));
         model.addAttribute("paginaActual",   page);
         model.addAttribute("totalPaginas",   pagina.getTotalPages());
         return "notificaciones/index";
     }
 
-    /** JSON para el dropdown del navbar: total no leídas + últimas 5. */
+    /** JSON para el dropdown del navbar: total no leídas + últimas 5, filtradas por rol. */
     @GetMapping(value = "/recientes", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, Object> recientes() {
-        long total         = service.contarNoLeidas();
-        List<Notificacion> items = service.listarRecientes();
+    public Map<String, Object> recientes(Authentication auth) {
+        Collection<String> authorities = authorities(auth);
+        long total         = service.contarNoLeidas(authorities);
+        List<Notificacion> items = service.listarRecientes(authorities);
 
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("total", total);
@@ -50,9 +56,9 @@ public class NotificacionController {
     /** Marca una notificación como leída. Devuelve el nuevo conteo de no leídas. */
     @PostMapping(value = "/{id}/leer", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public Map<String, Object> marcarLeida(@PathVariable Long id) {
+    public Map<String, Object> marcarLeida(@PathVariable Long id, Authentication auth) {
         service.marcarLeida(id);
-        return Map.of("success", true, "noLeidas", service.contarNoLeidas());
+        return Map.of("success", true, "noLeidas", service.contarNoLeidas(authorities(auth)));
     }
 
     /** Marca todas como leídas y redirige a la página de notificaciones. */
@@ -63,6 +69,13 @@ public class NotificacionController {
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
+
+    private static Collection<String> authorities(Authentication auth) {
+        if (auth == null) return List.of();
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .collect(Collectors.toSet());
+    }
 
     private Map<String, Object> toMap(Notificacion n) {
         Map<String, Object> m = new LinkedHashMap<>();

@@ -162,7 +162,7 @@
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i><span th:text="#{action.export}">Excel</span>
             </a>
             <a th:href="@{/inventario/nuevo}"
-               sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+               sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_CREAR')"
                class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{inv.nuevo}">Nuevo insumo</span>
             </a>
@@ -283,21 +283,21 @@
                            class="action-link edit" th:title="#{inv.action.movimientos}">
                             <i class="bi bi-clock-history"></i>
                         </a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_EDITAR','MODULO_INVENTARIO_ELIMINAR')">·</span>
                         <button type="button" class="action-link edit border-0 bg-transparent p-0 btn-ajuste-rapido"
                                 th:title="#{inv.action.ajuste}"
-                                sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                                sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_EDITAR')"
                                 th:attr="data-id=${ins.id},data-nombre=${ins.nombre},data-unidad=${ins.unidad != null ? ins.unidad : ''}">
                             <i class="bi bi-plus-slash-minus"></i>
                         </button>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_EDITAR','MODULO_INVENTARIO_ELIMINAR')">·</span>
                         <a th:href="@{/inventario/editar/{id}(id=${ins.id})}"
-                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN')"
+                           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_EDITAR')"
                            class="action-link edit" th:text="#{action.edit}">Editar</a>
-                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">·</span>
+                        <span class="action-sep" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_ELIMINAR')">·</span>
                         <form th:action="@{/inventario/eliminar/{id}(id=${ins.id})}" method="post"
                               class="d-inline"
-                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                              sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_ELIMINAR')">
                             <button type="submit" class="action-link del border-0 bg-transparent p-0" th:attr="data-confirm=#{inv.confirm.eliminar}" th:text="#{action.delete}">Eliminar</button>
                         </form>
                     </td>

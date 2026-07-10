@@ -168,25 +168,59 @@ class NotificacionServiceTest {
         verify(repo, times(3)).save(any());
     }
 
+    // ── tiposVisibles ──────────────────────────────────────────────────────────
+
+    @Test
+    void tiposVisibles_adminVeTodo() {
+        List<com.alera.model.enums.TipoNotificacion> tipos =
+                service.tiposVisibles(List.of("ROLE_ADMIN"));
+        assertThat(tipos).containsExactlyInAnyOrder(com.alera.model.enums.TipoNotificacion.values());
+    }
+
+    @Test
+    void tiposVisibles_inventarioVeBajoStockYVencimiento() {
+        List<com.alera.model.enums.TipoNotificacion> tipos =
+                service.tiposVisibles(List.of("MODULO_INVENTARIO_VER"));
+        assertThat(tipos).contains(TipoNotificacion.BAJO_STOCK, TipoNotificacion.VENCIMIENTO);
+        assertThat(tipos).doesNotContain(TipoNotificacion.PLAN_VENCIMIENTO, TipoNotificacion.PLAN_LIMITE);
+    }
+
+    @Test
+    void tiposVisibles_sinPermisos_listaVacia() {
+        assertThat(service.tiposVisibles(List.of())).isEmpty();
+    }
+
     // ── listarRecientes ────────────────────────────────────────────────────────
 
     @Test
     void listarRecientes_delegaARepo() {
         Notificacion n = new Notificacion();
-        when(repo.findTop5ByLeidaFalseOrderByCreatedAtDesc()).thenReturn(List.of(n));
+        when(repo.findTop5ByLeidaFalseAndTipoInOrderByCreatedAtDesc(anyList())).thenReturn(List.of(n));
 
-        List<Notificacion> result = service.listarRecientes();
+        List<Notificacion> result = service.listarRecientes(List.of("ROLE_ADMIN"));
 
         assertThat(result).hasSize(1);
-        verify(repo).findTop5ByLeidaFalseOrderByCreatedAtDesc();
+        verify(repo).findTop5ByLeidaFalseAndTipoInOrderByCreatedAtDesc(anyList());
+    }
+
+    @Test
+    void listarRecientes_sinPermisos_listaVacia() {
+        assertThat(service.listarRecientes(List.of())).isEmpty();
+        verify(repo, never()).findTop5ByLeidaFalseAndTipoInOrderByCreatedAtDesc(anyList());
     }
 
     // ── contarNoLeidas ─────────────────────────────────────────────────────────
 
     @Test
     void contarNoLeidas_delegaARepo() {
-        when(repo.countByLeidaFalse()).thenReturn(7L);
-        assertThat(service.contarNoLeidas()).isEqualTo(7L);
+        when(repo.countByLeidaFalseAndTipoIn(anyList())).thenReturn(7L);
+        assertThat(service.contarNoLeidas(List.of("ROLE_ADMIN"))).isEqualTo(7L);
+    }
+
+    @Test
+    void contarNoLeidas_sinPermisos_cero() {
+        assertThat(service.contarNoLeidas(List.of())).isZero();
+        verify(repo, never()).countByLeidaFalseAndTipoIn(anyList());
     }
 
     // ── listarTodas ────────────────────────────────────────────────────────────
@@ -194,12 +228,43 @@ class NotificacionServiceTest {
     @Test
     void listarTodas_delegaARepo() {
         Page<Notificacion> page = new PageImpl<>(List.of());
-        when(repo.findAllOrdenadas(any(Pageable.class))).thenReturn(page);
+        when(repo.findByTiposOrdenadas(anyList(), any(Pageable.class))).thenReturn(page);
 
-        Page<Notificacion> result = service.listarTodas(0);
+        Page<Notificacion> result = service.listarTodas(0, List.of("ROLE_ADMIN"));
 
         assertThat(result).isNotNull();
-        verify(repo).findAllOrdenadas(any(Pageable.class));
+        verify(repo).findByTiposOrdenadas(anyList(), any(Pageable.class));
+    }
+
+    @Test
+    void listarTodas_sinPermisos_paginaVacia() {
+        Page<Notificacion> result = service.listarTodas(0, List.of());
+        assertThat(result.getContent()).isEmpty();
+        verify(repo, never()).findByTiposOrdenadas(anyList(), any(Pageable.class));
+    }
+
+    // ── crearAlertaBpmSalud ────────────────────────────────────────────────────
+
+    @Test
+    void crearAlertaBpmSalud_sinDuplicado_creaNotificacion() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.BPM_SALUD), any(), any())).thenReturn(false);
+
+        service.crearAlertaBpmSalud("Juan");
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.BPM_SALUD);
+        assertThat(cap.getValue().getMensaje()).contains("Juan");
+        assertThat(cap.getValue().getUrlAccion()).isEqualTo("/bpm/salud/autorizaciones");
+    }
+
+    @Test
+    void crearAlertaBpmSalud_yaDuplicadoHoy_noCreaNada() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.BPM_SALUD), any(), any())).thenReturn(true);
+
+        service.crearAlertaBpmSalud("Juan");
+
+        verify(repo, never()).save(any());
     }
 
     // ── marcarLeida ────────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@ package com.alera.config;
 import com.alera.model.Tenant;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -40,9 +41,21 @@ public class GlobalControllerAdvice {
     }
 
     // Idioma activo — usado en el toggle de idioma del navbar.
-    // Patrón en templates: #{enum.EstadoVenta.__${venta.estado}__}
     @ModelAttribute("currentLang")
     public String currentLang() {
         return LocaleContextHolder.getLocale().getLanguage();
+    }
+
+    // Nombre del rol custom para el badge del navbar (solo usuarios RBAC).
+    // Viene de la authority "NOMBRE_ROL_{nombre}" emitida en loadUserByUsername.
+    @ModelAttribute("rolNombreCustom")
+    public String rolNombreCustom(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated()) return null;
+        return auth.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .filter(a -> a.startsWith("NOMBRE_ROL_"))
+                .findFirst()
+                .map(a -> a.substring("NOMBRE_ROL_".length()))
+                .orElse(null);
     }
 }

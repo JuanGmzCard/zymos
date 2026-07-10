@@ -73,13 +73,13 @@
         <div>
             <h1><i class="bi bi-kanban me-2"></i><span th:text="#{kanban.title}">Kanban de Lotes</span></h1>
             <p class="subtitle mb-0"><span th:text="#{kanban.subtitle}">Vista de lotes activos por fase de producción</span>
-                <span sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')" class="ms-2">
+                <span sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_TRAZABILIDAD_EDITAR','MODULO_TRAZABILIDAD_CREAR','MODULO_TRAZABILIDAD_ELIMINAR')" class="ms-2">
                     <i class="bi bi-arrows-move me-1"></i><span th:text="#{kanban.drag.hint}">Arrastrá las cards para mover fases</span>
                 </span>
             </p>
         </div>
         <div class="d-flex gap-2 pt-1">
-            <a th:href="@{/nuevo}" class="btn btn-primary btn-sm" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <a th:href="@{/nuevo}" class="btn btn-primary btn-sm" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{kanban.nuevo}">Nuevo Lote</span>
             </a>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
@@ -114,7 +114,7 @@
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
             </div>
@@ -144,7 +144,7 @@
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
             </div>
@@ -171,7 +171,7 @@
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
             </div>
@@ -198,7 +198,7 @@
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
             </div>
@@ -226,7 +226,7 @@
                     </div>
                     <div class="mt-2 d-flex gap-1">
                         <a th:href="@{/ver/{id}(id=${lote.id})}" class="btn btn-zymos btn-sm py-0 px-2" style="font-size:0.65rem;"><i class="bi bi-eye"></i></a>
-                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"><i class="bi bi-pencil"></i></a>
+                        <a th:href="@{/editar/{id}(id=${lote.id})}" class="btn btn-outline-secondary btn-sm py-0 px-2" style="font-size:0.65rem;" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_EDITAR')"><i class="bi bi-pencil"></i></a>
                     </div>
                 </div>
             </div>

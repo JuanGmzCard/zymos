@@ -224,7 +224,7 @@
                                     <i class="bi bi-eye"></i>
                                 </a>
                                 <button type="button" class="btn btn-outline-secondary btn-sm btn-ajuste"
-                                        sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN')"
+                                        sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_CREAR')"
                                         th:attr="data-lote-id=${s.loteId},
                                                   data-lote-codigo=${s.codigoLote},
                                                   data-lote-unidad=${s.unidad}"
