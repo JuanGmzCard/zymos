@@ -421,6 +421,49 @@ Templates auditados (17): barriles, clientes, equipos, facturas, inventario, ord
 
 ---
 
+## MÓDULO DE MIGRACIÓN DE DATOS (`/admin/migracion`)
+
+Herramienta de importación masiva vía XLSX para onboarding de tenants. Accesible solo para ADMIN/SUPERADMIN (restringido por SecurityConfig en `/admin/**`). Ruta: `/admin/migracion/{subdomain}`.
+
+### Arquitectura
+- **`MigracionController`** — 3 endpoints: `GET /{subdomain}` (página), `GET /{subdomain}/plantilla/{modulo}` (descarga XLSX), `POST /{subdomain}/importar/{modulo}` (importación). Inyecta `MessageSource`; recibe `Locale locale` en `detalle()` e `importar()` para flash messages i18n. Pasa 3 stats al modelo: `totalImportaciones`, `importacionesExitosas`, `importacionesParciales` (calculados con `stream().filter()`).
+- **`MigracionService`** — 11 métodos `importar*()`. Usa `JdbcTemplate` (SQL nativo) y Apache POI para leer XLSX. Devuelve `Resultado(procesadas, exitosas, errores, mensajes, estado)` donde `estado` es `"EXITOSO"` / `"PARCIAL"` / `"ERROR"`. Guarda `MigracionLog` por cada importación.
+- **`MigracionTemplateService`** — 11 métodos `plantilla*()` que generan XLSX con estilos, dropdowns de validación, filas de ejemplo y hoja de instrucciones.
+- **`MigracionLog`** — entidad (`migracion_log`) con: `tenantId`, `modulo`, `archivo`, `procesadas`, `exitosas`, `conErrores`, `estado`, `detalles` (TEXT), `usuario`, `fecha` (`@PrePersist`).
+- **`MigracionLogRepository`** — `findByTenantIdOrderByFechaDesc(String tenantId)` y `countByTenantId(String tenantId)`.
+
+### 11 módulos soportados
+| Módulo | Key i18n | Hojas XLSX |
+|---|---|---|
+| `almacen` | `admin.mig.mod.almacen` | 1 |
+| `equipos` | `admin.mig.mod.equipos` | 1 |
+| `comercial` | `admin.mig.mod.comercial` | 3 (Proveedores→Facturas→Factura_Items) |
+| `produccion` | `admin.mig.mod.produccion` | 6 (Recetas→Ingredientes→Escalones→Adiciones→Lotes→Lote_Ingredientes) |
+| `clientes` | `admin.mig.mod.clientes` | 1 |
+| `ventas` | `admin.mig.mod.ventas` | 2 (Ventas→Venta_Items, misma referencia_venta) |
+| `barriles` | `admin.mig.mod.barriles` | 1 |
+| `ordenes` | `admin.mig.mod.ordenes` | 2 (OC→OC_Items, mismo numero_oc) |
+| `seguimiento` | `admin.mig.mod.seguimiento` | 3 (independientes, referencia codigo_lote) |
+| `catalogos` | `admin.mig.mod.catalogos` | 2 (Tipos_Cerveza y Categorias independientes) |
+| `mantenimientos` | `admin.mig.mod.mantenimientos` | 1 (referencia equipo por nombre exacto) |
+
+### Flash messages (i18n)
+Prefijo `admin.mig.flash.*` — resueltos con `messageSource.getMessage(key, args, key, locale)`. Keys:
+- `admin.mig.flash.tenant.no.encontrado` — tenant no encontrado (redirect a `/admin/tenants`)
+- `admin.mig.flash.archivo.vacio` — sin archivo seleccionado
+- `admin.mig.flash.resultado` — resumen `{0}: {1} filas, {2} exitosas, {3} con errores`
+- `admin.mig.flash.primeros.errores` — primeras 3 líneas de error concatenadas
+- `admin.mig.flash.error.procesando` — excepción no controlada
+
+### Template (`admin/migracion/detalle.html`)
+- **Stat cards** (`.stat-card-simple`): total, exitosas, parciales, último módulo — visibles solo cuando `totalImportaciones > 0`.
+- **Flash message**: `class="alert alert-dismissible"` + `th:classappend="'alert-' + ..."` (no `th:classappend="'alert alert-' + ..."`).
+- **Modal errores**: `#erroresTexto` sin `bg-light`; dark mode via CSS en `<style th:attr="nonce=${cspNonce}">`.
+- **Badge módulo en historial**: ternario de 11 entradas — `catalogos` → `bg-secondary`, `mantenimientos` → `bg-danger`.
+- **Al agregar un módulo nuevo**: (1) añadir case en el switch del controller; (2) añadir card en el grid del template; (3) añadir instrucción en la lista; (4) añadir entrada al badge ternario; (5) añadir keys i18n `admin.mig.mod.*` en ambos `messages*.properties`.
+
+---
+
 ## CONVENCIONES DEL PROYECTO
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:

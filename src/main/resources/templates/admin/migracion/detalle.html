@@ -13,11 +13,15 @@
     <style th:attr="nonce=${cspNonce}">
         .mig-instrucciones { background:#eff6ff; border-color:#bfdbfe; }
         .mig-section-hd { border-bottom:1px solid #e2e8f0; background:#f8fafc; border-radius:8px 8px 0 0; }
+        #erroresTexto { background:#f8fafc; color:#1e293b; }
         html.dark-mode .mig-instrucciones { background:var(--dm-input) !important; border-color:var(--dm-border-light) !important; }
         html.dark-mode .mig-section-hd { background:var(--dm-input) !important; border-color:var(--dm-border-light) !important; }
         html.dark-mode .mig-section-hd .fw-semibold { color:var(--dm-text) !important; }
         html.dark-mode .mig-section-hd .text-secondary { color:var(--dm-text-muted) !important; }
         html.dark-mode .mig-section-hd > .rounded { opacity:0.6; }
+        html.dark-mode .modal-content { background:var(--dm-card); color:var(--dm-text); border-color:var(--dm-border-light); }
+        html.dark-mode .modal-header { border-color:var(--dm-border-light); }
+        html.dark-mode #erroresTexto { background:var(--dm-input); color:var(--dm-text); }
     </style>
 </head>
 <body>
@@ -40,9 +44,31 @@
     </div>
 
     <!-- Flash -->
-    <div th:if="${mensaje}" th:classappend="'alert alert-' + ${tipoMensaje} + ' alert-dismissible fade show mb-3'" role="alert">
+    <div th:if="${mensaje}" class="alert alert-dismissible fade show mb-3"
+         th:classappend="'alert-' + (${tipoMensaje} != null ? ${tipoMensaje} : 'info')" role="alert">
         <span th:text="${mensaje}"></span>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Stat cards del historial -->
+    <div class="d-flex flex-wrap gap-3 mb-4" th:if="${totalImportaciones > 0}">
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{admin.mig.stats.total}">Total</div>
+            <div class="stat-value info" th:text="${totalImportaciones}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{admin.mig.stats.exitosas}">Exitosas</div>
+            <div class="stat-value success" th:text="${importacionesExitosas}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{admin.mig.stats.parciales}">Parciales</div>
+            <div class="stat-value warning" th:text="${importacionesParciales}">0</div>
+        </div>
+        <div class="stat-card-simple" th:if="${!historial.isEmpty()}">
+            <div class="stat-label" th:text="#{admin.mig.stats.ultimo}">Último módulo</div>
+            <div class="stat-value muted" style="font-size:1.2rem; text-transform:capitalize;"
+                 th:text="${historial[0].modulo}">—</div>
+        </div>
     </div>
 
     <!-- Instrucciones generales -->
@@ -62,6 +88,8 @@
                     <li th:text="#{admin.mig.instr.8}">Para el módulo Ventas, llene en orden: Ventas → Venta_Items.</li>
                     <li th:text="#{admin.mig.instr.9}">Para el módulo Órdenes de Compra, llene en orden: OC → OC_Items.</li>
                     <li th:text="#{admin.mig.instr.10}">Para el módulo Seguimiento, las 3 hojas son independientes.</li>
+                    <li th:text="#{admin.mig.instr.11}">Para el módulo Catálogos, las hojas Tipos_Cerveza y Categorias son independientes.</li>
+                    <li th:text="#{admin.mig.instr.12}">Para el módulo Mantenimientos, cada fila referencia un equipo por su nombre exacto.</li>
                 </ol>
             </div>
         </div>
@@ -394,6 +422,78 @@
             </div>
         </div>
 
+        <!-- Catálogos -->
+        <div class="col-xl-6">
+            <div class="content-card h-100" style="padding:0; margin-bottom:0;">
+                <div class="mig-section-hd d-flex align-items-center gap-3 px-4 py-3">
+                    <div class="d-flex align-items-center justify-content-center rounded"
+                         style="width:36px; height:36px; background:#fdf4ff; flex-shrink:0;">
+                        <i class="bi bi-tag" style="color:#9333ea; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.catalogos}">Catálogos</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.catalogos.desc}">Tipos de cerveza y categorías de equipos e insumos</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/catalogos(s=${tenant.subdomain})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
+                        </a>
+                        <span class="text-secondary" style="font-size:0.775rem;">plantilla-catalogos.xlsx (2 hojas)</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/catalogos(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mantenimientos -->
+        <div class="col-xl-6">
+            <div class="content-card h-100" style="padding:0; margin-bottom:0;">
+                <div class="mig-section-hd d-flex align-items-center gap-3 px-4 py-3">
+                    <div class="d-flex align-items-center justify-content-center rounded"
+                         style="width:36px; height:36px; background:#fff1f2; flex-shrink:0;">
+                        <i class="bi bi-wrench-adjustable" style="color:#e11d48; font-size:1rem;"></i>
+                    </div>
+                    <div>
+                        <div class="fw-semibold" style="color:#1e293b; font-size:0.925rem;" th:text="#{admin.mig.mod.mantenimientos}">Mantenimientos</div>
+                        <div class="text-secondary" style="font-size:0.775rem;" th:text="#{admin.mig.mod.mantenimientos.desc}">Historial de mantenimientos preventivos y correctivos</div>
+                    </div>
+                </div>
+                <div class="px-4 py-3">
+                    <div class="d-flex gap-2 align-items-center mb-3">
+                        <a th:href="@{/admin/migracion/{s}/plantilla/mantenimientos(s=${tenant.subdomain})}"
+                           class="btn btn-sm btn-outline-success">
+                            <i class="bi bi-download me-1"></i><span th:text="#{admin.mig.btn.descargar}">Descargar Plantilla</span>
+                        </a>
+                        <span class="text-secondary" style="font-size:0.775rem;">plantilla-mantenimientos.xlsx</span>
+                    </div>
+                    <form th:action="@{/admin/migracion/{s}/importar/mantenimientos(s=${tenant.subdomain})}"
+                          method="post" enctype="multipart/form-data">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                        <div class="input-group input-group-sm">
+                            <input type="file" name="archivo" class="form-control"
+                                   accept=".xlsx,.xls" required>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-upload me-1"></i><span th:text="#{admin.mig.btn.importar}">Importar</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Historial de migraciones -->
@@ -430,15 +530,17 @@
                             th:text="${#temporals.format(log.fecha,'dd/MM/yyyy HH:mm')}">-</td>
                         <td>
                             <span class="badge"
-                                  th:classappend="${log.modulo == 'almacen'    ? 'bg-success' :
-                                                   log.modulo == 'equipos'    ? 'bg-primary' :
-                                                   log.modulo == 'comercial'  ? 'bg-warning text-dark' :
-                                                   log.modulo == 'clientes'   ? 'bg-secondary' :
-                                                   log.modulo == 'ventas'     ? 'bg-dark' :
-                                                   log.modulo == 'barriles'   ? 'bg-success' :
-                                                   log.modulo == 'ordenes'    ? 'bg-warning text-dark' :
-                                                   log.modulo == 'seguimiento'? 'bg-info text-dark' :
-                                                                                'bg-secondary'}"
+                                  th:classappend="${log.modulo == 'almacen'        ? 'bg-success' :
+                                                   log.modulo == 'equipos'        ? 'bg-primary' :
+                                                   log.modulo == 'comercial'      ? 'bg-warning text-dark' :
+                                                   log.modulo == 'clientes'       ? 'bg-secondary' :
+                                                   log.modulo == 'ventas'         ? 'bg-dark' :
+                                                   log.modulo == 'barriles'       ? 'bg-success' :
+                                                   log.modulo == 'ordenes'        ? 'bg-warning text-dark' :
+                                                   log.modulo == 'seguimiento'    ? 'bg-info text-dark' :
+                                                   log.modulo == 'catalogos'      ? 'bg-secondary' :
+                                                   log.modulo == 'mantenimientos' ? 'bg-danger' :
+                                                                                    'bg-secondary'}"
                                   th:text="${log.modulo}">mod</span>
                         </td>
                         <td class="text-secondary text-truncate" style="max-width:180px;"
@@ -481,7 +583,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <pre id="erroresTexto" class="small bg-light p-3 rounded" style="white-space:pre-wrap;"></pre>
+                <pre id="erroresTexto" class="small p-3 rounded" style="white-space:pre-wrap;"></pre>
             </div>
         </div>
     </div>
