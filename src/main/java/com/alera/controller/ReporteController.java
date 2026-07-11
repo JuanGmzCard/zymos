@@ -530,6 +530,29 @@ public class ReporteController {
                 .body(excel);
     }
 
+    @GetMapping("/ventas/pdf")
+    public ResponseEntity<byte[]> ventasPdf(
+            @RequestParam(required = false) EstadoVenta estado,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request, Locale locale) {
+
+        if (desde == null) desde = LocalDate.now().minusMonths(3);
+        if (hasta == null) hasta = LocalDate.now();
+
+        List<Venta> ventas = ventaService.listarParaExport(estado, desde, hasta);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+
+        byte[] pdf = pdfExportService.generarPdfReporteVentas(ventas, estado, desde, hasta, branding, locale);
+        String filename = "reporte-ventas-" + desde + "-" + hasta + ".pdf";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(pdf);
+    }
+
     // JPQL SUM sobre BigDecimal puede retornar Double en Hibernate — conversión segura
     private static BigDecimal toBigDecimal(Object o) {
         if (o == null) return BigDecimal.ZERO;

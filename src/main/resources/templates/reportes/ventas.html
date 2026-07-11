@@ -51,6 +51,10 @@
             <p class="subtitle mb-0" th:text="#{reportes.ventas.subtitle}">Análisis de ventas y despachos por período</p>
         </div>
         <div class="d-flex gap-2 pt-1">
+            <a th:href="@{/reportes/ventas/pdf(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''})}"
+               class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
             <a th:href="@{/ventas/export(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''})}"
                class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{fact.btn.excel}">Excel</span>
@@ -145,6 +149,64 @@
                     <canvas id="chartEstados" style="max-height:200px;"></canvas>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- Listado de ventas individuales -->
+    <div class="table-card mb-4" th:unless="${#lists.isEmpty(ventas)}">
+        <div class="table-title d-flex align-items-center justify-content-between">
+            <span><i class="bi bi-list-ul me-2"></i><strong th:text="#{reportes.ventas.table.title}">Ventas en el Período</strong></span>
+            <div class="d-flex align-items-center gap-2">
+                <span id="ventasPaginaInfo" class="text-secondary" style="font-size:0.8rem;"></span>
+                <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="ventasBtnPrev" disabled>&lsaquo;</button>
+                <button class="btn btn-outline-secondary btn-sm py-0 px-2" id="ventasBtnNext">&rsaquo;</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table mb-0" id="tablaVentas">
+                <thead>
+                    <tr>
+                        <th th:text="#{reportes.ventas.col.remision}">Remisión</th>
+                        <th th:text="#{reportes.ventas.col.cliente}">Cliente</th>
+                        <th th:text="#{reportes.ventas.col.fecha}">Fecha</th>
+                        <th th:text="#{reportes.ventas.col.lote}">Lote</th>
+                        <th class="text-center" th:text="#{reportes.ventas.col.items}">Ítems</th>
+                        <th class="text-end" th:text="#{reportes.ventas.col.total}">Total</th>
+                        <th th:text="#{reportes.ventas.col.estado.col}">Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="v : ${ventas}">
+                        <td class="font-monospace text-muted" style="font-size:0.82rem;"
+                            th:text="${v.remisionNumero != null and !v.remisionNumero.isEmpty()} ? ${v.remisionNumero} : '—'">—</td>
+                        <td class="fw-semibold" th:text="${v.cliente}">—</td>
+                        <td class="text-muted"
+                            th:text="${#temporals.format(v.fechaDespacho,'dd/MM/yyyy')}">—</td>
+                        <td>
+                            <span th:if="${v.primerCodigoLote != null}"
+                                  class="font-monospace" style="font-size:0.82rem;color:var(--verde-zymos,#2563eb);"
+                                  th:text="${v.primerCodigoLote}">—</span>
+                            <span th:unless="${v.primerCodigoLote != null}" class="text-muted">—</span>
+                        </td>
+                        <td class="text-center text-muted" th:text="${v.itemsCount}">0</td>
+                        <td class="text-end fw-semibold"
+                            th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${v.estado.name() == 'DESPACHADO'} ? 'bg-success' :
+                                                  (${v.estado.name() == 'PENDIENTE'} ? 'bg-warning text-dark' :
+                                                  (${v.estado.name() == 'CANCELADO'} ? 'bg-secondary' : 'bg-info text-dark'))"
+                                  th:text="${v.estado.displayName}">—</span>
+                        </td>
+                        <td class="text-end pe-3">
+                            <a th:href="@{/ventas/{id}(id=${v.id})}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -255,6 +317,39 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 /*]]>*/
+</script>
+<script th:attr="nonce=${cspNonce}">
+// Paginación tabla de ventas
+(function() {
+    var PAGE_SIZE = 15;
+    var currentPage = 0;
+
+    function renderPage() {
+        var rows = document.querySelectorAll('#tablaVentas tbody tr');
+        if (!rows.length) return;
+        rows.forEach(function(r, i) {
+            r.style.display = (i >= currentPage * PAGE_SIZE && i < (currentPage + 1) * PAGE_SIZE) ? '' : 'none';
+        });
+        var total = rows.length;
+        var from = currentPage * PAGE_SIZE + 1;
+        var to = Math.min((currentPage + 1) * PAGE_SIZE, total);
+        var info = document.getElementById('ventasPaginaInfo');
+        if (info) info.textContent = total > PAGE_SIZE ? from + '–' + to + ' / ' + total : total + ' ventas';
+        var prev = document.getElementById('ventasBtnPrev');
+        var next = document.getElementById('ventasBtnNext');
+        if (prev) prev.disabled = currentPage === 0;
+        if (next) next.disabled = to >= total;
+        if (total <= PAGE_SIZE && prev && next) { prev.style.display = 'none'; next.style.display = 'none'; }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderPage();
+        var prev = document.getElementById('ventasBtnPrev');
+        var next = document.getElementById('ventasBtnNext');
+        if (prev) prev.addEventListener('click', function() { currentPage--; renderPage(); });
+        if (next) next.addEventListener('click', function() { currentPage++; renderPage(); });
+    });
+})();
 </script>
 </body>
 </html>

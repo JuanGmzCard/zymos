@@ -12,6 +12,7 @@ import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.Venta;
 import com.alera.model.VentaItem;
+import com.alera.model.enums.EstadoVenta;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Element;
@@ -1580,6 +1581,151 @@ public class PdfExportService {
     private boolean notBlank(String s) { return s != null && !s.isBlank(); }
     private String fmt2(BigDecimal n)  {
         return n != null ? String.format("%,.0f", n.doubleValue()) : "—";
+    }
+
+    // ── PDF Reporte de Ventas ────────────────────────────────────────
+
+    public byte[] generarPdfReporteVentas(List<Venta> ventas,
+                                           EstadoVenta estadoFiltro,
+                                           LocalDate desde, LocalDate hasta,
+                                           ExportBranding branding,
+                                           Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4.rotate(), 36, 36, 45, 40);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
+
+                // ── Cabecera ──────────────────────────────────────────────
+                PdfPTable header = new PdfPTable(1);
+                header.setWidthPercentage(100);
+                header.setSpacingAfter(10);
+                PdfPCell hCell = new PdfPCell();
+                hCell.setBackgroundColor(pal.verde()); hCell.setBorder(0);
+                hCell.setPaddingTop(10); hCell.setPaddingBottom(10); hCell.setPaddingLeft(14);
+                hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                        new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+                Paragraph tituloH = new Paragraph(t("pdf.title.reporte_ventas"),
+                        new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
+                tituloH.setSpacingBefore(3);
+                hCell.addElement(tituloH);
+                String periodoStr = desde.format(FMT_FECHA) + " — " + hasta.format(FMT_FECHA);
+                if (estadoFiltro != null) periodoStr += "  ·  " + estadoFiltro.getDisplayName();
+                hCell.addElement(new Paragraph(periodoStr,
+                        new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro())));
+                header.addCell(hCell);
+                doc.add(header);
+
+                // ── Estadísticas ──────────────────────────────────────────
+                long totalVentas      = ventas.size();
+                long totalDespachadas = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.DESPACHADO).count();
+                long totalPendientes  = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.PENDIENTE).count();
+                long totalCanceladas  = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.CANCELADO).count();
+                BigDecimal ingresos   = ventas.stream()
+                        .filter(v -> v.getEstado() == EstadoVenta.DESPACHADO)
+                        .map(Venta::getValorTotal)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                long clientesUnicos   = ventas.stream()
+                        .map(Venta::getCliente).filter(c -> c != null).distinct().count();
+
+                addTituloPdf(doc, t("pdf.title.resumen_periodo"), pal);
+                Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable stats = new PdfPTable(new float[]{1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f});
+                stats.setWidthPercentage(100);
+                par(stats, t("pdf.label.total_ventas"),  String.valueOf(totalVentas),      lbl, val, pal);
+                par(stats, t("pdf.label.despachadas"),   String.valueOf(totalDespachadas),  lbl, val, pal);
+                par(stats, t("pdf.label.pendientes"),    String.valueOf(totalPendientes),   lbl, val, pal);
+                par(stats, t("pdf.label.canceladas"),    String.valueOf(totalCanceladas),   lbl, val, pal);
+                par(stats, t("pdf.label.ingresos"),      "$" + fmt2(ingresos),              lbl, val, pal);
+                par(stats, t("pdf.label.cliente"),       String.valueOf(clientesUnicos) + " únicos", lbl, val, pal);
+                par(stats, t("pdf.label.generado"),      LocalDate.now().format(FMT_FECHA), lbl, val, pal);
+                par(stats, "", "", lbl, val, pal);
+                doc.add(stats);
+
+                // ── Tabla de ventas ───────────────────────────────────────
+                if (!ventas.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.ventas_periodo"), pal);
+                    PdfPTable tabla = new PdfPTable(new float[]{1.2f, 2.5f, 1.2f, 1.5f, 0.6f, 1.5f, 1.2f});
+                    tabla.setWidthPercentage(100);
+                    Font th = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                    Font td = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                    for (String h : new String[]{
+                            t("pdf.label.remision"), t("pdf.label.cliente"),
+                            t("pdf.label.fecha_despacho"), t("pdf.label.codigo"),
+                            t("pdf.header.num"), t("pdf.header.valor_total"), t("pdf.label.estado")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, th));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
+                        c.setPadding(4); tabla.addCell(c);
+                    }
+                    boolean alt = false;
+                    for (Venta v : ventas) {
+                        Color bg = alt ? pal.fondo() : Color.WHITE;
+                        alt = !alt;
+                        tablaCelda(tabla, v.getRemisionNumero() != null ? v.getRemisionNumero() : "—", td, bg);
+                        tablaCelda(tabla, v.getCliente(), td, bg);
+                        tablaCelda(tabla, fmt(v.getFechaDespacho()), td, bg);
+                        tablaCelda(tabla, v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "—", td, bg);
+                        tablaCelda(tabla, String.valueOf(v.getItemsCount()), td, bg);
+                        tablaCelda(tabla, "$" + fmt2(v.getValorTotal()), td, bg);
+                        tablaCelda(tabla, v.getEstado().getDisplayName(), td, bg);
+                    }
+                    doc.add(tabla);
+                }
+
+                // ── Resumen por cliente ───────────────────────────────────
+                Map<String, double[]> clienteAgg = new LinkedHashMap<>();
+                for (Venta v : ventas) {
+                    if (v.getCliente() == null) continue;
+                    double[] agg = clienteAgg.computeIfAbsent(v.getCliente(), k -> new double[]{0, 0});
+                    agg[0]++;
+                    agg[1] += v.getValorTotal().doubleValue();
+                }
+                if (clienteAgg.size() > 1) {
+                    addTituloPdf(doc, t("pdf.title.resumen_clientes"), pal);
+                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f});
+                    resTabla.setWidthPercentage(55);
+                    resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
+                    Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                    for (String h : new String[]{t("pdf.label.cliente"), t("pdf.header.lotes"), t("pdf.header.total")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, rth));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
+                        resTabla.addCell(c);
+                    }
+                    boolean[] a2 = {false};
+                    clienteAgg.entrySet().stream()
+                            .sorted((x, y) -> Double.compare(y.getValue()[1], x.getValue()[1]))
+                            .limit(15)
+                            .forEach(e -> {
+                                Color bg = a2[0] ? pal.fondo() : Color.WHITE;
+                                a2[0] = !a2[0];
+                                Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                                tablaCelda(resTabla, e.getKey(), rtd, bg);
+                                tablaCelda(resTabla, String.valueOf((long) e.getValue()[0]), rtd, bg);
+                                tablaCelda(resTabla, "$" + fmt2(BigDecimal.valueOf(e.getValue()[1])), rtd, bg);
+                            });
+                    doc.add(resTabla);
+                }
+
+                // ── Pie ───────────────────────────────────────────────────
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF del reporte de ventas", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
+        }
     }
 
     // ── PDF Venta (Remisión) ─────────────────────────────────────────
