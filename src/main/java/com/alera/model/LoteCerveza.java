@@ -44,9 +44,16 @@ public class LoteCerveza extends AuditableEntity {
     private Integer ogTerceraElaboracion;
     @Column(name = "og_brix_tercera_elaboracion", precision = 5, scale = 2)
     private BigDecimal ogBrixTerceraElaboracion;
+    private LocalDate fechaCuartaElaboracion;
+    private BigDecimal aguaCuartaElaboracion;
+    @Column(name = "og_cuarta_elaboracion")
+    private Integer ogCuartaElaboracion;
+    @Column(name = "og_brix_cuarta_elaboracion", precision = 5, scale = 2)
+    private BigDecimal ogBrixCuartaElaboracion;
     private BigDecimal volumenFinalPrimeraElaboracion;
     private BigDecimal volumenFinalSegundaElaboracion;
     private BigDecimal volumenFinalTerceraElaboracion;
+    private BigDecimal volumenFinalCuartaElaboracion;
 
     private java.time.LocalTime horaInicioPrimeraElaboracion;
     private java.time.LocalTime horaFinPrimeraElaboracion;
@@ -54,6 +61,8 @@ public class LoteCerveza extends AuditableEntity {
     private java.time.LocalTime horaFinSegundaElaboracion;
     private java.time.LocalTime horaInicioTerceraElaboracion;
     private java.time.LocalTime horaFinTerceraElaboracion;
+    private java.time.LocalTime horaInicioCuartaElaboracion;
+    private java.time.LocalTime horaFinCuartaElaboracion;
 
     private BigDecimal aguaUtilizada;
     private BigDecimal phAgua;
@@ -144,6 +153,10 @@ public class LoteCerveza extends AuditableEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta3_id")
     private Receta receta3;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receta4_id")
+    private Receta receta4;
 
 
     // Filtros de ingredientes
@@ -241,6 +254,15 @@ public class LoteCerveza extends AuditableEntity {
                 .setScale(2, RoundingMode.HALF_UP);
     }
 
+    public BigDecimal getTotalAguaElaboraciones() {
+        BigDecimal total = BigDecimal.ZERO;
+        if (aguaUtilizada != null)          total = total.add(aguaUtilizada);
+        if (aguaSegundaElaboracion != null)  total = total.add(aguaSegundaElaboracion);
+        if (aguaTerceraElaboracion != null)  total = total.add(aguaTerceraElaboracion);
+        if (aguaCuartaElaboracion != null)   total = total.add(aguaCuartaElaboracion);
+        return total;
+    }
+
     // Cálculos de calidad — densidades en formato XXXX (ej: 1056, 1015)
     public BigDecimal getAbv() {
         if (densidadInicial == null || densidadFinal == null) return null;
@@ -314,6 +336,16 @@ public class LoteCerveza extends AuditableEntity {
     public void setOgBrixSegundaElaboracion(BigDecimal v) { this.ogBrixSegundaElaboracion = v; }
     public BigDecimal getOgBrixTerceraElaboracion() { return ogBrixTerceraElaboracion; }
     public void setOgBrixTerceraElaboracion(BigDecimal v) { this.ogBrixTerceraElaboracion = v; }
+    public LocalDate getFechaCuartaElaboracion() { return fechaCuartaElaboracion; }
+    public void setFechaCuartaElaboracion(LocalDate v) { this.fechaCuartaElaboracion = v; }
+    public BigDecimal getAguaCuartaElaboracion() { return aguaCuartaElaboracion; }
+    public void setAguaCuartaElaboracion(BigDecimal v) { this.aguaCuartaElaboracion = v; }
+    public Integer getOgCuartaElaboracion() { return ogCuartaElaboracion; }
+    public void setOgCuartaElaboracion(Integer v) { this.ogCuartaElaboracion = v; }
+    public BigDecimal getOgBrixCuartaElaboracion() { return ogBrixCuartaElaboracion; }
+    public void setOgBrixCuartaElaboracion(BigDecimal v) { this.ogBrixCuartaElaboracion = v; }
+    public BigDecimal getVolumenFinalCuartaElaboracion() { return volumenFinalCuartaElaboracion; }
+    public void setVolumenFinalCuartaElaboracion(BigDecimal v) { this.volumenFinalCuartaElaboracion = v; }
     public BigDecimal getVolumenFinalSegundaElaboracion() { return volumenFinalSegundaElaboracion; }
     public void setVolumenFinalSegundaElaboracion(BigDecimal v) { this.volumenFinalSegundaElaboracion = v; }
     public BigDecimal getVolumenFinalTerceraElaboracion() { return volumenFinalTerceraElaboracion; }
@@ -330,6 +362,10 @@ public class LoteCerveza extends AuditableEntity {
     public void setHoraInicioTerceraElaboracion(java.time.LocalTime v) { this.horaInicioTerceraElaboracion = v; }
     public java.time.LocalTime getHoraFinTerceraElaboracion() { return horaFinTerceraElaboracion; }
     public void setHoraFinTerceraElaboracion(java.time.LocalTime v) { this.horaFinTerceraElaboracion = v; }
+    public java.time.LocalTime getHoraInicioCuartaElaboracion() { return horaInicioCuartaElaboracion; }
+    public void setHoraInicioCuartaElaboracion(java.time.LocalTime v) { this.horaInicioCuartaElaboracion = v; }
+    public java.time.LocalTime getHoraFinCuartaElaboracion() { return horaFinCuartaElaboracion; }
+    public void setHoraFinCuartaElaboracion(java.time.LocalTime v) { this.horaFinCuartaElaboracion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }
@@ -416,6 +452,8 @@ public class LoteCerveza extends AuditableEntity {
     public void setReceta2(Receta receta2) { this.receta2 = receta2; }
     public Receta getReceta3() { return receta3; }
     public void setReceta3(Receta receta3) { this.receta3 = receta3; }
+    public Receta getReceta4() { return receta4; }
+    public void setReceta4(Receta receta4) { this.receta4 = receta4; }
     public List<LoteItemFactura> getItemsFactura() { return itemsFactura; }
     public void setItemsFactura(List<LoteItemFactura> itemsFactura) { this.itemsFactura = itemsFactura; }
 }

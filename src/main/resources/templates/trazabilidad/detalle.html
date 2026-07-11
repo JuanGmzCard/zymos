@@ -182,6 +182,8 @@
                                       th:if="${lote.numeroElaboraciones == 2}">2 elaboraciones</span>
                                 <span class="badge ms-1" style="background:#dcfce7;color:#15803d;font-size:0.6rem;"
                                       th:if="${lote.numeroElaboraciones == 3}">3 elaboraciones</span>
+                                <span class="badge ms-1" style="background:#faf5ff;color:#7c3aed;font-size:0.6rem;"
+                                      th:if="${lote.numeroElaboraciones == 4}">4 elaboraciones</span>
                             </div>
                             <div class="table-responsive">
                                 <table class="table table-sm mb-0" style="font-size:0.82rem;">
@@ -212,6 +214,12 @@
                                             <td class="py-2" th:text="${lote.horaInicioTerceraElaboracion != null} ? ${#temporals.format(lote.horaInicioTerceraElaboracion,'HH:mm')} : '—'">—</td>
                                             <td class="py-2" th:text="${lote.horaFinTerceraElaboracion != null} ? ${#temporals.format(lote.horaFinTerceraElaboracion,'HH:mm')} : '—'">—</td>
                                         </tr>
+                                        <tr th:if="${lote.numeroElaboraciones >= 4}">
+                                            <td class="ps-2 py-2 fw-semibold" style="font-size:0.78rem;">S4</td>
+                                            <td class="py-2" th:text="${lote.fechaCuartaElaboracion != null} ? ${#temporals.format(lote.fechaCuartaElaboracion,'dd/MM/yyyy')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaInicioCuartaElaboracion != null} ? ${#temporals.format(lote.horaInicioCuartaElaboracion,'HH:mm')} : '—'">—</td>
+                                            <td class="py-2" th:text="${lote.horaFinCuartaElaboracion != null} ? ${#temporals.format(lote.horaFinCuartaElaboracion,'HH:mm')} : '—'">—</td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -233,6 +241,12 @@
                                 <a th:href="@{/recetas/ver/{id}(id=${lote.receta3.id})}" th:text="${lote.receta3.nombre}">—</a>
                             </div>
                         </div>
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 4 and lote.receta4 != null}">
+                            <div class="detail-label" th:text="#{traz.det.label.receta.s4}">Receta Sesión 4</div>
+                            <div class="detail-value">
+                                <a th:href="@{/recetas/ver/{id}(id=${lote.receta4.id})}" th:text="${lote.receta4.nombre}">—</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -245,9 +259,18 @@
                         <div class="col-4">
                             <div class="detail-label" th:text="#{traz.det.label.agua}">Agua</div>
                             <div class="detail-value">
-                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones == 2}"
-                                      class="text-muted small me-1">S1:</span>
-                                <span th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</span>
+                                <!-- n=1: valor simple sin prefijos -->
+                                <span th:if="${lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1}"
+                                      th:text="${lote.aguaUtilizada != null} ? ${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</span>
+                                <!-- n≥2: Total + desglose por sesión -->
+                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}"
+                                      class="text-muted small me-1">Total:</span>
+                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}"
+                                      th:text="${lote.totalAguaElaboraciones.signum() > 0} ? ${lote.totalAguaElaboraciones.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</span>
+                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.aguaUtilizada != null}"
+                                      class="d-block small text-muted mt-0">
+                                    <span class="me-1">S1:</span><span th:text="${lote.aguaUtilizada.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                </span>
                                 <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.aguaSegundaElaboracion != null}"
                                       class="d-block small text-muted mt-0">
                                     <span class="me-1">S2:</span><span th:text="${lote.aguaSegundaElaboracion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
@@ -255,6 +278,10 @@
                                 <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 3 and lote.aguaTerceraElaboracion != null}"
                                       class="d-block small text-muted mt-0">
                                     <span class="me-1">S3:</span><span th:text="${lote.aguaTerceraElaboracion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                </span>
+                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 4 and lote.aguaCuartaElaboracion != null}"
+                                      class="d-block small text-muted mt-0">
+                                    <span class="me-1">S4:</span><span th:text="${lote.aguaCuartaElaboracion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
                                 </span>
                             </div>
                         </div>
@@ -281,19 +308,23 @@
                                       class="d-block small text-muted mt-0">
                                     <span class="me-1">S3:</span><span th:text="${lote.volumenFinalTerceraElaboracion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
                                 </span>
+                                <span th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 4 and lote.volumenFinalCuartaElaboracion != null}"
+                                      class="d-block small text-muted mt-0">
+                                    <span class="me-1">S4:</span><span th:text="${lote.volumenFinalCuartaElaboracion.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                </span>
                             </div>
                         </div>
                         <div class="col-6" th:if="${lote.densidadInicial != null}">
                             <div class="densidad-box">
                                 <div class="densidad-tag">
                                     OG
-                                    <span th:if="${lote.ogBrix != null}"
+                                    <span th:if="${lote.ogBrix != null and (lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1)}"
                                           class="badge bg-info text-dark ms-1" style="font-size:0.55rem;vertical-align:middle;">Refractómetro</span>
                                 </div>
                                 <div class="densidad-valor" th:text="${lote.densidadInicial}">—</div>
                                 <div class="detail-label">
                                     <span th:text="#{traz.det.label.og}">Densidad Inicial</span>
-                                    <span th:if="${lote.ogBrix != null}"
+                                    <span th:if="${lote.ogBrix != null and (lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1)}"
                                           th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
                                           class="text-info"></span>
                                 </div>
@@ -301,9 +332,18 @@
                         </div>
                         <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}">
                             <div class="densidad-box">
-                                <div class="densidad-tag">OG S1</div>
+                                <div class="densidad-tag">
+                                    OG S1
+                                    <span th:if="${lote.ogBrix != null}"
+                                          class="badge bg-info text-dark ms-1" style="font-size:0.55rem;vertical-align:middle;">Refractómetro</span>
+                                </div>
                                 <div class="densidad-valor" th:text="${lote.ogPrimeraElaboracion != null} ? ${lote.ogPrimeraElaboracion} : '—'">—</div>
-                                <div class="detail-label" th:text="#{traz.det.label.elaboracion1.og}">OG Sesión 1 (pre-mezcla)</div>
+                                <div class="detail-label">
+                                    <span th:text="#{traz.det.label.elaboracion1.og}">OG Sesión 1 (pre-mezcla)</span>
+                                    <span th:if="${lote.ogBrix != null}"
+                                          th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
+                                          class="text-info"></span>
+                                </div>
                             </div>
                         </div>
                         <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2}">
@@ -326,6 +366,18 @@
                                     <span th:text="#{traz.det.label.elaboracion3.og}">OG Sesión 3 (pre-mezcla)</span>
                                     <span th:if="${lote.ogBrixTerceraElaboracion != null}"
                                           th:text="'· ' + ${lote.ogBrixTerceraElaboracion.stripTrailingZeros().toPlainString()} + ' °Brix'"
+                                          class="text-info"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 4}">
+                            <div class="densidad-box">
+                                <div class="densidad-tag">OG S4</div>
+                                <div class="densidad-valor" th:text="${lote.ogCuartaElaboracion != null} ? ${lote.ogCuartaElaboracion} : '—'">—</div>
+                                <div class="detail-label">
+                                    <span th:text="#{traz.det.label.elaboracion4.og}">OG Sesión 4 (pre-mezcla)</span>
+                                    <span th:if="${lote.ogBrixCuartaElaboracion != null}"
+                                          th:text="'· ' + ${lote.ogBrixCuartaElaboracion.stripTrailingZeros().toPlainString()} + ' °Brix'"
                                           class="text-info"></span>
                                 </div>
                             </div>

@@ -163,10 +163,11 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
     - **Carga para editar** (entity→DTO): `LoteMapper.toLoteFormDto()` (MapStruct, auto-generado). Campos simples se mapean por nombre automáticamente. Requiere recompilar cuando se agregan campos.
     - **Guardado** (DTO→entity): `TrazabilidadService.mapearDto()` — mapeo MANUAL con `lote.setXxx(dto.getXxx())`. MapStruct NO se usa aquí. Al agregar campos nuevos, SIEMPRE añadir los setters en `mapearDto()` dentro del bloque `if (numCoc >= N)` / `else` correspondiente; de lo contrario los valores se pierden silenciosamente.
 
-45. **Multi-cocción — arquitectura**: `LoteCerveza` soporta 1, 2 o 3 cocciones controladas por `numeroCocciones` (Integer). Campos por sesión (todos nullable, activados según n):
-    - Sesión 1: `ogPrimeraCoccion` (Integer SG), `volumenFinalPrimeraCoccion` (BigDecimal L)
-    - Sesión 2: `fechaSegundaCoccion`, `aguaSegundaCoccion`, `ogSegundaCoccion` (SG) / `ogBrixSegundaCoccion` (BigDecimal Brix), `volumenFinalSegundaCoccion`
-    - Sesión 3: ídem con `Tercera`. En formulario: `#segunda-coccion-section` / `#tercera-coccion-section` (ocultos por `applyCocciones()`). OG combinado = media ponderada por volumen en SG. `sincronizarVolumenFinalTotal()` en `trazabilidad-ingredientes.js` auto-suma los volúmenes de sesión en `litrosFinales`. `densidadInicial` siempre visible; readonly en Brix (calculado desde °Brix via `calcularSgDesdeBrix()`). `densidadFinalFecha` es campo común fuera de los bloques `#modo-sg` / `#modo-brix`.
+45. **Multi-elaboración — arquitectura**: `LoteCerveza` soporta 1, 2, 3 o 4 elaboraciones controladas por `numeroElaboraciones` (Integer, default 1). Campos por sesión (todos nullable, activados según n):
+    - Sesión 1: `ogPrimeraElaboracion` (Integer SG), `ogBrix` (BigDecimal Brix de S1), `volumenFinalPrimeraElaboracion`, `horaInicioPrimeraElaboracion`, `horaFinPrimeraElaboracion`
+    - Sesión 2: `fechaSegundaElaboracion`, `aguaSegundaElaboracion`, `ogSegundaElaboracion` (SG) / `ogBrixSegundaElaboracion` (Brix), `volumenFinalSegundaElaboracion`, `horaInicioSegundaElaboracion`, `horaFinSegundaElaboracion`, `receta2` (FK)
+    - Sesión 3: ídem con `Tercera` + `receta3` (FK)
+    - Sesión 4: ídem con `Cuarta` + `receta4` (FK). En formulario: secciones `#segunda-elaboracion-section` / `#tercera-elaboracion-section` / `#cuarta-elaboracion-section` (ocultos por `applyElaboraciones()`). OG combinado = media ponderada por volumen en SG (`calcularOgCombinado()` → escribe en `densidadInicial` automáticamente). `sincronizarVolumenFinalTotal()` auto-suma volúmenes S1–S4 en `litrosFinales`. `densidadInicial` siempre visible; readonly en modo Brix. `densidadFinalFecha` campo común. **`getTotalAguaElaboraciones()`** — computed method en `LoteCerveza` que suma `aguaUtilizada + aguaSegunda + aguaTercera + aguaCuarta` (usado en detalle.html para mostrar Agua Total). **Display OG en detalle.html**: box "OG" (principal, combinado) muestra badge "Refractómetro" y °Brix SOLO en modo sesión única (n==1); en multi-sesión el OG es el combinado y no se le asocia el Brix de S1. Box "OG S1" muestra badge Refractómetro + °Brix desde `ogBrix`. Boxes S2/S3/S4 leen sus propios campos `ogBrixX`. **Fermentador en Panel 0**: el `<select equipoFermentadorId>` vive en el Panel 0 (Datos Generales); Panel 2 (Fermentación) solo muestra un display readonly + link "Asignar en Datos Generales" (`goTab(0)`). La validación en `trazabilidad-costos.js` redirige a `goTab(0)` si falta fermentador.
 
 46. **Formulario — mover nodos DOM entre secciones**: cuando un campo debe aparecer en distinto lugar según estado del formulario (sin duplicar `name`), capturar `parentNode` y `nextSibling` antes del primer `applyCocciones()` y usar `anchor.after(col)` / `origParent.insertBefore(col, origNextSib)` para moverlo físicamente. Patrón implementado en Agua Utilizada (`#agua-general-col`) que se mueve a Primera Sesión de Cocción cuando n≥2.
 
@@ -427,7 +428,8 @@ Herramienta de importación masiva vía XLSX para onboarding de tenants. Accesib
 
 ### Arquitectura
 - **`MigracionController`** — 3 endpoints: `GET /{subdomain}` (página), `GET /{subdomain}/plantilla/{modulo}` (descarga XLSX), `POST /{subdomain}/importar/{modulo}` (importación). Inyecta `MessageSource`; recibe `Locale locale` en `detalle()` e `importar()` para flash messages i18n. Pasa 3 stats al modelo: `totalImportaciones`, `importacionesExitosas`, `importacionesParciales` (calculados con `stream().filter()`).
-- **`MigracionService`** — 11 métodos `importar*()`. Usa `JdbcTemplate` (SQL nativo) y Apache POI para leer XLSX. Devuelve `Resultado(procesadas, exitosas, errores, mensajes, estado)` donde `estado` es `"EXITOSO"` / `"PARCIAL"` / `"ERROR"`. Guarda `MigracionLog` por cada importación.
+- **`MigracionService`** — 11 métodos `importar*()`. Usa `JdbcTemplate` (SQL nativo) y Apache POI para leer XLSX. Devuelve `Resultado(procesadas, exitosas, errores, mensajes, estado)` donde `estado` es `"EXITOSO"` / `"PARCIAL"` / `"ERROR"`. Guarda `MigracionLog` por cada importación. Helpers privados: `hora(row, col)` → `LocalTime` desde HH:mm; `resolverRecetaOpcional(nombre, recetaIds, tenantId)` → `Long` id buscando primero en mapa luego en BD.
+- **Multi-elaboración en `importarProduccion`** — hoja Lotes acepta 71 columnas (0-70). Cols 42-70 opcionales: `[42]numero_elaboraciones` (default 1), `[43]og_s1`, `[44]vol_final_s1`, `[45]hora_inicio_s1`, `[46]hora_fin_s1`; S2: `[47]fecha_s2` … `[54]nombre_receta_s2`; S3: `[55-62]`; S4: `[63-70]`. Los campos `receta2_id/receta3_id/receta4_id` se resuelven por nombre. Horas en formato HH:mm.
 - **`MigracionTemplateService`** — 11 métodos `plantilla*()` que generan XLSX con estilos, dropdowns de validación, filas de ejemplo y hoja de instrucciones.
 - **`MigracionLog`** — entidad (`migracion_log`) con: `tenantId`, `modulo`, `archivo`, `procesadas`, `exitosas`, `conErrores`, `estado`, `detalles` (TEXT), `usuario`, `fecha` (`@PrePersist`).
 - **`MigracionLogRepository`** — `findByTenantIdOrderByFechaDesc(String tenantId)` y `countByTenantId(String tenantId)`.
@@ -438,7 +440,7 @@ Herramienta de importación masiva vía XLSX para onboarding de tenants. Accesib
 | `almacen` | `admin.mig.mod.almacen` | 1 |
 | `equipos` | `admin.mig.mod.equipos` | 1 |
 | `comercial` | `admin.mig.mod.comercial` | 3 (Proveedores→Facturas→Factura_Items) |
-| `produccion` | `admin.mig.mod.produccion` | 6 (Recetas→Ingredientes→Escalones→Adiciones→Lotes→Lote_Ingredientes) |
+| `produccion` | `admin.mig.mod.produccion` | 6 (Recetas→Ingredientes→Escalones→Adiciones→Lotes→Lote_Ingredientes). Hoja Lotes: cols 0-41 base + cols 42-70 multi-elaboración (ver abajo) |
 | `clientes` | `admin.mig.mod.clientes` | 1 |
 | `ventas` | `admin.mig.mod.ventas` | 2 (Ventas→Venta_Items, misma referencia_venta) |
 | `barriles` | `admin.mig.mod.barriles` | 1 |

@@ -122,7 +122,11 @@ public class MigracionTemplateService {
                 {"carb_tecnica", "PIEDRA | PRESION_FIJA  (solo si carb_metodo = FORZADA)"},
                 {"carb_validacion", "ADECUADA | RETENCION_CORRECTA | SOBRECARBONATADA | BAJA_CARBONATACION"},
                 {"og_brix / fg_brix", "Lectura en °Brix (decimal, ej: 14.5). Terrill calcula densidad corregida automáticamente"},
-                {"fermentador_nombre", "Nombre exacto del equipo fermentador registrado en el sistema (tolerante si no existe)"}
+                {"fermentador_nombre", "Nombre exacto del equipo fermentador registrado en el sistema (tolerante si no existe)"},
+                {"numero_elaboraciones", "1 = sesión única (default) | 2/3/4 = doble/triple/cuádruple cocción. Activa columnas sN"},
+                {"og_sN / vol_final_sN", "OG pre-mezcla (formato XXXX) y volumen en L de cada sesión. Solo para numero_elaboraciones ≥ 2"},
+                {"hora_inicio_sN / hora_fin_sN", "Hora de inicio/fin de cada sesión en formato HH:mm (ej: 08:00). Opcional"},
+                {"nombre_receta_sN", "Receta alternativa para sesión 2/3/4. Vacío = misma receta de S1"}
             });
         hojaRecetas(wb, es);
         hojaRecetaIngredientes(wb, es);
@@ -489,7 +493,37 @@ public class MigracionTemplateService {
             {"carb_fecha_inicial",   "opt"},
             {"carb_fecha_final_ideal","opt"},
             {"carb_temperatura",     "opt"},
-            {"carb_fecha_final",     "opt"}
+            {"carb_fecha_final",     "opt"},
+            // Multi-sesión (cols 42-70)
+            {"numero_elaboraciones", "opt"},
+            {"og_s1",                "opt"},
+            {"vol_final_s1",         "opt"},
+            {"hora_inicio_s1",       "opt"},
+            {"hora_fin_s1",          "opt"},
+            {"fecha_s2",             "opt"},
+            {"agua_s2",              "opt"},
+            {"og_s2",                "opt"},
+            {"og_brix_s2",           "opt"},
+            {"vol_final_s2",         "opt"},
+            {"hora_inicio_s2",       "opt"},
+            {"hora_fin_s2",          "opt"},
+            {"nombre_receta_s2",     "opt"},
+            {"fecha_s3",             "opt"},
+            {"agua_s3",              "opt"},
+            {"og_s3",                "opt"},
+            {"og_brix_s3",           "opt"},
+            {"vol_final_s3",         "opt"},
+            {"hora_inicio_s3",       "opt"},
+            {"hora_fin_s3",          "opt"},
+            {"nombre_receta_s3",     "opt"},
+            {"fecha_s4",             "opt"},
+            {"agua_s4",              "opt"},
+            {"og_s4",                "opt"},
+            {"og_brix_s4",           "opt"},
+            {"vol_final_s4",         "opt"},
+            {"hora_inicio_s4",       "opt"},
+            {"hora_fin_s4",          "opt"},
+            {"nombre_receta_s4",     "opt"}
         };
         cabecera(sh, es, cols);
         ejemplo(sh, es, new Object[]{
@@ -499,7 +533,12 @@ public class MigracionTemplateService {
             "2024-01-21","2024-02-04",18.0,"2024-02-03",
             "2024-02-04","2024-02-11",12.0,"2024-02-11",
             "2024-02-12","2024-03-12",5.0,"2024-03-10",
-            "2024-03-11","2024-03-18",4.0,"2024-03-17"});
+            "2024-03-11","2024-03-18",4.0,"2024-03-17",
+            // Multi-sesión ejemplo (2 cocciones)
+            2, 1060, 10.0, "08:00", "12:00",
+            "2024-01-21", 12, 1056, "", 9.5, "13:00", "17:00", "",
+            "","","","","","","","",
+            "","","","","","","",""});
         dropdown(sh, 1, 9999, 12, "NATURAL", "FORZADA");
         dropdown(sh, 1, 9999, 15, "dextrosa", "sacarosa", "extracto", "miel");
         dropdown(sh, 1, 9999, 19, "PIEDRA", "PRESION_FIJA");
@@ -510,7 +549,12 @@ public class MigracionTemplateService {
                160, 180, 150, 150,
                160, 180, 150, 150,
                160, 180, 150, 150,
-               160, 180, 150, 150);
+               160, 180, 150, 150,
+               // Multi-sesión
+               120, 120, 120, 110, 110,
+               150, 110, 120, 110, 120, 110, 110, 200,
+               150, 110, 120, 110, 120, 110, 110, 200,
+               150, 110, 120, 110, 120, 110, 110, 200);
     }
 
     private void hojaLoteIngredientes(XSSFWorkbook wb, Estilos es) {

@@ -4,6 +4,7 @@ let currentTab = 0;
 var _recetaPendiente = null; // receta cargada pero aún no aplicada a panel-1
 var _recetaData2 = null;    // datos de receta sesión 2 (para re-append tras poblarDesdeReceta)
 var _recetaData3 = null;    // datos de receta sesión 3
+var _recetaData4 = null;    // datos de receta sesión 4
 
 function goTab(idx) {
     document.getElementById('panel-' + currentTab).classList.add('d-none');
@@ -61,7 +62,7 @@ function volUpdate(field) {
     const liters = displayVal * TO_LITERS[unit];
     document.getElementById(field + '-value').value = parseFloat(liters.toFixed(6));
     showEquiv(field, liters);
-    if (field === 'litros1' || field === 'litros2' || field === 'litros3') {
+    if (field === 'litros1' || field === 'litros2' || field === 'litros3' || field === 'litros4') {
         sincronizarVolumenFinalTotal();
     }
 }
@@ -80,7 +81,8 @@ function sincronizarVolumenFinalTotal() {
     var v1 = parseFloat(document.getElementById('litros1-value').value) || 0;
     var v2 = parseFloat(document.getElementById('litros2-value').value) || 0;
     var v3 = n >= 3 ? (parseFloat(document.getElementById('litros3-value').value) || 0) : 0;
-    var totalLiters = v1 + v2 + v3;
+    var v4 = n >= 4 ? (parseFloat(document.getElementById('litros4-value').value) || 0) : 0;
+    var totalLiters = v1 + v2 + v3 + v4;
     hiddenEl.value = parseFloat(totalLiters.toFixed(6));
     var unitEl = document.getElementById('litros-unit');
     var unit = unitEl ? unitEl.value : 'L';
@@ -110,7 +112,7 @@ function showEquiv(field, liters) {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    ['agua', 'litros', 'agua2', 'agua3', 'litros1', 'litros2', 'litros3'].forEach(field => {
+    ['agua', 'litros', 'agua2', 'agua3', 'agua4', 'litros1', 'litros2', 'litros3', 'litros4'].forEach(field => {
         const el = document.getElementById(field + '-value');
         if (!el) return;
         const val = parseFloat(el.value);
@@ -194,7 +196,7 @@ function cargarRecetaAdicional(selId, hiddenId, btn) {
     if (!id) { alert('Seleccioná una receta primero'); return; }
     document.getElementById(hiddenId).value = id;
 
-    var sesion = selId.indexOf('3') !== -1 ? 3 : 2;
+    var sesion = selId.indexOf('4') !== -1 ? 4 : selId.indexOf('3') !== -1 ? 3 : 2;
     var originalHtml = btn ? btn.innerHTML : '';
     if (btn) { btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Cargando...'; btn.disabled = true; }
 
@@ -235,9 +237,10 @@ function procesarRecetaAdicional(data, btn, originalHtml, sesion) {
     // Guardar datos para re-append si poblarDesdeReceta borra las filas
     if (sesion === 2) _recetaData2 = data;
     if (sesion === 3) _recetaData3 = data;
+    if (sesion === 4) _recetaData4 = data;
 
     // Poblar agua y volumen final para la sesión adicional
-    if (sesion === 2 || sesion === 3) {
+    if (sesion === 2 || sesion === 3 || sesion === 4) {
         var _mL = 0, _sL = 0;
         if (data.aguaMacerado != null) {
             var _ru = (data.unidadAguaMacerado || 'L');
@@ -773,6 +776,8 @@ document.addEventListener('change', function(e) {
         if (_cargar2) _cargar2.addEventListener('click', function() { cargarRecetaAdicional('recetaSelect2', 'receta2IdHidden', this); });
         var _cargar3 = document.getElementById('btnCargarReceta3');
         if (_cargar3) _cargar3.addEventListener('click', function() { cargarRecetaAdicional('recetaSelect3', 'receta3IdHidden', this); });
+        var _cargar4 = document.getElementById('btnCargarReceta4');
+        if (_cargar4) _cargar4.addEventListener('click', function() { cargarRecetaAdicional('recetaSelect4', 'receta4IdHidden', this); });
     }
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initIngredientesListeners);

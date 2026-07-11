@@ -18,8 +18,8 @@ public class LoteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaElaboracion;
 
-    @Min(value = 1, message = "El número de elaboraciones debe ser entre 1 y 3")
-    @Max(value = 3, message = "El número de elaboraciones debe ser entre 1 y 3")
+    @Min(value = 1, message = "El número de elaboraciones debe ser entre 1 y 4")
+    @Max(value = 4, message = "El número de elaboraciones debe ser entre 1 y 4")
     private Integer numeroElaboraciones = 1;
 
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -56,6 +56,21 @@ public class LoteFormDto {
     @DecimalMax(value = "40.0", message = "El °Brix de la tercera elaboración no puede superar 40")
     private BigDecimal ogBrixTerceraElaboracion;
 
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate fechaCuartaElaboracion;
+
+    @DecimalMin(value = "0.0", message = "El agua de la cuarta elaboración no puede ser negativa")
+    @DecimalMax(value = "99999.999", message = "El agua de la cuarta elaboración es demasiado alta")
+    private BigDecimal aguaCuartaElaboracion;
+
+    @Min(value = 1000, message = "La densidad de la cuarta elaboración mínima es 1000")
+    @Max(value = 1150, message = "La densidad de la cuarta elaboración máxima es 1150")
+    private Integer ogCuartaElaboracion;
+
+    @DecimalMin(value = "1.0", message = "El °Brix de la cuarta elaboración debe ser mayor a 1")
+    @DecimalMax(value = "40.0", message = "El °Brix de la cuarta elaboración no puede superar 40")
+    private BigDecimal ogBrixCuartaElaboracion;
+
     @DecimalMin(value = "0.0", message = "El volumen final de la primera elaboración no puede ser negativo")
     private BigDecimal volumenFinalPrimeraElaboracion;
 
@@ -65,12 +80,17 @@ public class LoteFormDto {
     @DecimalMin(value = "0.0", message = "El volumen final de la tercera elaboración no puede ser negativo")
     private BigDecimal volumenFinalTerceraElaboracion;
 
+    @DecimalMin(value = "0.0", message = "El volumen final de la cuarta elaboración no puede ser negativo")
+    private BigDecimal volumenFinalCuartaElaboracion;
+
     private java.time.LocalTime horaInicioPrimeraElaboracion;
     private java.time.LocalTime horaFinPrimeraElaboracion;
     private java.time.LocalTime horaInicioSegundaElaboracion;
     private java.time.LocalTime horaFinSegundaElaboracion;
     private java.time.LocalTime horaInicioTerceraElaboracion;
     private java.time.LocalTime horaFinTerceraElaboracion;
+    private java.time.LocalTime horaInicioCuartaElaboracion;
+    private java.time.LocalTime horaFinCuartaElaboracion;
 
     @DecimalMin(value = "0.0", message = "El agua utilizada no puede ser negativa")
     @DecimalMax(value = "99999.999", message = "El agua utilizada es demasiado alta")
@@ -173,6 +193,7 @@ public class LoteFormDto {
     private Long recetaId;
     private Long receta2Id;
     private Long receta3Id;
+    private Long receta4Id;
     private List<Long> itemsIds = new ArrayList<>();
     private List<BigDecimal> itemsCantidades = new ArrayList<>();
 
@@ -231,6 +252,20 @@ public class LoteFormDto {
     public void setHoraInicioTerceraElaboracion(java.time.LocalTime v) { this.horaInicioTerceraElaboracion = v; }
     public java.time.LocalTime getHoraFinTerceraElaboracion() { return horaFinTerceraElaboracion; }
     public void setHoraFinTerceraElaboracion(java.time.LocalTime v) { this.horaFinTerceraElaboracion = v; }
+    public LocalDate getFechaCuartaElaboracion() { return fechaCuartaElaboracion; }
+    public void setFechaCuartaElaboracion(LocalDate v) { this.fechaCuartaElaboracion = v; }
+    public BigDecimal getAguaCuartaElaboracion() { return aguaCuartaElaboracion; }
+    public void setAguaCuartaElaboracion(BigDecimal v) { this.aguaCuartaElaboracion = v; }
+    public Integer getOgCuartaElaboracion() { return ogCuartaElaboracion; }
+    public void setOgCuartaElaboracion(Integer v) { this.ogCuartaElaboracion = v; }
+    public BigDecimal getOgBrixCuartaElaboracion() { return ogBrixCuartaElaboracion; }
+    public void setOgBrixCuartaElaboracion(BigDecimal v) { this.ogBrixCuartaElaboracion = v; }
+    public BigDecimal getVolumenFinalCuartaElaboracion() { return volumenFinalCuartaElaboracion; }
+    public void setVolumenFinalCuartaElaboracion(BigDecimal v) { this.volumenFinalCuartaElaboracion = v; }
+    public java.time.LocalTime getHoraInicioCuartaElaboracion() { return horaInicioCuartaElaboracion; }
+    public void setHoraInicioCuartaElaboracion(java.time.LocalTime v) { this.horaInicioCuartaElaboracion = v; }
+    public java.time.LocalTime getHoraFinCuartaElaboracion() { return horaFinCuartaElaboracion; }
+    public void setHoraFinCuartaElaboracion(java.time.LocalTime v) { this.horaFinCuartaElaboracion = v; }
     public BigDecimal getAguaUtilizada() { return aguaUtilizada; }
     public void setAguaUtilizada(BigDecimal aguaUtilizada) { this.aguaUtilizada = aguaUtilizada; }
     public BigDecimal getPhAgua() { return phAgua; }
@@ -321,6 +356,8 @@ public class LoteFormDto {
     public void setReceta2Id(Long receta2Id) { this.receta2Id = receta2Id; }
     public Long getReceta3Id() { return receta3Id; }
     public void setReceta3Id(Long receta3Id) { this.receta3Id = receta3Id; }
+    public Long getReceta4Id() { return receta4Id; }
+    public void setReceta4Id(Long receta4Id) { this.receta4Id = receta4Id; }
     public List<Long> getItemsIds() { return itemsIds; }
     public void setItemsIds(List<Long> itemsIds) { this.itemsIds = itemsIds; }
     public List<BigDecimal> getItemsCantidades() { return itemsCantidades; }

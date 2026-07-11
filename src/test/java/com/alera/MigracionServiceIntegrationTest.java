@@ -385,8 +385,8 @@ class MigracionServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("importarProduccion — lote con codigo duplicado genera error idempotente")
-    void produccion_codigoDuplicado_errorFila() throws Exception {
+    @DisplayName("importarProduccion — re-importar lote duplicado es idempotente (sin error)")
+    void produccion_codigoDuplicado_idempotente() throws Exception {
         // Primera importación
         XSSFWorkbook wb1 = new XSSFWorkbook();
         Sheet sh1 = hoja(wb1, "Lotes");
@@ -406,7 +406,8 @@ class MigracionServiceIntegrationTest extends AbstractIntegrationTest {
 
         MigracionService.Resultado res2 = migracionService.importarProduccion(toFile(wb2, "prod2"), TENANT, USUARIO);
 
-        assertThat(res2.errores()).isGreaterThan(0);
+        assertThat(res2.errores()).isEqualTo(0);
+        assertThat(res2.estado()).isEqualTo("EXITOSO");
         assertThat(count("lotes_cerveza")).isEqualTo(1); // no se duplicó
     }
 

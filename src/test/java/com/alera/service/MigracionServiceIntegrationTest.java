@@ -216,8 +216,8 @@ class MigracionServiceIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("importarProduccion reporta error para código de lote duplicado")
-    void importarProduccion_codigoDuplicado_reportaError() throws Exception {
+    @DisplayName("importarProduccion — re-importar lote duplicado es idempotente (sin error)")
+    void importarProduccion_codigoDuplicado_idempotente() throws Exception {
         MockMultipartFile file1 = excelConHojasProduccion(
                 new String[0][],
                 new String[0][],
@@ -239,8 +239,10 @@ class MigracionServiceIntegrationTest extends AbstractIntegrationTest {
 
         MigracionService.Resultado r = service.importarProduccion(file2, TENANT, USUARIO);
 
-        assertThat(r.errores()).isEqualTo(1);
-        assertThat(r.mensajes()).anyMatch(m -> m.contains("IPA-DUP"));
+        assertThat(r.errores()).isEqualTo(0);
+        assertThat(r.estado()).isEqualTo("EXITOSO");
+        Long count = jdbc.queryForObject("SELECT COUNT(*) FROM lotes_cerveza WHERE tenant_id=?", Long.class, TENANT);
+        assertThat(count).isEqualTo(1); // no se duplicó
     }
 
     @Test

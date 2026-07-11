@@ -329,6 +329,7 @@ public class MigracionService {
 
             // 1) Recetas
             Map<String, Long> recetaIds = new HashMap<>();
+            Set<String> recetasExistentes = new HashSet<>();
             Sheet shRec = wb.getSheet("Recetas");
             if (shRec != null) {
                 for (Row row : shRec) {
@@ -340,10 +341,15 @@ public class MigracionService {
                         if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                         if (estilo.isBlank()) throw new IllegalArgumentException("estilo es obligatorio");
 
-                        long existe = jdbc.queryForObject(
-                                "SELECT COUNT(*) FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? AND deleted_at IS NULL",
+                        List<Long> existentes = jdbc.queryForList(
+                                "SELECT id FROM recetas WHERE nombre=? AND tenant_id=? LIMIT 1",
                                 Long.class, nombre, tenantId);
-                        if (existe > 0) throw new IllegalArgumentException("Ya existe una receta con nombre '" + nombre + "'");
+                        if (!existentes.isEmpty()) {
+                            recetaIds.put(nombre, existentes.get(0));
+                            recetasExistentes.add(nombre);
+                            ok++;
+                            continue;
+                        }
 
                         String desc     = texto(row, 2);
                         boolean activa  = textoODefault(row, 3, "TRUE").equalsIgnoreCase("TRUE") || textoODefault(row, 3,"TRUE").equalsIgnoreCase("SI");
@@ -391,6 +397,7 @@ public class MigracionService {
                         String nombre   = texto(row, 2);
                         String cantUni  = texto(row, 3);
 
+                        if (recetasExistentes.contains(recNom)) { ok++; continue; }
                         Long recId = resolverRecetaId(recetaIds, recNom, tenantId);
                         validarEnum(tipo,"tipo","MALTA","LUPULO","LEVADURA","CLARIFICANTE");
                         if (nombre.isBlank()) throw new IllegalArgumentException("nombre_ingrediente es obligatorio");
@@ -418,6 +425,7 @@ public class MigracionService {
                         Integer durMin  = entero(row, 3);
                         Integer orden   = enteroODefault(row, 4, 0);
 
+                        if (recetasExistentes.contains(recNom)) { ok++; continue; }
                         Long recId = resolverRecetaId(recetaIds, recNom, tenantId);
                         if (escNom.isBlank()) throw new IllegalArgumentException("nombre_escalon es obligatorio");
                         if (temp == null)     throw new IllegalArgumentException("temperatura_c es obligatoria");
@@ -446,6 +454,7 @@ public class MigracionService {
                         String unidad  = texto(row, 4);
                         Integer orden  = enteroODefault(row, 5, 0);
 
+                        if (recetasExistentes.contains(recNom)) { ok++; continue; }
                         Long recId = resolverRecetaId(recetaIds, recNom, tenantId);
                         if (nombre.isBlank())  throw new IllegalArgumentException("nombre es obligatorio");
                         if (minRest == null)   throw new IllegalArgumentException("minutos_restantes es obligatorio");
@@ -462,6 +471,7 @@ public class MigracionService {
 
             // 5) Lotes
             Map<String, Long> loteIds = new HashMap<>();
+            Set<String> lotesExistentes = new HashSet<>();
             Sheet shLotes = wb.getSheet("Lotes");
             if (shLotes != null) {
                 for (Row row : shLotes) {
@@ -476,10 +486,15 @@ public class MigracionService {
                         if (estilo.isBlank())  throw new IllegalArgumentException("estilo es obligatorio");
                         if (fecEl == null)     throw new IllegalArgumentException("fecha_elaboracion es obligatoria");
 
-                        long existe = jdbc.queryForObject(
-                                "SELECT COUNT(*) FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL",
+                        List<Long> lotesExist = jdbc.queryForList(
+                                "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? LIMIT 1",
                                 Long.class, codigo, tenantId);
-                        if (existe > 0) throw new IllegalArgumentException("Ya existe un lote con código '" + codigo + "'");
+                        if (!lotesExist.isEmpty()) {
+                            loteIds.put(codigo, lotesExist.get(0));
+                            lotesExistentes.add(codigo);
+                            ok++;
+                            continue;
+                        }
 
                         BigDecimal litros  = decimal(row, 3);
                         Integer ogObj      = entero(row, 4);
@@ -525,13 +540,43 @@ public class MigracionService {
                         LocalDate carbFecIdeal = fecha(row, 39);
                         BigDecimal carbTemp    = decimal(row, 40);
                         LocalDate carbFecFin   = fecha(row, 41);
+                        // Multi-sesión (cols 42-70)
+                        Integer numElab = enteroODefault(row, 42, 1);
+                        Integer ogS1              = entero(row, 43);
+                        BigDecimal volFinalS1     = decimal(row, 44);
+                        java.time.LocalTime horaIniS1 = hora(row, 45);
+                        java.time.LocalTime horaFinS1 = hora(row, 46);
+                        LocalDate fechaS2         = fecha(row, 47);
+                        BigDecimal aguaS2         = decimal(row, 48);
+                        Integer ogS2              = entero(row, 49);
+                        BigDecimal ogBrixS2       = decimal(row, 50);
+                        BigDecimal volFinalS2     = decimal(row, 51);
+                        java.time.LocalTime horaIniS2 = hora(row, 52);
+                        java.time.LocalTime horaFinS2 = hora(row, 53);
+                        String recNomS2           = texto(row, 54);
+                        LocalDate fechaS3         = fecha(row, 55);
+                        BigDecimal aguaS3         = decimal(row, 56);
+                        Integer ogS3              = entero(row, 57);
+                        BigDecimal ogBrixS3       = decimal(row, 58);
+                        BigDecimal volFinalS3     = decimal(row, 59);
+                        java.time.LocalTime horaIniS3 = hora(row, 60);
+                        java.time.LocalTime horaFinS3 = hora(row, 61);
+                        String recNomS3           = texto(row, 62);
+                        LocalDate fechaS4         = fecha(row, 63);
+                        BigDecimal aguaS4         = decimal(row, 64);
+                        Integer ogS4              = entero(row, 65);
+                        BigDecimal ogBrixS4       = decimal(row, 66);
+                        BigDecimal volFinalS4     = decimal(row, 67);
+                        java.time.LocalTime horaIniS4 = hora(row, 68);
+                        java.time.LocalTime horaFinS4 = hora(row, 69);
+                        String recNomS4           = texto(row, 70);
 
                         Long recId = null;
                         if (!recNom.isBlank()) {
                             recId = recetaIds.get(recNom);
                             if (recId == null) {
                                 List<Long> ids = jdbc.queryForList(
-                                        "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                        "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
                                         Long.class, recNom, tenantId);
                                 if (!ids.isEmpty()) recId = ids.get(0);
                             }
@@ -545,6 +590,10 @@ public class MigracionService {
                             if (!ids.isEmpty()) fermId = ids.get(0);
                         }
 
+                        Long recId2 = resolverRecetaOpcional(recNomS2, recetaIds, tenantId);
+                        Long recId3 = resolverRecetaOpcional(recNomS3, recetaIds, tenantId);
+                        Long recId4 = resolverRecetaOpcional(recNomS4, recetaIds, tenantId);
+
                         long loteId = insertarYRetornarId(
                                 "INSERT INTO lotes_cerveza " +
                                 "(codigo_lote,estilo,fecha_elaboracion,litros_finales,densidad_inicial,densidad_final," +
@@ -556,8 +605,21 @@ public class MigracionService {
                                 "acond_fecha_inicial,acond_fecha_final_ideal,acond_temperatura,acond_fecha_final," +
                                 "madur_fecha_inicial,madur_fecha_final_ideal,madur_temperatura,madur_fecha_final," +
                                 "carb_fecha_inicial,carb_fecha_final_ideal,carb_temperatura,carb_fecha_final," +
+                                "numero_elaboraciones," +
+                                "og_primera_elaboracion,volumen_final_primera_elaboracion," +
+                                "hora_inicio_primera_elaboracion,hora_fin_primera_elaboracion," +
+                                "fecha_segunda_elaboracion,agua_segunda_elaboracion," +
+                                "og_segunda_elaboracion,og_brix_segunda_elaboracion,volumen_final_segunda_elaboracion," +
+                                "hora_inicio_segunda_elaboracion,hora_fin_segunda_elaboracion,receta2_id," +
+                                "fecha_tercera_elaboracion,agua_tercera_elaboracion," +
+                                "og_tercera_elaboracion,og_brix_tercera_elaboracion,volumen_final_tercera_elaboracion," +
+                                "hora_inicio_tercera_elaboracion,hora_fin_tercera_elaboracion,receta3_id," +
+                                "fecha_cuarta_elaboracion,agua_cuarta_elaboracion," +
+                                "og_cuarta_elaboracion,og_brix_cuarta_elaboracion,volumen_final_cuarta_elaboracion," +
+                                "hora_inicio_cuarta_elaboracion,hora_fin_cuarta_elaboracion,receta4_id," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
+                                "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 codigo, estilo, fecEl, litros, ogObj, fgObj,
                                 agua, phAgua, nulaSiBlank(clar), obsNula(obs), obsNula(notasCata),
                                 recId,
@@ -568,6 +630,11 @@ public class MigracionService {
                                 acondFecIni, acondFecIdeal, acondTemp, acondFecFin,
                                 madurFecIni, madurFecIdeal, madurTemp, madurFecFin,
                                 carbFecIni, carbFecIdeal, carbTemp, carbFecFin,
+                                numElab,
+                                ogS1, volFinalS1, horaIniS1, horaFinS1,
+                                fechaS2, aguaS2, ogS2, ogBrixS2, volFinalS2, horaIniS2, horaFinS2, recId2,
+                                fechaS3, aguaS3, ogS3, ogBrixS3, volFinalS3, horaIniS3, horaFinS3, recId3,
+                                fechaS4, aguaS4, ogS4, ogBrixS4, volFinalS4, horaIniS4, horaFinS4, recId4,
                                 tenantId, usuario, usuario);
 
                         loteIds.put(codigo, loteId);
@@ -590,10 +657,11 @@ public class MigracionService {
                         String nombre  = texto(row, 2);
                         String cantUni = texto(row, 3);
 
+                        if (lotesExistentes.contains(codigo)) { ok++; continue; }
                         Long loteId = loteIds.get(codigo);
                         if (loteId == null) {
                             List<Long> ids = jdbc.queryForList(
-                                    "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                                    "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? LIMIT 1",
                                     Long.class, codigo, tenantId);
                             if (ids.isEmpty()) throw new IllegalArgumentException("codigo_lote '" + codigo + "' no encontrado");
                             loteId = ids.get(0);
@@ -1265,7 +1333,7 @@ public class MigracionService {
         Long id = cache.get(nombreReceta);
         if (id != null) return id;
         List<Long> ids = jdbc.queryForList(
-                "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? AND deleted_at IS NULL LIMIT 1",
+                "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
                 Long.class, nombreReceta, tenantId);
         if (ids.isEmpty()) throw new IllegalArgumentException("Receta '" + nombreReceta + "' no existe en el sistema para este tenant");
         id = ids.get(0);
@@ -1338,6 +1406,23 @@ public class MigracionService {
         if (s.isBlank()) return null;
         try { return LocalDate.parse(s); }
         catch (DateTimeParseException e) { return null; }
+    }
+
+    private java.time.LocalTime hora(Row row, int col) {
+        String s = texto(row, col);
+        if (s.isBlank()) return null;
+        try { return java.time.LocalTime.parse(s); }
+        catch (DateTimeParseException e) { return null; }
+    }
+
+    private Long resolverRecetaOpcional(String nombre, Map<String, Long> recetaIds, String tenantId) {
+        if (nombre == null || nombre.isBlank()) return null;
+        Long id = recetaIds.get(nombre);
+        if (id != null) return id;
+        List<Long> ids = jdbc.queryForList(
+                "SELECT id FROM recetas WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
+                Long.class, nombre, tenantId);
+        return ids.isEmpty() ? null : ids.get(0);
     }
 
     private String nulaSiBlank(String s) { return (s == null || s.isBlank()) ? null : s; }

@@ -144,14 +144,14 @@ function sincronizarIngredientesDesdeItems() {
         poblarDesdeReceta('levaduras-container',     'levaduras',     'lista-levaduras',     'Levadura',     _recetaPendiente.levaduras     || []);
         poblarDesdeReceta('clarificantes-container', 'clarificantes', 'lista-clarificantes', 'Clarificante', _recetaPendiente.clarificantes || []);
         _recetaPendiente = null;
-        // Re-agregar ingredientes de sesiones 2 y 3 que poblarDesdeReceta acaba de borrar
+        // Re-agregar ingredientes de sesiones 2, 3 y 4 que poblarDesdeReceta acaba de borrar
         var _gruposAd = [
             { key: 'maltas',        containerId: 'maltas-container',        tipo: 'maltas',        listId: 'lista-maltas',        ph: 'Malta' },
             { key: 'lupulos',       containerId: 'lupulos-container',       tipo: 'lupulos',       listId: 'lista-lupulos',       ph: 'Lúpulo' },
             { key: 'levaduras',     containerId: 'levaduras-container',     tipo: 'levaduras',     listId: 'lista-levaduras',     ph: 'Levadura' },
             { key: 'clarificantes', containerId: 'clarificantes-container', tipo: 'clarificantes', listId: 'lista-clarificantes', ph: 'Clarificante' }
         ];
-        [_recetaData2, _recetaData3].forEach(function(rdata) {
+        [_recetaData2, _recetaData3, _recetaData4].forEach(function(rdata) {
             if (!rdata) return;
             _gruposAd.forEach(function(cfg) {
                 (rdata[cfg.key] || []).forEach(function(item) {
@@ -161,6 +161,7 @@ function sincronizarIngredientesDesdeItems() {
         });
         _recetaData2 = null;
         _recetaData3 = null;
+        _recetaData4 = null;
         goTab(1);
         return;
     }
@@ -271,7 +272,7 @@ document.getElementById('loteForm').addEventListener('submit', function(e) {
     var fermentador = document.getElementById('equipoFermentadorId');
     if (fermFecha && fermFecha.value && fermentador && !fermentador.value) {
         e.preventDefault();
-        goTab(2);
+        goTab(0);
         fermentador.classList.add('is-invalid');
         var fb = document.getElementById('fermentador-feedback');
         if (!fb) {
@@ -339,8 +340,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (btnAplicar) {
-        // Restaurar estado al cargar (edición de lote ya procesado)
-        if (_costoLsKey && localStorage.getItem(_costoLsKey)) {
+        // Ocultar botón si ya hay ítems asignados guardados en servidor (INIT_IDS)
+        // o si localStorage indica que fue aplicado en esta sesión
+        var _yaAplicado = (typeof INIT_IDS !== 'undefined' && INIT_IDS && INIT_IDS.length > 0)
+                       || (_costoLsKey && localStorage.getItem(_costoLsKey));
+        if (_yaAplicado) {
             _marcarCostosAplicados();
         }
 

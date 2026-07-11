@@ -302,7 +302,7 @@ class MigracionTestDataGenerator {
             data(shAD, r++, "Stout Imperial 2024","Whirlfloc",  "10", "1",  "tab","2");
             data(shAD, r++, "Hefeweizen Dorada",  "Hallertau",  "60", "15", "gr", "1");
 
-            // Lotes — cols 0-41 (ver MigracionService.importarProduccion)
+            // Lotes — cols 0-70 (ver MigracionService.importarProduccion)
             // [0]codigo [1]estilo [2]fec_elab [3]litros [4]og [5]fg [6]agua [7]ph
             // [8]clar [9]obs [10]notas_cata [11]receta [12]carb_metodo [13]co2_obj [14]co2_real
             // [15]azucar_tipo [16]azucar_gr [17]presion_psi [18]tiempo_h [19]tecnica [20]validacion
@@ -311,6 +311,10 @@ class MigracionTestDataGenerator {
             // [30]acond_ini [31]acond_ideal [32]acond_temp [33]acond_fin
             // [34]madur_ini [35]madur_ideal [36]madur_temp [37]madur_fin
             // [38]carb_ini [39]carb_ideal [40]carb_temp [41]carb_fin
+            // Multi-sesión: [42]num_elab [43]og_s1 [44]vol_s1 [45]h_ini_s1 [46]h_fin_s1
+            // [47]fec_s2 [48]agua_s2 [49]og_s2 [50]og_brix_s2 [51]vol_s2 [52]h_ini_s2 [53]h_fin_s2 [54]rec_s2
+            // [55]fec_s3 [56]agua_s3 [57]og_s3 [58]og_brix_s3 [59]vol_s3 [60]h_ini_s3 [61]h_fin_s3 [62]rec_s3
+            // [63]fec_s4 [64]agua_s4 [65]og_s4 [66]og_brix_s4 [67]vol_s4 [68]h_ini_s4 [69]h_fin_s4 [70]rec_s4
             Sheet shL = wb.createSheet("Lotes");
             hdr(shL,
                     "codigo_lote","estilo","fecha_elaboracion","litros_finales",
@@ -323,21 +327,30 @@ class MigracionTestDataGenerator {
                     "ferm_fecha_inicial","ferm_fecha_final_ideal","ferm_temperatura","ferm_fecha_final",
                     "acond_fecha_inicial","acond_fecha_final_ideal","acond_temperatura","acond_fecha_final",
                     "madur_fecha_inicial","madur_fecha_final_ideal","madur_temperatura","madur_fecha_final",
-                    "carb_fecha_inicial","carb_fecha_final_ideal","carb_temperatura","carb_fecha_final");
+                    "carb_fecha_inicial","carb_fecha_final_ideal","carb_temperatura","carb_fecha_final",
+                    "numero_elaboraciones","og_s1","vol_final_s1","hora_inicio_s1","hora_fin_s1",
+                    "fecha_s2","agua_s2","og_s2","og_brix_s2","vol_final_s2","hora_inicio_s2","hora_fin_s2","nombre_receta_s2",
+                    "fecha_s3","agua_s3","og_s3","og_brix_s3","vol_final_s3","hora_inicio_s3","hora_fin_s3","nombre_receta_s3",
+                    "fecha_s4","agua_s4","og_s4","og_brix_s4","vol_final_s4","hora_inicio_s4","hora_fin_s4","nombre_receta_s4");
             r = 0;
-            // Lote 1 — IPA completo con todas las fases y campos nuevos
+            // Lote 1 — IPA doble cocción (2 sesiones), ejemplo multi-sesión completo
             data(shL, r++,
                     "IPA-2024-001","American IPA","2024-03-15","19.5",
                     "1057","1012","24","5.4",
                     "Whirlfloc","Primer lote IPA del año, muy buena atenuación","Aroma floral prominente, amargor limpio, retrogusto frutal","IPA Clásica Aguila",
                     "NATURAL","2.4","2.4","dextrosa",
                     "118","","","","ADECUADA","Botella 330mL",
-                    "14.2","3.5","Fermentador A","2024-03-29",
+                    "","3.5","Fermentador A","2024-03-29",
                     "2024-03-16","2024-03-30","18.0","2024-03-29",
                     "2024-03-30","2024-04-06","12.0","2024-04-05",
                     "2024-04-06","2024-05-07","5.0","2024-05-05",
-                    "2024-05-06","2024-05-13","4.0","2024-05-12");
-            // Lote 2 — Stout en maduración (sin datos de carbonatación aún)
+                    "2024-05-06","2024-05-13","4.0","2024-05-12",
+                    // Multi-sesión: 2 cocciones
+                    "2","1060","10.0","08:00","12:30",
+                    "2024-03-15","12","1054","","9.5","13:00","17:30","",
+                    "","","","","","","","",
+                    "","","","","","","","");
+            // Lote 2 — Stout sesión única (sin datos multi-sesión)
             data(shL, r++,
                     "STT-2024-001","Imperial Stout","2024-04-20","17.0",
                     "1082","1021","26","5.2",
@@ -348,7 +361,11 @@ class MigracionTestDataGenerator {
                     "2024-04-21","2024-05-05","19.0","2024-05-05",
                     "2024-05-06","2024-05-13","12.0","2024-05-13",
                     "2024-05-14","2024-06-14","4.0","",
-                    "","","","");
+                    "","","","",
+                    "1","","","","",
+                    "","","","","","","","",
+                    "","","","","","","","",
+                    "","","","","","","","");
             // Lote 3 — Hefeweizen simple (campos mínimos)
             data(shL, r++,
                     "HEF-2024-001","Hefeweizen","2024-05-10","20.0",
@@ -359,7 +376,11 @@ class MigracionTestDataGenerator {
                     "2024-05-11","2024-05-21","18.0","",
                     "","","","",
                     "","","","",
-                    "","","","");
+                    "","","","",
+                    "1","","","","",
+                    "","","","","","","","",
+                    "","","","","","","","",
+                    "","","","","","","","");
 
             // Lote_Ingredientes — cols: [0]codigo [1]tipo [2]nombre [3]cant_con_unidad
             Sheet shLI = wb.createSheet("Lote_Ingredientes");

@@ -325,6 +325,23 @@ public class TrazabilidadService {
             lote.setHoraInicioTerceraElaboracion(null);
             lote.setHoraFinTerceraElaboracion(null);
         }
+        if (numCoc >= 4) {
+            lote.setFechaCuartaElaboracion(dto.getFechaCuartaElaboracion());
+            lote.setAguaCuartaElaboracion(dto.getAguaCuartaElaboracion());
+            lote.setOgCuartaElaboracion(dto.getOgCuartaElaboracion());
+            lote.setVolumenFinalCuartaElaboracion(dto.getVolumenFinalCuartaElaboracion());
+            lote.setOgBrixCuartaElaboracion(dto.getOgBrixCuartaElaboracion());
+            lote.setHoraInicioCuartaElaboracion(dto.getHoraInicioCuartaElaboracion());
+            lote.setHoraFinCuartaElaboracion(dto.getHoraFinCuartaElaboracion());
+        } else {
+            lote.setFechaCuartaElaboracion(null);
+            lote.setAguaCuartaElaboracion(null);
+            lote.setOgCuartaElaboracion(null);
+            lote.setVolumenFinalCuartaElaboracion(null);
+            lote.setOgBrixCuartaElaboracion(null);
+            lote.setHoraInicioCuartaElaboracion(null);
+            lote.setHoraFinCuartaElaboracion(null);
+        }
         lote.setAguaUtilizada(dto.getAguaUtilizada());
         lote.setPhAgua(dto.getPhAgua());
         lote.setLitrosFinales(dto.getLitrosFinales());
@@ -398,6 +415,10 @@ public class TrazabilidadService {
 
         lote.setReceta3(dto.getReceta3Id() != null && numCoc >= 3
                 ? recetaRepo.findById(dto.getReceta3Id()).orElse(null)
+                : null);
+
+        lote.setReceta4(dto.getReceta4Id() != null && numCoc >= 4
+                ? recetaRepo.findById(dto.getReceta4Id()).orElse(null)
                 : null);
 
         if (dto.getEquipoFermentadorId() != null) {
@@ -538,6 +559,8 @@ public class TrazabilidadService {
             case "horaFinSegundaElaboracion"     -> lote.setHoraFinSegundaElaboracion(hora);
             case "horaInicioTerceraElaboracion"  -> lote.setHoraInicioTerceraElaboracion(hora);
             case "horaFinTerceraElaboracion"     -> lote.setHoraFinTerceraElaboracion(hora);
+            case "horaInicioCuartaElaboracion"   -> lote.setHoraInicioCuartaElaboracion(hora);
+            case "horaFinCuartaElaboracion"      -> lote.setHoraFinCuartaElaboracion(hora);
             default -> throw new IllegalArgumentException("Campo de hora inválido: " + campo);
         }
         loteRepo.save(lote);

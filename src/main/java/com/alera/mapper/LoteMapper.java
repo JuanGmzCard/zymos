@@ -23,6 +23,7 @@ public interface LoteMapper {
     @Mapping(source = "receta.id",            target = "recetaId")
     @Mapping(source = "receta2.id",           target = "receta2Id")
     @Mapping(source = "receta3.id",           target = "receta3Id")
+    @Mapping(source = "receta4.id",           target = "receta4Id")
     @Mapping(target = "itemsIds",             ignore = true)
     @Mapping(target = "itemsCantidades",      ignore = true)
     @Mapping(source = "maltas",      target = "maltas",        qualifiedByName = "ingredientesAInsumos")

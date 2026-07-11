@@ -168,10 +168,12 @@
         /* Secciones multi-elaboración */
         html.dark-mode #primera-elaboracion-section .card.border-0,
         html.dark-mode #segunda-elaboracion-section .card.border-0,
-        html.dark-mode #tercera-elaboracion-section .card.border-0 { background: var(--dm-card) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode #tercera-elaboracion-section .card.border-0,
+        html.dark-mode #cuarta-elaboracion-section .card.border-0 { background: var(--dm-card) !important; border-color: var(--dm-border-light) !important; }
         html.dark-mode #primera-elaboracion-section .card-header,
         html.dark-mode #segunda-elaboracion-section .card-header,
-        html.dark-mode #tercera-elaboracion-section .card-header { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
+        html.dark-mode #tercera-elaboracion-section .card-header,
+        html.dark-mode #cuarta-elaboracion-section .card-header { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
         /* OG combinado y costos de producción */
         html.dark-mode #og-combinado-box > div { background: var(--dm-input) !important; border-color: var(--dm-border-light) !important; }
         html.dark-mode .card:has(#costos-collapse) { background: var(--dm-card) !important; border-color: var(--dm-border-light) !important; }
@@ -205,6 +207,7 @@
         <input type="hidden" th:field="*{recetaId}"  id="recetaIdHidden">
         <input type="hidden" th:field="*{receta2Id}" id="receta2IdHidden">
         <input type="hidden" th:field="*{receta3Id}" id="receta3IdHidden">
+        <input type="hidden" th:field="*{receta4Id}" id="receta4IdHidden">
 
         <!-- Banner duplicado -->
         <div class="alert alert-info d-flex align-items-center gap-2 mb-3" th:if="${duplicadoDe != null}">
@@ -317,6 +320,8 @@
                                     th:selected="${loteForm.numeroElaboraciones == 2}">2 elaboraciones</option>
                             <option value="3" th:text="#{traz.form.doble.elaboracion.select.3}"
                                     th:selected="${loteForm.numeroElaboraciones == 3}">3 elaboraciones</option>
+                            <option value="4" th:text="#{traz.form.doble.elaboracion.select.4}"
+                                    th:selected="${loteForm.numeroElaboraciones == 4}">4 elaboraciones</option>
                         </select>
                     </div>
                     <div class="col-md-4" id="agua-general-col">
@@ -356,6 +361,19 @@
                         <input type="hidden" name="litrosFinales" id="litros-value"
                                th:value="${loteForm.litrosFinales}">
                         <small class="text-muted" id="litros-equiv"></small>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label" for="equipoFermentadorId" th:text="#{traz.form.ferm.fermentador}">Fermentador Asignado</label>
+                        <select th:field="*{equipoFermentadorId}"
+                                th:classappend="${#fields.hasErrors('equipoFermentadorId')} ? 'is-invalid' : ''"
+                                class="form-select">
+                            <option value="" th:text="#{traz.form.ferm.sin.asignar}">-- Sin asignar --</option>
+                            <option th:each="f : ${fermentadores}" th:value="${f.id}" th:text="${f.nombre}"></option>
+                        </select>
+                        <div th:if="${#fields.hasErrors('equipoFermentadorId')}"
+                             class="invalid-feedback d-block"
+                             th:errors="*{equipoFermentadorId}"></div>
                     </div>
 
                     <div class="col-12"><hr class="my-1"></div>
@@ -765,6 +783,130 @@
                         </div>
                     </div>
 
+                    <!-- Cuarta sesión de elaboración -->
+                    <div class="col-12" id="cuarta-elaboracion-section" style="display:none;">
+                        <div class="card border-0" style="background:#faf5ff;border:1px solid #e9d5ff!important;">
+                            <div class="card-header py-2 d-flex align-items-center gap-2"
+                                 style="background:#ede9fe;border-bottom:1px solid #ddd6fe;">
+                                <i class="bi bi-layers" style="color:#7c3aed;"></i>
+                                <span class="fw-600 small" style="color:#7c3aed;" th:text="#{traz.form.doble.elaboracion.sec4.titulo}">Cuarta Sesión de Elaboración</span>
+                                <span class="ms-auto badge" style="background:#7c3aed;color:#fff;font-size:0.65rem;">Sesión 4</span>
+                            </div>
+                            <div class="p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label small" for="fechaCuartaElaboracion" th:text="#{traz.form.doble.elaboracion.sec4.fecha}">Fecha Sesión 4</label>
+                                        <input type="date" th:field="*{fechaCuartaElaboracion}" class="form-control">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec4.hora.inicio}">Hora Inicio S4</label>
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaInicioCuartaElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaInicioCuartaElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaInicioCuartaElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaInicioCuartaElaboracion" style="min-height:1.2em"></div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec4.hora.fin}">Hora Fin S4</label>
+                                        <div class="input-group">
+                                            <input type="time" th:field="*{horaFinCuartaElaboracion}" class="form-control hora-auto-input"
+                                                   data-hora-campo="horaFinCuartaElaboracion">
+                                            <button type="button" class="btn btn-outline-secondary btn-marcar-hora btn-sm"
+                                                    data-hora-campo="horaFinCuartaElaboracion" title="Marcar hora actual">
+                                                <i class="bi bi-clock-history"></i>
+                                            </button>
+                                        </div>
+                                        <div class="hora-feedback-msg small mt-1" data-hora-campo="horaFinCuartaElaboracion" style="min-height:1.2em"></div>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="agua4-display" th:text="#{traz.form.doble.elaboracion.sec4.agua}">Agua Sesión 4</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="agua4-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.aguaCuartaElaboracion}"
+                                                   data-vol-field="agua4">
+                                            <select id="agua4-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="agua4">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="aguaCuartaElaboracion" id="agua4-value"
+                                               th:value="${loteForm.aguaCuartaElaboracion}">
+                                        <small class="text-muted" id="agua4-equiv"></small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <!-- Modo SG -->
+                                        <div class="og-sesion-sg" id="og4-sg-modo">
+                                            <label class="form-label small" for="ogCuartaElaboracion" th:text="#{traz.form.doble.elaboracion.sec4.og}">OG pre-mezcla Sesión 4</label>
+                                            <input type="number" step="1" min="1000" max="1150"
+                                                   th:field="*{ogCuartaElaboracion}" class="form-control"
+                                                   placeholder="1050">
+                                            <small class="text-muted" th:text="#{traz.form.doble.elaboracion.sec2.og.hint}">Densidad antes de combinar</small>
+                                        </div>
+                                        <!-- Modo Brix -->
+                                        <div class="og-sesion-brix d-none" id="og4-brix-modo">
+                                            <label class="form-label small" th:text="#{traz.form.doble.elaboracion.sec4.og.brix}">OG Sesión 4 (°Brix)</label>
+                                            <input type="number" step="0.1" min="1" max="40" id="ogBrix4"
+                                                   th:field="*{ogBrixCuartaElaboracion}" class="form-control"
+                                                   placeholder="14.6">
+                                            <small class="text-muted" th:text="#{traz.form.doble.elaboracion.sec4.og.brix.hint}">Lectura del mosto sin fermentar</small>
+                                            <div class="d-flex align-items-center gap-1 mt-1">
+                                                <small class="text-muted">SG:</small>
+                                                <input type="number" id="og4SgPreview" class="form-control form-control-sm" readonly tabindex="-1"
+                                                       placeholder="—" style="width:90px;background:#f8fafc;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3 mt-1">
+                                    <div class="col-md-5">
+                                        <label class="form-label small" for="litros4-display" th:text="#{traz.form.doble.elaboracion.sec4.vol.final}">Volumen Final Sesión 4</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.001" id="litros4-display" class="form-control"
+                                                   placeholder="0.00" th:value="${loteForm.volumenFinalCuartaElaboracion}"
+                                                   data-vol-field="litros4">
+                                            <select id="litros4-unit" class="form-select" style="max-width:130px;"
+                                                    data-vol-unit-field="litros4">
+                                                <option value="L" th:text="#{traz.form.unit.litros}">Litros (L)</option>
+                                                <option value="mL" th:text="#{traz.form.unit.ml}">Mililitros (mL)</option>
+                                                <option value="gal" th:text="#{traz.form.unit.gal}">Galones (gal)</option>
+                                            </select>
+                                        </div>
+                                        <input type="hidden" name="volumenFinalCuartaElaboracion" id="litros4-value"
+                                               th:value="${loteForm.volumenFinalCuartaElaboracion}">
+                                        <small class="text-muted" id="litros4-equiv"></small>
+                                    </div>
+                                </div>
+                                <!-- Receta sesión 4 -->
+                                <div class="row g-2 mt-2 align-items-end" th:if="${!#lists.isEmpty(recetasActivas)}">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600" th:text="#{traz.form.doble.elaboracion.sec4.receta}">Receta Sesión 4</label>
+                                        <select id="recetaSelect4" class="form-select form-select-sm">
+                                            <option value="" th:text="#{traz.form.doble.elaboracion.sec4.receta.select}">— Seleccionar receta sesión 4 —</option>
+                                            <option th:each="rec : ${recetasActivas}"
+                                                    th:value="${rec.id}"
+                                                    th:text="${rec.nombre} + ' (' + ${rec.estilo} + ')'"
+                                                    th:selected="${loteForm.receta4Id != null and rec.id == loteForm.receta4Id}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-auto">
+                                        <button type="button" class="btn btn-sm btn-zymos" id="btnCargarReceta4">
+                                            <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.doble.elaboracion.sec4.receta.btn}">Agregar ingredientes al lote</span>
+                                        </button>
+                                    </div>
+                                    <div class="col-12">
+                                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.doble.elaboracion.sec4.receta.hint}">Añade los ingredientes de esta receta a la lista de insumos</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-12"><hr class="my-1"></div>
 
                     <!-- Costos de Producción — buscador de ítems de factura -->
@@ -1052,16 +1194,14 @@
                 <p class="text-muted small mb-3" th:text="#{traz.form.ferm.desc}">Primera etapa: los azúcares se convierten en alcohol y CO₂ por acción de la levadura.</p>
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label" for="equipoFermentadorId" th:text="#{traz.form.ferm.fermentador}">Fermentador Asignado</label>
-                        <select th:field="*{equipoFermentadorId}"
-                                th:classappend="${#fields.hasErrors('equipoFermentadorId')} ? 'is-invalid' : ''"
-                                class="form-select">
-                            <option value="" th:text="#{traz.form.ferm.sin.asignar}">-- Sin asignar --</option>
-                            <option th:each="f : ${fermentadores}" th:value="${f.id}" th:text="${f.nombre}"></option>
-                        </select>
-                        <div th:if="${#fields.hasErrors('equipoFermentadorId')}"
-                             class="invalid-feedback d-block"
-                             th:errors="*{equipoFermentadorId}"></div>
+                        <label class="form-label" th:text="#{traz.form.ferm.fermentador}">Fermentador Asignado</label>
+                        <div id="fermentador-asignado-display" class="d-flex align-items-center gap-2 py-2">
+                            <!-- JS sincroniza este display con el select de Datos Generales -->
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            <a href="#" id="linkIrFermentador" th:text="#{traz.form.ferm.asignar.en.general}">Asignar en Datos Generales</a>
+                        </small>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label" for="fermFechaInicial" th:text="#{traz.form.ferm.fecha.inicio}">Fecha de Inicio</label>
@@ -1778,6 +1918,7 @@
                             var sel  = document.getElementById('numeroElaboracionesSelect');
                             var sec2 = document.getElementById('segunda-elaboracion-section');
                             var sec3 = document.getElementById('tercera-elaboracion-section');
+                            var sec4 = document.getElementById('cuarta-elaboracion-section');
                             if (!sel) return;
                             var aguaCol       = document.getElementById('agua-general-col');
                             var aguaOrigPar   = aguaCol && aguaCol.parentNode;
@@ -1792,9 +1933,11 @@
                             function clearSection(secNum) {
                                 var ids = secNum === 2
                                     ? ['fechaSegundaElaboracion', 'horaInicioSegundaElaboracion', 'horaFinSegundaElaboracion', 'agua2-display', 'agua2-value', 'ogSegundaElaboracion', 'litros2-display', 'litros2-value']
-                                    : ['fechaTerceraElaboracion', 'horaInicioTerceraElaboracion', 'horaFinTerceraElaboracion', 'agua3-display', 'agua3-value', 'ogTerceraElaboracion', 'litros3-display', 'litros3-value'];
+                                    : secNum === 3
+                                    ? ['fechaTerceraElaboracion', 'horaInicioTerceraElaboracion', 'horaFinTerceraElaboracion', 'agua3-display', 'agua3-value', 'ogTerceraElaboracion', 'litros3-display', 'litros3-value']
+                                    : ['fechaCuartaElaboracion', 'horaInicioCuartaElaboracion', 'horaFinCuartaElaboracion', 'agua4-display', 'agua4-value', 'ogCuartaElaboracion', 'litros4-display', 'litros4-value'];
                                 ids.forEach(function(id) {
-                                    var el = document.getElementById(id);
+                                    var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
                                     if (el) el.value = '';
                                 });
                             }
@@ -1802,8 +1945,10 @@
                                 var n = parseInt(sel.value, 10);
                                 sec2.style.display = n >= 2 ? '' : 'none';
                                 sec3.style.display = n >= 3 ? '' : 'none';
+                                if (sec4) sec4.style.display = n >= 4 ? '' : 'none';
                                 if (n < 2) clearSection(2);
                                 if (n < 3) clearSection(3);
+                                if (n < 4) clearSection(4);
 
                                 // Sesión 1: mostrar tarjeta primera-elaboracion-section en multielaboración
                                 var primeraSec = document.getElementById('primera-elaboracion-section');
@@ -1924,6 +2069,9 @@
                             <button type="button" class="btn btn-outline-secondary btn-sm modal-coc-btn" th:attr="data-coc-n=3">
                                 <i class="bi bi-3-circle me-1"></i><span th:text="#{traz.form.doble.elaboracion.select.3}">3 elaboraciones</span>
                             </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm modal-coc-btn" th:attr="data-coc-n=4">
+                                <i class="bi bi-4-circle me-1"></i><span th:text="#{traz.form.doble.elaboracion.select.4}">4 elaboraciones</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2026,7 +2174,7 @@ function calcularOgCombinado() {
             var brix = parseFloat((document.getElementById(brixId) || {}).value);
             return (!isNaN(brix) && brix > 1) ? Math.round(brixToSg(brix) * 1000) : NaN;
         }
-        var nameMap = { 1: 'ogPrimeraElaboracion', 2: 'ogSegundaElaboracion', 3: 'ogTerceraElaboracion' };
+        var nameMap = { 1: 'ogPrimeraElaboracion', 2: 'ogSegundaElaboracion', 3: 'ogTerceraElaboracion', 4: 'ogCuartaElaboracion' };
         var el = document.querySelector('[name="' + nameMap[n] + '"]');
         return el ? (Math.round(window.numVal(el.value)) || NaN) : NaN;
     }
@@ -2069,7 +2217,8 @@ function calcularSgSesion(n) {
     if (!brixEl) return;
     var brix = parseFloat(brixEl.value);
     var previewEl = document.getElementById('og' + n + 'SgPreview');
-    var sgName = n === 2 ? 'ogSegundaElaboracion' : 'ogTerceraElaboracion';
+    var sgNameMap = { 2: 'ogSegundaElaboracion', 3: 'ogTerceraElaboracion', 4: 'ogCuartaElaboracion' };
+    var sgName = sgNameMap[n] || 'ogSegundaElaboracion';
     var sgInput = document.querySelector('[name="' + sgName + '"]');
     if (!isNaN(brix) && brix > 1) {
         var sg = Math.round(brixToSg(brix) * 1000);
@@ -2087,9 +2236,9 @@ function toggleInstrumento(modo) {
     var inpOg   = document.getElementById('densidadInicial');
     var inpFg   = document.getElementById('densidadFinal');
 
-    // Divs OG de sesiones adicionales (2 y 3)
+    // Divs OG de sesiones adicionales (2, 3 y 4)
     var isBrix = modo === 'BRIX';
-    [2, 3].forEach(function(n) {
+    [2, 3, 4].forEach(function(n) {
         var sgDiv   = document.getElementById('og' + n + '-sg-modo');
         var brixDiv = document.getElementById('og' + n + '-brix-modo');
         if (sgDiv)   { sgDiv.classList.toggle('d-none', isBrix); }
@@ -2164,13 +2313,15 @@ document.addEventListener('DOMContentLoaded', function() {
     // Brix oninput listeners — sesiones adicionales
     var ogBrix2El = document.getElementById('ogBrix2');
     var ogBrix3El = document.getElementById('ogBrix3');
+    var ogBrix4El = document.getElementById('ogBrix4');
     if (ogBrix2El) ogBrix2El.addEventListener('input', function() { calcularSgSesion(2); calcularOgCombinado(); });
     if (ogBrix3El) ogBrix3El.addEventListener('input', function() { calcularSgSesion(3); calcularOgCombinado(); });
+    if (ogBrix4El) ogBrix4El.addEventListener('input', function() { calcularSgSesion(4); calcularOgCombinado(); });
     if (ogBrixEl)  ogBrixEl.addEventListener('input',  calcularOgCombinado);
 
     // OG + Volumen inputs para cálculo combinado
-    ['ogPrimeraElaboracion', 'ogSegundaElaboracion', 'ogTerceraElaboracion',
-     'litros1-display', 'litros2-display', 'litros3-display'].forEach(function(id) {
+    ['ogPrimeraElaboracion', 'ogSegundaElaboracion', 'ogTerceraElaboracion', 'ogCuartaElaboracion',
+     'litros1-display', 'litros2-display', 'litros3-display', 'litros4-display'].forEach(function(id) {
         var el = document.getElementById(id) || document.querySelector('[name="' + id + '"]');
         if (el) el.addEventListener('input', calcularOgCombinado);
     });
@@ -2187,8 +2338,34 @@ document.addEventListener('DOMContentLoaded', function() {
     if (instrInicial === 'BRIX') {
         calcularSgSesion(2);
         calcularSgSesion(3);
+        calcularSgSesion(4);
     }
     calcularOgCombinado();
+
+    // ── Sincronizar display de fermentador en Panel 2 ────────────────────────
+    function actualizarDisplayFermentador() {
+        var sel = document.getElementById('equipoFermentadorId');
+        var disp = document.getElementById('fermentador-asignado-display');
+        if (!sel || !disp) return;
+        var opt = sel.options[sel.selectedIndex];
+        if (sel.value) {
+            disp.innerHTML = '<i class="bi bi-check-circle-fill text-success me-1"></i>'
+                           + '<span class="fw-600">' + opt.text + '</span>';
+        } else {
+            disp.innerHTML = '<span class="text-muted"><i class="bi bi-dash-circle me-1"></i>Sin asignar</span>';
+        }
+    }
+    var selFerm = document.getElementById('equipoFermentadorId');
+    if (selFerm) selFerm.addEventListener('change', actualizarDisplayFermentador);
+    actualizarDisplayFermentador();
+
+    var linkFerm = document.getElementById('linkIrFermentador');
+    if (linkFerm) linkFerm.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof goTab === 'function') goTab(0);
+        var s = document.getElementById('equipoFermentadorId');
+        if (s) s.focus();
+    });
 });
 </script>
 <script th:attr="nonce=${cspNonce}">
