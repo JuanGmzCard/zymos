@@ -51,6 +51,11 @@
         html.dark-mode .fin-metric { border-color:var(--dm-border-faint); }
         html.dark-mode .fin-label { color:var(--dm-text-muted); }
         html.dark-mode .fin-value { color:var(--dm-text); }
+
+        .chart-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
+        .chart-card-header { padding:0.875rem 1.25rem; font-size:0.8rem; font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; }
+        html.dark-mode .chart-card { background:var(--dm-card); border-color:var(--dm-border-light); }
+        html.dark-mode .chart-card-header { color:var(--dm-text-muted); border-color:var(--dm-border-light); }
     </style>
 </head>
 <body>
@@ -225,51 +230,47 @@
         </div>
         <div class="row g-3">
             <div class="col-md-6" th:if="${!#lists.isEmpty(alertasBajoStock)}">
-                <div class="card-zymos">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="bi bi-exclamation-triangle me-2 text-warning"></i><span th:text="#{dashboard.alertas.bajo.stock}">Bajo Stock</span></h5>
+                <div class="table-card">
+                    <div class="table-count">
+                        <span><i class="bi bi-exclamation-triangle me-2 text-warning"></i><span th:text="#{dashboard.alertas.bajo.stock}">Bajo Stock</span></span>
                         <span class="badge bg-danger" th:text="${#lists.size(alertasBajoStock)}"></span>
                     </div>
-                    <div class="card-body p-0">
-                        <table class="table table-sm mb-0" style="font-size:0.8rem;">
-                            <tbody>
-                            <tr th:each="ins : ${alertasBajoStock}">
-                                <td class="ps-3 py-2 fw-600" th:text="${ins.nombre}">—</td>
-                                <td class="py-2 text-danger fw-bold"
-                                    th:text="${ins.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidadDisplay}">—</td>
-                                <td class="py-2 text-muted small"
-                                    th:text="#{dashboard.alerta.min} + ' ' + ${ins.stockMinimoDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidadStockMinimoDisplay}">—</td>
-                                <td class="py-2 pe-3 text-end">
-                                    <a th:href="@{/inventario}" class="btn btn-xs btn-outline-warning"
-                                       style="font-size:0.7rem;padding:1px 6px;">
-                                        <i class="bi bi-arrow-right"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="table table-sm mb-0" style="font-size:0.8rem;">
+                        <tbody>
+                        <tr th:each="ins : ${alertasBajoStock}">
+                            <td class="ps-3 py-2 fw-semibold" th:text="${ins.nombre}">—</td>
+                            <td class="py-2 text-danger fw-bold"
+                                th:text="${ins.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidadDisplay}">—</td>
+                            <td class="py-2 text-muted small"
+                                th:text="#{dashboard.alerta.min} + ' ' + ${ins.stockMinimoDisplay.stripTrailingZeros().toPlainString()} + ' ' + ${ins.unidadStockMinimoDisplay}">—</td>
+                            <td class="py-2 pe-3 text-end">
+                                <a th:href="@{/inventario}" class="btn btn-sm btn-outline-warning"
+                                   style="font-size:0.7rem;padding:1px 6px;">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
             <div class="col-md-6" th:if="${!#lists.isEmpty(alertasProxVencer)}">
-                <div class="card-zymos">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5><i class="bi bi-calendar-x me-2 text-warning"></i><span th:text="#{dashboard.alertas.prox.vencer}">Próximos a Vencer</span></h5>
+                <div class="table-card">
+                    <div class="table-count">
+                        <span><i class="bi bi-calendar-x me-2 text-warning"></i><span th:text="#{dashboard.alertas.prox.vencer}">Próximos a Vencer</span></span>
                         <span class="badge bg-warning text-dark" th:text="${#lists.size(alertasProxVencer)}"></span>
                     </div>
-                    <div class="card-body p-0">
-                        <table class="table table-sm mb-0" style="font-size:0.8rem;">
-                            <tbody>
-                            <tr th:each="ins : ${alertasProxVencer}">
-                                <td class="ps-3 py-2 fw-600" th:text="${ins.nombre}">—</td>
-                                <td class="py-2" th:classappend="${ins.claseVencimiento}"
-                                    th:text="${ins.textoVencimiento}">—</td>
-                                <td class="py-2 text-muted small"
-                                    th:text="${#temporals.format(ins.fechaVencimiento,'dd/MM/yyyy')}">—</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    <table class="table table-sm mb-0" style="font-size:0.8rem;">
+                        <tbody>
+                        <tr th:each="ins : ${alertasProxVencer}">
+                            <td class="ps-3 py-2 fw-semibold" th:text="${ins.nombre}">—</td>
+                            <td class="py-2" th:classappend="${ins.claseVencimiento}"
+                                th:text="${ins.textoVencimiento}">—</td>
+                            <td class="py-2 text-muted small"
+                                th:text="${#temporals.format(ins.fechaVencimiento,'dd/MM/yyyy')}">—</td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -280,14 +281,13 @@
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
-        <div class="card-zymos">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5><i class="bi bi-calendar-check me-2"></i><span th:text="#{dashboard.elaboraciones}">Próximas Elaboraciones</span></h5>
+        <div class="table-card">
+            <div class="table-count">
+                <span><i class="bi bi-calendar-check me-2"></i><span th:text="#{dashboard.elaboraciones}">Próximas Elaboraciones</span></span>
                 <a th:href="@{/planificacion}" class="btn btn-outline-secondary btn-sm">
                     <i class="bi bi-calendar3 me-1"></i><span th:text="#{dashboard.elaboraciones.ver.cal}">Ver calendario</span>
                 </a>
             </div>
-            <div class="card-body p-0">
                 <div th:if="${#lists.isEmpty(proximasElaboraciones)}" class="empty-state py-4">
                     <i class="bi bi-calendar"></i>
                     <p th:text="#{dashboard.elaboraciones.empty}">No hay elaboraciones planificadas</p>
@@ -296,12 +296,12 @@
                 <table th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table table-hover mb-0">
                     <thead>
                     <tr>
-                        <th class="ps-3" style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;" th:text="#{dashboard.elaboraciones.fecha}">Fecha</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;" th:text="#{dashboard.elaboraciones.nombre}">Elaboración</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;" th:text="#{dashboard.elaboraciones.receta}">Receta</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;" th:text="#{dashboard.elaboraciones.volumen}">Volumen</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;" th:text="#{dashboard.elaboraciones.estado}">Estado</th>
-                        <th style="background:var(--verde-alera);color:var(--crema);font-size:0.75rem;"></th>
+                        <th class="ps-3" th:text="#{dashboard.elaboraciones.fecha}">Fecha</th>
+                        <th th:text="#{dashboard.elaboraciones.nombre}">Elaboración</th>
+                        <th th:text="#{dashboard.elaboraciones.receta}">Receta</th>
+                        <th th:text="#{dashboard.elaboraciones.volumen}">Volumen</th>
+                        <th th:text="#{dashboard.elaboraciones.estado}">Estado</th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -337,7 +337,6 @@
                     </tr>
                     </tbody>
                 </table>
-            </div>
         </div>
     </div>
 
@@ -348,17 +347,17 @@
         </div>
         <div class="row g-4">
             <div class="col-md-7">
-                <div class="card-zymos h-100">
-                    <div class="card-header"><h5><i class="bi bi-bar-chart-line me-2"></i><span th:text="#{dashboard.charts.litros}">Litros Producidos por Mes</span></h5></div>
-                    <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+                <div class="chart-card h-100">
+                    <div class="chart-card-header"><i class="bi bi-bar-chart-line me-2"></i><span th:text="#{dashboard.charts.litros}">Litros Producidos por Mes</span></div>
+                    <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                         <canvas id="chartLitros" style="max-height:200px;"></canvas>
                     </div>
                 </div>
             </div>
             <div class="col-md-5">
-                <div class="card-zymos h-100">
-                    <div class="card-header"><h5><i class="bi bi-pie-chart me-2"></i><span th:text="#{dashboard.charts.lotes}">Lotes por Estilo</span></h5></div>
-                    <div class="card-body d-flex align-items-center justify-content-center" style="min-height:220px;">
+                <div class="chart-card h-100">
+                    <div class="chart-card-header"><i class="bi bi-pie-chart me-2"></i><span th:text="#{dashboard.charts.lotes}">Lotes por Estilo</span></div>
+                    <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                         <canvas id="chartEstilos" style="max-height:200px;"></canvas>
                     </div>
                 </div>
