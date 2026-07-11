@@ -68,6 +68,8 @@
 
 <div class="container-fluid px-4 pb-4">
 
+    <div th:replace="~{fragments/reportes-nav :: nav('ventas')}"></div>
+
     <!-- Selector de período -->
     <div class="filter-card mb-3">
         <form th:action="@{/reportes/ventas}" method="get" class="d-flex gap-3 align-items-end flex-wrap mb-2">

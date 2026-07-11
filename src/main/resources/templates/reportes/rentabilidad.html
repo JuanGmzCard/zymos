@@ -100,6 +100,8 @@
 
 <div class="container-fluid px-4 pb-4">
 
+    <div th:replace="~{fragments/reportes-nav :: nav('rentabilidad')}"></div>
+
     <!-- Alertas flash -->
     <div th:if="${mensaje}" th:classappend="'alert alert-' + ${tipoMensaje}" class="alert alert-dismissible fade show mb-3" role="alert">
         <span th:text="${mensaje}"></span>

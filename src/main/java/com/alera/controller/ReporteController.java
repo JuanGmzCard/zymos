@@ -58,6 +58,11 @@ public class ReporteController {
         this.ventaItemRepo       = ventaItemRepo;
     }
 
+    @GetMapping({"", "/"})
+    public String index() {
+        return "redirect:/reportes/produccion";
+    }
+
     @GetMapping("/produccion")
     public String produccion(
             @RequestParam(required = false) String estilo,

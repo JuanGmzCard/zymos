@@ -35,6 +35,8 @@
         </div>
     </div>
 
+    <div th:replace="~{fragments/reportes-nav :: nav('produccion')}"></div>
+
     <!-- Filtros de período -->
     <div class="filter-card mb-4">
         <form th:action="@{/reportes/produccion}" method="get" class="d-flex gap-3 align-items-end flex-wrap">

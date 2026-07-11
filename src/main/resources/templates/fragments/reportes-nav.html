@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav th:fragment="nav(activeReport)" class="report-nav">
+    <a th:href="@{/reportes/produccion}"
+       th:classappend="${activeReport == 'produccion'} ? 'active' : ''"
+       class="report-nav-tab">
+        <i class="bi bi-bar-chart-line"></i>
+        <span th:text="#{reportes.nav.produccion}">Producción</span>
+    </a>
+    <a th:href="@{/reportes/ventas}"
+       th:classappend="${activeReport == 'ventas'} ? 'active' : ''"
+       class="report-nav-tab">
+        <i class="bi bi-graph-up-arrow"></i>
+        <span th:text="#{reportes.nav.ventas}">Ventas</span>
+    </a>
+    <a th:href="@{/reportes/rentabilidad}"
+       th:classappend="${activeReport == 'rentabilidad'} ? 'active' : ''"
+       class="report-nav-tab">
+        <i class="bi bi-currency-dollar"></i>
+        <span th:text="#{reportes.nav.rentabilidad}">Rentabilidad</span>
+    </a>
+</nav>
+</body>
+</html>
