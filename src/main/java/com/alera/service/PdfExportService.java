@@ -1481,14 +1481,17 @@ public class PdfExportService {
                 // ── Tabla de lotes ────────────────────────────────────────
                 if (!lotes.isEmpty()) {
                     addTituloPdf(doc, t("pdf.title.lotes_periodo"), pal);
-                    PdfPTable tabla = new PdfPTable(new float[]{1.4f, 1.5f, 1.8f, 1f, 0.8f, 0.8f, 0.9f, 0.9f, 1.2f});
+                    PdfPTable tabla = new PdfPTable(
+                            new float[]{1.3f, 1.3f, 1.6f, 0.9f, 0.8f, 0.75f, 0.75f, 0.85f, 0.85f, 1.0f, 1.1f});
                     tabla.setWidthPercentage(100);
                     Font th = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
                     Font td = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
                     Font tdGreen = new Font(Font.HELVETICA, 7, Font.BOLD, pal.verde());
-                    for (String h : new String[]{t("pdf.label.codigo"), t("pdf.label.estilo"), t("pdf.label.receta"),
-                            t("pdf.header.fecha"), t("pdf.label.litros"), "OG", "ABV",
-                            t("pdf.header.efic"), t("pdf.label.estado")}) {
+                    for (String h : new String[]{
+                            t("pdf.label.codigo"), t("pdf.label.estilo"), t("pdf.label.receta"),
+                            t("pdf.header.fecha"), t("pdf.label.litros"),
+                            "OG", "FG", "ABV %", t("pdf.header.efic"),
+                            t("pdf.label.costo_por_litro"), t("pdf.label.estado")}) {
                         PdfPCell c = new PdfPCell(new Phrase(h, th));
                         c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
                         c.setPadding(4); tabla.addCell(c);
@@ -1505,50 +1508,58 @@ public class PdfExportService {
                         tablaCelda(tabla, fmt(lote.getFechaElaboracion()), td, bg);
                         tablaCelda(tabla, lote.getLitrosFinales() != null ? lote.getLitrosFinales() + " L" : "—", td, bg);
                         tablaCelda(tabla, lote.getDensidadInicial() != null ? String.valueOf(lote.getDensidadInicial()) : "—", td, bg);
+                        tablaCelda(tabla, lote.getDensidadFinal()   != null ? String.valueOf(lote.getDensidadFinal())   : "—", td, bg);
                         String abvTxt = lote.getAbv() != null ? lote.getAbv() + "%" : "—";
                         PdfPCell abvCell = new PdfPCell(new Phrase(abvTxt, lote.getAbv() != null ? tdGreen : td));
                         abvCell.setBackgroundColor(bg); abvCell.setBorderColor(C_BORDE); abvCell.setPadding(4);
                         tabla.addCell(abvCell);
                         tablaCelda(tabla, lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", td, bg);
+                        tablaCelda(tabla, lote.getCostoPorLitro() != null ? "$" + fmt2(lote.getCostoPorLitro()) + "/L" : "—", td, bg);
                         tablaCelda(tabla, lote.getFaseActual() != null ? lote.getFaseActual() : "—", td, bg);
                     }
                     doc.add(tabla);
                 }
 
                 // ── Resumen por estilo ────────────────────────────────────
-                Map<String, BigDecimal[]> resAgg = new LinkedHashMap<>();
+                // [0]=count, [1]=litros, [2]=abvSum, [3]=abvCount
+                Map<String, double[]> resAgg = new LinkedHashMap<>();
                 for (var lote : lotes) {
                     String est = lote.getEstilo() != null ? lote.getEstilo() : t("pdf.text.sin_estilo");
-                    BigDecimal[] agg = resAgg.computeIfAbsent(est, k -> new BigDecimal[]{BigDecimal.ZERO, BigDecimal.ZERO});
-                    agg[0] = agg[0].add(BigDecimal.ONE);
-                    agg[1] = agg[1].add(lote.getLitrosFinales() != null ? lote.getLitrosFinales() : BigDecimal.ZERO);
+                    double[] agg = resAgg.computeIfAbsent(est, k -> new double[4]);
+                    agg[0]++;
+                    agg[1] += lote.getLitrosFinales() != null ? lote.getLitrosFinales().doubleValue() : 0;
+                    if (lote.getAbv() != null) { agg[2] += lote.getAbv().doubleValue(); agg[3]++; }
                 }
                 if (resAgg.size() > 1) {
                     addTituloPdf(doc, t("pdf.title.resumen_estilo"), pal);
-                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 1f});
-                    resTabla.setWidthPercentage(60);
+                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 1f, 1.2f});
+                    resTabla.setWidthPercentage(70);
                     resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
                     Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
-                    for (String h : new String[]{t("pdf.label.estilo"), t("pdf.header.lotes"), t("pdf.label.litros"), t("pdf.header.pct_vol")}) {
+                    for (String h : new String[]{t("pdf.label.estilo"), t("pdf.header.lotes"),
+                            t("pdf.label.litros"), t("pdf.header.pct_vol"), t("pdf.label.abv_promedio")}) {
                         PdfPCell c = new PdfPCell(new Phrase(h, rth));
                         c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
                         resTabla.addCell(c);
                     }
-                    boolean a2 = false;
-                    for (var e : resAgg.entrySet().stream()
-                            .sorted((x, y) -> y.getValue()[1].compareTo(x.getValue()[1]))
-                            .collect(Collectors.toList())) {
-                        Color bg = a2 ? pal.fondo() : Color.WHITE; a2 = !a2;
-                        BigDecimal litE = e.getValue()[1];
-                        int pct = totalLitros.compareTo(BigDecimal.ZERO) > 0
-                                ? litE.multiply(BigDecimal.valueOf(100))
-                                        .divide(totalLitros, 0, java.math.RoundingMode.HALF_UP).intValue() : 0;
-                        Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
-                        tablaCelda(resTabla, e.getKey(), rtd, bg);
-                        tablaCelda(resTabla, String.valueOf(e.getValue()[0].intValue()), rtd, bg);
-                        tablaCelda(resTabla, fmt2(litE) + " L", rtd, bg);
-                        tablaCelda(resTabla, pct + "%", rtd, bg);
-                    }
+                    boolean[] a2 = {false};
+                    resAgg.entrySet().stream()
+                            .sorted((x, y) -> Double.compare(y.getValue()[1], x.getValue()[1]))
+                            .forEach(e -> {
+                                Color bg = a2[0] ? pal.fondo() : Color.WHITE; a2[0] = !a2[0];
+                                double litE = e.getValue()[1];
+                                int pct = totalLitros.compareTo(BigDecimal.ZERO) > 0
+                                        ? (int) Math.round(litE * 100 / totalLitros.doubleValue()) : 0;
+                                double[] d = e.getValue();
+                                String abvPromStr = d[3] > 0
+                                        ? String.format("%.2f%%", d[2] / d[3]) : "—";
+                                Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                                tablaCelda(resTabla, e.getKey(), rtd, bg);
+                                tablaCelda(resTabla, String.valueOf((int) d[0]), rtd, bg);
+                                tablaCelda(resTabla, fmt2(BigDecimal.valueOf(litE)) + " L", rtd, bg);
+                                tablaCelda(resTabla, pct + "%", rtd, bg);
+                                tablaCelda(resTabla, abvPromStr, rtd, bg);
+                            });
                     doc.add(resTabla);
                 }
 
