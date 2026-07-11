@@ -21,11 +21,11 @@
             <p class="subtitle" th:text="#{reportes.prod.subtitle}">Análisis de lotes elaborados por período</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
-            <a th:href="@{/reportes/produccion/pdf(desde=${#temporals.format(desde,'yyyy-MM-dd')},hasta=${#temporals.format(hasta,'yyyy-MM-dd')},estilo=${estilo})}"
+            <a th:href="@{/reportes/produccion/pdf(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''},estilo=${estilo})}"
                class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <a th:href="@{/reportes/produccion/excel(desde=${#temporals.format(desde,'yyyy-MM-dd')},hasta=${#temporals.format(hasta,'yyyy-MM-dd')},estilo=${estilo})}"
+            <a th:href="@{/reportes/produccion/excel(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''},estilo=${estilo})}"
                class="btn btn-sm btn-outline-secondary">
                 <i class="bi bi-file-earmark-excel me-1"></i>Excel
             </a>
@@ -41,12 +41,12 @@
             <div>
                 <label class="form-label form-label-sm mb-1" th:text="#{filter.desde}">Desde</label>
                 <input type="date" name="desde" class="form-control form-control-sm"
-                       th:value="${#temporals.format(desde,'yyyy-MM-dd')}">
+                       th:value="${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''}">
             </div>
             <div>
                 <label class="form-label form-label-sm mb-1" th:text="#{filter.hasta}">Hasta</label>
                 <input type="date" name="hasta" class="form-control form-control-sm"
-                       th:value="${#temporals.format(hasta,'yyyy-MM-dd')}">
+                       th:value="${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''}">
             </div>
             <div th:if="${!#lists.isEmpty(estilosDisponibles)}">
                 <label class="form-label form-label-sm mb-1" th:text="#{filter.estilo}">Estilo</label>
@@ -71,7 +71,9 @@
             </div>
             <div class="ms-auto text-secondary align-self-center" style="font-size:0.8rem;">
                 <i class="bi bi-calendar2-range me-1"></i>
-                <span th:text="${#temporals.format(desde,'dd/MM/yyyy')} + ' — ' + ${#temporals.format(hasta,'dd/MM/yyyy')}"></span>
+                <span th:if="${desde != null and hasta != null}"
+                      th:text="${#temporals.format(desde,'dd/MM/yyyy')} + ' — ' + ${#temporals.format(hasta,'dd/MM/yyyy')}"></span>
+                <span th:unless="${desde != null and hasta != null}" th:text="#{filter.todos.periodos}">Todo el historial</span>
                 <span th:if="${estilo != null and !estilo.isEmpty()}"
                       class="badge ms-1 bg-primary"
                       th:text="${estilo}"></span>
