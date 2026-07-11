@@ -10,6 +10,7 @@ import com.alera.model.LoteCerveza;
 import com.alera.model.LoteItemFactura;
 import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
+import com.alera.dto.RentabilidadLoteDto;
 import com.alera.model.Venta;
 import com.alera.model.VentaItem;
 import com.alera.model.enums.EstadoVenta;
@@ -1561,6 +1562,146 @@ public class PdfExportService {
                 doc.close();
             } catch (Exception e) {
                 throw new RuntimeException("Error generando PDF del reporte de producción", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
+        }
+    }
+
+    // ── PDF Reporte de Rentabilidad ──────────────────────────────────────────
+
+    public byte[] generarPdfReporteRentabilidad(List<RentabilidadLoteDto> filas,
+                                                 String estiloFiltro,
+                                                 LocalDate desde, LocalDate hasta,
+                                                 ExportBranding branding,
+                                                 Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            String brandName = branding.name();
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            Document doc = new Document(PageSize.A4.rotate(), 36, 36, 45, 40);
+            try {
+                PdfWriter.getInstance(doc, baos);
+                doc.open();
+
+                // ── Cabecera ──────────────────────────────────────────────
+                PdfPTable header = new PdfPTable(1);
+                header.setWidthPercentage(100);
+                header.setSpacingAfter(10);
+                PdfPCell hCell = new PdfPCell();
+                hCell.setBackgroundColor(pal.verde()); hCell.setBorder(0);
+                hCell.setPaddingTop(10); hCell.setPaddingBottom(10); hCell.setPaddingLeft(14);
+                hCell.addElement(new Paragraph(brandName.toUpperCase(),
+                        new Font(Font.HELVETICA, 7, Font.NORMAL, pal.dorado())));
+                Paragraph tituloH = new Paragraph(t("pdf.title.reporte_rentabilidad"),
+                        new Font(Font.HELVETICA, 13, Font.BOLD, pal.crema()));
+                tituloH.setSpacingBefore(3);
+                hCell.addElement(tituloH);
+                String periodoStr = (desde != null ? desde.format(FMT_FECHA) : "—")
+                        + " — " + (hasta != null ? hasta.format(FMT_FECHA) : "—");
+                if (estiloFiltro != null && !estiloFiltro.isBlank()) periodoStr += "  ·  " + estiloFiltro;
+                hCell.addElement(new Paragraph(periodoStr,
+                        new Font(Font.HELVETICA, 9, Font.ITALIC, pal.verdeClaro())));
+                header.addCell(hCell);
+                doc.add(header);
+
+                // ── Estadísticas ──────────────────────────────────────────
+                BigDecimal totalIngresos = filas.stream().filter(r -> r.ingresos() != null)
+                        .map(RentabilidadLoteDto::ingresos).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalCosto = filas.stream().filter(r -> r.costo() != null)
+                        .map(RentabilidadLoteDto::costo).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalMargen = totalIngresos.subtract(totalCosto)
+                        .setScale(0, java.math.RoundingMode.HALF_UP);
+                long lotesConDatos  = filas.stream().filter(r -> !r.sinCosto() && !r.sinVentas()).count();
+                long lotesRentables = filas.stream().filter(RentabilidadLoteDto::rentable).count();
+                long lotesEnRojo    = filas.stream().filter(RentabilidadLoteDto::enRojo).count();
+                String margenStr = (totalMargen.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "")
+                        + "$" + fmt2(totalMargen);
+
+                addTituloPdf(doc, t("pdf.title.resumen_periodo"), pal);
+                Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
+                Font val = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+                PdfPTable stats = new PdfPTable(new float[]{1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f, 1.5f});
+                stats.setWidthPercentage(100);
+                par(stats, t("pdf.label.total_lotes"),       String.valueOf(filas.size()),  lbl, val, pal);
+                par(stats, t("pdf.label.lotes_con_datos"),   String.valueOf(lotesConDatos), lbl, val, pal);
+                par(stats, t("pdf.label.lotes_rentables"),   String.valueOf(lotesRentables),lbl, val, pal);
+                par(stats, t("pdf.label.lotes_en_rojo"),     String.valueOf(lotesEnRojo),   lbl, val, pal);
+                par(stats, t("pdf.label.ingresos_ventas"),   "$" + fmt2(totalIngresos),     lbl, val, pal);
+                par(stats, t("pdf.label.costos_produccion"), "$" + fmt2(totalCosto),        lbl, val, pal);
+                par(stats, t("pdf.label.margen_bruto"),      margenStr,                     lbl, val, pal);
+                par(stats, t("pdf.label.generado"),          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
+                doc.add(stats);
+
+                // ── Tabla de lotes ────────────────────────────────────────
+                if (!filas.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.rentabilidad_lotes"), pal);
+                    PdfPTable tabla = new PdfPTable(
+                            new float[]{1.3f, 1.5f, 1.1f, 0.8f, 1.3f, 1.3f, 1.3f, 1f, 1.2f});
+                    tabla.setWidthPercentage(100);
+                    Font th   = new Font(Font.HELVETICA, 7, Font.BOLD,   pal.crema());
+                    Font td   = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                    Font tdOk = new Font(Font.HELVETICA, 7, Font.BOLD,   new Color(22,  163, 74));
+                    Font tdKo = new Font(Font.HELVETICA, 7, Font.BOLD,   new Color(220, 38,  38));
+                    for (String h : new String[]{
+                            t("pdf.label.codigo"), t("pdf.label.estilo"), t("pdf.label.fecha_completado"),
+                            t("pdf.label.litros"), t("pdf.label.costo_prod"), t("pdf.label.ingresos_ventas"),
+                            t("pdf.label.margen_bruto"), t("pdf.label.margen_pct"), t("pdf.label.estado")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, th));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE);
+                        c.setPadding(4); tabla.addCell(c);
+                    }
+                    boolean alt = false;
+                    for (RentabilidadLoteDto r : filas) {
+                        Color bg = alt ? pal.fondo() : Color.WHITE;
+                        alt = !alt;
+                        tablaCelda(tabla, r.codigoLote(), td, bg);
+                        tablaCelda(tabla, r.estilo() != null ? r.estilo() : "—", td, bg);
+                        tablaCelda(tabla, r.fechaCompletado() != null
+                                ? r.fechaCompletado().format(FMT_FECHA) : "—", td, bg);
+                        tablaCelda(tabla, r.litrosFinales() != null
+                                ? r.litrosFinales() + " L" : "—", td, bg);
+                        tablaCelda(tabla, !r.sinCosto()   ? "$" + fmt2(r.costo())    : "—", td, bg);
+                        tablaCelda(tabla, !r.sinVentas()  ? "$" + fmt2(r.ingresos()) : "—", td, bg);
+                        boolean tieneMargen = r.margen() != null && !r.sinCosto() && !r.sinVentas();
+                        String  mStr = tieneMargen ? (r.rentable() ? "+" : "") + "$" + fmt2(r.margen()) : "—";
+                        PdfPCell mCell = new PdfPCell(new Phrase(mStr, tieneMargen
+                                ? (r.rentable() ? tdOk : tdKo) : td));
+                        mCell.setBackgroundColor(bg); mCell.setBorderColor(C_BORDE); mCell.setPadding(4);
+                        tabla.addCell(mCell);
+                        boolean tienePct = r.margenPct() != null && !r.sinCosto() && !r.sinVentas();
+                        String  pStr = tienePct ? (r.rentable() ? "+" : "") + r.margenPct() + "%" : "—";
+                        PdfPCell pCell = new PdfPCell(new Phrase(pStr, tienePct
+                                ? (r.rentable() ? tdOk : tdKo) : td));
+                        pCell.setBackgroundColor(bg); pCell.setBorderColor(C_BORDE); pCell.setPadding(4);
+                        tabla.addCell(pCell);
+                        String estadoStr;
+                        if (!r.sinCosto() && !r.sinVentas()) {
+                            estadoStr = r.rentable()
+                                    ? t("reportes.rent.badge.rentable")
+                                    : t("reportes.rent.badge.en.rojo");
+                        } else if (r.sinVentas()) {
+                            estadoStr = t("reportes.rent.badge.sin.ventas");
+                        } else {
+                            estadoStr = t("reportes.rent.badge.sin.costos");
+                        }
+                        tablaCelda(tabla, estadoStr, td, bg);
+                    }
+                    doc.add(tabla);
+                }
+
+                // ── Pie ───────────────────────────────────────────────────
+                doc.add(new Paragraph("\n"));
+                Paragraph pie = new Paragraph(
+                        tf("pdf.text.pie", LocalDateTime.now().format(FMT_DT), brandName),
+                        new Font(Font.HELVETICA, 7, Font.ITALIC, C_GRIS));
+                pie.setAlignment(Element.ALIGN_RIGHT);
+                doc.add(pie);
+                doc.close();
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando PDF de rentabilidad", e);
             }
             return baos.toByteArray();
         } finally {

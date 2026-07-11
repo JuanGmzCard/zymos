@@ -388,68 +388,13 @@ public class ReporteController {
             @RequestParam(required = false, defaultValue = "margen") String ordenar,
             Model model) {
 
-        // Costos por lote (una sola query agregada)
-        Map<Long, BigDecimal> costosPorLote = new HashMap<>();
-        for (Object[] row : loteItemFacturaRepo.sumCostosPorLote()) {
-            costosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
-        }
-
-        // Ingresos despachados por lote (una sola query agregada)
-        Map<Long, BigDecimal> ingresosPorLote = new HashMap<>();
-        for (Object[] row : ventaItemRepo.sumIngresosDespachadosPorLote()) {
-            ingresosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
-        }
-
-        // Lotes completados con filtro de período
-        var todosLotes = loteRepo.findAllCompletados(
-                org.springframework.data.domain.PageRequest.of(0, 1000));
-
-        // Filtro de período por fechaCompletado (carbFechaFinal)
-        var lotesFiltrados = todosLotes.stream()
-                .filter(l -> desde == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isBefore(desde)))
-                .filter(l -> hasta == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isAfter(hasta)))
-                .filter(l -> estilo == null || estilo.isBlank() || estilo.equals(l.getEstilo()))
-                .collect(Collectors.toList());
-
-        // Estilos disponibles para el filtro
-        List<String> estilosDisponibles = todosLotes.stream()
+        List<String> estilosDisponibles = loteRepo
+                .findAllCompletados(org.springframework.data.domain.Pageable.unpaged())
+                .stream()
                 .map(LoteCerveza::getEstilo).filter(e -> e != null && !e.isBlank())
                 .distinct().sorted().collect(Collectors.toList());
 
-        // Construir DTOs
-        List<RentabilidadLoteDto> filas = new ArrayList<>();
-        for (LoteCerveza lote : lotesFiltrados) {
-            BigDecimal costo    = costosPorLote.getOrDefault(lote.getId(), null);
-            BigDecimal ingresos = ingresosPorLote.getOrDefault(lote.getId(), null);
-
-            // Si el costo es 0 y no hay entrada, lo tratamos como sin datos
-            if (costo != null && costo.compareTo(BigDecimal.ZERO) == 0) costo = null;
-            if (ingresos != null && ingresos.compareTo(BigDecimal.ZERO) == 0) ingresos = null;
-
-            BigDecimal margen    = null;
-            BigDecimal margenPct = null;
-            if (costo != null && ingresos != null) {
-                margen    = ingresos.subtract(costo).setScale(0, RoundingMode.HALF_UP);
-                margenPct = ingresos.compareTo(BigDecimal.ZERO) > 0
-                        ? margen.multiply(BigDecimal.valueOf(100))
-                                .divide(ingresos, 1, RoundingMode.HALF_UP)
-                        : null;
-            } else if (ingresos != null) {
-                margen = ingresos.setScale(0, RoundingMode.HALF_UP); // sin costo registrado
-            }
-
-            BigDecimal litros = lote.getLitrosFinales();
-            BigDecimal costoPorLitro = (costo != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
-                    ? costo.divide(litros, 2, RoundingMode.HALF_UP) : null;
-            BigDecimal ingresoPorLitro = (ingresos != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
-                    ? ingresos.divide(litros, 2, RoundingMode.HALF_UP) : null;
-
-            filas.add(new RentabilidadLoteDto(
-                    lote.getId(), lote.getCodigoLote(), lote.getEstilo(),
-                    lote.getCarbFechaFinal(), litros,
-                    costo, ingresos, margen, margenPct,
-                    costoPorLitro, ingresoPorLitro));
-        }
+        List<RentabilidadLoteDto> filas = buildRentabilidadFilas(estilo, desde, hasta);
 
         // Ordenamiento
         Comparator<RentabilidadLoteDto> comp = switch (ordenar) {
@@ -556,6 +501,88 @@ public class ReporteController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(pdf);
+    }
+
+    @GetMapping("/rentabilidad/pdf")
+    public ResponseEntity<byte[]> rentabilidadPdf(
+            @RequestParam(required = false) String estilo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request, Locale locale) {
+
+        if (desde == null) desde = LocalDate.now().minusMonths(3);
+        if (hasta == null) hasta = LocalDate.now();
+
+        List<RentabilidadLoteDto> filas = buildRentabilidadFilas(estilo, desde, hasta);
+        // PDF ordenado por margen desc (default)
+        filas.sort(Comparator.comparing(
+                r -> r.margen() != null ? r.margen() : BigDecimal.valueOf(-999_999),
+                Comparator.reverseOrder()));
+
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        byte[] pdf = pdfExportService.generarPdfReporteRentabilidad(
+                filas, estilo, desde, hasta,
+                ExportBranding.from(tenant), locale);
+        String filename = "reporte-rentabilidad-" + desde + "-" + hasta + ".pdf";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(pdf);
+    }
+
+    private List<RentabilidadLoteDto> buildRentabilidadFilas(
+            String estilo, LocalDate desde, LocalDate hasta) {
+
+        Map<Long, BigDecimal> costosPorLote = new HashMap<>();
+        for (Object[] row : loteItemFacturaRepo.sumCostosPorLote()) {
+            costosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
+        }
+        Map<Long, BigDecimal> ingresosPorLote = new HashMap<>();
+        for (Object[] row : ventaItemRepo.sumIngresosDespachadosPorLote()) {
+            ingresosPorLote.put(((Number) row[0]).longValue(), toBigDecimal(row[1]));
+        }
+
+        var todosLotes = loteRepo.findAllCompletados(
+                org.springframework.data.domain.Pageable.unpaged());
+
+        var lotesFiltrados = todosLotes.stream()
+                .filter(l -> desde == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isBefore(desde)))
+                .filter(l -> hasta == null || (l.getCarbFechaFinal() != null && !l.getCarbFechaFinal().isAfter(hasta)))
+                .filter(l -> estilo == null || estilo.isBlank() || estilo.equals(l.getEstilo()))
+                .collect(Collectors.toList());
+
+        List<RentabilidadLoteDto> filas = new ArrayList<>();
+        for (LoteCerveza lote : lotesFiltrados) {
+            BigDecimal costo    = costosPorLote.getOrDefault(lote.getId(), null);
+            BigDecimal ingresos = ingresosPorLote.getOrDefault(lote.getId(), null);
+            if (costo    != null && costo.compareTo(BigDecimal.ZERO)    == 0) costo    = null;
+            if (ingresos != null && ingresos.compareTo(BigDecimal.ZERO) == 0) ingresos = null;
+
+            BigDecimal margen    = null;
+            BigDecimal margenPct = null;
+            if (costo != null && ingresos != null) {
+                margen    = ingresos.subtract(costo).setScale(0, RoundingMode.HALF_UP);
+                margenPct = ingresos.compareTo(BigDecimal.ZERO) > 0
+                        ? margen.multiply(BigDecimal.valueOf(100))
+                                .divide(ingresos, 1, RoundingMode.HALF_UP)
+                        : null;
+            } else if (ingresos != null) {
+                margen = ingresos.setScale(0, RoundingMode.HALF_UP);
+            }
+            BigDecimal litros = lote.getLitrosFinales();
+            BigDecimal costoPorLitro = (costo != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
+                    ? costo.divide(litros, 2, RoundingMode.HALF_UP) : null;
+            BigDecimal ingresoPorLitro = (ingresos != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
+                    ? ingresos.divide(litros, 2, RoundingMode.HALF_UP) : null;
+
+            filas.add(new RentabilidadLoteDto(
+                    lote.getId(), lote.getCodigoLote(), lote.getEstilo(),
+                    lote.getCarbFechaFinal(), litros,
+                    costo, ingresos, margen, margenPct,
+                    costoPorLitro, ingresoPorLitro));
+        }
+        return filas;
     }
 
     // JPQL SUM sobre BigDecimal puede retornar Double en Hibernate — conversión segura

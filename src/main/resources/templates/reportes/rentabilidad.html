@@ -92,9 +92,20 @@
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
 <div class="container-fluid px-4">
-    <div class="page-header">
-        <h1><i class="bi bi-currency-dollar me-2"></i><span th:text="#{reportes.rent.title}">Rentabilidad por Lote</span></h1>
-        <div class="subtitle" th:text="#{reportes.rent.subtitle}">Margen bruto por lote: ingresos de ventas despachadas vs. costos de producción asignados</div>
+    <div class="page-header d-flex justify-content-between align-items-start flex-wrap gap-3">
+        <div>
+            <h1><i class="bi bi-currency-dollar me-2"></i><span th:text="#{reportes.rent.title}">Rentabilidad por Lote</span></h1>
+            <div class="subtitle" th:text="#{reportes.rent.subtitle}">Margen bruto por lote: ingresos de ventas despachadas vs. costos de producción asignados</div>
+        </div>
+        <div class="d-flex gap-2 pt-1">
+            <a th:href="@{/reportes/rentabilidad/pdf(desde=${desde},hasta=${hasta},estilo=${estilo})}"
+               class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            <button class="btn btn-outline-secondary btn-sm btn-print">
+                <i class="bi bi-printer me-1"></i><span th:text="#{action.print}">Imprimir</span>
+            </button>
+        </div>
     </div>
 </div>
 
