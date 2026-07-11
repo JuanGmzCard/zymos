@@ -476,6 +476,34 @@ Prefijo `admin.mig.flash.*` — resueltos con `messageSource.getMessage(key, arg
 
 ---
 
+## MÓDULO REPORTES (`/reportes`)
+
+Tres reportes: Producción (`/reportes/produccion`), Ventas (`/reportes/ventas`), Rentabilidad (`/reportes/rentabilidad`). Navegación via fragmento `fragments/reportes-nav.html`. `GET /reportes/` redirige a `/reportes/produccion`.
+
+### Exports disponibles por reporte
+
+| Reporte | Excel | PDF |
+|---|---|---|
+| Producción | `GET /reportes/produccion/excel` — 3 sheets (Lotes, Por Estilo, Tendencia Mensual) | `GET /reportes/produccion/pdf` |
+| Ventas | `GET /reportes/ventas/excel` — 5 sheets (Ventas, Ítems, Por Cliente, Por Estado, Tendencia) | `GET /reportes/ventas/pdf` |
+| Rentabilidad | `GET /reportes/rentabilidad/excel` — 3 sheets (Rentabilidad, Por Estilo, Tendencia Mensual) | `GET /reportes/rentabilidad/pdf` |
+
+### ExcelExportService — notas críticas
+
+- **`generarExcelReporteProduccion(lotes, resumen, ...)`**: el parámetro `List<Object[]> resumen` es **ignorado**. `construirSheetEstilos` calcula los datos directamente desde `lotes`. Tests que llamen a este método deben pasar `LoteCerveza` reales; pasar solo `resumen` sin lotes produce una hoja vacía.
+- **`generarExcelReporteRentabilidad(filas, estilo, desde, hasta, ...)`**: recibe `List<RentabilidadLoteDto>` ya calculados por `ReporteController.buildRentabilidadFilas()`. Los 3 sheets usan los campos del DTO directamente.
+- **Paleta multi-tenant**: todas las sheets usan `Pal.of(ExportBranding)` — los colores se calculan desde el branding del tenant. No hardcodear hex en `ExcelExportService`.
+
+### PdfExportService — receta en multi-elaboración
+
+- `addTablaInfoLote()`: cuando `numCoc >= 2`, el label de la receta principal (S1) usa `pdf.label.receta_s1` ("Receta Sesión 1") en lugar del genérico `pdf.label.receta` ("Receta"). S2/S3/S4 usan `pdf.label.receta_s2/s3/s4` respectivamente.
+
+### detalle.html — receta S1 en multi-elaboración
+
+- Bloque "Receta Sesión 1" visible solo con `lote.numeroElaboraciones >= 2 and lote.receta != null`, posicionado después del bloque Fermentador. En sesión única, la receta aparece en el encabezado del lote y no se repite aquí.
+
+---
+
 ## CONVENCIONES DEL PROYECTO
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:
