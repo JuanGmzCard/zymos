@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.config.ExportBranding;
+import com.alera.dto.RentabilidadLoteDto;
 import com.alera.model.FacturaItem;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
@@ -710,6 +711,7 @@ public class ExcelExportService {
                 construirSheetVentasItems(wb, ventas, branding.name(), pal);
                 construirSheetVentasPorCliente(wb, ventas, branding.name(), pal);
                 construirSheetVentasPorEstado(wb, ventas, branding.name(), pal);
+                construirSheetVentasTendencia(wb, ventas, branding.name(), pal);
                 wb.write(baos);
             } catch (Exception e) {
                 throw new RuntimeException("Error generando Excel de ventas", e);
@@ -742,7 +744,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(tf("xls.titulo.ventas", brandName));
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 8));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 7));
 
         String periodoStr = tf("xls.filtro.periodo",
                 desde != null ? desde.format(FMT_FECHA) : "—",
@@ -752,7 +754,7 @@ public class ExcelExportService {
         Cell cP = fP.createCell(0);
         cP.setCellValue(periodoStr);
         cP.setCellStyle(stPeriodo);
-        sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 8));
+        sheet.addMergedRegion(new CellRangeAddress(r - 1, r - 1, 0, 7));
 
         long totalVentas = ventas.size();
         long totalDespachadas = ventas.stream().filter(v -> v.getEstado() == EstadoVenta.DESPACHADO).count();
@@ -773,14 +775,14 @@ public class ExcelExportService {
         Row fHead = sheet.createRow(r++);
         fHead.setHeight((short) (16 * 20));
         String[] headers = {
-            t("xls.header.cliente"),       t("xls.header.primer_lote"),
-            t("xls.header.fecha_despacho"), t("xls.header.estado"),
-            t("xls.header.valor_total"),   t("xls.header.notas"),
-            t("xls.header.creado_por")
+            t("xls.header.cliente"),        t("xls.header.primer_lote"),
+            t("xls.header.remision"),        t("xls.header.fecha_despacho"),
+            t("xls.header.estado"),          t("xls.header.valor_total"),
+            t("xls.header.notas"),           t("xls.header.creado_por")
         };
         for (int i = 0; i < headers.length; i++) celda(fHead, i, headers[i], stHeader);
 
-        int[] widths = {30, 16, 14, 14, 16, 30, 18};
+        int[] widths = {30, 16, 14, 14, 14, 16, 30, 18};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         for (int i = 0; i < ventas.size(); i++) {
@@ -790,13 +792,14 @@ public class ExcelExportService {
             XSSFCellStyle sD = alt ? stDatoAlt : stDato;
             XSSFCellStyle sN = alt ? stNumAlt  : stNum;
 
-            celda(fila, 0, v.getCliente(), sD);
-            celda(fila, 1, v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "", sD);
-            celda(fila, 2, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "", sD);
-            celda(fila, 3, v.getEstado() != null ? v.getEstado().getDisplayName() : "", sD);
-            celdaNum(fila, 4, toDouble(v.getValorTotal()), sN);
-            celda(fila, 5, v.getNotas() != null ? v.getNotas() : "", sD);
-            celda(fila, 6, v.getCreatedBy() != null ? v.getCreatedBy() : "", sD);
+            celda   (fila, 0, v.getCliente(), sD);
+            celda   (fila, 1, v.getPrimerCodigoLote()  != null ? v.getPrimerCodigoLote()  : "", sD);
+            celda   (fila, 2, v.getRemisionNumero()    != null ? v.getRemisionNumero()    : "", sD);
+            celda   (fila, 3, v.getFechaDespacho()     != null ? v.getFechaDespacho().format(FMT_FECHA) : "", sD);
+            celda   (fila, 4, v.getEstado()            != null ? v.getEstado().getDisplayName() : "", sD);
+            celdaNum(fila, 5, toDouble(v.getValorTotal()), sN);
+            celda   (fila, 6, v.getNotas()             != null ? v.getNotas()             : "", sD);
+            celda   (fila, 7, v.getCreatedBy()         != null ? v.getCreatedBy()         : "", sD);
         }
 
         if (!ventas.isEmpty()) {
@@ -822,7 +825,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(tf("xls.titulo.items_venta", brandName));
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 9));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
 
         r++;
         Row fHead = sheet.createRow(r++);
@@ -884,7 +887,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(tf("xls.titulo.por_cliente", brandName));
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
         r++;
         Row fHead = sheet.createRow(r++);
@@ -892,26 +895,35 @@ public class ExcelExportService {
         celda(fHead, 0, t("xls.header.cliente"),     stHeader);
         celda(fHead, 1, t("xls.header.ventas"),      stHeader);
         celda(fHead, 2, t("xls.header.total_dolar"), stHeader);
+        celda(fHead, 3, t("xls.header.pct_total"),   stHeader);
 
         sheet.setColumnWidth(0, 35 * 256);
         sheet.setColumnWidth(1, 12 * 256);
         sheet.setColumnWidth(2, 18 * 256);
+        sheet.setColumnWidth(3, 14 * 256);
 
-        Map<String, long[]> agrupado = new LinkedHashMap<>();
+        Map<String, double[]> agrupado = new LinkedHashMap<>();
         for (Venta v : ventas) {
             String cliente = v.getCliente() != null ? v.getCliente() : t("xls.text.sin_cliente");
-            agrupado.computeIfAbsent(cliente, k -> new long[]{0, 0});
+            agrupado.computeIfAbsent(cliente, k -> new double[]{0, 0});
             agrupado.get(cliente)[0]++;
-            if (v.getValorTotal() != null) agrupado.get(cliente)[1] += v.getValorTotal().longValue();
+            if (v.getValorTotal() != null) agrupado.get(cliente)[1] += v.getValorTotal().doubleValue();
         }
 
+        double totalGlobal = agrupado.values().stream().mapToDouble(d -> d[1]).sum();
+        List<Map.Entry<String, double[]>> sorted = agrupado.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue()[1], a.getValue()[1]))
+                .collect(Collectors.toList());
+
         int i = 0;
-        for (Map.Entry<String, long[]> entry : agrupado.entrySet()) {
+        for (Map.Entry<String, double[]> entry : sorted) {
             boolean alt = i % 2 != 0;
             Row fila = sheet.createRow(r++);
-            celda(fila, 0, entry.getKey(), alt ? stDatoAlt : stDato);
-            celdaNum(fila, 1, (double) entry.getValue()[0], alt ? stNumAlt : stNum);
-            celdaNum(fila, 2, (double) entry.getValue()[1], alt ? stNumAlt : stNum);
+            celda   (fila, 0, entry.getKey(),     alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, entry.getValue()[0], alt ? stNumAlt : stNum);
+            celdaNum(fila, 2, entry.getValue()[1], alt ? stNumAlt : stNum);
+            celdaNum(fila, 3, totalGlobal > 0 ? entry.getValue()[1] * 100.0 / totalGlobal : 0,
+                     alt ? stNumAlt : stNum);
             i++;
         }
     }
@@ -933,7 +945,7 @@ public class ExcelExportService {
         Cell cT = fT.createCell(0);
         cT.setCellValue(tf("xls.titulo.por_estado", brandName));
         cT.setCellStyle(stTitulo);
-        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 2));
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
 
         r++;
         Row fHead = sheet.createRow(r++);
@@ -941,27 +953,339 @@ public class ExcelExportService {
         celda(fHead, 0, t("xls.header.estado"),      stHeader);
         celda(fHead, 1, t("xls.header.ventas"),      stHeader);
         celda(fHead, 2, t("xls.header.total_dolar"), stHeader);
+        celda(fHead, 3, t("xls.header.pct_total"),   stHeader);
 
         sheet.setColumnWidth(0, 18 * 256);
         sheet.setColumnWidth(1, 12 * 256);
         sheet.setColumnWidth(2, 18 * 256);
+        sheet.setColumnWidth(3, 14 * 256);
 
-        Map<String, long[]> agrupado = new LinkedHashMap<>();
+        Map<String, double[]> agrupado = new LinkedHashMap<>();
         for (Venta v : ventas) {
             String estado = v.getEstado() != null ? v.getEstado().getDisplayName() : t("xls.text.sin_estado");
-            agrupado.computeIfAbsent(estado, k -> new long[]{0, 0});
+            agrupado.computeIfAbsent(estado, k -> new double[]{0, 0});
             agrupado.get(estado)[0]++;
-            if (v.getValorTotal() != null) agrupado.get(estado)[1] += v.getValorTotal().longValue();
+            if (v.getValorTotal() != null) agrupado.get(estado)[1] += v.getValorTotal().doubleValue();
         }
 
+        double totalGlobal = agrupado.values().stream().mapToDouble(d -> d[1]).sum();
+        List<Map.Entry<String, double[]>> sorted = agrupado.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue()[1], a.getValue()[1]))
+                .collect(Collectors.toList());
+
         int i = 0;
-        for (Map.Entry<String, long[]> entry : agrupado.entrySet()) {
+        for (Map.Entry<String, double[]> entry : sorted) {
             boolean alt = i % 2 != 0;
             Row fila = sheet.createRow(r++);
-            celda(fila, 0, entry.getKey(), alt ? stDatoAlt : stDato);
-            celdaNum(fila, 1, (double) entry.getValue()[0], alt ? stNumAlt : stNum);
-            celdaNum(fila, 2, (double) entry.getValue()[1], alt ? stNumAlt : stNum);
+            celda   (fila, 0, entry.getKey(),     alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, entry.getValue()[0], alt ? stNumAlt : stNum);
+            celdaNum(fila, 2, entry.getValue()[1], alt ? stNumAlt : stNum);
+            celdaNum(fila, 3, totalGlobal > 0 ? entry.getValue()[1] * 100.0 / totalGlobal : 0,
+                     alt ? stNumAlt : stNum);
             i++;
+        }
+    }
+
+    private void construirSheetVentasTendencia(XSSFWorkbook wb, List<Venta> ventas,
+                                                String brandName, Pal pal) {
+        // Group by year-month of createdAt — [0]=total ventas, [1]=despachadas, [2]=ingresos
+        TreeMap<String, double[]> mensual = new TreeMap<>();
+        for (Venta v : ventas) {
+            if (v.getCreatedAt() == null) continue;
+            String mes = String.format("%04d/%02d",
+                    v.getCreatedAt().getYear(), v.getCreatedAt().getMonthValue());
+            double[] d = mensual.computeIfAbsent(mes, k -> new double[3]);
+            d[0]++;
+            if (v.getEstado() == EstadoVenta.DESPACHADO) {
+                d[1]++;
+                if (v.getValorTotal() != null) d[2] += v.getValorTotal().doubleValue();
+            }
+        }
+        if (mensual.isEmpty()) return;
+
+        Sheet sheet = wb.createSheet(t("xls.sheet.tendencia_ventas"));
+        int[] colWidths = {14, 14, 14, 18};
+        for (int i = 0; i < colWidths.length; i++) sheet.setColumnWidth(i, colWidths[i] * 256);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(tf("xls.titulo.tendencia_ventas", brandName));
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+
+        r++;
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        celda(fH, 0, t("xls.header.mes"),          stHeader);
+        celda(fH, 1, t("xls.header.ventas"),        stHeader);
+        celda(fH, 2, t("xls.header.despachadas"),   stHeader);
+        celda(fH, 3, t("xls.header.ingresos_desp"), stHeader);
+
+        List<Map.Entry<String, double[]>> entries = new ArrayList<>(mensual.entrySet());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<String, double[]> e = entries.get(i);
+            boolean alt = i % 2 != 0;
+            double[] d = e.getValue();
+            Row fila = sheet.createRow(r++);
+            celda   (fila, 0, e.getKey(), alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, d[0],        alt ? stNumAlt  : stNum);
+            celdaNum(fila, 2, d[1],        alt ? stNumAlt  : stNum);
+            celdaNum(fila, 3, d[2],        alt ? stNumAlt  : stNum);
+        }
+    }
+
+    // ── Excel Reporte Rentabilidad ────────────────────────────────────
+
+    public byte[] generarExcelReporteRentabilidad(List<RentabilidadLoteDto> filas,
+                                                   String estilo,
+                                                   LocalDate desde, LocalDate hasta,
+                                                   ExportBranding branding, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            Pal pal = Pal.of(branding);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try (XSSFWorkbook wb = new XSSFWorkbook()) {
+                construirSheetRentabilidad(wb, filas, estilo, desde, hasta, branding.name(), pal);
+                construirSheetRentabilidadPorEstilo(wb, filas, branding.name(), pal);
+                construirSheetRentabilidadTendencia(wb, filas, branding.name(), pal);
+                wb.write(baos);
+            } catch (Exception e) {
+                throw new RuntimeException("Error generando Excel de rentabilidad", e);
+            }
+            return baos.toByteArray();
+        } finally {
+            LOCALE_HOLDER.remove();
+        }
+    }
+
+    private void construirSheetRentabilidad(XSSFWorkbook wb, List<RentabilidadLoteDto> filas,
+                                             String estilo,
+                                             LocalDate desde, LocalDate hasta,
+                                             String brandName, Pal pal) {
+        Sheet sheet = wb.createSheet(t("xls.sheet.rentabilidad"));
+        sheet.setDefaultColumnWidth(15);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stPeriodo = estiloPeriodo(wb, pal);
+        XSSFCellStyle stResumen = estiloResumen(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        // Título
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(tf("xls.titulo.rentabilidad", brandName));
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 10));
+
+        // Período / filtro
+        String desdeStr = desde != null ? desde.format(FMT_FECHA) : "—";
+        String hastaStr = hasta != null ? hasta.format(FMT_FECHA) : "—";
+        String filtro   = tf("xls.filtro.periodo", desdeStr, hastaStr);
+        if (estilo != null && !estilo.isBlank()) filtro += tf("xls.filtro.estado", estilo);
+        Row fP = sheet.createRow(r++);
+        Cell cP = fP.createCell(0);
+        cP.setCellValue(filtro);
+        cP.setCellStyle(stPeriodo);
+        sheet.addMergedRegion(new CellRangeAddress(1, 1, 0, 10));
+
+        // Resumen
+        r++;
+        BigDecimal totalCosto    = filas.stream().filter(f -> f.costo() != null)
+                .map(RentabilidadLoteDto::costo).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIngresos = filas.stream().filter(f -> f.ingresos() != null)
+                .map(RentabilidadLoteDto::ingresos).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMargen   = totalIngresos.subtract(totalCosto)
+                .setScale(0, java.math.RoundingMode.HALF_UP);
+        long rentables = filas.stream().filter(RentabilidadLoteDto::rentable).count();
+        long enRojo    = filas.stream().filter(RentabilidadLoteDto::enRojo).count();
+
+        Row fRes = sheet.createRow(r++);
+        celda(fRes, 0, tf("xls.resumen.total_lotes", filas.size()), stResumen);
+        celda(fRes, 2, tf("xls.resumen.ingresos",    totalIngresos.toPlainString()), stResumen);
+        celda(fRes, 5, tf("xls.resumen.margen",      totalMargen.toPlainString()), stResumen);
+        celda(fRes, 8, tf("xls.resumen.completados", rentables, enRojo), stResumen);
+
+        r++;
+        // Encabezados
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        String[] headers = {
+            t("xls.header.codigo"),       t("xls.header.estilo"),
+            t("xls.header.completado"),   t("xls.header.litros"),
+            t("xls.header.costo_total"),  t("xls.header.ingresos"),
+            t("xls.header.margen"),       t("xls.header.margen_pct"),
+            t("xls.header.costo_litro"),  t("xls.header.ingreso_litro"),
+            t("xls.header.estado")
+        };
+        for (int i = 0; i < headers.length; i++) celda(fH, i, headers[i], stHeader);
+
+        int[] widths = {14, 18, 14, 10, 16, 16, 16, 12, 13, 13, 14};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        for (int i = 0; i < filas.size(); i++) {
+            RentabilidadLoteDto f = filas.get(i);
+            boolean alt = i % 2 != 0;
+            Row fila = sheet.createRow(r++);
+            XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+            XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+            celda   (fila, 0,  f.codigoLote(), sD);
+            celda   (fila, 1,  f.estilo() != null ? f.estilo() : "", sD);
+            celda   (fila, 2,  f.fechaCompletado() != null ? f.fechaCompletado().format(FMT_FECHA) : "", sD);
+            celdaNum(fila, 3,  toDouble(f.litrosFinales()), sN);
+            celdaNum(fila, 4,  toDouble(f.costo()), sN);
+            celdaNum(fila, 5,  toDouble(f.ingresos()), sN);
+            celdaNum(fila, 6,  toDouble(f.margen()), sN);
+            celdaNum(fila, 7,  toDouble(f.margenPct()), sN);
+            celdaNum(fila, 8,  toDouble(f.costoPorLitro()), sN);
+            celdaNum(fila, 9,  toDouble(f.ingresoPorLitro()), sN);
+
+            String estado;
+            if (f.sinVentas())                       estado = t("xls.text.sin_ventas");
+            else if (f.sinCosto())                   estado = t("xls.text.sin_costo");
+            else if (f.rentable())                   estado = t("xls.text.rentable");
+            else                                     estado = t("xls.text.en_rojo");
+            celda(fila, 10, estado, sD);
+        }
+
+        if (!filas.isEmpty()) {
+            sheet.setAutoFilter(new CellRangeAddress(r - filas.size() - 1, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetRentabilidadPorEstilo(XSSFWorkbook wb, List<RentabilidadLoteDto> filas,
+                                                      String brandName, Pal pal) {
+        // [0]=count, [1]=litros, [2]=costo, [3]=ingresos, [4]=margen
+        Map<String, double[]> styleData = new LinkedHashMap<>();
+        for (RentabilidadLoteDto f : filas) {
+            String est = f.estilo() != null ? f.estilo() : "—";
+            double[] d = styleData.computeIfAbsent(est, k -> new double[5]);
+            d[0]++;
+            if (f.litrosFinales() != null) d[1] += f.litrosFinales().doubleValue();
+            if (f.costo()         != null) d[2] += f.costo().doubleValue();
+            if (f.ingresos()      != null) d[3] += f.ingresos().doubleValue();
+            if (f.margen()        != null) d[4] += f.margen().doubleValue();
+        }
+        List<Map.Entry<String, double[]>> sorted = styleData.entrySet().stream()
+                .sorted((a, b) -> Double.compare(b.getValue()[3], a.getValue()[3]))
+                .collect(Collectors.toList());
+
+        Sheet sheet = wb.createSheet(t("xls.sheet.por_estilo"));
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(tf("xls.titulo.rent.por_estilo", brandName));
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 6));
+
+        r++;
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        String[] colHeaders = {
+            t("xls.header.estilo"),       t("xls.header.cantidad_lotes"),
+            t("xls.header.litros_totales"), t("xls.header.costo_total"),
+            t("xls.header.ingresos"),     t("xls.header.margen"),
+            t("xls.header.margen_pct")
+        };
+        for (int i = 0; i < colHeaders.length; i++) celda(fH, i, colHeaders[i], stHeader);
+
+        int[] colWidths = {22, 14, 16, 16, 16, 16, 14};
+        for (int i = 0; i < colWidths.length; i++) sheet.setColumnWidth(i, colWidths[i] * 256);
+
+        double totalIngresos = sorted.stream().mapToDouble(e -> e.getValue()[3]).sum();
+
+        for (int i = 0; i < sorted.size(); i++) {
+            Map.Entry<String, double[]> e = sorted.get(i);
+            boolean alt = i % 2 != 0;
+            double[] d = e.getValue();
+            Row fila = sheet.createRow(r++);
+            double margenPct = d[3] > 0 ? d[4] * 100.0 / d[3] : 0;
+            celda   (fila, 0, e.getKey(),         alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, d[0],               alt ? stNumAlt  : stNum);
+            celdaNum(fila, 2, d[1] > 0 ? d[1] : null, alt ? stNumAlt : stNum);
+            celdaNum(fila, 3, d[2] > 0 ? d[2] : null, alt ? stNumAlt : stNum);
+            celdaNum(fila, 4, d[3] > 0 ? d[3] : null, alt ? stNumAlt : stNum);
+            celdaNum(fila, 5, d[4] != 0 ? d[4] : null, alt ? stNumAlt : stNum);
+            celdaNum(fila, 6, d[3] > 0 ? margenPct : null, alt ? stNumAlt : stNum);
+        }
+    }
+
+    private void construirSheetRentabilidadTendencia(XSSFWorkbook wb, List<RentabilidadLoteDto> filas,
+                                                      String brandName, Pal pal) {
+        // Group by year-month of fechaCompletado — [0]=lotes, [1]=ingresos, [2]=margen
+        TreeMap<String, double[]> mensual = new TreeMap<>();
+        for (RentabilidadLoteDto f : filas) {
+            if (f.fechaCompletado() == null) continue;
+            String mes = String.format("%04d/%02d",
+                    f.fechaCompletado().getYear(), f.fechaCompletado().getMonthValue());
+            double[] d = mensual.computeIfAbsent(mes, k -> new double[3]);
+            d[0]++;
+            if (f.ingresos() != null) d[1] += f.ingresos().doubleValue();
+            if (f.margen()   != null) d[2] += f.margen().doubleValue();
+        }
+        if (mensual.isEmpty()) return;
+
+        Sheet sheet = wb.createSheet(t("xls.sheet.tendencia_mensual"));
+        int[] colWidths = {14, 14, 18, 16};
+        for (int i = 0; i < colWidths.length; i++) sheet.setColumnWidth(i, colWidths[i] * 256);
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(tf("xls.titulo.rent.tendencia", brandName));
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, 3));
+
+        r++;
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        celda(fH, 0, t("xls.header.mes"),             stHeader);
+        celda(fH, 1, t("xls.header.cantidad_lotes"),  stHeader);
+        celda(fH, 2, t("xls.header.ingresos"),        stHeader);
+        celda(fH, 3, t("xls.header.margen"),          stHeader);
+
+        List<Map.Entry<String, double[]>> entries = new ArrayList<>(mensual.entrySet());
+        for (int i = 0; i < entries.size(); i++) {
+            Map.Entry<String, double[]> e = entries.get(i);
+            boolean alt = i % 2 != 0;
+            double[] d = e.getValue();
+            Row fila = sheet.createRow(r++);
+            celda   (fila, 0, e.getKey(),                  alt ? stDatoAlt : stDato);
+            celdaNum(fila, 1, d[0],                        alt ? stNumAlt  : stNum);
+            celdaNum(fila, 2, d[1] > 0 ? d[1] : null,    alt ? stNumAlt  : stNum);
+            celdaNum(fila, 3, d[2] != 0 ? d[2] : null,   alt ? stNumAlt  : stNum);
         }
     }
 

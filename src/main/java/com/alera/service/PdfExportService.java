@@ -592,7 +592,8 @@ public class PdfExportService {
             par(t, t("pdf.label.hora_fin")    + " S4", horaFin4, lbl, val, pal);
         }
 
-        par(t, t("pdf.label.receta"),
+        String recetaLabel = numCoc >= 2 ? t("pdf.label.receta_s1") : t("pdf.label.receta");
+        par(t, recetaLabel,
                 lote.getReceta() != null ? lote.getReceta().getNombre() : "—", lbl, val, pal);
         if (numCoc >= 2 && lote.getReceta2() != null) {
             par(t, t("pdf.label.receta_s2"), lote.getReceta2().getNombre(), lbl, val, pal);
@@ -1794,7 +1795,7 @@ public class PdfExportService {
                 par(stats, t("pdf.label.pendientes"),    String.valueOf(totalPendientes),   lbl, val, pal);
                 par(stats, t("pdf.label.canceladas"),    String.valueOf(totalCanceladas),   lbl, val, pal);
                 par(stats, t("pdf.label.ingresos"),      "$" + fmt2(ingresos),              lbl, val, pal);
-                par(stats, t("pdf.label.cliente"),       String.valueOf(clientesUnicos) + " únicos", lbl, val, pal);
+                par(stats, t("pdf.label.clientes_unicos"), String.valueOf(clientesUnicos), lbl, val, pal);
                 par(stats, t("pdf.label.generado"),      LocalDate.now().format(FMT_FECHA), lbl, val, pal);
                 par(stats, "", "", lbl, val, pal);
                 doc.add(stats);
@@ -1839,15 +1840,17 @@ public class PdfExportService {
                 }
                 if (clienteAgg.size() > 1) {
                     addTituloPdf(doc, t("pdf.title.resumen_clientes"), pal);
-                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f});
-                    resTabla.setWidthPercentage(55);
+                    PdfPTable resTabla = new PdfPTable(new float[]{3f, 1f, 1.5f, 0.9f});
+                    resTabla.setWidthPercentage(65);
                     resTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
                     Font rth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
-                    for (String h : new String[]{t("pdf.label.cliente"), t("pdf.header.lotes"), t("pdf.header.total")}) {
+                    for (String h : new String[]{t("pdf.label.cliente"), t("pdf.header.n_ventas"),
+                                                  t("pdf.header.total"),   t("pdf.header.pct_total")}) {
                         PdfPCell c = new PdfPCell(new Phrase(h, rth));
                         c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
                         resTabla.addCell(c);
                     }
+                    double totalClientes = clienteAgg.values().stream().mapToDouble(d -> d[1]).sum();
                     boolean[] a2 = {false};
                     clienteAgg.entrySet().stream()
                             .sorted((x, y) -> Double.compare(y.getValue()[1], x.getValue()[1]))
@@ -1859,8 +1862,50 @@ public class PdfExportService {
                                 tablaCelda(resTabla, e.getKey(), rtd, bg);
                                 tablaCelda(resTabla, String.valueOf((long) e.getValue()[0]), rtd, bg);
                                 tablaCelda(resTabla, "$" + fmt2(BigDecimal.valueOf(e.getValue()[1])), rtd, bg);
+                                tablaCelda(resTabla, totalClientes > 0
+                                        ? String.format("%.1f%%", e.getValue()[1] * 100.0 / totalClientes) : "—",
+                                        rtd, bg);
                             });
                     doc.add(resTabla);
+                }
+
+                // ── Resumen por estado ────────────────────────────────────
+                if (!ventas.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.resumen_estados"), pal);
+                    PdfPTable estTabla = new PdfPTable(new float[]{2f, 1f, 1.5f, 0.9f});
+                    estTabla.setWidthPercentage(55);
+                    estTabla.setHorizontalAlignment(Element.ALIGN_LEFT);
+                    Font eth = new Font(Font.HELVETICA, 7, Font.BOLD, pal.crema());
+                    for (String h : new String[]{t("pdf.label.estado"), t("pdf.header.n_ventas"),
+                                                  t("pdf.header.total"), t("pdf.header.pct_total")}) {
+                        PdfPCell c = new PdfPCell(new Phrase(h, eth));
+                        c.setBackgroundColor(pal.verde()); c.setBorderColor(C_BORDE); c.setPadding(4);
+                        estTabla.addCell(c);
+                    }
+                    Map<String, double[]> estadoAgg = new LinkedHashMap<>();
+                    for (Venta v : ventas) {
+                        String estNombre = v.getEstado() != null ? v.getEstado().getDisplayName() : "—";
+                        estadoAgg.computeIfAbsent(estNombre, k -> new double[]{0, 0});
+                        estadoAgg.get(estNombre)[0]++;
+                        if (v.getValorTotal() != null)
+                            estadoAgg.get(estNombre)[1] += v.getValorTotal().doubleValue();
+                    }
+                    double totalEst = estadoAgg.values().stream().mapToDouble(d -> d[1]).sum();
+                    boolean[] a3 = {false};
+                    estadoAgg.entrySet().stream()
+                            .sorted((x, y) -> Double.compare(y.getValue()[1], x.getValue()[1]))
+                            .forEach(e -> {
+                                Color bg = a3[0] ? pal.fondo() : Color.WHITE;
+                                a3[0] = !a3[0];
+                                Font etd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
+                                tablaCelda(estTabla, e.getKey(), etd, bg);
+                                tablaCelda(estTabla, String.valueOf((long) e.getValue()[0]), etd, bg);
+                                tablaCelda(estTabla, "$" + fmt2(BigDecimal.valueOf(e.getValue()[1])), etd, bg);
+                                tablaCelda(estTabla, totalEst > 0
+                                        ? String.format("%.1f%%", e.getValue()[1] * 100.0 / totalEst) : "—",
+                                        etd, bg);
+                            });
+                    doc.add(estTabla);
                 }
 
                 // ── Pie ───────────────────────────────────────────────────

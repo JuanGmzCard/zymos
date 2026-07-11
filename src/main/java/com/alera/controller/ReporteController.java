@@ -503,6 +503,35 @@ public class ReporteController {
                 .body(pdf);
     }
 
+    @GetMapping("/rentabilidad/excel")
+    public ResponseEntity<byte[]> rentabilidadExcel(
+            @RequestParam(required = false) String estilo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request, Locale locale) {
+
+        if (desde == null) desde = LocalDate.now().minusMonths(3);
+        if (hasta == null) hasta = LocalDate.now();
+
+        List<RentabilidadLoteDto> filas = buildRentabilidadFilas(estilo, desde, hasta);
+        filas.sort(Comparator.comparing(
+                r -> r.margen() != null ? r.margen() : BigDecimal.valueOf(-999_999),
+                Comparator.reverseOrder()));
+
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+
+        byte[] excel = excelExportService.generarExcelReporteRentabilidad(
+                filas, estilo, desde, hasta, branding, locale);
+        String filename = "reporte-rentabilidad-" + desde + "-" + hasta + ".xlsx";
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(excel);
+    }
+
     @GetMapping("/rentabilidad/pdf")
     public ResponseEntity<byte[]> rentabilidadPdf(
             @RequestParam(required = false) String estilo,

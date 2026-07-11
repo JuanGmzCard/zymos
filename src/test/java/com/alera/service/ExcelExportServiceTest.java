@@ -346,10 +346,9 @@ class ExcelExportServiceTest {
     @Test
     @DisplayName("la hoja 2 contiene el nombre del estilo en los datos (fila 3, col 0)")
     void excel_hoja2_contieneDatoEstilo() throws Exception {
-        java.util.List<Object[]> resumen = new java.util.ArrayList<>();
-        resumen.add(resumenEstilo("Stout Imperial", 2L, 40.0));
+        LoteCerveza l = lote("IMP-001", "Stout Imperial");
         byte[] bytes = service.generarExcelReporteProduccion(
-                List.of(), resumen, DESDE, HASTA, BRANDING, ES);
+                List.of(l), List.of(), DESDE, HASTA, BRANDING, ES);
         try (XSSFWorkbook wb = openExcel(bytes)) {
             assertThat(cellStr(wb.getSheetAt(1), 3, 0)).isEqualTo("Stout Imperial");
         }
@@ -358,10 +357,10 @@ class ExcelExportServiceTest {
     @Test
     @DisplayName("la hoja 2 contiene los litros totales del resumen de estilos (fila 3, col 2)")
     void excel_hoja2_contieneLitrosTotalesEstilo() throws Exception {
-        java.util.List<Object[]> resumen = new java.util.ArrayList<>();
-        resumen.add(resumenEstilo("IPA", 3L, 65.0));
+        LoteCerveza l = lote("IPA-001", "IPA");
+        l.setLitrosFinales(new BigDecimal("65.0"));
         byte[] bytes = service.generarExcelReporteProduccion(
-                List.of(), resumen, DESDE, HASTA, BRANDING, ES);
+                List.of(l), List.of(), DESDE, HASTA, BRANDING, ES);
         try (XSSFWorkbook wb = openExcel(bytes)) {
             double litros = cellNum(wb.getSheetAt(1), 3, 2);
             assertThat(litros).isEqualTo(65.0, within(0.001));

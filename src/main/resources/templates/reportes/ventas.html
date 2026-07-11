@@ -51,11 +51,11 @@
             <p class="subtitle mb-0" th:text="#{reportes.ventas.subtitle}">Análisis de ventas y despachos por período</p>
         </div>
         <div class="d-flex gap-2 pt-1">
-            <a th:href="@{/reportes/ventas/pdf(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''})}"
+            <a th:href="@{/reportes/ventas/pdf(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''},estado=${estado != null ? estado.name() : ''})}"
                class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
-            <a th:href="@{/ventas/export(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''})}"
+            <a th:href="@{/reportes/ventas/excel(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''},estado=${estado != null ? estado.name() : ''})}"
                class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{fact.btn.excel}">Excel</span>
             </a>

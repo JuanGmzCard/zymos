@@ -229,6 +229,12 @@
                             <div class="detail-value"
                                  th:text="${lote.equipoFermentador != null} ? ${lote.equipoFermentador.nombre} : #{traz.det.label.sin.asignar}">—</div>
                         </div>
+                        <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.receta != null}">
+                            <div class="detail-label" th:text="#{traz.det.label.receta.s1}">Receta Sesión 1</div>
+                            <div class="detail-value">
+                                <a th:href="@{/recetas/ver/{id}(id=${lote.receta.id})}" th:text="${lote.receta.nombre}">—</a>
+                            </div>
+                        </div>
                         <div class="col-6" th:if="${lote.numeroElaboraciones != null and lote.numeroElaboraciones >= 2 and lote.receta2 != null}">
                             <div class="detail-label" th:text="#{traz.det.label.receta.s2}">Receta Sesión 2</div>
                             <div class="detail-value">
