@@ -4,6 +4,7 @@ import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Notificacion;
+import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.NotificacionRepository;
@@ -26,12 +27,14 @@ public class NotificacionService {
 
     // Qué authority de módulo debe tener el usuario para ver cada tipo de notificación.
     // PLAN_* y tipos sin entrada → solo ROLE_ADMIN / ROLE_SUPERADMIN.
-    private static final Map<TipoNotificacion, String> TIPO_AUTHORITY = Map.of(
-        TipoNotificacion.BAJO_STOCK,   "MODULO_INVENTARIO_VER",
-        TipoNotificacion.VENCIMIENTO,  "MODULO_INVENTARIO_VER",
-        TipoNotificacion.MANTENIMIENTO,"MODULO_EQUIPOS_VER",
-        TipoNotificacion.SISTEMA,      "MODULO_FACTURACION_VER",
-        TipoNotificacion.BPM_SALUD,    "MODULO_BPM_VER"
+    private static final Map<TipoNotificacion, String> TIPO_AUTHORITY = Map.ofEntries(
+        Map.entry(TipoNotificacion.BAJO_STOCK,        "MODULO_INVENTARIO_VER"),
+        Map.entry(TipoNotificacion.VENCIMIENTO,       "MODULO_INVENTARIO_VER"),
+        Map.entry(TipoNotificacion.MANTENIMIENTO,     "MODULO_EQUIPOS_VER"),
+        Map.entry(TipoNotificacion.SISTEMA,           "MODULO_FACTURACION_VER"),
+        Map.entry(TipoNotificacion.BPM_SALUD,         "MODULO_BPM_VER"),
+        Map.entry(TipoNotificacion.TAREA_ASIGNADA,    "MODULO_TAREAS_VER"),
+        Map.entry(TipoNotificacion.TAREA_VENCIMIENTO, "MODULO_TAREAS_VER")
     );
 
     private final NotificacionRepository repo;
@@ -218,6 +221,31 @@ public class NotificacionService {
                     nombreManipulador + " reportó síntomas hoy. Revisá las autorizaciones de salud.",
                     "/bpm/salud/autorizaciones"));
         }
+    }
+
+    public void crearAlertaTareaAsignada(Tarea tarea) {
+        String titulo  = "Tarea asignada: " + tarea.getTitulo();
+        String mensaje = "Te asignaron la tarea \"" + tarea.getTitulo() + "\""
+                + (tarea.getFechaVencimiento() != null ? " — vence el " + tarea.getFechaVencimiento() : "") + ".";
+        repo.save(Notificacion.of(TipoNotificacion.TAREA_ASIGNADA, titulo, mensaje, "/tareas/" + tarea.getId()));
+    }
+
+    public void crearAlertaTareaVencimiento(List<Tarea> tareas) {
+        if (tareas.isEmpty()) return;
+        LocalDateTime hoy     = LocalDate.now().atStartOfDay();
+        LocalDateTime maniana = hoy.plusDays(1);
+        if (repo.existeEnPeriodo(TipoNotificacion.TAREA_VENCIMIENTO, hoy, maniana)) return;
+        int n = tareas.size();
+        String msg = n == 1
+                ? "\"" + tareas.get(0).getTitulo() + "\" vence mañana."
+                : tareas.stream().limit(3).map(Tarea::getTitulo)
+                        .reduce((a, b) -> a + ", " + b).orElse("")
+                  + (n > 3 ? " y " + (n - 3) + " más vencen" : " vencen") + " mañana.";
+        repo.save(Notificacion.of(
+                TipoNotificacion.TAREA_VENCIMIENTO,
+                n + " tarea" + (n > 1 ? "s" : "") + " por vencer",
+                msg,
+                "/tareas"));
     }
 
     public void crearAlertaFacturas(List<FacturaProveedor> sinProcesar, int dias) {

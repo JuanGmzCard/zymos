@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - ' + (${modoEdicion} ? #{tarea.editar} : #{tarea.nueva})">Alera - Tarea</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .item-row { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:0.75rem 1rem; margin-bottom:0.5rem; }
+        .item-row .btn-remove { opacity:0; transition:opacity .15s; }
+        .item-row:hover .btn-remove { opacity:1; }
+        html.dark-mode .filter-card,
+        html.dark-mode .table-card { background:var(--dm-card); border-color:var(--dm-border-med); }
+        html.dark-mode .item-row { background:var(--dm-input); border-color:var(--dm-border-med); }
+        html.dark-mode .form-control, html.dark-mode .form-select { background:var(--dm-input); color:var(--dm-text); border-color:var(--dm-border-med); }
+        html.dark-mode .form-label { color:var(--dm-text-soft); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid px-4">
+
+    <!-- Cabecera -->
+    <div class="page-header">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a th:href="@{/tareas}" th:text="#{tarea.title}">Tareas</a></li>
+                <li class="breadcrumb-item active"
+                    th:text="${modoEdicion} ? #{tarea.editar} : #{tarea.nueva}">Nueva Tarea</li>
+            </ol>
+        </nav>
+        <h1 th:text="${modoEdicion} ? #{tarea.editar} : #{tarea.nueva}">Nueva Tarea</h1>
+    </div>
+
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert alert-dismissible mb-3"
+         th:classappend="'alert-' + ${tipoMensaje}">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <form th:action="${modoEdicion} ? @{/tareas/actualizar/{id}(id=${tarea.id})} : @{/tareas/guardar}"
+          method="post" id="tareaForm">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+        <div class="row g-3">
+            <!-- Panel izquierdo -->
+            <div class="col-lg-8">
+                <div class="table-card p-3 mb-3">
+                    <!-- Título -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" th:text="#{tarea.label.titulo}">Título</label>
+                        <input type="text" name="titulo" class="form-control" required maxlength="200"
+                               th:placeholder="#{tarea.ph.titulo}"
+                               th:value="${tarea != null ? tarea.titulo : ''}">
+                    </div>
+                    <!-- Descripción -->
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{tarea.label.descripcion}">Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="3"
+                                  th:placeholder="#{tarea.ph.descripcion}"
+                                  th:text="${tarea != null ? tarea.descripcion : ''}"></textarea>
+                    </div>
+                </div>
+
+                <!-- Ítems -->
+                <div class="table-card">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold" th:text="#{tarea.label.items}">Ítems de la tarea</span>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAgregarItem">
+                            <i class="bi bi-plus-lg me-1"></i><span th:text="#{tarea.btn.agregar.item}">Agregar ítem</span>
+                        </button>
+                    </div>
+                    <div class="p-3" id="itemsContainer">
+                        <!-- Ítems existentes (modo edición) -->
+                        <th:block th:if="${modoEdicion and tarea != null}" th:each="item, stat : ${tarea.items}">
+                            <div class="item-row" th:id="'item-' + ${stat.index}">
+                                <div class="row g-2 align-items-start">
+                                    <div class="col-md-6">
+                                        <label class="form-label small" th:text="#{tarea.label.item.desc}">Descripción</label>
+                                        <input type="text" name="itemDesc" class="form-control form-control-sm" required
+                                               maxlength="500" th:placeholder="#{tarea.ph.item}"
+                                               th:value="${item.descripcion}">
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small" th:text="#{tarea.label.item.lote}">Lote</label>
+                                        <select name="itemLoteId" class="form-select form-select-sm">
+                                            <option value="" th:text="#{tarea.select.lote}">— Sin lote —</option>
+                                            <option th:each="l : ${lotes}"
+                                                    th:value="${l.id}"
+                                                    th:text="${l.codigoLote + ' — ' + (l.estilo != null ? l.estilo : '')}"
+                                                    th:selected="${item.lote != null and item.lote.id == l.id}"></option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small" th:text="#{tarea.label.item.equipo}">Equipo</label>
+                                        <div class="d-flex gap-1">
+                                            <select name="itemEquipoId" class="form-select form-select-sm">
+                                                <option value="" th:text="#{tarea.select.equipo}">— Sin equipo —</option>
+                                                <option th:each="eq : ${equipos}"
+                                                        th:value="${eq.id}"
+                                                        th:text="${eq.nombre}"
+                                                        th:selected="${item.equipo != null and item.equipo.id == eq.id}"></option>
+                                            </select>
+                                            <button type="button" class="btn btn-outline-danger btn-sm btn-remove"
+                                                    th:attr="data-target=${'item-' + stat.index}"
+                                                    title="Eliminar">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </th:block>
+                        <!-- Placeholder cuando no hay ítems -->
+                        <div id="noItemsMsg" class="text-muted small text-center py-3"
+                             th:if="${!modoEdicion or tarea == null or tarea.items.isEmpty()}"
+                             th:text="#{tarea.label.sin.items}">Sin ítems</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel derecho -->
+            <div class="col-lg-4">
+                <div class="table-card p-3">
+                    <!-- Asignado a -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" th:text="#{tarea.label.asignado}">Asignado a</label>
+                        <select name="asignadoA" class="form-select">
+                            <option value="" th:text="#{tarea.select.usuario}">— Sin asignar —</option>
+                            <option th:each="u : ${usuarios}"
+                                    th:value="${u.username}"
+                                    th:text="${u.username}"
+                                    th:selected="${tarea != null and tarea.asignadoA != null and tarea.asignadoA == u.username}"></option>
+                        </select>
+                    </div>
+                    <!-- Prioridad -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" th:text="#{tarea.label.prioridad}">Prioridad</label>
+                        <select name="prioridad" class="form-select">
+                            <option th:each="p : ${prioridades}"
+                                    th:value="${p.name()}"
+                                    th:text="${p.displayName}"
+                                    th:selected="${tarea != null ? tarea.prioridad == p : p.name() == 'MEDIA'}"></option>
+                        </select>
+                    </div>
+                    <!-- Fecha vencimiento -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" th:text="#{tarea.label.vencimiento}">Fecha vencimiento</label>
+                        <input type="date" name="fechaVencimiento" class="form-control"
+                               th:value="${tarea != null and tarea.fechaVencimiento != null ? #temporals.format(tarea.fechaVencimiento,'yyyy-MM-dd') : ''}">
+                    </div>
+                    <!-- Lote referencia -->
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{tarea.label.lote}">Lote (ref. opcional)</label>
+                        <select name="loteId" class="form-select">
+                            <option value="" th:text="#{tarea.select.lote}">— Sin lote —</option>
+                            <option th:each="l : ${lotes}"
+                                    th:value="${l.id}"
+                                    th:text="${l.codigoLote + ' — ' + (l.estilo != null ? l.estilo : '')}"
+                                    th:selected="${tarea != null and tarea.lote != null and tarea.lote.id == l.id}"></option>
+                        </select>
+                    </div>
+                    <!-- Equipo referencia -->
+                    <div class="mb-3">
+                        <label class="form-label" th:text="#{tarea.label.equipo}">Equipo (ref. opcional)</label>
+                        <select name="equipoId" class="form-select">
+                            <option value="" th:text="#{tarea.select.equipo}">— Sin equipo —</option>
+                            <option th:each="eq : ${equipos}"
+                                    th:value="${eq.id}"
+                                    th:text="${eq.nombre}"
+                                    th:selected="${tarea != null and tarea.equipo != null and tarea.equipo.id == eq.id}"></option>
+                        </select>
+                    </div>
+                    <!-- Botones -->
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>
+                            <span th:text="${modoEdicion} ? #{tarea.btn.actualizar} : #{tarea.btn.guardar}">Guardar</span>
+                        </button>
+                        <a th:href="${modoEdicion} ? @{/tareas/{id}(id=${tarea.id})} : @{/tareas}"
+                           class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Templates de options para los selects dinámicos -->
+<template id="tplLoteOptions">
+    <option value="" th:text="#{tarea.select.lote}">— Sin lote —</option>
+    <option th:each="l : ${lotes}" th:value="${l.id}"
+            th:text="${l.codigoLote + (l.estilo != null ? ' — ' + l.estilo : '')}"></option>
+</template>
+<template id="tplEquipoOptions">
+    <option value="" th:text="#{tarea.select.equipo}">— Sin equipo —</option>
+    <option th:each="eq : ${equipos}" th:value="${eq.id}" th:text="${eq.nombre}"></option>
+</template>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:attr="nonce=${cspNonce}">
+(function () {
+    let itemCount = document.querySelectorAll('.item-row').length;
+
+    function cloneOptions(templateId) {
+        const tpl = document.getElementById(templateId);
+        if (!tpl) return '';
+        const frag = tpl.content.cloneNode(true);
+        const tmp = document.createElement('div');
+        tmp.appendChild(frag);
+        return tmp.innerHTML;
+    }
+
+    function addItemRow() {
+        const idx = itemCount++;
+        const noMsg = document.getElementById('noItemsMsg');
+        if (noMsg) noMsg.remove();
+
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.id = 'item-' + idx;
+        div.innerHTML = `
+          <div class="row g-2 align-items-start">
+            <div class="col-md-6">
+              <label class="form-label small">Descripción del ítem</label>
+              <input type="text" name="itemDesc" class="form-control form-control-sm" required maxlength="500">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Lote</label>
+              <select name="itemLoteId" class="form-select form-select-sm">${cloneOptions('tplLoteOptions')}</select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label small">Equipo</label>
+              <div class="d-flex gap-1">
+                <select name="itemEquipoId" class="form-select form-select-sm">${cloneOptions('tplEquipoOptions')}</select>
+                <button type="button" class="btn btn-outline-danger btn-sm btn-remove" data-target="item-${idx}" title="Eliminar">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>`;
+        document.getElementById('itemsContainer').appendChild(div);
+    }
+
+    document.getElementById('btnAgregarItem').addEventListener('click', addItemRow);
+
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.btn-remove');
+        if (!btn) return;
+        const row = document.getElementById(btn.dataset.target);
+        if (row) row.remove();
+        if (document.querySelectorAll('.item-row').length === 0) {
+            const msg = document.createElement('div');
+            msg.id = 'noItemsMsg';
+            msg.className = 'text-muted small text-center py-3';
+            msg.textContent = 'Sin ítems registrados';
+            document.getElementById('itemsContainer').appendChild(msg);
+        }
+    });
+}());
+</script>
+</body>
+</html>

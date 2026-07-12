@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - ' + #{tarea.title}">Alera - Tareas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .prioridad-badge { font-size:0.7rem; font-weight:600; border-radius:4px; padding:2px 8px; }
+        .progress-sm { height:6px; border-radius:3px; }
+        .vencida-row td { background:#fff5f5 !important; }
+        html.dark-mode .filter-card,
+        html.dark-mode .table-card { background:var(--dm-card); border-color:var(--dm-border-med); }
+        html.dark-mode .table-card thead th { background:var(--dm-card) !important; color:var(--dm-text-muted) !important; }
+        html.dark-mode .table-card tbody td { color:var(--dm-text); border-color:var(--dm-border-faint); }
+        html.dark-mode .table-card tbody tr:hover td { background:var(--dm-hover); }
+        html.dark-mode .stat-card-simple { background:var(--dm-card); border-color:var(--dm-border-med); }
+        html.dark-mode .stat-card-simple .stat-value { color:var(--dm-text-strong); }
+        html.dark-mode .stat-card-simple .stat-label { color:var(--dm-text-muted); }
+        html.dark-mode .filter-tab.active { background:var(--verde-zymos); color:#fff; }
+        html.dark-mode .filter-tab:not(.active) { color:var(--dm-text-soft); }
+        html.dark-mode .filter-tab:not(.active):hover { background:var(--dm-hover); }
+        html.dark-mode .vencida-row td { background:rgba(239,68,68,0.08) !important; }
+        html.dark-mode .progress { background:var(--dm-input); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container-fluid px-4">
+
+    <!-- Cabecera -->
+    <div class="page-header d-flex justify-content-between align-items-start">
+        <div>
+            <h1 th:text="#{tarea.title}">Gestión de Tareas</h1>
+            <p class="subtitle mb-0" th:text="#{tarea.subtitle}">Asignación y seguimiento de tareas operativas</p>
+        </div>
+        <div class="d-flex gap-2 pt-1">
+            <a th:href="@{/tareas/nueva}"
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TAREAS_CREAR')"
+               class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i><span th:text="#{tarea.nueva}">Nueva Tarea</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Flash -->
+    <div th:if="${mensaje}" class="alert alert-dismissible mb-3"
+         th:classappend="'alert-' + ${tipoMensaje}">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="d-flex gap-3 flex-wrap mb-4">
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{tarea.stat.total}">Total</div>
+            <div class="stat-value" th:text="${conteos['total']}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{tarea.stat.pendiente}">Pendientes</div>
+            <div class="stat-value warning" th:text="${conteos['pendiente']}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{tarea.stat.en_progreso}">En progreso</div>
+            <div class="stat-value info" th:text="${conteos['en_progreso']}">0</div>
+        </div>
+        <div class="stat-card-simple">
+            <div class="stat-label" th:text="#{tarea.stat.completada}">Completadas</div>
+            <div class="stat-value success" th:text="${conteos['completada']}">0</div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filter-card mb-3">
+        <div class="d-flex gap-2 flex-wrap align-items-center">
+            <!-- Filtro por estado -->
+            <a th:href="@{/tareas(asignadoA=${asignadoFiltro})}"
+               th:classappend="${estadoFiltro == null} ? 'active' : 'inactive'"
+               class="filter-tab" th:text="#{tarea.filter.todas}">Todas</a>
+            <th:block th:each="est : ${estados}">
+                <a th:href="@{/tareas(estado=${est.name()},asignadoA=${asignadoFiltro})}"
+                   th:classappend="${estadoFiltro != null and estadoFiltro.name() == est.name()} ? 'active' : 'inactive'"
+                   class="filter-tab"
+                   th:text="${est.displayName}">Estado</a>
+            </th:block>
+            <!-- Filtro por usuario -->
+            <div class="ms-auto d-flex align-items-center gap-2">
+                <label class="text-muted small" th:text="#{tarea.filter.asignado}">Usuario</label>
+                <select class="form-select form-select-sm" style="width:auto"
+                        onchange="window.location='/tareas?asignadoA='+this.value+(this.dataset.estado ? '&amp;estado='+this.dataset.estado : '')"
+                        th:attr="data-estado=${estadoFiltro != null ? estadoFiltro.name() : ''}">
+                    <option value="" th:text="#{tarea.filter.todas}">Todas</option>
+                    <option th:each="u : ${usuarios}"
+                            th:value="${u.username}"
+                            th:text="${u.username}"
+                            th:selected="${asignadoFiltro != null and asignadoFiltro == u.username}"></option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-card">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-600 small" style="color:#475569"
+                  th:text="${tareas.size()} + ' tarea' + (${tareas.size()} != 1 ? 's' : '')">0 tareas</span>
+        </div>
+        <div th:if="${tareas.isEmpty()}" class="p-4 text-center text-muted">
+            <i class="bi bi-check2-all fs-2 d-block mb-2"></i>
+            <span th:text="#{tarea.label.sin.tareas}">No hay tareas en esta vista</span>
+        </div>
+        <div class="table-responsive" th:if="${!tareas.isEmpty()}">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Tarea</th>
+                        <th th:text="#{tarea.label.asignado}">Asignado a</th>
+                        <th th:text="#{tarea.label.prioridad}">Prioridad</th>
+                        <th th:text="#{tarea.label.vencimiento}">Vencimiento</th>
+                        <th th:text="#{tarea.label.progreso}">Progreso</th>
+                        <th th:text="#{tarea.label.estado}">Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="t : ${tareas}" th:classappend="${t.vencida} ? 'vencida-row' : ''">
+                        <td>
+                            <a th:href="@{/tareas/{id}(id=${t.id})}" class="fw-semibold text-decoration-none"
+                               style="color:#1e293b" th:text="${t.titulo}">—</a>
+                            <div th:if="${t.descripcion != null and !t.descripcion.isEmpty()}"
+                                 class="small text-muted text-truncate" style="max-width:280px"
+                                 th:text="${t.descripcion}"></div>
+                            <div th:if="${!t.items.isEmpty()}" class="small text-muted">
+                                <i class="bi bi-list-task me-1"></i>
+                                <span th:text="${t.items.size()} + ' ítem' + (${t.items.size()} != 1 ? 's' : '')"></span>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:if="${t.asignadoA != null}"
+                                  class="badge bg-light text-dark border">
+                                <i class="bi bi-person me-1"></i><span th:text="${t.asignadoA}">—</span>
+                            </span>
+                            <span th:if="${t.asignadoA == null}" class="text-muted small">—</span>
+                        </td>
+                        <td>
+                            <span class="badge prioridad-badge"
+                                  th:classappend="${t.prioridad.badgeClass}"
+                                  th:text="${t.prioridad.displayName}">—</span>
+                        </td>
+                        <td>
+                            <span th:if="${t.fechaVencimiento != null}"
+                                  th:text="${#temporals.format(t.fechaVencimiento,'dd/MM/yyyy')}"
+                                  th:classappend="${t.vencida} ? 'text-danger fw-semibold' : ''">—</span>
+                            <span th:if="${t.fechaVencimiento == null}" class="text-muted small" th:text="#{tarea.sin.vencimiento}">—</span>
+                            <span th:if="${t.vencida}" class="badge bg-danger ms-1 small" th:text="#{tarea.label.vencida}">Vencida</span>
+                        </td>
+                        <td style="min-width:100px">
+                            <div th:if="${!t.items.isEmpty()}">
+                                <div class="progress progress-sm mb-1">
+                                    <div class="progress-bar bg-success"
+                                         th:style="'width:' + ${t.porcentajeCompletado} + '%'"></div>
+                                </div>
+                                <small class="text-muted" th:text="${t.porcentajeCompletado} + '%'">0%</small>
+                            </div>
+                            <span th:if="${t.items.isEmpty()}" class="text-muted small">—</span>
+                        </td>
+                        <td>
+                            <span class="badge" th:classappend="${t.estado.badgeClass}"
+                                  th:text="${t.estado.displayName}">—</span>
+                        </td>
+                        <td class="text-end" style="white-space:nowrap">
+                            <a th:href="@{/tareas/{id}(id=${t.id})}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a th:href="@{/tareas/editar/{id}(id=${t.id})}"
+                               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TAREAS_EDITAR')"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <form th:action="@{/tareas/{id}/eliminar(id=${t.id})}" method="post" style="display:contents"
+                                  th:attr="data-confirm=#{tarea.confirm.eliminar}">
+                                <input type="hidden" name="_method" value="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                <button type="submit" class="btn btn-outline-danger btn-sm"
+                                        sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TAREAS_ELIMINAR')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

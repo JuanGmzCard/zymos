@@ -7,7 +7,9 @@ public enum TipoNotificacion {
     SISTEMA("bi-info-circle-fill",                 "text-primary"),
     PLAN_VENCIMIENTO("bi-exclamation-octagon-fill","text-danger"),
     PLAN_LIMITE("bi-graph-up-arrow",               "text-warning"),
-    BPM_SALUD("bi-heart-pulse",                    "text-danger");
+    BPM_SALUD("bi-heart-pulse",                    "text-danger"),
+    TAREA_ASIGNADA("bi-check2-square",             "text-success"),
+    TAREA_VENCIMIENTO("bi-alarm",                  "text-warning");
 
     private final String icono;
     private final String colorClase;

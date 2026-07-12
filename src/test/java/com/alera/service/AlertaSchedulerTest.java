@@ -32,6 +32,7 @@ class AlertaSchedulerTest {
     @Mock VentaService             ventaService;
     @Mock LoteCervezaRepository    loteCervezaRepo;
     @Mock UsuarioRepository        usuarioRepo;
+    @Mock TareaService             tareaService;
 
     @InjectMocks AlertaScheduler scheduler;
 
@@ -49,6 +50,7 @@ class AlertaSchedulerTest {
         lenient().when(emailService.mailConfigurado()).thenReturn(false);
         lenient().when(loteCervezaRepo.count()).thenReturn(0L);
         lenient().when(usuarioRepo.countByTenantId(any())).thenReturn(0L);
+        lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of());
     }
 
     @AfterEach

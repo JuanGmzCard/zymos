@@ -246,6 +246,9 @@ public class SecurityConfig {
                 .requestMatchers("/barriles/**")
                     .access(modulo("BARRILES"))
 
+                // Tareas
+                .requestMatchers("/tareas/**").access(modulo("TAREAS"))
+
                 // BPM
                 .requestMatchers("/bpm/salud/autorizaciones", "/bpm/salud/autorizar/**")
                     .hasAnyRole("ADMIN", "SUPERADMIN")

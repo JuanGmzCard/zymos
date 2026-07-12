@@ -128,13 +128,13 @@ public class RolTenantService {
                 "Acceso completo al sistema", true, true);
         crearPermisosParaRol(tenantId, "Administrador",
                 new String[]{"TRAZABILIDAD","RECETAS","INVENTARIO","FACTURACION","COMERCIAL",
-                             "EQUIPOS","REPORTES","PLANIFICACION","BPM","BARRILES"},
+                             "EQUIPOS","REPORTES","PLANIFICACION","BPM","BARRILES","TAREAS"},
                 true, true, true, true);
 
         repo.insertarRolNativo(tenantId, "Producción",
                 "Gestión de lotes, recetas e inventario de producción", true, false);
         crearPermisosParaRol(tenantId, "Producción",
-                new String[]{"TRAZABILIDAD","RECETAS","PLANIFICACION","INVENTARIO","EQUIPOS","BARRILES"},
+                new String[]{"TRAZABILIDAD","RECETAS","PLANIFICACION","INVENTARIO","EQUIPOS","BARRILES","TAREAS"},
                 true, true, true, true);
         crearPermisosParaRol(tenantId, "Producción",
                 new String[]{"REPORTES"}, true, false, false, false);
@@ -160,7 +160,7 @@ public class RolTenantService {
         repo.insertarRolNativo(tenantId, "Recursos Humanos",
                 "Acceso al módulo BPM (Buenas Prácticas de Manufactura)", false, false);
         crearPermisosParaRol(tenantId, "Recursos Humanos",
-                new String[]{"BPM"}, true, true, true, true);
+                new String[]{"BPM","TAREAS"}, true, true, true, true);
     }
 
     private void crearPermisosParaRol(String tenantId, String nombreRol,

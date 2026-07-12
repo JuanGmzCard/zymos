@@ -10,7 +10,8 @@ public enum ModuloApp {
     REPORTES("Reportes"),
     PLANIFICACION("Planificación"),
     BPM("BPM"),
-    BARRILES("Barriles");
+    BARRILES("Barriles"),
+    TAREAS("Tareas");
 
     private final String displayName;
 

@@ -351,6 +351,14 @@
                     </ul>
                 </li>
 
+                <!-- Tareas -->
+                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TAREAS_VER')">
+                    <a class="nav-link" th:href="@{/tareas}"
+                       th:classappend="${currentUri != null and currentUri.startsWith('/tareas')} ? 'active' : ''">
+                        <i class="bi bi-check2-square"></i> <span th:text="#{nav.tareas}">Tareas</span>
+                    </a>
+                </li>
+
                 <!-- Admin (ADMIN y SUPERADMIN) -->
                 <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"

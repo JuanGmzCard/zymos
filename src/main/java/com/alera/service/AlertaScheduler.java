@@ -4,6 +4,7 @@ import com.alera.config.TenantContext;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
+import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
@@ -16,6 +17,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Component
@@ -34,6 +36,7 @@ public class AlertaScheduler {
     private final VentaService             ventaService;
     private final LoteCervezaRepository    loteCervezaRepo;
     private final UsuarioRepository        usuarioRepo;
+    private final TareaService             tareaService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -50,7 +53,8 @@ public class AlertaScheduler {
                             FacturaProveedorService facturaService,
                             VentaService ventaService,
                             LoteCervezaRepository loteCervezaRepo,
-                            UsuarioRepository usuarioRepo) {
+                            UsuarioRepository usuarioRepo,
+                            TareaService tareaService) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -61,6 +65,7 @@ public class AlertaScheduler {
         this.ventaService        = ventaService;
         this.loteCervezaRepo     = loteCervezaRepo;
         this.usuarioRepo         = usuarioRepo;
+        this.tareaService        = tareaService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -98,6 +103,10 @@ public class AlertaScheduler {
                 long totalLotes    = loteCervezaRepo.count();
                 long totalUsuarios = usuarioRepo.countByTenantId(tenant.getSubdomain());
                 notificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios);
+
+                // Tareas que vencen mañana
+                List<Tarea> tareasVencen = tareaService.listarProximasAVencer(LocalDate.now().plusDays(1));
+                notificacionService.crearAlertaTareaVencimiento(tareasVencen);
 
                 // Expirar cotizaciones vencidas
                 int expiradas = ventaService.expirarCotizaciones();
