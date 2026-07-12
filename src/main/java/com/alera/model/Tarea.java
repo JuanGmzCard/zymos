@@ -11,7 +11,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "tareas")
@@ -162,7 +164,80 @@ public class Tarea {
     public List<TareaItem> getItems() { return items; }
     public void setItems(List<TareaItem> items) { this.items = items; }
 
-    /** Tipo de referencia activa (solo una puede ser no-null a la vez). */
+    /** Todas las referencias activas como lista [{tipo, id, label, url}]. */
+    public List<Map<String, Object>> getRefEntries() {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (lote != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "LOTE"); m.put("id", lote.getId());
+            m.put("label", lote.getCodigoLote() + (lote.getEstilo() != null ? " — " + lote.getEstilo() : ""));
+            m.put("url", "/ver/" + lote.getId()); result.add(m);
+        }
+        if (equipo != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "EQUIPO"); m.put("id", equipo.getId());
+            m.put("label", equipo.getNombre()); m.put("url", "/equipos/ver/" + equipo.getId()); result.add(m);
+        }
+        if (insumo != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "INSUMO"); m.put("id", insumo.getId());
+            m.put("label", insumo.getNombre() + (insumo.getTipo() != null ? " (" + insumo.getTipo() + ")" : ""));
+            m.put("url", "/inventario/" + insumo.getId() + "/historial"); result.add(m);
+        }
+        if (elaboracion != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "ELABORACION"); m.put("id", elaboracion.getId());
+            m.put("label", elaboracion.getNombreElaboracion()); m.put("url", "/planificacion"); result.add(m);
+        }
+        if (ordenCompra != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "ORDEN_COMPRA"); m.put("id", ordenCompra.getId());
+            m.put("label", (ordenCompra.getNumeroOc() != null ? ordenCompra.getNumeroOc() : "OC sin número")
+                    + (ordenCompra.getProveedor() != null ? " — " + ordenCompra.getProveedor() : ""));
+            m.put("url", "/ordenes-compra/ver/" + ordenCompra.getId()); result.add(m);
+        }
+        if (venta != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "VENTA"); m.put("id", venta.getId());
+            m.put("label", venta.getCliente() + (venta.getRemisionNumero() != null ? " #" + venta.getRemisionNumero() : ""));
+            m.put("url", "/ventas/ver/" + venta.getId()); result.add(m);
+        }
+        if (cliente != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "CLIENTE"); m.put("id", cliente.getId());
+            m.put("label", cliente.getNombre() + (cliente.getNit() != null ? " — " + cliente.getNit() : ""));
+            m.put("url", "/clientes/ver/" + cliente.getId()); result.add(m);
+        }
+        if (factura != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "FACTURA"); m.put("id", factura.getId());
+            m.put("label", (factura.getNumeroFactura() != null && !factura.getNumeroFactura().isBlank()
+                    ? factura.getNumeroFactura() : "#" + factura.getId())
+                    + (factura.getProveedor() != null ? " — " + factura.getProveedor() : ""));
+            m.put("url", "/facturas/ver/" + factura.getId()); result.add(m);
+        }
+        if (proveedor != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "PROVEEDOR"); m.put("id", proveedor.getId());
+            m.put("label", proveedor.getNombre() + (proveedor.getNit() != null ? " — " + proveedor.getNit() : ""));
+            m.put("url", "/proveedores/editar/" + proveedor.getId()); result.add(m);
+        }
+        if (receta != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "RECETA"); m.put("id", receta.getId());
+            m.put("label", receta.getNombre() + (receta.getEstilo() != null ? " — " + receta.getEstilo() : ""));
+            m.put("url", "/recetas/ver/" + receta.getId()); result.add(m);
+        }
+        if (barril != null) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("tipo", "BARRIL"); m.put("id", barril.getId());
+            m.put("label", barril.getCodigo() + (barril.getTipo() != null ? " — " + barril.getTipo() : ""));
+            m.put("url", "/barriles/ver/" + barril.getId()); result.add(m);
+        }
+        return result;
+    }
+
+    /** Tipo de la primera referencia activa (retro-compatibilidad). */
     public String getRefTipo() {
         if (lote != null)        return "LOTE";
         if (equipo != null)      return "EQUIPO";

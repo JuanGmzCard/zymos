@@ -109,11 +109,13 @@
                                  th:text="${tarea.createdAt != null ? #temporals.format(tarea.createdAt,'dd/MM/yyyy HH:mm') : '—'}">—</div>
                         </div>
                     </div>
-                    <div th:if="${tarea.refLabel != null}">
+                    <div th:if="${!#lists.isEmpty(tarea.refEntries)}">
                         <div class="detail-label" th:text="#{tarea.label.referencia}">Referencia</div>
                         <div class="detail-value">
-                            <a th:href="${tarea.refUrl}" th:text="${tarea.refLabel}"
-                               class="text-decoration-none">—</a>
+                            <th:block th:each="ref : ${tarea.refEntries}">
+                                <a th:href="${ref['url']}" th:text="${ref['label']}"
+                                   class="text-decoration-none d-block"></a>
+                            </th:block>
                         </div>
                     </div>
                 </div>

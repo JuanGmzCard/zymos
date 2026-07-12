@@ -140,11 +140,13 @@
                             </div>
                         </td>
                         <td>
-                            <span th:if="${t.refLabel != null}" class="small">
-                                <a th:href="${t.refUrl}" class="text-decoration-none text-muted"
-                                   th:text="${t.refLabel}"></a>
-                            </span>
-                            <span th:if="${t.refLabel == null}" class="text-muted small">—</span>
+                            <th:block th:if="${!#lists.isEmpty(t.refEntries)}">
+                                <th:block th:each="ref, stat : ${t.refEntries}">
+                                    <a th:href="${ref['url']}" class="text-decoration-none text-muted small d-block"
+                                       th:text="${ref['label']}"></a>
+                                </th:block>
+                            </th:block>
+                            <span th:if="${#lists.isEmpty(t.refEntries)}" class="text-muted small">—</span>
                         </td>
                         <td>
                             <span th:if="${t.asignadoA != null}"

@@ -87,8 +87,8 @@ public class TareaService {
                          LocalDate fechaVencimiento,
                          PrioridadTarea prioridad,
                          String asignadoA,
-                         String refTipo,
-                         Long refId,
+                         List<String> refTipos,
+                         List<Long> refIds,
                          List<Map<String, String>> itemsData,
                          String creadoPor) {
 
@@ -100,7 +100,7 @@ public class TareaService {
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
         tarea.setCreadoPor(creadoPor);
 
-        resolverReferencia(tarea, refTipo, refId);
+        resolverMultiplesReferencias(tarea, refTipos, refIds);
         poblarItems(tarea, itemsData);
 
         Tarea saved = repo.save(tarea);
@@ -118,8 +118,8 @@ public class TareaService {
                             LocalDate fechaVencimiento,
                             PrioridadTarea prioridad,
                             String asignadoA,
-                            String refTipo,
-                            Long refId,
+                            List<String> refTipos,
+                            List<Long> refIds,
                             List<Map<String, String>> itemsData) {
 
         Tarea tarea = buscarPorId(id);
@@ -132,7 +132,7 @@ public class TareaService {
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
 
         limpiarReferencias(tarea);
-        resolverReferencia(tarea, refTipo, refId);
+        resolverMultiplesReferencias(tarea, refTipos, refIds);
 
         tarea.getItems().clear();
         poblarItems(tarea, itemsData);
@@ -192,6 +192,14 @@ public class TareaService {
 
     public List<Tarea> listarProximasAVencer(LocalDate hasta) {
         return repo.findByFechaVencimientoLessThanEqualAndEstadoNot(hasta, EstadoTarea.COMPLETADA);
+    }
+
+    private void resolverMultiplesReferencias(Tarea tarea, List<String> refTipos, List<Long> refIds) {
+        if (refTipos == null || refIds == null) return;
+        int size = Math.min(refTipos.size(), refIds.size());
+        for (int i = 0; i < size; i++) {
+            resolverReferencia(tarea, refTipos.get(i), refIds.get(i));
+        }
     }
 
     private void resolverReferencia(Tarea tarea, String refTipo, Long refId) {
