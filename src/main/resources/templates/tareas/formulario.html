@@ -249,21 +249,22 @@
 
     function showSearchWrap() {
         if (refSearchWrap) refSearchWrap.style.display = '';
-        if (chipZone) chipZone.style.display = 'none';
+        const zone = document.getElementById('refChipZone');
+        if (zone) zone.style.display = 'none';
         if (refSearch) refSearch.value = '';
     }
 
     function showChip(label) {
-        if (!chipZone) {
+        let zone = document.getElementById('refChipZone');
+        if (!zone) {
             // Crear chip si no existe (nueva tarea)
-            const zone = document.createElement('div');
+            zone = document.createElement('div');
             zone.id = 'refChipZone';
             zone.style.marginBottom = '.5rem';
             zone.innerHTML = '<span class="ref-chip" id="refChip"><i class="bi bi-link-45deg"></i> <span id="refChipLabel"></span> <i class="bi bi-x" id="btnClearRef"></i></span>';
             refSearchWrap.parentNode.insertBefore(zone, refSearchWrap);
             document.getElementById('btnClearRef').addEventListener('click', clearRef);
         }
-        const zone = document.getElementById('refChipZone');
         document.getElementById('refChipLabel').textContent = label;
         zone.style.display = '';
         if (refSearchWrap) refSearchWrap.style.display = 'none';
