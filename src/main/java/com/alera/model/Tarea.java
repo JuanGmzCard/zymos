@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.hibernate.annotations.BatchSize;
 
 @Entity
 @Table(name = "tareas")
@@ -107,6 +108,11 @@ public class Tarea {
     @OrderBy("ordenItem ASC, id ASC")
     private List<TareaItem> items = new ArrayList<>();
 
+    @OneToMany(mappedBy = "tarea", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("orden ASC, id ASC")
+    @BatchSize(size = 30)
+    private List<TareaReferencia> referencias = new ArrayList<>();
+
     public boolean isVencida() {
         return fechaVencimiento != null
                 && LocalDate.now().isAfter(fechaVencimiento)
@@ -163,9 +169,25 @@ public class Tarea {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public List<TareaItem> getItems() { return items; }
     public void setItems(List<TareaItem> items) { this.items = items; }
+    public List<TareaReferencia> getReferencias() { return referencias; }
+    public void setReferencias(List<TareaReferencia> referencias) { this.referencias = referencias; }
 
     /** Todas las referencias activas como lista [{tipo, id, label, url}]. */
     public List<Map<String, Object>> getRefEntries() {
+        // Usar tabla tarea_referencias si ya fue poblada (V79+)
+        if (referencias != null && !referencias.isEmpty()) {
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (TareaReferencia ref : referencias) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("tipo",  ref.getTipo());
+                m.put("id",    ref.getEntidadId());
+                m.put("label", ref.getLabel() != null ? ref.getLabel() : "");
+                m.put("url",   ref.getUrl()   != null ? ref.getUrl()   : "#");
+                result.add(m);
+            }
+            return result;
+        }
+        // Fallback: columnas FK individuales (datos anteriores a V79)
         List<Map<String, Object>> result = new ArrayList<>();
         if (lote != null) {
             Map<String, Object> m = new LinkedHashMap<>();

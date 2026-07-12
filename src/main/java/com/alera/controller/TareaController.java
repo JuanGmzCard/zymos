@@ -110,9 +110,10 @@ public class TareaController {
                           @RequestParam(required = false) String fechaVencimiento,
                           @RequestParam(required = false) PrioridadTarea prioridad,
                           @RequestParam(required = false) String asignadoA,
-                          @RequestParam(value = "refTipos", required = false) List<String> refTipos,
-                          @RequestParam(value = "refIds",   required = false) List<Long>   refIds,
-                          @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
+                          @RequestParam(value = "refTipos",  required = false) List<String> refTipos,
+                          @RequestParam(value = "refIds",    required = false) List<Long>   refIds,
+                          @RequestParam(value = "refLabels", required = false) List<String> refLabels,
+                          @RequestParam(value = "itemDesc",  required = false) List<String> itemDescs,
                           Authentication auth,
                           RedirectAttributes ra,
                           Locale locale) {
@@ -120,7 +121,7 @@ public class TareaController {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
             List<Map<String, String>> itemsData = buildItemsData(itemDescs);
-            service.guardar(titulo, descripcion, fv, prioridad, asignadoA, refTipos, refIds, itemsData, auth.getName());
+            service.guardar(titulo, descripcion, fv, prioridad, asignadoA, refTipos, refIds, refLabels, itemsData, auth.getName());
             ra.addFlashAttribute("mensaje", msg("tarea.guardada", locale));
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
@@ -154,16 +155,17 @@ public class TareaController {
                              @RequestParam(required = false) String fechaVencimiento,
                              @RequestParam(required = false) PrioridadTarea prioridad,
                              @RequestParam(required = false) String asignadoA,
-                             @RequestParam(value = "refTipos", required = false) List<String> refTipos,
-                             @RequestParam(value = "refIds",   required = false) List<Long>   refIds,
-                             @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
+                             @RequestParam(value = "refTipos",  required = false) List<String> refTipos,
+                             @RequestParam(value = "refIds",    required = false) List<Long>   refIds,
+                             @RequestParam(value = "refLabels", required = false) List<String> refLabels,
+                             @RequestParam(value = "itemDesc",  required = false) List<String> itemDescs,
                              RedirectAttributes ra,
                              Locale locale) {
         try {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
             List<Map<String, String>> itemsData = buildItemsData(itemDescs);
-            service.actualizar(id, titulo, descripcion, fv, prioridad, asignadoA, refTipos, refIds, itemsData);
+            service.actualizar(id, titulo, descripcion, fv, prioridad, asignadoA, refTipos, refIds, refLabels, itemsData);
             ra.addFlashAttribute("mensaje", msg("tarea.actualizada", locale));
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {

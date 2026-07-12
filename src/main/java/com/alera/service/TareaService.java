@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.model.Tarea;
 import com.alera.model.TareaItem;
+import com.alera.model.TareaReferencia;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
 import com.alera.repository.*;
@@ -89,6 +90,7 @@ public class TareaService {
                          String asignadoA,
                          List<String> refTipos,
                          List<Long> refIds,
+                         List<String> refLabels,
                          List<Map<String, String>> itemsData,
                          String creadoPor) {
 
@@ -100,7 +102,7 @@ public class TareaService {
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
         tarea.setCreadoPor(creadoPor);
 
-        resolverMultiplesReferencias(tarea, refTipos, refIds);
+        resolverMultiplesReferencias(tarea, refTipos, refIds, refLabels);
         poblarItems(tarea, itemsData);
 
         Tarea saved = repo.save(tarea);
@@ -120,6 +122,7 @@ public class TareaService {
                             String asignadoA,
                             List<String> refTipos,
                             List<Long> refIds,
+                            List<String> refLabels,
                             List<Map<String, String>> itemsData) {
 
         Tarea tarea = buscarPorId(id);
@@ -132,7 +135,7 @@ public class TareaService {
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
 
         limpiarReferencias(tarea);
-        resolverMultiplesReferencias(tarea, refTipos, refIds);
+        resolverMultiplesReferencias(tarea, refTipos, refIds, refLabels);
 
         tarea.getItems().clear();
         poblarItems(tarea, itemsData);
@@ -194,33 +197,39 @@ public class TareaService {
         return repo.findByFechaVencimientoLessThanEqualAndEstadoNot(hasta, EstadoTarea.COMPLETADA);
     }
 
-    private void resolverMultiplesReferencias(Tarea tarea, List<String> refTipos, List<Long> refIds) {
+    private void resolverMultiplesReferencias(Tarea tarea, List<String> refTipos, List<Long> refIds, List<String> refLabels) {
         if (refTipos == null || refIds == null) return;
         int size = Math.min(refTipos.size(), refIds.size());
         for (int i = 0; i < size; i++) {
-            resolverReferencia(tarea, refTipos.get(i), refIds.get(i));
+            String tipo = refTipos.get(i);
+            Long   entidadId = refIds.get(i);
+            if (tipo == null || tipo.isBlank() || entidadId == null) continue;
+            String label = (refLabels != null && i < refLabels.size()) ? refLabels.get(i) : "";
+            String url   = computeRefUrl(tipo, entidadId);
+            tarea.getReferencias().add(new TareaReferencia(tarea, tipo.toUpperCase(), entidadId, label, url, i));
         }
     }
 
-    private void resolverReferencia(Tarea tarea, String refTipo, Long refId) {
-        if (refTipo == null || refTipo.isBlank() || refId == null) return;
-        switch (refTipo.toUpperCase()) {
-            case "LOTE"         -> tarea.setLote(loteRepo.findById(refId).orElse(null));
-            case "EQUIPO"       -> tarea.setEquipo(equipoRepo.findById(refId).orElse(null));
-            case "INSUMO"       -> tarea.setInsumo(insumoRepo.findById(refId).orElse(null));
-            case "ELABORACION"  -> tarea.setElaboracion(elaboracionRepo.findById(refId).orElse(null));
-            case "ORDEN_COMPRA" -> tarea.setOrdenCompra(ordenCompraRepo.findById(refId).orElse(null));
-            case "VENTA"        -> tarea.setVenta(ventaRepo.findById(refId).orElse(null));
-            case "CLIENTE"      -> tarea.setCliente(clienteRepo.findById(refId).orElse(null));
-            case "FACTURA"      -> tarea.setFactura(facturaRepo.findById(refId).orElse(null));
-            case "PROVEEDOR"    -> tarea.setProveedor(proveedorRepo.findById(refId).orElse(null));
-            case "RECETA"       -> tarea.setReceta(recetaRepo.findById(refId).orElse(null));
-            case "BARRIL"       -> tarea.setBarril(barrilRepo.findById(refId).orElse(null));
-            default             -> throw new IllegalArgumentException("Tipo de referencia desconocido: " + refTipo);
-        }
+    private String computeRefUrl(String tipo, Long id) {
+        return switch (tipo.toUpperCase()) {
+            case "LOTE"         -> "/ver/" + id;
+            case "EQUIPO"       -> "/equipos/ver/" + id;
+            case "INSUMO"       -> "/inventario/" + id + "/historial";
+            case "ELABORACION"  -> "/planificacion";
+            case "ORDEN_COMPRA" -> "/ordenes-compra/ver/" + id;
+            case "VENTA"        -> "/ventas/ver/" + id;
+            case "CLIENTE"      -> "/clientes/ver/" + id;
+            case "FACTURA"      -> "/facturas/ver/" + id;
+            case "PROVEEDOR"    -> "/proveedores/editar/" + id;
+            case "RECETA"       -> "/recetas/ver/" + id;
+            case "BARRIL"       -> "/barriles/ver/" + id;
+            default             -> "#";
+        };
     }
 
     private void limpiarReferencias(Tarea tarea) {
+        tarea.getReferencias().clear();
+        // Limpiar también columnas FK individuales (datos pre-V79)
         tarea.setLote(null);
         tarea.setEquipo(null);
         tarea.setInsumo(null);

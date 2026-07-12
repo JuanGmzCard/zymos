@@ -160,7 +160,7 @@ class TareaControllerTest {
     @DisplayName("POST /tareas/guardar redirige a /tareas tras crear")
     void guardar_redirige() throws Exception {
         Tarea saved = tareaEjemplo();
-        when(tareaService.guardar(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(tareaService.guardar(any(), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(saved);
 
         mockMvc.perform(post("/tareas/guardar").with(csrf())
@@ -184,7 +184,7 @@ class TareaControllerTest {
     @WithMockUser
     @DisplayName("POST /tareas/actualizar/{id} redirige a /tareas/{id}")
     void actualizar_redirige() throws Exception {
-        when(tareaService.actualizar(eq(1L), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(tareaService.actualizar(eq(1L), any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(tareaEjemplo());
 
         mockMvc.perform(post("/tareas/actualizar/1").with(csrf())

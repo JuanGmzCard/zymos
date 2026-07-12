@@ -165,21 +165,21 @@ class TareaServiceTest {
         @Test
         @DisplayName("sin asignadoA no dispara notificación")
         void sinAsignado_noDispararNotificacion() {
-            service.guardar("Título", null, null, PrioridadTarea.MEDIA, null, null, null, List.of(), "admin");
+            service.guardar("Título", null, null, PrioridadTarea.MEDIA, null, null, null, null, List.of(), "admin");
             verify(notificacionService, never()).crearAlertaTareaAsignada(any());
         }
 
         @Test
         @DisplayName("con asignadoA dispara notificación")
         void conAsignado_disparaNotificacion() {
-            service.guardar("Título", null, null, PrioridadTarea.ALTA, "juan", null, null, List.of(), "admin");
+            service.guardar("Título", null, null, PrioridadTarea.ALTA, "juan", null, null, null, List.of(), "admin");
             verify(notificacionService).crearAlertaTareaAsignada(any(Tarea.class));
         }
 
         @Test
         @DisplayName("prioridad null default MEDIA")
         void prioridadNull_defaultMedia() {
-            service.guardar("Título", null, null, null, null, null, null, List.of(), "admin");
+            service.guardar("Título", null, null, null, null, null, null, null, List.of(), "admin");
             ArgumentCaptor<Tarea> cap = ArgumentCaptor.forClass(Tarea.class);
             verify(repo).save(cap.capture());
             assertThat(cap.getValue().getPrioridad()).isEqualTo(PrioridadTarea.MEDIA);
@@ -188,7 +188,7 @@ class TareaServiceTest {
         @Test
         @DisplayName("creadoPor se setea correctamente")
         void creadoPor_seteaCorrectamente() {
-            service.guardar("T", null, null, PrioridadTarea.BAJA, null, null, null, List.of(), "operador");
+            service.guardar("T", null, null, PrioridadTarea.BAJA, null, null, null, null, List.of(), "operador");
             ArgumentCaptor<Tarea> cap = ArgumentCaptor.forClass(Tarea.class);
             verify(repo).save(cap.capture());
             assertThat(cap.getValue().getCreadoPor()).isEqualTo("operador");
@@ -201,7 +201,7 @@ class TareaServiceTest {
                     Map.of("descripcion", "Lavar tanque"),
                     Map.of("descripcion", "Enjuagar")
             );
-            service.guardar("T", null, null, PrioridadTarea.MEDIA, null, null, null, items, "admin");
+            service.guardar("T", null, null, PrioridadTarea.MEDIA, null, null, null, null, items, "admin");
             ArgumentCaptor<Tarea> cap = ArgumentCaptor.forClass(Tarea.class);
             verify(repo).save(cap.capture());
             assertThat(cap.getValue().getItems()).hasSize(2);
@@ -214,7 +214,7 @@ class TareaServiceTest {
                     Map.of("descripcion", ""),
                     Map.of("descripcion", "Enjuagar")
             );
-            service.guardar("T", null, null, PrioridadTarea.MEDIA, null, null, null, items, "admin");
+            service.guardar("T", null, null, PrioridadTarea.MEDIA, null, null, null, null, items, "admin");
             ArgumentCaptor<Tarea> cap = ArgumentCaptor.forClass(Tarea.class);
             verify(repo).save(cap.capture());
             assertThat(cap.getValue().getItems()).hasSize(1);
@@ -235,7 +235,7 @@ class TareaServiceTest {
             when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.actualizar(1L, "T", null, null, PrioridadTarea.MEDIA, "karen",
-                    null, null, List.of());
+                    null, null, null, List.of());
 
             verify(notificacionService).crearAlertaTareaAsignada(any());
         }
@@ -248,7 +248,7 @@ class TareaServiceTest {
             when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             service.actualizar(1L, "T", null, null, PrioridadTarea.MEDIA, "juan",
-                    null, null, List.of());
+                    null, null, null, List.of());
 
             verify(notificacionService, never()).crearAlertaTareaAsignada(any());
         }
@@ -262,7 +262,7 @@ class TareaServiceTest {
             when(repo.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             List<Map<String, String>> nuevosItems = List.of(Map.of("descripcion", "Nuevo ítem"));
-            service.actualizar(1L, "T", null, null, PrioridadTarea.MEDIA, null, null, null, nuevosItems);
+            service.actualizar(1L, "T", null, null, PrioridadTarea.MEDIA, null, null, null, null, nuevosItems);
 
             ArgumentCaptor<Tarea> cap = ArgumentCaptor.forClass(Tarea.class);
             verify(repo).save(cap.capture());

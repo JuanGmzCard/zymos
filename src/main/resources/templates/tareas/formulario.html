@@ -158,10 +158,12 @@
                         <div id="refChipsContainer" class="d-flex flex-wrap gap-1 mb-2"
                              th:style="${#lists.isEmpty(tarea.refEntries)} ? 'display:none' : ''">
                             <th:block th:each="ref : ${tarea.refEntries}">
-                                <span class="ref-chip" th:attr="data-tipo=${ref['tipo']},data-id=${ref['id']},data-label=${ref['label']}">
+                                <span class="ref-chip"
+                                      th:attr="data-tipo=${ref['tipo']},data-id=${ref['id']},data-key=${ref['tipo']} + ':' + ${ref['id']}">
                                     <i class="bi bi-link-45deg"></i>
                                     <span th:text="${ref['label']}"></span>
-                                    <i class="bi bi-x ref-chip-x" th:attr="data-tipo=${ref['tipo']}"></i>
+                                    <i class="bi bi-x ref-chip-x"
+                                       th:attr="data-key=${ref['tipo']} + ':' + ${ref['id']}"></i>
                                 </span>
                             </th:block>
                         </div>
@@ -242,46 +244,53 @@
     const refDropdown   = document.getElementById('refDropdown');
     const refSearchWrap = document.getElementById('refSearchWrap');
 
-    // chips: {tipo → {id, label}}
-    const chips = {};
+    // chips: [{key:"TIPO:id", tipo, id, label}] — permite varios del mismo tipo
+    const chips = [];
+
+    function chipKey(tipo, id) { return tipo + ':' + id; }
 
     function renderChips() {
         const container = document.getElementById('refChipsContainer');
         if (!container) return;
         container.innerHTML = '';
-        const tipos = Object.keys(chips);
-        tipos.forEach(function(tipo) {
+        chips.forEach(function(chip) {
             const span = document.createElement('span');
             span.className = 'ref-chip';
-            span.dataset.tipo = tipo;
-            const lbl = (chips[tipo].label || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const lbl = (chip.label || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            const key = chip.key.replace(/"/g,'&quot;');
             span.innerHTML =
                 '<i class="bi bi-link-45deg"></i> ' +
                 '<span>' + lbl + '</span> ' +
-                '<i class="bi bi-x ref-chip-x" data-tipo="' + tipo + '"></i>';
+                '<i class="bi bi-x ref-chip-x" data-key="' + key + '"></i>';
             container.appendChild(span);
         });
-        container.style.display = tipos.length ? 'flex' : 'none';
+        container.style.display = chips.length ? 'flex' : 'none';
     }
 
     function addChip(tipo, id, label) {
-        chips[tipo] = {id: String(id), label: label || ''};
+        const key = chipKey(tipo, id);
+        if (chips.some(function(c) { return c.key === key; })) return; // evitar duplicado exacto
+        chips.push({key: key, tipo: tipo, id: String(id), label: label || ''});
         renderChips();
     }
 
-    function removeChip(tipo) {
-        delete chips[tipo];
+    function removeChip(key) {
+        const idx = chips.findIndex(function(c) { return c.key === key; });
+        if (idx >= 0) chips.splice(idx, 1);
         renderChips();
     }
 
-    // Inicializar desde modo edición (INIT_REFS inyectado por Thymeleaf)
+    // Inicializar chips desde INIT_REFS (modo edición)
     if (Array.isArray(INIT_REFS)) {
         INIT_REFS.forEach(function(ref) {
             if (ref.tipo && ref.id != null) {
-                chips[ref.tipo] = {id: String(ref.id), label: ref.label || ''};
+                const key = chipKey(ref.tipo, ref.id);
+                if (!chips.some(function(c) { return c.key === key; })) {
+                    chips.push({key: key, tipo: ref.tipo, id: String(ref.id), label: ref.label || ''});
+                }
             }
         });
-        if (Object.keys(chips).length) renderChips();
+        if (chips.length) renderChips();
     }
 
     function closeDropdown() {
@@ -293,8 +302,8 @@
         fetch('/tareas/suggest-ref?tipo=' + encodeURIComponent(tipo) + '&q=' + encodeURIComponent(q), {
             headers: {'X-Requested-With': 'XMLHttpRequest'}
         })
-        .then(r => r.json())
-        .then(items => {
+        .then(function(r) { return r.json(); })
+        .then(function(items) {
             refDropdown.innerHTML = '';
             if (!items.length) {
                 refDropdown.innerHTML = '<div class="ref-item text-muted">Sin resultados</div>';
@@ -305,9 +314,8 @@
                     div.innerHTML = '<div class="fw-semibold">' + (item.label || '') + '</div>' +
                                     (item.sub ? '<div class="ref-sub">' + item.sub + '</div>' : '');
                     div.addEventListener('click', function() {
-                        const tipo = selectTipo.value;
-                        addChip(tipo, item.id, item.label);
-                        // Resetear dropdown y búsqueda para permitir agregar más
+                        const t = selectTipo.value;
+                        addChip(t, item.id, item.label);
                         selectTipo.value = '';
                         if (refSearchWrap) refSearchWrap.style.display = 'none';
                         if (refSearch) refSearch.value = '';
@@ -346,26 +354,29 @@
         });
     }
 
-    // Eliminar chip individual
+    // Eliminar chip por data-key (composición tipo:id)
     document.addEventListener('click', function(e) {
         const x = e.target.closest('.ref-chip-x');
-        if (x && x.dataset.tipo) { removeChip(x.dataset.tipo); return; }
+        if (x && x.dataset.key) { removeChip(x.dataset.key); return; }
         if (refDropdown && !refDropdown.contains(e.target) && e.target !== refSearch) {
             closeDropdown();
         }
     });
 
-    // Generar hidden inputs antes del submit
+    // Generar hidden inputs (refTipos, refIds, refLabels) antes del submit
     document.getElementById('tareaForm').addEventListener('submit', function() {
         const container = document.getElementById('refHiddenInputs');
         container.innerHTML = '';
-        Object.keys(chips).forEach(function(tipo) {
+        chips.forEach(function(chip) {
             const ti = document.createElement('input');
-            ti.type = 'hidden'; ti.name = 'refTipos'; ti.value = tipo;
+            ti.type = 'hidden'; ti.name = 'refTipos'; ti.value = chip.tipo;
             container.appendChild(ti);
             const ii = document.createElement('input');
-            ii.type = 'hidden'; ii.name = 'refIds'; ii.value = chips[tipo].id;
+            ii.type = 'hidden'; ii.name = 'refIds'; ii.value = chip.id;
             container.appendChild(ii);
+            const li = document.createElement('input');
+            li.type = 'hidden'; li.name = 'refLabels'; li.value = chip.label;
+            container.appendChild(li);
         });
     }, true);
 }());
