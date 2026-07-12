@@ -316,12 +316,20 @@
 
     if (selectTipo) {
         selectTipo.addEventListener('change', function() {
-            hiddenTipo.value = '';
-            hiddenId.value   = '';
-            showSearchWrap();
             closeDropdown();
-            // Si elige "sin referencia" ocultar el search
-            if (!this.value && refSearchWrap) refSearchWrap.style.display = 'none';
+            if (!this.value) {
+                // "Sin referencia": borrar todo explícitamente
+                hiddenTipo.value = '';
+                hiddenId.value   = '';
+                const zone = document.getElementById('refChipZone');
+                if (zone) zone.style.display = 'none';
+                if (refSearchWrap) refSearchWrap.style.display = 'none';
+            } else {
+                // Cambio de tipo: mostrar búsqueda pero mantener chip actual visible
+                // Los hidden fields solo se actualizan al seleccionar una nueva entidad
+                if (refSearchWrap) refSearchWrap.style.display = '';
+                if (refSearch) { refSearch.value = ''; refSearch.focus(); }
+            }
         });
 
         // Al cargar, si ya hay un tipo seleccionado pero no hay chip, mostrar search
