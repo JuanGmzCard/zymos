@@ -17,7 +17,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Lombok 1.18.46 (override — Spring Boot 3.4.x gestiona 1.18.36, se sobreescribe para Java 26)
 - MapStruct 1.5.5.Final — generación de mapeos entidad↔DTO en tiempo de compilación
 - SpringDoc OpenAPI 2.8.3 — documentación automática de la API REST (`/swagger-ui.html`)
-- Micrometer + Prometheus — métricas de producción (`/actuator/prometheus`)
+- Micrometer + Prometheus — métricas de producción (`/actuator/prometheus`). **Stack de monitoreo en Docker**: Prometheus v2.53.0 + Grafana v11.1.0 (`monitoring/`). Dashboard "Zymos — Overview" auto-provisionado con 12 paneles (HTTP traffic, latencia p50/p95/p99, JVM heap, HikariCP pool, CPU, logback events).
 - OpenPDF 1.3.43 (`com.github.librepdf`) — generación de PDF (licencia LGPL/Apache). Clases en `com.lowagie.text.*`
 - Spring Boot Starter Mail — envío de emails HTML vía SMTP. `JavaMailSender` solo se auto-configura si `spring.mail.host` está definido (no vacío). `EmailService` usa `@Autowired(required = false)` para soportar entornos sin SMTP.
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
@@ -37,6 +37,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V71). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 30 minutos de inactividad (`server.servlet.session.timeout=30m`)
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
+- **Monitoreo** (solo en Docker — opcional): Prometheus `localhost:9090`, Grafana `localhost:3000`. Vars: `GRAFANA_ADMIN_USER` (def: admin), `GRAFANA_ADMIN_PASSWORD` (def: admin — cambiar en prod). Prometheus usa `ADMIN_USERNAME/PASSWORD` para autenticarse en `/actuator/prometheus`. Archivos en `monitoring/`: template `prometheus/prometheus.yml`, script `prometheus/docker-entrypoint.sh` (sustituye credenciales via `sed`), `grafana/provisioning/` (datasource + dashboard auto-provisionado).
 - **CI/CD**: `.github/workflows/ci.yml` — dos jobs paralelos en cada push: `Build & Test` (Java 21 + Postgres para Testcontainers) y `SpotBugs` (Java 21, sin Postgres, `mvn compile spotbugs:check`). **Dependabot**: `.github/dependabot.yml` — revisa Maven y GitHub Actions semanalmente con grupos `spring-boot`, `testcontainers`, `security`.
 - Actuator: `GET /actuator/health` (público), `/actuator/**` solo ADMIN
 - Swagger UI: `GET /swagger-ui.html` (requiere autenticación)
