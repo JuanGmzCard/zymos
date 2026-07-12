@@ -8,7 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -32,6 +34,22 @@ public class PlanificacionService {
     @Transactional(readOnly = true)
     public List<ElaboracionPlanificada> listarTodas() {
         return repo.findAllOrdenadas();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> suggest(String q) {
+        if (q == null || q.isBlank()) return List.of();
+        String ql = q.toLowerCase();
+        return listarTodas().stream()
+                .filter(e -> e.getNombreElaboracion().toLowerCase().contains(ql))
+                .limit(6)
+                .map(e -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id",    e.getId());
+                    m.put("label", e.getNombreElaboracion());
+                    m.put("sub",   e.getFechaPlaneada() != null ? e.getFechaPlaneada().toString() : "");
+                    return m;
+                }).toList();
     }
 
     @Transactional(readOnly = true)

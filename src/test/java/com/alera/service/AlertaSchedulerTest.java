@@ -177,6 +177,15 @@ class AlertaSchedulerTest {
         verify(notificacionService, times(2)).crearAlertas(any(), any(), any());
     }
 
+    @Test
+    void enviarAlertasDiarias_invocaAlertaTareasVencimiento() {
+        when(tenantRepo.findAll()).thenReturn(List.of(tenant("mosto", true, null)));
+
+        scheduler.enviarAlertasDiarias();
+
+        verify(notificacionService).crearAlertaTareaVencimiento(any());
+    }
+
     private void assertTenantContextLimpio() {
         // TenantContext.getCurrentTenant() devuelve null o "" después de clear()
         // No podemos llamarlo directamente sin getter público, pero podemos verificar

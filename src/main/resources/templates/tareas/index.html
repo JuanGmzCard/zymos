@@ -118,6 +118,7 @@
                 <thead>
                     <tr>
                         <th>Tarea</th>
+                        <th th:text="#{tarea.label.referencia}">Referencia</th>
                         <th th:text="#{tarea.label.asignado}">Asignado a</th>
                         <th th:text="#{tarea.label.prioridad}">Prioridad</th>
                         <th th:text="#{tarea.label.vencimiento}">Vencimiento</th>
@@ -138,6 +139,13 @@
                                 <i class="bi bi-list-task me-1"></i>
                                 <span th:text="${t.items.size()} + ' ítem' + (${t.items.size()} != 1 ? 's' : '')"></span>
                             </div>
+                        </td>
+                        <td>
+                            <span th:if="${t.refLabel != null}" class="small">
+                                <a th:href="${t.refUrl}" class="text-decoration-none text-muted"
+                                   th:text="${t.refLabel}"></a>
+                            </span>
+                            <span th:if="${t.refLabel == null}" class="text-muted small">—</span>
                         </td>
                         <td>
                             <span th:if="${t.asignadoA != null}"

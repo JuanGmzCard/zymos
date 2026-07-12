@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -50,6 +52,20 @@ public class InsumoInventarioService {
         String nombreParam = (nombre != null && !nombre.isBlank()) ? nombre.trim() : "";
         String tipoParam = (tipo != null && !tipo.isBlank()) ? tipo : null;
         return repo.findByFiltros(nombreParam, tipoParam, PageRequest.of(page, pageSize));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> suggest(String q) {
+        if (q == null || q.isBlank() || q.trim().length() < 2) return List.of();
+        return listarPaginado(q.trim(), null, 0).getContent().stream()
+                .limit(6)
+                .map(i -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id",    i.getId());
+                    m.put("label", i.getNombre());
+                    m.put("sub",   (i.getTipo() != null ? i.getTipo() : "") + " · " + i.getCantidad().stripTrailingZeros().toPlainString() + " " + i.getUnidad());
+                    return m;
+                }).toList();
     }
 
     public Optional<InsumoInventario> buscarPorId(Long id) {

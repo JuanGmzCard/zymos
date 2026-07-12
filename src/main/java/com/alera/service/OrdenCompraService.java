@@ -129,12 +129,15 @@ public class OrdenCompraService {
     public List<Map<String, Object>> suggest(String q) {
         if (q == null || q.trim().length() < 2) return List.of();
         return repo.search(q.trim(), PageRequest.of(0, 6)).stream()
-                .map(oc -> Map.<String, Object>of(
-                        "titulo",    oc.getNumeroOc() != null ? oc.getNumeroOc() : "OC sin número",
-                        "sub",       oc.getProveedor() != null ? oc.getProveedor() : "",
-                        "estado",    oc.getEstado().getDisplayName(),
-                        "url",       "/ordenes-compra/ver/" + oc.getId()
-                ))
+                .map(oc -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("id",     oc.getId());
+                    m.put("titulo", oc.getNumeroOc() != null ? oc.getNumeroOc() : "OC sin número");
+                    m.put("sub",    oc.getProveedor() != null ? oc.getProveedor() : "");
+                    m.put("estado", oc.getEstado().getDisplayName());
+                    m.put("url",    "/ordenes-compra/ver/" + oc.getId());
+                    return m;
+                })
                 .toList();
     }
 

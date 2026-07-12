@@ -4,6 +4,7 @@ import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Notificacion;
+import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.model.enums.TipoNotificacion;
 import com.alera.repository.NotificacionRepository;
@@ -182,6 +183,13 @@ class NotificacionServiceTest {
         List<com.alera.model.enums.TipoNotificacion> tipos =
                 service.tiposVisibles(List.of("MODULO_INVENTARIO_VER"));
         assertThat(tipos).contains(TipoNotificacion.BAJO_STOCK, TipoNotificacion.VENCIMIENTO);
+        assertThat(tipos).doesNotContain(TipoNotificacion.PLAN_VENCIMIENTO, TipoNotificacion.PLAN_LIMITE);
+    }
+
+    @Test
+    void tiposVisibles_conModuloTareasVer_incluyeTareaAsignadaYVencimiento() {
+        List<TipoNotificacion> tipos = service.tiposVisibles(List.of("MODULO_TAREAS_VER"));
+        assertThat(tipos).contains(TipoNotificacion.TAREA_ASIGNADA, TipoNotificacion.TAREA_VENCIMIENTO);
         assertThat(tipos).doesNotContain(TipoNotificacion.PLAN_VENCIMIENTO, TipoNotificacion.PLAN_LIMITE);
     }
 
@@ -446,5 +454,98 @@ class NotificacionServiceTest {
         service.crearAlertaPlan(tenant(null, 10, null), 10, 0);
 
         verify(repo, never()).save(any());
+    }
+
+    // ── crearAlertaTareaAsignada ───────────────────────────────────────────────
+
+    private Tarea tareaConId(Long id, String titulo, String asignadoA) {
+        Tarea t = new Tarea();
+        t.setId(id);
+        t.setTitulo(titulo);
+        t.setAsignadoA(asignadoA);
+        return t;
+    }
+
+    @Test
+    void crearAlertaTareaAsignada_guardaNotificacionConTipoCorrectamente() {
+        Tarea tarea = tareaConId(1L, "Limpiar fermentador", "juan");
+
+        service.crearAlertaTareaAsignada(tarea);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.TAREA_ASIGNADA);
+        assertThat(cap.getValue().getTitulo()).contains("Limpiar fermentador");
+        assertThat(cap.getValue().getUrlAccion()).isEqualTo("/tareas/1");
+    }
+
+    @Test
+    void crearAlertaTareaAsignada_sinFechaVencimiento_mensajeSinFecha() {
+        Tarea tarea = tareaConId(2L, "Revisar presión", "karen");
+
+        service.crearAlertaTareaAsignada(tarea);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getMensaje()).doesNotContain("vence");
+    }
+
+    @Test
+    void crearAlertaTareaAsignada_conFechaVencimiento_mensajeContieneFecha() {
+        Tarea tarea = tareaConId(3L, "Calibrar sensor", "pedro");
+        tarea.setFechaVencimiento(LocalDate.of(2026, 8, 1));
+
+        service.crearAlertaTareaAsignada(tarea);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getMensaje()).contains("vence");
+    }
+
+    // ── crearAlertaTareaVencimiento ────────────────────────────────────────────
+
+    @Test
+    void crearAlertaTareaVencimiento_listaVacia_noGuarda() {
+        service.crearAlertaTareaVencimiento(List.of());
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void crearAlertaTareaVencimiento_conDuplicadoHoy_noGuarda() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.TAREA_VENCIMIENTO), any(), any())).thenReturn(true);
+
+        service.crearAlertaTareaVencimiento(List.of(tareaConId(1L, "T1", null)));
+
+        verify(repo, never()).save(any());
+    }
+
+    @Test
+    void crearAlertaTareaVencimiento_unaTarea_guardaConMensajeSingular() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.TAREA_VENCIMIENTO), any(), any())).thenReturn(false);
+
+        service.crearAlertaTareaVencimiento(List.of(tareaConId(1L, "Calibrar fermentador", null)));
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTipo()).isEqualTo(TipoNotificacion.TAREA_VENCIMIENTO);
+        assertThat(cap.getValue().getTitulo()).contains("1 tarea");
+        assertThat(cap.getValue().getMensaje()).contains("Calibrar fermentador");
+        assertThat(cap.getValue().getUrlAccion()).isEqualTo("/tareas");
+    }
+
+    @Test
+    void crearAlertaTareaVencimiento_variasTareas_mensajePlural() {
+        when(repo.existeEnPeriodo(eq(TipoNotificacion.TAREA_VENCIMIENTO), any(), any())).thenReturn(false);
+        List<Tarea> tareas = List.of(
+            tareaConId(1L, "T1", null),
+            tareaConId(2L, "T2", null),
+            tareaConId(3L, "T3", null)
+        );
+
+        service.crearAlertaTareaVencimiento(tareas);
+
+        ArgumentCaptor<Notificacion> cap = ArgumentCaptor.forClass(Notificacion.class);
+        verify(repo).save(cap.capture());
+        assertThat(cap.getValue().getTitulo()).contains("3 tareas");
     }
 }

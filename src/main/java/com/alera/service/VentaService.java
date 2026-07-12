@@ -262,6 +262,7 @@ public class VentaService {
         return ventaRepo.search(q.trim(), PageRequest.of(0, 6)).stream()
                 .map(v -> {
                     Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id",     v.getId());
                     m.put("titulo", v.getCliente());
                     m.put("sub",    v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "Sin lote");
                     m.put("fecha",  v.getFechaDespacho() != null ? v.getFechaDespacho().toString() : "");

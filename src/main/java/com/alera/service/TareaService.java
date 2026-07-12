@@ -1,15 +1,10 @@
 package com.alera.service;
 
-import com.alera.model.Equipo;
-import com.alera.model.LoteCerveza;
 import com.alera.model.Tarea;
 import com.alera.model.TareaItem;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
-import com.alera.repository.EquipoRepository;
-import com.alera.repository.LoteCervezaRepository;
-import com.alera.repository.TareaItemRepository;
-import com.alera.repository.TareaRepository;
+import com.alera.repository.*;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,22 +17,34 @@ import java.util.Map;
 @Transactional
 public class TareaService {
 
-    private final TareaRepository          repo;
-    private final TareaItemRepository      itemRepo;
-    private final LoteCervezaRepository    loteRepo;
-    private final EquipoRepository         equipoRepo;
-    private final NotificacionService      notificacionService;
+    private final TareaRepository                  repo;
+    private final TareaItemRepository              itemRepo;
+    private final LoteCervezaRepository            loteRepo;
+    private final EquipoRepository                 equipoRepo;
+    private final InsumoInventarioRepository       insumoRepo;
+    private final ElaboracionPlanificadaRepository elaboracionRepo;
+    private final OrdenCompraRepository            ordenCompraRepo;
+    private final VentaRepository                  ventaRepo;
+    private final NotificacionService              notificacionService;
 
     public TareaService(TareaRepository repo,
                         TareaItemRepository itemRepo,
                         LoteCervezaRepository loteRepo,
                         EquipoRepository equipoRepo,
+                        InsumoInventarioRepository insumoRepo,
+                        ElaboracionPlanificadaRepository elaboracionRepo,
+                        OrdenCompraRepository ordenCompraRepo,
+                        VentaRepository ventaRepo,
                         NotificacionService notificacionService) {
-        this.repo                 = repo;
-        this.itemRepo             = itemRepo;
-        this.loteRepo             = loteRepo;
-        this.equipoRepo           = equipoRepo;
-        this.notificacionService  = notificacionService;
+        this.repo               = repo;
+        this.itemRepo           = itemRepo;
+        this.loteRepo           = loteRepo;
+        this.equipoRepo         = equipoRepo;
+        this.insumoRepo         = insumoRepo;
+        this.elaboracionRepo    = elaboracionRepo;
+        this.ordenCompraRepo    = ordenCompraRepo;
+        this.ventaRepo          = ventaRepo;
+        this.notificacionService = notificacionService;
     }
 
     @Transactional(readOnly = true)
@@ -64,8 +71,8 @@ public class TareaService {
                          LocalDate fechaVencimiento,
                          PrioridadTarea prioridad,
                          String asignadoA,
-                         Long loteId,
-                         Long equipoId,
+                         String refTipo,
+                         Long refId,
                          List<Map<String, String>> itemsData,
                          String creadoPor) {
 
@@ -77,9 +84,7 @@ public class TareaService {
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
         tarea.setCreadoPor(creadoPor);
 
-        if (loteId != null)   tarea.setLote(loteRepo.findById(loteId).orElse(null));
-        if (equipoId != null) tarea.setEquipo(equipoRepo.findById(equipoId).orElse(null));
-
+        resolverReferencia(tarea, refTipo, refId);
         poblarItems(tarea, itemsData);
 
         Tarea saved = repo.save(tarea);
@@ -97,8 +102,8 @@ public class TareaService {
                             LocalDate fechaVencimiento,
                             PrioridadTarea prioridad,
                             String asignadoA,
-                            Long loteId,
-                            Long equipoId,
+                            String refTipo,
+                            Long refId,
                             List<Map<String, String>> itemsData) {
 
         Tarea tarea = buscarPorId(id);
@@ -110,8 +115,8 @@ public class TareaService {
         tarea.setPrioridad(prioridad != null ? prioridad : PrioridadTarea.MEDIA);
         tarea.setAsignadoA(asignadoA != null && !asignadoA.isBlank() ? asignadoA : null);
 
-        tarea.setLote(loteId   != null ? loteRepo.findById(loteId).orElse(null)     : null);
-        tarea.setEquipo(equipoId != null ? equipoRepo.findById(equipoId).orElse(null) : null);
+        limpiarReferencias(tarea);
+        resolverReferencia(tarea, refTipo, refId);
 
         tarea.getItems().clear();
         poblarItems(tarea, itemsData);
@@ -159,6 +164,27 @@ public class TareaService {
         return repo.findByFechaVencimientoAndEstadoNot(fecha, EstadoTarea.COMPLETADA);
     }
 
+    private void resolverReferencia(Tarea tarea, String refTipo, Long refId) {
+        if (refTipo == null || refTipo.isBlank() || refId == null) return;
+        switch (refTipo.toUpperCase()) {
+            case "LOTE"         -> tarea.setLote(loteRepo.findById(refId).orElse(null));
+            case "EQUIPO"       -> tarea.setEquipo(equipoRepo.findById(refId).orElse(null));
+            case "INSUMO"       -> tarea.setInsumo(insumoRepo.findById(refId).orElse(null));
+            case "ELABORACION"  -> tarea.setElaboracion(elaboracionRepo.findById(refId).orElse(null));
+            case "ORDEN_COMPRA" -> tarea.setOrdenCompra(ordenCompraRepo.findById(refId).orElse(null));
+            case "VENTA"        -> tarea.setVenta(ventaRepo.findById(refId).orElse(null));
+        }
+    }
+
+    private void limpiarReferencias(Tarea tarea) {
+        tarea.setLote(null);
+        tarea.setEquipo(null);
+        tarea.setInsumo(null);
+        tarea.setElaboracion(null);
+        tarea.setOrdenCompra(null);
+        tarea.setVenta(null);
+    }
+
     private void recalcularEstado(Long tareaId) {
         repo.findById(tareaId).ifPresent(tarea -> {
             List<TareaItem> items = itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(tareaId);
@@ -189,13 +215,6 @@ public class TareaService {
             item.setDescripcion(desc.trim());
             item.setOrdenItem(i);
             item.setCompletado(Boolean.FALSE);
-
-            String loteIdStr   = d.get("loteId");
-            String equipoIdStr = d.get("equipoId");
-            if (loteIdStr   != null && !loteIdStr.isBlank())
-                item.setLote(loteRepo.findById(Long.parseLong(loteIdStr)).orElse(null));
-            if (equipoIdStr != null && !equipoIdStr.isBlank())
-                item.setEquipo(equipoRepo.findById(Long.parseLong(equipoIdStr)).orElse(null));
 
             tarea.getItems().add(item);
         }

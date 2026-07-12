@@ -54,6 +54,7 @@ public class EquipoService {
             .limit(6)
             .map(e -> {
                 Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",         e.getId());
                 m.put("nombre",     e.getNombre());
                 m.put("tipo",       e.getTipo() != null ? e.getTipo() : "");
                 m.put("estado",     e.getEstado() != null ? e.getEstado().getDisplayName() : "");

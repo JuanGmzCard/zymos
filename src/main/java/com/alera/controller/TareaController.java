@@ -3,10 +3,8 @@ package com.alera.controller;
 import com.alera.model.Tarea;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
-import com.alera.service.EquipoService;
-import com.alera.service.TareaService;
-import com.alera.service.TrazabilidadService;
-import com.alera.service.UsuarioService;
+import com.alera.service.*;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
@@ -24,19 +22,31 @@ import java.util.Map;
 @RequestMapping("/tareas")
 public class TareaController {
 
-    private final TareaService       service;
-    private final UsuarioService     usuarioService;
-    private final TrazabilidadService trazabilidadService;
-    private final EquipoService      equipoService;
+    private final TareaService         service;
+    private final UsuarioService       usuarioService;
+    private final TrazabilidadService  trazabilidadService;
+    private final EquipoService        equipoService;
+    private final InsumoInventarioService insumoService;
+    private final PlanificacionService planificacionService;
+    private final OrdenCompraService   ordenCompraService;
+    private final VentaService         ventaService;
 
     public TareaController(TareaService service,
                            UsuarioService usuarioService,
                            TrazabilidadService trazabilidadService,
-                           EquipoService equipoService) {
-        this.service             = service;
-        this.usuarioService      = usuarioService;
-        this.trazabilidadService = trazabilidadService;
-        this.equipoService       = equipoService;
+                           EquipoService equipoService,
+                           InsumoInventarioService insumoService,
+                           PlanificacionService planificacionService,
+                           OrdenCompraService ordenCompraService,
+                           VentaService ventaService) {
+        this.service              = service;
+        this.usuarioService       = usuarioService;
+        this.trazabilidadService  = trazabilidadService;
+        this.equipoService        = equipoService;
+        this.insumoService        = insumoService;
+        this.planificacionService = planificacionService;
+        this.ordenCompraService   = ordenCompraService;
+        this.ventaService         = ventaService;
     }
 
     @GetMapping
@@ -46,21 +56,21 @@ public class TareaController {
         List<Tarea> tareas = service.listar(estado, asignadoA);
         Map<String, Long> conteos = service.contarPorEstado();
 
-        model.addAttribute("tareas",      tareas);
+        model.addAttribute("tareas",       tareas);
         model.addAttribute("estadoFiltro", estado);
         model.addAttribute("asignadoFiltro", asignadoA);
-        model.addAttribute("conteos",     conteos);
-        model.addAttribute("usuarios",    usuarioService.listarTodos());
-        model.addAttribute("estados",     EstadoTarea.values());
+        model.addAttribute("conteos",      conteos);
+        model.addAttribute("usuarios",     usuarioService.listarTodos());
+        model.addAttribute("estados",      EstadoTarea.values());
         return "tareas/index";
     }
 
     @GetMapping("/nueva")
     public String nueva(Model model) {
-        model.addAttribute("usuarios",  usuarioService.listarTodos());
-        model.addAttribute("lotes",     trazabilidadService.listarTodos());
-        model.addAttribute("equipos",   equipoService.listarTodos());
+        model.addAttribute("tarea",       new Tarea());
+        model.addAttribute("usuarios",    usuarioService.listarTodos());
         model.addAttribute("prioridades", PrioridadTarea.values());
+        model.addAttribute("tiposRef",    tiposReferencia());
         model.addAttribute("modoEdicion", false);
         return "tareas/formulario";
     }
@@ -71,18 +81,16 @@ public class TareaController {
                           @RequestParam(required = false) String fechaVencimiento,
                           @RequestParam(required = false) PrioridadTarea prioridad,
                           @RequestParam(required = false) String asignadoA,
-                          @RequestParam(required = false) Long loteId,
-                          @RequestParam(required = false) Long equipoId,
-                          @RequestParam(value = "itemDesc",      required = false) List<String> itemDescs,
-                          @RequestParam(value = "itemLoteId",    required = false) List<String> itemLoteIds,
-                          @RequestParam(value = "itemEquipoId",  required = false) List<String> itemEquipoIds,
+                          @RequestParam(required = false) String refTipo,
+                          @RequestParam(required = false) Long refId,
+                          @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
                           Authentication auth,
                           RedirectAttributes ra) {
         try {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
-            List<Map<String, String>> itemsData = buildItemsData(itemDescs, itemLoteIds, itemEquipoIds);
-            service.guardar(titulo, descripcion, fv, prioridad, asignadoA, loteId, equipoId, itemsData, auth.getName());
+            List<Map<String, String>> itemsData = buildItemsData(itemDescs);
+            service.guardar(titulo, descripcion, fv, prioridad, asignadoA, refTipo, refId, itemsData, auth.getName());
             ra.addFlashAttribute("mensaje", "Tarea creada exitosamente.");
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
@@ -101,11 +109,10 @@ public class TareaController {
     @GetMapping("/editar/{id}")
     public String editar(@PathVariable Long id, Model model) {
         Tarea tarea = service.buscarPorId(id);
-        model.addAttribute("tarea",      tarea);
-        model.addAttribute("usuarios",   usuarioService.listarTodos());
-        model.addAttribute("lotes",      trazabilidadService.listarTodos());
-        model.addAttribute("equipos",    equipoService.listarTodos());
+        model.addAttribute("tarea",       tarea);
+        model.addAttribute("usuarios",    usuarioService.listarTodos());
         model.addAttribute("prioridades", PrioridadTarea.values());
+        model.addAttribute("tiposRef",    tiposReferencia());
         model.addAttribute("modoEdicion", true);
         return "tareas/formulario";
     }
@@ -117,17 +124,15 @@ public class TareaController {
                              @RequestParam(required = false) String fechaVencimiento,
                              @RequestParam(required = false) PrioridadTarea prioridad,
                              @RequestParam(required = false) String asignadoA,
-                             @RequestParam(required = false) Long loteId,
-                             @RequestParam(required = false) Long equipoId,
-                             @RequestParam(value = "itemDesc",      required = false) List<String> itemDescs,
-                             @RequestParam(value = "itemLoteId",    required = false) List<String> itemLoteIds,
-                             @RequestParam(value = "itemEquipoId",  required = false) List<String> itemEquipoIds,
+                             @RequestParam(required = false) String refTipo,
+                             @RequestParam(required = false) Long refId,
+                             @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
                              RedirectAttributes ra) {
         try {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
-            List<Map<String, String>> itemsData = buildItemsData(itemDescs, itemLoteIds, itemEquipoIds);
-            service.actualizar(id, titulo, descripcion, fv, prioridad, asignadoA, loteId, equipoId, itemsData);
+            List<Map<String, String>> itemsData = buildItemsData(itemDescs);
+            service.actualizar(id, titulo, descripcion, fv, prioridad, asignadoA, refTipo, refId, itemsData);
             ra.addFlashAttribute("mensaje", "Tarea actualizada.");
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
@@ -150,7 +155,7 @@ public class TareaController {
         return "redirect:/tareas";
     }
 
-    @PostMapping(value = "/{tareaId}/items/{itemId}/toggle", produces = "application/json")
+    @PostMapping(value = "/{tareaId}/items/{itemId}/toggle", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public ResponseEntity<Map<String, Object>> toggleItem(@PathVariable Long tareaId,
                                                           @PathVariable Long itemId) {
@@ -162,22 +167,61 @@ public class TareaController {
         }
     }
 
-    private List<Map<String, String>> buildItemsData(List<String> descs,
-                                                     List<String> loteIds,
-                                                     List<String> equipoIds) {
+    @GetMapping(value = "/suggest-ref", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public List<Map<String, Object>> suggestRef(@RequestParam String tipo,
+                                                @RequestParam(defaultValue = "") String q) {
+        if (q.isBlank() || q.trim().length() < 2) return List.of();
+        return switch (tipo.toUpperCase()) {
+            case "LOTE" -> trazabilidadService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("codigoLote") + (m.get("estilo") != null && !m.get("estilo").toString().isBlank() ? " — " + m.get("estilo") : ""),
+                            "sub",   String.valueOf(m.getOrDefault("fase", ""))))
+                    .toList();
+            case "EQUIPO" -> equipoService.suggest(q, null).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("nombre"),
+                            "sub",   String.valueOf(m.getOrDefault("tipo", ""))))
+                    .toList();
+            case "INSUMO" -> insumoService.suggest(q);
+            case "ELABORACION" -> planificacionService.suggest(q);
+            case "ORDEN_COMPRA" -> ordenCompraService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("titulo"),
+                            "sub",   String.valueOf(m.getOrDefault("sub", ""))))
+                    .toList();
+            case "VENTA" -> ventaService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("titulo"),
+                            "sub",   String.valueOf(m.getOrDefault("sub", ""))))
+                    .toList();
+            default -> List.of();
+        };
+    }
+
+    private List<Map<String, String>> tiposReferencia() {
+        return List.of(
+            Map.of("valor", "LOTE",         "etiqueta", "Lote de producción"),
+            Map.of("valor", "EQUIPO",        "etiqueta", "Equipo"),
+            Map.of("valor", "INSUMO",        "etiqueta", "Insumo / Inventario"),
+            Map.of("valor", "ELABORACION",   "etiqueta", "Elaboración planificada"),
+            Map.of("valor", "ORDEN_COMPRA",  "etiqueta", "Orden de compra"),
+            Map.of("valor", "VENTA",         "etiqueta", "Venta")
+        );
+    }
+
+    private List<Map<String, String>> buildItemsData(List<String> descs) {
         List<Map<String, String>> result = new ArrayList<>();
         if (descs == null) return result;
-        for (int i = 0; i < descs.size(); i++) {
+        for (String desc : descs) {
             Map<String, String> m = new HashMap<>();
-            m.put("descripcion", descs.get(i));
-            m.put("loteId",   safeGet(loteIds, i));
-            m.put("equipoId", safeGet(equipoIds, i));
+            m.put("descripcion", desc);
             result.add(m);
         }
         return result;
-    }
-
-    private String safeGet(List<String> list, int index) {
-        return (list != null && index < list.size()) ? list.get(index) : null;
     }
 }
