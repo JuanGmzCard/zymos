@@ -25,6 +25,9 @@ public class TareaService {
     private final ElaboracionPlanificadaRepository elaboracionRepo;
     private final OrdenCompraRepository            ordenCompraRepo;
     private final VentaRepository                  ventaRepo;
+    private final ClienteRepository                clienteRepo;
+    private final FacturaProveedorRepository       facturaRepo;
+    private final ProveedorRepository              proveedorRepo;
     private final NotificacionService              notificacionService;
 
     public TareaService(TareaRepository repo,
@@ -35,6 +38,9 @@ public class TareaService {
                         ElaboracionPlanificadaRepository elaboracionRepo,
                         OrdenCompraRepository ordenCompraRepo,
                         VentaRepository ventaRepo,
+                        ClienteRepository clienteRepo,
+                        FacturaProveedorRepository facturaRepo,
+                        ProveedorRepository proveedorRepo,
                         NotificacionService notificacionService) {
         this.repo               = repo;
         this.itemRepo           = itemRepo;
@@ -44,6 +50,9 @@ public class TareaService {
         this.elaboracionRepo    = elaboracionRepo;
         this.ordenCompraRepo    = ordenCompraRepo;
         this.ventaRepo          = ventaRepo;
+        this.clienteRepo        = clienteRepo;
+        this.facturaRepo        = facturaRepo;
+        this.proveedorRepo      = proveedorRepo;
         this.notificacionService = notificacionService;
     }
 
@@ -173,6 +182,9 @@ public class TareaService {
             case "ELABORACION"  -> tarea.setElaboracion(elaboracionRepo.findById(refId).orElse(null));
             case "ORDEN_COMPRA" -> tarea.setOrdenCompra(ordenCompraRepo.findById(refId).orElse(null));
             case "VENTA"        -> tarea.setVenta(ventaRepo.findById(refId).orElse(null));
+            case "CLIENTE"      -> tarea.setCliente(clienteRepo.findById(refId).orElse(null));
+            case "FACTURA"      -> tarea.setFactura(facturaRepo.findById(refId).orElse(null));
+            case "PROVEEDOR"    -> tarea.setProveedor(proveedorRepo.findById(refId).orElse(null));
         }
     }
 
@@ -183,6 +195,9 @@ public class TareaService {
         tarea.setElaboracion(null);
         tarea.setOrdenCompra(null);
         tarea.setVenta(null);
+        tarea.setCliente(null);
+        tarea.setFactura(null);
+        tarea.setProveedor(null);
     }
 
     private void recalcularEstado(Long tareaId) {

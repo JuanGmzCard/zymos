@@ -46,6 +46,7 @@ public class ProveedorService {
         return repo.search(q.trim(), PageRequest.of(0, 6)).stream()
             .map(p -> {
                 Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",     p.getId());
                 m.put("nombre", p.getNombre());
                 m.put("nit",    p.getNit() != null ? p.getNit() : "");
                 m.put("activo", p.isActivo());

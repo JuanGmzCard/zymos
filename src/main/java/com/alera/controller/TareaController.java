@@ -22,14 +22,17 @@ import java.util.Map;
 @RequestMapping("/tareas")
 public class TareaController {
 
-    private final TareaService         service;
-    private final UsuarioService       usuarioService;
-    private final TrazabilidadService  trazabilidadService;
-    private final EquipoService        equipoService;
-    private final InsumoInventarioService insumoService;
-    private final PlanificacionService planificacionService;
-    private final OrdenCompraService   ordenCompraService;
-    private final VentaService         ventaService;
+    private final TareaService              service;
+    private final UsuarioService            usuarioService;
+    private final TrazabilidadService       trazabilidadService;
+    private final EquipoService             equipoService;
+    private final InsumoInventarioService   insumoService;
+    private final PlanificacionService      planificacionService;
+    private final OrdenCompraService        ordenCompraService;
+    private final VentaService              ventaService;
+    private final ClienteService            clienteService;
+    private final FacturaProveedorService   facturaService;
+    private final ProveedorService          proveedorService;
 
     public TareaController(TareaService service,
                            UsuarioService usuarioService,
@@ -38,7 +41,10 @@ public class TareaController {
                            InsumoInventarioService insumoService,
                            PlanificacionService planificacionService,
                            OrdenCompraService ordenCompraService,
-                           VentaService ventaService) {
+                           VentaService ventaService,
+                           ClienteService clienteService,
+                           FacturaProveedorService facturaService,
+                           ProveedorService proveedorService) {
         this.service              = service;
         this.usuarioService       = usuarioService;
         this.trazabilidadService  = trazabilidadService;
@@ -47,6 +53,9 @@ public class TareaController {
         this.planificacionService = planificacionService;
         this.ordenCompraService   = ordenCompraService;
         this.ventaService         = ventaService;
+        this.clienteService       = clienteService;
+        this.facturaService       = facturaService;
+        this.proveedorService     = proveedorService;
     }
 
     @GetMapping
@@ -199,6 +208,24 @@ public class TareaController {
                             "label", m.get("titulo"),
                             "sub",   String.valueOf(m.getOrDefault("sub", ""))))
                     .toList();
+            case "CLIENTE" -> clienteService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("nombre"),
+                            "sub",   String.valueOf(m.getOrDefault("nit", ""))))
+                    .toList();
+            case "FACTURA" -> facturaService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("titulo"),
+                            "sub",   String.valueOf(m.getOrDefault("proveedor", ""))))
+                    .toList();
+            case "PROVEEDOR" -> proveedorService.suggest(q).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("nombre"),
+                            "sub",   String.valueOf(m.getOrDefault("nit", ""))))
+                    .toList();
             default -> List.of();
         };
     }
@@ -210,7 +237,10 @@ public class TareaController {
             Map.of("valor", "INSUMO",        "etiqueta", "Insumo / Inventario"),
             Map.of("valor", "ELABORACION",   "etiqueta", "Elaboración planificada"),
             Map.of("valor", "ORDEN_COMPRA",  "etiqueta", "Orden de compra"),
-            Map.of("valor", "VENTA",         "etiqueta", "Venta")
+            Map.of("valor", "VENTA",         "etiqueta", "Venta"),
+            Map.of("valor", "CLIENTE",       "etiqueta", "Cliente"),
+            Map.of("valor", "FACTURA",       "etiqueta", "Factura de proveedor"),
+            Map.of("valor", "PROVEEDOR",     "etiqueta", "Proveedor")
         );
     }
 

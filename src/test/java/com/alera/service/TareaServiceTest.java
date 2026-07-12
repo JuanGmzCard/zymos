@@ -42,6 +42,9 @@ class TareaServiceTest {
     @Mock ElaboracionPlanificadaRepository elaboracionRepo;
     @Mock OrdenCompraRepository            ordenCompraRepo;
     @Mock VentaRepository                  ventaRepo;
+    @Mock ClienteRepository                clienteRepo;
+    @Mock FacturaProveedorRepository       facturaRepo;
+    @Mock ProveedorRepository              proveedorRepo;
     @Mock NotificacionService              notificacionService;
 
     @InjectMocks TareaService service;

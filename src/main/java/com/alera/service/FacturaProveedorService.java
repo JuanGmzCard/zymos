@@ -64,6 +64,7 @@ public class FacturaProveedorService {
         return repo.search(q.trim(), PageRequest.of(0, 6)).stream()
             .map(f -> {
                 Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",        f.getId());
                 m.put("titulo",    f.getNumeroFactura() != null && !f.getNumeroFactura().isBlank()
                                    ? f.getNumeroFactura() : "#" + f.getId());
                 m.put("proveedor", f.getProveedor() != null ? f.getProveedor() : "");

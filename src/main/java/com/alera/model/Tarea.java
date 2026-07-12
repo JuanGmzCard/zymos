@@ -73,6 +73,18 @@ public class Tarea {
     @JoinColumn(name = "venta_id")
     private Venta venta;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cliente_id")
+    private Cliente cliente;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "factura_id")
+    private FacturaProveedor factura;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "proveedor_id")
+    private Proveedor proveedor;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -127,6 +139,12 @@ public class Tarea {
     public void setOrdenCompra(OrdenCompra ordenCompra) { this.ordenCompra = ordenCompra; }
     public Venta getVenta() { return venta; }
     public void setVenta(Venta venta) { this.venta = venta; }
+    public Cliente getCliente() { return cliente; }
+    public void setCliente(Cliente cliente) { this.cliente = cliente; }
+    public FacturaProveedor getFactura() { return factura; }
+    public void setFactura(FacturaProveedor factura) { this.factura = factura; }
+    public Proveedor getProveedor() { return proveedor; }
+    public void setProveedor(Proveedor proveedor) { this.proveedor = proveedor; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public List<TareaItem> getItems() { return items; }
@@ -134,22 +152,28 @@ public class Tarea {
 
     /** Tipo de referencia activa (solo una puede ser no-null a la vez). */
     public String getRefTipo() {
-        if (lote != null)       return "LOTE";
-        if (equipo != null)     return "EQUIPO";
-        if (insumo != null)     return "INSUMO";
+        if (lote != null)        return "LOTE";
+        if (equipo != null)      return "EQUIPO";
+        if (insumo != null)      return "INSUMO";
         if (elaboracion != null) return "ELABORACION";
         if (ordenCompra != null) return "ORDEN_COMPRA";
-        if (venta != null)      return "VENTA";
+        if (venta != null)       return "VENTA";
+        if (cliente != null)     return "CLIENTE";
+        if (factura != null)     return "FACTURA";
+        if (proveedor != null)   return "PROVEEDOR";
         return null;
     }
 
     public Long getRefId() {
-        if (lote != null)       return lote.getId();
-        if (equipo != null)     return equipo.getId();
-        if (insumo != null)     return insumo.getId();
+        if (lote != null)        return lote.getId();
+        if (equipo != null)      return equipo.getId();
+        if (insumo != null)      return insumo.getId();
         if (elaboracion != null) return elaboracion.getId();
         if (ordenCompra != null) return ordenCompra.getId();
-        if (venta != null)      return venta.getId();
+        if (venta != null)       return venta.getId();
+        if (cliente != null)     return cliente.getId();
+        if (factura != null)     return factura.getId();
+        if (proveedor != null)   return proveedor.getId();
         return null;
     }
 
@@ -162,6 +186,13 @@ public class Tarea {
                                         + (ordenCompra.getProveedor() != null ? " — " + ordenCompra.getProveedor() : "");
         if (venta != null)       return venta.getCliente()
                                         + (venta.getRemisionNumero() != null ? " #" + venta.getRemisionNumero() : "");
+        if (cliente != null)     return cliente.getNombre()
+                                        + (cliente.getNit() != null ? " — " + cliente.getNit() : "");
+        if (factura != null)     return (factura.getNumeroFactura() != null && !factura.getNumeroFactura().isBlank()
+                                        ? factura.getNumeroFactura() : "#" + factura.getId())
+                                        + (factura.getProveedor() != null ? " — " + factura.getProveedor() : "");
+        if (proveedor != null)   return proveedor.getNombre()
+                                        + (proveedor.getNit() != null ? " — " + proveedor.getNit() : "");
         return null;
     }
 
@@ -172,6 +203,9 @@ public class Tarea {
         if (elaboracion != null) return "/planificacion";
         if (ordenCompra != null) return "/ordenes-compra/ver/" + ordenCompra.getId();
         if (venta != null)       return "/ventas/ver/" + venta.getId();
+        if (cliente != null)     return "/clientes/ver/" + cliente.getId();
+        if (factura != null)     return "/facturas/ver/" + factura.getId();
+        if (proveedor != null)   return "/proveedores/editar/" + proveedor.getId();
         return null;
     }
 }
