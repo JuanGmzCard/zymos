@@ -506,14 +506,38 @@ Tres reportes: Producción (`/reportes/produccion`), Ventas (`/reportes/ventas`)
 
 ## MÓDULO TAREAS (`/tareas`)
 
-Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta base: `/tareas`. Posición en navbar: entre BPM y Admin (link simple, sin dropdown). V75 (`V75__tareas.sql`).
+Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta base: `/tareas`. Posición en navbar: entre BPM y Admin (link simple, sin dropdown). V75–V78.
 
 ### Entidades
 
-- **`Tarea`** (tabla `tareas`): `titulo`, `descripcion`, `fechaVencimiento`, `prioridad` (enum `PrioridadTarea`), `estado` (enum `EstadoTarea`), `asignadoA` (String username — no FK), `creadoPor` (String username), `lote` (FK nullable → `lotes_cerveza`), `equipo` (FK nullable → `equipos`), `@TenantId`, `@CreatedDate` / `@LastModifiedDate` via `@EntityListeners(AuditingEntityListener.class)`, `items` OneToMany→`TareaItem`.
+- **`Tarea`** (tabla `tareas`): `titulo`, `descripcion`, `fechaVencimiento`, `prioridad` (enum `PrioridadTarea`), `estado` (enum `EstadoTarea`), `asignadoA` (String username — no FK), `creadoPor` (String username), `@TenantId`, `@CreatedDate` / `@LastModifiedDate`, `items` OneToMany→`TareaItem`.
+  - **11 FK de referencia** (todas nullable, como máximo una activa a la vez): `lote`, `equipo`, `insumo`, `elaboracion`, `ordenCompra`, `venta`, `cliente`, `factura`, `proveedor`, `receta`, `barril`. Agregadas en V76 (alta), V77 (media), V78 (baja).
   - `isVencida()`: `fechaVencimiento != null && now().isAfter(fechaVencimiento) && estado != COMPLETADA`
   - `getPorcentajeCompletado()`: `completados * 100 / items.size()`
-- **`TareaItem`** (tabla `tarea_items`): `descripcion`, `completado` (Boolean), `ordenItem` (Integer), `lote` FK nullable, `equipo` FK nullable, `@TenantId`, `tarea` ManyToOne. Misma estructura que `VentaItem` (no extiende AuditableEntity).
+  - **Métodos computados de referencia** (no columna BD): `getRefTipo()` → String del tipo activo (ej: `"LOTE"`), `getRefId()` → Long id, `getRefLabel()` → texto display, `getRefUrl()` → URL de detalle. Todos evalúan las 11 FK en orden fijo; retornan null si todas son null.
+- **`TareaItem`** (tabla `tarea_items`): `descripcion`, `completado` (Boolean), `ordenItem` (Integer), `@TenantId`, `tarea` ManyToOne. No extiende AuditableEntity.
+
+### Sistema de referencias universales (V76–V78)
+
+`TareaService.guardar()` y `actualizar()` reciben `String refTipo, Long refId` en lugar de FKs separadas. `resolverReferencia(tarea, refTipo, refId)` hace switch sobre el tipo y llama el repo correspondiente. `limpiarReferencias(tarea)` pone las 11 FK a null antes de resolver en cada actualización.
+
+| Tipo | Entidad | Prioridad | Migración |
+|---|---|---|---|
+| `LOTE` | LoteCerveza | Alta | V76 |
+| `EQUIPO` | Equipo | Alta | V75 |
+| `INSUMO` | InsumoInventario | Alta | V76 |
+| `ELABORACION` | ElaboracionPlanificada | Alta | V76 |
+| `ORDEN_COMPRA` | OrdenCompra | Alta | V76 |
+| `VENTA` | Venta | Alta | V76 |
+| `CLIENTE` | Cliente | Media | V77 |
+| `FACTURA` | FacturaProveedor | Media | V77 |
+| `PROVEEDOR` | Proveedor | Media | V77 |
+| `RECETA` | Receta | Baja | V78 |
+| `BARRIL` | Barril | Baja | V78 |
+
+### Endpoint suggest-ref
+
+`GET /tareas/suggest-ref?tipo=XX&q=YY` — `@ResponseBody`, normaliza la respuesta de cada módulo a `{id, label, sub}`. Mínimo 2 caracteres en `q`. El formulario lo llama con debounce 260ms al escribir en el campo de búsqueda de referencia.
 
 ### Auto-recálculo de estado
 
@@ -539,13 +563,15 @@ Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta ba
 
 `POST /tareas/{tareaId}/items/{itemId}/toggle` — `@ResponseBody`, retorna JSON: `{completado: bool, estado: "PENDIENTE"|"EN_PROGRESO"|"COMPLETADA", pct: int}`. El JS en `detalle.html` usa CSRF via `<meta name="_csrf">` / `<meta name="_csrf_header">`.
 
-### Formulario — ítems dinámicos sin JSON serialización
+### Formulario — referencia con dropdown + typeahead
 
-El formulario usa `<template id="tplLoteOptions">` y `<template id="tplEquipoOptions">` renderizados server-side por Thymeleaf. El JS clona con `tpl.content.cloneNode(true)` para construir nuevas filas. **NO serializar `List<LoteCerveza>` como JSON** via `th:inline="javascript"` — las lazy collections de JPA causan problemas con Jackson en Thymeleaf inline.
+El formulario tiene `<select id="selectRefTipo">` (alimentado de `${tiposRef}`) + campo de búsqueda + dropdown AJAX. La selección escribe `refTipo` y `refId` en inputs hidden. Al editar, se muestra el chip de la referencia existente con botón de limpiar. **No usar** selects separados por tipo — el sistema es completamente data-driven vía `tiposReferencia()` en el controller.
 
 ### Tests
 
-- `AlertaSchedulerTest` requiere `@Mock TareaService tareaService` + stub `lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of())` en `@BeforeEach`.
+- `TareaServiceTest` — requiere `@Mock` para los 13 repos que inyecta el constructor (incluye todos los repos de referencia).
+- `TareaControllerTest` — requiere `@MockBean` para los 10 services que inyecta el controller.
+- `AlertaSchedulerTest` — requiere `@Mock TareaService tareaService` + stub `lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of())` en `@BeforeEach`.
 
 ---
 
