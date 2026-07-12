@@ -175,8 +175,9 @@
             method: 'POST',
             headers: { [csrfHeader]: csrf, 'Content-Type': 'application/json' }
         })
-        .then(r => r.json())
+        .then(r => { if (!r.ok) return null; return r.json(); })
         .then(data => {
+            if (!data) return;
             const done = data.completado;
             chk.classList.toggle('done', done);
             chk.innerHTML = done ? '<i class="bi bi-check2"></i>' : '';

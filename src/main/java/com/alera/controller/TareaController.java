@@ -4,6 +4,8 @@ import com.alera.model.Tarea;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
 import com.alera.service.*;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.context.MessageSource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -35,6 +38,7 @@ public class TareaController {
     private final ProveedorService          proveedorService;
     private final RecetaService             recetaService;
     private final BarrilService             barrilService;
+    private final MessageSource             messageSource;
 
     public TareaController(TareaService service,
                            UsuarioService usuarioService,
@@ -48,7 +52,8 @@ public class TareaController {
                            FacturaProveedorService facturaService,
                            ProveedorService proveedorService,
                            RecetaService recetaService,
-                           BarrilService barrilService) {
+                           BarrilService barrilService,
+                           MessageSource messageSource) {
         this.service              = service;
         this.usuarioService       = usuarioService;
         this.trazabilidadService  = trazabilidadService;
@@ -62,6 +67,15 @@ public class TareaController {
         this.proveedorService     = proveedorService;
         this.recetaService        = recetaService;
         this.barrilService        = barrilService;
+        this.messageSource        = messageSource;
+    }
+
+    private String msg(String key, Locale locale) {
+        return messageSource.getMessage(key, null, key, locale);
+    }
+
+    private String msgf(String key, Locale locale, Object... args) {
+        return messageSource.getMessage(key, args, key, locale);
     }
 
     @GetMapping
@@ -100,16 +114,17 @@ public class TareaController {
                           @RequestParam(required = false) Long refId,
                           @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
                           Authentication auth,
-                          RedirectAttributes ra) {
+                          RedirectAttributes ra,
+                          Locale locale) {
         try {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
             List<Map<String, String>> itemsData = buildItemsData(itemDescs);
             service.guardar(titulo, descripcion, fv, prioridad, asignadoA, refTipo, refId, itemsData, auth.getName());
-            ra.addFlashAttribute("mensaje", "Tarea creada exitosamente.");
+            ra.addFlashAttribute("mensaje", msg("tarea.guardada", locale));
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
-            ra.addFlashAttribute("mensaje", "Error al crear la tarea: " + e.getMessage());
+            ra.addFlashAttribute("mensaje", msgf("tarea.error.crear", locale, e.getMessage()));
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/tareas";
@@ -142,29 +157,30 @@ public class TareaController {
                              @RequestParam(required = false) String refTipo,
                              @RequestParam(required = false) Long refId,
                              @RequestParam(value = "itemDesc", required = false) List<String> itemDescs,
-                             RedirectAttributes ra) {
+                             RedirectAttributes ra,
+                             Locale locale) {
         try {
             LocalDate fv = (fechaVencimiento != null && !fechaVencimiento.isBlank())
                     ? LocalDate.parse(fechaVencimiento) : null;
             List<Map<String, String>> itemsData = buildItemsData(itemDescs);
             service.actualizar(id, titulo, descripcion, fv, prioridad, asignadoA, refTipo, refId, itemsData);
-            ra.addFlashAttribute("mensaje", "Tarea actualizada.");
+            ra.addFlashAttribute("mensaje", msg("tarea.actualizada", locale));
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
-            ra.addFlashAttribute("mensaje", "Error al actualizar la tarea: " + e.getMessage());
+            ra.addFlashAttribute("mensaje", msgf("tarea.error.actualizar", locale, e.getMessage()));
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/tareas/" + id;
     }
 
     @PostMapping("/{id}/eliminar")
-    public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
+    public String eliminar(@PathVariable Long id, RedirectAttributes ra, Locale locale) {
         try {
             service.eliminar(id);
-            ra.addFlashAttribute("mensaje", "Tarea eliminada.");
+            ra.addFlashAttribute("mensaje", msg("tarea.eliminada", locale));
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
-            ra.addFlashAttribute("mensaje", "Error al eliminar la tarea: " + e.getMessage());
+            ra.addFlashAttribute("mensaje", msgf("tarea.error.eliminar", locale, e.getMessage()));
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/tareas";
@@ -177,6 +193,8 @@ public class TareaController {
         try {
             Map<String, Object> result = service.toggleItem(tareaId, itemId);
             return ResponseEntity.ok(result);
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }

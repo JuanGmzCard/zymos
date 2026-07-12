@@ -294,7 +294,7 @@ class TareaServiceTest {
         @DisplayName("marcar completado invierte el flag")
         void toggle_invierteCompletado() {
             TareaItem it = item(5L, 1L, false);
-            when(itemRepo.findById(5L)).thenReturn(Optional.of(it));
+            when(itemRepo.findByIdAndTareaId(5L, 1L)).thenReturn(Optional.of(it));
             when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(1L)).thenReturn(List.of(it));
             Tarea t = tarea(1L, EstadoTarea.PENDIENTE, null);
@@ -311,7 +311,7 @@ class TareaServiceTest {
         void todosCompletados_estadoCompletada() {
             TareaItem it1 = item(1L, 10L, false); // se va a marcar como done
             TareaItem it2 = item(2L, 10L, true);
-            when(itemRepo.findById(1L)).thenReturn(Optional.of(it1));
+            when(itemRepo.findByIdAndTareaId(1L, 10L)).thenReturn(Optional.of(it1));
             when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(10L)).thenReturn(List.of(it1, it2));
             Tarea t = tarea(10L, EstadoTarea.EN_PROGRESO, null);
@@ -330,7 +330,7 @@ class TareaServiceTest {
         void algunosCompletados_estadoEnProgreso() {
             TareaItem it1 = item(1L, 10L, false); // se marca done
             TareaItem it2 = item(2L, 10L, false); // queda pendiente
-            when(itemRepo.findById(1L)).thenReturn(Optional.of(it1));
+            when(itemRepo.findByIdAndTareaId(1L, 10L)).thenReturn(Optional.of(it1));
             when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(10L)).thenReturn(List.of(it1, it2));
             Tarea t = tarea(10L, EstadoTarea.PENDIENTE, null);
@@ -349,7 +349,7 @@ class TareaServiceTest {
         void desmarcarUnico_estadoPendiente() {
             TareaItem it1 = item(1L, 10L, true); // se desmarca
             TareaItem it2 = item(2L, 10L, false);
-            when(itemRepo.findById(1L)).thenReturn(Optional.of(it1));
+            when(itemRepo.findByIdAndTareaId(1L, 10L)).thenReturn(Optional.of(it1));
             when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(10L)).thenReturn(List.of(it1, it2));
             Tarea t = tarea(10L, EstadoTarea.EN_PROGRESO, null);
@@ -366,7 +366,7 @@ class TareaServiceTest {
         @Test
         @DisplayName("item inexistente lanza EntityNotFoundException")
         void itemInexistente_lanzaExcepcion() {
-            when(itemRepo.findById(99L)).thenReturn(Optional.empty());
+            when(itemRepo.findByIdAndTareaId(99L, 1L)).thenReturn(Optional.empty());
             assertThatThrownBy(() -> service.toggleItem(1L, 99L))
                     .isInstanceOf(EntityNotFoundException.class);
         }
@@ -375,7 +375,7 @@ class TareaServiceTest {
         @DisplayName("resultado incluye pct y estado")
         void resultado_incluyePctYEstado() {
             TareaItem it = item(5L, 1L, false);
-            when(itemRepo.findById(5L)).thenReturn(Optional.of(it));
+            when(itemRepo.findByIdAndTareaId(5L, 1L)).thenReturn(Optional.of(it));
             when(itemRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
             when(itemRepo.findByTareaIdOrderByOrdenItemAscIdAsc(1L)).thenReturn(List.of(it));
             Tarea t = tarea(1L, EstadoTarea.PENDIENTE, null);
@@ -391,12 +391,13 @@ class TareaServiceTest {
     // ── contarPorEstado ────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("contarPorEstado retorna mapa con 4 claves")
+    @DisplayName("contarPorEstado retorna mapa con 4 claves sumadas desde GROUP BY")
     void contarPorEstado_retornaMapaCompleto() {
-        when(repo.count()).thenReturn(10L);
-        when(repo.countByEstado(EstadoTarea.PENDIENTE)).thenReturn(5L);
-        when(repo.countByEstado(EstadoTarea.EN_PROGRESO)).thenReturn(3L);
-        when(repo.countByEstado(EstadoTarea.COMPLETADA)).thenReturn(2L);
+        when(repo.countGroupByEstado()).thenReturn(List.of(
+                new Object[]{EstadoTarea.PENDIENTE,   5L},
+                new Object[]{EstadoTarea.EN_PROGRESO, 3L},
+                new Object[]{EstadoTarea.COMPLETADA,  2L}
+        ));
 
         Map<String, Long> mapa = service.contarPorEstado();
 
@@ -412,11 +413,11 @@ class TareaServiceTest {
     @DisplayName("listarProximasAVencer delega al repositorio con la fecha y estado NOT COMPLETADA")
     void listarProximasAVencer_delegaARepo() {
         LocalDate manana = LocalDate.now().plusDays(1);
-        when(repo.findByFechaVencimientoAndEstadoNot(manana, EstadoTarea.COMPLETADA))
+        when(repo.findByFechaVencimientoLessThanEqualAndEstadoNot(manana, EstadoTarea.COMPLETADA))
                 .thenReturn(List.of());
 
         service.listarProximasAVencer(manana);
 
-        verify(repo).findByFechaVencimientoAndEstadoNot(manana, EstadoTarea.COMPLETADA);
+        verify(repo).findByFechaVencimientoLessThanEqualAndEstadoNot(manana, EstadoTarea.COMPLETADA);
     }
 }

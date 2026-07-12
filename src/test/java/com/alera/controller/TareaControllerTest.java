@@ -223,13 +223,12 @@ class TareaControllerTest {
 
     @Test
     @WithMockUser
-    @DisplayName("POST toggle con error retorna 400 con JSON de error")
-    void toggleItem_conError_retorna400() throws Exception {
+    @DisplayName("POST toggle con EntityNotFoundException retorna 404")
+    void toggleItem_conEntityNotFound_retorna404() throws Exception {
         when(tareaService.toggleItem(1L, 99L))
                 .thenThrow(new jakarta.persistence.EntityNotFoundException("no encontrado"));
 
         mockMvc.perform(post("/tareas/1/items/99/toggle").with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists());
+                .andExpect(status().isNotFound());
     }
 }

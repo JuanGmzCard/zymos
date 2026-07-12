@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -104,7 +105,7 @@ public class TareaService {
 
         Tarea saved = repo.save(tarea);
 
-        if (saved.getAsignadoA() != null) {
+        if (saved.getAsignadoA() != null && !saved.getAsignadoA().equals(creadoPor)) {
             notificacionService.crearAlertaTareaAsignada(saved);
         }
 
@@ -151,7 +152,7 @@ public class TareaService {
     }
 
     public Map<String, Object> toggleItem(Long tareaId, Long itemId) {
-        TareaItem item = itemRepo.findById(itemId)
+        TareaItem item = itemRepo.findByIdAndTareaId(itemId, tareaId)
                 .orElseThrow(() -> new EntityNotFoundException("Item no encontrado: " + itemId));
 
         item.setCompletado(!Boolean.TRUE.equals(item.getCompletado()));
@@ -159,24 +160,38 @@ public class TareaService {
 
         recalcularEstado(tareaId);
 
+        Tarea tarea = repo.findById(tareaId)
+                .orElseThrow(() -> new EntityNotFoundException("Tarea no encontrada: " + tareaId));
         return Map.of(
                 "completado", item.getCompletado(),
-                "estado", repo.findById(tareaId).map(t -> t.getEstado().name()).orElse(""),
-                "pct", repo.findById(tareaId).map(Tarea::getPorcentajeCompletado).orElse(0)
+                "estado",     tarea.getEstado().name(),
+                "pct",        tarea.getPorcentajeCompletado()
         );
     }
 
     public Map<String, Long> contarPorEstado() {
-        return Map.of(
-                "total",       repo.count(),
-                "pendiente",   repo.countByEstado(EstadoTarea.PENDIENTE),
-                "en_progreso", repo.countByEstado(EstadoTarea.EN_PROGRESO),
-                "completada",  repo.countByEstado(EstadoTarea.COMPLETADA)
-        );
+        Map<String, Long> result = new HashMap<>(Map.of(
+                "total",       0L,
+                "pendiente",   0L,
+                "en_progreso", 0L,
+                "completada",  0L));
+        long total = 0L;
+        for (Object[] row : repo.countGroupByEstado()) {
+            EstadoTarea estado = (EstadoTarea) row[0];
+            long count = ((Number) row[1]).longValue();
+            total += count;
+            switch (estado) {
+                case PENDIENTE   -> result.put("pendiente",   count);
+                case EN_PROGRESO -> result.put("en_progreso", count);
+                case COMPLETADA  -> result.put("completada",  count);
+            }
+        }
+        result.put("total", total);
+        return result;
     }
 
-    public List<Tarea> listarProximasAVencer(LocalDate fecha) {
-        return repo.findByFechaVencimientoAndEstadoNot(fecha, EstadoTarea.COMPLETADA);
+    public List<Tarea> listarProximasAVencer(LocalDate hasta) {
+        return repo.findByFechaVencimientoLessThanEqualAndEstadoNot(hasta, EstadoTarea.COMPLETADA);
     }
 
     private void resolverReferencia(Tarea tarea, String refTipo, Long refId) {
@@ -193,6 +208,7 @@ public class TareaService {
             case "PROVEEDOR"    -> tarea.setProveedor(proveedorRepo.findById(refId).orElse(null));
             case "RECETA"       -> tarea.setReceta(recetaRepo.findById(refId).orElse(null));
             case "BARRIL"       -> tarea.setBarril(barrilRepo.findById(refId).orElse(null));
+            default             -> throw new IllegalArgumentException("Tipo de referencia desconocido: " + refTipo);
         }
     }
 

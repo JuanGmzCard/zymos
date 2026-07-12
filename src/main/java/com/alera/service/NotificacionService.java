@@ -181,31 +181,31 @@ public class NotificacionService {
         if (!repo.existeEnPeriodo(TipoNotificacion.PLAN_LIMITE, hoy, maniana)) {
             Integer maxLotes    = tenant.getMaxLotes();
             Integer maxUsuarios = tenant.getMaxUsuarios();
+            String titulo  = null;
+            String mensaje = null;
 
             if (maxLotes != null && totalLotes >= maxLotes) {
-                repo.save(Notificacion.of(
-                        TipoNotificacion.PLAN_LIMITE,
-                        "Límite de lotes alcanzado",
-                        "Se alcanzó el límite de " + maxLotes + " lotes incluidos en el plan.",
-                        null));
+                titulo  = "Límite de lotes alcanzado";
+                mensaje = "Se alcanzó el límite de " + maxLotes + " lotes incluidos en el plan.";
             } else if (maxLotes != null && totalLotes >= maxLotes * 0.9) {
-                repo.save(Notificacion.of(
-                        TipoNotificacion.PLAN_LIMITE,
-                        "Cerca del límite de lotes",
-                        "Se usaron " + totalLotes + " de " + maxLotes + " lotes incluidos en el plan.",
-                        null));
-            } else if (maxUsuarios != null && totalUsuarios >= maxUsuarios) {
-                repo.save(Notificacion.of(
-                        TipoNotificacion.PLAN_LIMITE,
-                        "Límite de usuarios alcanzado",
-                        "Se alcanzó el límite de " + maxUsuarios + " usuarios incluidos en el plan.",
-                        null));
+                titulo  = "Cerca del límite de lotes";
+                mensaje = "Se usaron " + totalLotes + " de " + maxLotes + " lotes incluidos en el plan.";
+            }
+
+            if (maxUsuarios != null && totalUsuarios >= maxUsuarios) {
+                String t2 = "Límite de usuarios alcanzado";
+                String m2 = "Se alcanzó el límite de " + maxUsuarios + " usuarios incluidos en el plan.";
+                titulo  = titulo  == null ? t2 : titulo  + " / " + t2;
+                mensaje = mensaje == null ? m2 : mensaje + " " + m2;
             } else if (maxUsuarios != null && totalUsuarios >= maxUsuarios * 0.9) {
-                repo.save(Notificacion.of(
-                        TipoNotificacion.PLAN_LIMITE,
-                        "Cerca del límite de usuarios",
-                        "Se usaron " + totalUsuarios + " de " + maxUsuarios + " usuarios incluidos en el plan.",
-                        null));
+                String t2 = "Cerca del límite de usuarios";
+                String m2 = "Se usaron " + totalUsuarios + " de " + maxUsuarios + " usuarios incluidos en el plan.";
+                titulo  = titulo  == null ? t2 : titulo  + " / " + t2;
+                mensaje = mensaje == null ? m2 : mensaje + " " + m2;
+            }
+
+            if (titulo != null) {
+                repo.save(Notificacion.of(TipoNotificacion.PLAN_LIMITE, titulo, mensaje, null));
             }
         }
     }
