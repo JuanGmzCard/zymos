@@ -504,6 +504,51 @@ Tres reportes: Producción (`/reportes/produccion`), Ventas (`/reportes/ventas`)
 
 ---
 
+## MÓDULO TAREAS (`/tareas`)
+
+Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta base: `/tareas`. Posición en navbar: entre BPM y Admin (link simple, sin dropdown). V75 (`V75__tareas.sql`).
+
+### Entidades
+
+- **`Tarea`** (tabla `tareas`): `titulo`, `descripcion`, `fechaVencimiento`, `prioridad` (enum `PrioridadTarea`), `estado` (enum `EstadoTarea`), `asignadoA` (String username — no FK), `creadoPor` (String username), `lote` (FK nullable → `lotes_cerveza`), `equipo` (FK nullable → `equipos`), `@TenantId`, `@CreatedDate` / `@LastModifiedDate` via `@EntityListeners(AuditingEntityListener.class)`, `items` OneToMany→`TareaItem`.
+  - `isVencida()`: `fechaVencimiento != null && now().isAfter(fechaVencimiento) && estado != COMPLETADA`
+  - `getPorcentajeCompletado()`: `completados * 100 / items.size()`
+- **`TareaItem`** (tabla `tarea_items`): `descripcion`, `completado` (Boolean), `ordenItem` (Integer), `lote` FK nullable, `equipo` FK nullable, `@TenantId`, `tarea` ManyToOne. Misma estructura que `VentaItem` (no extiende AuditableEntity).
+
+### Auto-recálculo de estado
+
+`TareaService.recalcularEstado(tareaId)` — llamado en cada `toggleItem()`:
+- Todos completados → `COMPLETADA`
+- ≥1 completado → `EN_PROGRESO`
+- 0 completados → `PENDIENTE`
+- Si `items.isEmpty()` → no cambia el estado
+
+### Notificaciones
+
+- `TipoNotificacion.TAREA_ASIGNADA` — disparada en `guardar()` si `asignadoA != null`, y en `actualizar()` si el usuario asignado cambió. Vinculada a `MODULO_TAREAS_VER` en `TIPO_AUTHORITY`.
+- `TipoNotificacion.TAREA_VENCIMIENTO` — disparada por `AlertaScheduler` diariamente para tareas que vencen mañana (deduplicación por día via `existeEnPeriodo`).
+- `NotificacionService.TIPO_AUTHORITY` usa `Map.ofEntries()` (no `Map.of()`) para soportar los 7 tipos actuales.
+
+### RBAC
+
+- `ModuloApp.TAREAS` — añadido al enum
+- SecurityConfig: `.requestMatchers("/tareas/**").access(modulo("TAREAS"))` (antes del bloque BPM)
+- Roles por defecto en `RolTenantService`: Administrador (full), Producción (full), Recursos Humanos (full). Inventario/Facturación/Equipos no tienen acceso por defecto.
+
+### Toggle ítem AJAX
+
+`POST /tareas/{tareaId}/items/{itemId}/toggle` — `@ResponseBody`, retorna JSON: `{completado: bool, estado: "PENDIENTE"|"EN_PROGRESO"|"COMPLETADA", pct: int}`. El JS en `detalle.html` usa CSRF via `<meta name="_csrf">` / `<meta name="_csrf_header">`.
+
+### Formulario — ítems dinámicos sin JSON serialización
+
+El formulario usa `<template id="tplLoteOptions">` y `<template id="tplEquipoOptions">` renderizados server-side por Thymeleaf. El JS clona con `tpl.content.cloneNode(true)` para construir nuevas filas. **NO serializar `List<LoteCerveza>` como JSON** via `th:inline="javascript"` — las lazy collections de JPA causan problemas con Jackson en Thymeleaf inline.
+
+### Tests
+
+- `AlertaSchedulerTest` requiere `@Mock TareaService tareaService` + stub `lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of())` en `@BeforeEach`.
+
+---
+
 ## CONVENCIONES DEL PROYECTO
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:
