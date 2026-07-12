@@ -565,6 +565,11 @@ V79 también migra los datos existentes de las 11 FK a `tarea_referencias` vía 
 - SecurityConfig: `.requestMatchers("/tareas/**").access(modulo("TAREAS"))` (antes del bloque BPM)
 - Roles por defecto en `RolTenantService`: Administrador (full), Producción (full), Recursos Humanos (full). Inventario/Facturación/Equipos no tienen acceso por defecto.
 
+### Ítems vs Referencias — distinción conceptual
+
+- **Ítems** (`TareaItem`): checklist de acciones a ejecutar *dentro* de la tarea (ej: "Lavar fermentador", "Verificar válvulas"). Se marcan completados uno a uno y determinan el progreso (0–100%). Son trabajo pendiente.
+- **Referencias** (`TareaReferencia`): vínculos a registros del sistema que dan *contexto* a la tarea (ej: sobre qué Lote, Equipo u Orden es esta tarea). No se "completan" — son links de navegación. El label de cada referencia se genera automáticamente del nombre del registro seleccionado; el usuario no escribe ninguna descripción para la referencia.
+
 ### Toggle ítem AJAX
 
 `POST /tareas/{tareaId}/items/{itemId}/toggle` — `@ResponseBody`, retorna JSON: `{completado: bool, estado: "PENDIENTE"|"EN_PROGRESO"|"COMPLETADA", pct: int}`. El JS en `detalle.html` usa CSRF via `<meta name="_csrf">` / `<meta name="_csrf_header">`.
