@@ -66,5 +66,42 @@ services:
       db:
         condition: service_healthy
 
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml.tmpl:ro
+      - ./monitoring/prometheus/docker-entrypoint.sh:/docker-entrypoint.sh:ro
+      - prometheus_data:/prometheus
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
+    environment:
+      ZYMOS_SCRAPE_USER:     ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ZYMOS_SCRAPE_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
+    ports:
+      - "127.0.0.1:9090:9090"   # solo localhost — no exponer públicamente
+    depends_on:
+      app:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER:         ${GRAFANA_ADMIN_USER:-admin}
+      # GRAFANA_ADMIN_PASSWORD debe definirse en .env (cambiar "admin" por defecto)
+      GF_SECURITY_ADMIN_PASSWORD:     ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP:         "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+    ports:
+      - "127.0.0.1:3000:3000"   # solo localhost — acceder vía SSH tunnel en producción
+    depends_on:
+      - prometheus
+
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
