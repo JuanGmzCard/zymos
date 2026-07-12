@@ -50,6 +50,8 @@ class TareaControllerTest {
     @MockBean ClienteService            clienteService;
     @MockBean FacturaProveedorService   facturaProveedorService;
     @MockBean ProveedorService          proveedorService;
+    @MockBean RecetaService             recetaService;
+    @MockBean BarrilService             barrilService;
 
     private Tarea tareaEjemplo() {
         Tarea t = new Tarea();

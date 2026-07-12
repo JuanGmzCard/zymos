@@ -12,7 +12,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -28,6 +30,20 @@ public class BarrilService {
                          MovimientoBarrilRepository movimientoRepo) {
         this.barrilRepo    = barrilRepo;
         this.movimientoRepo = movimientoRepo;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> suggest(String q) {
+        if (q == null || q.isBlank() || q.trim().length() < 2) return List.of();
+        return barrilRepo.findByFiltros(q.trim(), null, PageRequest.of(0, 6)).getContent().stream()
+            .map(b -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",    b.getId());
+                m.put("label", b.getCodigo() + (b.getTipo() != null ? " — " + b.getTipo() : ""));
+                m.put("sub",   b.getEstado().getDisplayName()
+                               + (b.getClienteNombre() != null ? " · " + b.getClienteNombre() : ""));
+                return m;
+            }).toList();
     }
 
     @Transactional(readOnly = true)

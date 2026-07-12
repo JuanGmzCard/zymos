@@ -33,6 +33,8 @@ public class TareaController {
     private final ClienteService            clienteService;
     private final FacturaProveedorService   facturaService;
     private final ProveedorService          proveedorService;
+    private final RecetaService             recetaService;
+    private final BarrilService             barrilService;
 
     public TareaController(TareaService service,
                            UsuarioService usuarioService,
@@ -44,7 +46,9 @@ public class TareaController {
                            VentaService ventaService,
                            ClienteService clienteService,
                            FacturaProveedorService facturaService,
-                           ProveedorService proveedorService) {
+                           ProveedorService proveedorService,
+                           RecetaService recetaService,
+                           BarrilService barrilService) {
         this.service              = service;
         this.usuarioService       = usuarioService;
         this.trazabilidadService  = trazabilidadService;
@@ -56,6 +60,8 @@ public class TareaController {
         this.clienteService       = clienteService;
         this.facturaService       = facturaService;
         this.proveedorService     = proveedorService;
+        this.recetaService        = recetaService;
+        this.barrilService        = barrilService;
     }
 
     @GetMapping
@@ -226,6 +232,13 @@ public class TareaController {
                             "label", m.get("nombre"),
                             "sub",   String.valueOf(m.getOrDefault("nit", ""))))
                     .toList();
+            case "RECETA" -> recetaService.suggest(q, null).stream()
+                    .map(m -> Map.<String, Object>of(
+                            "id",    m.get("id"),
+                            "label", m.get("nombre"),
+                            "sub",   String.valueOf(m.getOrDefault("estilo", ""))))
+                    .toList();
+            case "BARRIL" -> barrilService.suggest(q);
             default -> List.of();
         };
     }
@@ -240,7 +253,9 @@ public class TareaController {
             Map.of("valor", "VENTA",         "etiqueta", "Venta"),
             Map.of("valor", "CLIENTE",       "etiqueta", "Cliente"),
             Map.of("valor", "FACTURA",       "etiqueta", "Factura de proveedor"),
-            Map.of("valor", "PROVEEDOR",     "etiqueta", "Proveedor")
+            Map.of("valor", "PROVEEDOR",     "etiqueta", "Proveedor"),
+            Map.of("valor", "RECETA",        "etiqueta", "Receta"),
+            Map.of("valor", "BARRIL",        "etiqueta", "Barril")
         );
     }
 

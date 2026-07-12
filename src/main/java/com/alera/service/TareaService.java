@@ -28,6 +28,8 @@ public class TareaService {
     private final ClienteRepository                clienteRepo;
     private final FacturaProveedorRepository       facturaRepo;
     private final ProveedorRepository              proveedorRepo;
+    private final RecetaRepository                 recetaRepo;
+    private final BarrilRepository                 barrilRepo;
     private final NotificacionService              notificacionService;
 
     public TareaService(TareaRepository repo,
@@ -41,6 +43,8 @@ public class TareaService {
                         ClienteRepository clienteRepo,
                         FacturaProveedorRepository facturaRepo,
                         ProveedorRepository proveedorRepo,
+                        RecetaRepository recetaRepo,
+                        BarrilRepository barrilRepo,
                         NotificacionService notificacionService) {
         this.repo               = repo;
         this.itemRepo           = itemRepo;
@@ -53,6 +57,8 @@ public class TareaService {
         this.clienteRepo        = clienteRepo;
         this.facturaRepo        = facturaRepo;
         this.proveedorRepo      = proveedorRepo;
+        this.recetaRepo         = recetaRepo;
+        this.barrilRepo         = barrilRepo;
         this.notificacionService = notificacionService;
     }
 
@@ -185,6 +191,8 @@ public class TareaService {
             case "CLIENTE"      -> tarea.setCliente(clienteRepo.findById(refId).orElse(null));
             case "FACTURA"      -> tarea.setFactura(facturaRepo.findById(refId).orElse(null));
             case "PROVEEDOR"    -> tarea.setProveedor(proveedorRepo.findById(refId).orElse(null));
+            case "RECETA"       -> tarea.setReceta(recetaRepo.findById(refId).orElse(null));
+            case "BARRIL"       -> tarea.setBarril(barrilRepo.findById(refId).orElse(null));
         }
     }
 
@@ -198,6 +206,8 @@ public class TareaService {
         tarea.setCliente(null);
         tarea.setFactura(null);
         tarea.setProveedor(null);
+        tarea.setReceta(null);
+        tarea.setBarril(null);
     }
 
     private void recalcularEstado(Long tareaId) {

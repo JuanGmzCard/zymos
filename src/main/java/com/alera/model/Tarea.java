@@ -74,6 +74,14 @@ public class Tarea {
     private Venta venta;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "receta_id")
+    private Receta receta;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "barril_id")
+    private Barril barril;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id")
     private Cliente cliente;
 
@@ -139,6 +147,10 @@ public class Tarea {
     public void setOrdenCompra(OrdenCompra ordenCompra) { this.ordenCompra = ordenCompra; }
     public Venta getVenta() { return venta; }
     public void setVenta(Venta venta) { this.venta = venta; }
+    public Receta getReceta() { return receta; }
+    public void setReceta(Receta receta) { this.receta = receta; }
+    public Barril getBarril() { return barril; }
+    public void setBarril(Barril barril) { this.barril = barril; }
     public Cliente getCliente() { return cliente; }
     public void setCliente(Cliente cliente) { this.cliente = cliente; }
     public FacturaProveedor getFactura() { return factura; }
@@ -161,6 +173,8 @@ public class Tarea {
         if (cliente != null)     return "CLIENTE";
         if (factura != null)     return "FACTURA";
         if (proveedor != null)   return "PROVEEDOR";
+        if (receta != null)      return "RECETA";
+        if (barril != null)      return "BARRIL";
         return null;
     }
 
@@ -174,6 +188,8 @@ public class Tarea {
         if (cliente != null)     return cliente.getId();
         if (factura != null)     return factura.getId();
         if (proveedor != null)   return proveedor.getId();
+        if (receta != null)      return receta.getId();
+        if (barril != null)      return barril.getId();
         return null;
     }
 
@@ -193,6 +209,10 @@ public class Tarea {
                                         + (factura.getProveedor() != null ? " — " + factura.getProveedor() : "");
         if (proveedor != null)   return proveedor.getNombre()
                                         + (proveedor.getNit() != null ? " — " + proveedor.getNit() : "");
+        if (receta != null)      return receta.getNombre()
+                                        + (receta.getEstilo() != null ? " — " + receta.getEstilo() : "");
+        if (barril != null)      return barril.getCodigo()
+                                        + (barril.getTipo() != null ? " — " + barril.getTipo() : "");
         return null;
     }
 
@@ -206,6 +226,8 @@ public class Tarea {
         if (cliente != null)     return "/clientes/ver/" + cliente.getId();
         if (factura != null)     return "/facturas/ver/" + factura.getId();
         if (proveedor != null)   return "/proveedores/editar/" + proveedor.getId();
+        if (receta != null)      return "/recetas/ver/" + receta.getId();
+        if (barril != null)      return "/barriles/ver/" + barril.getId();
         return null;
     }
 }

@@ -151,6 +151,7 @@ public class RecetaService {
             .limit(6)
             .map(r -> {
                 Map<String, Object> m = new LinkedHashMap<>();
+                m.put("id",     r.getId());
                 m.put("nombre", r.getNombre());
                 m.put("estilo", r.getEstilo() != null ? r.getEstilo() : "");
                 m.put("activa", r.isActiva());
