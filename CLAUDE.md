@@ -550,9 +550,10 @@ Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta ba
 
 ### Notificaciones
 
-- `TipoNotificacion.TAREA_ASIGNADA` — disparada en `guardar()` si `asignadoA != null`, y en `actualizar()` si el usuario asignado cambió. Vinculada a `MODULO_TAREAS_VER` en `TIPO_AUTHORITY`.
-- `TipoNotificacion.TAREA_VENCIMIENTO` — disparada por `AlertaScheduler` diariamente para tareas que vencen mañana (deduplicación por día via `existeEnPeriodo`).
+- `TipoNotificacion.TAREA_ASIGNADA` — disparada en `guardar()` si `asignadoA != null && !asignadoA.equals(creadoPor)` (no se notifica auto-asignación), y en `actualizar()` si el usuario asignado cambió. Vinculada a `MODULO_TAREAS_VER` en `TIPO_AUTHORITY`.
+- `TipoNotificacion.TAREA_VENCIMIENTO` — disparada por `AlertaScheduler` diariamente para tareas vencidas o que vencen hasta `LocalDate.now().plusDays(1)` (usa `LessThanEqual`, no coincidencia exacta). Deduplicación por día via `existeEnPeriodo`.
 - `NotificacionService.TIPO_AUTHORITY` usa `Map.ofEntries()` (no `Map.of()`) para soportar los 7 tipos actuales.
+- `NotificacionService.crearAlertaPlan` — lotes y usuarios se evalúan en bloques `if` **independientes** (no `else-if`) para que ambos límites disparen en la misma ejecución. Si ambos alcanzan su límite, se genera una sola `PLAN_LIMITE` notification con título y mensaje combinados (`"/"`). El `existeEnPeriodo` se chequea una sola vez antes del bloque.
 
 ### RBAC
 
@@ -563,15 +564,23 @@ Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta ba
 ### Toggle ítem AJAX
 
 `POST /tareas/{tareaId}/items/{itemId}/toggle` — `@ResponseBody`, retorna JSON: `{completado: bool, estado: "PENDIENTE"|"EN_PROGRESO"|"COMPLETADA", pct: int}`. El JS en `detalle.html` usa CSRF via `<meta name="_csrf">` / `<meta name="_csrf_header">`.
+- **Ownership check**: usa `itemRepo.findByIdAndTareaId(itemId, tareaId)` — lanza `EntityNotFoundException` si el ítem no pertenece a esa tarea. El controller devuelve **404** (no 400) para `EntityNotFoundException`; cualquier otra excepción devuelve 400.
+- **JS**: verifica `response.ok` antes de llamar `r.json()` — si el server devuelve 404/5xx, no actualiza la UI.
 
 ### Formulario — referencia con dropdown + typeahead
 
 El formulario tiene `<select id="selectRefTipo">` (alimentado de `${tiposRef}`) + campo de búsqueda + dropdown AJAX. La selección escribe `refTipo` y `refId` en inputs hidden. Al editar, se muestra el chip de la referencia existente con botón de limpiar. **No usar** selects separados por tipo — el sistema es completamente data-driven vía `tiposReferencia()` en el controller.
 
+### Performance — TareaRepository
+
+- `@EntityGraph(attributePaths = "items")` en las 4 consultas `findAllBy*` usadas por `listar()` — evita N+1 al renderizar `t.items.size()` en `index.html`.
+- `contarPorEstado()` usa `countGroupByEstado()` (JPQL GROUP BY, 1 query) en lugar de 4 `COUNT` separadas. El servicio llena el Map iterando `List<Object[]>` con cast a `EstadoTarea` + `Number`.
+- `resolverReferencia` tiene `default -> throw new IllegalArgumentException(...)` — un `refTipo` desconocido falla explícitamente en lugar de silenciosamente.
+
 ### Tests
 
-- `TareaServiceTest` — requiere `@Mock` para los 13 repos que inyecta el constructor (incluye todos los repos de referencia).
-- `TareaControllerTest` — requiere `@MockBean` para los 10 services que inyecta el controller.
+- `TareaServiceTest` — requiere `@Mock` para los 13 repos que inyecta el constructor (incluye todos los repos de referencia). Los stubs de toggle usan `itemRepo.findByIdAndTareaId(itemId, tareaId)` (no `findById`). El stub de `contarPorEstado` usa `repo.countGroupByEstado()` retornando `List<Object[]>`. El stub de `listarProximasAVencer` usa `findByFechaVencimientoLessThanEqualAndEstadoNot`.
+- `TareaControllerTest` — requiere `@MockBean` para los 10 services que inyecta el controller. `MessageSource` es auto-configurado por Spring Boot — no necesita `@MockBean`.
 - `AlertaSchedulerTest` — requiere `@Mock TareaService tareaService` + stub `lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of())` en `@BeforeEach`.
 
 ---
