@@ -507,20 +507,24 @@ Tres reportes: Producción (`/reportes/produccion`), Ventas (`/reportes/ventas`)
 
 ## MÓDULO TAREAS (`/tareas`)
 
-Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta base: `/tareas`. Posición en navbar: entre BPM y Admin (link simple, sin dropdown). V75–V78.
+Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta base: `/tareas`. Posición en navbar: entre BPM y Admin (link simple, sin dropdown). V75–V79.
 
 ### Entidades
 
-- **`Tarea`** (tabla `tareas`): `titulo`, `descripcion`, `fechaVencimiento`, `prioridad` (enum `PrioridadTarea`), `estado` (enum `EstadoTarea`), `asignadoA` (String username — no FK), `creadoPor` (String username), `@TenantId`, `@CreatedDate` / `@LastModifiedDate`, `items` OneToMany→`TareaItem`.
-  - **11 FK de referencia** (todas nullable, como máximo una activa a la vez): `lote`, `equipo`, `insumo`, `elaboracion`, `ordenCompra`, `venta`, `cliente`, `factura`, `proveedor`, `receta`, `barril`. Agregadas en V76 (alta), V77 (media), V78 (baja).
+- **`Tarea`** (tabla `tareas`): `titulo`, `descripcion`, `fechaVencimiento`, `prioridad` (enum `PrioridadTarea`), `estado` (enum `EstadoTarea`), `asignadoA` (String username — no FK), `creadoPor` (String username), `@TenantId`, `@CreatedDate` / `@LastModifiedDate`, `items` OneToMany→`TareaItem`, `referencias` OneToMany→`TareaReferencia`.
+  - **11 FK de referencia legacy** (nullable, mantenidas por compat con datos pre-V79): `lote`, `equipo`, `insumo`, `elaboracion`, `ordenCompra`, `venta`, `cliente`, `factura`, `proveedor`, `receta`, `barril`. Agregadas en V76 (alta), V77 (media), V78 (baja).
+  - `referencias` — `@OneToMany(cascade=ALL, orphanRemoval=true) @BatchSize(size=30)` — colección principal desde V79. `getRefEntries()` usa `referencias` si no está vacía; si está vacía cae al fallback de 11 FK (datos pre-V79).
   - `isVencida()`: `fechaVencimiento != null && now().isAfter(fechaVencimiento) && estado != COMPLETADA`
   - `getPorcentajeCompletado()`: `completados * 100 / items.size()`
-  - **Métodos computados de referencia** (no columna BD): `getRefTipo()` → String del tipo activo (ej: `"LOTE"`), `getRefId()` → Long id, `getRefLabel()` → texto display, `getRefUrl()` → URL de detalle. Todos evalúan las 11 FK en orden fijo; retornan null si todas son null.
+  - **Métodos de referencia backward-compat**: `getRefTipo()`, `getRefId()`, `getRefLabel()`, `getRefUrl()` — evalúan `referencias` primero (primer entry), luego 11 FK.
 - **`TareaItem`** (tabla `tarea_items`): `descripcion`, `completado` (Boolean), `ordenItem` (Integer), `@TenantId`, `tarea` ManyToOne. No extiende AuditableEntity.
+- **`TareaReferencia`** (tabla `tarea_referencias`, V79): `tipo` (VARCHAR 30), `entidadId` (BIGINT), `label` (TEXT — denormalizado, guardado al crear), `url` (VARCHAR 500 — calculada server-side), `orden` (Integer), `@TenantId`, `tarea` ManyToOne. FK cascade ON DELETE CASCADE. No extiende AuditableEntity.
 
-### Sistema de referencias universales (V76–V78)
+### Sistema de referencias múltiples (V79)
 
-`TareaService.guardar()` y `actualizar()` reciben `String refTipo, Long refId` en lugar de FKs separadas. `resolverReferencia(tarea, refTipo, refId)` hace switch sobre el tipo y llama el repo correspondiente. `limpiarReferencias(tarea)` pone las 11 FK a null antes de resolver en cada actualización.
+Desde V79 una tarea puede tener **N referencias de cualquier tipo**, incluyendo múltiples del mismo tipo (ej: dos Equipos). `TareaService.guardar()` y `actualizar()` reciben `List<String> refTipos, List<Long> refIds, List<String> refLabels` (tres listas paralelas). `resolverMultiplesReferencias` crea un `TareaReferencia` por cada entrada — el label se recibe del frontend (ya lo conoce el UI al seleccionar del suggest), la URL se calcula con `computeRefUrl(tipo, id)`. `limpiarReferencias(tarea)` llama `tarea.getReferencias().clear()` (orphanRemoval borra en BD) y además nulifica las 11 FK legacy.
+
+V79 también migra los datos existentes de las 11 FK a `tarea_referencias` vía INSERT…SELECT con JOINs para calcular el label.
 
 | Tipo | Entidad | Prioridad | Migración |
 |---|---|---|---|
@@ -567,20 +571,21 @@ Asignación y seguimiento de tareas operativas para usuarios del tenant. Ruta ba
 - **Ownership check**: usa `itemRepo.findByIdAndTareaId(itemId, tareaId)` — lanza `EntityNotFoundException` si el ítem no pertenece a esa tarea. El controller devuelve **404** (no 400) para `EntityNotFoundException`; cualquier otra excepción devuelve 400.
 - **JS**: verifica `response.ok` antes de llamar `r.json()` — si el server devuelve 404/5xx, no actualiza la UI.
 
-### Formulario — referencia con dropdown + typeahead
+### Formulario — referencia con dropdown + typeahead (multi-chip)
 
-El formulario tiene `<select id="selectRefTipo">` (alimentado de `${tiposRef}`) + campo de búsqueda + dropdown AJAX. La selección escribe `refTipo` y `refId` en inputs hidden. Al editar, se muestra el chip de la referencia existente con botón de limpiar. **No usar** selects separados por tipo — el sistema es completamente data-driven vía `tiposReferencia()` en el controller.
+El formulario tiene `<select id="selectRefTipo">` + campo de búsqueda + dropdown AJAX. Se pueden agregar múltiples chips, incluso varios del mismo tipo. El JS mantiene `chips = [{key:"TIPO:id", tipo, id, label}]` (array, no map). La clave compuesta `tipo:id` impide duplicados exactos pero permite `EQUIPO:1` y `EQUIPO:2` en simultáneo. Al hacer submit se generan inputs hidden paralelos `refTipos[]`, `refIds[]`, `refLabels[]`. Al editar, `INIT_REFS` (inyectado por Thymeleaf desde `tarea.refEntries`) inicializa los chips. **No usar** selects separados por tipo — el sistema es data-driven vía `tiposReferencia()` en el controller.
 
 ### Performance — TareaRepository
 
 - `@EntityGraph(attributePaths = "items")` en las 4 consultas `findAllBy*` usadas por `listar()` — evita N+1 al renderizar `t.items.size()` en `index.html`.
+- `referencias` usa `@BatchSize(size=30)` en lugar de agregarse al EntityGraph (evita `MultipleBagFetchException` por dos colecciones List en el mismo JOIN FETCH). Con open-in-view activo, el batch-load se activa al renderizar la vista.
 - `contarPorEstado()` usa `countGroupByEstado()` (JPQL GROUP BY, 1 query) en lugar de 4 `COUNT` separadas. El servicio llena el Map iterando `List<Object[]>` con cast a `EstadoTarea` + `Number`.
-- `resolverReferencia` tiene `default -> throw new IllegalArgumentException(...)` — un `refTipo` desconocido falla explícitamente en lugar de silenciosamente.
+- `computeRefUrl(tipo, id)` en `TareaService` — switch expression que calcula la URL de detalle según el tipo sin cargar la entidad.
 
 ### Tests
 
-- `TareaServiceTest` — requiere `@Mock` para los 13 repos que inyecta el constructor (incluye todos los repos de referencia). Los stubs de toggle usan `itemRepo.findByIdAndTareaId(itemId, tareaId)` (no `findById`). El stub de `contarPorEstado` usa `repo.countGroupByEstado()` retornando `List<Object[]>`. El stub de `listarProximasAVencer` usa `findByFechaVencimientoLessThanEqualAndEstadoNot`.
-- `TareaControllerTest` — requiere `@MockBean` para los 10 services que inyecta el controller. `MessageSource` es auto-configurado por Spring Boot — no necesita `@MockBean`.
+- `TareaServiceTest` — requiere `@Mock` para los 13 repos que inyecta el constructor (incluye todos los repos de referencia — ya no se usan en `resolverMultiplesReferencias` pero siguen inyectados). Los stubs de toggle usan `itemRepo.findByIdAndTareaId(itemId, tareaId)` (no `findById`). El stub de `contarPorEstado` usa `repo.countGroupByEstado()` retornando `List<Object[]>`. El stub de `listarProximasAVencer` usa `findByFechaVencimientoLessThanEqualAndEstadoNot`. Las llamadas a `guardar` y `actualizar` reciben un `null` extra para `refLabels` (posición tras `refIds`).
+- `TareaControllerTest` — stubs de `tareaService.guardar(...)` y `tareaService.actualizar(...)` necesitan 10 y 10 `any()` respectivamente (incluye el nuevo param `refLabels`). `MessageSource` es auto-configurado por Spring Boot — no necesita `@MockBean`.
 - `AlertaSchedulerTest` — requiere `@Mock TareaService tareaService` + stub `lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of())` en `@BeforeEach`.
 
 ---
