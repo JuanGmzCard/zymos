@@ -22,6 +22,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Spring Boot Starter Mail — envío de emails HTML vía SMTP. `JavaMailSender` solo se auto-configura si `spring.mail.host` está definido (no vacío). `EmailService` usa `@Autowired(required = false)` para soportar entornos sin SMTP.
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
 - JJWT 0.12.6 (`jjwt-api` + `jjwt-impl` + `jjwt-jackson`) — generación y validación de tokens JWT HS256 para la API REST
+- Sentry 7.14.0 (`sentry-spring-boot-starter-jakarta`) — error tracking multi-tenant. Deshabilitado si `SENTRY_DSN` está vacío. Cada evento incluye tag `tenant` (subdomain activo) y `user.username`. Ver configuración en `SentryConfig.java`.
 - SignaturePad 4.1.7 (CDN: `cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js`) — firma digital canvas en módulo BPM. Integrado vía `static/js/bpm-firma.js`
 - JUnit 5 + Mockito (unitarios) + Testcontainers (integración con PostgreSQL real)
 - SpotBugs 4.8.6.4 (`spotbugs-maven-plugin`) — análisis estático de bytecode. Exclusiones en `spotbugs-exclude.xml` (EI_EXPOSE_REP de Lombok + clases `*Impl` de MapStruct). **Solo corre en CI (Java 21)** — ASM no soporta class file v70 (JDK 26 local).
@@ -51,6 +52,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **Rate limiting API**: `app.api.rate-limit=${API_RATE_LIMIT:100}` — máximo de peticiones a `/api/**` por IP en ventana fija de 1 minuto. Implementado en `ApiRateLimitFilter` con Caffeine (`expireAfterWrite`). Devuelve HTTP 429 con `{error:"Rate limit exceeded"}` al excederse.
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
+- **Sentry — error tracking** (opcional): `SENTRY_DSN` (vacío → Sentry deshabilitado; en prod definir con el DSN del proyecto en sentry.io), `SENTRY_RELEASE` (def: `1.0.0` — pasar git SHA en CI para rastrear qué versión causó el error). Configurado en `SentryConfig.java` con dos beans: `EventProcessor` (agrega tag `tenant` desde `TenantContext` a cada evento) y `SentryUserProvider` (adjunta `username` del usuario autenticado vía `SecurityContextHolder`). `GlobalExceptionHandler` llama `Sentry.captureException(ex)` tanto en el handler de 500 (`Exception`) como en el de 400 (`RuntimeException`). `sentry.environment` es `dev` por defecto y `prod` en `application-prod.properties`.
 
 ---
 

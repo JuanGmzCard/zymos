@@ -71,6 +71,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handleRuntime(RuntimeException ex, Model model) {
         log.error("Error de ejecución: {}", ex.getMessage(), ex);
+        Sentry.captureException(ex);
         model.addAttribute("codigo", 400);
         model.addAttribute("titulo", "Error en la operación");
         model.addAttribute("descripcion", ex.getMessage());
