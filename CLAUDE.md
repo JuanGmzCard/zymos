@@ -184,6 +184,8 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 52. **Índices únicos y soft delete — usar índice parcial**: cuando una entidad usa soft delete (`deleted_at IS NULL` via `@SQLRestriction`) y tiene un unique constraint, el índice debe ser **parcial** en PostgreSQL: `CREATE UNIQUE INDEX ... ON tabla(col) WHERE deleted_at IS NULL`. Sin la cláusula `WHERE`, filas archivadas siguen ocupando el nombre y bloquean crear registros nuevos con el mismo valor. Caso real: `ux_recetas_nombre_tenant` (V23) era global — V80 lo reemplaza por índice parcial. Al agregar nuevas entidades con soft delete + unicidad, crear siempre el índice con `WHERE deleted_at IS NULL`. Quitar también `unique = true` del `@Column` JPA: no refleja el constraint real (compuesto + parcial) y puede confundir la validación de Hibernate.
 
+53. **Excel de Trazabilidad de Lotes — `GET /excel`**: `TrazabilidadController.excel()` acepta los mismos 4 filtros del listado (`estilo`, `fase`, `desde`, `hasta`) y llama a `TrazabilidadService.listarFiltrado()` (versión sin paginar de `listarPaginado()` que llama a `LoteCervezaRepository.findByFiltrosSinPaginar()`). `ExcelExportService.generarExcelLotes()` produce 6 hojas que replican los 6 tabs de la UI: `General e Insumos` (código, estilo, fecha, # sesiones, receta, fermentador, fase, ingredientes como string CSV, agua, pH, litros, costo), `Fermentación`, `Acondicionamiento`, `Maduración` (las 3 con estado, inicio, fin ideal, temperatura, fin real), `Carbonatación` (igual + método, CO₂, azúcar, presión, técnica, validación, destino) y `Densidad/Obs.` (OG, FG, ABV, atenuación, eficiencia, observaciones, notas de cata). Ingredientes se formatean con `joinIngredientes()` que usa `UnidadUtils.displayTexto()` para mostrar unidades amigables (ej: "5000000 gr" → "5 kg"). `faseEstado(inicio, fin)` retorna "Pendiente"/"En proceso"/"Completado" según las fechas. `@MockBean ExcelExportService` requerido en `TrazabilidadControllerTest`.
+
 51. **Notificaciones — filtrado por rol**: `NotificacionService` filtra las notificaciones según las authorities del usuario. `TIPO_AUTHORITY` (Map estático) define qué authority requiere cada `TipoNotificacion`: `BAJO_STOCK`/`VENCIMIENTO` → `MODULO_INVENTARIO_VER`, `MANTENIMIENTO` → `MODULO_EQUIPOS_VER`, `SISTEMA` → `MODULO_FACTURACION_VER`, `BPM_SALUD` → `MODULO_BPM_VER`. Tipos sin entrada en el mapa (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) solo los ven ADMIN/SUPERADMIN. `tiposVisibles(Collection<String> authorities)` calcula la lista filtrada. Los métodos `listarRecientes`, `contarNoLeidas` y `listarTodas` reciben `Collection<String> authorities` como parámetro — obtenerlas en el controller con `auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet())`. **Al agregar un nuevo `TipoNotificacion`**: añadir entrada en `TIPO_AUTHORITY` si no es admin-only; si es admin-only, simplemente no agregar entrada. `TipoNotificacion.BPM_SALUD` se genera en `BpmService.guardarSintoma()` cuando `r.tieneSintomas()` es true, con deduplicación de 1 por día via `existeEnPeriodo()`.
 
 ---
@@ -352,6 +354,14 @@ flash.addFlashAttribute("mensaje", msg("bpm.sint.guardado", locale));
 String sub = msgf("bpm.pdf.periodo", locale, desde.format(fmt), hasta.format(fmt));
 ```
 Spring MVC inyecta `Locale locale` automáticamente como parámetro de método — no requiere configuración adicional.
+
+### Cambio de idioma — selector en navbar
+
+`I18nConfig`: `TenantAwareCookieLocaleResolver` (cookie `zymos-lang`) + `LocaleChangeInterceptor` (param `lang`).
+
+El selector en `navbar.html` usa `href="#" data-lang="es/en" class="lang-switch-link"` (sin `th:href`). Un listener JS en `DOMContentLoaded` intercepta el click, construye la URL con `new URL(window.location.href)` + `searchParams.set('lang', ...)` y fuerza `window.location.href` — garantiza un reload completo preservando la ruta y otros query params activos.
+
+**NO usar** `th:href="@{''(lang='es')}"` para el selector de idioma: genera solo `?lang=es` sin ruta, y en algunas páginas el navegador lo trata como cambio de query param sin recargar.
 
 ---
 

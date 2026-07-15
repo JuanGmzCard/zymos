@@ -557,12 +557,12 @@
                         <li>
                             <div class="dropdown-item d-flex align-items-center gap-1 py-1">
                                 <i class="bi bi-globe2 me-1 text-muted" style="font-size:0.85rem;"></i>
-                                <a th:href="@{''(lang='es')}"
-                                   class="text-decoration-none small"
+                                <a href="#" data-lang="es"
+                                   class="lang-switch-link text-decoration-none small"
                                    th:classappend="${currentLang == 'es'} ? 'fw-bold' : 'text-muted'">ES</a>
                                 <span class="text-muted small">·</span>
-                                <a th:href="@{''(lang='en')}"
-                                   class="text-decoration-none small"
+                                <a href="#" data-lang="en"
+                                   class="lang-switch-link text-decoration-none small"
                                    th:classappend="${currentLang == 'en'} ? 'fw-bold' : 'text-muted'">EN</a>
                             </div>
                         </li>
@@ -672,6 +672,15 @@
         // Auto-submit formulario al cambiar un select (reemplaza onchange="this.form.submit()")
         document.addEventListener('change', function(e) {
             if (e.target.matches('[data-auto-submit]') && e.target.form) e.target.form.submit();
+        });
+        // Cambio de idioma — recarga inmediata preservando ruta y query params actuales
+        document.addEventListener('click', function(e) {
+            var link = e.target.closest('.lang-switch-link');
+            if (!link) return;
+            e.preventDefault();
+            var url = new URL(window.location.href);
+            url.searchParams.set('lang', link.dataset.lang);
+            window.location.href = url.toString();
         });
     });
     // ── Notificaciones in-app ────────────────────────────────────
