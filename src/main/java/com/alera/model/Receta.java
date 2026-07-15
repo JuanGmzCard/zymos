@@ -18,7 +18,7 @@ public class Receta extends AuditableEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(nullable = false, length = 150)
     private String nombre;
 
     @Column(nullable = false, length = 100)
