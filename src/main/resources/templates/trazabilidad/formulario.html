@@ -465,9 +465,6 @@
                                     <small class="text-muted" id="og-combinado-detalle"></small>
                                 </div>
                             </div>
-                            <button type="button" class="btn btn-primary btn-sm" id="btnAplicarOgCombinado">
-                                <i class="bi bi-arrow-down-circle me-1"></i><span th:text="#{traz.form.og.combinado.btn}">Aplicar a OG Final</span>
-                            </button>
                         </div>
                         <small class="text-muted d-block mt-1">
                             <i class="bi bi-info-circle me-1"></i><span th:text="#{traz.form.og.combinado.hint}">Se calcula automáticamente. Puedes sobreescribir el OG final si mediste directamente en el fermentador.</span>
@@ -2326,13 +2323,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (el) el.addEventListener('input', calcularOgCombinado);
     });
 
-    // Botón "Aplicar a OG Final"
-    var btnAplicar = document.getElementById('btnAplicarOgCombinado');
-    if (btnAplicar) btnAplicar.addEventListener('click', function() {
-        var prev = document.getElementById('og-combinado-preview');
-        var ogEl = document.getElementById('densidadInicial');
-        if (prev && ogEl && prev.textContent !== '—') ogEl.value = prev.textContent;
-    });
 
     // Inicializar previsualización Brix sesiones si hay valor guardado
     if (instrInicial === 'BRIX') {
