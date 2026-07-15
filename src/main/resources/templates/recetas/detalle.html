@@ -385,10 +385,16 @@
                 <label class="form-label small text-muted" th:text="#{recetas.detalle.factor}">Factor de escala</label>
                 <div class="form-control-plaintext fw-bold" style="color:var(--verde-alera);" id="factorEscala">—</div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-4 d-flex gap-2 flex-wrap">
                 <button type="button" class="btn btn-sm btn-outline-secondary" id="btnResetEscala">
                     <i class="bi bi-arrow-counterclockwise me-1"></i><span th:text="#{recetas.detalle.restablecer}">Restablecer</span>
                 </button>
+                <a id="btnCrearEscalada"
+                   th:href="@{/recetas/escalar/{id}(id=${receta.id})}"
+                   class="btn btn-sm btn-primary disabled"
+                   aria-disabled="true">
+                    <i class="bi bi-plus-circle me-1"></i><span th:text="#{recetas.detalle.btn.crear.escalada}">Crear receta escalada</span>
+                </a>
             </div>
         </div>
         <div id="escalaResultado" class="d-none">
@@ -445,6 +451,16 @@
                         <div class="fw-bold escala-calculada d-none" style="color:var(--verde-alera);"></div>
                     </div>
                 </div>
+                <div th:each="ing : ${receta.clarificantes}" class="col-md-4">
+                    <div class="p-2 border rounded bg-white">
+                        <div class="small text-clarificante fw-semibold mb-1" th:text="#{recetas.detalle.tipo.clarificante}">Clarificante</div>
+                        <div class="small fw-semibold" th:text="${ing.nombre}">—</div>
+                        <div class="text-muted small escala-original" th:attr="data-cantidad=${ing.cantidad}">
+                            <span th:text="${ing.cantidad}">—</span>
+                        </div>
+                        <div class="fw-bold escala-calculada d-none" style="color:var(--verde-alera);"></div>
+                    </div>
+                </div>
             </div><!-- /row ingredientes -->
         </div><!-- /escalaResultado -->
     </div>
@@ -458,6 +474,7 @@ const AGUA_MACERADO     = /*[[${receta.aguaMacerado}]]*/ null;
 const UNIDAD_MACERADO   = /*[[${receta.unidadAguaMacerado}]]*/ 'L';
 const AGUA_SPARGE       = /*[[${receta.aguaSparge}]]*/ null;
 const UNIDAD_SPARGE     = /*[[${receta.unidadAguaSparge}]]*/ 'L';
+const RECETA_ID         = /*[[${receta.id}]]*/ null;
 
 function fmtNum(n, maxDec) {
     return parseFloat((+n).toFixed(maxDec)).toString();
@@ -467,15 +484,18 @@ function calcularEscala() {
     const volObj    = window.numVal ? numVal(document.getElementById('volObjetivo').value || 0) : parseFloat(document.getElementById('volObjetivo').value);
     const factorEl  = document.getElementById('factorEscala');
     const resultado = document.getElementById('escalaResultado');
+    const btnCrear  = document.getElementById('btnCrearEscalada');
 
     if (!VOLUMEN_BASE || isNaN(volObj) || volObj <= 0) {
         factorEl.textContent = '—';
         resultado.classList.add('d-none');
-        // reset ingredientes
         document.querySelectorAll('.escala-calculada').forEach(el => el.classList.add('d-none'));
         document.querySelectorAll('.escala-original').forEach(el => el.classList.remove('d-none'));
-        // reset agua
         resetAgua();
+        if (btnCrear) {
+            btnCrear.classList.add('disabled');
+            btnCrear.setAttribute('aria-disabled', 'true');
+        }
         return;
     }
 
@@ -502,6 +522,13 @@ function calcularEscala() {
     escalarAgua('aguaMaceradoOriginal', 'aguaMaceradoCalculado', AGUA_MACERADO, UNIDAD_MACERADO, factor);
     // Agua sparge
     escalarAgua('aguaSpargeOriginal', 'aguaSpargeCalculado', AGUA_SPARGE, UNIDAD_SPARGE, factor);
+
+    // Habilitar botón de crear receta escalada
+    if (btnCrear && RECETA_ID) {
+        btnCrear.href = '/recetas/escalar/' + RECETA_ID + '?volumen=' + volObj;
+        btnCrear.classList.remove('disabled');
+        btnCrear.removeAttribute('aria-disabled');
+    }
 }
 
 function escalarAgua(idOrig, idCalc, valorBase, unidad, factor) {

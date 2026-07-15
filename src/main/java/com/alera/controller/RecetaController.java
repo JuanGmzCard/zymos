@@ -166,6 +166,17 @@ public class RecetaController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
+    @GetMapping("/escalar/{id}")
+    public String escalar(@PathVariable Long id,
+                          @RequestParam BigDecimal volumen,
+                          Model model) {
+        model.addAttribute("recetaForm",       service.escalarComoFormDto(id, volumen));
+        model.addAttribute("insumosInventario", insumoService.listarTodos());
+        model.addAttribute("tiposCerveza",     tipoCervezaService.listarActivos());
+        return "recetas/formulario";
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         try {

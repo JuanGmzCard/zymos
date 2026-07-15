@@ -16,6 +16,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,6 +95,62 @@ public class RecetaService {
         dto.setId(null);
         dto.setNombre(r.getNombre() + " (Copia)");
         return dto;
+    }
+
+    public RecetaFormDto escalarComoFormDto(Long id, BigDecimal volumenObjetivo) {
+        Receta r = buscarPorId(id);
+        RecetaFormDto dto = toFormDto(r);
+        dto.setId(null);
+
+        if (r.getVolumenBase() == null || volumenObjetivo == null || volumenObjetivo.compareTo(BigDecimal.ZERO) <= 0) {
+            dto.setNombre(r.getNombre() + " (Escalada)");
+            return dto;
+        }
+
+        BigDecimal factor = volumenObjetivo.divide(r.getVolumenBase(), 6, RoundingMode.HALF_UP);
+
+        escalarIngredientes(dto.getMaltas(), factor);
+        escalarIngredientes(dto.getLupulos(), factor);
+        escalarIngredientes(dto.getLevaduras(), factor);
+        escalarIngredientes(dto.getClarificantes(), factor);
+
+        for (RecetaFormDto.AdicionHervorDto adic : dto.getAdicionesHervor()) {
+            if (adic.getCantidad() != null) {
+                adic.setCantidad(adic.getCantidad().multiply(factor).setScale(2, RoundingMode.HALF_UP));
+            }
+        }
+
+        if (dto.getAguaMacerado() != null) {
+            dto.setAguaMacerado(dto.getAguaMacerado().multiply(factor).setScale(2, RoundingMode.HALF_UP));
+        }
+        if (dto.getAguaSparge() != null) {
+            dto.setAguaSparge(dto.getAguaSparge().multiply(factor).setScale(2, RoundingMode.HALF_UP));
+        }
+
+        dto.setVolumenBase(volumenObjetivo);
+        dto.setNombre(generarNombreEscalado(r.getNombre(), volumenObjetivo));
+        return dto;
+    }
+
+    private void escalarIngredientes(List<InsumoDto> items, BigDecimal factor) {
+        for (InsumoDto item : items) {
+            if (item.getCantidad() == null || item.getCantidad().isBlank()) continue;
+            try {
+                BigDecimal cant = new BigDecimal(item.getCantidad().replace(",", "."));
+                BigDecimal scaled = cant.multiply(factor).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+                item.setCantidad(scaled.toPlainString());
+            } catch (NumberFormatException ignored) {}
+        }
+    }
+
+    private String generarNombreEscalado(String nombreOriginal, BigDecimal volumenObjetivo) {
+        String volStr = volumenObjetivo.stripTrailingZeros().toPlainString();
+        // Replace "XX litros", "XX L" or "XX l" patterns
+        String resultado = nombreOriginal.replaceAll("(?i)(\\d+(?:[.,]\\d+)?)\\s*(litros?\\b|L\\b)", volStr + " L");
+        if (resultado.equals(nombreOriginal)) {
+            resultado = nombreOriginal + " " + volStr + " L";
+        }
+        return resultado;
     }
 
     public RecetaFormDto toFormDto(Receta r) {
