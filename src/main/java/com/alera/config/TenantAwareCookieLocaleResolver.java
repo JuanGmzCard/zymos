@@ -26,6 +26,13 @@ public class TenantAwareCookieLocaleResolver extends CookieLocaleResolver {
 
     @Override
     public Locale resolveLocale(HttpServletRequest request) {
+        // Check if setLocale() already stored a new locale in this request
+        // (happens when LocaleChangeInterceptor runs before template rendering).
+        // Without this check, the locale change only takes effect on the next request.
+        Locale requestLocale = (Locale) request.getAttribute(LOCALE_REQUEST_ATTRIBUTE_NAME);
+        if (requestLocale != null) {
+            return requestLocale;
+        }
         Cookie cookie = WebUtils.getCookie(request, cookieName);
         if (cookie != null && StringUtils.hasText(cookie.getValue())) {
             try {
