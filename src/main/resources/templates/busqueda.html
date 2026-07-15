@@ -213,15 +213,15 @@
                           th:text="${#lists.size(equipos)}"></span>
                 </div>
                 <div class="list-group list-group-flush">
-                    <a th:each="eq : ${equipos}"
-                       th:href="@{/equipos/ver/{id}(id=${eq.id})}"
+                    <a th:each="equipo : ${equipos}"
+                       th:href="@{/equipos/ver/{id}(id=${equipo.id})}"
                        class="list-group-item list-group-item-action">
-                        <div class="fw-semibold small" th:text="${eq.nombre}">—</div>
+                        <div class="fw-semibold small" th:text="${equipo.nombre}">—</div>
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-secondary" style="font-size:.7rem;" th:text="${eq.tipo}">—</span>
+                            <span class="badge bg-secondary" style="font-size:.7rem;" th:text="${equipo.tipo}">—</span>
                             <span class="small"
-                                  th:text="${eq.estado.displayName}"
-                                  th:classappend="${eq.estado.name() == 'OPERATIVO'} ? 'fw-semibold' : 'text-muted'">—</span>
+                                  th:text="${equipo.estado.displayName}"
+                                  th:classappend="${equipo.estado.name() == 'OPERATIVO'} ? 'fw-semibold' : 'text-muted'">—</span>
                         </div>
                     </a>
                 </div>
