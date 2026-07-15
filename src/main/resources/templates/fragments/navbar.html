@@ -557,11 +557,11 @@
                         <li>
                             <div class="dropdown-item d-flex align-items-center gap-1 py-1">
                                 <i class="bi bi-globe2 me-1 text-muted" style="font-size:0.85rem;"></i>
-                                <a th:href="${#request.requestURI + '?lang=es'}"
+                                <a th:href="${currentUri + '?lang=es'}"
                                    class="text-decoration-none small"
                                    th:classappend="${currentLang == 'es'} ? 'fw-bold' : 'text-muted'">ES</a>
                                 <span class="text-muted small">·</span>
-                                <a th:href="${#request.requestURI + '?lang=en'}"
+                                <a th:href="${currentUri + '?lang=en'}"
                                    class="text-decoration-none small"
                                    th:classappend="${currentLang == 'en'} ? 'fw-bold' : 'text-muted'">EN</a>
                             </div>
