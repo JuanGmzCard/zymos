@@ -17,8 +17,8 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
 
     @Query("SELECT DISTINCT f FROM FacturaProveedor f LEFT JOIN FETCH f.items WHERE " +
            "(:estado IS NULL OR f.estado = :estado) AND " +
-           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
-           "(:hasta  IS NULL OR f.fechaFactura <= :hasta) " +
+           "(CAST(:desde AS LocalDate) IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(CAST(:hasta AS LocalDate) IS NULL OR f.fechaFactura <= :hasta) " +
            "ORDER BY f.fechaFactura DESC NULLS LAST, f.id DESC")
     List<FacturaProveedor> findWithItemsFiltered(
             @Param("estado") EstadoFactura estado,
@@ -27,8 +27,8 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
 
     @Query("SELECT f FROM FacturaProveedor f WHERE " +
            "(:estado IS NULL OR f.estado = :estado) AND " +
-           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
-           "(:hasta  IS NULL OR f.fechaFactura <= :hasta) " +
+           "(CAST(:desde AS LocalDate) IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(CAST(:hasta AS LocalDate) IS NULL OR f.fechaFactura <= :hasta) " +
            "ORDER BY f.fechaFactura DESC NULLS LAST, f.id DESC")
     Page<FacturaProveedor> findAllFiltered(
             @Param("estado") EstadoFactura estado,
@@ -53,24 +53,24 @@ public interface FacturaProveedorRepository extends JpaRepository<FacturaProveed
 
     @Query("SELECT COALESCE(SUM(f.valorTotal), 0) FROM FacturaProveedor f WHERE " +
            "(:estado IS NULL OR f.estado = :estado) AND " +
-           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
-           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+           "(CAST(:desde AS LocalDate) IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(CAST(:hasta AS LocalDate) IS NULL OR f.fechaFactura <= :hasta)")
     BigDecimal sumTotalFiltered(@Param("estado") EstadoFactura estado,
                                 @Param("desde")  LocalDate desde,
                                 @Param("hasta")  LocalDate hasta);
 
     @Query("SELECT COALESCE(SUM(f.valorTotal), 0) FROM FacturaProveedor f WHERE " +
            "f.estado IN :estados AND " +
-           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
-           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+           "(CAST(:desde AS LocalDate) IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(CAST(:hasta AS LocalDate) IS NULL OR f.fechaFactura <= :hasta)")
     BigDecimal sumPorEstados(@Param("estados") Collection<EstadoFactura> estados,
                              @Param("desde")   LocalDate desde,
                              @Param("hasta")   LocalDate hasta);
 
     @Query("SELECT COUNT(f) FROM FacturaProveedor f WHERE " +
            "f.estado IN :estados AND " +
-           "(:desde  IS NULL OR f.fechaFactura >= :desde) AND " +
-           "(:hasta  IS NULL OR f.fechaFactura <= :hasta)")
+           "(CAST(:desde AS LocalDate) IS NULL OR f.fechaFactura >= :desde) AND " +
+           "(CAST(:hasta AS LocalDate) IS NULL OR f.fechaFactura <= :hasta)")
     long countPorEstados(@Param("estados") Collection<EstadoFactura> estados,
                          @Param("desde")   LocalDate desde,
                          @Param("hasta")   LocalDate hasta);

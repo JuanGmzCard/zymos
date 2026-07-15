@@ -221,7 +221,9 @@ public class SecurityConfig {
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
                 // Trazabilidad — granular por operación
-                .requestMatchers(HttpMethod.POST, "/guardar", "/duplicar/**")
+                .requestMatchers(HttpMethod.POST, "/guardar")
+                    .access(moduloOp("TRAZABILIDAD", "CREAR"))
+                .requestMatchers(HttpMethod.GET, "/duplicar/**")
                     .access(moduloOp("TRAZABILIDAD", "CREAR"))
                 .requestMatchers(HttpMethod.POST, "/actualizar/**")
                     .access(moduloOp("TRAZABILIDAD", "EDITAR"))

@@ -63,7 +63,9 @@ public class InsumoInventarioService {
                     Map<String, Object> m = new LinkedHashMap<>();
                     m.put("id",    i.getId());
                     m.put("label", i.getNombre());
-                    m.put("sub",   (i.getTipo() != null ? i.getTipo() : "") + " · " + i.getCantidad().stripTrailingZeros().toPlainString() + " " + i.getUnidad());
+                    m.put("sub",   (i.getTipo() != null ? i.getTipo() : "") + " · " +
+                            (i.getCantidad() != null ? i.getCantidad().stripTrailingZeros().toPlainString() : "0") +
+                            " " + i.getUnidad());
                     return m;
                 }).toList();
     }

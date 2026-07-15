@@ -259,72 +259,28 @@ public class Tarea {
         return result;
     }
 
-    /** Tipo de la primera referencia activa (retro-compatibilidad). */
+    /** Tipo de la primera referencia activa (retro-compatibilidad). Delega a getRefEntries(). */
     public String getRefTipo() {
-        if (lote != null)        return "LOTE";
-        if (equipo != null)      return "EQUIPO";
-        if (insumo != null)      return "INSUMO";
-        if (elaboracion != null) return "ELABORACION";
-        if (ordenCompra != null) return "ORDEN_COMPRA";
-        if (venta != null)       return "VENTA";
-        if (cliente != null)     return "CLIENTE";
-        if (factura != null)     return "FACTURA";
-        if (proveedor != null)   return "PROVEEDOR";
-        if (receta != null)      return "RECETA";
-        if (barril != null)      return "BARRIL";
-        return null;
+        List<Map<String, Object>> entries = getRefEntries();
+        return entries.isEmpty() ? null : (String) entries.get(0).get("tipo");
     }
 
     public Long getRefId() {
-        if (lote != null)        return lote.getId();
-        if (equipo != null)      return equipo.getId();
-        if (insumo != null)      return insumo.getId();
-        if (elaboracion != null) return elaboracion.getId();
-        if (ordenCompra != null) return ordenCompra.getId();
-        if (venta != null)       return venta.getId();
-        if (cliente != null)     return cliente.getId();
-        if (factura != null)     return factura.getId();
-        if (proveedor != null)   return proveedor.getId();
-        if (receta != null)      return receta.getId();
-        if (barril != null)      return barril.getId();
+        List<Map<String, Object>> entries = getRefEntries();
+        if (entries.isEmpty()) return null;
+        Object id = entries.get(0).get("id");
+        if (id instanceof Long l) return l;
+        if (id instanceof Number n) return n.longValue();
         return null;
     }
 
     public String getRefLabel() {
-        if (lote != null)        return lote.getCodigoLote() + (lote.getEstilo() != null ? " — " + lote.getEstilo() : "");
-        if (equipo != null)      return equipo.getNombre();
-        if (insumo != null)      return insumo.getNombre() + (insumo.getTipo() != null ? " (" + insumo.getTipo() + ")" : "");
-        if (elaboracion != null) return elaboracion.getNombreElaboracion();
-        if (ordenCompra != null) return (ordenCompra.getNumeroOc() != null ? ordenCompra.getNumeroOc() : "OC sin número")
-                                        + (ordenCompra.getProveedor() != null ? " — " + ordenCompra.getProveedor() : "");
-        if (venta != null)       return venta.getCliente()
-                                        + (venta.getRemisionNumero() != null ? " #" + venta.getRemisionNumero() : "");
-        if (cliente != null)     return cliente.getNombre()
-                                        + (cliente.getNit() != null ? " — " + cliente.getNit() : "");
-        if (factura != null)     return (factura.getNumeroFactura() != null && !factura.getNumeroFactura().isBlank()
-                                        ? factura.getNumeroFactura() : "#" + factura.getId())
-                                        + (factura.getProveedor() != null ? " — " + factura.getProveedor() : "");
-        if (proveedor != null)   return proveedor.getNombre()
-                                        + (proveedor.getNit() != null ? " — " + proveedor.getNit() : "");
-        if (receta != null)      return receta.getNombre()
-                                        + (receta.getEstilo() != null ? " — " + receta.getEstilo() : "");
-        if (barril != null)      return barril.getCodigo()
-                                        + (barril.getTipo() != null ? " — " + barril.getTipo() : "");
-        return null;
+        List<Map<String, Object>> entries = getRefEntries();
+        return entries.isEmpty() ? null : (String) entries.get(0).get("label");
     }
 
     public String getRefUrl() {
-        if (lote != null)        return "/ver/" + lote.getId();
-        if (equipo != null)      return "/equipos/ver/" + equipo.getId();
-        if (insumo != null)      return "/inventario/" + insumo.getId() + "/historial";
-        if (elaboracion != null) return "/planificacion";
-        if (ordenCompra != null) return "/ordenes-compra/ver/" + ordenCompra.getId();
-        if (venta != null)       return "/ventas/ver/" + venta.getId();
-        if (cliente != null)     return "/clientes/ver/" + cliente.getId();
-        if (factura != null)     return "/facturas/ver/" + factura.getId();
-        if (proveedor != null)   return "/proveedores/editar/" + proveedor.getId();
-        if (receta != null)      return "/recetas/ver/" + receta.getId();
-        if (barril != null)      return "/barriles/ver/" + barril.getId();
-        return null;
+        List<Map<String, Object>> entries = getRefEntries();
+        return entries.isEmpty() ? null : (String) entries.get(0).get("url");
     }
 }
