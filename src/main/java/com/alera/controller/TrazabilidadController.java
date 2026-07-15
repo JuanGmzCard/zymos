@@ -292,6 +292,7 @@ public class TrazabilidadController {
         if (result.hasErrors()) {
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
+            model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());
             return "trazabilidad/formulario";
         }
         if (dto.getFermFechaInicial() != null && dto.getEquipoFermentadorId() == null) {
@@ -299,6 +300,7 @@ public class TrazabilidadController {
                     "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
+            model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());
             return "trazabilidad/formulario";
         }
         try {

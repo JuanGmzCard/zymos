@@ -137,7 +137,7 @@ public class RecetaService {
             if (item.getCantidad() == null || item.getCantidad().isBlank()) continue;
             try {
                 BigDecimal cant = new BigDecimal(item.getCantidad().replace(",", "."));
-                BigDecimal scaled = cant.multiply(factor).setScale(2, RoundingMode.HALF_UP).stripTrailingZeros();
+                BigDecimal scaled = cant.multiply(factor).setScale(2, RoundingMode.HALF_UP);
                 item.setCantidad(scaled.toPlainString());
             } catch (NumberFormatException ignored) {}
         }

@@ -223,9 +223,12 @@ public class MigracionService {
                         validarEnum(estado, "estado", "RECIBIDA","VERIFICADA","PAGADA");
                         boolean ivaIncluido = "TRUE".equals(ivaInclStr) || "SI".equals(ivaInclStr) || "1".equals(ivaInclStr);
 
-                        Long provId = jdbc.queryForObject(
+                        List<Long> provIds = jdbc.queryForList(
                                 "SELECT id FROM proveedores WHERE LOWER(nombre)=LOWER(?) AND tenant_id=? LIMIT 1",
                                 Long.class, provNombre, tenantId);
+                        if (provIds.isEmpty())
+                            throw new IllegalArgumentException("Proveedor no encontrado: " + provNombre);
+                        Long provId = provIds.get(0);
 
                         long factId = insertarYRetornarId(
                                 "INSERT INTO facturas_proveedor " +

@@ -91,7 +91,11 @@ public class RecetaController {
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute("recetaForm") RecetaFormDto dto,
                           BindingResult result, Model model, RedirectAttributes ra) {
-        if (result.hasErrors()) return "recetas/formulario";
+        if (result.hasErrors()) {
+            model.addAttribute("insumosInventario", insumoService.listarTodos());
+            model.addAttribute("tiposCerveza", tipoCervezaService.listarActivos());
+            return "recetas/formulario";
+        }
         try {
             service.guardar(dto);
             ra.addFlashAttribute("mensaje", "Receta guardada correctamente");
@@ -120,6 +124,8 @@ public class RecetaController {
                              BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
             model.addAttribute("recetaId", id);
+            model.addAttribute("insumosInventario", insumoService.listarTodos());
+            model.addAttribute("tiposCerveza", tipoCervezaService.listarActivos());
             return "recetas/formulario";
         }
         try {

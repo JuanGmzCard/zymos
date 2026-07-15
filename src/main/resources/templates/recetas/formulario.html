@@ -81,7 +81,7 @@
                                placeholder="Ej: Stout" required
                                list="datalist-estilos" autocomplete="off">
                         <button type="button" class="btn btn-outline-secondary" id="btnNuevoTipoCerveza"
-                                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
+                                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR') or hasAuthority('MODULO_RECETAS_EDITAR')"
                                 th:title="#{recetas.form.btn.tipo.title}" title="Crear tipo de cerveza">
                             <i class="bi bi-plus-square"></i>
                         </button>
