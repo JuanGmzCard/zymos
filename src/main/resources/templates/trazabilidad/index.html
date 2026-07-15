@@ -146,6 +146,10 @@
                class="btn btn-outline-secondary btn-sm" th:title="#{action.export.pdf}" target="_blank">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
+            <a th:href="@{/excel(estilo=${estiloFiltro},fase=${faseFiltro},desde=${desdeFiltro},hasta=${hastaFiltro})}"
+               class="btn btn-outline-success btn-sm" th:title="#{action.export.excel}">
+                <i class="bi bi-file-earmark-excel me-1"></i>Excel
+            </a>
             <a th:href="@{/nuevo}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{traz.nuevo}">Nuevo Lote</span>
             </a>

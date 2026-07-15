@@ -40,6 +40,25 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
                                     @Param("hasta")  LocalDate hasta,
                                     Pageable pageable);
 
+    // Igual que findByFiltros pero sin paginación — para exports
+    @Query("SELECT l FROM LoteCerveza l WHERE " +
+           "(:estilo = '' OR LOWER(l.estilo) LIKE LOWER(CONCAT('%', :estilo, '%'))) " +
+           "AND (:fase = '' OR " +
+           "  (:fase = 'COMPLETADO'        AND l.carbFechaFinal   IS NOT NULL) OR " +
+           "  (:fase = 'CARBONATACION'     AND l.carbFechaInicial  IS NOT NULL AND l.carbFechaFinal   IS NULL) OR " +
+           "  (:fase = 'MADURACION'        AND l.madurFechaInicial IS NOT NULL AND l.carbFechaInicial  IS NULL) OR " +
+           "  (:fase = 'ACONDICIONAMIENTO' AND l.acondFechaInicial IS NOT NULL AND l.madurFechaInicial IS NULL) OR " +
+           "  (:fase = 'FERMENTACION'      AND l.fermFechaInicial  IS NOT NULL AND l.acondFechaInicial IS NULL) OR " +
+           "  (:fase = 'INICIO'            AND l.fermFechaInicial  IS NULL)" +
+           ") " +
+           "AND (CAST(:desde AS LocalDate) IS NULL OR l.fechaElaboracion >= :desde) " +
+           "AND (CAST(:hasta AS LocalDate) IS NULL OR l.fechaElaboracion <= :hasta) " +
+           "ORDER BY l.createdAt DESC")
+    List<LoteCerveza> findByFiltrosSinPaginar(@Param("estilo") String estilo,
+                                              @Param("fase")   String fase,
+                                              @Param("desde")  LocalDate desde,
+                                              @Param("hasta")  LocalDate hasta);
+
     // Búsqueda global por código o estilo
     @Query("SELECT l FROM LoteCerveza l WHERE " +
            "LOWER(l.codigoLote) LIKE LOWER(CONCAT('%', :q, '%')) OR " +

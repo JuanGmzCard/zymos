@@ -80,6 +80,14 @@ public class TrazabilidadService {
         return loteRepo.findAllOrderByCreatedAtDesc();
     }
 
+    @Transactional(readOnly = true)
+    public List<LoteCerveza> listarFiltrado(String estilo, String fase,
+                                             LocalDate desde, LocalDate hasta) {
+        String estiloParam = (estilo != null && !estilo.isBlank()) ? estilo.trim() : "";
+        String faseParam   = (fase   != null && !fase.isBlank())   ? fase.trim()   : "";
+        return loteRepo.findByFiltrosSinPaginar(estiloParam, faseParam, desde, hasta);
+    }
+
     // Fix 5+6: paginación + filtros
     public Page<LoteCerveza> listarPaginado(String estilo, String fase, int page) {
         return listarPaginado(estilo, fase, null, null, page);

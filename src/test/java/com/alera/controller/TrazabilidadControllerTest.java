@@ -58,6 +58,7 @@ class TrazabilidadControllerTest {
     @MockBean ZymosAuthFailureHandler      failureHandler;
     @MockBean ZymosAccessDeniedHandler     accessDeniedHandler;
     @MockBean PdfExportService             pdfExportService;
+    @MockBean ExcelExportService           excelExportService;
     @MockBean LecturaFermentacionService   lecturaService;
     @MockBean EvaluacionSensorialService   evaluacionService;
     @MockBean PlanificacionService         planificacionService;

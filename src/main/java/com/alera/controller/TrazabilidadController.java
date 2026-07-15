@@ -7,6 +7,8 @@ import com.alera.model.LoteCerveza;
 import com.alera.model.RecetaIngrediente;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoPlanificacion;
+import com.alera.config.ExportBranding;
+import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
 import com.alera.service.PlanificacionService;
 import com.alera.service.VentaService;
@@ -52,6 +54,7 @@ public class TrazabilidadController {
     private final TipoCervezaRepository tipoCervezaRepo;
     private final FacturaItemRepository facturaItemRepo;
     private final PdfExportService pdfExportService;
+    private final ExcelExportService excelExportService;
     private final LecturaFermentacionService lecturaService;
     private final EvaluacionSensorialService evaluacionService;
     private final PlanificacionService planificacionService;
@@ -65,6 +68,7 @@ public class TrazabilidadController {
                                    TipoCervezaRepository tipoCervezaRepo,
                                    FacturaItemRepository facturaItemRepo,
                                    PdfExportService pdfExportService,
+                                   ExcelExportService excelExportService,
                                    LecturaFermentacionService lecturaService,
                                    EvaluacionSensorialService evaluacionService,
                                    PlanificacionService planificacionService,
@@ -77,6 +81,7 @@ public class TrazabilidadController {
         this.tipoCervezaRepo = tipoCervezaRepo;
         this.facturaItemRepo = facturaItemRepo;
         this.pdfExportService = pdfExportService;
+        this.excelExportService = excelExportService;
         this.lecturaService = lecturaService;
         this.evaluacionService = evaluacionService;
         this.planificacionService = planificacionService;
@@ -407,6 +412,24 @@ public class TrazabilidadController {
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .body(pdf);
+    }
+
+    @GetMapping("/excel")
+    public ResponseEntity<byte[]> excel(
+            @RequestParam(defaultValue = "") String estilo,
+            @RequestParam(defaultValue = "") String fase,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
+            HttpServletRequest request, Locale locale) {
+        List<LoteCerveza> lotes = service.listarFiltrado(estilo, fase, desde, hasta);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+        byte[] excel = excelExportService.generarExcelLotes(lotes, estilo, fase, desde, hasta, branding, locale);
+        String filename = "lotes-trazabilidad.xlsx";
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(excel);
     }
 
     @GetMapping("/duplicar/{id}")
