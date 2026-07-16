@@ -128,19 +128,19 @@
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{reportes.rent.stat.ingresos}">Ingresos totales</div>
             <div class="stat-value info"
-                 th:text="${#numbers.formatDecimal(totalIngresos, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalIngresos, 1, 'COMMA', 0, 'POINT')}">$0</div>
             <div class="stat-sub" th:text="#{reportes.rent.stat.ingresos.sub}">ventas despachadas</div>
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{reportes.rent.stat.costos}">Costos totales</div>
             <div class="stat-value muted"
-                 th:text="${#numbers.formatDecimal(totalCosto, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalCosto, 1, 'COMMA', 0, 'POINT')}">$0</div>
             <div class="stat-sub" th:text="#{reportes.rent.stat.costos.sub}">producción asignada</div>
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{reportes.rent.stat.margen}">Margen bruto</div>
             <div th:classappend="${totalMargen != null and totalMargen.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? 'stat-value success' : 'stat-value danger'"
-                 th:text="${#numbers.formatDecimal(totalMargen, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalMargen, 1, 'COMMA', 0, 'POINT')}">$0</div>
             <div class="stat-sub" th:if="${totalMargenPct != null}"
                  th:text="${totalMargenPct} + '% ' + #{reportes.rent.stat.margen.sub}">0%</div>
         </div>
@@ -264,14 +264,14 @@
                         <!-- Costo -->
                         <td class="text-end">
                             <span th:if="${!r.sinCosto()}" class="text-muted"
-                                  th:text="${#numbers.formatDecimal(r.costo(), 1, 'COMMA', 0, 'POINT')}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(r.costo(), 1, 'COMMA', 0, 'POINT')}">—</span>
                             <span th:if="${r.sinCosto()}" class="badge-sincosto" th:text="#{reportes.rent.badge.sin.registro}">Sin registro</span>
                         </td>
 
                         <!-- Ingresos -->
                         <td class="text-end">
                             <span th:if="${!r.sinVentas()}"
-                                  th:text="${#numbers.formatDecimal(r.ingresos(), 1, 'COMMA', 0, 'POINT')}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(r.ingresos(), 1, 'COMMA', 0, 'POINT')}">—</span>
                             <span th:if="${r.sinVentas()}" class="badge-sinventa" th:text="#{reportes.rent.badge.sin.ventas}">Sin ventas</span>
                         </td>
 
@@ -279,7 +279,7 @@
                         <td class="text-end">
                             <span th:if="${r.margen() != null and !r.sinCosto() and !r.sinVentas()}"
                                   th:classappend="${r.rentable()} ? 'margen-positivo' : 'margen-negativo'"
-                                  th:text="${(r.rentable() ? '+' : '') + #numbers.formatDecimal(r.margen(), 1, 'COMMA', 0, 'POINT')}">—</span>
+                                  th:text="${(r.rentable() ? '+' : '') + branding.simboloMoneda} + ${#numbers.formatDecimal(r.margen(), 1, 'COMMA', 0, 'POINT')}">—</span>
                             <span th:if="${r.margen() == null or r.sinCosto() or r.sinVentas()}"
                                   class="margen-sindata">—</span>
                         </td>
@@ -296,14 +296,14 @@
                         <!-- Costo/L -->
                         <td class="text-end text-muted" style="font-size:0.8rem;">
                             <span th:if="${r.costoPorLitro() != null}"
-                                  th:text="${#numbers.formatDecimal(r.costoPorLitro(), 1, 'COMMA', 0, 'POINT') + '/L'}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(r.costoPorLitro(), 1, 'COMMA', 0, 'POINT')} + '/L'">—</span>
                             <span th:if="${r.costoPorLitro() == null}">—</span>
                         </td>
 
                         <!-- Ingreso/L -->
                         <td class="text-end text-muted" style="font-size:0.8rem;">
                             <span th:if="${r.ingresoPorLitro() != null}"
-                                  th:text="${#numbers.formatDecimal(r.ingresoPorLitro(), 1, 'COMMA', 0, 'POINT') + '/L'}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(r.ingresoPorLitro(), 1, 'COMMA', 0, 'POINT')} + '/L'">—</span>
                             <span th:if="${r.ingresoPorLitro() == null}">—</span>
                         </td>
 
@@ -325,12 +325,12 @@
                     <tr class="total-row" style="font-weight:600; border-top: 2px solid #e2e8f0;">
                         <td colspan="4" class="text-muted" style="font-size:0.8rem; padding: 0.65rem 1rem;" th:text="#{reportes.rent.total}">TOTAL</td>
                         <td class="text-end" style="padding: 0.65rem 1rem;"
-                            th:text="${#numbers.formatDecimal(totalCosto, 1, 'COMMA', 0, 'POINT')}">—</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalCosto, 1, 'COMMA', 0, 'POINT')}">—</td>
                         <td class="text-end" style="padding: 0.65rem 1rem;"
-                            th:text="${#numbers.formatDecimal(totalIngresos, 1, 'COMMA', 0, 'POINT')}">—</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalIngresos, 1, 'COMMA', 0, 'POINT')}">—</td>
                         <td class="text-end" style="padding: 0.65rem 1rem;"
                             th:classappend="${totalMargen != null and totalMargen.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? 'margen-positivo' : 'margen-negativo'"
-                            th:text="${(totalMargen != null and totalMargen.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? '+' : '') + #numbers.formatDecimal(totalMargen, 1, 'COMMA', 0, 'POINT')}">—</td>
+                            th:text="${(totalMargen != null and totalMargen.compareTo(T(java.math.BigDecimal).ZERO) >= 0 ? '+' : '') + branding.simboloMoneda} + ${#numbers.formatDecimal(totalMargen, 1, 'COMMA', 0, 'POINT')}">—</td>
                         <td class="text-end" style="padding: 0.65rem 1rem;"
                             th:if="${totalMargenPct != null}"
                             th:classappend="${totalMargenPct.compareTo(T(java.math.BigDecimal).ZERO) >= 0} ? 'margen-positivo' : 'margen-negativo'"

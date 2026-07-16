@@ -190,12 +190,12 @@
                             <tfoot>
                                 <tr>
                                     <td colspan="5" class="text-end fw-bold text-muted small" th:text="#{oc.form.subtotal}">Subtotal estimado:</td>
-                                    <td colspan="2" class="text-end fw-bold" id="subtotalDisplay">$0</td>
+                                    <td colspan="2" class="text-end fw-bold" id="subtotalDisplay" th:text="${branding.simboloMoneda} + '0'">$0</td>
                                     <td></td>
                                 </tr>
                                 <tr>
                                     <td colspan="5" class="text-end fw-bold text-muted small" th:text="#{oc.form.total}">Total estimado (con IVA):</td>
-                                    <td colspan="2" class="text-end fw-bold" id="totalDisplay" style="color:var(--verde-alera)">$0</td>
+                                    <td colspan="2" class="text-end fw-bold" id="totalDisplay" style="color:var(--verde-alera)" th:text="${branding.simboloMoneda} + '0'">$0</td>
                                     <td></td>
                                 </tr>
                             </tfoot>

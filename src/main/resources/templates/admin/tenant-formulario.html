@@ -21,6 +21,9 @@
         html.dark-mode .form-section { background:var(--dm-card); border-color:var(--dm-border-light); }
         html.dark-mode .logo-preview-body { background:var(--dm-input); }
         html.dark-mode .font-preview-box { background:var(--dm-input); border-color:var(--dm-border-light); }
+        html.dark-mode #previewFontBody { color: var(--dm-text-soft) !important; }
+        html.dark-mode .form-section hr { border-color: var(--dm-border-med); opacity: 1; }
+        html.dark-mode .form-section h6 { color: var(--dm-text); }
     </style>
 </head>
 <body>
@@ -108,10 +111,28 @@
                 </div>
 
                 <!-- Símbolo de moneda -->
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label detail-label" th:text="#{admin.tform.label.moneda}">Símbolo de moneda</label>
-                    <input type="text" th:field="*{simboloMoneda}" class="form-control" maxlength="10" placeholder="$">
-                    <div class="form-text" th:text="#{admin.tform.hint.moneda}">Ej: $, €, £, COP $</div>
+                    <select th:field="*{simboloMoneda}" class="form-select">
+                        <optgroup th:attr="label=#{admin.tform.moneda.grupo.latam}">
+                            <option value="$">$ — Dólar / Peso</option>
+                            <option value="COP $">COP $ — Peso colombiano</option>
+                            <option value="MXN $">MXN $ — Peso mexicano</option>
+                            <option value="ARS $">ARS $ — Peso argentino</option>
+                            <option value="CLP $">CLP $ — Peso chileno</option>
+                            <option value="R$">R$ — Real brasileño</option>
+                            <option value="S/.">S/. — Sol peruano</option>
+                            <option value="Bs.">Bs. — Bolívar</option>
+                            <option value="Q">Q — Quetzal</option>
+                            <option value="₡">₡ — Colón</option>
+                        </optgroup>
+                        <optgroup th:attr="label=#{admin.tform.moneda.grupo.intl}">
+                            <option value="€">€ — Euro</option>
+                            <option value="£">£ — Libra esterlina</option>
+                            <option value="¥">¥ — Yen / Yuan</option>
+                        </optgroup>
+                    </select>
+                    <div class="form-text" th:text="#{admin.tform.hint.moneda}">Símbolo que aparece junto a los valores monetarios.</div>
                 </div>
 
                 <!-- Límites de plan -->

@@ -339,14 +339,14 @@
                         <td class="text-muted" th:text="${ci['cantidad'] ?: '—'}">—</td>
                         <td>
                             <span th:if="${ci['valorUnitario'] != null}"
-                                  th:text="'$ ' + ${#numbers.formatDecimal(ci['valorUnitario'], 1, 2)} + ' / ' + (${ci['unidadFactura']} ?: '')"></span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ci['valorUnitario'], 1, 2)} + ' / ' + (${ci['unidadFactura']} ?: '')"></span>
                             <span th:unless="${ci['valorUnitario'] != null}" class="text-muted" th:text="#{recetas.detalle.sin.datos}">Sin datos</span>
                         </td>
                         <td class="text-end">
                             <span th:if="${ci['costoEstimado'] != null}"
                                   class="fw-bold"
                                   style="color:var(--dorado);"
-                                  th:text="'$ ' + ${#numbers.formatDecimal(ci['costoEstimado'], 1, 0)}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ci['costoEstimado'], 1, 0)}">—</span>
                             <span th:unless="${ci['costoEstimado'] != null}" class="text-muted">—</span>
                         </td>
                         <td class="text-muted small"
@@ -357,7 +357,7 @@
                     <tr class="table-light">
                         <td colspan="3" class="fw-bold text-end small" th:text="#{recetas.detalle.total.est}">Total estimado</td>
                         <td class="text-end fw-bold" style="color:var(--dorado);"
-                            th:text="'$ ' + ${#numbers.formatDecimal(totalCostoEstimado, 1, 0)}">—</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalCostoEstimado, 1, 0)}">—</td>
                         <td></td>
                     </tr>
                 </tfoot>

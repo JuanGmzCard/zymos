@@ -446,13 +446,13 @@
                         <div class="fin-metric">
                             <div class="fin-label" th:text="#{dashboard.fin.gasto}">Gasto Total Compras</div>
                             <div class="fin-value">
-                                $<span th:text="${#numbers.formatDecimal(totalGastado, 1, 'COMMA', 0, 'POINT')}">0</span>
+                                <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</span>
                             </div>
                         </div>
                         <div class="fin-metric">
                             <div class="fin-label" th:text="#{dashboard.fin.mantenimientos}">Costo Mantenimientos</div>
                             <div class="fin-value">
-                                $<span th:text="${#numbers.formatDecimal(totalMantenimientos, 1, 'COMMA', 0, 'POINT')}">0</span>
+                                <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalMantenimientos, 1, 'COMMA', 0, 'POINT')}">$0</span>
                             </div>
                         </div>
                     </div>

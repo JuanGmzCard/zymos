@@ -703,6 +703,7 @@ html.dark-mode th:not([class*="th-"]):not([style*="background"]) {
 }
 html.dark-mode .detail-label,
 html.dark-mode .text-muted { color: var(--dm-text-muted) !important; }
+html.dark-mode .form-text { color: var(--dm-text-soft) !important; }
 html.dark-mode .stat-number { color: var(--dorado-claro) !important; }
 
 /* Inputs y selects */

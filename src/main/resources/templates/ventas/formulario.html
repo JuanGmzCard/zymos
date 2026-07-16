@@ -237,7 +237,7 @@
                                             <!-- Precio unitario -->
                                             <td>
                                                 <div class="input-group input-group-sm">
-                                                    <span class="input-group-text">$</span>
+                                                    <span class="input-group-text" th:text="${branding.simboloMoneda}">$</span>
                                                     <input type="number" class="form-control form-control-sm item-precio"
                                                            th:name="'items[' + ${iStat.index} + '].precioUnitario'"
                                                            th:value="${item.precioUnitario}"
@@ -269,7 +269,7 @@
                                         <tr>
                                             <td colspan="6" class="text-end fw-semibold pe-2" th:text="#{ventas.form.total.label}">Total Venta:</td>
                                             <td class="text-end pe-2">
-                                                <span id="grandTotal" style="font-weight:700;color:var(--dorado);">$0</span>
+                                                <span id="grandTotal" style="font-weight:700;color:var(--dorado);" th:text="${branding.simboloMoneda} + '0'">$0</span>
                                             </td>
                                             <td></td>
                                         </tr>
@@ -392,7 +392,7 @@ function crearFilaHTML(idx) {
     <td><input type="text" class="form-control form-control-sm" name="items[${idx}].descripcion" placeholder="${VENTAS_MSG.descPh}"></td>
     <td><input type="number" class="form-control form-control-sm item-cantidad" name="items[${idx}].cantidad" step="0.001" min="0.001" placeholder="${VENTAS_MSG.cantPh}" required></td>
     <td><select class="form-select form-select-sm item-unidad" name="items[${idx}].unidad">${UNIT_OPTIONS}</select></td>
-    <td><div class="input-group input-group-sm"><span class="input-group-text">$</span>
+    <td><div class="input-group input-group-sm"><span class="input-group-text">${SIMBOLO_MONEDA}</span>
         <input type="number" class="form-control form-control-sm item-precio" name="items[${idx}].precioUnitario" step="0.01" min="0" required placeholder="0.00">
         </div></td>
     <td><div class="input-group input-group-sm">
