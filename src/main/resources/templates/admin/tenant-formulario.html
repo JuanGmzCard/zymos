@@ -114,6 +114,9 @@
                 <div class="col-md-3">
                     <label class="form-label detail-label" th:text="#{admin.tform.label.moneda}">Símbolo de moneda</label>
                     <select th:field="*{simboloMoneda}" class="form-select">
+                        <optgroup th:attr="label=#{admin.tform.moneda.grupo.norteamerica}">
+                            <option value="USD $">USD $ — Dólar estadounidense</option>
+                        </optgroup>
                         <optgroup th:attr="label=#{admin.tform.moneda.grupo.latam}">
                             <option value="$">$ — Dólar / Peso</option>
                             <option value="COP $">COP $ — Peso colombiano</option>
