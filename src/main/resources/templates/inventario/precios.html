@@ -73,7 +73,7 @@
                         <div class="stat-label" th:text="#{inv.prec.stat.ultimo}">Último precio unitario</div>
                         <div class="stat-value"
                              th:if="${precioUltimo != null}"
-                             th:text="'$' + ${#numbers.formatDecimal(precioUltimo,1,'COMMA',0,'POINT')}">—</div>
+                             th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(precioUltimo,1,'COMMA',0,'POINT')}">—</div>
                         <div class="stat-label"
                              th:if="${historial[0].unidad != null}"
                              th:text="#{inv.prec.por.unidad} + ' ' + ${historial[0].unidad}">—</div>
@@ -84,7 +84,7 @@
                         <div class="stat-label" th:text="#{inv.prec.stat.promedio}">Precio promedio</div>
                         <div class="stat-value info"
                              th:if="${precioPromedio != null}"
-                             th:text="'$' + ${#numbers.formatDecimal(precioPromedio,1,'COMMA',0,'POINT')}">—</div>
+                             th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(precioPromedio,1,'COMMA',0,'POINT')}">—</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -92,7 +92,7 @@
                         <div class="stat-label" th:text="#{inv.prec.stat.minmax}">Mín / Máx</div>
                         <div class="stat-value success" style="font-size:1.1rem;"
                              th:if="${precioMinimo != null and precioMaximo != null}"
-                             th:text="'$' + ${#numbers.formatDecimal(precioMinimo,1,'COMMA',0,'POINT')} + ' / $' + ${#numbers.formatDecimal(precioMaximo,1,'COMMA',0,'POINT')}">—</div>
+                             th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(precioMinimo,1,'COMMA',0,'POINT')} + ' / ' + ${branding.simboloMoneda} + ${#numbers.formatDecimal(precioMaximo,1,'COMMA',0,'POINT')}">—</div>
                     </div>
                 </div>
                 <div class="col-6 col-md-3">
@@ -104,11 +104,11 @@
                              th:if="${variacion != null and nCompras > 1}">
                             <span th:if="${variacion.signum() > 0}" class="text-danger">
                                 <i class="bi bi-arrow-up-short"></i>
-                                <span th:text="'+$' + ${#numbers.formatDecimal(variacion,1,'COMMA',0,'POINT')}"></span>
+                                <span th:text="'+' + ${branding.simboloMoneda} + ${#numbers.formatDecimal(variacion,1,'COMMA',0,'POINT')}"></span>
                             </span>
                             <span th:if="${variacion.signum() < 0}" class="text-success">
                                 <i class="bi bi-arrow-down-short"></i>
-                                <span th:text="'$' + ${#numbers.formatDecimal(variacion,1,'COMMA',0,'POINT')}"></span>
+                                <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(variacion,1,'COMMA',0,'POINT')}"></span>
                             </span>
                             <span th:if="${variacion.signum() == 0}" class="text-muted" th:text="#{inv.prec.sin.variacion}">Sin variación</span>
                             <span class="text-muted"> <span th:text="#{inv.prec.vs.primera}">vs primera compra</span></span>
@@ -160,11 +160,11 @@
                                 <td class="text-end"
                                     th:text="${fi.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${fi.unidadDisplay} ?: '')">—</td>
                                 <td class="text-end fw-bold"
-                                    th:text="${fi.valorUnitario != null} ? '$' + ${#numbers.formatDecimal(fi.valorUnitario,1,'COMMA',2,'POINT')} : '—'">—</td>
+                                    th:text="${fi.valorUnitario != null} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(fi.valorUnitario,1,'COMMA',2,'POINT')} : '—'">—</td>
                                 <td class="text-end text-muted"
                                     th:text="${fi.porcentajeIvaItem != null and fi.porcentajeIvaItem.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? ${fi.porcentajeIvaItem} + '%' : '—'">—</td>
                                 <td class="text-end"
-                                    th:text="'$' + ${#numbers.formatDecimal(fi.valorLinea,1,'COMMA',0,'POINT')}">—</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(fi.valorLinea,1,'COMMA',0,'POINT')}">—</td>
                             </tr>
                         </tbody>
                     </table>
@@ -191,6 +191,7 @@ var INV_PREC_MSG = {
     puLabel:   /*[[#{inv.prec.js.pu.label}]]*/ 'Precio unitario ($)',
     proveedor: /*[[#{inv.prec.js.proveedor}]]*/ 'Proveedor'
 };
+var SIMBOLO_MONEDA = /*[[${branding.simboloMoneda}]]*/ '$';
 (function () {
     var canvas = document.getElementById('chartPrecios');
     if (!canvas) return;
@@ -227,7 +228,7 @@ var INV_PREC_MSG = {
                         title: function(ctx) { return fechas[ctx[0].dataIndex]; },
                         label: function(ctx) {
                             var p = proveedores[ctx.dataIndex] || '';
-                            return ['$' + ctx.raw.toLocaleString('es-AR', {minimumFractionDigits:2}),
+                            return [SIMBOLO_MONEDA + ctx.raw.toLocaleString('es-AR', {minimumFractionDigits:2}),
                                     p ? INV_PREC_MSG.proveedor + ': ' + p : ''];
                         }
                     }
@@ -239,7 +240,7 @@ var INV_PREC_MSG = {
                     title: { display: true, text: INV_PREC_MSG.puLabel },
                     ticks: {
                         callback: function(v) {
-                            return '$' + v.toLocaleString('es-AR');
+                            return SIMBOLO_MONEDA + v.toLocaleString('es-AR');
                         }
                     }
                 }

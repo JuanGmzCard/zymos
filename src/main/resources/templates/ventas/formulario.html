@@ -325,6 +325,7 @@ var VENTAS_MSG = {
     selectPh:     /*[[#{label.select}]]*/ '— seleccionar —',
     nit:          /*[[#{label.nit}]]*/ 'NIT'
 };
+var SIMBOLO_MONEDA = /*[[${branding.simboloMoneda}]]*/ '$';
 /*]]>*/
 </script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
@@ -448,10 +449,10 @@ function actualizarTotales() {
         var disc  = parseFloat(row.querySelector('.item-descuento')?.value)  || 0;
         var total = qty * price * (1 - disc / 100);
         var cell  = row.querySelector('.item-total');
-        if (cell) cell.textContent = qty > 0 && price >= 0 ? '$' + fmtNum(total) : '—';
+        if (cell) cell.textContent = qty > 0 && price >= 0 ? SIMBOLO_MONEDA + fmtNum(total) : '—';
         grand += total;
     });
-    document.getElementById('grandTotal').textContent = '$' + fmtNum(grand);
+    document.getElementById('grandTotal').textContent = SIMBOLO_MONEDA + fmtNum(grand);
 }
 
 function fmtNum(n) {

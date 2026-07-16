@@ -41,7 +41,7 @@
             <div class="stat-card-simple">
                 <div class="stat-label" th:text="#{prov.stats.total.compras}">Total compras</div>
                 <div class="stat-value success"
-                     th:text="'$' + ${totalFacturas != null} ? ${#numbers.formatDecimal(totalFacturas,1,'COMMA',0,'POINT')} : '0'">$0</div>
+                     th:text="${totalFacturas != null} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(totalFacturas,1,'COMMA',0,'POINT')} : '0'">$0</div>
             </div>
         </div>
     </div>

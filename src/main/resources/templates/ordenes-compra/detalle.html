@@ -129,23 +129,23 @@
                                 <td class="text-center"
                                     th:text="${item.cantidad != null ? item.cantidadDisplay.stripTrailingZeros().toPlainString() + (item.unidadDisplay != null ? ' ' + item.unidadDisplay : '') : '—'}">—</td>
                                 <td class="text-end"
-                                    th:text="${item.precioUnitarioEstimado != null ? '$' + #numbers.formatDecimal(item.precioUnitarioEstimado,1,'COMMA',0,'POINT') : '—'}">—</td>
+                                    th:text="${item.precioUnitarioEstimado != null} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(item.precioUnitarioEstimado,1,'COMMA',0,'POINT')} : '—'">—</td>
                                 <td class="text-center"
                                     th:text="${item.porcentajeIvaItem != null ? item.porcentajeIvaItem.stripTrailingZeros().toPlainString() + '%' : '0%'}">0%</td>
                                 <td class="text-end fw-semibold"
-                                    th:text="${item.precioUnitarioEstimado != null ? '$' + #numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT') : '—'}">—</td>
+                                    th:text="${item.precioUnitarioEstimado != null} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')} : '—'">—</td>
                             </tr>
                         </tbody>
                         <tfoot>
                             <tr th:if="${oc.totalEstimado > 0}" class="table-light">
                                 <td colspan="6" class="text-end small text-muted" th:text="#{oc.det.subtotal}">Subtotal estimado:</td>
                                 <td class="text-end fw-semibold"
-                                    th:text="${'$' + #numbers.formatDecimal(oc.subtotalEstimado,1,'COMMA',0,'POINT')}">$0</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(oc.subtotalEstimado,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
                             <tr th:if="${oc.totalEstimado > 0}" class="table-light">
                                 <td colspan="6" class="text-end fw-bold" th:text="#{oc.det.total}">Total estimado (con IVA):</td>
                                 <td class="text-end fw-bold"
-                                    th:text="${'$' + #numbers.formatDecimal(oc.totalEstimado,1,'COMMA',0,'POINT')}">$0</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(oc.totalEstimado,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
                         </tfoot>
                     </table>

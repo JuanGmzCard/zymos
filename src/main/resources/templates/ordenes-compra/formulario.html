@@ -239,6 +239,7 @@
         eliminarTitle: /*[[#{action.delete}]]*/ 'Eliminar',
         nitPrefix:     /*[[#{label.nit}]]*/ 'NIT'
     };
+var SIMBOLO_MONEDA = /*[[${branding.simboloMoneda}]]*/ '$';
 /*]]>*/
 </script>
 
@@ -390,8 +391,8 @@ function recalcular() {
         subtotal += linea;
         total    += linea * (1 + iva / 100);
     });
-    document.getElementById('subtotalDisplay').textContent = '$' + fmtMoney(subtotal);
-    document.getElementById('totalDisplay').textContent    = '$' + fmtMoney(total);
+    document.getElementById('subtotalDisplay').textContent = SIMBOLO_MONEDA + fmtMoney(subtotal);
+    document.getElementById('totalDisplay').textContent    = SIMBOLO_MONEDA + fmtMoney(total);
 }
 
 function fmtMoney(n) {

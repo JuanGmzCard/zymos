@@ -268,7 +268,7 @@
                     </td>
                     <td class="text-center d-none d-md-table-cell" th:text="${oc.items.size()}">0</td>
                     <td class="text-end d-none d-lg-table-cell">
-                        <span th:text="${'$' + #numbers.formatDecimal(oc.totalEstimado, 1, 'COMMA', 0, 'POINT')}"></span>
+                        <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(oc.totalEstimado, 1, 'COMMA', 0, 'POINT')}"></span>
                     </td>
                     <td class="text-end pe-3">
                         <a th:href="@{/ordenes-compra/ver/{id}(id=${oc.id})}"

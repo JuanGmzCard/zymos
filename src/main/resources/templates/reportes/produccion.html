@@ -121,7 +121,7 @@
             <div class="stat-card-simple">
                 <div class="stat-label" th:text="#{reportes.prod.stat.costo}">Costo Total</div>
                 <div class="stat-value"
-                     th:text="${costoTotalPeriodo != null} ? '$' + ${#numbers.formatDecimal(costoTotalPeriodo,1,0)} : '—'">—</div>
+                     th:text="${costoTotalPeriodo != null} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(costoTotalPeriodo,1,0)} : '—'">—</div>
             </div>
         </div>
         <div class="col-6 col-md-3">
@@ -238,7 +238,7 @@
                                 </td>
                                 <td>
                                     <span th:if="${lote.costoPorLitro != null}" class="text-secondary"
-                                          th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,2)}">-</span>
+                                          th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoPorLitro,1,2)}">-</span>
                                     <span th:unless="${lote.costoPorLitro != null}" class="text-secondary">—</span>
                                 </td>
                                 <td>

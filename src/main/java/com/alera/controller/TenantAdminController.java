@@ -213,6 +213,7 @@ public class TenantAdminController {
         m.put("colorBodyBg",     t.getColorBodyBg());
         m.put("fontHeadings",    t.getFontHeadings());
         m.put("fontBody",        t.getFontBody());
+        m.put("simboloMoneda",   t.getSimboloMoneda());
         return m;
     }
 
@@ -228,6 +229,7 @@ public class TenantAdminController {
         applyColor(c, "colorBodyBg",      t::setColorBodyBg);
         if (c.containsKey("fontHeadings"))     t.setFontHeadings(c.get("fontHeadings"));
         if (c.containsKey("fontBody"))         t.setFontBody(c.get("fontBody"));
+        if (c.containsKey("simboloMoneda"))    t.setSimboloMoneda(c.get("simboloMoneda"));
     }
 
     private void applyColor(Map<String, String> c, String key,

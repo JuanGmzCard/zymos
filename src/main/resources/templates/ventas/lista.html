@@ -237,7 +237,7 @@
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{ventas.stats.ingresos}">Ingresos Despachados</div>
             <div class="stat-value success"
-                 th:text="'$' + ${#numbers.formatDecimal(statsIngresos,1,'COMMA',0,'POINT')}">$0</div>
+                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(statsIngresos,1,'COMMA',0,'POINT')}">$0</div>
         </div>
     </div>
 
@@ -330,7 +330,7 @@
                               th:text="${v.estado.displayName}">—</span>
                     </td>
                     <td class="text-end fw-bold pe-3"
-                        th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
+                        th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
                     <td class="text-end pe-3 text-nowrap">
                         <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
                            class="action-link view" th:title="#{action.view.detail}" th:text="#{action.ver}">Ver</a>
@@ -406,7 +406,7 @@
                         <td class="fw-semibold" th:text="${c['cliente']}">—</td>
                         <td class="text-center text-muted small" th:text="${c['total_ventas']}">—</td>
                         <td class="text-end pe-3 fw-bold" style="color:var(--dorado);"
-                            th:text="'$' + ${#numbers.formatDecimal(c['total_ingresos'],1,'COMMA',0,'POINT')}">$0</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(c['total_ingresos'],1,'COMMA',0,'POINT')}">$0</td>
                     </tr>
                     </tbody>
                 </table>

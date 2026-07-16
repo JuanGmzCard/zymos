@@ -237,7 +237,7 @@
                         <td class="text-secondary" style="font-size:0.8rem;" th:text="#{comp.row.costo.total}">Costo total</td>
                         <td class="valor-celda text-secondary" th:each="lote : ${lotes}">
                             <span th:if="${lote.costoTotal != null}"
-                                  th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal, 1, 'COMMA', 0, 'POINT')}">—</span>
+                                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoTotal, 1, 'COMMA', 0, 'POINT')}">—</span>
                             <span th:unless="${lote.costoTotal != null}" class="text-secondary fst-italic" style="font-size:.8em;" th:text="#{comp.row.sin.costo}">sin costo asignado</span>
                         </td>
                     </tr>
@@ -248,7 +248,7 @@
                         <td class="valor-celda" th:each="lote : ${lotes}"
                             th:classappend="${mejores['cpl'] != null and mejores['cpl'] == lote.id} ? 'cpl-mejor' : ''">
                             <span th:if="${lote.costoPorLitro != null}">
-                                <span th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro, 1, 'COMMA', 0, 'POINT')}">—</span>
+                                <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoPorLitro, 1, 'COMMA', 0, 'POINT')}">—</span>
                                 <i th:if="${mejores['cpl'] != null and mejores['cpl'] == lote.id}"
                                    class="bi bi-arrow-down-circle-fill ms-1 text-success" style="font-size:.75em;"></i>
                             </span>

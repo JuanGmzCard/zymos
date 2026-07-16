@@ -125,6 +125,7 @@ public class DataInitializer implements CommandLineRunner {
         t.setColorBodyBg(branding.getColorBodyBg());
         t.setFontHeadings(branding.getFontHeadings());
         t.setFontBody(branding.getFontBody());
+        t.setSimboloMoneda(branding.getSimboloMoneda());
         t.setActive(true);
         tenantRepo.save(t);
         log.info("Tenant '{}' creado con branding '{}'", defaultSubdomain, branding.getName());

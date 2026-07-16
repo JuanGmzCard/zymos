@@ -103,18 +103,18 @@
                             </td>
                             <td class="fw-semibold" th:text="${item.nombre}">-</td>
                             <td th:text="${item.cantidadDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${item.unidadDisplay} != null ? ${item.unidadDisplay} : '')">-</td>
-                            <td th:text="'$' + ${#numbers.formatDecimal(item.valorUnitario,1,'COMMA',2,'POINT')}">-</td>
+                            <td th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorUnitario,1,'COMMA',2,'POINT')}">-</td>
                             <td th:if="${factura.ivaIncluido}"
                                 class="text-muted small"
-                                th:text="'$' + ${#numbers.formatDecimal(item.valorUnitarioSinIva,1,'COMMA',2,'POINT')}">-</td>
+                                th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorUnitarioSinIva,1,'COMMA',2,'POINT')}">-</td>
                             <td th:text="${item.porcentajeDescuento} + '%'">-</td>
                             <td th:text="${item.porcentajeIvaItem} + '%'">-</td>
                             <td class="text-muted small"
-                                th:text="'$' + ${#numbers.formatDecimal(item.valorIvaItem,1,'COMMA',2,'POINT')}">-</td>
+                                th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorIvaItem,1,'COMMA',2,'POINT')}">-</td>
                             <td class="text-muted small"
-                                th:text="${item.impuestoConsumo != null and item.impuestoConsumo.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? '$' + ${#numbers.formatDecimal(item.impuestoConsumo,1,'COMMA',2,'POINT')} : '—'">—</td>
+                                th:text="${item.impuestoConsumo != null and item.impuestoConsumo.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? ${branding.simboloMoneda} + ${#numbers.formatDecimal(item.impuestoConsumo,1,'COMMA',2,'POINT')} : '—'">—</td>
                             <td class="fw-semibold"
-                                th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',2,'POINT')}">-</td>
+                                th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',2,'POINT')}">-</td>
                         </tr>
                         </tbody>
                     </table>
@@ -190,29 +190,29 @@
                     <span class="text-muted small"
                           th:text="${factura.ivaIncluido} ? #{fact.det.subtotal.sin.iva} : #{fact.det.subtotal}">Subtotal</span>
                     <span class="fw-semibold"
-                          th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</span>
+                          th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted small" th:text="#{fact.det.iva.x.item}">IVA (por ítem)</span>
-                    <span th:text="'$' + ${#numbers.formatDecimal(factura.valorIva,1,'COMMA',2,'POINT')}">-</span>
+                    <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.valorIva,1,'COMMA',2,'POINT')}">-</span>
                 </div>
                 <th:block th:with="envio=${factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO},
                                    impConsumoTotal=${factura.valorTotal.subtract(factura.subtotal).subtract(factura.valorIva).subtract(factura.costoEnvio != null ? factura.costoEnvio : T(java.math.BigDecimal).ZERO)}">
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${impConsumoTotal.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
                         <span class="text-muted small" th:text="#{fact.det.imp.consumo}">Imp. Consumo</span>
-                        <span th:text="'$' + ${#numbers.formatDecimal(impConsumoTotal,1,'COMMA',2,'POINT')}">-</span>
+                        <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(impConsumoTotal,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
                         <span class="text-muted small fw-semibold" th:text="#{fact.det.total.sin.envio}">Total sin envío</span>
                         <span class="fw-semibold"
-                              th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal.subtract(envio),1,'COMMA',2,'POINT')}">-</span>
+                              th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.valorTotal.subtract(envio),1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2"
                          th:if="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0}">
                         <span class="text-muted small" th:text="#{fact.det.envio}">Envío</span>
-                        <span th:text="'$' + ${#numbers.formatDecimal(envio,1,'COMMA',2,'POINT')}">-</span>
+                        <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(envio,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                     <hr class="my-2">
                     <div class="d-flex justify-content-between">
@@ -220,7 +220,7 @@
                               th:text="${envio.compareTo(T(java.math.BigDecimal).ZERO) != 0} ? #{fact.det.total.con.envio} : #{fact.det.total}">TOTAL</span>
                         <span class="fw-bold"
                               style="color:#1e293b;"
-                              th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</span>
+                              th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</span>
                     </div>
                 </th:block>
             </div>

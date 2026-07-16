@@ -124,7 +124,7 @@
             <div class="stat-card-simple h-100">
                 <div class="stat-label" th:text="#{admin.met.ingresos}">Ingresos despachados</div>
                 <div class="stat-value success"
-                     th:text="'$' + ${#numbers.formatDecimal(metricas.ingresosVentas, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                     th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(metricas.ingresosVentas, 1, 'COMMA', 0, 'POINT')}">$0</div>
             </div>
         </div>
         <div class="col-6 col-md-4">
@@ -150,7 +150,7 @@
             <div class="stat-card-simple h-100">
                 <div class="stat-label" th:text="#{admin.met.total.gasto}">Total compras</div>
                 <div class="stat-value danger"
-                     th:text="'$' + ${#numbers.formatDecimal(metricas.totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                     th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(metricas.totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</div>
             </div>
         </div>
     </div>

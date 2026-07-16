@@ -402,7 +402,7 @@
                     <div class="stat-card">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <div class="stat-number" th:text="'$' + ${#numbers.formatDecimal(ventasIngresos,1,'COMMA',0,'POINT')}">$0</div>
+                                <div class="stat-number" th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ventasIngresos,1,'COMMA',0,'POINT')}">$0</div>
                                 <div class="stat-label" th:text="#{dashboard.ventas.ingresos}">Ingresos</div>
                             </div>
                             <i class="bi bi-currency-dollar stat-icon"></i>

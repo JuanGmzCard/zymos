@@ -57,7 +57,13 @@ public class PdfExportService {
     private static final DateTimeFormatter FMT_DT    = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter FMT_HORA  = DateTimeFormatter.ofPattern("HH:mm");
 
-    private static final ThreadLocal<Locale> LOCALE_HOLDER = new ThreadLocal<>();
+    private static final ThreadLocal<Locale> LOCALE_HOLDER  = new ThreadLocal<>();
+    private static final ThreadLocal<String> MONEDA_HOLDER  = new ThreadLocal<>();
+
+    private String mon() {
+        String s = MONEDA_HOLDER.get();
+        return s != null ? s : "$";
+    }
 
     private String t(String key) {
         Locale loc = LOCALE_HOLDER.get();
@@ -90,6 +96,7 @@ public class PdfExportService {
                                   List<Venta> ventas,
                                   Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -169,6 +176,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -176,6 +184,7 @@ public class PdfExportService {
 
     public byte[] generarPdfReceta(Receta receta, ExportBranding branding, Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -342,6 +351,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -353,6 +363,7 @@ public class PdfExportService {
                                          ExportBranding branding,
                                          Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -466,6 +477,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -1103,9 +1115,9 @@ public class PdfExportService {
 
         PdfPTable resumen = new PdfPTable(new float[]{1.2f, 2, 1.2f, 2});
         resumen.setWidthPercentage(100); resumen.setSpacingAfter(6);
-        par(resumen, t("pdf.label.costo_total"),     "$" + fmt2(lote.getCostoTotal()), lbl, val, pal);
+        par(resumen, t("pdf.label.costo_total"),     mon() + fmt2(lote.getCostoTotal()), lbl, val, pal);
         par(resumen, t("pdf.label.costo_por_litro"),
-                lote.getCostoPorLitro() != null ? "$" + fmt2(lote.getCostoPorLitro()) : "—", lbl, val, pal);
+                lote.getCostoPorLitro() != null ? mon() + fmt2(lote.getCostoPorLitro()) : "—", lbl, val, pal);
         par(resumen, t("pdf.label.items_asignados"), String.valueOf(lote.getItemsFactura().size()), lbl, val, pal);
         par(resumen, "", "", lbl, val, pal);
         doc.add(resumen);
@@ -1127,7 +1139,7 @@ public class PdfExportService {
                     : li.getCantidadAsignadaDisplay().stripTrailingZeros().toPlainString()
                       + " " + (li.getUnidadAsignadaDisplay() != null ? li.getUnidadAsignadaDisplay() : "");
             for (String v : new String[]{nroFact, li.getItem().getFactura().getProveedor(),
-                    li.getItem().getNombre(), cant, "$" + fmt2(li.getValorAsignado())}) {
+                    li.getItem().getNombre(), cant, mon() + fmt2(li.getValorAsignado())}) {
                 PdfPCell c = new PdfPCell(new Phrase(v != null ? v : "—", tdF));
                 c.setBorderColor(C_BORDE); c.setPadding(4);
                 dt.addCell(c);
@@ -1259,9 +1271,9 @@ public class PdfExportService {
             case "eficiencia"  -> l.getEficienciaMacerado() != null ? l.getEficienciaMacerado() + "%" : "—";
             case "litros"      -> l.getLitrosFinales()      != null ? l.getLitrosFinales()      + " L" : "—";
             case "costo_total" -> l.getCostoTotal()         != null
-                    ? "$ " + l.getCostoTotal().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
+                    ? mon() + " " + l.getCostoTotal().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
             case "cpl"         -> l.getCostoPorLitro()      != null
-                    ? "$ " + l.getCostoPorLitro().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
+                    ? mon() + " " + l.getCostoPorLitro().setScale(0, java.math.RoundingMode.HALF_UP) : "—";
             default -> "—";
         };
     }
@@ -1350,7 +1362,7 @@ public class PdfExportService {
             tableCell(tbl, v.getFechaDespacho() != null ? v.getFechaDespacho().format(FMT_FECHA) : "—", valFont);
             tableCell(tbl, v.getEstado().getDisplayName(), valFont);
             tableCellC(tbl, String.valueOf(v.getItemsCount()), valFont);
-            tableCellR(tbl, "$ " + String.format("%,.0f", v.getValorTotal().doubleValue()), totFont);
+            tableCellR(tbl, mon() + " " + String.format("%,.0f", v.getValorTotal().doubleValue()), totFont);
         }
         doc.add(tbl);
     }
@@ -1413,6 +1425,7 @@ public class PdfExportService {
                                                ExportBranding branding,
                                                Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -1475,7 +1488,7 @@ public class PdfExportService {
                 par(stats, t("pdf.label.eficiencia_prom"),   avgEfStr,                          lbl, val, pal);
                 par(stats, t("pdf.label.estilos_distintos"), String.valueOf(lotes.stream().map(LoteCerveza::getEstilo).distinct().count()), lbl, val, pal);
                 par(stats, t("pdf.label.completados"),       completados + " (" + tasaComp + "%)", lbl, val, pal);
-                par(stats, t("pdf.label.costo_total"),       costoTotal != null ? "$" + fmt2(costoTotal) : "—", lbl, val, pal);
+                par(stats, t("pdf.label.costo_total"),       costoTotal != null ? mon() + fmt2(costoTotal) : "—", lbl, val, pal);
                 par(stats, t("pdf.label.generado"),          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
                 doc.add(stats);
 
@@ -1515,7 +1528,7 @@ public class PdfExportService {
                         abvCell.setBackgroundColor(bg); abvCell.setBorderColor(C_BORDE); abvCell.setPadding(4);
                         tabla.addCell(abvCell);
                         tablaCelda(tabla, lote.getEficienciaMacerado() != null ? lote.getEficienciaMacerado() + "%" : "—", td, bg);
-                        tablaCelda(tabla, lote.getCostoPorLitro() != null ? "$" + fmt2(lote.getCostoPorLitro()) + "/L" : "—", td, bg);
+                        tablaCelda(tabla, lote.getCostoPorLitro() != null ? mon() + fmt2(lote.getCostoPorLitro()) + "/L" : "—", td, bg);
                         tablaCelda(tabla, lote.getFaseActual() != null ? lote.getFaseActual() : "—", td, bg);
                     }
                     doc.add(tabla);
@@ -1578,6 +1591,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -1589,6 +1603,7 @@ public class PdfExportService {
                                                  ExportBranding branding,
                                                  Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -1630,7 +1645,7 @@ public class PdfExportService {
                 long lotesRentables = filas.stream().filter(RentabilidadLoteDto::rentable).count();
                 long lotesEnRojo    = filas.stream().filter(RentabilidadLoteDto::enRojo).count();
                 String margenStr = (totalMargen.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "")
-                        + "$" + fmt2(totalMargen);
+                        + mon() + fmt2(totalMargen);
 
                 addTituloPdf(doc, t("pdf.title.resumen_periodo"), pal);
                 Font lbl = new Font(Font.HELVETICA, 8, Font.BOLD, pal.verde());
@@ -1641,8 +1656,8 @@ public class PdfExportService {
                 par(stats, t("pdf.label.lotes_con_datos"),   String.valueOf(lotesConDatos), lbl, val, pal);
                 par(stats, t("pdf.label.lotes_rentables"),   String.valueOf(lotesRentables),lbl, val, pal);
                 par(stats, t("pdf.label.lotes_en_rojo"),     String.valueOf(lotesEnRojo),   lbl, val, pal);
-                par(stats, t("pdf.label.ingresos_ventas"),   "$" + fmt2(totalIngresos),     lbl, val, pal);
-                par(stats, t("pdf.label.costos_produccion"), "$" + fmt2(totalCosto),        lbl, val, pal);
+                par(stats, t("pdf.label.ingresos_ventas"),   mon() + fmt2(totalIngresos),   lbl, val, pal);
+                par(stats, t("pdf.label.costos_produccion"), mon() + fmt2(totalCosto),      lbl, val, pal);
                 par(stats, t("pdf.label.margen_bruto"),      margenStr,                     lbl, val, pal);
                 par(stats, t("pdf.label.generado"),          LocalDate.now().format(FMT_FECHA), lbl, val, pal);
                 doc.add(stats);
@@ -1675,10 +1690,10 @@ public class PdfExportService {
                                 ? r.fechaCompletado().format(FMT_FECHA) : "—", td, bg);
                         tablaCelda(tabla, r.litrosFinales() != null
                                 ? r.litrosFinales() + " L" : "—", td, bg);
-                        tablaCelda(tabla, !r.sinCosto()   ? "$" + fmt2(r.costo())    : "—", td, bg);
-                        tablaCelda(tabla, !r.sinVentas()  ? "$" + fmt2(r.ingresos()) : "—", td, bg);
+                        tablaCelda(tabla, !r.sinCosto()   ? mon() + fmt2(r.costo())    : "—", td, bg);
+                        tablaCelda(tabla, !r.sinVentas()  ? mon() + fmt2(r.ingresos()) : "—", td, bg);
                         boolean tieneMargen = r.margen() != null && !r.sinCosto() && !r.sinVentas();
-                        String  mStr = tieneMargen ? (r.rentable() ? "+" : "") + "$" + fmt2(r.margen()) : "—";
+                        String  mStr = tieneMargen ? (r.rentable() ? "+" : "") + mon() + fmt2(r.margen()) : "—";
                         PdfPCell mCell = new PdfPCell(new Phrase(mStr, tieneMargen
                                 ? (r.rentable() ? tdOk : tdKo) : td));
                         mCell.setBackgroundColor(bg); mCell.setBorderColor(C_BORDE); mCell.setPadding(4);
@@ -1718,6 +1733,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -1744,6 +1760,7 @@ public class PdfExportService {
                                            ExportBranding branding,
                                            Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -1794,7 +1811,7 @@ public class PdfExportService {
                 par(stats, t("pdf.label.despachadas"),   String.valueOf(totalDespachadas),  lbl, val, pal);
                 par(stats, t("pdf.label.pendientes"),    String.valueOf(totalPendientes),   lbl, val, pal);
                 par(stats, t("pdf.label.canceladas"),    String.valueOf(totalCanceladas),   lbl, val, pal);
-                par(stats, t("pdf.label.ingresos"),      "$" + fmt2(ingresos),              lbl, val, pal);
+                par(stats, t("pdf.label.ingresos"),      mon() + fmt2(ingresos),            lbl, val, pal);
                 par(stats, t("pdf.label.clientes_unicos"), String.valueOf(clientesUnicos), lbl, val, pal);
                 par(stats, t("pdf.label.generado"),      LocalDate.now().format(FMT_FECHA), lbl, val, pal);
                 par(stats, "", "", lbl, val, pal);
@@ -1824,7 +1841,7 @@ public class PdfExportService {
                         tablaCelda(tabla, fmt(v.getFechaDespacho()), td, bg);
                         tablaCelda(tabla, v.getPrimerCodigoLote() != null ? v.getPrimerCodigoLote() : "—", td, bg);
                         tablaCelda(tabla, String.valueOf(v.getItemsCount()), td, bg);
-                        tablaCelda(tabla, "$" + fmt2(v.getValorTotal()), td, bg);
+                        tablaCelda(tabla, mon() + fmt2(v.getValorTotal()), td, bg);
                         tablaCelda(tabla, v.getEstado().getDisplayName(), td, bg);
                     }
                     doc.add(tabla);
@@ -1861,7 +1878,7 @@ public class PdfExportService {
                                 Font rtd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
                                 tablaCelda(resTabla, e.getKey(), rtd, bg);
                                 tablaCelda(resTabla, String.valueOf((long) e.getValue()[0]), rtd, bg);
-                                tablaCelda(resTabla, "$" + fmt2(BigDecimal.valueOf(e.getValue()[1])), rtd, bg);
+                                tablaCelda(resTabla, mon() + fmt2(BigDecimal.valueOf(e.getValue()[1])), rtd, bg);
                                 tablaCelda(resTabla, totalClientes > 0
                                         ? String.format("%.1f%%", e.getValue()[1] * 100.0 / totalClientes) : "—",
                                         rtd, bg);
@@ -1900,7 +1917,7 @@ public class PdfExportService {
                                 Font etd = new Font(Font.HELVETICA, 7, Font.NORMAL, Color.DARK_GRAY);
                                 tablaCelda(estTabla, e.getKey(), etd, bg);
                                 tablaCelda(estTabla, String.valueOf((long) e.getValue()[0]), etd, bg);
-                                tablaCelda(estTabla, "$" + fmt2(BigDecimal.valueOf(e.getValue()[1])), etd, bg);
+                                tablaCelda(estTabla, mon() + fmt2(BigDecimal.valueOf(e.getValue()[1])), etd, bg);
                                 tablaCelda(estTabla, totalEst > 0
                                         ? String.format("%.1f%%", e.getValue()[1] * 100.0 / totalEst) : "—",
                                         etd, bg);
@@ -1922,6 +1939,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -1929,6 +1947,7 @@ public class PdfExportService {
 
     public byte[] generarPdfVenta(Venta venta, ExportBranding branding, Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try {
             Pal pal = Pal.of(branding);
             String brandName = branding.name();
@@ -2026,11 +2045,11 @@ public class PdfExportService {
                                   + (item.getUnidad() != null ? " " + item.getUnidad() : "")
                                 : "—";
                         String precCol = item.getPrecioUnitario() != null
-                                ? "$" + String.format("%,.2f", item.getPrecioUnitario()) : "—";
+                                ? mon() + String.format("%,.2f", item.getPrecioUnitario()) : "—";
                         String descPctCol = item.getDescuentoPct() != null
                                 && item.getDescuentoPct().compareTo(BigDecimal.ZERO) > 0
                                 ? item.getDescuentoPct() + "%" : "—";
-                        String linTotCol = "$" + String.format("%,.0f", item.getValorLinea());
+                        String linTotCol = mon() + String.format("%,.0f", item.getValorLinea());
 
                         tableCell(tabla, loteCol,    fTdMono, Color.WHITE, Element.ALIGN_LEFT);
                         tableCell(tabla, descCol,    fTd,     Color.WHITE, Element.ALIGN_LEFT);
@@ -2043,7 +2062,7 @@ public class PdfExportService {
                 doc.add(tabla);
 
                 // ── Total destacado ───────────────────────────────────────
-                String totalStr = "$" + String.format("%,.0f", venta.getValorTotal());
+                String totalStr = mon() + String.format("%,.0f", venta.getValorTotal());
 
                 PdfPTable totBox = new PdfPTable(new float[]{3f, 1f});
                 totBox.setWidthPercentage(50);
@@ -2087,6 +2106,7 @@ public class PdfExportService {
             return baos.toByteArray();
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 
@@ -2101,6 +2121,7 @@ public class PdfExportService {
 
     public byte[] generarPdfOrdenCompra(com.alera.model.OrdenCompra oc, ExportBranding branding, Locale locale) {
         LOCALE_HOLDER.set(locale);
+        MONEDA_HOLDER.set(branding.simboloMoneda());
         try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Document doc = new Document(PageSize.A4, 40, 40, 50, 50);
             PdfWriter.getInstance(doc, out);
@@ -2215,6 +2236,7 @@ public class PdfExportService {
             throw new RuntimeException("Error generando PDF de OC", e);
         } finally {
             LOCALE_HOLDER.remove();
+            MONEDA_HOLDER.remove();
         }
     }
 

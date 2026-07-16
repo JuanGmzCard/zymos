@@ -126,7 +126,7 @@
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{reportes.ventas.stat.ingresos}">Ingresos</div>
             <div class="stat-value info"
-                 th:text="'$' + ${#numbers.formatDecimal(ingresosTotales,1,'COMMA',0,'POINT')}">$0</div>
+                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ingresosTotales,1,'COMMA',0,'POINT')}">$0</div>
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{reportes.ventas.stat.clientes}">Clientes Únicos</div>
@@ -193,7 +193,7 @@
                         </td>
                         <td class="text-center text-muted" th:text="${v.itemsCount}">0</td>
                         <td class="text-end fw-semibold"
-                            th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
                         <td>
                             <span class="badge"
                                   th:classappend="${v.estado.name() == 'DESPACHADO'} ? 'bg-success' :
@@ -232,7 +232,7 @@
                         <td style="padding-left:1.25rem;" class="fw-semibold" th:text="${c.cliente}">—</td>
                         <td class="text-center" th:text="${c.ventas}">0</td>
                         <td class="text-end pe-3 fw-bold"
-                            th:text="'$' + ${#numbers.formatDecimal(c.total,1,'COMMA',0,'POINT')}">$0</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(c.total,1,'COMMA',0,'POINT')}">$0</td>
                     </tr>
                 </tbody>
             </table>

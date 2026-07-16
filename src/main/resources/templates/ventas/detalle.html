@@ -159,11 +159,11 @@
                                 <td class="text-muted small"
                                     th:text="${item.unidadDisplay ?: '—'}">—</td>
                                 <td class="text-end"
-                                    th:text="'$' + ${#numbers.formatDecimal(item.precioUnitario,1,'COMMA',2,'POINT')}">—</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.precioUnitario,1,'COMMA',2,'POINT')}">—</td>
                                 <td class="text-end text-muted small"
                                     th:text="${item.descuentoPct != null and item.descuentoPct.compareTo(T(java.math.BigDecimal).ZERO) > 0} ? (${item.descuentoPct} + '%') : '—'">—</td>
                                 <td class="text-end fw-semibold"
-                                    th:text="'$' + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')}">—</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(item.valorLinea,1,'COMMA',0,'POINT')}">—</td>
                             </tr>
                             <tr th:if="${#lists.isEmpty(venta.items)}">
                                 <td colspan="7" class="text-center text-muted py-3 fst-italic" th:text="#{ventas.table.items.empty}">Sin ítems registrados</td>
@@ -173,7 +173,7 @@
                             <tr class="table-light">
                                 <td colspan="6" class="text-end fw-bold small" th:text="#{ventas.table.total.label}">TOTAL</td>
                                 <td class="text-end fw-bold"
-                                    th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
+                                    th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -240,7 +240,7 @@
                     <i class="bi bi-currency-dollar me-2"></i><span th:text="#{ventas.detalle.valor.section}">VALOR TOTAL</span>
                 </div>
                 <div class="display-6 fw-bold mb-1"
-                     th:text="'$' + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</div>
+                     th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(venta.valorTotal,1,'COMMA',0,'POINT')}">$0</div>
                 <div class="text-muted small"
                      th:text="${venta.items.size()} + ' ' + #{ventas.items.count}">0 ítems</div>
             </div>

@@ -60,7 +60,7 @@
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{fact.stat.monto.total}">Monto Total</div>
-            <div class="stat-value" th:text="'$' + ${#numbers.formatDecimal(statsTotal,1,'COMMA',0,'POINT')}">$0</div>
+            <div class="stat-value" th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(statsTotal,1,'COMMA',0,'POINT')}">$0</div>
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{fact.stat.pendientes}">Pendientes de Pago</div>
@@ -68,7 +68,7 @@
         </div>
         <div class="stat-card-simple">
             <div class="stat-label" th:text="#{fact.stat.monto.pend}">Monto Pendiente</div>
-            <div class="stat-value warning" th:text="'$' + ${#numbers.formatDecimal(statsPendiente,1,'COMMA',0,'POINT')}">$0</div>
+            <div class="stat-value warning" th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(statsPendiente,1,'COMMA',0,'POINT')}">$0</div>
         </div>
     </div>
 
@@ -155,8 +155,8 @@
                               th:text="${factura.estado.displayName}">-</span>
                     </td>
                     <td><span class="badge bg-light text-dark border" th:text="${#lists.size(factura.items)}">0</span></td>
-                    <td th:text="'$' + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</td>
-                    <td class="fw-semibold" th:text="'$' + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</td>
+                    <td th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.subtotal,1,'COMMA',2,'POINT')}">-</td>
+                    <td class="fw-semibold" th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(factura.valorTotal,1,'COMMA',2,'POINT')}">-</td>
                     <td class="text-end pe-3">
                         <a th:href="@{/facturas/ver/{id}(id=${factura.id})}"
                            class="action-link view" th:text="#{fact.action.ver}">Ver</a>
@@ -198,6 +198,7 @@
 var FACT_LISTA_MSG = {
     sinResultados: /*[[#{traz.index.js.sin.resultados}]]*/ 'Sin resultados para'
 };
+var SIMBOLO_MONEDA = /*[[${branding.simboloMoneda}]]*/ '$';
 /*]]>*/
 </script>
 <script th:attr="nonce=${cspNonce}">
@@ -262,7 +263,7 @@ var FACT_LISTA_MSG = {
         }
         var html = '';
         items.forEach(function(item) {
-            var totalFmt = '$' + Number(item.total).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+            var totalFmt = SIMBOLO_MONEDA + Number(item.total).toLocaleString('es-CO', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
             var meta = [item.proveedor, item.fecha].filter(Boolean).join(' · ');
             html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                 '<i class="bi bi-receipt ss-icon"></i>' +

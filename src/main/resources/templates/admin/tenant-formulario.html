@@ -98,13 +98,20 @@
                     </div>
                 </div>
                 <!-- Idioma por defecto -->
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label detail-label" th:text="#{admin.tform.label.idioma}">Idioma por defecto</label>
                     <select th:field="*{locale}" class="form-select">
                         <option value="es" th:text="#{admin.tform.idioma.es}">🇪🇸 Español</option>
                         <option value="en" th:text="#{admin.tform.idioma.en}">🇬🇧 English</option>
                     </select>
                     <div class="form-text" th:text="#{admin.tform.hint.idioma}">Idioma de la interfaz para los usuarios de este tenant (pueden cambiarlo manualmente).</div>
+                </div>
+
+                <!-- Símbolo de moneda -->
+                <div class="col-md-2">
+                    <label class="form-label detail-label" th:text="#{admin.tform.label.moneda}">Símbolo de moneda</label>
+                    <input type="text" th:field="*{simboloMoneda}" class="form-control" maxlength="10" placeholder="$">
+                    <div class="form-text" th:text="#{admin.tform.hint.moneda}">Ej: $, €, £, COP $</div>
                 </div>
 
                 <!-- Límites de plan -->

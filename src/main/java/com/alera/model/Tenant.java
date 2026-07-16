@@ -45,6 +45,9 @@ public class Tenant {
     @Column(name = "font_body", length = 100)
     private String fontBody     = "Raleway";
 
+    @Column(name = "simbolo_moneda", length = 10)
+    private String simboloMoneda = "$";
+
     @Column(name = "email_admin", length = 200)
     private String emailAdmin;
 
@@ -117,6 +120,8 @@ public class Tenant {
     public void   setFontHeadings(String v)  { this.fontHeadings = v; }
     public String getFontBody()              { return fontBody; }
     public void   setFontBody(String v)      { this.fontBody = v; }
+    public String getSimboloMoneda()         { return simboloMoneda != null ? simboloMoneda : "$"; }
+    public void   setSimboloMoneda(String v) { this.simboloMoneda = v; }
     public String getEmailAdmin()             { return emailAdmin; }
     public void   setEmailAdmin(String v)   { this.emailAdmin = v; }
     public String getLocale()               { return locale; }

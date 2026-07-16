@@ -1089,19 +1089,19 @@
         <div class="sh d-flex justify-content-between align-items-center">
             <span><i class="bi bi-currency-dollar me-2"></i><span th:text="#{traz.det.sec.costo}">Costo de Producción</span></span>
             <span th:if="${lote.costoTotal != null}" class="fw-bold text-dorado"
-                  th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}"></span>
+                  th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}"></span>
         </div>
         <div class="sb">
             <div class="d-flex flex-wrap gap-3 mb-3" th:if="${lote.costoTotal != null}">
                 <div class="densidad-box text-center">
                     <div class="densidad-tag" th:text="#{traz.det.costo.label.total}">Costo Total</div>
                     <div class="densidad-valor" style="font-size:1.3rem;"
-                         th:text="'$' + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}">—</div>
+                         th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoTotal,1,'COMMA',0,'POINT')}">—</div>
                 </div>
                 <div class="densidad-box densidad-final text-center" th:if="${lote.costoPorLitro != null}">
                     <div class="densidad-tag" th:text="#{traz.det.costo.label.litro}">Costo / Litro</div>
                     <div class="densidad-valor" style="font-size:1.3rem;"
-                         th:text="'$' + ${#numbers.formatDecimal(lote.costoPorLitro,1,'COMMA',2,'POINT')}">—</div>
+                         th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(lote.costoPorLitro,1,'COMMA',2,'POINT')}">—</div>
                 </div>
                 <div class="densidad-box text-center">
                     <div class="densidad-tag" th:text="#{traz.det.costo.label.items}">Ítems asignados</div>
@@ -1131,7 +1131,7 @@
                         <td th:text="${asig.item.nombre}">—</td>
                         <td th:text="${asig.cantidadAsignada.doubleValue() == 0.0} ? #{traz.det.costo.total.item} : ${asig.cantidadAsignadaDisplay.stripTrailingZeros().toPlainString()} + ' ' + (${asig.unidadAsignadaDisplay ?: ''})">—</td>
                         <td class="text-end pe-3 fw-bold"
-                            th:text="'$' + ${#numbers.formatDecimal(asig.valorAsignado,1,'COMMA',0,'POINT')}">—</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(asig.valorAsignado,1,'COMMA',0,'POINT')}">—</td>
                     </tr>
                 </tbody>
             </table>
@@ -1174,7 +1174,7 @@
                                   th:text="${v.estado.displayName}">—</span>
                         </td>
                         <td class="text-end fw-bold"
-                            th:text="'$' + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
+                            th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(v.valorTotal,1,'COMMA',0,'POINT')}">—</td>
                         <td class="pe-3 text-center">
                             <a th:href="@{/ventas/ver/{id}(id=${v.id})}"
                                class="btn btn-sm btn-outline-secondary py-0 px-1 border-0" th:title="#{action.view.detail}">
