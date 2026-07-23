@@ -25,7 +25,7 @@ public interface OrdenCompraRepository extends JpaRepository<OrdenCompra, Long> 
     @Query(value = """
             SELECT COALESCE(MAX(CAST(SUBSTRING(numero_oc FROM 4) AS INTEGER)), 0)
             FROM ordenes_compra
-            WHERE tenant_id = :tenantId AND numero_oc LIKE 'OC-%'
+            WHERE tenant_id = :tenantId AND numero_oc ~ '^OC-[0-9]+$'
             """, nativeQuery = true)
     Integer findMaxNumeroOc(@Param("tenantId") String tenantId);
 
