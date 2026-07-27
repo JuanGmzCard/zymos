@@ -15,6 +15,9 @@ logs/
 Thumbs.db
 .claude/
 
+# Archivos subidos por usuarios
+uploads/
+
 # Node.js (asistente TypeScript)
 node_modules/
 dist/
