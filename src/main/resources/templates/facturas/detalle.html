@@ -20,6 +20,11 @@
             <p class="subtitle mb-0" th:text="${factura.proveedor}">Proveedor</p>
         </div>
         <div class="d-flex gap-2 pt-1">
+            <a th:if="${factura.archivoNombre != null}"
+               th:href="@{/facturas/{id}/adjunto(id=${factura.id})}"
+               class="btn btn-outline-secondary btn-sm" target="_blank">
+                <i class="bi bi-paperclip me-1"></i><span th:text="#{fact.det.btn.adjunto}">Ver adjunto</span>
+            </a>
             <a th:href="@{/facturas/duplicar/{id}(id=${factura.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-copy me-1"></i><span th:text="#{fact.det.btn.duplicar}">Duplicar</span>
             </a>
@@ -68,6 +73,16 @@
                         <span class="badge bg-warning text-dark">
                             <i class="bi bi-percent me-1"></i><span th:text="#{fact.det.iva.incl}">Precio unitario con IVA incluido</span>
                         </span>
+                    </div>
+                    <div th:if="${factura.archivoNombre != null}" class="col-12">
+                        <div class="detail-label" th:text="#{fact.det.adjunto}">Adjunto</div>
+                        <div class="detail-value">
+                            <a th:href="@{/facturas/{id}/adjunto(id=${factura.id})}"
+                               target="_blank" class="d-inline-flex align-items-center gap-1">
+                                <i class="bi bi-paperclip"></i>
+                                <span th:text="${factura.archivoNombre}">archivo.pdf</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

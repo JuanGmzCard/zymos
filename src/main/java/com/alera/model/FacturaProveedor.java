@@ -54,6 +54,12 @@ public class FacturaProveedor extends AuditableEntity {
     @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<FacturaItem> items = new ArrayList<>();
 
+    @Column(length = 500)
+    private String archivoAdjunto;
+
+    @Column(length = 255)
+    private String archivoNombre;
+
     // Getters & Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -83,4 +89,8 @@ public class FacturaProveedor extends AuditableEntity {
     public void setIvaIncluido(boolean ivaIncluido) { this.ivaIncluido = ivaIncluido; }
     public List<FacturaItem> getItems() { return items; }
     public void setItems(List<FacturaItem> items) { this.items = items; }
+    public String getArchivoAdjunto() { return archivoAdjunto; }
+    public void setArchivoAdjunto(String archivoAdjunto) { this.archivoAdjunto = archivoAdjunto; }
+    public String getArchivoNombre() { return archivoNombre; }
+    public void setArchivoNombre(String archivoNombre) { this.archivoNombre = archivoNombre; }
 }

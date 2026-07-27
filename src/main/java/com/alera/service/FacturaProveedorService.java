@@ -312,6 +312,14 @@ public class FacturaProveedorService {
         return dto;
     }
 
+    public void actualizarAdjunto(Long id, String ruta, String nombre) {
+        repo.findById(id).ifPresent(f -> {
+            f.setArchivoAdjunto(ruta);
+            f.setArchivoNombre(nombre);
+            repo.save(f);
+        });
+    }
+
     @CacheEvict(value = "dashboard-stats", allEntries = true)
     public Long crearDesdeOrdenCompra(com.alera.model.OrdenCompra oc) {
         FacturaProveedor factura = new FacturaProveedor();

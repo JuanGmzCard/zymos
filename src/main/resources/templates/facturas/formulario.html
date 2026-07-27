@@ -44,7 +44,7 @@
 
 <div class="container-fluid px-4 py-4">
     <form th:action="${facturaId != null} ? @{/facturas/actualizar/{id}(id=${facturaId})} : @{/facturas/guardar}"
-          th:object="${facturaForm}" method="post">
+          th:object="${facturaForm}" method="post" enctype="multipart/form-data">
 
         <!-- DATOS GENERALES -->
         <div class="content-card mb-4">
@@ -100,6 +100,21 @@
                             <span th:text="#{fact.form.iva.check}">El precio unitario ya incluye IVA</span>
                             <small class="text-muted ms-1" th:text="#{fact.form.iva.hint}">(precio bruto — el IVA está incluido en el valor ingresado)</small>
                         </label>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label" th:text="#{fact.form.label.adjunto}">Adjunto</label>
+                    <input type="file" name="archivo" class="form-control"
+                           accept=".pdf,.jpg,.jpeg,.png,.webp,.xlsx,.xls,.doc,.docx">
+                    <div class="form-text" th:text="#{fact.form.adjunto.hint}">PDF, imagen u otro documento — máx. 20 MB</div>
+                    <div th:if="${archivoNombreActual != null}" class="mt-1">
+                        <small class="text-muted">
+                            <i class="bi bi-paperclip me-1"></i>
+                            <span th:text="#{fact.form.adjunto.actual}">Actual:</span>
+                            <a th:href="@{/facturas/{id}/adjunto(id=${facturaId})}"
+                               target="_blank" th:text="${archivoNombreActual}">archivo.pdf</a>
+                            <span class="text-muted ms-1" th:text="#{fact.form.adjunto.reemplazar}">(subir nuevo reemplaza el actual)</span>
+                        </small>
                     </div>
                 </div>
             </div>

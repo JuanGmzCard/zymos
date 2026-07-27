@@ -1,9 +1,11 @@
 package com.alera.controller;
 
+import com.alera.config.TenantContext;
 import com.alera.dto.FacturaFormDto;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaHistorialEstado;
 import com.alera.model.FacturaItem;
+import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoEquipo;
@@ -21,6 +23,9 @@ import com.alera.service.InsumoInventarioService;
 import com.alera.service.ProveedorService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -29,9 +34,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -39,6 +49,11 @@ import java.util.*;
 @Controller
 @RequestMapping("/facturas")
 public class FacturaProveedorController {
+
+    private static final Logger log = LoggerFactory.getLogger(FacturaProveedorController.class);
+
+    @Value("${app.upload.dir:./uploads}")
+    private String uploadDir;
 
     private final FacturaProveedorService service;
     private final ProveedorService proveedorService;
@@ -149,13 +164,18 @@ public class FacturaProveedorController {
 
     @PostMapping("/guardar")
     public String guardar(@Valid @ModelAttribute("facturaForm") FacturaFormDto dto,
-                          BindingResult result, Model model, RedirectAttributes ra) {
+                          BindingResult result, Model model, RedirectAttributes ra,
+                          @RequestParam(value = "archivo", required = false) MultipartFile archivo) {
         if (result.hasErrors()) {
             agregarDatosFormulario(model);
             return "facturas/formulario";
         }
         try {
-            service.guardar(dto);
+            FacturaProveedor saved = service.guardar(dto);
+            if (archivo != null && !archivo.isEmpty()) {
+                String[] rutaYNombre = guardarArchivo(archivo, saved.getId());
+                service.actualizarAdjunto(saved.getId(), rutaYNombre[0], rutaYNombre[1]);
+            }
             ra.addFlashAttribute("mensaje", "Factura guardada y inventario actualizado");
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
@@ -195,6 +215,7 @@ public class FacturaProveedorController {
         }
         model.addAttribute("facturaForm", service.toFormDto(factura));
         model.addAttribute("facturaId", id);
+        model.addAttribute("archivoNombreActual", factura.getArchivoNombre());
         agregarDatosFormulario(model);
         return "facturas/formulario";
     }
@@ -202,14 +223,20 @@ public class FacturaProveedorController {
     @PostMapping("/actualizar/{id}")
     public String actualizar(@PathVariable Long id,
                              @Valid @ModelAttribute("facturaForm") FacturaFormDto dto,
-                             BindingResult result, Model model, RedirectAttributes ra) {
+                             BindingResult result, Model model, RedirectAttributes ra,
+                             @RequestParam(value = "archivo", required = false) MultipartFile archivo) {
         if (result.hasErrors()) {
             agregarDatosFormulario(model);
             model.addAttribute("facturaId", id);
             return "facturas/formulario";
         }
         try {
-            service.actualizar(id, dto);
+            FacturaProveedor saved = service.actualizar(id, dto);
+            if (archivo != null && !archivo.isEmpty()) {
+                eliminarArchivoFisico(saved.getArchivoAdjunto());
+                String[] rutaYNombre = guardarArchivo(archivo, id);
+                service.actualizarAdjunto(id, rutaYNombre[0], rutaYNombre[1]);
+            }
             ra.addFlashAttribute("mensaje", "Factura actualizada");
             ra.addFlashAttribute("tipoMensaje", "success");
         } catch (Exception e) {
@@ -237,6 +264,7 @@ public class FacturaProveedorController {
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         try {
+            service.buscarPorId(id).ifPresent(f -> eliminarArchivoFisico(f.getArchivoAdjunto()));
             service.eliminar(id);
             ra.addFlashAttribute("mensaje", "Factura eliminada");
             ra.addFlashAttribute("tipoMensaje", "success");
@@ -245,6 +273,29 @@ public class FacturaProveedorController {
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/facturas";
+    }
+
+    @GetMapping("/{id}/adjunto")
+    public ResponseEntity<byte[]> descargarAdjunto(@PathVariable Long id) {
+        FacturaProveedor factura = service.buscarPorId(id).orElse(null);
+        if (factura == null || factura.getArchivoAdjunto() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        try {
+            Path archivo = Paths.get(uploadDir).resolve(factura.getArchivoAdjunto());
+            if (!Files.exists(archivo)) return ResponseEntity.notFound().build();
+            byte[] bytes = Files.readAllBytes(archivo);
+            String contentType = Files.probeContentType(archivo);
+            if (contentType == null) contentType = "application/octet-stream";
+            String nombre = factura.getArchivoNombre() != null ? factura.getArchivoNombre() : archivo.getFileName().toString();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + nombre + "\"")
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .body(bytes);
+        } catch (IOException e) {
+            log.error("Error al leer adjunto de factura {}", id, e);
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     // ── Quick-create endpoints (accesibles para ADMIN y FACTURACION) ────────
@@ -304,6 +355,30 @@ public class FacturaProveedorController {
             resp.put("success", false);
             resp.put("error", e.getMessage());
             return ResponseEntity.badRequest().body(resp);
+        }
+    }
+
+    // ── Helpers de adjuntos ──────────────────────────────────────────────────
+
+    private String[] guardarArchivo(MultipartFile file, Long facturaId) throws IOException {
+        String tenant = TenantContext.getCurrentTenant();
+        if (tenant == null || tenant.isBlank()) tenant = "default";
+        Path dir = Paths.get(uploadDir).resolve("facturas").resolve(tenant);
+        Files.createDirectories(dir);
+        String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "adjunto";
+        String ext = original.contains(".") ? original.substring(original.lastIndexOf('.')) : "";
+        String nombre = facturaId + "_" + UUID.randomUUID() + ext;
+        Files.copy(file.getInputStream(), dir.resolve(nombre));
+        String ruta = "facturas/" + tenant + "/" + nombre;
+        return new String[]{ruta, original};
+    }
+
+    private void eliminarArchivoFisico(String ruta) {
+        if (ruta == null || ruta.isBlank()) return;
+        try {
+            Files.deleteIfExists(Paths.get(uploadDir).resolve(ruta));
+        } catch (IOException e) {
+            log.warn("No se pudo eliminar adjunto: {}", ruta, e);
         }
     }
 
