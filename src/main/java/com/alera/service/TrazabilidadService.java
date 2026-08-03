@@ -165,11 +165,21 @@ public class TrazabilidadService {
                 .filter(lif -> lif.getItem() != null && "ENVASE".equals(lif.getItem().getTipoInsumo()))
                 .toList();
 
+        Integer ogAntes = lote.getDensidadInicial();
         Integer fgAntes = lote.getDensidadFinal();
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
+        Integer ogDespues = lote.getDensidadInicial();
+        if (ogDespues != null && !ogDespues.equals(ogAntes)) {
+            LocalDate fechaOg = lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now();
+            LecturaFermentacion og = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "OG inicial")
+                    .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("OG inicial"); return l; });
+            og.setFecha(fechaOg);
+            og.setDensidad(ogDespues);
+            lecturaRepo.save(og);
+        }
         Integer fgDespues = lote.getDensidadFinal();
         if (fgDespues != null && !fgDespues.equals(fgAntes)) {
             LocalDate fechaFg = lote.getDensidadFinalFecha() != null ? lote.getDensidadFinalFecha() : LocalDate.now();
