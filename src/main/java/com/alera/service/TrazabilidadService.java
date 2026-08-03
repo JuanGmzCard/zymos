@@ -128,13 +128,9 @@ public class TrazabilidadService {
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
         if (lote.getDensidadInicial() != null) {
-            LecturaFermentacion ogInicial = new LecturaFermentacion();
-            ogInicial.setLote(lote);
-            ogInicial.setFecha(lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now());
-            ogInicial.setDensidad(lote.getDensidadInicial());
-            ogInicial.setTemperatura(lote.getOgTemperatura());
-            ogInicial.setNotas("OG inicial");
-            lecturaRepo.save(ogInicial);
+            upsertLecturaAuto(lote, "OG inicial",
+                    lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now(),
+                    lote.getDensidadInicial(), lote.getOgTemperatura());
         }
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "CREADO", currentUser(), lote.getEstilo()));
@@ -177,25 +173,15 @@ public class TrazabilidadService {
         loteRepo.save(lote);
         Integer ogDespues = lote.getDensidadInicial();
         if (ogDespues != null && (!ogDespues.equals(ogAntes)
-                || !java.util.Objects.equals(lote.getOgTemperatura(), ogTempAntes))) {
+                || tempCambiada(ogTempAntes, lote.getOgTemperatura()))) {
             LocalDate fechaOg = lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now();
-            LecturaFermentacion og = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "OG inicial")
-                    .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("OG inicial"); return l; });
-            og.setFecha(fechaOg);
-            og.setDensidad(ogDespues);
-            og.setTemperatura(lote.getOgTemperatura());
-            lecturaRepo.save(og);
+            upsertLecturaAuto(lote, "OG inicial", fechaOg, ogDespues, lote.getOgTemperatura());
         }
         Integer fgDespues = lote.getDensidadFinal();
         if (fgDespues != null && (!fgDespues.equals(fgAntes)
-                || !java.util.Objects.equals(lote.getFgTemperatura(), fgTempAntes))) {
+                || tempCambiada(fgTempAntes, lote.getFgTemperatura()))) {
             LocalDate fechaFg = lote.getDensidadFinalFecha() != null ? lote.getDensidadFinalFecha() : LocalDate.now();
-            LecturaFermentacion fg = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "FG final")
-                    .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("FG final"); return l; });
-            fg.setFecha(fechaFg);
-            fg.setDensidad(fgDespues);
-            fg.setTemperatura(lote.getFgTemperatura());
-            lecturaRepo.save(fg);
+            upsertLecturaAuto(lote, "FG final", fechaFg, fgDespues, lote.getFgTemperatura());
         }
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "EDITADO", currentUser(), null));
@@ -630,6 +616,32 @@ public class TrazabilidadService {
         return tenantRepo.findById(TenantContext.getCurrentTenant())
                 .map(t -> t.getUnidadTemperatura())
                 .orElse("C");
+    }
+
+    // Crea o actualiza la lectura auto-generada (notas="OG inicial" / "FG final").
+    // Usar upsert tanto en guardar() como en actualizar() evita duplicados si el
+    // método se llama más de una vez sobre el mismo lote.
+    private void upsertLecturaAuto(LoteCerveza lote, String notas,
+                                   LocalDate fecha, Integer densidad,
+                                   java.math.BigDecimal temperatura) {
+        LecturaFermentacion l = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), notas)
+                .orElseGet(() -> {
+                    LecturaFermentacion n = new LecturaFermentacion();
+                    n.setLote(lote);
+                    n.setNotas(notas);
+                    return n;
+                });
+        l.setFecha(fecha);
+        l.setDensidad(densidad);
+        l.setTemperatura(temperatura);
+        lecturaRepo.save(l);
+    }
+
+    // Comparación de BigDecimal que ignora la escala (20 == 20.00).
+    private static boolean tempCambiada(java.math.BigDecimal antes, java.math.BigDecimal despues) {
+        if (antes == null && despues == null) return false;
+        if (antes == null || despues == null) return true;
+        return antes.compareTo(despues) != 0;
     }
 
     private void verificarLimiteLotes() {
