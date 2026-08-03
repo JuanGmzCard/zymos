@@ -416,6 +416,30 @@
                         </div>
                     </div>
 
+                    <!-- Temperaturas de medición OG/FG -->
+                    <div class="row g-3 mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label" for="ogTemperatura"
+                                   th:text="#{traz.form.og.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. medición OG (°C)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1"
+                                       th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '68' : '20'}"
+                                       th:field="*{ogTemperatura}" class="form-control">
+                                <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="fgTemperatura"
+                                   th:text="#{traz.form.fg.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. medición FG (°C)</label>
+                            <div class="input-group">
+                                <input type="number" step="0.1"
+                                       th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '68' : '20'}"
+                                       th:field="*{fgTemperatura}" class="form-control">
+                                <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Modo Brix (refractómetro) — se expande debajo cuando está activo -->
                     <div id="modo-brix" class="d-none">
                         <!-- Fila OG — oculta en multielaboración (el card de Sesión 1 lo reemplaza) -->
@@ -1209,10 +1233,13 @@
                         <input type="date" th:field="*{fermFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="fermTemperatura" th:text="#{traz.form.ferm.temperatura}">Temperatura (°C)</label>
+                        <label class="form-label" for="fermTemperatura"
+                               th:text="#{traz.form.ferm.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temperatura (°C)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" th:field="*{fermTemperatura}" class="form-control" placeholder="18">
-                            <span class="input-group-text">°C</span>
+                            <input type="number" step="0.1"
+                                   th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '65' : '18'}"
+                                   th:field="*{fermTemperatura}" class="form-control">
+                            <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -1238,10 +1265,13 @@
                         <input type="date" th:field="*{acondFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="acondTemperatura" th:text="#{traz.form.acond.temperatura}">Temperatura (°C)</label>
+                        <label class="form-label" for="acondTemperatura"
+                               th:text="#{traz.form.acond.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temperatura (°C)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" th:field="*{acondTemperatura}" class="form-control" placeholder="12">
-                            <span class="input-group-text">°C</span>
+                            <input type="number" step="0.1"
+                                   th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '55' : '12'}"
+                                   th:field="*{acondTemperatura}" class="form-control">
+                            <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -1267,10 +1297,13 @@
                         <input type="date" th:field="*{madurFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="madurTemperatura" th:text="#{traz.form.madur.temperatura}">Temperatura (°C)</label>
+                        <label class="form-label" for="madurTemperatura"
+                               th:text="#{traz.form.madur.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temperatura (°C)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" th:field="*{madurTemperatura}" class="form-control" placeholder="2">
-                            <span class="input-group-text">°C</span>
+                            <input type="number" step="0.1"
+                                   th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '36' : '2'}"
+                                   th:field="*{madurTemperatura}" class="form-control">
+                            <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                         </div>
                     </div>
                     <div class="col-md-3">
@@ -1298,10 +1331,13 @@
                         <input type="date" th:field="*{carbFechaFinalIdeal}" class="form-control">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label" for="carbTemperatura" th:text="#{traz.form.carbon.temp}">Temp. Cerveza (°C)</label>
+                        <label class="form-label" for="carbTemperatura"
+                               th:text="#{traz.form.carbon.temp(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. Cerveza (°C)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" th:field="*{carbTemperatura}" class="form-control" placeholder="4" id="carbTempInput">
-                            <span class="input-group-text">°C</span>
+                            <input type="number" step="0.1"
+                                   th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '40' : '4'}"
+                                   th:field="*{carbTemperatura}" class="form-control" id="carbTempInput">
+                            <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                         </div>
                         <div class="form-text" th:text="#{traz.form.carbon.temp.hint}">Afecta la absorción de CO₂</div>
                     </div>

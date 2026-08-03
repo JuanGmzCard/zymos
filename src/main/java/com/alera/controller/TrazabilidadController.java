@@ -8,6 +8,7 @@ import com.alera.model.RecetaIngrediente;
 import com.alera.model.Tenant;
 import com.alera.model.enums.EstadoPlanificacion;
 import com.alera.config.ExportBranding;
+import com.alera.config.TempUtils;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
 import com.alera.service.PlanificacionService;
@@ -265,9 +266,23 @@ public class TrazabilidadController {
     }
 
     @GetMapping("/editar/{id}")
-    public String editar(@PathVariable Long id, Model model) {
+    public String editar(@PathVariable Long id, Model model,
+                         @ModelAttribute("tempUnit") String tempUnit) {
         var lote = service.buscarPorId(id);
-        model.addAttribute("loteForm", service.toLoteFormDto(lote));
+        LoteFormDto form = service.toLoteFormDto(lote);
+        // Convertir temperaturas almacenadas en Celsius a la unidad del tenant para el formulario
+        if ("F".equals(tempUnit)) {
+            form.setOgTemperatura(TempUtils.toDisplay(lote.getOgTemperatura(), "F"));
+            form.setFgTemperatura(TempUtils.toDisplay(lote.getFgTemperatura(), "F"));
+            form.setFermTemperatura(TempUtils.toDisplay(lote.getFermTemperatura(), "F"));
+            form.setAcondTemperatura(TempUtils.toDisplay(lote.getAcondTemperatura(), "F"));
+            form.setMadurTemperatura(TempUtils.toDisplay(lote.getMadurTemperatura(), "F"));
+            form.setCarbTemperatura(TempUtils.toDisplay(lote.getCarbTemperatura(), "F"));
+        } else {
+            form.setOgTemperatura(lote.getOgTemperatura());
+            form.setFgTemperatura(lote.getFgTemperatura());
+        }
+        model.addAttribute("loteForm", form);
         model.addAttribute("loteId", id);
         model.addAttribute("codigoLote", lote.getCodigoLote());
         agregarInventarioAlModelo(model);

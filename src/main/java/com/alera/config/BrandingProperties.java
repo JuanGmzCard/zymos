@@ -18,7 +18,8 @@ public class BrandingProperties {
     private String colorBodyBg   = "#F0EDE2";
     private String fontHeadings    = "Cinzel";
     private String fontBody        = "Raleway";
-    private String simboloMoneda   = "$";
+    private String simboloMoneda      = "$";
+    private String unidadTemperatura  = "C";
 
     public String getName()             { return name; }
     public void   setName(String v)     { this.name = v; }
@@ -42,6 +43,8 @@ public class BrandingProperties {
     public void   setFontHeadings(String v)      { this.fontHeadings = v; }
     public String getFontBody()          { return fontBody; }
     public void   setFontBody(String v)          { this.fontBody = v; }
-    public String getSimboloMoneda()     { return simboloMoneda; }
-    public void   setSimboloMoneda(String v)     { this.simboloMoneda = v; }
+    public String getSimboloMoneda()         { return simboloMoneda; }
+    public void   setSimboloMoneda(String v) { this.simboloMoneda = v; }
+    public String getUnidadTemperatura()         { return unidadTemperatura; }
+    public void   setUnidadTemperatura(String v) { this.unidadTemperatura = v; }
 }

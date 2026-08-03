@@ -48,6 +48,9 @@ public class Tenant {
     @Column(name = "simbolo_moneda", length = 10)
     private String simboloMoneda = "$";
 
+    @Column(name = "unidad_temperatura", length = 1)
+    private String unidadTemperatura = "C";
+
     @Column(name = "email_admin", length = 200)
     private String emailAdmin;
 
@@ -120,8 +123,10 @@ public class Tenant {
     public void   setFontHeadings(String v)  { this.fontHeadings = v; }
     public String getFontBody()              { return fontBody; }
     public void   setFontBody(String v)      { this.fontBody = v; }
-    public String getSimboloMoneda()         { return simboloMoneda != null ? simboloMoneda : "$"; }
-    public void   setSimboloMoneda(String v) { this.simboloMoneda = v; }
+    public String getSimboloMoneda()             { return simboloMoneda != null ? simboloMoneda : "$"; }
+    public void   setSimboloMoneda(String v)     { this.simboloMoneda = v; }
+    public String getUnidadTemperatura()         { return unidadTemperatura != null ? unidadTemperatura : "C"; }
+    public void   setUnidadTemperatura(String v) { this.unidadTemperatura = v; }
     public String getEmailAdmin()             { return emailAdmin; }
     public void   setEmailAdmin(String v)   { this.emailAdmin = v; }
     public String getLocale()               { return locale; }

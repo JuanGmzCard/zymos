@@ -73,6 +73,12 @@ public class LoteCerveza extends AuditableEntity {
     private Integer densidadFinal;
     private LocalDate densidadFinalFecha;
 
+    // Temperaturas de medición OG/FG — almacenadas siempre en Celsius
+    @Column(name = "og_temperatura", precision = 5, scale = 2)
+    private BigDecimal ogTemperatura;
+    @Column(name = "fg_temperatura", precision = 5, scale = 2)
+    private BigDecimal fgTemperatura;
+
     // Medición con refractómetro — valores Brix originales
     @Column(name = "og_brix", precision = 5, scale = 2)
     private BigDecimal ogBrix;
@@ -380,6 +386,10 @@ public class LoteCerveza extends AuditableEntity {
     public void setDensidadFinal(Integer densidadFinal) { this.densidadFinal = densidadFinal; }
     public LocalDate getDensidadFinalFecha() { return densidadFinalFecha; }
     public void setDensidadFinalFecha(LocalDate densidadFinalFecha) { this.densidadFinalFecha = densidadFinalFecha; }
+    public BigDecimal getOgTemperatura() { return ogTemperatura; }
+    public void setOgTemperatura(BigDecimal v) { this.ogTemperatura = v; }
+    public BigDecimal getFgTemperatura() { return fgTemperatura; }
+    public void setFgTemperatura(BigDecimal v) { this.fgTemperatura = v; }
     public Equipo getEquipoFermentador() { return equipoFermentador; }
     public void setEquipoFermentador(Equipo equipoFermentador) { this.equipoFermentador = equipoFermentador; }
     public List<Ingrediente> getIngredientes() { return ingredientes; }

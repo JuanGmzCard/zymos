@@ -138,6 +138,16 @@
                     <div class="form-text" th:text="#{admin.tform.hint.moneda}">Símbolo que aparece junto a los valores monetarios.</div>
                 </div>
 
+                <!-- Unidad de temperatura -->
+                <div class="col-md-3">
+                    <label class="form-label detail-label" th:text="#{admin.tform.label.unidad.temp}">Unidad de temperatura</label>
+                    <select th:field="*{unidadTemperatura}" class="form-select">
+                        <option value="C" th:text="#{admin.tform.unidad.temp.c}">°C — Celsius</option>
+                        <option value="F" th:text="#{admin.tform.unidad.temp.f}">°F — Fahrenheit</option>
+                    </select>
+                    <div class="form-text" th:text="#{admin.tform.hint.unidad.temp}">Unidad usada en toda la plataforma para registrar temperaturas.</div>
+                </div>
+
                 <!-- Límites de plan -->
                 <div class="col-12">
                     <hr class="my-1">

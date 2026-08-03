@@ -120,6 +120,10 @@ public class LoteFormDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate densidadFinalFecha;
 
+    // Temperaturas de medición OG/FG — en la unidad del tenant (C o F); el servicio convierte a Celsius
+    private BigDecimal ogTemperatura;
+    private BigDecimal fgTemperatura;
+
     // Medición con refractómetro
     @DecimalMin(value = "1.0",  message = "El °Brix inicial debe ser mayor a 1")
     @DecimalMax(value = "40.0", message = "El °Brix inicial no puede superar 40")
@@ -286,6 +290,10 @@ public class LoteFormDto {
     public void setOgBrix(BigDecimal ogBrix) { this.ogBrix = ogBrix; }
     public BigDecimal getFgBrix() { return fgBrix; }
     public void setFgBrix(BigDecimal fgBrix) { this.fgBrix = fgBrix; }
+    public BigDecimal getOgTemperatura() { return ogTemperatura; }
+    public void setOgTemperatura(BigDecimal v) { this.ogTemperatura = v; }
+    public BigDecimal getFgTemperatura() { return fgTemperatura; }
+    public void setFgTemperatura(BigDecimal v) { this.fgTemperatura = v; }
     public List<InsumoDto> getMaltas() { return maltas; }
     public void setMaltas(List<InsumoDto> maltas) { this.maltas = maltas; }
     public List<InsumoDto> getLupulos() { return lupulos; }

@@ -46,6 +46,16 @@ public class GlobalControllerAdvice {
         return LocaleContextHolder.getLocale().getLanguage();
     }
 
+    // Unidad de temperatura del tenant activo — "C" o "F". Usado en templates para labels e inputs.
+    @ModelAttribute("tempUnit")
+    public String tempUnit(HttpServletRequest request) {
+        try {
+            Object tenant = request.getAttribute("currentTenant");
+            if (tenant instanceof Tenant t) return t.getUnidadTemperatura();
+        } catch (Exception ignored) {}
+        return defaultBranding.getUnidadTemperatura();
+    }
+
     // Nombre del rol custom para el badge del navbar (solo usuarios RBAC).
     // Viene de la authority "NOMBRE_ROL_{nombre}" emitida en loadUserByUsername.
     @ModelAttribute("rolNombreCustom")

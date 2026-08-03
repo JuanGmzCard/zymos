@@ -213,7 +213,8 @@ public class TenantAdminController {
         m.put("colorBodyBg",     t.getColorBodyBg());
         m.put("fontHeadings",    t.getFontHeadings());
         m.put("fontBody",        t.getFontBody());
-        m.put("simboloMoneda",   t.getSimboloMoneda());
+        m.put("simboloMoneda",       t.getSimboloMoneda());
+        m.put("unidadTemperatura",   t.getUnidadTemperatura());
         return m;
     }
 
@@ -229,7 +230,11 @@ public class TenantAdminController {
         applyColor(c, "colorBodyBg",      t::setColorBodyBg);
         if (c.containsKey("fontHeadings"))     t.setFontHeadings(c.get("fontHeadings"));
         if (c.containsKey("fontBody"))         t.setFontBody(c.get("fontBody"));
-        if (c.containsKey("simboloMoneda"))    t.setSimboloMoneda(c.get("simboloMoneda"));
+        if (c.containsKey("simboloMoneda"))      t.setSimboloMoneda(c.get("simboloMoneda"));
+        if (c.containsKey("unidadTemperatura")) {
+            String ut = c.get("unidadTemperatura");
+            if ("C".equals(ut) || "F".equals(ut)) t.setUnidadTemperatura(ut);
+        }
     }
 
     private void applyColor(Map<String, String> c, String key,

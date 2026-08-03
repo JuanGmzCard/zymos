@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.exception.LoteNoEncontradoException;
 import com.alera.config.TenantContext;
+import com.alera.config.TempUtils;
 import com.alera.config.UnidadUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -131,6 +132,7 @@ public class TrazabilidadService {
             ogInicial.setLote(lote);
             ogInicial.setFecha(lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now());
             ogInicial.setDensidad(lote.getDensidadInicial());
+            ogInicial.setTemperatura(lote.getOgTemperatura());
             ogInicial.setNotas("OG inicial");
             lecturaRepo.save(ogInicial);
         }
@@ -178,6 +180,7 @@ public class TrazabilidadService {
                     .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("OG inicial"); return l; });
             og.setFecha(fechaOg);
             og.setDensidad(ogDespues);
+            og.setTemperatura(lote.getOgTemperatura());
             lecturaRepo.save(og);
         }
         Integer fgDespues = lote.getDensidadFinal();
@@ -187,6 +190,7 @@ public class TrazabilidadService {
                     .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("FG final"); return l; });
             fg.setFecha(fechaFg);
             fg.setDensidad(fgDespues);
+            fg.setTemperatura(lote.getFgTemperatura());
             lecturaRepo.save(fg);
         }
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
@@ -385,26 +389,29 @@ public class TrazabilidadService {
         lote.setPhAgua(dto.getPhAgua());
         lote.setLitrosFinales(dto.getLitrosFinales());
         lote.setClarificante(dto.getClarificante());
+        String unit = getTenantUnit();
         lote.setDensidadInicial(dto.getDensidadInicial());
         lote.setDensidadFinal(dto.getDensidadFinal());
         lote.setDensidadFinalFecha(dto.getDensidadFinalFecha());
+        lote.setOgTemperatura(TempUtils.toStorage(dto.getOgTemperatura(), unit));
+        lote.setFgTemperatura(TempUtils.toStorage(dto.getFgTemperatura(), unit));
         lote.setOgBrix(dto.getOgBrix());
         lote.setFgBrix(dto.getFgBrix());
         lote.setFermFechaInicial(dto.getFermFechaInicial());
         lote.setFermFechaFinalIdeal(dto.getFermFechaFinalIdeal());
-        lote.setFermTemperatura(dto.getFermTemperatura());
+        lote.setFermTemperatura(TempUtils.toStorage(dto.getFermTemperatura(), unit));
         lote.setFermFechaFinal(dto.getFermFechaFinal());
         lote.setAcondFechaInicial(dto.getAcondFechaInicial());
         lote.setAcondFechaFinalIdeal(dto.getAcondFechaFinalIdeal());
-        lote.setAcondTemperatura(dto.getAcondTemperatura());
+        lote.setAcondTemperatura(TempUtils.toStorage(dto.getAcondTemperatura(), unit));
         lote.setAcondFechaFinal(dto.getAcondFechaFinal());
         lote.setMadurFechaInicial(dto.getMadurFechaInicial());
         lote.setMadurFechaFinalIdeal(dto.getMadurFechaFinalIdeal());
-        lote.setMadurTemperatura(dto.getMadurTemperatura());
+        lote.setMadurTemperatura(TempUtils.toStorage(dto.getMadurTemperatura(), unit));
         lote.setMadurFechaFinal(dto.getMadurFechaFinal());
         lote.setCarbFechaInicial(dto.getCarbFechaInicial());
         lote.setCarbFechaFinalIdeal(dto.getCarbFechaFinalIdeal());
-        lote.setCarbTemperatura(dto.getCarbTemperatura());
+        lote.setCarbTemperatura(TempUtils.toStorage(dto.getCarbTemperatura(), unit));
         lote.setCarbFechaFinal(dto.getCarbFechaFinal());
         lote.setCarbMetodo(dto.getCarbMetodo());
         lote.setCarbCo2Objetivo(dto.getCarbCo2Objetivo());
@@ -613,6 +620,12 @@ public class TrazabilidadService {
         } catch (Exception e) {
             return "sistema";
         }
+    }
+
+    private String getTenantUnit() {
+        return tenantRepo.findById(TenantContext.getCurrentTenant())
+                .map(t -> t.getUnidadTemperatura())
+                .orElse("C");
     }
 
     private void verificarLimiteLotes() {

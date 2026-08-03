@@ -494,8 +494,9 @@
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.fermFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.fermTemperatura != null}">
-                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
-                    <span class="fase-dato-val" th:text="${lote.fermTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                    <span class="fase-dato-key" th:text="#{traz.table.temperatura}">Temperatura</span>
+                    <span class="fase-dato-val"
+                          th:text="${T(com.alera.config.TempUtils).toDisplay(lote.fermTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
                 <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
@@ -519,8 +520,9 @@
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.acondFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.acondTemperatura != null}">
-                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
-                    <span class="fase-dato-val" th:text="${lote.acondTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                    <span class="fase-dato-key" th:text="#{traz.table.temperatura}">Temperatura</span>
+                    <span class="fase-dato-val"
+                          th:text="${T(com.alera.config.TempUtils).toDisplay(lote.acondTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
                 <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
@@ -544,8 +546,9 @@
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.madurFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.madurTemperatura != null}">
-                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
-                    <span class="fase-dato-val" th:text="${lote.madurTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                    <span class="fase-dato-key" th:text="#{traz.table.temperatura}">Temperatura</span>
+                    <span class="fase-dato-val"
+                          th:text="${T(com.alera.config.TempUtils).toDisplay(lote.madurTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
                 <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
@@ -569,8 +572,9 @@
                     <span class="fase-dato-val text-dorado" th:text="${#temporals.format(lote.carbFechaFinal,'dd/MM/yyyy')}"></span>
                 </div>
                 <div class="fase-dato" th:if="${lote.carbTemperatura != null}">
-                    <span class="fase-dato-key" th:text="#{traz.form.ferm.temperatura}">Temperatura</span>
-                    <span class="fase-dato-val" th:text="${lote.carbTemperatura.stripTrailingZeros().toPlainString()} + ' °C'"></span>
+                    <span class="fase-dato-key" th:text="#{traz.table.temperatura}">Temperatura</span>
+                    <span class="fase-dato-val"
+                          th:text="${T(com.alera.config.TempUtils).toDisplay(lote.carbTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
                 <div th:if="${lote.carbFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
             </div>
@@ -618,7 +622,7 @@
                                       class="text-muted">—</span>
                             </td>
                             <td class="text-center"
-                                th:text="${lec.temperatura != null} ? ${lec.temperatura.stripTrailingZeros().toPlainString()} + ' °C' : '—'">—</td>
+                                th:text="${lec.temperatura != null} ? ${lec.temperatura.stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)} : '—'">—</td>
                             <td class="text-muted small" th:text="${lec.notas ?: '—'}">—</td>
                             <td sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_ELIMINAR')">
                                 <form th:action="@{/ver/{id}/lecturas/{lid}/eliminar(id=${lote.id},lid=${lec.id})}"
@@ -663,9 +667,11 @@
                                th:readonly="${lote.ogBrix != null}">
                     </div>
                     <div class="col-auto">
-                        <label class="form-label detail-label" th:text="#{traz.det.curva.form.temp}">Temp. (°C)</label>
+                        <label class="form-label detail-label"
+                               th:text="#{traz.det.curva.form.temp(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. (°C)</label>
                         <input type="number" name="temperatura" class="form-control form-control-sm"
-                               style="width:85px;" placeholder="18.5" min="0" max="60" step="0.1">
+                               style="width:85px;" step="0.1"
+                               th:attr="placeholder=${tempUnit == 'F' ? '65' : '18.5'},min=${tempUnit == 'F' ? 14 : 0},max=${tempUnit == 'F' ? 140 : 60}">
                     </div>
                     <div class="col">
                         <label class="form-label detail-label" th:text="#{label.notas}">Notas</label>
@@ -1247,7 +1253,7 @@
 var CHART_FECHAS        = /*[[${chartFechas}]]*/ [];
 var CHART_DENSIDAD      = /*[[${chartDensidad}]]*/ [];
 var CHART_TEMP          = /*[[${chartTemp}]]*/ [];
-var CHART_TEMP_OBJETIVO = /*[[${lote.fermTemperatura}]]*/ null;
+var CHART_TEMP_OBJETIVO = /*[[${T(com.alera.config.TempUtils).toDisplay(lote.fermTemperatura, tempUnit)}]]*/ null;
 var CHART_FG_REAL       = /*[[${lote.densidadFinal}]]*/ null;
 var LECT_OG_BRIX        = /*[[${lote.ogBrix}]]*/ null;
 /*]]>*/

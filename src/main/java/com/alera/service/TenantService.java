@@ -83,6 +83,8 @@ public class TenantService {
         agregarCambio(cambios, "planInicio", antes.getPlanInicio(), despues.getPlanInicio());
         agregarCambio(cambios, "planFin", antes.getPlanFin(), despues.getPlanFin());
         agregarCambio(cambios, "locale", antes.getLocale(), despues.getLocale());
+        agregarCambio(cambios, "simboloMoneda", antes.getSimboloMoneda(), despues.getSimboloMoneda());
+        agregarCambio(cambios, "unidadTemperatura", antes.getUnidadTemperatura(), despues.getUnidadTemperatura());
 
         if (cambios.isEmpty()) return null;
         String resumen = String.join("; ", cambios);
