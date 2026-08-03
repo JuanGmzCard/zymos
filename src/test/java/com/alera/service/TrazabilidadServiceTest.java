@@ -12,6 +12,7 @@ import com.alera.model.enums.TipoIngrediente;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.HistorialLoteRepository;
+import com.alera.repository.LecturaFermentacionRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.RecetaRepository;
 import com.alera.repository.TenantRepository;
@@ -46,6 +47,7 @@ class TrazabilidadServiceTest {
     @Mock private LoteMapper loteMapper;
     @Mock private EntityManager em;
     @Mock private TenantRepository tenantRepo;
+    @Mock private LecturaFermentacionRepository lecturaRepo;
 
     @InjectMocks
     private TrazabilidadService service;

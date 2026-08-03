@@ -43,6 +43,7 @@ public class TrazabilidadService {
     private final LoteMapper loteMapper;
     private final EntityManager em;
     private final com.alera.repository.TenantRepository tenantRepo;
+    private final LecturaFermentacionRepository lecturaRepo;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -52,7 +53,8 @@ public class TrazabilidadService {
                                 InsumoInventarioService insumoService,
                                 LoteMapper loteMapper,
                                 EntityManager em,
-                                com.alera.repository.TenantRepository tenantRepo) {
+                                com.alera.repository.TenantRepository tenantRepo,
+                                LecturaFermentacionRepository lecturaRepo) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -62,6 +64,7 @@ public class TrazabilidadService {
         this.loteMapper = loteMapper;
         this.em = em;
         this.tenantRepo = tenantRepo;
+        this.lecturaRepo = lecturaRepo;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -123,6 +126,14 @@ public class TrazabilidadService {
         lote.setCodigoLote(generarCodigo(dto.getEstilo()));
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
+        if (lote.getDensidadInicial() != null) {
+            LecturaFermentacion ogInicial = new LecturaFermentacion();
+            ogInicial.setLote(lote);
+            ogInicial.setFecha(lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now());
+            ogInicial.setDensidad(lote.getDensidadInicial());
+            ogInicial.setNotas("OG inicial");
+            lecturaRepo.save(ogInicial);
+        }
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "CREADO", currentUser(), lote.getEstilo()));
         List<String> advertencias = new ArrayList<>(descontarInventario(lote.getIngredientes(), lote.getCodigoLote()));
@@ -154,10 +165,20 @@ public class TrazabilidadService {
                 .filter(lif -> lif.getItem() != null && "ENVASE".equals(lif.getItem().getTipoInsumo()))
                 .toList();
 
+        Integer fgAntes = lote.getDensidadFinal();
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
+        Integer fgDespues = lote.getDensidadFinal();
+        if (fgDespues != null && !fgDespues.equals(fgAntes)) {
+            LocalDate fechaFg = lote.getDensidadFinalFecha() != null ? lote.getDensidadFinalFecha() : LocalDate.now();
+            LecturaFermentacion fg = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "FG final")
+                    .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("FG final"); return l; });
+            fg.setFecha(fechaFg);
+            fg.setDensidad(fgDespues);
+            lecturaRepo.save(fg);
+        }
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 "EDITADO", currentUser(), null));
 

@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 public interface LecturaFermentacionRepository extends JpaRepository<LecturaFermentacion, Long> {
 
     @Query("SELECT l FROM LecturaFermentacion l WHERE l.lote.id = :loteId ORDER BY l.fecha ASC, l.id ASC")
     List<LecturaFermentacion> findByLoteIdOrdenadas(@Param("loteId") Long loteId);
+
+    Optional<LecturaFermentacion> findFirstByLoteIdAndNotas(Long loteId, String notas);
 }

@@ -102,7 +102,11 @@ class LecturaFermentacionServiceIntegrationTest extends AbstractIntegrationTest 
 
         lecturaService.agregar(lote.getId(), LocalDate.now(), 1020, null, null);
 
-        var lectura = lecturaService.listarPorLote(lote.getId()).get(0);
+        // El lote tenía densidadInicial=1060 → se crea la lectura OG automática.
+        // Buscamos específicamente la lectura manual con densidad 1020.
+        var lectura = lecturaService.listarPorLote(lote.getId()).stream()
+                .filter(l -> Integer.valueOf(1020).equals(l.getDensidad()))
+                .findFirst().orElseThrow();
         // ABV = (1060 - 1020) * 131.25 / 1000 = 5.25
         assertThat(lectura.getAbvParcial(1060))
                 .isEqualByComparingTo(new BigDecimal("5.25"));
