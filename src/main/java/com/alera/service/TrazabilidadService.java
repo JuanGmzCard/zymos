@@ -169,12 +169,15 @@ public class TrazabilidadService {
 
         Integer ogAntes = lote.getDensidadInicial();
         Integer fgAntes = lote.getDensidadFinal();
+        java.math.BigDecimal ogTempAntes = lote.getOgTemperatura();
+        java.math.BigDecimal fgTempAntes = lote.getFgTemperatura();
         lote.getIngredientes().clear();
         mapearDto(lote, dto);
         agregarIngredientes(lote, dto);
         loteRepo.save(lote);
         Integer ogDespues = lote.getDensidadInicial();
-        if (ogDespues != null && !ogDespues.equals(ogAntes)) {
+        if (ogDespues != null && (!ogDespues.equals(ogAntes)
+                || !java.util.Objects.equals(lote.getOgTemperatura(), ogTempAntes))) {
             LocalDate fechaOg = lote.getFechaElaboracion() != null ? lote.getFechaElaboracion() : LocalDate.now();
             LecturaFermentacion og = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "OG inicial")
                     .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("OG inicial"); return l; });
@@ -184,7 +187,8 @@ public class TrazabilidadService {
             lecturaRepo.save(og);
         }
         Integer fgDespues = lote.getDensidadFinal();
-        if (fgDespues != null && !fgDespues.equals(fgAntes)) {
+        if (fgDespues != null && (!fgDespues.equals(fgAntes)
+                || !java.util.Objects.equals(lote.getFgTemperatura(), fgTempAntes))) {
             LocalDate fechaFg = lote.getDensidadFinalFecha() != null ? lote.getDensidadFinalFecha() : LocalDate.now();
             LecturaFermentacion fg = lecturaRepo.findFirstByLoteIdAndNotas(lote.getId(), "FG final")
                     .orElseGet(() -> { LecturaFermentacion l = new LecturaFermentacion(); l.setLote(lote); l.setNotas("FG final"); return l; });

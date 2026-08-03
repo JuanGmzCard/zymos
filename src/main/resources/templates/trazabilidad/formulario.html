@@ -394,33 +394,17 @@
                         </div>
                     </div>
 
-                    <!-- OG + FG (modo SG inline) + Fecha FG — una sola fila en modo hidrómetro -->
+                    <!-- OG + Temp OG | FG + Temp FG | Fecha FG — una sola fila -->
                     <div class="row g-3 mb-2">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label" for="densidadInicial" id="og-final-label" th:text="#{traz.form.label.og}">Densidad Inicial (OG)</label>
                             <input type="number" step="1" min="1000" max="1150" th:field="*{densidadInicial}" class="form-control"
                                    placeholder="1060" inputmode="numeric">
                             <small class="text-muted" id="og-final-hint" th:text="#{traz.form.og.rango}">Rango: 1000–1150</small>
                         </div>
-                        <!-- Modo SG: FG como col inline — se oculta al cambiar a Brix -->
-                        <div id="modo-sg" class="col-md-4">
-                            <label class="form-label" for="densidadFinal" th:text="#{traz.form.label.fg}">Densidad Final (FG)</label>
-                            <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
-                                   placeholder="1014" inputmode="numeric">
-                            <small class="text-muted" th:text="#{traz.form.fg.rango}">Rango: 990–1060</small>
-                        </div>
-                        <!-- Fecha FG — común a ambos modos -->
-                        <div class="col-md-4">
-                            <label class="form-label" for="densidadFinalFecha" th:text="#{traz.form.label.fecha.fg}">Fecha Densidad Final</label>
-                            <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
-                        </div>
-                    </div>
-
-                    <!-- Temperaturas de medición OG/FG -->
-                    <div class="row g-3 mb-2">
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <label class="form-label" for="ogTemperatura"
-                                   th:text="#{traz.form.og.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. medición OG (°C)</label>
+                                   th:text="#{traz.form.og.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. OG</label>
                             <div class="input-group">
                                 <input type="number" step="0.1"
                                        th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '68' : '20'}"
@@ -428,15 +412,27 @@
                                 <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <!-- Modo SG: FG como col inline — se oculta al cambiar a Brix -->
+                        <div id="modo-sg" class="col-md-3">
+                            <label class="form-label" for="densidadFinal" th:text="#{traz.form.label.fg}">Densidad Final (FG)</label>
+                            <input type="number" step="1" min="990" max="1060" th:field="*{densidadFinal}" class="form-control"
+                                   placeholder="1014" inputmode="numeric">
+                            <small class="text-muted" th:text="#{traz.form.fg.rango}">Rango: 990–1060</small>
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label" for="fgTemperatura"
-                                   th:text="#{traz.form.fg.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. medición FG (°C)</label>
+                                   th:text="#{traz.form.fg.temperatura(${tempUnit == 'F' ? '°F' : '°C'})}">Temp. FG</label>
                             <div class="input-group">
                                 <input type="number" step="0.1"
                                        th:attr="min=${tempUnit == 'F' ? 14 : -10},max=${tempUnit == 'F' ? 140 : 60},placeholder=${tempUnit == 'F' ? '68' : '20'}"
                                        th:field="*{fgTemperatura}" class="form-control">
                                 <span class="input-group-text" th:text="${tempUnit == 'F' ? '°F' : '°C'}">°C</span>
                             </div>
+                        </div>
+                        <!-- Fecha FG — común a ambos modos -->
+                        <div class="col-md-2">
+                            <label class="form-label" for="densidadFinalFecha" th:text="#{traz.form.label.fecha.fg}">Fecha FG</label>
+                            <input type="date" th:field="*{densidadFinalFecha}" class="form-control">
                         </div>
                     </div>
 

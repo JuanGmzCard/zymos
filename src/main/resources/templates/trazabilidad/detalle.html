@@ -333,6 +333,8 @@
                                     <span th:if="${lote.ogBrix != null and (lote.numeroElaboraciones == null or lote.numeroElaboraciones == 1)}"
                                           th:text="'· ' + ${lote.ogBrix.stripTrailingZeros().toPlainString()} + ' °Brix'"
                                           class="text-info"></span>
+                                    <span th:if="${lote.ogTemperatura != null}" class="text-muted"
+                                          th:text="'· ' + ${T(com.alera.config.TempUtils).toDisplay(lote.ogTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                                 </div>
                             </div>
                         </div>
@@ -403,6 +405,8 @@
                                     <span th:if="${lote.fgBrix != null}"
                                           th:text="'· ' + ${lote.fgBrix.stripTrailingZeros().toPlainString()} + ' °Brix crudo'"
                                           class="text-info"></span>
+                                    <span th:if="${lote.fgTemperatura != null}" class="text-muted"
+                                          th:text="'· ' + ${T(com.alera.config.TempUtils).toDisplay(lote.fgTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                                 </div>
                             </div>
                         </div>
