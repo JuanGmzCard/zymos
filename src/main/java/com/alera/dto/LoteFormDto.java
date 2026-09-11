@@ -83,13 +83,21 @@ public class LoteFormDto {
     @DecimalMin(value = "0.0", message = "El volumen final de la cuarta elaboración no puede ser negativo")
     private BigDecimal volumenFinalCuartaElaboracion;
 
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaInicioPrimeraElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaFinPrimeraElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaInicioSegundaElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaFinSegundaElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaInicioTerceraElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaFinTerceraElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaInicioCuartaElaboracion;
+    @DateTimeFormat(pattern = "HH:mm")
     private java.time.LocalTime horaFinCuartaElaboracion;
 
     @DecimalMin(value = "0.0", message = "El agua utilizada no puede ser negativa")
