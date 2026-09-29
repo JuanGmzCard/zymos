@@ -191,6 +191,7 @@ public class SecurityConfig {
                                             ZymosAuthSuccessHandler successHandler,
                                             ZymosAuthFailureHandler failureHandler,
                                             ZymosAccessDeniedHandler accessDeniedHandler,
+                                            ZymosInvalidSessionStrategy invalidSessionStrategy,
                                             CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -203,7 +204,7 @@ public class SecurityConfig {
             .authenticationProvider(authProvider)
             .httpBasic(Customizer.withDefaults())
             .sessionManagement(session -> session
-                .invalidSessionUrl("/login?expired=true")
+                .invalidSessionStrategy(invalidSessionStrategy)
                 .sessionConcurrency(c -> c
                     .maximumSessions(10)
                     .expiredUrl("/login?expired=true")
