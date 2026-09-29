@@ -24,15 +24,11 @@ public class ZymosInvalidSessionStrategy implements InvalidSessionStrategy {
         // Expirar la cookie stale para que el navegador no la reenvíe
         Cookie expired = new Cookie("SESSION", "");
         expired.setMaxAge(0);
-        expired.setPath(contextPath(request));
+        expired.setPath("/");
         expired.setHttpOnly(true);
         response.addCookie(expired);
 
-        response.sendRedirect(contextPath(request) + "/login?expired=true");
-    }
-
-    private static String contextPath(HttpServletRequest request) {
         String cp = request.getContextPath();
-        return (cp != null && !cp.isEmpty()) ? cp : "/";
+        response.sendRedirect((cp != null ? cp : "") + "/login?expired=true");
     }
 }
