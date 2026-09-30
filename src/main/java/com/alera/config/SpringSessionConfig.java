@@ -1,27 +1,50 @@
 package com.alera.config;
 
+import jakarta.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.autoconfigure.transaction.TransactionManagerCustomizers;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.session.jdbc.config.annotation.SpringSessionTransactionManager;
+
+import javax.sql.DataSource;
+
 /**
- * La configuración de Spring Session se delega completamente a JdbcSessionAutoConfiguration,
- * que importa JdbcHttpSessionConfiguration (extends SpringHttpSessionConfiguration).
+ * Aísla Spring Session JDBC del JpaTransactionManager de Hibernate.
  *
- * El motivo es que SpringHttpSessionConfiguration.springSessionRepositoryFilter() crea un
- * FilterRegistrationBean con SessionRepositoryFilter.DEFAULT_ORDER = Integer.MIN_VALUE + 50,
- * garantizando que SessionRepositoryFilter corra ANTES que Spring Security (orden -100).
+ * Problema: JpaBaseConfiguration.transactionManager() tiene @ConditionalOnMissingBean(PlatformTransactionManager.class).
+ * Si solo registramos el DataSourceTransactionManager para Spring Session, esa condición se satisface
+ * y el bean 'transactionManager' de JPA nunca se crea → la app no arranca.
  *
- * Si se proporciona un SessionRepository bean propio, JdbcSessionAutoConfiguration se salta
- * (@ConditionalOnMissingBean), SessionRepositoryFilterConfiguration crea el filtro SIN un
- * FilterRegistrationBean explícito → Spring Boot lo registra en Ordered.LOWEST_PRECEDENCE
- * (Integer.MAX_VALUE) → corre DESPUÉS de Spring Security → el request no está envuelto
- * por Spring Session → isRequestedSessionIdValid() falla para POST → estrategia de sesión
- * inválida se dispara aunque el usuario esté autenticado.
+ * Solución: definir ambos beans explícitamente.
+ *   1. JpaTransactionManager  →  @Primary, nombre 'transactionManager' (igual que el auto-config)
+ *   2. DataSourceTransactionManager → @SpringSessionTransactionManager (qualifier que JdbcHttpSessionConfiguration
+ *      usa en su @Autowired para inyectar el TM de sesiones, separándolo de JPA)
  *
- * La configuración necesaria está en application.properties:
- *   spring.session.store-type=jdbc
- *   spring.session.jdbc.initialize-schema=never
- *   spring.session.jdbc.flush-mode=immediate
- *   server.servlet.session.timeout=8h
+ * Con DELAYED_ACQUISITION_AND_RELEASE_AFTER_TRANSACTION en Hibernate, el EntityManager abre la tx pero
+ * no adquiere la conexión JDBC de inmediato. Al usar JpaTransactionManager (REQUIRES_NEW) para findById(),
+ * JdbcTemplate no encontraba ConnectionHolder en el hilo → SELECT devolvía 0 filas aunque el registro
+ * existiera → isRequestedSessionIdValid() = false → ZymosInvalidSessionStrategy → /login?expired=true.
+ * DataSourceTransactionManager gestiona una conexión JDBC directa sin interferencia de Hibernate.
  */
+@Configuration
 public class SpringSessionConfig {
-    // No beans — JdbcSessionAutoConfiguration maneja todo.
-    // HttpSessionEventPublisher ya está en SecurityConfig.
+
+    @Bean
+    @Primary
+    public JpaTransactionManager transactionManager(EntityManagerFactory emf,
+            ObjectProvider<TransactionManagerCustomizers> customizers) {
+        JpaTransactionManager tm = new JpaTransactionManager(emf);
+        customizers.ifAvailable(c -> c.customize(tm));
+        return tm;
+    }
+
+    @Bean
+    @SpringSessionTransactionManager
+    public DataSourceTransactionManager springSessionTransactionManager(DataSource dataSource) {
+        return new DataSourceTransactionManager(dataSource);
+    }
 }
