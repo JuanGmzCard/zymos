@@ -21,8 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -295,12 +295,14 @@ public class SecurityConfig {
                 )
             )
             .csrf(csrf -> csrf
-                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                // CsrfTokenRequestAttributeHandler (no-XOR, eager) garantiza que la cookie
-                // XSRF-TOKEN se escribe en CADA respuesta GET, no solo cuando Thymeleaf
-                // accede al token. Sin esto, la primera petición POST tras un login falla
-                // con MissingCsrfTokenException porque el deferred default (XOR) no escribe
-                // la cookie a menos que algo acceda al atributo _csrf primero.
+                // HttpSessionCsrfTokenRepository: token guardado en sesión JDBC (PostgreSQL).
+                // Elimina el problema de "cookie XSRF-TOKEN ausente" — el token vive en la
+                // sesión persistida, no en una cookie que puede desaparecer tras un reinicio
+                // o si el navegador la elimina. CookieCsrfTokenRepository requería un GET
+                // intermedio para regenerar la cookie; con sesión esto no es necesario.
+                // CsrfTokenRequestAttributeHandler (no-XOR, eager) garantiza que el token se
+                // resuelve de forma directa (sin XOR) para compatibilidad con with(csrf()) en tests.
+                .csrfTokenRepository(new HttpSessionCsrfTokenRepository())
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 .ignoringRequestMatchers("/api/**", "/api/auth/**"));
         return http.build();
