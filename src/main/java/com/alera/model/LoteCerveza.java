@@ -287,23 +287,15 @@ public class LoteCerveza extends AuditableEntity {
     // Eficiencia de macerado: (OG_puntos × litros) / (kg_malta × 308) × 100
     public BigDecimal getEficienciaMacerado() {
         if (densidadInicial == null || litrosFinales == null) return null;
-        BigDecimal totalMaltaKg = BigDecimal.ZERO;
+        BigDecimal totalMaltaGr = BigDecimal.ZERO;
         for (Ingrediente ing : ingredientes) {
             if (ing.getTipo() != TipoIngrediente.MALTA || ing.getCantidad() == null) continue;
-            String[] partes = ing.getCantidad().trim().split("\\s+");
-            if (partes.length < 2) continue;
-            try {
-                BigDecimal valor = new BigDecimal(partes[0]);
-                String unidad = partes[1].toLowerCase();
-                if (unidad.equals("gr") || unidad.equals("g")) {
-                    totalMaltaKg = totalMaltaKg.add(valor.divide(new BigDecimal("1000"), 6, RoundingMode.HALF_UP));
-                } else if (unidad.equals("kg")) {
-                    totalMaltaKg = totalMaltaKg.add(valor);
-                }
-            } catch (NumberFormatException ignored) {}
+            BigDecimal gr = com.alera.config.UnidadUtils.parsearYConvertir(ing.getCantidad());
+            totalMaltaGr = totalMaltaGr.add(gr);
         }
-        if (totalMaltaKg.compareTo(BigDecimal.ZERO) == 0) return null;
-        BigDecimal ogPuntos = BigDecimal.valueOf(densidadInicial - 1000); // ya en puntos
+        if (totalMaltaGr.compareTo(BigDecimal.ZERO) == 0) return null;
+        BigDecimal totalMaltaKg = totalMaltaGr.divide(new BigDecimal("1000"), 6, RoundingMode.HALF_UP);
+        BigDecimal ogPuntos = BigDecimal.valueOf(densidadInicial - 1000);
         BigDecimal potencial = totalMaltaKg.multiply(new BigDecimal("308"));
         return ogPuntos.multiply(litrosFinales)
                 .divide(potencial, 6, RoundingMode.HALF_UP)
