@@ -22,6 +22,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -295,6 +296,12 @@ public class SecurityConfig {
             )
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                // CsrfTokenRequestAttributeHandler (no-XOR, eager) garantiza que la cookie
+                // XSRF-TOKEN se escribe en CADA respuesta GET, no solo cuando Thymeleaf
+                // accede al token. Sin esto, la primera petición POST tras un login falla
+                // con MissingCsrfTokenException porque el deferred default (XOR) no escribe
+                // la cookie a menos que algo acceda al atributo _csrf primero.
+                .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 .ignoringRequestMatchers("/api/**", "/api/auth/**"));
         return http.build();
     }
