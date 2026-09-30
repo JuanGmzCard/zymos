@@ -17,21 +17,27 @@ public class ZymosInvalidSessionStrategy implements InvalidSessionStrategy {
     public void onInvalidSessionDetected(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
         // Spring Security enruta MissingCsrfTokenException → InvalidSessionAccessDeniedHandler → esta
-        // estrategia cuando el token CSRF falta (sin cookie XSRF-TOKEN). En ese caso el usuario puede
-        // estar autenticado con una sesión válida — no es una sesión expirada sino un fallo de CSRF.
-        // Si hay autenticación real, devolver 403; si no hay sesión activa, redirigir al login.
+        // estrategia cuando el token CSRF falta (sin cookie XSRF-TOKEN). El distinctor clave es:
+        //   - CSRF path: la sesión SÍ existe en BD (sessionValid=true) pero falta el token CSRF.
+        //   - SessionManagement path: la sesión NO existe en BD (sessionValid=false) → expiración real.
+        // Solo devolver 403 cuando la sesión es válida Y el usuario está autenticado (CSRF path puro).
+        boolean sessionIsValid = request.isRequestedSessionIdValid();
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         boolean isAuthenticated = auth != null
                 && auth.isAuthenticated()
                 && !(auth instanceof AnonymousAuthenticationToken);
 
-        if (isAuthenticated) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        String cp = request.getContextPath() != null ? request.getContextPath() : "";
+
+        if (isAuthenticated && sessionIsValid) {
+            // Sesión válida en BD + usuario autenticado: el token CSRF falta (cookie XSRF-TOKEN ausente
+            // o caducada). No es una sesión expirada. Redirigir al inicio para que el navegador reciba
+            // una nueva cookie CSRF y el usuario pueda continuar sin ver un error confuso.
+            response.sendRedirect(cp + "/");
             return;
         }
 
         request.getSession();
-        String cp = request.getContextPath();
-        response.sendRedirect((cp != null ? cp : "") + "/login?expired=true");
+        response.sendRedirect(cp + "/login?expired=true");
     }
 }
