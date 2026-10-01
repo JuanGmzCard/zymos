@@ -182,6 +182,21 @@
         html.dark-mode #costo-asignados-wrap table thead { background: var(--dm-input) !important; }
         /* Inputs readonly (OG calculados) */
         html.dark-mode input[readonly] { background: var(--dm-input) !important; }
+
+        /* ══ WIZARD MÓVIL (< 576px) ══════════════════════ */
+        /* Oculta el label/ícono de cada tab, deja solo el círculo numerado.
+           6 círculos × ~48px = ~288px, caben en 360px sin scroll horizontal. */
+        @media (max-width: 575.98px) {
+            .wizard-nav .wz-tab {
+                padding: 10px 12px;
+                gap: 0;
+                flex: 1;
+                justify-content: center;
+            }
+            .wizard-nav .wz-tab > span:not(.wz-num) {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
