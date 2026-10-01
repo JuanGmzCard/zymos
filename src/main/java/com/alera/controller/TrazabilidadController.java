@@ -175,6 +175,7 @@ public class TrazabilidadController {
         model.addAttribute("maduracion",       lotes.stream().filter(l -> l.getMadurFechaInicial() != null && l.getCarbFechaInicial() == null && !l.isCompletado()).toList());
         model.addAttribute("carbonatacion",    lotes.stream().filter(l -> l.getCarbFechaInicial() != null && !l.isCompletado()).toList());
         model.addAttribute("completados",      lotes.stream().filter(l -> l.isCompletado()).toList());
+        model.addAttribute("today",            java.time.LocalDate.now());
         return "trazabilidad/kanban";
     }
 
