@@ -153,12 +153,15 @@
 <div class="container-fluid px-4">
 
     <!-- Cabecera de página -->
-    <div class="page-header d-flex justify-content-between align-items-start">
-        <div>
-            <h1><i class="bi bi-cart-check me-2"></i><span th:text="#{oc.lista.h1}">Órdenes de Compra</span></h1>
-            <p class="subtitle mb-0" th:text="#{oc.lista.subtitle}">Gestión de órdenes a proveedores</p>
+    <div class="page-header-modern">
+        <div class="phm-left">
+            <div class="phm-icon"><i class="bi bi-cart-check"></i></div>
+            <div>
+                <div class="phm-crumb">Comercial <i class="bi bi-chevron-right phm-sep"></i> <b th:text="#{oc.lista.h1}">Órdenes de Compra</b></div>
+                <h1 th:text="#{oc.lista.h1}">Órdenes de Compra</h1>
+            </div>
         </div>
-        <div class="d-flex gap-2 pt-1">
+        <div class="phm-actions">
             <a th:href="@{/ordenes-compra/nueva}" class="btn btn-primary btn-sm"
                sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{oc.action.nueva}">Nueva OC</span>

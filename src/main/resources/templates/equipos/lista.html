@@ -15,12 +15,15 @@
 <div class="container-fluid px-4">
 
     <!-- Cabecera -->
-    <div class="page-header d-flex justify-content-between align-items-start">
-        <div>
-            <h1 th:text="#{equipo.title}">Equipos</h1>
-            <p class="subtitle mb-0" th:text="#{equipo.subtitle}">Gestión del parque de equipos de la cervecería</p>
+    <div class="page-header-modern">
+        <div class="phm-left">
+            <div class="phm-icon"><i class="bi bi-tools"></i></div>
+            <div>
+                <div class="phm-crumb"><span th:text="${branding.name}">Zymos</span> <i class="bi bi-chevron-right phm-sep"></i> <b th:text="#{equipo.title}">Equipos</b></div>
+                <h1 th:text="#{equipo.title}">Equipos</h1>
+            </div>
         </div>
-        <div class="d-flex gap-2 pt-1">
+        <div class="phm-actions">
             <a th:href="@{/equipos/nuevo}"
                sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')"
                class="btn btn-primary btn-sm">
