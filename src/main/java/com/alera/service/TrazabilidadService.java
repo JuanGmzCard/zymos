@@ -72,9 +72,12 @@ public class TrazabilidadService {
         return historialRepo.findByLoteIdOrderByFechaDesc(loteId);
     }
 
+    @Value("${app.kanban.completados-dias:30}")
+    private int kanbanCompletadosDias;
+
     @Transactional(readOnly = true)
     public List<LoteCerveza> listarParaKanban() {
-        return loteRepo.findParaKanban(java.time.LocalDate.now().minusDays(7));
+        return loteRepo.findParaKanban(java.time.LocalDate.now().minusDays(kanbanCompletadosDias));
     }
 
     @Value("${app.page-size:15}")
