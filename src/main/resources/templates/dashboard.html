@@ -235,6 +235,7 @@
                         <span><i class="bi bi-exclamation-triangle me-2 text-warning"></i><span th:text="#{dashboard.alertas.bajo.stock}">Bajo Stock</span></span>
                         <span class="badge bg-danger" th:text="${#lists.size(alertasBajoStock)}"></span>
                     </div>
+                    <div class="table-responsive">
                     <table class="table table-sm mb-0" style="font-size:0.8rem;">
                         <tbody>
                         <tr th:each="ins : ${alertasBajoStock}">
@@ -252,6 +253,7 @@
                         </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
             <div class="col-md-6" th:if="${!#lists.isEmpty(alertasProxVencer)}">
@@ -260,6 +262,7 @@
                         <span><i class="bi bi-calendar-x me-2 text-warning"></i><span th:text="#{dashboard.alertas.prox.vencer}">Próximos a Vencer</span></span>
                         <span class="badge bg-warning text-dark" th:text="${#lists.size(alertasProxVencer)}"></span>
                     </div>
+                    <div class="table-responsive">
                     <table class="table table-sm mb-0" style="font-size:0.8rem;">
                         <tbody>
                         <tr th:each="ins : ${alertasProxVencer}">
@@ -271,6 +274,7 @@
                         </tr>
                         </tbody>
                     </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -293,6 +297,7 @@
                     <p th:text="#{dashboard.elaboraciones.empty}">No hay elaboraciones planificadas</p>
                     <a th:href="@{/planificacion}" class="btn btn-primary btn-sm" th:text="#{dashboard.elaboraciones.planificar}">Planificar</a>
                 </div>
+                <div th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table-responsive">
                 <table th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table table-hover mb-0">
                     <thead>
                     <tr>
@@ -337,6 +342,7 @@
                     </tr>
                     </tbody>
                 </table>
+                </div>
         </div>
     </div>
 
