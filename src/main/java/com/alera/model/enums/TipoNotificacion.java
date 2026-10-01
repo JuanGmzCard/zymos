@@ -8,6 +8,7 @@ public enum TipoNotificacion {
     PLAN_VENCIMIENTO("bi-exclamation-octagon-fill","text-danger"),
     PLAN_LIMITE("bi-graph-up-arrow",               "text-warning"),
     BPM_SALUD("bi-heart-pulse",                    "text-danger"),
+    LOTE_FASE_VENCIDA("bi-clock-history",            "text-danger"),
     TAREA_ASIGNADA("bi-check2-square",             "text-success"),
     TAREA_VENCIMIENTO("bi-alarm",                  "text-warning");
 

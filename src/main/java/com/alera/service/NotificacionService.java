@@ -3,6 +3,7 @@ package com.alera.service;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
+import com.alera.model.LoteCerveza;
 import com.alera.model.Notificacion;
 import com.alera.model.Tarea;
 import com.alera.model.Tenant;
@@ -33,6 +34,7 @@ public class NotificacionService {
         Map.entry(TipoNotificacion.MANTENIMIENTO,     "MODULO_EQUIPOS_VER"),
         Map.entry(TipoNotificacion.SISTEMA,           "MODULO_FACTURACION_VER"),
         Map.entry(TipoNotificacion.BPM_SALUD,         "MODULO_BPM_VER"),
+        Map.entry(TipoNotificacion.LOTE_FASE_VENCIDA,  "MODULO_TRAZABILIDAD_VER"),
         Map.entry(TipoNotificacion.TAREA_ASIGNADA,    "MODULO_TAREAS_VER"),
         Map.entry(TipoNotificacion.TAREA_VENCIMIENTO, "MODULO_TAREAS_VER")
     );
@@ -246,6 +248,24 @@ public class NotificacionService {
                 n + " tarea" + (n > 1 ? "s" : "") + " por vencer",
                 msg,
                 "/tareas"));
+    }
+
+    public void crearAlertaFasesVencidas(List<LoteCerveza> lotes) {
+        if (lotes.isEmpty()) return;
+        LocalDateTime hoy     = LocalDate.now().atStartOfDay();
+        LocalDateTime maniana = hoy.plusDays(1);
+        if (repo.existeEnPeriodo(TipoNotificacion.LOTE_FASE_VENCIDA, hoy, maniana)) return;
+        int n = lotes.size();
+        String msg = n == 1
+                ? "El lote \"" + lotes.get(0).getCodigoLote() + "\" (" + lotes.get(0).getFaseActual() + ") pasó su fecha ideal."
+                : lotes.stream().limit(3).map(LoteCerveza::getCodigoLote)
+                        .reduce((a, b) -> a + ", " + b).orElse("")
+                  + (n > 3 ? " y " + (n - 3) + " más" : "") + " pasaron su fecha ideal de fase.";
+        repo.save(Notificacion.of(
+                TipoNotificacion.LOTE_FASE_VENCIDA,
+                n + " lote" + (n > 1 ? "s" : "") + " con fase vencida",
+                msg,
+                "/kanban"));
     }
 
     public void crearAlertaFacturas(List<FacturaProveedor> sinProcesar, int dias) {

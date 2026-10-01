@@ -51,6 +51,7 @@ class AlertaSchedulerTest {
         lenient().when(loteCervezaRepo.count()).thenReturn(0L);
         lenient().when(usuarioRepo.countByTenantId(any())).thenReturn(0L);
         lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of());
+        lenient().when(loteCervezaRepo.findFasesVencidas(any())).thenReturn(List.of());
     }
 
     @AfterEach
@@ -184,6 +185,15 @@ class AlertaSchedulerTest {
         scheduler.enviarAlertasDiarias();
 
         verify(notificacionService).crearAlertaTareaVencimiento(any());
+    }
+
+    @Test
+    void enviarAlertasDiarias_invocaAlertaFasesVencidas() {
+        when(tenantRepo.findAll()).thenReturn(List.of(tenant("mosto", true, null)));
+
+        scheduler.enviarAlertasDiarias();
+
+        verify(notificacionService).crearAlertaFasesVencidas(any());
     }
 
     private void assertTenantContextLimpio() {

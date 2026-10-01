@@ -123,6 +123,16 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     @Query("SELECT l.receta.id, COUNT(l) FROM LoteCerveza l WHERE l.receta IS NOT NULL GROUP BY l.receta.id")
     List<Object[]> countPorReceta();
 
+    // Lotes no completados con al menos una fase activa que pasó su fecha ideal
+    @Query("SELECT l FROM LoteCerveza l WHERE " +
+           "l.carbFechaFinal IS NULL AND (" +
+           "  (l.fermFechaInicial IS NOT NULL AND l.fermFechaFinal  IS NULL AND l.fermFechaFinalIdeal  < :hoy) OR " +
+           "  (l.acondFechaInicial IS NOT NULL AND l.acondFechaFinal IS NULL AND l.acondFechaFinalIdeal < :hoy) OR " +
+           "  (l.madurFechaInicial IS NOT NULL AND l.madurFechaFinal IS NULL AND l.madurFechaFinalIdeal < :hoy) OR " +
+           "  (l.carbFechaInicial  IS NOT NULL AND l.carbFechaFinalIdeal < :hoy)" +
+           ") ORDER BY l.createdAt DESC")
+    List<LoteCerveza> findFasesVencidas(@Param("hoy") LocalDate hoy);
+
     // Comparativa: carga ingredientes para calcular eficiencia sin N+1
     @Query("SELECT DISTINCT l FROM LoteCerveza l LEFT JOIN FETCH l.ingredientes WHERE l.id IN :ids")
     List<LoteCerveza> findByIds(@Param("ids") List<Long> ids);

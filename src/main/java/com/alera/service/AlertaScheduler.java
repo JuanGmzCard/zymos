@@ -4,6 +4,7 @@ import com.alera.config.TenantContext;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
+import com.alera.model.LoteCerveza;
 import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.repository.LoteCervezaRepository;
@@ -107,6 +108,10 @@ public class AlertaScheduler {
                 // Tareas que vencen mañana
                 List<Tarea> tareasVencen = tareaService.listarProximasAVencer(LocalDate.now().plusDays(1));
                 notificacionService.crearAlertaTareaVencimiento(tareasVencen);
+
+                // Lotes con fecha ideal de fase superada
+                List<LoteCerveza> fasesVencidas = loteCervezaRepo.findFasesVencidas(LocalDate.now());
+                notificacionService.crearAlertaFasesVencidas(fasesVencidas);
 
                 // Expirar cotizaciones vencidas
                 int expiradas = ventaService.expirarCotizaciones();
