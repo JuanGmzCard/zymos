@@ -1186,6 +1186,15 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
     }
 }
 
+/* Page headers y section headers — wrap en móvil para que los botones caigan debajo del título */
+@media (max-width: 575.98px) {
+    .page-header.d-flex,
+    .sh.d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
 /* Filter cards — inputs a ancho completo en móvil (sobreescribe inline width:Xpx) */
 @media (max-width: 575.98px) {
     .filter-card .form-control,
