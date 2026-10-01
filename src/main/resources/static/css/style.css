@@ -1177,6 +1177,15 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
 .stat-card-simple .stat-value.danger  { color: #ef4444; }
 .stat-card-simple .stat-value.info    { color: #3b82f6; }
 
+/* Stat cards — 2 columnas en móvil, ancho natural en tablet/desktop */
+@media (max-width: 575.98px) {
+    .stat-card-simple,
+    .stat-card-link {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 0;
+    }
+}
+
 /* Tarjeta de filtros */
 .filter-card {
     background: #fff;
