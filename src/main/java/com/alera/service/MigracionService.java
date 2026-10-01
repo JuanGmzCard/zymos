@@ -82,12 +82,13 @@ public class MigracionService {
                 try {
                     String nombre = texto(row, 0);
                     String tipo   = texto(row, 1).toUpperCase();
-                    BigDecimal cantidad  = decimal(row, 2);
-                    String unidad        = texto(row, 3);
-                    BigDecimal stockMin  = decimal(row, 4);
-                    String proveedor     = texto(row, 5);
-                    LocalDate fecVenc    = fecha(row, 6);
-                    String obs           = texto(row, 7);
+                    BigDecimal cantidad       = decimal(row, 2);
+                    String unidad             = texto(row, 3);
+                    BigDecimal stockMin       = decimal(row, 4);
+                    String proveedor          = texto(row, 5);
+                    LocalDate fecVenc         = fecha(row, 6);
+                    String obs                = texto(row, 7);
+                    BigDecimal costoUnitario  = decimal(row, 8);
 
                     if (nombre.isBlank()) throw new IllegalArgumentException("nombre es obligatorio");
                     validarEnum(tipo, "tipo", "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
@@ -95,12 +96,12 @@ public class MigracionService {
 
                     jdbc.update("INSERT INTO insumos_inventario " +
                             "(nombre,tipo,cantidad,unidad,stock_minimo,proveedor,fecha_vencimiento,observaciones," +
-                            "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                            "VALUES (?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                            "costo_unitario,tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
+                            "VALUES (?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                             nombre, tipoDisplay,
                             cantidad != null ? cantidad : BigDecimal.ZERO,
                             unidadNula(unidad), stockMin != null ? stockMin : BigDecimal.ZERO, proveedorNulo(proveedor),
-                            fecVenc, obsNula(obs), tenantId, usuario, usuario);
+                            fecVenc, obsNula(obs), costoUnitario, tenantId, usuario, usuario);
                     ok++;
                 } catch (Exception e) {
                     errores.add("Fila " + (row.getRowNum() + 1) + ": " + e.getMessage());

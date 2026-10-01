@@ -22,7 +22,8 @@ public class MigracionTemplateService {
                 {"tipo", "MALTA | LUPULO | LEVADURA | CLARIFICANTE | AGENTE_CARBONATACION | AGUA | QUIMICO | ENVASE | OTRO"},
                 {"unidad", "gr | kg | mL | L | gal | und"},
                 {"fecha_vencimiento", "Formato: YYYY-MM-DD  (ej: 2025-12-31)"},
-                {"cantidad / stock_minimo", "Número decimal (ej: 5000  o  2.5)"}
+                {"cantidad / stock_minimo", "Número decimal (ej: 5000  o  2.5)"},
+                {"costo_unitario", "Precio por unidad de inventario (ej: 5500.50). Opcional — usado para calcular costo estimado de lotes sin facturas asignadas"}
             });
         hojaInsumos(wb, es);
         return bytes(wb);
@@ -284,13 +285,14 @@ public class MigracionTemplateService {
             {"stock_minimo",      "opt"},
             {"proveedor",         "opt"},
             {"fecha_vencimiento", "opt"},
-            {"observaciones",     "opt"}
+            {"observaciones",     "opt"},
+            {"costo_unitario",    "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"Pale Ale 2-Row", "MALTA", 5000, "gr", 500, "MaltaCo SA", "2025-12-31", "Malta base clara"});
+        ejemplo(sh, es, new Object[]{"Pale Ale 2-Row", "MALTA", 5000, "gr", 500, "MaltaCo SA", "2025-12-31", "Malta base clara", 5500.00});
         dropdown(sh, 1, 9999, 1, "MALTA","LUPULO","LEVADURA","CLARIFICANTE","AGENTE_CARBONATACION","AGUA","QUIMICO","ENVASE","OTRO");
         dropdown(sh, 1, 9999, 3, "gr","kg","mL","L","gal","und");
-        anchos(sh, 220, 160, 120, 100, 130, 200, 170, 300);
+        anchos(sh, 220, 160, 120, 100, 130, 200, 170, 300, 160);
     }
 
     private void hojaEquipos(XSSFWorkbook wb, Estilos es) {
