@@ -64,6 +64,7 @@ class TrazabilidadControllerTest {
     @MockBean PlanificacionService         planificacionService;
     @MockBean VentaService                 ventaService;
     @MockBean LoteCervezaRepository        loteRepo;
+    @MockBean BarrilService                barrilService;
 
     @BeforeEach
     void setUp() {

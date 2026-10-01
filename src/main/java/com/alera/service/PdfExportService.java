@@ -1320,7 +1320,8 @@ public class PdfExportService {
             tableCellC(tbl, ev.getSensacionBoca()   != null ? String.valueOf(ev.getSensacionBoca())   : "—", valFont);
             tableCellC(tbl, ev.getImpresionGeneral()!= null ? String.valueOf(ev.getImpresionGeneral()): "—", valFont);
             tableCellC(tbl, ev.getPuntajeTotal()    != null ? String.valueOf(ev.getPuntajeTotal())    : "—", boldFont);
-            tableCell(tbl, ev.getClasificacion()   != null ? ev.getClasificacion()   : "—",   valFont);
+            tableCell(tbl, ev.getClasificacion() != null
+                    ? t("traz.det.js.clasif." + ev.getClasificacion()) : "—", valFont);
         }
         doc.add(tbl);
 

@@ -165,14 +165,14 @@ class EvaluacionSensorialServiceTest {
 
     @Test
     void clasificacion_correctaPorRango() {
-        assertThat(evalConTotal(50).getClasificacion()).isEqualTo("Excepcional");
-        assertThat(evalConTotal(47).getClasificacion()).isEqualTo("Excepcional");
-        assertThat(evalConTotal(38).getClasificacion()).isEqualTo("Excelente");
-        assertThat(evalConTotal(30).getClasificacion()).isEqualTo("Muy buena");
-        assertThat(evalConTotal(21).getClasificacion()).isEqualTo("Buena");
-        assertThat(evalConTotal(14).getClasificacion()).isEqualTo("Aceptable");
-        assertThat(evalConTotal(7).getClasificacion()).isEqualTo("Deficiente");
-        assertThat(evalConTotal(0).getClasificacion()).isEqualTo("Inaceptable");
+        assertThat(evalConTotal(50).getClasificacion()).isEqualTo("excepcional");
+        assertThat(evalConTotal(47).getClasificacion()).isEqualTo("excepcional");
+        assertThat(evalConTotal(38).getClasificacion()).isEqualTo("excelente");
+        assertThat(evalConTotal(30).getClasificacion()).isEqualTo("muy.buena");
+        assertThat(evalConTotal(21).getClasificacion()).isEqualTo("buena");
+        assertThat(evalConTotal(14).getClasificacion()).isEqualTo("aceptable");
+        assertThat(evalConTotal(7).getClasificacion()).isEqualTo("deficiente");
+        assertThat(evalConTotal(0).getClasificacion()).isEqualTo("inaceptable");
     }
 
     @Test

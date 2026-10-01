@@ -30,6 +30,9 @@ public class InsumoInventario extends AuditableEntity {
 
     private LocalDate fechaVencimiento;
 
+    @Column(precision = 14, scale = 2)
+    private BigDecimal costoUnitario;
+
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
@@ -118,4 +121,6 @@ public class InsumoInventario extends AuditableEntity {
     public void setFechaVencimiento(LocalDate fechaVencimiento) { this.fechaVencimiento = fechaVencimiento; }
     public String getObservaciones() { return observaciones; }
     public void setObservaciones(String observaciones) { this.observaciones = observaciones; }
+    public BigDecimal getCostoUnitario() { return costoUnitario; }
+    public void setCostoUnitario(BigDecimal costoUnitario) { this.costoUnitario = costoUnitario; }
 }

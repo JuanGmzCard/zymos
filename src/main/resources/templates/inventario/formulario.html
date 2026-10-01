@@ -89,6 +89,16 @@
                     <label class="form-label" for="fechaVencimiento" th:text="#{inv.form.label.vencimiento}">Fecha de vencimiento</label>
                     <input type="date" id="fechaVencimiento" th:field="*{fechaVencimiento}" class="form-control">
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="costoUnitario" th:text="#{inv.form.label.costo.unitario}">Costo unitario</label>
+                    <div class="input-group">
+                        <span class="input-group-text" th:text="${branding.simboloMoneda}">$</span>
+                        <input type="number" id="costoUnitario" name="costoUnitario"
+                               step="0.01" min="0" th:field="*{costoUnitario}"
+                               class="form-control" placeholder="0.00">
+                    </div>
+                    <div class="form-text" th:text="#{inv.form.ph.costo.unitario}">Precio por unidad</div>
+                </div>
                 <div class="col-12">
                     <label class="form-label" for="observaciones" th:text="#{inv.form.label.obs}">Observaciones</label>
                     <textarea id="observaciones" th:field="*{observaciones}" class="form-control" rows="2"

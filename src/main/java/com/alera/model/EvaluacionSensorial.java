@@ -53,16 +53,17 @@ public class EvaluacionSensorial {
              + (impresionGeneral != null ? impresionGeneral : 0);
     }
 
+    /** Devuelve la clave i18n para el label de clasificación BJCP (sufijo de traz.det.js.clasif.*). */
     public String getClasificacion() {
         Integer t = getPuntajeTotal();
         if (t == null) return null;
-        if (t >= 47) return "Excepcional";
-        if (t >= 38) return "Excelente";
-        if (t >= 30) return "Muy buena";
-        if (t >= 21) return "Buena";
-        if (t >= 14) return "Aceptable";
-        if (t >= 7)  return "Deficiente";
-        return "Inaceptable";
+        if (t >= 47) return "excepcional";
+        if (t >= 38) return "excelente";
+        if (t >= 30) return "muy.buena";
+        if (t >= 21) return "buena";
+        if (t >= 14) return "aceptable";
+        if (t >= 7)  return "deficiente";
+        return "inaceptable";
     }
 
     public String getBadgeClass() {

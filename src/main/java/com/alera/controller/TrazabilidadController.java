@@ -32,7 +32,9 @@ import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TipoCervezaRepository;
+import com.alera.service.BarrilService;
 import com.alera.service.EquipoService;
+import org.springframework.context.MessageSource;
 import com.alera.service.RecetaService;
 import com.alera.service.TrazabilidadService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -61,6 +63,8 @@ public class TrazabilidadController {
     private final PlanificacionService planificacionService;
     private final VentaService ventaService;
     private final LoteCervezaRepository loteRepo;
+    private final BarrilService barrilService;
+    private final MessageSource messageSource;
 
     public TrazabilidadController(TrazabilidadService service,
                                    EquipoService equipoService,
@@ -74,7 +78,9 @@ public class TrazabilidadController {
                                    EvaluacionSensorialService evaluacionService,
                                    PlanificacionService planificacionService,
                                    VentaService ventaService,
-                                   LoteCervezaRepository loteRepo) {
+                                   LoteCervezaRepository loteRepo,
+                                   BarrilService barrilService,
+                                   MessageSource messageSource) {
         this.service = service;
         this.equipoService = equipoService;
         this.recetaService = recetaService;
@@ -88,6 +94,16 @@ public class TrazabilidadController {
         this.planificacionService = planificacionService;
         this.ventaService = ventaService;
         this.loteRepo = loteRepo;
+        this.barrilService = barrilService;
+        this.messageSource = messageSource;
+    }
+
+    private String msg(String key, Locale locale) {
+        return messageSource.getMessage(key, null, key, locale);
+    }
+
+    private String msgf(String key, Locale locale, Object... args) {
+        return messageSource.getMessage(key, args, key, locale);
     }
 
     @GetMapping
@@ -344,9 +360,18 @@ public class TrazabilidadController {
         model.addAttribute("historial", service.obtenerHistorial(id));
         model.addAttribute("lecturas",  lecturas);
         model.addAttribute("evaluaciones", evaluaciones);
-        model.addAttribute("promedioEvaluacion",
-                evaluaciones.isEmpty() ? null : evaluacionService.calcularPromedio(evaluaciones));
+        Double promedio = evaluaciones.isEmpty() ? null : evaluacionService.calcularPromedio(evaluaciones);
+        model.addAttribute("promedioEvaluacion", promedio);
+        model.addAttribute("clasificacionPromedio", promedio != null ? clasificarBjcp(promedio) : null);
         model.addAttribute("ventasLote", ventaService.listarPorLote(id));
+        BigDecimal costoEstimado = lote.getCostoTotal() == null
+                ? service.calcularCostoEstimado(lote) : null;
+        model.addAttribute("costoEstimado", costoEstimado);
+        BigDecimal litros = lote.getLitrosFinales();
+        model.addAttribute("costoEstimadoPorLitro",
+                (costoEstimado != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
+                        ? costoEstimado.divide(litros, 2, java.math.RoundingMode.HALF_UP)
+                        : null);
         return "trazabilidad/detalle";
     }
 
@@ -446,19 +471,33 @@ public class TrazabilidadController {
         var lote = service.buscarPorId(id);
         var dto = service.toLoteFormDto(lote);
         dto.setFechaElaboracion(null);
-        dto.setDensidadInicial(null);
-        dto.setDensidadFinal(null);
-        dto.setDensidadFinalFecha(null);
+        // Mediciones de densidad/temperatura (resultados del lote original)
+        dto.setDensidadInicial(null); dto.setDensidadFinal(null); dto.setDensidadFinalFecha(null);
+        dto.setOgTemperatura(null); dto.setFgBrix(null); dto.setFgTemperatura(null);
+        // Fechas y horas de multi-elaboración
+        dto.setFechaSegundaElaboracion(null); dto.setFechaTerceraElaboracion(null); dto.setFechaCuartaElaboracion(null);
+        dto.setHoraInicioPrimeraElaboracion(null); dto.setHoraFinPrimeraElaboracion(null);
+        dto.setHoraInicioSegundaElaboracion(null); dto.setHoraFinSegundaElaboracion(null);
+        dto.setHoraInicioTerceraElaboracion(null); dto.setHoraFinTerceraElaboracion(null);
+        dto.setHoraInicioCuartaElaboracion(null); dto.setHoraFinCuartaElaboracion(null);
+        // OG y Brix medidos por sesión (resultados)
+        dto.setOgPrimeraElaboracion(null); dto.setOgBrix(null);
+        dto.setOgSegundaElaboracion(null); dto.setOgBrixSegundaElaboracion(null);
+        dto.setOgTerceraElaboracion(null); dto.setOgBrixTerceraElaboracion(null);
+        dto.setOgCuartaElaboracion(null);  dto.setOgBrixCuartaElaboracion(null);
+        // Volúmenes finales por sesión y total
+        dto.setVolumenFinalPrimeraElaboracion(null); dto.setVolumenFinalSegundaElaboracion(null);
+        dto.setVolumenFinalTerceraElaboracion(null); dto.setVolumenFinalCuartaElaboracion(null);
+        dto.setLitrosFinales(null);
+        // Fechas de proceso
         dto.setFermFechaInicial(null); dto.setFermFechaFinalIdeal(null); dto.setFermFechaFinal(null);
         dto.setAcondFechaInicial(null); dto.setAcondFechaFinalIdeal(null); dto.setAcondFechaFinal(null);
         dto.setMadurFechaInicial(null); dto.setMadurFechaFinalIdeal(null); dto.setMadurFechaFinal(null);
         dto.setCarbFechaInicial(null); dto.setCarbFechaFinalIdeal(null); dto.setCarbFechaFinal(null);
-        dto.setCarbCo2Real(null);
-        dto.setCarbValidacion(null);
-        dto.setCarbDestino(null);
-        dto.setNotasCata(null);
-        dto.setObservaciones(null);
-        dto.setRecetaId(null);
+        // Resultados de carbonatación y notas del lote original
+        dto.setCarbCo2Real(null); dto.setCarbValidacion(null); dto.setCarbDestino(null);
+        dto.setNotasCata(null); dto.setObservaciones(null);
+        // Costos asignados (específicos del lote original)
         dto.setItemsIds(new java.util.ArrayList<>());
         dto.setItemsCantidades(new java.util.ArrayList<>());
         model.addAttribute("loteForm", dto);
@@ -495,6 +534,23 @@ public class TrazabilidadController {
         }
     }
 
+    @PostMapping("/actualizar/{id}/avanzar-fase")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> avanzarFase(
+            @PathVariable Long id,
+            @RequestParam String fase,
+            @RequestParam String accion,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fecha,
+            @RequestParam(required = false) BigDecimal temperatura,
+            @RequestParam(required = false, defaultValue = "C") String tempUnit) {
+        try {
+            service.avanzarFase(id, fase, accion, fecha, temperatura, tempUnit);
+            return ResponseEntity.ok(Map.of("ok", true));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("ok", false, "error", e.getMessage()));
+        }
+    }
+
     @PostMapping("/eliminar/{id}")
     public String eliminar(@PathVariable Long id, RedirectAttributes ra) {
         try {
@@ -506,6 +562,39 @@ public class TrazabilidadController {
             ra.addFlashAttribute("tipoMensaje", "danger");
         }
         return "redirect:/";
+    }
+
+    @PostMapping("/crear-barriles/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')")
+    public String crearBarrilesDesdeDestino(@PathVariable Long id,
+                                            RedirectAttributes ra,
+                                            Locale locale) {
+        try {
+            LoteCerveza lote = service.buscarPorId(id);
+            int creados = barrilService.crearDesdeDestino(
+                    lote.getId(), lote.getCodigoLote(), lote.getCarbDestino());
+            if (creados == 0) {
+                ra.addFlashAttribute("mensaje", msg("traz.barriles.sin.nuevos", locale));
+                ra.addFlashAttribute("tipoMensaje", "warning");
+            } else {
+                ra.addFlashAttribute("mensaje", msgf("traz.barriles.creados", locale, creados));
+                ra.addFlashAttribute("tipoMensaje", "success");
+            }
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
+        return "redirect:/ver/" + id;
+    }
+
+    private static String clasificarBjcp(double score) {
+        if (score >= 47) return "excepcional";
+        if (score >= 38) return "excelente";
+        if (score >= 30) return "muy.buena";
+        if (score >= 21) return "buena";
+        if (score >= 14) return "aceptable";
+        if (score >= 7)  return "deficiente";
+        return "inaceptable";
     }
 
     private void agregarInventarioAlModelo(Model model) {

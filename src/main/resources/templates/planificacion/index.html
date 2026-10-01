@@ -140,10 +140,7 @@
                 <div th:each="p : ${proximas}"
                      th:if="${p.estado.name() != 'CANCELADA' and p.estado.name() != 'COMPLETADA'}">
                     <div class="proxima-card"
-                         th:classappend="${p.estado.name() == 'EN_PROCESO'} ? 'en-proceso'
-                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA') ? 'hoy'
-                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA') ? 'vencida'
-                                       : ''">
+                         th:classappend="${p.estado.name() == 'EN_PROCESO' ? 'en-proceso' : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA' ? 'hoy' : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA' ? 'vencida' : ''))}">
                         <div class="d-flex justify-content-between align-items-start">
                             <div style="flex:1; min-width:0;">
                                 <div class="fw-bold small" th:text="${p.nombreElaboracion}">—</div>
@@ -207,10 +204,7 @@
                 </thead>
                 <tbody>
                     <tr th:each="p : ${todas}"
-                        th:classappend="${p.estado.name() == 'CANCELADA'} ? 'opacity-50'
-                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA') ? 'row-hoy'
-                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA') ? 'row-vencida'
-                                       : ''">
+                        th:classappend="${p.estado.name() == 'CANCELADA' ? 'opacity-50' : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA' ? 'row-hoy' : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA' ? 'row-vencida' : ''))}">
                         <td style="padding-left:1.25rem;" class="text-nowrap fw-bold">
                             <span th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</span>
                             <span th:if="${p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA'}"

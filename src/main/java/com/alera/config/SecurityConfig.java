@@ -234,6 +234,8 @@ public class SecurityConfig {
                     .access(moduloOp("TRAZABILIDAD", "CREAR"))
                 .requestMatchers(HttpMethod.GET, "/duplicar/**")
                     .access(moduloOp("TRAZABILIDAD", "CREAR"))
+                .requestMatchers(HttpMethod.POST, "/crear-barriles/**")
+                    .access(moduloOp("TRAZABILIDAD", "CREAR"))
                 .requestMatchers(HttpMethod.POST, "/actualizar/**")
                     .access(moduloOp("TRAZABILIDAD", "EDITAR"))
                 .requestMatchers(HttpMethod.POST, "/eliminar/**")

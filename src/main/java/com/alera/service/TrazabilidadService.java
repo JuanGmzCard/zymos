@@ -291,9 +291,76 @@ public class TrazabilidadService {
             default -> throw new IllegalArgumentException("Fase inválida: " + fase);
         }
         loteRepo.save(lote);
+        String eventoFase = switch (fase) {
+            case "sinIniciar"       -> "FASE_REINICIADA";
+            case "fermentacion"     -> "FERM_INICIADA";
+            case "acondicionamiento"-> "ACOND_INICIADA";
+            case "maduracion"       -> "MADUR_INICIADA";
+            case "carbonatacion"    -> "CARB_INICIADA";
+            case "completados"      -> "COMPLETADO";
+            default                 -> "EDITADO";
+        };
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
-                "EDITADO", currentUser(), "Fase → " + fase));
+                eventoFase, currentUser(), null));
         log.info("Lote {} movido a fase: {}", lote.getCodigoLote(), fase);
+    }
+
+    @CacheEvict(value = "dashboard-stats", allEntries = true)
+    public void avanzarFase(Long id, String fase, String accion, LocalDate fecha,
+                             java.math.BigDecimal temperatura, String tempUnit) {
+        LoteCerveza lote = loteRepo.findById(id)
+                .orElseThrow(() -> new LoteNoEncontradoException(id));
+        java.math.BigDecimal tempStorage = temperatura != null
+                ? TempUtils.toStorage(temperatura, tempUnit) : null;
+        switch (fase.toUpperCase()) {
+            case "FERM" -> {
+                if ("INICIAR".equals(accion)) {
+                    if (lote.getEquipoFermentador() == null)
+                        throw new IllegalStateException("Asigná un fermentador antes de iniciar la fermentación.");
+                    lote.setFermFechaInicial(fecha);
+                    if (tempStorage != null) lote.setFermTemperatura(tempStorage);
+                } else {
+                    lote.setFermFechaFinal(fecha);
+                }
+            }
+            case "ACOND" -> {
+                if ("INICIAR".equals(accion)) {
+                    lote.setAcondFechaInicial(fecha);
+                    if (tempStorage != null) lote.setAcondTemperatura(tempStorage);
+                } else {
+                    lote.setAcondFechaFinal(fecha);
+                }
+            }
+            case "MADUR" -> {
+                if ("INICIAR".equals(accion)) {
+                    lote.setMadurFechaInicial(fecha);
+                    if (tempStorage != null) lote.setMadurTemperatura(tempStorage);
+                } else {
+                    lote.setMadurFechaFinal(fecha);
+                }
+            }
+            case "CARB" -> {
+                if ("INICIAR".equals(accion)) {
+                    lote.setCarbFechaInicial(fecha);
+                    if (tempStorage != null) lote.setCarbTemperatura(tempStorage);
+                } else {
+                    lote.setCarbFechaFinal(fecha);
+                }
+            }
+            default -> throw new IllegalArgumentException("Fase inválida: " + fase);
+        }
+        loteRepo.save(lote);
+        boolean iniciando = "INICIAR".equals(accion);
+        String eventoAvance = switch (fase.toUpperCase()) {
+            case "FERM"  -> iniciando ? "FERM_INICIADA"  : "FERM_COMPLETADA";
+            case "ACOND" -> iniciando ? "ACOND_INICIADA" : "ACOND_COMPLETADA";
+            case "MADUR" -> iniciando ? "MADUR_INICIADA" : "MADUR_COMPLETADA";
+            case "CARB"  -> iniciando ? "CARB_INICIADA"  : "CARB_COMPLETADA";
+            default      -> "EDITADO";
+        };
+        historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
+                eventoAvance, currentUser(), null));
+        log.info("Lote {} fase {} {}", lote.getCodigoLote(), fase, accion);
     }
 
     @Caching(evict = {
@@ -313,7 +380,31 @@ public class TrazabilidadService {
         log.info("Lote archivado: {} | inventario restaurado", lote.getCodigoLote());
     }
 
+    private static boolean after(LocalDate a, LocalDate b) {
+        return a != null && b != null && a.isAfter(b);
+    }
+
+    private void validarOrdenFechas(LoteFormDto dto) {
+        if (after(dto.getFechaElaboracion(), dto.getFermFechaInicial()))
+            throw new IllegalArgumentException("La fecha de elaboración no puede ser posterior al inicio de la fermentación.");
+        if (after(dto.getFermFechaInicial(), dto.getFermFechaFinal()))
+            throw new IllegalArgumentException("La fermentación no puede finalizar antes de iniciarse.");
+        if (after(dto.getFermFechaFinal(), dto.getAcondFechaInicial()))
+            throw new IllegalArgumentException("El acondicionamiento no puede comenzar antes de que finalice la fermentación.");
+        if (after(dto.getAcondFechaInicial(), dto.getAcondFechaFinal()))
+            throw new IllegalArgumentException("El acondicionamiento no puede finalizar antes de iniciarse.");
+        if (after(dto.getAcondFechaFinal(), dto.getMadurFechaInicial()))
+            throw new IllegalArgumentException("La maduración no puede comenzar antes de que finalice el acondicionamiento.");
+        if (after(dto.getMadurFechaInicial(), dto.getMadurFechaFinal()))
+            throw new IllegalArgumentException("La maduración no puede finalizar antes de iniciarse.");
+        if (after(dto.getMadurFechaFinal(), dto.getCarbFechaInicial()))
+            throw new IllegalArgumentException("La carbonatación no puede comenzar antes de que finalice la maduración.");
+        if (after(dto.getCarbFechaInicial(), dto.getCarbFechaFinal()))
+            throw new IllegalArgumentException("La carbonatación no puede finalizar antes de iniciarse.");
+    }
+
     private void mapearDto(LoteCerveza lote, LoteFormDto dto) {
+        validarOrdenFechas(dto);
         lote.setEstilo(dto.getEstilo());
         lote.setFechaElaboracion(dto.getFechaElaboracion());
         int numCoc = dto.getNumeroElaboraciones() != null ? dto.getNumeroElaboraciones() : 1;
@@ -635,6 +726,40 @@ public class TrazabilidadService {
         l.setDensidad(densidad);
         l.setTemperatura(temperatura);
         lecturaRepo.save(l);
+    }
+
+    /**
+     * Estima el costo de producción multiplicando la cantidad de cada ingrediente
+     * por el precio unitario configurado en InsumoInventario.
+     * Retorna null si ningún ingrediente tiene precio registrado.
+     */
+    @Transactional(readOnly = true)
+    public java.math.BigDecimal calcularCostoEstimado(LoteCerveza lote) {
+        List<Ingrediente> ingredientes = lote.getIngredientes();
+        if (ingredientes.isEmpty()) return null;
+        java.math.BigDecimal total = java.math.BigDecimal.ZERO;
+        boolean hayAlguno = false;
+        for (Ingrediente ing : ingredientes) {
+            Optional<com.alera.model.InsumoInventario> opt =
+                    insumoService.buscarPorNombreExacto(ing.getNombre());
+            if (opt.isEmpty()) continue;
+            com.alera.model.InsumoInventario insumo = opt.get();
+            if (insumo.getCostoUnitario() == null) continue;
+            java.math.BigDecimal cantidadBase = UnidadUtils.parsearYConvertir(ing.getCantidad());
+            java.math.BigDecimal cantidadEnUnidad = toInventoryUnit(cantidadBase, insumo.getUnidad());
+            total = total.add(cantidadEnUnidad.multiply(insumo.getCostoUnitario()));
+            hayAlguno = true;
+        }
+        return hayAlguno ? total.setScale(2, java.math.RoundingMode.HALF_UP) : null;
+    }
+
+    private static java.math.BigDecimal toInventoryUnit(java.math.BigDecimal baseValue, String unidad) {
+        if (baseValue == null || unidad == null) return java.math.BigDecimal.ZERO;
+        return switch (unidad.trim()) {
+            case "kg", "L" -> baseValue.divide(
+                    java.math.BigDecimal.valueOf(1000), 6, java.math.RoundingMode.HALF_UP);
+            default -> baseValue; // gr, mL, und, gal — pasar directo
+        };
     }
 
     // Comparación de BigDecimal que ignora la escala (20 == 20.00).

@@ -54,4 +54,19 @@ public class HistorialLote {
     public String getUsuario()       { return usuario; }
     public LocalDateTime getFecha()  { return fecha; }
     public String getNotas()         { return notas; }
+
+    public String getBadgeClass() {
+        if (accion == null) return "bg-secondary";
+        return switch (accion) {
+            case "CREADO"          -> "bg-success";
+            case "ARCHIVADO"       -> "bg-danger";
+            case "COMPLETADO"      -> "bg-primary";
+            case "FASE_REINICIADA" -> "bg-warning text-dark";
+            default -> {
+                if (accion.endsWith("_INICIADA"))   yield "bg-success bg-opacity-75";
+                if (accion.endsWith("_COMPLETADA")) yield "bg-info text-dark";
+                yield "bg-secondary";
+            }
+        };
+    }
 }

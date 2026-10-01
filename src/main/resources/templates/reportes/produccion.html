@@ -172,6 +172,29 @@
         </div>
     </div>
 
+    <!-- Gráfico fila 3: Tendencias por estilo (solo cuando hay estilo seleccionado) -->
+    <div class="row g-3 mb-3" th:if="${estilo != null and !estilo.isEmpty() and not #lists.isEmpty(tendLabels)}">
+        <div class="col-12">
+            <div class="content-card" style="margin-bottom:0;">
+                <div class="content-card-title d-flex align-items-center gap-2">
+                    <i class="bi bi-graph-up-arrow"></i>
+                    <span th:text="#{reportes.prod.chart.tendencia.estilo}">Evolución del Estilo</span>
+                    <span class="badge ms-1" style="background:var(--verde-zymos,#2563eb); font-size:0.75rem;" th:text="${estilo}"></span>
+                </div>
+                <div class="row g-3 p-3">
+                    <div class="col-md-6">
+                        <div style="font-size:0.78rem;font-weight:600;color:#475569;margin-bottom:0.5rem;" th:text="#{reportes.prod.chart.og}">OG: Alcanzado vs Objetivo</div>
+                        <canvas id="chartTendOg" style="max-height:220px;"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <div style="font-size:0.78rem;font-weight:600;color:#475569;margin-bottom:0.5rem;" th:text="#{reportes.prod.chart.ef.abv}">Eficiencia &amp; ABV</div>
+                        <canvas id="chartTendEfAbv" style="max-height:220px;"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Tabla de lotes + Resumen por estilo -->
     <div class="row g-3 mb-4">
 
@@ -289,11 +312,20 @@
 const chartData    = /*[[${chartEstilosLitros}]]*/ {};
 const trendData    = /*[[${chartTendencia}]]*/ {};
 const abvDistData  = /*[[${chartAbvDist}]]*/ {};
+const tendLabels     = /*[[${tendLabels}]]*/ [];
+const tendOgAlc      = /*[[${tendOgAlcanzado}]]*/ [];
+const tendOgObj      = /*[[${tendOgObjetivo}]]*/ [];
+const tendEficiencia = /*[[${tendEficiencia}]]*/ [];
+const tendAbv        = /*[[${tendAbv}]]*/ [];
 const RPTPROD_MSG = {
-    litros:  /*[[#{reportes.prod.js.litros}]]*/ 'Litros',
-    lotes:   /*[[#{reportes.prod.js.lotes}]]*/ 'Lotes',
-    loteAbv: /*[[#{reportes.prod.js.lote.abv}]]*/ 'lote(s)',
-    de:      /*[[#{reportes.prod.js.de}]]*/ 'de'
+    litros:       /*[[#{reportes.prod.js.litros}]]*/ 'Litros',
+    lotes:        /*[[#{reportes.prod.js.lotes}]]*/ 'Lotes',
+    loteAbv:      /*[[#{reportes.prod.js.lote.abv}]]*/ 'lote(s)',
+    de:           /*[[#{reportes.prod.js.de}]]*/ 'de',
+    ogAlcanzado:  /*[[#{reportes.prod.js.og.alcanzado}]]*/ 'OG Alcanzado',
+    ogObjetivo:   /*[[#{reportes.prod.js.og.objetivo}]]*/ 'OG Objetivo',
+    eficiencia:   /*[[#{reportes.prod.js.eficiencia}]]*/ 'Eficiencia',
+    abv:          /*[[#{reportes.prod.js.abv}]]*/ 'ABV'
 };
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -360,6 +392,116 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         });
+    }
+
+    // Gráficos tendencias por estilo
+    if (tendLabels.length > 0) {
+        const ogCanv = document.getElementById('chartTendOg');
+        if (ogCanv) {
+            new Chart(ogCanv, {
+                type: 'line',
+                data: {
+                    labels: tendLabels,
+                    datasets: [
+                        {
+                            label: RPTPROD_MSG.ogAlcanzado,
+                            data: tendOgAlc,
+                            borderColor: DORADO,
+                            backgroundColor: hexToRgba(DORADO, 0.08),
+                            pointBackgroundColor: DORADO,
+                            pointRadius: 5,
+                            tension: 0.3,
+                            fill: true,
+                            spanGaps: true
+                        },
+                        {
+                            label: RPTPROD_MSG.ogObjetivo,
+                            data: tendOgObj,
+                            borderColor: VERDE,
+                            borderDash: [6, 3],
+                            pointBackgroundColor: VERDE,
+                            pointStyle: 'triangle',
+                            pointRadius: 5,
+                            tension: 0.3,
+                            fill: false,
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { font: { family: 'Raleway', size: 10 } } } },
+                    scales: {
+                        y: {
+                            suggestedMin: 1000,
+                            suggestedMax: 1080,
+                            ticks: { font: { family: 'Raleway', size: 10 } }
+                        },
+                        x: { ticks: { font: { family: 'Raleway', size: 10 }, maxRotation: 45 } }
+                    }
+                }
+            });
+        }
+
+        const efCanv = document.getElementById('chartTendEfAbv');
+        if (efCanv) {
+            new Chart(efCanv, {
+                type: 'bar',
+                data: {
+                    labels: tendLabels,
+                    datasets: [
+                        {
+                            label: RPTPROD_MSG.eficiencia + ' %',
+                            data: tendEficiencia,
+                            backgroundColor: hexToRgba(DORADO, 0.55),
+                            borderColor: DORADO,
+                            borderWidth: 1,
+                            borderRadius: 3,
+                            yAxisID: 'y',
+                            spanGaps: true
+                        },
+                        {
+                            type: 'line',
+                            label: RPTPROD_MSG.abv + ' %',
+                            data: tendAbv,
+                            borderColor: VERDE,
+                            backgroundColor: hexToRgba(VERDE, 0.1),
+                            pointBackgroundColor: VERDE,
+                            pointRadius: 4,
+                            tension: 0.3,
+                            fill: false,
+                            yAxisID: 'y1',
+                            spanGaps: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { font: { family: 'Raleway', size: 10 } } } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                font: { family: 'Raleway', size: 10 },
+                                callback: v => v + '%'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            suggestedMax: 10,
+                            ticks: {
+                                font: { family: 'Raleway', size: 10 },
+                                callback: v => v + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        },
+                        x: { ticks: { font: { family: 'Raleway', size: 10 }, maxRotation: 45 } }
+                    }
+                }
+            });
+        }
     }
 
     // Gráfico distribución ABV

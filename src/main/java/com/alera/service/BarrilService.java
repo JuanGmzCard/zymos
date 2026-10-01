@@ -111,6 +111,38 @@ public class BarrilService {
     @Transactional(readOnly = true)
     public long countByEstado(EstadoBarril estado)   { return barrilRepo.countByEstado(estado); }
 
+    /**
+     * Crea barriles/kegs automáticamente desde el campo carbDestino del lote.
+     * Solo procesa entradas que contengan "barril" o "keg" (ignorando mayúsculas).
+     * Omite silenciosamente los códigos ya existentes (idempotente).
+     * @return cantidad de barriles creados en esta llamada
+     */
+    public int crearDesdeDestino(Long loteId, String codigoLote, String carbDestino) {
+        if (carbDestino == null || carbDestino.isBlank()) return 0;
+        var entradas = parseDestinoBarril(carbDestino);
+        int seq = 1;
+        int creados = 0;
+        for (var entrada : entradas) {
+            int cantidad = Math.max(1, entrada.cantidad().intValue());
+            for (int i = 0; i < cantidad; i++) {
+                String codigo = codigoLote + "-B-" + seq++;
+                if (barrilRepo.existsByCodigoIgnoreCase(codigo)) continue;
+                Barril b = new Barril();
+                b.setCodigo(codigo);
+                b.setTipo(entrada.formato());
+                b.setCapacidadLitros(parseLitros(entrada.formato()));
+                b.setEstado(EstadoBarril.LLENO);
+                b.setLoteId(loteId);
+                b.setCodigoLote(codigoLote);
+                barrilRepo.save(b);
+                movimientoRepo.save(MovimientoBarril.of(
+                        b.getId(), null, EstadoBarril.LLENO, usuarioActual(), "Auto-creado desde lote"));
+                creados++;
+            }
+        }
+        return creados;
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────
 
     private void normalizar(Barril b) {
@@ -135,5 +167,41 @@ public class BarrilService {
         } catch (Exception e) {
             return "sistema";
         }
+    }
+
+    private static final java.util.regex.Pattern DESTINO_PATTERN =
+        java.util.regex.Pattern.compile("^(\\d+(?:[.,]\\d+)?)\\s*[×x]\\s*(.+)$",
+            java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    private static final java.util.regex.Pattern LITROS_PATTERN =
+        java.util.regex.Pattern.compile("(\\d+(?:[.,]\\d+)?)\\s*[Ll]\\b");
+
+    private record DestinoEntry(java.math.BigDecimal cantidad, String formato) {}
+
+    private List<DestinoEntry> parseDestinoBarril(String carbDestino) {
+        var result = new java.util.ArrayList<DestinoEntry>();
+        for (var parte : carbDestino.split("\\s*\\|\\s*")) {
+            parte = parte.trim();
+            if (parte.isEmpty()) continue;
+            var m = DESTINO_PATTERN.matcher(parte);
+            if (!m.matches()) continue;
+            String fmt = m.group(2).trim();
+            String fmtLower = fmt.toLowerCase();
+            if (fmtLower.contains("barril") || fmtLower.contains("keg")) {
+                result.add(new DestinoEntry(
+                        new java.math.BigDecimal(m.group(1).replace(',', '.')), fmt));
+            }
+        }
+        return result;
+    }
+
+    private static java.math.BigDecimal parseLitros(String formato) {
+        if (formato == null) return null;
+        var m = LITROS_PATTERN.matcher(formato);
+        if (m.find()) {
+            try { return new java.math.BigDecimal(m.group(1).replace(',', '.')); }
+            catch (NumberFormatException ignored) {}
+        }
+        return null;
     }
 }

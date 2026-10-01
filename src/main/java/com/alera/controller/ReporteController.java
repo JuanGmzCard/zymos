@@ -171,6 +171,26 @@ public class ReporteController {
         }
         if (!anyAbv) chartAbvDist.clear();
 
+        // ── Tendencias por estilo ──────────────────────────────────────
+        List<String> tendLabels      = new ArrayList<>();
+        List<Object> tendOgAlcanzado = new ArrayList<>();
+        List<Object> tendOgObjetivo  = new ArrayList<>();
+        List<Object> tendEficiencia  = new ArrayList<>();
+        List<Object> tendAbv         = new ArrayList<>();
+        if (estilo != null && !estilo.isBlank()) {
+            lotes.stream()
+                 .filter(l -> l.getFechaElaboracion() != null)
+                 .sorted(Comparator.comparing(LoteCerveza::getFechaElaboracion))
+                 .forEach(l -> {
+                     tendLabels.add(l.getCodigoLote());
+                     tendOgAlcanzado.add(l.getDensidadInicial());
+                     tendOgObjetivo.add(l.getReceta() != null ? l.getReceta().getOgObjetivo() : null);
+                     tendEficiencia.add(l.getEficienciaMacerado() != null
+                             ? l.getEficienciaMacerado().doubleValue() : null);
+                     tendAbv.add(l.getAbv() != null ? l.getAbv().doubleValue() : null);
+                 });
+        }
+
         // ── Resumen por estilo ─────────────────────────────────────────
         Map<String, BigDecimal[]> resumenAgg = new LinkedHashMap<>();
         for (var lote : lotes) {
@@ -222,6 +242,11 @@ public class ReporteController {
         model.addAttribute("chartTendencia",     chartTendencia);
         model.addAttribute("chartAbvDist",       chartAbvDist);
         model.addAttribute("resumenEstilos",     resumenEstilos);
+        model.addAttribute("tendLabels",         tendLabels);
+        model.addAttribute("tendOgAlcanzado",    tendOgAlcanzado);
+        model.addAttribute("tendOgObjetivo",     tendOgObjetivo);
+        model.addAttribute("tendEficiencia",     tendEficiencia);
+        model.addAttribute("tendAbv",            tendAbv);
         return "reportes/produccion";
     }
 

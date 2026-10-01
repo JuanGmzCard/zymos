@@ -260,7 +260,7 @@ class TrazabilidadMoverFaseTest {
     // ── historial ─────────────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("moverFase — guarda historial con acción EDITADO y detalle de la fase")
+    @DisplayName("moverFase — guarda historial con evento específico de la fase")
     void moverFase_guardaHistorial() {
         lote.setEquipoFermentador(new Equipo());
         givenLote();
@@ -269,8 +269,7 @@ class TrazabilidadMoverFaseTest {
 
         ArgumentCaptor<HistorialLote> captor = ArgumentCaptor.forClass(HistorialLote.class);
         verify(historialRepo).save(captor.capture());
-        assertThat(captor.getValue().getAccion()).isEqualTo("EDITADO");
-        assertThat(captor.getValue().getNotas()).contains("fermentacion");
+        assertThat(captor.getValue().getAccion()).isEqualTo("FERM_INICIADA");
     }
 
     @Test
