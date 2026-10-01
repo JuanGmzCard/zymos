@@ -35,6 +35,7 @@ public class PlanificacionController {
         model.addAttribute("todas",    planService.listarTodas());
         model.addAttribute("recetas",  recetaService.listarActivas());
         model.addAttribute("estados",  EstadoPlanificacion.values());
+        model.addAttribute("today",    LocalDate.now());
         return "planificacion/index";
     }
 

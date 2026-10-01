@@ -29,6 +29,12 @@
             border-radius: 0 6px 6px 0;
         }
         .proxima-card.en-proceso { border-left-color: #0288D1; }
+        .proxima-card.hoy { border-left-color: #16a34a; background: #f0fdf4; }
+        .proxima-card.vencida { border-left-color: #dc2626; background: #fef2f2; }
+        .badge-planif-hoy { background:#16a34a; color:#fff; font-size:.62rem; padding:1px 6px; border-radius:10px; font-weight:700; vertical-align:middle; }
+        .badge-planif-vencida { background:#dc2626; color:#fff; font-size:.62rem; padding:1px 6px; border-radius:10px; font-weight:700; vertical-align:middle; }
+        .row-hoy td { background: #f0fdf4 !important; }
+        .row-vencida td { background: #fef2f2 !important; }
 
         .page-header { padding: 1.75rem 0 1rem; }
         .page-header h1 { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: 0.2rem; font-family: var(--font-body), sans-serif; }
@@ -54,6 +60,10 @@
         html.dark-mode .cal-wrapper { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .proximas-wrapper { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .proxima-card { background: var(--dm-card); border-left-color: #0284c7; }
+        html.dark-mode .proxima-card.hoy { background: rgba(22,163,74,.12); border-left-color: #16a34a; }
+        html.dark-mode .proxima-card.vencida { background: rgba(220,38,38,.12); border-left-color: #dc2626; }
+        html.dark-mode .row-hoy td { background: rgba(22,163,74,.08) !important; }
+        html.dark-mode .row-vencida td { background: rgba(220,38,38,.08) !important; }
         html.dark-mode .page-header h1 { color: var(--dm-text); }
         html.dark-mode .page-header .subtitle { color: var(--dm-text-muted); }
         html.dark-mode .stat-card-simple { background: var(--dm-card); border-color: var(--dm-border-light); }
@@ -130,17 +140,37 @@
                 <div th:each="p : ${proximas}"
                      th:if="${p.estado.name() != 'CANCELADA' and p.estado.name() != 'COMPLETADA'}">
                     <div class="proxima-card"
-                         th:classappend="${p.estado.name() == 'EN_PROCESO'} ? 'en-proceso' : ''">
+                         th:classappend="${p.estado.name() == 'EN_PROCESO'} ? 'en-proceso'
+                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA') ? 'hoy'
+                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA') ? 'vencida'
+                                       : ''">
                         <div class="d-flex justify-content-between align-items-start">
-                            <div>
+                            <div style="flex:1; min-width:0;">
                                 <div class="fw-bold small" th:text="${p.nombreElaboracion}">—</div>
-                                <div class="text-muted" style="font-size:.78rem;"
-                                     th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</div>
+                                <div class="text-muted" style="font-size:.78rem;">
+                                    <span th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</span>
+                                    <span th:if="${p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today)}"
+                                          class="badge-planif-hoy ms-1" th:text="#{planif.badge.hoy}">¡Hoy!</span>
+                                    <span th:if="${p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA'}"
+                                          class="badge-planif-vencida ms-1" th:text="#{planif.badge.vencida}">Atrasada</span>
+                                </div>
                                 <div class="text-muted" style="font-size:.75rem;"
                                      th:if="${p.volumenEstimado != null}"
                                      th:text="${p.volumenEstimado.stripTrailingZeros().toPlainString()} + ' ' + #{planif.proximas.vol}">—</div>
+                                <!-- Botón Elaborar: solo cuando la fecha ya llegó y está PLANIFICADA -->
+                                <div th:if="${p.estado.name() == 'PLANIFICADA' and p.fechaPlaneada != null and !p.fechaPlaneada.isAfter(today)}"
+                                     class="mt-2"
+                                     sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAnyAuthority('MODULO_PLANIFICACION_CREAR','MODULO_PLANIFICACION_EDITAR','MODULO_TRAZABILIDAD_CREAR')">
+                                    <a th:href="@{/nuevo(planId=${p.id})}"
+                                       th:class="${p.fechaPlaneada.isEqual(today)} ? 'btn btn-success btn-sm' : 'btn btn-warning btn-sm'"
+                                       style="font-size:.75rem;">
+                                        <i class="bi bi-play-fill me-1"></i>
+                                        <span th:if="${p.fechaPlaneada.isEqual(today)}" th:text="#{planif.btn.elaborar}">Elaborar</span>
+                                        <span th:unless="${p.fechaPlaneada.isEqual(today)}" th:text="#{planif.btn.elaborar.pendiente}">Elaborar (atrasada)</span>
+                                    </a>
+                                </div>
                             </div>
-                            <span class="plan-badge"
+                            <span class="plan-badge ms-2 flex-shrink-0"
                                   th:style="'background:' + ${p.estado.color} + ';color:' + ${p.estado.colorTexto}"
                                   th:text="${p.estado.displayName}">—</span>
                         </div>
@@ -177,9 +207,17 @@
                 </thead>
                 <tbody>
                     <tr th:each="p : ${todas}"
-                        th:classappend="${p.estado.name() == 'CANCELADA'} ? 'opacity-50' : ''">
-                        <td style="padding-left:1.25rem;" class="text-nowrap fw-bold"
-                            th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</td>
+                        th:classappend="${p.estado.name() == 'CANCELADA'} ? 'opacity-50'
+                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA') ? 'row-hoy'
+                                       : (p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA') ? 'row-vencida'
+                                       : ''">
+                        <td style="padding-left:1.25rem;" class="text-nowrap fw-bold">
+                            <span th:text="${#temporals.format(p.fechaPlaneada,'dd/MM/yyyy')}">—</span>
+                            <span th:if="${p.fechaPlaneada != null and p.fechaPlaneada.isEqual(today) and p.estado.name() == 'PLANIFICADA'}"
+                                  class="badge-planif-hoy ms-1" th:text="#{planif.badge.hoy}">¡Hoy!</span>
+                            <span th:if="${p.fechaPlaneada != null and p.fechaPlaneada.isBefore(today) and p.estado.name() == 'PLANIFICADA'}"
+                                  class="badge-planif-vencida ms-1" th:text="#{planif.badge.vencida}">Atrasada</span>
+                        </td>
                         <td th:text="${p.nombreElaboracion}">—</td>
                         <td class="text-muted small">
                             <span th:if="${p.receta != null}" th:text="${p.receta.nombre}">—</span>
@@ -209,9 +247,19 @@
                                 </button>
                                 <!-- Iniciar → abre formulario de nuevo lote con datos pre-cargados -->
                                 <th:block th:if="${p.estado.name() == 'PLANIFICADA'}">
-                                    <a th:href="@{/nuevo(planId=${p.id})}"
+                                    <!-- Fecha llegó: botón verde con texto -->
+                                    <a th:if="${p.fechaPlaneada != null and !p.fechaPlaneada.isAfter(today)}"
+                                       th:href="@{/nuevo(planId=${p.id})}"
+                                       th:class="${p.fechaPlaneada.isEqual(today)} ? 'btn btn-sm btn-success py-0 px-2' : 'btn btn-sm btn-warning py-0 px-2'"
+                                       th:title="#{planif.btn.elaborar}">
+                                        <i class="bi bi-play-fill me-1"></i>
+                                        <span th:text="#{planif.btn.elaborar}">Elaborar</span>
+                                    </a>
+                                    <!-- Fecha futura: botón outline discreto solo con ícono -->
+                                    <a th:unless="${p.fechaPlaneada != null and !p.fechaPlaneada.isAfter(today)}"
+                                       th:href="@{/nuevo(planId=${p.id})}"
                                        class="btn btn-sm btn-outline-primary py-0 px-2"
-                                       th:title="#{planif.btn.iniciar}" title="Iniciar elaboración">
+                                       th:title="#{planif.btn.iniciar}">
                                         <i class="bi bi-play-fill"></i>
                                     </a>
                                 </th:block>
