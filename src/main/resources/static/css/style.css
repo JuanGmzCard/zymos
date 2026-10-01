@@ -1186,6 +1186,19 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
     }
 }
 
+/* Filter cards — inputs a ancho completo en móvil (sobreescribe inline width:Xpx) */
+@media (max-width: 575.98px) {
+    .filter-card .form-control,
+    .filter-card .form-select {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    /* Form con d-flex ocupa todo el ancho para que sus flex-items se expandan */
+    .filter-card form.d-flex {
+        width: 100%;
+    }
+}
+
 /* Tarjeta de filtros */
 .filter-card {
     background: #fff;

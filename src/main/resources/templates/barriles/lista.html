@@ -195,10 +195,10 @@
     <!-- Filtros -->
     <div class="filter-card mb-3">
         <form th:action="@{/barriles}" method="get" class="row g-2 align-items-end mb-3">
-            <div class="col-auto">
+            <div class="col-12 col-sm-auto">
                 <input type="hidden" th:if="${estadoFiltro != null}" name="estado" th:value="${estadoFiltro.name()}">
                 <input type="text" name="codigo" class="form-control form-control-sm"
-                       style="width:220px;" th:placeholder="#{barriles.filter.codigo.ph}"
+                       th:placeholder="#{barriles.filter.codigo.ph}"
                        th:value="${codigo}">
             </div>
             <div class="col-auto">
