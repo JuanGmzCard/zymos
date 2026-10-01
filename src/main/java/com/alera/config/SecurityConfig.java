@@ -22,7 +22,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
-import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -304,7 +303,7 @@ public class SecurityConfig {
                 // intermedio para regenerar la cookie; con sesión esto no es necesario.
                 // CsrfTokenRequestAttributeHandler (no-XOR, eager) garantiza que el token se
                 // resuelve de forma directa (sin XOR) para compatibilidad con with(csrf()) en tests.
-                .csrfTokenRepository(new HttpSessionCsrfTokenRepository())
+                .csrfTokenRepository(new SafeHttpSessionCsrfTokenRepository())
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
                 .ignoringRequestMatchers("/api/**", "/api/auth/**"));
         return http.build();

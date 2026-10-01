@@ -2,6 +2,8 @@ package com.alera.model;
 
 import com.alera.model.enums.EstadoPlanificacion;
 import jakarta.persistence.*;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 import org.hibernate.annotations.TenantId;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,6 +25,7 @@ public class ElaboracionPlanificada {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "receta_id")
+    @NotFound(action = NotFoundAction.IGNORE)
     private Receta receta;
 
     @Column(name = "nombre_elaboracion", nullable = false, length = 150)
