@@ -1,6 +1,7 @@
 package com.alera.controller;
 
 import com.alera.model.Tarea;
+import com.alera.model.TareaComentario;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
 import com.alera.service.*;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -133,8 +135,27 @@ public class TareaController {
 
     @GetMapping("/{id}")
     public String ver(@PathVariable Long id, Model model) {
-        model.addAttribute("tarea", service.buscarPorId(id));
+        model.addAttribute("tarea",       service.buscarPorId(id));
+        model.addAttribute("comentarios", service.listarComentarios(id));
         return "tareas/detalle";
+    }
+
+    @PostMapping(value = "/{id}/comentarios", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> agregarComentario(
+            @PathVariable Long id,
+            @RequestParam String texto,
+            Authentication auth) {
+        if (texto == null || texto.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Texto requerido"));
+        }
+        TareaComentario c = service.agregarComentario(id, texto, auth.getName());
+        return ResponseEntity.ok(Map.of(
+                "id",        c.getId(),
+                "texto",     c.getTexto(),
+                "autor",     c.getAutor(),
+                "fechaHora", c.getFechaHora().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+        ));
     }
 
     @GetMapping("/editar/{id}")

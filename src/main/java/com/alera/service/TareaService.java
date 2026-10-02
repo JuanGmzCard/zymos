@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.model.Tarea;
+import com.alera.model.TareaComentario;
 import com.alera.model.TareaItem;
 import com.alera.model.TareaReferencia;
 import com.alera.model.enums.EstadoTarea;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +23,7 @@ public class TareaService {
 
     private final TareaRepository                  repo;
     private final TareaItemRepository              itemRepo;
+    private final TareaComentarioRepository        comentarioRepo;
     private final LoteCervezaRepository            loteRepo;
     private final EquipoRepository                 equipoRepo;
     private final InsumoInventarioRepository       insumoRepo;
@@ -36,6 +39,7 @@ public class TareaService {
 
     public TareaService(TareaRepository repo,
                         TareaItemRepository itemRepo,
+                        TareaComentarioRepository comentarioRepo,
                         LoteCervezaRepository loteRepo,
                         EquipoRepository equipoRepo,
                         InsumoInventarioRepository insumoRepo,
@@ -50,6 +54,7 @@ public class TareaService {
                         NotificacionService notificacionService) {
         this.repo               = repo;
         this.itemRepo           = itemRepo;
+        this.comentarioRepo     = comentarioRepo;
         this.loteRepo           = loteRepo;
         this.equipoRepo         = equipoRepo;
         this.insumoRepo         = insumoRepo;
@@ -276,5 +281,16 @@ public class TareaService {
 
             tarea.getItems().add(item);
         }
+    }
+
+    public TareaComentario agregarComentario(Long tareaId, String texto, String autor) {
+        Tarea tarea = buscarPorId(tareaId);
+        TareaComentario c = new TareaComentario(tarea, texto.trim(), autor, LocalDateTime.now());
+        return comentarioRepo.save(c);
+    }
+
+    @Transactional(readOnly = true)
+    public List<TareaComentario> listarComentarios(Long tareaId) {
+        return comentarioRepo.findByTareaIdOrderByFechaHoraAsc(tareaId);
     }
 }

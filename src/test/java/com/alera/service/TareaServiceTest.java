@@ -3,6 +3,7 @@ package com.alera.service;
 import com.alera.model.Equipo;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Tarea;
+import com.alera.model.TareaComentario;
 import com.alera.model.TareaItem;
 import com.alera.model.enums.EstadoTarea;
 import com.alera.model.enums.PrioridadTarea;
@@ -36,6 +37,7 @@ class TareaServiceTest {
 
     @Mock TareaRepository                  repo;
     @Mock TareaItemRepository              itemRepo;
+    @Mock TareaComentarioRepository        comentarioRepo;
     @Mock LoteCervezaRepository            loteRepo;
     @Mock EquipoRepository                 equipoRepo;
     @Mock InsumoInventarioRepository       insumoRepo;
