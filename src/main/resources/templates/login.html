@@ -3,96 +3,359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${branding.name} + ' - ' + #{login.title}">Alera - Iniciar Sesión</title>
+    <title th:text="${branding.name} + ' - ' + #{login.title}">Zymos - Iniciar Sesión</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+
+    <!-- Tipografías y variables de branding -->
     <style th:inline="text" th:attr="nonce=${cspNonce}">
-@import url('https://fonts.googleapis.com/css2?family=[[${branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
-    :root {
-        --font-headings: '[[${branding.fontHeadings != null ? branding.fontHeadings : 'Cinzel'}]]', serif;
-        --font-body:     '[[${branding.fontBody != null ? branding.fontBody : 'Raleway'}]]', sans-serif;
-        --verde-oscuro: [[${branding.colorNavbar}]];
-        --verde-zymos:  [[${branding.colorPrimary}]];
-        --verde-alera:  [[${branding.colorPrimary}]];
-        --dorado:       [[${branding.colorAccent}]];
-        --dorado-claro: [[${branding.colorAccentHover}]];
-        --crema:        [[${branding.colorCream}]];
-        --fondo:        [[${branding.colorBodyBg}]];
-        --texto-claro:  [[${branding.colorCream}]];
+@import url('https://fonts.googleapis.com/css2?family=[[${branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Inter'}]]:wght@400;600;700;800&family=[[${branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Inter'}]]:wght@300;400;500;600&display=swap');
+:root {
+    --font-headings: '[[${branding.fontHeadings != null ? branding.fontHeadings : 'Inter'}]]', sans-serif;
+    --font-body:     '[[${branding.fontBody     != null ? branding.fontBody     : 'Inter'}]]', sans-serif;
+    --verde-oscuro:  [[${branding.colorNavbar}]];
+    --verde-zymos:   [[${branding.colorPrimary}]];
+    --verde-alera:   [[${branding.colorPrimary}]];
+    --dorado:        [[${branding.colorAccent}]];
+    --dorado-claro:  [[${branding.colorAccentHover}]];
+    --crema:         [[${branding.colorCream}]];
+    --fondo:         [[${branding.colorBodyBg}]];
+}
+    </style>
+
+    <style th:attr="nonce=${cspNonce}">
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        font-family: var(--font-body, 'Inter', sans-serif);
+        min-height: 100vh;
+        display: flex;
+        overflow: hidden;
+    }
+
+    /* ── Split wrapper ── */
+    .la-wrap {
+        display: flex;
+        width: 100%;
+        min-height: 100vh;
+    }
+
+    /* ══════════════════════════════
+       PANEL IZQUIERDO — Branding
+    ══════════════════════════════ */
+    .la-left {
+        width: 46%;
+        min-height: 100vh;
+        background: var(--verde-oscuro, #0f172a);
+        background-image:
+            radial-gradient(ellipse at 80% 10%,  color-mix(in srgb, var(--verde-zymos, #2563eb) 22%, transparent) 0%, transparent 55%),
+            radial-gradient(ellipse at 10% 90%,  color-mix(in srgb, var(--dorado,      #0ea5e9) 15%, transparent) 0%, transparent 50%);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 52px 48px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Patrón de puntos decorativo */
+    .la-left::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(circle, rgba(255,255,255,.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        pointer-events: none;
+    }
+
+    .la-brand { position: relative; z-index: 1; }
+
+    .la-logo-box {
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--dorado, #0ea5e9) 20%, transparent);
+        border: 1px solid color-mix(in srgb, var(--dorado, #0ea5e9) 35%, transparent);
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .la-logo-box img { max-height: 36px; max-width: 36px; object-fit: contain; }
+    .la-logo-box i   { font-size: 24px; color: var(--dorado, #0ea5e9); }
+
+    .la-brand h1 {
+        font-family: var(--font-headings, 'Inter', sans-serif);
+        font-size: 30px; font-weight: 800;
+        color: #f8fafc; letter-spacing: -.5px;
+        margin-bottom: 6px;
+    }
+    .la-brand p {
+        font-size: 13px;
+        color: rgba(255,255,255,.5);
+    }
+
+    /* Features */
+    .la-features { position: relative; z-index: 1; }
+
+    .la-feat {
+        display: flex; align-items: flex-start; gap: 14px;
+        margin-bottom: 22px;
+    }
+    .la-feat-icon {
+        width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
+        background: color-mix(in srgb, var(--dorado, #0ea5e9) 15%, transparent);
+        border: 1px solid color-mix(in srgb, var(--dorado, #0ea5e9) 25%, transparent);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 17px; color: var(--dorado, #0ea5e9);
+    }
+    .la-feat-text h4 {
+        font-size: 13px; font-weight: 600; color: #f1f5f9;
+        margin-bottom: 2px;
+    }
+    .la-feat-text p {
+        font-size: 12px; color: rgba(255,255,255,.45); line-height: 1.5;
+    }
+
+    /* Footer izquierdo */
+    .la-left-footer {
+        position: relative; z-index: 1;
+        font-size: 11px; color: rgba(255,255,255,.2);
+    }
+
+    /* ══════════════════════════════
+       PANEL DERECHO — Formulario
+    ══════════════════════════════ */
+    .la-right {
+        flex: 1;
+        min-height: 100vh;
+        background: #0f172a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 40px;
+    }
+
+    .la-form-box {
+        width: 100%;
+        max-width: 380px;
+    }
+
+    .la-form-box h2 {
+        font-size: 22px; font-weight: 700;
+        color: #f1f5f9; margin-bottom: 4px;
+    }
+    .la-form-box .la-sub {
+        font-size: 13px; color: #475569; margin-bottom: 28px;
+    }
+
+    /* Alertas */
+    .la-alert {
+        display: flex; align-items: flex-start; gap: 10px;
+        padding: 12px 14px; border-radius: 10px;
+        font-size: 13px; margin-bottom: 20px;
+        border: 1px solid transparent;
+    }
+    .la-alert i { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+    .la-alert-danger  { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.25);  color: #fca5a5; }
+    .la-alert-success { background: rgba(34,197,94,.12);  border-color: rgba(34,197,94,.25);  color: #86efac; }
+    .la-alert-warning { background: rgba(234,179,8,.12);  border-color: rgba(234,179,8,.25);  color: #fde047; }
+
+    /* Campo de formulario */
+    .la-field { margin-bottom: 16px; }
+    .la-field label {
+        display: block;
+        font-size: 11px; font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase; letter-spacing: .08em;
+        margin-bottom: 7px;
+    }
+    .la-input-wrap {
+        display: flex; align-items: center;
+        background: #1e293b;
+        border: 1.5px solid #334155;
+        border-radius: 10px; overflow: hidden;
+        transition: border-color .2s, box-shadow .2s;
+    }
+    .la-input-wrap:focus-within {
+        border-color: var(--verde-zymos, #2563eb);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--verde-zymos, #2563eb) 18%, transparent);
+    }
+    .la-input-icon {
+        padding: 0 13px;
+        color: var(--dorado, #f97316);
+        font-size: 16px; flex-shrink: 0;
+        display: flex; align-items: center;
+    }
+    .la-input-wrap input {
+        flex: 1; padding: 12px 12px 12px 0;
+        background: transparent; border: none;
+        color: #e2e8f0; font-size: 14px;
+        font-family: var(--font-body, 'Inter', sans-serif);
+        outline: none;
+    }
+    .la-input-wrap input::placeholder { color: #334155; }
+
+    /* Botón toggle contraseña */
+    .la-btn-eye {
+        background: transparent; border: none;
+        color: #475569; padding: 0 12px;
+        cursor: pointer; display: flex; align-items: center;
+        font-size: 15px;
+        transition: color .15s;
+    }
+    .la-btn-eye:hover { color: #94a3b8; }
+
+    /* Botón submit */
+    .la-btn-submit {
+        width: 100%; padding: 13px;
+        background: var(--verde-zymos, #2563eb);
+        color: #fff; border: none; border-radius: 10px;
+        font-size: 15px; font-weight: 600; cursor: pointer;
+        margin-top: 8px;
+        font-family: var(--font-body, 'Inter', sans-serif);
+        transition: opacity .15s, transform .1s;
+        box-shadow: 0 4px 14px color-mix(in srgb, var(--verde-zymos, #2563eb) 40%, transparent);
+    }
+    .la-btn-submit:hover { opacity: .9; transform: translateY(-1px); }
+    .la-btn-submit:active { transform: none; opacity: 1; }
+
+    /* Footer derecho */
+    .la-right-footer {
+        text-align: center; font-size: 11px;
+        color: #1e293b; margin-top: 28px;
+    }
+
+    /* ── Responsive: móvil oculta panel izquierdo ── */
+    @media (max-width: 768px) {
+        .la-left  { display: none; }
+        .la-right { padding: 40px 24px; }
     }
     </style>
 </head>
-<body class="login-body">
-<div class="login-container">
-    <div class="login-card">
-        <div class="login-header">
-            <div class="login-logo">
+<body>
+
+<div class="la-wrap">
+
+    <!-- ══════════ PANEL IZQUIERDO ══════════ -->
+    <div class="la-left">
+
+        <div class="la-brand">
+            <div class="la-logo-box">
                 <img th:if="${!#strings.isEmpty(branding.logoUrl)}"
-                     th:src="${branding.logoUrl}" alt=""
-                     style="max-height:90px;max-width:240px;object-fit:contain;">
+                     th:src="${branding.logoUrl}" alt="">
                 <i th:unless="${!#strings.isEmpty(branding.logoUrl)}"
                    class="bi bi-droplet-fill"></i>
             </div>
-            <h1 class="login-title" th:text="${branding.name}">Alera</h1>
-            <p class="login-subtitle" th:text="${branding.tagline}">Sistema de Trazabilidad Cervecera</p>
+            <h1 th:text="${branding.name}">Zymos</h1>
+            <p th:text="${branding.tagline}">Sistema de Gestión y Trazabilidad Integral</p>
         </div>
 
-        <div class="login-body-content">
-            <div th:if="${param.bloqueado}" class="alert alert-danger">
-                <i class="bi bi-shield-lock me-2"></i>
-                <span th:text="#{login.blocked}">Demasiados intentos fallidos. Tu acceso está bloqueado temporalmente. Intenta de nuevo en unos minutos.</span>
-            </div>
-            <div th:if="${param.error}" class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle me-2"></i><span th:text="#{login.error}">Usuario o contraseña incorrectos</span>
-            </div>
-            <div th:if="${param.logout}" class="alert alert-success">
-                <i class="bi bi-check-circle me-2"></i><span th:text="#{login.logout.ok}">Sesión cerrada correctamente</span>
-            </div>
-            <div th:if="${param.expired}" class="alert alert-warning">
-                <i class="bi bi-clock me-2"></i><span th:text="#{login.expired}">Tu sesión expiró por inactividad (30 min). Inicia sesión nuevamente.</span>
-            </div>
-
-            <form th:action="@{/login}" method="post">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold" th:text="#{login.username}">Usuario</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-person"></i></span>
-                        <input type="text" name="username" class="form-control"
-                               th:placeholder="#{login.username.placeholder}" placeholder="Ingresa tu usuario" required autofocus>
-                    </div>
+        <div class="la-features">
+            <div class="la-feat">
+                <div class="la-feat-icon"><i class="bi bi-clipboard2-check"></i></div>
+                <div class="la-feat-text">
+                    <h4 th:text="#{login.feat1.title}">Trazabilidad completa</h4>
+                    <p  th:text="#{login.feat1.desc}">Seguimiento de cada lote desde el grano hasta el vaso</p>
                 </div>
-                <div class="mb-4">
-                    <label class="form-label fw-semibold" th:text="#{login.password}">Contraseña</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input type="password" name="password" class="form-control"
-                               th:placeholder="#{login.password.placeholder}" placeholder="Ingresa tu contraseña" required>
-                        <button type="button" class="btn btn-outline-secondary btn-toggle-pwd" tabindex="-1"
-                                th:title="#{login.password.toggle}" title="Mostrar/ocultar"><i class="bi bi-eye"></i></button>
-                    </div>
+            </div>
+            <div class="la-feat">
+                <div class="la-feat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="la-feat-text">
+                    <h4 th:text="#{login.feat2.title}">Reportes en tiempo real</h4>
+                    <p  th:text="#{login.feat2.desc}">Producción, ventas y rentabilidad al instante</p>
                 </div>
-                <button type="submit" class="btn btn-login w-100">
-                    <i class="bi bi-box-arrow-in-right me-2"></i><span th:text="#{login.submit}">Ingresar</span>
-                </button>
-            </form>
+            </div>
+            <div class="la-feat">
+                <div class="la-feat-icon"><i class="bi bi-shield-check"></i></div>
+                <div class="la-feat-text">
+                    <h4 th:text="#{login.feat3.title}">BPM y cumplimiento</h4>
+                    <p  th:text="#{login.feat3.desc}">Control sanitario y buenas prácticas integradas</p>
+                </div>
+            </div>
         </div>
 
-        <div class="login-footer">
-            <small class="text-muted"
-                   th:text="${branding.name} + ' ' + #{login.footer}">Alera © 2024 — Trazabilidad Artesanal</small>
+        <div class="la-left-footer"
+             th:text="${branding.name} + ' © ' + ${#temporals.year(#temporals.createNow())} + ' — ' + #{login.footer.tagline}">
+            Zymos © 2026 — Trazabilidad Artesanal
         </div>
     </div>
+
+    <!-- ══════════ PANEL DERECHO ══════════ -->
+    <div class="la-right">
+        <div class="la-form-box">
+
+            <h2 th:text="#{login.welcome}">Bienvenido de nuevo</h2>
+            <p class="la-sub" th:text="#{login.welcome.sub}">Ingresa tus credenciales para continuar</p>
+
+            <!-- Alertas -->
+            <div th:if="${param.bloqueado}" class="la-alert la-alert-danger">
+                <i class="bi bi-shield-lock"></i>
+                <span th:text="#{login.blocked}">Demasiados intentos fallidos. Tu acceso está bloqueado temporalmente.</span>
+            </div>
+            <div th:if="${param.error}" class="la-alert la-alert-danger">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span th:text="#{login.error}">Usuario o contraseña incorrectos</span>
+            </div>
+            <div th:if="${param.logout}" class="la-alert la-alert-success">
+                <i class="bi bi-check-circle"></i>
+                <span th:text="#{login.logout.ok}">Sesión cerrada correctamente</span>
+            </div>
+            <div th:if="${param.expired}" class="la-alert la-alert-warning">
+                <i class="bi bi-clock"></i>
+                <span th:text="#{login.expired}">Tu sesión expiró por inactividad. Inicia sesión nuevamente.</span>
+            </div>
+
+            <!-- Formulario -->
+            <form th:action="@{/login}" method="post">
+
+                <div class="la-field">
+                    <label th:text="#{login.username}">Usuario</label>
+                    <div class="la-input-wrap">
+                        <span class="la-input-icon"><i class="bi bi-person-fill"></i></span>
+                        <input type="text" name="username"
+                               th:placeholder="#{login.username.placeholder}"
+                               placeholder="Ingresa tu usuario"
+                               required autofocus>
+                    </div>
+                </div>
+
+                <div class="la-field">
+                    <label th:text="#{login.password}">Contraseña</label>
+                    <div class="la-input-wrap">
+                        <span class="la-input-icon"><i class="bi bi-lock-fill"></i></span>
+                        <input type="password" id="loginPwd" name="password"
+                               th:placeholder="#{login.password.placeholder}"
+                               placeholder="Ingresa tu contraseña"
+                               required>
+                        <button type="button" id="btnTogglePwd" class="la-btn-eye"
+                                th:title="#{login.password.toggle}" tabindex="-1">
+                            <i class="bi bi-eye" id="iconEye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="la-btn-submit">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>
+                    <span th:text="#{login.submit}">Ingresar</span>
+                </button>
+            </form>
+
+            <div class="la-right-footer"
+                 th:text="${branding.name} + ' © ' + ${#temporals.year(#temporals.createNow())} + ' — ' + #{login.footer.tagline}">
+                Zymos © 2026 — Trazabilidad Artesanal
+            </div>
+        </div>
+    </div>
+
 </div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:attr="nonce=${cspNonce}">
-document.querySelector('.btn-toggle-pwd').addEventListener('click', function() {
-  const inp = this.closest('.input-group').querySelector('input');
-  const ico = this.querySelector('i');
-  const show = inp.type === 'password';
-  inp.type = show ? 'text' : 'password';
-  ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+document.getElementById('btnTogglePwd').addEventListener('click', function () {
+    var inp = document.getElementById('loginPwd');
+    var ico = document.getElementById('iconEye');
+    var show = inp.type === 'password';
+    inp.type = show ? 'text' : 'password';
+    ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
 });
 </script>
 </body>
