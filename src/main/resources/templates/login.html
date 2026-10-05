@@ -52,10 +52,36 @@
             radial-gradient(ellipse at 10% 90%,  color-mix(in srgb, var(--dorado,      #0ea5e9) 15%, transparent) 0%, transparent 50%);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        padding: 52px 48px;
+        justify-content: center;
+        align-items: center;
+        padding: 52px 40px;
         position: relative;
         overflow: hidden;
+    }
+
+    .la-content {
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        max-width: 340px;
+        text-align: center;
+    }
+
+    /* Línea divisoria suave */
+    .la-left::after {
+        content: '';
+        position: absolute;
+        top: 10%; bottom: 10%; right: 0;
+        width: 1px;
+        background: linear-gradient(to bottom,
+            transparent,
+            rgba(255,255,255,.08) 30%,
+            rgba(255,255,255,.08) 70%,
+            transparent);
+        pointer-events: none;
     }
 
     /* Patrón de puntos decorativo */
@@ -68,7 +94,7 @@
         pointer-events: none;
     }
 
-    .la-brand { position: relative; z-index: 1; }
+    .la-brand {}
 
     .la-logo-box {
         width: 52px; height: 52px;
@@ -76,7 +102,7 @@
         background: color-mix(in srgb, var(--dorado, #0ea5e9) 20%, transparent);
         border: 1px solid color-mix(in srgb, var(--dorado, #0ea5e9) 35%, transparent);
         display: flex; align-items: center; justify-content: center;
-        margin-bottom: 20px;
+        margin: 0 auto 20px;
         overflow: hidden;
     }
     .la-logo-box img { max-height: 36px; max-width: 36px; object-fit: contain; }
@@ -93,12 +119,12 @@
         color: rgba(255,255,255,.5);
     }
 
-    /* Features */
-    .la-features { position: relative; z-index: 1; }
+    .la-features {}
 
     .la-feat {
-        display: flex; align-items: flex-start; gap: 14px;
+        display: flex; align-items: center; gap: 14px;
         margin-bottom: 22px;
+        text-align: left;
     }
     .la-feat-icon {
         width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0;
@@ -117,7 +143,9 @@
 
     /* Footer izquierdo */
     .la-left-footer {
-        position: relative; z-index: 1;
+        position: absolute; bottom: 28px; left: 0; right: 0;
+        text-align: center;
+        z-index: 1;
         font-size: 11px; color: rgba(255,255,255,.2);
     }
 
@@ -136,7 +164,7 @@
 
     .la-form-box {
         width: 100%;
-        max-width: 380px;
+        max-width: 400px;
     }
 
     .la-form-box h2 {
@@ -194,6 +222,15 @@
     }
     .la-input-wrap input::placeholder { color: #334155; }
 
+    /* Override autocompletado del navegador */
+    .la-input-wrap input:-webkit-autofill,
+    .la-input-wrap input:-webkit-autofill:hover,
+    .la-input-wrap input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 1000px #1e293b inset !important;
+        -webkit-text-fill-color: #e2e8f0 !important;
+        caret-color: #e2e8f0;
+    }
+
     /* Botón toggle contraseña */
     .la-btn-eye {
         background: transparent; border: none;
@@ -238,39 +275,43 @@
     <!-- ══════════ PANEL IZQUIERDO ══════════ -->
     <div class="la-left">
 
-        <div class="la-brand">
-            <div class="la-logo-box">
-                <img th:if="${!#strings.isEmpty(branding.logoUrl)}"
-                     th:src="${branding.logoUrl}" alt="">
-                <i th:unless="${!#strings.isEmpty(branding.logoUrl)}"
-                   class="bi bi-droplet-fill"></i>
-            </div>
-            <h1 th:text="${branding.name}">Zymos</h1>
-            <p th:text="${branding.tagline}">Sistema de Gestión y Trazabilidad Integral</p>
-        </div>
+        <div class="la-content">
 
-        <div class="la-features">
-            <div class="la-feat">
-                <div class="la-feat-icon"><i class="bi bi-clipboard2-check"></i></div>
-                <div class="la-feat-text">
-                    <h4 th:text="#{login.feat1.title}">Trazabilidad completa</h4>
-                    <p  th:text="#{login.feat1.desc}">Seguimiento de cada lote desde el grano hasta el vaso</p>
+            <div class="la-brand">
+                <div class="la-logo-box">
+                    <img th:if="${!#strings.isEmpty(branding.logoUrl)}"
+                         th:src="${branding.logoUrl}" alt="">
+                    <i th:unless="${!#strings.isEmpty(branding.logoUrl)}"
+                       class="bi bi-droplet-fill"></i>
+                </div>
+                <h1 th:text="${branding.name}">Zymos</h1>
+                <p th:text="${branding.tagline}">Sistema de Gestión y Trazabilidad Integral</p>
+            </div>
+
+            <div class="la-features">
+                <div class="la-feat">
+                    <div class="la-feat-icon"><i class="bi bi-clipboard2-check"></i></div>
+                    <div class="la-feat-text">
+                        <h4 th:text="#{login.feat1.title}">Trazabilidad completa</h4>
+                        <p  th:text="#{login.feat1.desc}">Seguimiento de cada lote desde el grano hasta el vaso</p>
+                    </div>
+                </div>
+                <div class="la-feat">
+                    <div class="la-feat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div class="la-feat-text">
+                        <h4 th:text="#{login.feat2.title}">Reportes en tiempo real</h4>
+                        <p  th:text="#{login.feat2.desc}">Producción, ventas y rentabilidad al instante</p>
+                    </div>
+                </div>
+                <div class="la-feat">
+                    <div class="la-feat-icon"><i class="bi bi-shield-check"></i></div>
+                    <div class="la-feat-text">
+                        <h4 th:text="#{login.feat3.title}">BPM y cumplimiento</h4>
+                        <p  th:text="#{login.feat3.desc}">Control sanitario y buenas prácticas integradas</p>
+                    </div>
                 </div>
             </div>
-            <div class="la-feat">
-                <div class="la-feat-icon"><i class="bi bi-graph-up-arrow"></i></div>
-                <div class="la-feat-text">
-                    <h4 th:text="#{login.feat2.title}">Reportes en tiempo real</h4>
-                    <p  th:text="#{login.feat2.desc}">Producción, ventas y rentabilidad al instante</p>
-                </div>
-            </div>
-            <div class="la-feat">
-                <div class="la-feat-icon"><i class="bi bi-shield-check"></i></div>
-                <div class="la-feat-text">
-                    <h4 th:text="#{login.feat3.title}">BPM y cumplimiento</h4>
-                    <p  th:text="#{login.feat3.desc}">Control sanitario y buenas prácticas integradas</p>
-                </div>
-            </div>
+
         </div>
 
         <div class="la-left-footer"
