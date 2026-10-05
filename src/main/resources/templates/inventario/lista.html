@@ -151,12 +151,15 @@
 <div class="container-fluid px-4">
 
     <!-- Cabecera de página -->
-    <div class="page-header d-flex justify-content-between align-items-start">
-        <div>
-            <h1 th:text="#{inv.title}">Inventario</h1>
-            <p class="subtitle mb-0" th:text="#{inv.subtitle}">Gestión de insumos</p>
+    <div class="page-header-modern">
+        <div class="phm-left">
+            <div class="phm-icon"><i class="bi bi-boxes"></i></div>
+            <div>
+                <div class="phm-crumb">Almacén <i class="bi bi-chevron-right phm-sep"></i> <b th:text="#{inv.title}">Inventario</b></div>
+                <h1 th:text="#{inv.title}">Inventario</h1>
+            </div>
         </div>
-        <div class="d-flex gap-2 pt-1">
+        <div class="phm-actions">
             <a th:href="@{/inventario/export(nombre=${nombreFiltro},tipo=${tipoFiltro},filtroBajoStock=${filtroBajoStock},filtroPorVencer=${filtroPorVencer})}"
                class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-spreadsheet me-1"></i><span th:text="#{action.export}">Excel</span>

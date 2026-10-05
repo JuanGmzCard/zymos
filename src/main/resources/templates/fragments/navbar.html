@@ -2,12 +2,21 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <body>
-<nav th:fragment="navbar" class="navbar navbar-expand-lg navbar-zymos">
+<div th:fragment="navbar"
+     th:with="modDash=${currentUri != null and currentUri.contains('/dashboard')},
+              modProd=${currentUri != null and (currentUri == '/' or currentUri == '/nuevo' or currentUri.contains('/editar/') or currentUri.contains('/kanban') or currentUri.contains('/planificacion') or currentUri.contains('/comparativa') or currentUri.contains('/calendario') or currentUri.contains('/reportes/produccion'))},
+              modAlm=${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas') or currentUri.contains('/barriles'))},
+              modEq=${currentUri != null and currentUri.contains('/equipos')},
+              modCom=${currentUri != null and (currentUri.startsWith('/stock') or currentUri.contains('/ventas') or currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.contains('/reportes/ventas') or currentUri.contains('/reportes/rentabilidad'))},
+              modBpm=${currentUri != null and currentUri.startsWith('/bpm')},
+              modTar=${currentUri != null and currentUri.startsWith('/tareas')},
+              modAdm=${currentUri != null and (currentUri.contains('/admin') or currentUri.contains('/usuarios') or currentUri.contains('/tipos-cerveza'))},
+              modNone=${currentUri == null or (!currentUri.contains('/dashboard') and currentUri != '/' and currentUri != '/nuevo' and !currentUri.contains('/editar/') and !currentUri.contains('/kanban') and !currentUri.contains('/planificacion') and !currentUri.contains('/comparativa') and !currentUri.contains('/calendario') and !currentUri.contains('/reportes') and !currentUri.contains('/inventario') and !currentUri.contains('/recetas') and !currentUri.contains('/barriles') and !currentUri.contains('/equipos') and !currentUri.startsWith('/stock') and !currentUri.contains('/ventas') and !currentUri.contains('/facturas') and !currentUri.contains('/proveedores') and !currentUri.contains('/clientes') and !currentUri.contains('/ordenes-compra') and !currentUri.startsWith('/bpm') and !currentUri.startsWith('/tareas') and !currentUri.contains('/admin') and !currentUri.contains('/usuarios') and !currentUri.contains('/tipos-cerveza'))}">
 
-    <!-- Inicializar dark mode antes del render (evita flash) -->
+    <!-- ── Dark mode init (anti-flash) ─────────────────────────────── -->
     <script th:attr="nonce=${cspNonce}">(function(){if(localStorage.getItem('zymos-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
 
-    <!-- Variables de color del cliente (sobrescriben :root de style.css) -->
+    <!-- ── CSS vars: multi-tenant branding ─────────────────────────── -->
     <style th:inline="text" th:attr="nonce=${cspNonce}">
 @import url('https://fonts.googleapis.com/css2?family=[[${branding != null and branding.fontHeadings != null ? #strings.replace(branding.fontHeadings, ' ', '+') : 'Cinzel'}]]:wght@400;600;700&family=[[${branding != null and branding.fontBody != null ? #strings.replace(branding.fontBody, ' ', '+') : 'Raleway'}]]:wght@300;400;500;600&display=swap');
     :root {
@@ -24,53 +33,316 @@
     }
     </style>
 
+    <!-- ── Sidebar layout styles ───────────────────────────────────── -->
     <style th:attr="nonce=${cspNonce}">
-    .search-suggest {
-        position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        min-width: 300px;
+    /* ── Body offset ── */
+    body { padding-left: 252px !important; padding-top: 48px !important; }
+
+    /* ── Rail (56px) ── */
+    .zymos-rail {
+        position: fixed; left: 0; top: 0; bottom: 0; width: 56px;
+        background: #0f172a;
+        display: flex; flex-direction: column; align-items: center;
+        padding: 10px 0; z-index: 1030;
+        border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    /* Avatar dropdown escapes the rail via fixed position */
+    .zymos-rail .rail-avatar-menu {
+        position: fixed !important;
+        left: 60px !important;
+        bottom: 8px !important;
+        top: auto !important;
+        z-index: 1060 !important;
+    }
+    /* Notification dropdown escapes the rail via fixed position — top set by JS */
+    .zymos-rail .rail-notif-menu {
+        position: fixed !important;
+        left: 60px !important;
+        top: auto !important;
+        z-index: 1060 !important;
+        min-width: 300px !important;
+        max-width: 340px !important;
+    }
+    .zymos-rail-logo {
+        width: 36px; height: 36px; border-radius: 9px;
+        background: var(--verde-alera, #364318);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; color: var(--crema, #f1f5f9);
+        margin-bottom: 10px; flex-shrink: 0; text-decoration: none;
+    }
+    .zymos-rail-logo img { height: 28px; max-width: 28px; object-fit: contain; border-radius: 5px; }
+    .zymos-rail-item {
+        width: 40px; height: 40px; border-radius: 9px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.05rem; color: #475569; cursor: pointer;
+        position: relative; flex-shrink: 0;
+        transition: background .15s, color .15s; text-decoration: none;
+        margin: 1px 0; border: none; background: transparent;
+    }
+    .zymos-rail-item:hover  { background: rgba(255,255,255,0.07); color: #94a3b8; }
+    .zymos-rail-item.rail-active {
+        background: color-mix(in srgb, var(--verde-alera, #364318) 25%, transparent);
+        color: var(--dorado, #C9A028) !important;
+    }
+    .zymos-rail-dot {
+        position: absolute; top: 4px; right: 4px;
+        width: 7px; height: 7px; border-radius: 50%;
+        background: #ef4444; border: 1.5px solid #0f172a;
+    }
+    .zymos-rail-sep {
+        width: 26px; height: 1px; background: rgba(255,255,255,0.08);
+        margin: 5px 0; flex-shrink: 0;
+    }
+    .zymos-rail-spacer { flex: 1; }
+    .zymos-rail-avatar {
+        width: 32px; height: 32px; border-radius: 50%;
+        background: var(--verde-alera, #364318);
+        color: var(--crema, #f1f5f9);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.7rem; font-weight: 700; cursor: pointer;
+        flex-shrink: 0; text-decoration: none; margin-top: 4px;
+        border: 2px solid rgba(255,255,255,0.1);
+        transition: border-color .15s;
+    }
+    .zymos-rail-avatar:hover { border-color: var(--dorado, #C9A028); color: var(--crema, #f1f5f9); }
+    .zymos-rail-avatar::after { display: none !important; }
+
+    /* ── Panel (196px) ── */
+    .zymos-panel {
+        position: fixed; left: 56px; top: 0; bottom: 0; width: 196px;
+        background: #1e293b;
+        display: flex; flex-direction: column; z-index: 1029;
+        border-right: 1px solid rgba(255,255,255,0.06);
+        overflow: visible;
+    }
+    /* Scrollable body inside the panel */
+    .zymos-panel-body {
+        flex: 1; overflow-y: auto; overflow-x: hidden;
+        display: flex; flex-direction: column;
+    }
+    .zymos-panel-body::-webkit-scrollbar { width: 3px; }
+    .zymos-panel-body::-webkit-scrollbar-track { background: transparent; }
+    .zymos-panel-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+    /* Sticky footer for + Nuevo */
+    .zymos-panel-footer {
+        flex-shrink: 0; padding: 8px;
+        border-top: 1px solid rgba(255,255,255,0.07);
+        background: #1e293b;
+    }
+    .zymos-panel-nuevo-btn {
+        display: flex; align-items: center; gap: 8px; width: 100%;
+        padding: 9px 12px; border-radius: 8px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.09);
+        color: #e2e8f0; font-size: 0.78rem; font-weight: 600;
+        cursor: pointer; transition: background .12s, border-color .12s;
+        text-align: left;
+    }
+    .zymos-panel-nuevo-btn:hover,
+    .show > .zymos-panel-nuevo-btn {
+        background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.16);
+        color: #f8fafc;
+    }
+    .zymos-panel-nuevo-btn i { color: var(--dorado, #C9A028); }
+    .zymos-panel-nuevo-btn.dropdown-toggle::after { display: none; }
+    .zymos-panel-nuevo-icon {
+        width: 20px; height: 20px; border-radius: 5px;
+        background: var(--dorado, #C9A028); color: #0f172a;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+    }
+    .zymos-panel-footer .dropdown-menu { z-index: 1070 !important; }
+
+    .zymos-panel-header {
+        padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.07);
+        flex-shrink: 0; order: 0;
+    }
+    .zymos-panel-mod {
+        font-size: 0.58rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.12em; color: var(--dorado, #C9A028); margin-bottom: 2px;
+    }
+    .zymos-panel-title { font-size: 0.88rem; font-weight: 700; color: #f1f5f9; }
+    /* Search lives between header and items via CSS order */
+    .zymos-panel-search {
+        order: 1; flex-shrink: 0;
+        margin: 8px 10px; position: relative;
+        background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 6px; padding: 6px 10px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .zymos-panel-search i { font-size: 0.7rem; color: #475569; flex-shrink: 0; }
+    .zymos-panel-search input {
+        background: transparent; border: none; outline: none;
+        font-size: 0.72rem; color: #cbd5e1; width: 100%; min-width: 0;
+    }
+    .zymos-panel-search input::placeholder { color: #475569; }
+    #panelSearchSuggest {
+        position: fixed; left: 252px; width: 320px;
         background: #fff;
         border: 1px solid color-mix(in srgb, var(--dorado) 35%, transparent);
-        border-radius: .5rem;
-        box-shadow: 0 6px 20px rgba(0,0,0,.18);
-        z-index: 1100;
-        overflow: hidden;
-        animation: suggestIn .12s ease;
+        border-radius: .5rem; box-shadow: 0 6px 20px rgba(0,0,0,.18);
+        z-index: 1100; overflow: hidden;
+        animation: suggestIn .12s ease; display: none;
     }
+    .zymos-panel-section {
+        font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.1em; color: #334155;
+        padding: 10px 14px 3px; flex-shrink: 0; order: 2;
+    }
+    .zymos-panel-item {
+        padding: 7px 12px; margin: 1px 6px; border-radius: 6px;
+        font-size: 0.76rem; color: #64748b; cursor: pointer;
+        display: flex; align-items: center; gap: 7px;
+        text-decoration: none; flex-shrink: 0; order: 2;
+        transition: background .12s, color .12s;
+    }
+    .zymos-panel-item:hover { background: rgba(255,255,255,0.06); color: #94a3b8; text-decoration: none; }
+    .zymos-panel-item.panel-active {
+        background: color-mix(in srgb, var(--verde-alera, #364318) 18%, transparent);
+        color: var(--dorado, #C9A028); font-weight: 600;
+    }
+    .zymos-panel-item i { font-size: 0.82rem; width: 14px; text-align: center; flex-shrink: 0; }
+    .zymos-panel-badge {
+        margin-left: auto; font-size: 0.62rem; font-weight: 600; color: #475569;
+    }
+
+    /* ── Topbar (48px) ── */
+    .zymos-topbar {
+        position: fixed; left: 252px; top: 0; right: 0; height: 48px;
+        background: #fff; border-bottom: 1px solid #e2e8f0;
+        display: flex; align-items: center; padding: 0 16px; gap: 10px;
+        z-index: 1028;
+    }
+    .zymos-topbar-brand {
+        font-size: 0.78rem; font-weight: 600; color: #64748b;
+        display: flex; align-items: center; gap: 6px;
+        flex: 1; min-width: 0; white-space: nowrap;
+    }
+    .zymos-topbar-brand i { color: var(--verde-alera, #364318); font-size: 0.9rem; }
+    .zymos-topbar-brand span { color: #1e293b; font-weight: 700; }
+    .zymos-topbar-right {
+        display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+    }
+    .zymos-tb-icon {
+        width: 30px; height: 30px; border-radius: 7px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.95rem; color: #64748b; cursor: pointer;
+        background: transparent; transition: background .12s;
+        position: relative; border: none; text-decoration: none;
+    }
+    .zymos-tb-icon:hover { background: #f1f5f9; color: #1e293b; }
+    .zymos-tb-btn-new {
+        background: var(--verde-alera, #364318); color: var(--crema, #f5edd0);
+        border-radius: 6px; padding: 5px 11px; font-size: 0.75rem; font-weight: 600;
+        display: flex; align-items: center; gap: 4px; white-space: nowrap;
+        border: none; cursor: pointer; text-decoration: none;
+        transition: filter .12s;
+    }
+    .zymos-tb-btn-new:hover { filter: brightness(1.2); color: var(--crema, #f5edd0); }
+
+    /* ── Avatar dropdown dark ── */
+    .rail-dropdown {
+        background: #1e293b !important;
+        border: 1px solid rgba(255,255,255,0.1) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
+        padding: 0 !important; overflow: hidden; min-width: 220px !important;
+    }
+    .rail-dropdown .rd-header {
+        padding: 14px 16px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .rail-dropdown .rd-avatar-row {
+        display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+    }
+    .rail-dropdown .rd-avatar-lg {
+        width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+        background: var(--verde-alera, #364318);
+        color: var(--crema, #f1f5f9);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; font-weight: 700;
+        border: 2px solid rgba(255,255,255,0.1);
+    }
+    .rail-dropdown .rd-name {
+        font-size: 0.88rem; font-weight: 700; color: #f1f5f9;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
+    }
+    .rail-dropdown .rd-roles { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+    .rail-dropdown .rd-role-pill {
+        font-size: 0.62rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        color: #94a3b8;
+    }
+    .rail-dropdown .rd-divider { border-color: rgba(255,255,255,0.07) !important; margin: 0 !important; }
+    .rail-dropdown a.rd-item,
+    .rail-dropdown button.rd-item {
+        display: flex; align-items: center; gap: 10px;
+        padding: 9px 16px; font-size: 0.8rem; color: #94a3b8;
+        text-decoration: none; background: transparent;
+        border: none; width: 100%; text-align: left; cursor: pointer;
+        transition: background .12s, color .12s;
+    }
+    .rail-dropdown a.rd-item:hover,
+    .rail-dropdown button.rd-item:hover {
+        background: rgba(255,255,255,0.06); color: #e2e8f0;
+    }
+    .rail-dropdown .rd-item i { font-size: 0.82rem; width: 16px; text-align: center; color: #475569; flex-shrink: 0; }
+    .rail-dropdown a.rd-item:hover i,
+    .rail-dropdown button.rd-item:hover i { color: #94a3b8; }
+    .rail-dropdown .rd-lang {
+        display: flex; align-items: center; gap: 5px;
+        padding: 8px 16px; font-size: 0.78rem; color: #475569;
+    }
+    .rail-dropdown .rd-lang a { text-decoration: none; color: #475569; font-weight: 500; }
+    .rail-dropdown .rd-lang a.lang-active { color: #e2e8f0; font-weight: 700; }
+    .rail-dropdown .rd-logout { color: #f87171 !important; }
+    .rail-dropdown .rd-logout:hover { background: rgba(248,113,113,0.07) !important; }
+    .rail-dropdown .rd-logout i { color: #f87171 !important; }
+
+    /* Mobile toggle */
+    .zymos-topbar-toggle {
+        display: none; width: 32px; height: 32px; border-radius: 7px;
+        align-items: center; justify-content: center;
+        font-size: 1.1rem; color: #64748b; cursor: pointer;
+        background: transparent; border: none; flex-shrink: 0;
+    }
+
+    /* ── search-suggest shared styles ── */
     @keyframes suggestIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
     .search-suggest .ss-section {
-        padding: 5px 12px 2px;
-        font-size: .68rem;
-        text-transform: uppercase;
-        letter-spacing: .06em;
-        color: #888;
+        padding: 5px 12px 2px; font-size: .68rem;
+        text-transform: uppercase; letter-spacing: .06em; color: #888;
         border-top: 1px solid rgba(0,0,0,.07);
     }
     .search-suggest .ss-section:first-child { border-top: none; }
     .search-suggest a.ss-item {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 7px 12px;
-        text-decoration: none;
-        color: inherit;
-        font-size: .87rem;
-        transition: background .1s;
+        display: flex; align-items: center; gap: 8px;
+        padding: 7px 12px; text-decoration: none; color: inherit;
+        font-size: .87rem; transition: background .1s;
     }
-    .search-suggest a.ss-item:hover, .search-suggest a.ss-item.ss-active { background: color-mix(in srgb, var(--dorado) 12%, transparent); }
+    .search-suggest a.ss-item:hover,
+    .search-suggest a.ss-item.ss-active { background: color-mix(in srgb, var(--dorado) 12%, transparent); }
     .search-suggest .ss-icon { color: var(--dorado); flex-shrink: 0; }
     .search-suggest .ss-title { flex: 1; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .search-suggest .ss-sub { font-size: .75rem; color: #888; white-space: nowrap; }
     .search-suggest .ss-footer {
-        padding: 6px 12px;
-        border-top: 1px solid rgba(0,0,0,.07);
-        font-size: .8rem;
-        text-align: center;
+        padding: 6px 12px; border-top: 1px solid rgba(0,0,0,.07);
+        font-size: .8rem; text-align: center;
     }
     .search-suggest .ss-footer a { color: var(--dorado); text-decoration: none; }
     .search-suggest .ss-footer a:hover { text-decoration: underline; }
     .search-suggest .ss-empty { padding: 12px; font-size: .85rem; color: #888; text-align: center; }
+
+    /* ── Dark mode: topbar ── */
+    html.dark-mode .zymos-topbar {
+        background: var(--dm-card); border-bottom-color: var(--dm-border-med);
+    }
+    html.dark-mode .zymos-topbar-brand { color: var(--dm-text-muted); }
+    html.dark-mode .zymos-topbar-brand span { color: var(--dm-text); }
+    html.dark-mode .zymos-tb-icon { color: var(--dm-text-muted); }
+    html.dark-mode .zymos-tb-icon:hover { background: var(--dm-hover); color: var(--dm-text); }
+    html.dark-mode #panelSearchSuggest { background: var(--dm-card); border-color: var(--dm-border-med); color: var(--dm-text); }
     html.dark-mode .search-suggest { background: var(--dm-card); border-color: var(--dm-border-med); color: var(--dm-text); }
     html.dark-mode .search-suggest a.ss-item { color: var(--dm-text) !important; }
     html.dark-mode .search-suggest a.ss-item:hover,
@@ -82,507 +354,662 @@
     html.dark-mode .toast { background: var(--dm-card); border-color: var(--dm-border-light) !important; }
     html.dark-mode .toast-body { color: var(--dm-text); }
 
-    /* ── Responsivo mobile (< lg) ────────────────────────────── */
+    /* ── Mobile (<992px) ── */
+    .zymos-backdrop {
+        display: none; position: fixed; inset: 0;
+        background: rgba(0,0,0,0.45); z-index: 1027;
+    }
+    .zymos-backdrop.show { display: block; }
     @media (max-width: 991.98px) {
-        /* Búsqueda: ancho completo, sin flex-grow vertical */
-        #navMain form[role="search"] { flex-grow: 0 !important; margin: 0.5rem 0 !important; }
-        #navSearchInput { max-width: 100% !important; min-width: 0 !important; }
-        #searchSuggest  { left: 0 !important; right: 0 !important; min-width: 0 !important; }
-
-        /* Iconos derechos: fila horizontal con separador */
-        .navbar-icons {
-            flex-direction: row !important;
-            flex-wrap: wrap;
-            gap: 0.25rem !important;
-            border-top: 1px solid color-mix(in srgb, var(--dorado) 20%, transparent);
-            padding-top: 0.5rem;
-            margin-top: 0.25rem;
-            padding-bottom: 0.25rem;
+        body { padding-left: 0 !important; padding-top: 52px !important; }
+        .zymos-rail {
+            transform: translateX(-100%);
+            transition: transform .25s ease;
+            z-index: 1040;
         }
-        .navbar-icons .nav-item { flex: 0 0 auto; }
-        /* Touch targets mínimos iOS (44px) */
-        .navbar-icons .nav-link,
-        .navbar-icons button.nav-link { min-height: 40px; display: flex !important; align-items: center; }
-        /* + Nuevo: se adapta en fila */
-        .navbar-icons .nav-item.dropdown > a { white-space: nowrap; }
+        .zymos-panel {
+            transform: translateX(calc(-56px - 100%));
+            transition: transform .25s ease;
+            z-index: 1039; left: 56px;
+        }
+        .zymos-rail.nav-open { transform: translateX(0); }
+        .zymos-panel.nav-open { transform: translateX(0); }
+        .zymos-topbar { left: 0 !important; height: 52px; }
+        .zymos-topbar-toggle { display: flex !important; }
+        .zymos-topbar-search { flex: 0 1 160px; }
+    }
+    @media (max-width: 575.98px) {
+        .zymos-topbar-search { display: none; }
+        .zymos-topbar-brand span { display: none; }
     }
     </style>
 
     <script th:attr="nonce=${cspNonce}">
     function togglePwd(btn) {
-      const inp = btn.closest('.input-group').querySelector('input');
-      const ico = btn.querySelector('i');
-      const show = inp.type === 'password';
-      inp.type = show ? 'text' : 'password';
-      ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
+        var inp = btn.closest('.input-group').querySelector('input');
+        var ico = btn.querySelector('i');
+        var show = inp.type === 'password';
+        inp.type = show ? 'text' : 'password';
+        ico.className = show ? 'bi bi-eye-slash' : 'bi bi-eye';
     }
     </script>
 
-    <div class="container-fluid">
-        <a class="navbar-brand" th:href="@{/dashboard}">
+    <!-- ═══════════════════════════════════════════════════
+         RAIL
+    ═══════════════════════════════════════════════════ -->
+    <aside class="zymos-rail" id="zymosRail">
+        <!-- Logo -->
+        <a class="zymos-rail-logo" th:href="@{/dashboard}" th:title="${branding != null ? branding.name : 'Zymos'}">
             <img th:if="${branding != null and !#strings.isEmpty(branding.logoUrl)}"
-                 th:src="${branding.logoUrl}" alt=""
-                 style="height:38px;max-width:140px;margin-right:6px;object-fit:contain;vertical-align:middle;">
+                 th:src="${branding.logoUrl}" alt="">
             <i th:unless="${branding != null and !#strings.isEmpty(branding.logoUrl)}"
-               class="bi bi-droplet-fill brand-icon"></i>
-            <span th:text="${branding != null ? branding.name : 'Alera'}">Alera</span>
+               class="bi bi-droplet-fill"></i>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
-            <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navMain">
-            <ul class="navbar-nav mb-2 mb-lg-0">
-                <!-- Dashboard -->
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/dashboard}"
-                       th:classappend="${currentUri != null and currentUri.contains('/dashboard')} ? 'active' : ''">
-                        <i class="bi bi-speedometer2"></i> <span th:text="#{nav.dashboard}">Dashboard</span>
-                    </a>
-                </li>
 
-                <!-- Producción (todos los roles) -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri == '/' or currentUri.contains('/kanban') or currentUri.contains('/planificacion') or currentUri.contains('/comparativa') or currentUri.contains('/calendario') or currentUri.contains('/reportes'))} ? 'active' : ''">
-                        <i class="bi bi-clipboard-data"></i> <span th:text="#{nav.produccion}">Producción</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/}"
-                               th:classappend="${currentUri != null and currentUri == '/'} ? 'active' : ''">
-                                <i class="bi bi-clipboard-data me-2"></i><span th:text="#{nav.produccion.trazabilidad}">Trazabilidad</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/kanban}"
-                               th:classappend="${currentUri != null and currentUri.contains('/kanban')} ? 'active' : ''">
-                                <i class="bi bi-kanban me-2"></i><span th:text="#{nav.produccion.kanban}">Kanban</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/planificacion}"
-                               th:classappend="${currentUri != null and currentUri.contains('/planificacion')} ? 'active' : ''">
-                                <i class="bi bi-calendar-week me-2"></i><span th:text="#{nav.produccion.planificacion}">Planificación</span>
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/comparativa}"
-                               th:classappend="${currentUri != null and currentUri.contains('/comparativa')} ? 'active' : ''">
-                                <i class="bi bi-bar-chart-steps me-2"></i><span th:text="#{nav.produccion.comparativa}">Comparativa</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/calendario}"
-                               th:classappend="${currentUri != null and currentUri.contains('/calendario')} ? 'active' : ''">
-                                <i class="bi bi-calendar3 me-2"></i><span th:text="#{nav.produccion.calendario}">Calendario</span>
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/reportes/produccion}"
-                               th:classappend="${currentUri != null and currentUri.contains('/reportes')} ? 'active' : ''">
-                                <i class="bi bi-bar-chart-line me-2"></i><span th:text="#{nav.produccion.reportes}">Reportes</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+        <!-- Dashboard -->
+        <a class="zymos-rail-item" th:href="@{/dashboard}"
+           th:classappend="${modDash} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.dashboard}">
+            <i class="bi bi-speedometer2"></i>
+        </a>
 
-                <!-- Almacén (ADMIN / INVENTARIO / PRODUCCION / SUPERADMIN / RBAC) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_VER','MODULO_RECETAS_VER','MODULO_BARRILES_VER')">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/inventario') or currentUri.contains('/recetas') or currentUri.contains('/barriles') or currentUri.startsWith('/stock'))} ? 'active' : ''">
-                        <i class="bi bi-box-seam"></i> <span th:text="#{nav.almacen}">Almacén</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/inventario}"
-                               th:classappend="${currentUri != null and currentUri.contains('/inventario')} ? 'active' : ''">
-                                <i class="bi bi-box-seam me-2"></i><span th:text="#{nav.almacen.inventario}">Inventario</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/recetas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/recetas')} ? 'active' : ''">
-                                <i class="bi bi-journal-bookmark me-2"></i><span th:text="#{nav.almacen.recetas}">Recetas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/barriles}"
-                               th:classappend="${currentUri != null and currentUri.contains('/barriles')} ? 'active' : ''">
-                                <i class="bi bi-bucket me-2"></i><span th:text="#{nav.almacen.barriles}">Barriles / Kegs</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/stock}"
-                               th:classappend="${currentUri != null and currentUri.startsWith('/stock')} ? 'active' : ''">
-                                <i class="bi bi-archive me-2"></i><span th:text="#{nav.almacen.stock}">Stock P. Terminado</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+        <!-- Producción -->
+        <a class="zymos-rail-item" th:href="@{/}"
+           th:classappend="${modProd} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.produccion}">
+            <i class="bi bi-clipboard-data"></i>
+        </a>
 
-                <!-- Equipos (ADMIN / EQUIPOS / PRODUCCION / SUPERADMIN / RBAC) -->
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_VER')">
-                    <a class="nav-link" th:href="@{/equipos}"
-                       th:classappend="${currentUri != null and currentUri.contains('/equipos')} ? 'active' : ''">
-                        <i class="bi bi-tools"></i> <span th:text="#{nav.equipos}">Equipos</span>
-                    </a>
-                </li>
+        <!-- Almacén -->
+        <a class="zymos-rail-item"
+           sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_VER','MODULO_RECETAS_VER','MODULO_BARRILES_VER')"
+           th:href="@{/inventario}"
+           th:classappend="${modAlm} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.almacen}">
+            <i class="bi bi-box-seam"></i>
+        </a>
 
-                <!-- Comercial (ADMIN / FACTURACION / SUPERADMIN / RBAC) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_FACTURACION_VER','MODULO_COMERCIAL_VER')">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/ventas') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.startsWith('/stock') or currentUri.contains('/reportes/rentabilidad'))} ? 'active' : ''">
-                        <i class="bi bi-receipt"></i> <span th:text="#{nav.comercial}">Comercial</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/ventas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? 'active' : ''">
-                                <i class="bi bi-bag-check me-2"></i><span th:text="#{nav.comercial.ventas}">Ventas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/stock}"
-                               th:classappend="${currentUri != null and currentUri.startsWith('/stock')} ? 'active' : ''">
-                                <i class="bi bi-archive me-2"></i><span th:text="#{nav.almacen.stock}">Stock P. Terminado</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/clientes}"
-                               th:classappend="${currentUri != null and currentUri.contains('/clientes')} ? 'active' : ''">
-                                <i class="bi bi-people me-2"></i><span th:text="#{nav.comercial.clientes}">Clientes</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/reportes/ventas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/reportes/ventas')} ? 'active' : ''">
-                                <i class="bi bi-graph-up-arrow me-2"></i><span th:text="#{nav.comercial.reporte.ventas}">Reporte Ventas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/reportes/rentabilidad}"
-                               th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? 'active' : ''">
-                                <i class="bi bi-currency-dollar me-2"></i><span th:text="#{nav.comercial.rentabilidad}">Rentabilidad</span>
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/ordenes-compra}"
-                               th:classappend="${currentUri != null and currentUri.contains('/ordenes-compra')} ? 'active' : ''">
-                                <i class="bi bi-cart-check me-2"></i><span th:text="#{nav.comercial.ordenes}">Órdenes de Compra</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/facturas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/facturas')} ? 'active' : ''">
-                                <i class="bi bi-receipt me-2"></i><span th:text="#{nav.comercial.facturas}">Facturas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/proveedores}"
-                               th:classappend="${currentUri != null and currentUri.contains('/proveedores')} ? 'active' : ''">
-                                <i class="bi bi-building me-2"></i><span th:text="#{nav.comercial.proveedores}">Proveedores</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+        <!-- Equipos -->
+        <a class="zymos-rail-item"
+           sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_VER')"
+           th:href="@{/equipos}"
+           th:classappend="${modEq} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.equipos}">
+            <i class="bi bi-tools"></i>
+        </a>
 
-                <!-- BPM (ADMIN / PRODUCCION / SUPERADMIN / RBAC) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_BPM_VER')">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and currentUri.startsWith('/bpm')} ? 'active' : ''">
-                        <i class="bi bi-clipboard2-check"></i> <span th:text="#{nav.bpm}">BPM</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm}"
-                               th:classappend="${currentUri != null and currentUri == '/bpm'} ? 'active' : ''">
-                                <i class="bi bi-speedometer2 me-2"></i><span th:text="#{nav.bpm.dashboard}">Dashboard BPM</span>
-                            </a>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm/salud/diario}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? 'active' : ''">
-                                <i class="bi bi-person-heart me-2" style="color:#f59e0b;"></i><span th:text="#{nav.bpm.salud}">Control Estado de Salud</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm/soluciones}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/soluciones')} ? 'active' : ''">
-                                <i class="bi bi-droplet-half me-2" style="color:#3b82f6;"></i><span th:text="#{nav.bpm.soluciones}">Soluciones Desinfectantes</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm/plagas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/plagas')} ? 'active' : ''">
-                                <i class="bi bi-bug me-2" style="color:#ef4444;"></i><span th:text="#{nav.bpm.plagas}">Control de Plagas</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm/residuos}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/residuos')} ? 'active' : ''">
-                                <i class="bi bi-trash3 me-2" style="color:#16a34a;"></i><span th:text="#{nav.bpm.residuos}">Evacuación de Residuos</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/bpm/limpieza}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/limpieza')} ? 'active' : ''">
-                                <i class="bi bi-stars me-2" style="color:#7c3aed;"></i><span th:text="#{nav.bpm.limpieza}">Limpieza y Desinfección</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <a class="dropdown-item" th:href="@{/bpm/sintomas}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? 'active' : ''">
-                                <i class="bi bi-list-check me-2"></i><span th:text="#{nav.bpm.sintomas}">Todos los registros de salud</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                            <a class="dropdown-item" th:href="@{/bpm/salud/autorizaciones}"
-                               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/autorizaciones')} ? 'active' : ''">
-                                <i class="bi bi-shield-check me-2 text-warning"></i><span th:text="#{nav.bpm.autorizaciones}">Autorizaciones de Salud</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
+        <!-- Comercial -->
+        <a class="zymos-rail-item"
+           sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_FACTURACION_VER','MODULO_COMERCIAL_VER')"
+           th:href="@{/ventas}"
+           th:classappend="${modCom} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.comercial}">
+            <i class="bi bi-receipt"></i>
+        </a>
 
-                <!-- Tareas -->
-                <li class="nav-item" sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TAREAS_VER')">
-                    <a class="nav-link" th:href="@{/tareas}"
-                       th:classappend="${currentUri != null and currentUri.startsWith('/tareas')} ? 'active' : ''">
-                        <i class="bi bi-check2-square"></i> <span th:text="#{nav.tareas}">Tareas</span>
-                    </a>
-                </li>
+        <div class="zymos-rail-sep"></div>
 
-                <!-- Admin (ADMIN y SUPERADMIN) -->
-                <li class="nav-item dropdown" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" role="button"
-                       th:classappend="${currentUri != null and (currentUri.contains('/tipos-cerveza') or currentUri.contains('/usuarios') or currentUri.contains('/admin'))} ? 'active' : ''">
-                        <i class="bi bi-shield-lock"></i> <span th:text="#{nav.admin}">Admin</span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <!-- Gestión -->
-                        <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.gestion}">Gestión</small>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/usuarios}"
-                               th:classappend="${currentUri != null and currentUri.contains('/usuarios')} ? 'active' : ''">
-                                <i class="bi bi-people me-2"></i><span th:text="#{nav.admin.usuarios}">Usuarios</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/tipos-cerveza}"
-                               th:classappend="${currentUri != null and currentUri.contains('/tipos-cerveza')} ? 'active' : ''">
-                                <i class="bi bi-tag me-2"></i><span th:text="#{nav.admin.tipos.cerveza}">Tipos de Cerveza</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/admin/categorias}"
-                               th:classappend="${currentUri != null and currentUri.contains('/admin/categorias')} ? 'active' : ''">
-                                <i class="bi bi-collection me-2"></i><span th:text="#{nav.admin.categorias}">Categorías</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/admin/roles}"
-                               th:classappend="${currentUri != null and currentUri.contains('/admin/roles')} ? 'active' : ''">
-                                <i class="bi bi-shield-lock me-2"></i><span th:text="#{nav.admin.roles}">Roles</span>
-                            </a>
-                        </li>
-                        <!-- Sistema -->
-                        <li><hr class="dropdown-divider mb-0"></li>
-                        <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.sistema}">Sistema</small>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/admin/logs}"
-                               th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? 'active' : ''">
-                                <i class="bi bi-journal-text me-2"></i><span th:text="#{nav.admin.logs}">Log de Accesos</span>
-                            </a>
-                        </li>
-                        <!-- Plataforma (solo SUPERADMIN) -->
-                        <li sec:authorize="hasRole('SUPERADMIN')"><hr class="dropdown-divider mb-0"></li>
-                        <li sec:authorize="hasRole('SUPERADMIN')" class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.68rem;text-transform:uppercase;letter-spacing:.06em;" th:text="#{nav.admin.plataforma}">Plataforma</small>
-                        </li>
-                        <li sec:authorize="hasRole('SUPERADMIN')">
-                            <a class="dropdown-item" th:href="@{/admin/tenants}"
-                               th:classappend="${currentUri != null and currentUri.contains('/admin/tenants')} ? 'active' : ''">
-                                <i class="bi bi-building-gear me-2"></i><span th:text="#{nav.admin.tenants}">Tenants</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
-            <!-- Búsqueda global con autocompletado -->
-            <form class="d-flex flex-grow-1 mx-3 my-2 my-lg-0 position-relative" th:action="@{/buscar}" method="get" role="search">
-                <div class="input-group input-group-sm w-100">
-                    <input type="search" name="q" id="navSearchInput" class="form-control navbar-search"
-                           th:placeholder="#{nav.search.placeholder}" placeholder="Buscar…"
-                           th:attr="aria-label=#{nav.search.aria}" aria-label="Buscar" autocomplete="off"
-                           style="min-width:180px;max-width:280px;background:rgba(255,255,255,0.1);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
-                    <button type="submit" class="btn btn-sm" style="background:color-mix(in srgb,var(--dorado) 20%,transparent);border-color:color-mix(in srgb,var(--dorado) 40%,transparent);color:var(--crema);">
-                        <i class="bi bi-search"></i>
-                    </button>
-                </div>
-                <div id="searchSuggest" class="search-suggest" style="display:none;"></div>
-            </form>
+        <!-- BPM -->
+        <a class="zymos-rail-item"
+           sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_BPM_VER')"
+           th:href="@{/bpm}"
+           th:classappend="${modBpm} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.bpm}">
+            <i class="bi bi-clipboard2-check"></i>
+        </a>
 
-            <ul class="navbar-nav ms-auto align-items-center gap-1 navbar-icons">
-                <!-- Botón modo oscuro -->
-                <li class="nav-item">
-                    <button class="btn border-0 nav-link px-2" id="darkToggleBtn"
-                            th:title="#{nav.dark.toggle}" title="Cambiar modo oscuro/claro"
-                            style="background:transparent;">
-                        <i class="bi bi-moon-fill" id="darkModeIcon" style="font-size:1rem;"></i>
+        <!-- Tareas -->
+        <a class="zymos-rail-item" id="railTareasItem"
+           sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TAREAS_VER')"
+           th:href="@{/tareas}"
+           th:classappend="${modTar} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.tareas}">
+            <i class="bi bi-check2-square"></i>
+        </a>
+
+        <div class="zymos-rail-sep"></div>
+
+        <!-- Admin -->
+        <a class="zymos-rail-item"
+           sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"
+           th:href="@{/admin/logs}"
+           th:classappend="${modAdm} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.admin}">
+            <i class="bi bi-shield-lock"></i>
+        </a>
+
+        <div class="zymos-rail-spacer"></div>
+
+        <!-- Notificaciones -->
+        <div class="dropdown" id="railBellDropdown" style="flex-shrink:0;">
+            <button class="zymos-rail-item position-relative" data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside" id="railBellToggle"
+                    style="color:#64748b;">
+                <i class="bi bi-bell-fill"></i>
+                <span id="alertaBadge" class="zymos-rail-dot" style="display:none;"></span>
+            </button>
+            <ul class="dropdown-menu p-0 rail-notif-menu">
+                <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
+                    <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.notificaciones}">Notificaciones</small>
+                    <button id="btnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
+                            style="font-size:.72rem;text-decoration:none;display:none;" th:text="#{nav.notif.marcar.todas}">
+                        Marcar todas leídas
                     </button>
                 </li>
-                <!-- Acciones rápidas -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link px-2 py-1 d-flex align-items-center gap-1" href="#"
-                       data-bs-toggle="dropdown" aria-expanded="false"
-                       style="border:1px solid color-mix(in srgb,var(--dorado) 55%,transparent);border-radius:6px;color:var(--dorado);font-size:0.82rem;font-weight:600;line-height:1.4;">
-                        <i class="bi bi-plus-lg" style="font-size:0.85rem;"></i> <span th:text="#{nav.nuevo}">Nuevo</span>
+                <li><hr class="dropdown-divider mt-1 mb-0"></li>
+                <li id="notifLista"></li>
+                <li><hr class="dropdown-divider my-0"></li>
+                <li>
+                    <a class="dropdown-item text-center py-2" th:href="@{/notificaciones}"
+                       style="font-size:.82rem;color:var(--dorado);" th:text="#{nav.notif.ver.todas}">
+                        Ver todas las notificaciones →
                     </a>
-                    <ul class="dropdown-menu dropdown-menu-lg-end" style="min-width:220px;">
-                        <li class="px-3 pt-2 pb-1">
-                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.nuevo.crear}">Crear nuevo</small>
-                        </li>
-                        <li><hr class="dropdown-divider mt-1 mb-0"></li>
-                        <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/nuevo}">
-                                <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.lote}">Lote de cerveza</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/recetas/nueva}">
-                                <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.receta}">Receta</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/inventario/nuevo}">
-                                <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.insumo}">Insumo</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/equipos/nuevo}">
-                                <i class="bi bi-tools me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.equipo}">Equipo</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
-                                <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.factura}">Factura</span>
-                            </a>
-                        </li>
-                        <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_CREAR')">
-                            <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
-                                <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.venta}">Venta</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-
-                <!-- Campana de notificaciones in-app -->
-                <li class="nav-item dropdown" id="alertaBellItem">
-                    <a class="nav-link px-2 position-relative" href="#"
-                       data-bs-toggle="dropdown" data-bs-auto-close="outside"
-                       aria-expanded="false" style="line-height:1;"
-                       id="notifDropdownToggle">
-                        <i class="bi bi-bell-fill" style="font-size:1rem;"></i>
-                        <span id="alertaBadge"
-                              class="position-absolute badge rounded-pill bg-danger"
-                              style="font-size:0.58rem; min-width:16px; padding:2px 4px;
-                                     top:0; right:0; transform:translate(30%,-20%);">
-                            0
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-lg-end p-0" style="min-width:300px;max-width:340px;">
-                        <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
-                            <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.notificaciones}">Notificaciones</small>
-                            <button id="btnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
-                                    style="font-size:.72rem;text-decoration:none;" th:text="#{nav.notif.marcar.todas}">
-                                Marcar todas leídas
-                            </button>
-                        </li>
-                        <li><hr class="dropdown-divider mt-1 mb-0"></li>
-                        <li id="notifLista"></li>
-                        <li><hr class="dropdown-divider my-0"></li>
-                        <li>
-                            <a class="dropdown-item text-center py-2" th:href="@{/notificaciones}"
-                               style="font-size:.82rem;color:var(--dorado);" th:text="#{nav.notif.ver.todas}">
-                                Ver todas las notificaciones →
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                <!-- Usuario -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                        <i class="bi bi-person-circle me-1"></i>
-                        <span sec:authentication="name">Usuario</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-lg-end">
-                        <li class="px-3 py-2">
-                            <div class="fw-600 text-truncate" style="max-width:180px;" sec:authentication="name">Usuario</div>
-                            <div class="mt-1">
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('SUPERADMIN')">Super Admin</span>
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Administrador</span>
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('INVENTARIO')">Inventario</span>
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('FACTURACION')">Facturación</span>
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('EQUIPOS')">Equipos</span>
-                                <span class="badge rounded-pill badge-role" sec:authorize="hasRole('PRODUCCION')">Producción</span>
-                                <span class="badge rounded-pill badge-role"
-                                      th:if="${rolNombreCustom != null}"
-                                      sec:authorize="!hasRole('ADMIN')"
-                                      th:text="${rolNombreCustom}">Rol</span>
-                            </div>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/mi-plan}"
-                               th:classappend="${currentUri != null and currentUri.startsWith('/mi-plan')} ? 'active' : ''">
-                                <i class="bi bi-shield-check me-2"></i><span th:text="#{nav.user.mi.plan}">Mi Plan</span>
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" th:href="@{/perfil/password}">
-                                <i class="bi bi-key me-2"></i><span th:text="#{nav.user.password}">Cambiar contraseña</span>
-                            </a>
-                        </li>
-                        <li>
-                            <div class="dropdown-item d-flex align-items-center gap-1 py-1">
-                                <i class="bi bi-globe2 me-1 text-muted" style="font-size:0.85rem;"></i>
-                                <a th:href="${currentUri + '?lang=es'}"
-                                   class="text-decoration-none small"
-                                   th:classappend="${currentLang == 'es'} ? 'fw-bold' : 'text-muted'">ES</a>
-                                <span class="text-muted small">·</span>
-                                <a th:href="${currentUri + '?lang=en'}"
-                                   class="text-decoration-none small"
-                                   th:classappend="${currentLang == 'en'} ? 'fw-bold' : 'text-muted'">EN</a>
-                            </div>
-                        </li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <form th:action="@{/logout}" method="post" class="d-inline">
-                                <button type="submit" class="dropdown-item">
-                                    <i class="bi bi-box-arrow-right me-2"></i><span th:text="#{nav.user.logout}">Cerrar Sesión</span>
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
                 </li>
             </ul>
         </div>
-    </div>
 
-    <!-- Toast de notificaciones -->
+        <!-- Dark mode toggle -->
+        <button class="zymos-rail-item" id="darkToggleBtn"
+                data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.dark.toggle}">
+            <i class="bi bi-moon-fill" id="darkModeIcon"></i>
+        </button>
+
+        <!-- User avatar → dropdown -->
+        <div class="dropdown" style="flex-shrink:0;margin-top:4px;">
+            <a class="zymos-rail-avatar dropdown-toggle"
+               href="#" data-bs-toggle="dropdown"
+               id="railUserDropdown">
+                <span id="railAvatarInitials" style="pointer-events:none;">?</span>
+                <span id="railUserNameHidden" sec:authentication="name"
+                      style="display:none;position:absolute;"></span>
+            </a>
+            <ul class="dropdown-menu rail-dropdown rail-avatar-menu">
+                <!-- Header: avatar + nombre + roles -->
+                <li class="rd-header">
+                    <div class="rd-avatar-row">
+                        <div class="rd-avatar-lg" id="railAvatarLg">?</div>
+                        <div class="rd-name" sec:authentication="name">Usuario</div>
+                    </div>
+                    <div class="rd-roles">
+                        <span class="rd-role-pill" sec:authorize="hasRole('SUPERADMIN')">Super Admin</span>
+                        <span class="rd-role-pill" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">Administrador</span>
+                        <span class="rd-role-pill" sec:authorize="hasRole('INVENTARIO')">Inventario</span>
+                        <span class="rd-role-pill" sec:authorize="hasRole('FACTURACION')">Facturación</span>
+                        <span class="rd-role-pill" sec:authorize="hasRole('EQUIPOS')">Equipos</span>
+                        <span class="rd-role-pill" sec:authorize="hasRole('PRODUCCION')">Producción</span>
+                        <span class="rd-role-pill"
+                              th:if="${rolNombreCustom != null}"
+                              sec:authorize="!hasRole('ADMIN')"
+                              th:text="${rolNombreCustom}">Rol</span>
+                    </div>
+                </li>
+                <li><hr class="rd-divider dropdown-divider"></li>
+                <li>
+                    <a class="rd-item" th:href="@{/mi-plan}">
+                        <i class="bi bi-shield-check"></i><span th:text="#{nav.user.mi.plan}">Mi Plan</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="rd-item" th:href="@{/perfil/password}">
+                        <i class="bi bi-key"></i><span th:text="#{nav.user.password}">Cambiar contraseña</span>
+                    </a>
+                </li>
+                <li>
+                    <div class="rd-lang">
+                        <i class="bi bi-globe2"></i>
+                        <a th:href="${currentUri + '?lang=es'}"
+                           th:classappend="${currentLang == 'es'} ? ' lang-active' : ''">ES</a>
+                        <span style="color:#334155;">·</span>
+                        <a th:href="${currentUri + '?lang=en'}"
+                           th:classappend="${currentLang == 'en'} ? ' lang-active' : ''">EN</a>
+                    </div>
+                </li>
+                <li><hr class="rd-divider dropdown-divider"></li>
+                <li>
+                    <form th:action="@{/logout}" method="post" style="display:contents;">
+                        <button type="submit" class="rd-item rd-logout">
+                            <i class="bi bi-box-arrow-right"></i><span th:text="#{nav.user.logout}">Cerrar Sesión</span>
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════
+         PANEL CONTEXTUAL
+    ═══════════════════════════════════════════════════ -->
+    <aside class="zymos-panel" id="zymosPanel">
+
+        <!-- ── Scrollable body ── -->
+        <div class="zymos-panel-body">
+
+        <!-- ── Search (order:1 → aparece entre header y items vía CSS) ── -->
+        <form class="zymos-panel-search" th:action="@{/buscar}" method="get" autocomplete="off">
+            <i class="bi bi-search"></i>
+            <input type="search" name="q" id="panelSearchInput"
+                   th:placeholder="#{nav.search.placeholder}" placeholder="Buscar…">
+            <div id="panelSearchSuggest" class="search-suggest"></div>
+        </form>
+
+        <!-- ── Dashboard panel (default when no module) ── -->
+        <th:block th:if="${modDash or modNone}">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.dashboard}">Dashboard</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item panel-active" th:href="@{/dashboard}">
+                <i class="bi bi-speedometer2"></i><span th:text="#{nav.dashboard}">Dashboard</span>
+            </a>
+        </th:block>
+
+        <!-- ── Producción panel ── -->
+        <th:block th:if="${modProd}">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.produccion}">Producción</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <div class="zymos-panel-section">Lotes</div>
+            <a class="zymos-panel-item" th:href="@{/}"
+               th:classappend="${currentUri != null and currentUri == '/'} ? ' panel-active' : ''">
+                <i class="bi bi-clipboard-data"></i><span th:text="#{nav.produccion.trazabilidad}">Trazabilidad</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/kanban}"
+               th:classappend="${currentUri != null and currentUri.contains('/kanban')} ? ' panel-active' : ''">
+                <i class="bi bi-kanban"></i><span th:text="#{nav.produccion.kanban}">Kanban</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/planificacion}"
+               th:classappend="${currentUri != null and currentUri.contains('/planificacion')} ? ' panel-active' : ''">
+                <i class="bi bi-calendar-week"></i><span th:text="#{nav.produccion.planificacion}">Planificación</span>
+            </a>
+            <div class="zymos-panel-section">Análisis</div>
+            <a class="zymos-panel-item" th:href="@{/comparativa}"
+               th:classappend="${currentUri != null and currentUri.contains('/comparativa')} ? ' panel-active' : ''">
+                <i class="bi bi-bar-chart-steps"></i><span th:text="#{nav.produccion.comparativa}">Comparativa</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/calendario}"
+               th:classappend="${currentUri != null and currentUri.contains('/calendario')} ? ' panel-active' : ''">
+                <i class="bi bi-calendar3"></i><span th:text="#{nav.produccion.calendario}">Calendario</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/reportes/produccion}"
+               th:classappend="${currentUri != null and currentUri.contains('/reportes/produccion')} ? ' panel-active' : ''">
+                <i class="bi bi-bar-chart-line"></i><span th:text="#{nav.produccion.reportes}">Reportes</span>
+            </a>
+        </th:block>
+
+        <!-- ── Almacén panel ── -->
+        <th:block th:if="${modAlm}"
+                  sec:authorize="hasAnyRole('ADMIN','INVENTARIO','PRODUCCION','SUPERADMIN') or hasAnyAuthority('MODULO_INVENTARIO_VER','MODULO_RECETAS_VER','MODULO_BARRILES_VER')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.almacen}">Almacén</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item" th:href="@{/inventario}"
+               th:classappend="${currentUri != null and currentUri.contains('/inventario')} ? ' panel-active' : ''">
+                <i class="bi bi-box-seam"></i><span th:text="#{nav.almacen.inventario}">Inventario</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/recetas}"
+               th:classappend="${currentUri != null and currentUri.contains('/recetas')} ? ' panel-active' : ''">
+                <i class="bi bi-journal-bookmark"></i><span th:text="#{nav.almacen.recetas}">Recetas</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/barriles}"
+               th:classappend="${currentUri != null and currentUri.contains('/barriles')} ? ' panel-active' : ''">
+                <i class="bi bi-bucket"></i><span th:text="#{nav.almacen.barriles}">Barriles / Kegs</span>
+            </a>
+        </th:block>
+
+        <!-- ── Equipos panel ── -->
+        <th:block th:if="${modEq}"
+                  sec:authorize="hasAnyRole('ADMIN','EQUIPOS','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_VER')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.equipos}">Equipos</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item" th:href="@{/equipos}"
+               th:classappend="${currentUri != null and currentUri.startsWith('/equipos') and !currentUri.contains('/nuevo') and !currentUri.contains('/editar')} ? ' panel-active' : ''">
+                <i class="bi bi-tools"></i><span th:text="#{nav.equipos}">Equipos</span>
+            </a>
+            <a class="zymos-panel-item"
+               sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')"
+               th:href="@{/equipos/nuevo}">
+                <i class="bi bi-plus-circle"></i><span th:text="#{nav.nuevo.equipo}">Nuevo Equipo</span>
+            </a>
+        </th:block>
+
+        <!-- ── Comercial panel ── -->
+        <th:block th:if="${modCom}"
+                  sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_FACTURACION_VER','MODULO_COMERCIAL_VER')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.comercial}">Comercial</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <div class="zymos-panel-section">Ventas</div>
+            <a class="zymos-panel-item" th:href="@{/ventas}"
+               th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? ' panel-active' : ''">
+                <i class="bi bi-bag-check"></i><span th:text="#{nav.comercial.ventas}">Ventas</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/stock}"
+               th:classappend="${currentUri != null and currentUri.startsWith('/stock')} ? ' panel-active' : ''">
+                <i class="bi bi-archive"></i><span th:text="#{nav.almacen.stock}">Stock P. Terminado</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/clientes}"
+               th:classappend="${currentUri != null and currentUri.contains('/clientes')} ? ' panel-active' : ''">
+                <i class="bi bi-people"></i><span th:text="#{nav.comercial.clientes}">Clientes</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/reportes/ventas}"
+               th:classappend="${currentUri != null and currentUri.contains('/reportes/ventas')} ? ' panel-active' : ''">
+                <i class="bi bi-graph-up-arrow"></i><span th:text="#{nav.comercial.reporte.ventas}">Reporte Ventas</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/reportes/rentabilidad}"
+               th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? ' panel-active' : ''">
+                <i class="bi bi-currency-dollar"></i><span th:text="#{nav.comercial.rentabilidad}">Rentabilidad</span>
+            </a>
+            <div class="zymos-panel-section">Compras</div>
+            <a class="zymos-panel-item" th:href="@{/ordenes-compra}"
+               th:classappend="${currentUri != null and currentUri.contains('/ordenes-compra')} ? ' panel-active' : ''">
+                <i class="bi bi-cart-check"></i><span th:text="#{nav.comercial.ordenes}">Órdenes de Compra</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/facturas}"
+               th:classappend="${currentUri != null and currentUri.contains('/facturas')} ? ' panel-active' : ''">
+                <i class="bi bi-receipt"></i><span th:text="#{nav.comercial.facturas}">Facturas</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/proveedores}"
+               th:classappend="${currentUri != null and currentUri.contains('/proveedores')} ? ' panel-active' : ''">
+                <i class="bi bi-building"></i><span th:text="#{nav.comercial.proveedores}">Proveedores</span>
+            </a>
+        </th:block>
+
+        <!-- ── BPM panel ── -->
+        <th:block th:if="${modBpm}"
+                  sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_BPM_VER')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.bpm}">BPM</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item" th:href="@{/bpm}"
+               th:classappend="${currentUri != null and currentUri == '/bpm'} ? ' panel-active' : ''">
+                <i class="bi bi-speedometer2"></i><span th:text="#{nav.bpm.dashboard}">Dashboard BPM</span>
+            </a>
+            <div class="zymos-panel-section">Registro</div>
+            <a class="zymos-panel-item" th:href="@{/bpm/salud/diario}"
+               th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? ' panel-active' : ''">
+                <i class="bi bi-person-heart" style="color:#f59e0b;"></i><span th:text="#{nav.bpm.salud}">Estado de Salud</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/bpm/soluciones}"
+               th:classappend="${currentUri != null and currentUri.contains('/bpm/soluciones')} ? ' panel-active' : ''">
+                <i class="bi bi-droplet-half" style="color:#3b82f6;"></i><span th:text="#{nav.bpm.soluciones}">Soluciones Desinfect.</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/bpm/plagas}"
+               th:classappend="${currentUri != null and currentUri.contains('/bpm/plagas')} ? ' panel-active' : ''">
+                <i class="bi bi-bug" style="color:#ef4444;"></i><span th:text="#{nav.bpm.plagas}">Control de Plagas</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/bpm/residuos}"
+               th:classappend="${currentUri != null and currentUri.contains('/bpm/residuos')} ? ' panel-active' : ''">
+                <i class="bi bi-trash3" style="color:#16a34a;"></i><span th:text="#{nav.bpm.residuos}">Evacuación Residuos</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/bpm/limpieza}"
+               th:classappend="${currentUri != null and currentUri.contains('/bpm/limpieza')} ? ' panel-active' : ''">
+                <i class="bi bi-stars" style="color:#7c3aed;"></i><span th:text="#{nav.bpm.limpieza}">Limpieza y Desinfección</span>
+            </a>
+            <th:block sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                <div class="zymos-panel-section">Admin</div>
+                <a class="zymos-panel-item" th:href="@{/bpm/sintomas}"
+                   th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? ' panel-active' : ''">
+                    <i class="bi bi-list-check"></i><span th:text="#{nav.bpm.sintomas}">Todos los registros</span>
+                </a>
+                <a class="zymos-panel-item" th:href="@{/bpm/salud/autorizaciones}"
+                   th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/autorizaciones')} ? ' panel-active' : ''">
+                    <i class="bi bi-shield-check text-warning"></i><span th:text="#{nav.bpm.autorizaciones}">Autorizaciones</span>
+                </a>
+            </th:block>
+        </th:block>
+
+        <!-- ── Tareas panel ── -->
+        <th:block th:if="${modTar}"
+                  sec:authorize="hasAnyRole('ADMIN','PRODUCCION','SUPERADMIN') or hasAuthority('MODULO_TAREAS_VER')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.tareas}">Tareas</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item" th:href="@{/tareas}"
+               th:classappend="${currentUri != null and currentUri.startsWith('/tareas')} ? ' panel-active' : ''">
+                <i class="bi bi-check2-square"></i><span th:text="#{nav.tareas}">Mis Tareas</span>
+            </a>
+        </th:block>
+
+        <!-- ── Admin panel ── -->
+        <th:block th:if="${modAdm}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.admin}">Admin</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <div class="zymos-panel-section" th:text="#{nav.admin.gestion}">Gestión</div>
+            <a class="zymos-panel-item" th:href="@{/usuarios}"
+               th:classappend="${currentUri != null and currentUri.contains('/usuarios')} ? ' panel-active' : ''">
+                <i class="bi bi-people"></i><span th:text="#{nav.admin.usuarios}">Usuarios</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/tipos-cerveza}"
+               th:classappend="${currentUri != null and currentUri.contains('/tipos-cerveza')} ? ' panel-active' : ''">
+                <i class="bi bi-tag"></i><span th:text="#{nav.admin.tipos.cerveza}">Tipos de Cerveza</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/admin/categorias}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/categorias')} ? ' panel-active' : ''">
+                <i class="bi bi-collection"></i><span th:text="#{nav.admin.categorias}">Categorías</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/admin/roles}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/roles')} ? ' panel-active' : ''">
+                <i class="bi bi-shield-lock"></i><span th:text="#{nav.admin.roles}">Roles</span>
+            </a>
+            <div class="zymos-panel-section" th:text="#{nav.admin.sistema}">Sistema</div>
+            <a class="zymos-panel-item" th:href="@{/admin/logs}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? ' panel-active' : ''">
+                <i class="bi bi-journal-text"></i><span th:text="#{nav.admin.logs}">Log de Accesos</span>
+            </a>
+            <th:block sec:authorize="hasRole('SUPERADMIN')">
+                <div class="zymos-panel-section" th:text="#{nav.admin.plataforma}">Plataforma</div>
+                <a class="zymos-panel-item" th:href="@{/admin/tenants}"
+                   th:classappend="${currentUri != null and currentUri.contains('/admin/tenants')} ? ' panel-active' : ''">
+                    <i class="bi bi-building-gear"></i><span th:text="#{nav.admin.tenants}">Tenants</span>
+                </a>
+                <a class="zymos-panel-item" th:href="@{/admin/tenants}"
+                   th:classappend="${currentUri != null and currentUri.contains('/admin/migracion')} ? ' panel-active' : ''">
+                    <i class="bi bi-database-up"></i><span>Migración</span>
+                </a>
+            </th:block>
+        </th:block>
+
+        </div><!-- /zymos-panel-body -->
+
+        <!-- ── Panel footer: + Nuevo ── -->
+        <div class="zymos-panel-footer">
+            <div class="dropup w-100">
+                <button class="zymos-panel-nuevo-btn dropdown-toggle" data-bs-toggle="dropdown"
+                        data-bs-auto-close="true">
+                    <span class="zymos-panel-nuevo-icon"><i class="bi bi-plus-lg"></i></span>
+                    <span th:text="#{nav.nuevo}">+ Nuevo</span>
+                    <i class="bi bi-chevron-up ms-auto" style="font-size:0.6rem;opacity:0.45;"></i>
+                </button>
+                <ul class="dropdown-menu w-100 mb-1" style="min-width:180px;">
+                    <li class="px-3 pt-2 pb-1">
+                        <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.nuevo.crear}">Crear nuevo</small>
+                    </li>
+                    <li><hr class="dropdown-divider mt-1 mb-0"></li>
+                    <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/nuevo}">
+                            <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.lote}">Lote de cerveza</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/recetas/nueva}">
+                            <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.receta}">Receta</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/inventario/nuevo}">
+                            <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.insumo}">Insumo</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/equipos/nuevo}">
+                            <i class="bi bi-tools me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.equipo}">Equipo</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
+                            <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.factura}">Factura</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
+                            <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.venta}">Venta</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div><!-- /zymos-panel-footer -->
+
+    </aside>
+
+    <!-- ═══════════════════════════════════════════════════
+         TOPBAR
+    ═══════════════════════════════════════════════════ -->
+    <header class="zymos-topbar" id="zymosTopbar">
+        <!-- Hamburger (mobile only) -->
+        <button class="zymos-topbar-toggle" id="navToggleBtn" aria-label="Menú">
+            <i class="bi bi-list"></i>
+        </button>
+
+        <!-- Module indicator -->
+        <div class="zymos-topbar-brand">
+            <th:block th:if="${modDash or modNone}">
+                <i class="bi bi-speedometer2"></i>
+                <span th:text="#{nav.dashboard}">Dashboard</span>
+            </th:block>
+            <th:block th:if="${modProd}">
+                <i class="bi bi-clipboard-data"></i>
+                <span th:text="#{nav.produccion}">Producción</span>
+            </th:block>
+            <th:block th:if="${modAlm}">
+                <i class="bi bi-box-seam"></i>
+                <span th:text="#{nav.almacen}">Almacén</span>
+            </th:block>
+            <th:block th:if="${modEq}">
+                <i class="bi bi-tools"></i>
+                <span th:text="#{nav.equipos}">Equipos</span>
+            </th:block>
+            <th:block th:if="${modCom}">
+                <i class="bi bi-receipt"></i>
+                <span th:text="#{nav.comercial}">Comercial</span>
+            </th:block>
+            <th:block th:if="${modBpm}">
+                <i class="bi bi-clipboard2-check"></i>
+                <span th:text="#{nav.bpm}">BPM</span>
+            </th:block>
+            <th:block th:if="${modTar}">
+                <i class="bi bi-check2-square"></i>
+                <span th:text="#{nav.tareas}">Tareas</span>
+            </th:block>
+            <th:block th:if="${modAdm}">
+                <i class="bi bi-shield-lock"></i>
+                <span th:text="#{nav.admin}">Admin</span>
+            </th:block>
+        </div>
+
+        <div class="zymos-topbar-right">
+            <!-- Botón buscar: solo en mobile donde el panel (con search) está oculto -->
+            <a class="zymos-tb-icon d-flex d-lg-none" th:href="@{/buscar}"
+               th:title="#{nav.search.aria}">
+                <i class="bi bi-search"></i>
+            </a>
+
+            <!-- Dark mode toggle: solo en mobile (<992px) donde el rail está oculto -->
+            <button class="zymos-tb-icon d-flex d-lg-none" id="darkToggleBtnTopbar"
+                    th:title="#{nav.dark.toggle}">
+                <i class="bi bi-moon-fill" id="darkModeIconTopbar"></i>
+            </button>
+
+            <!-- + Nuevo dropdown: solo mobile (en desktop está en el panel footer) -->
+            <div class="dropdown d-lg-none">
+                <button class="zymos-tb-btn-new dropdown-toggle" data-bs-toggle="dropdown"
+                        style="--bs-btn-padding-x:0;">
+                    <i class="bi bi-plus-lg"></i>
+                    <span th:text="#{nav.nuevo}">Nuevo</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" style="min-width:220px;">
+                    <li class="px-3 pt-2 pb-1">
+                        <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.nuevo.crear}">Crear nuevo</small>
+                    </li>
+                    <li><hr class="dropdown-divider mt-1 mb-0"></li>
+                    <li sec:authorize="hasAnyRole('ADMIN','SUPERADMIN','PRODUCCION') or hasAuthority('MODULO_TRAZABILIDAD_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/nuevo}">
+                            <i class="bi bi-clipboard-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.lote}">Lote de cerveza</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/recetas/nueva}">
+                            <i class="bi bi-journal-plus me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.receta}">Receta</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','INVENTARIO','SUPERADMIN') or hasAuthority('MODULO_INVENTARIO_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/inventario/nuevo}">
+                            <i class="bi bi-box-seam me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.insumo}">Insumo</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','EQUIPOS','SUPERADMIN') or hasAuthority('MODULO_EQUIPOS_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/equipos/nuevo}">
+                            <i class="bi bi-tools me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.equipo}">Equipo</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/facturas/nueva}">
+                            <i class="bi bi-receipt me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.factura}">Factura</span>
+                        </a>
+                    </li>
+                    <li sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_COMERCIAL_CREAR')">
+                        <a class="dropdown-item py-2" th:href="@{/ventas/nuevo}">
+                            <i class="bi bi-bag-check me-2" style="color:var(--dorado);"></i><span th:text="#{nav.nuevo.venta}">Venta</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Notifications bell: solo mobile (en desktop está en el rail) -->
+            <div class="dropdown d-lg-none" id="topbarBellItem">
+                <button class="zymos-tb-icon position-relative" data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside" id="topbarNotifToggle">
+                    <i class="bi bi-bell-fill"></i>
+                    <span id="topbarAlertaBadge"
+                          class="position-absolute badge rounded-pill bg-danger"
+                          style="font-size:0.55rem;min-width:14px;padding:2px 3px;top:1px;right:1px;transform:translate(30%,-20%);display:none;">0</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end p-0" style="min-width:300px;max-width:340px;">
+                    <li class="px-3 pt-2 pb-1 d-flex justify-content-between align-items-center">
+                        <small class="text-muted" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:.05em;" th:text="#{nav.notificaciones}">Notificaciones</small>
+                        <button id="topbarBtnMarcarTodas" class="btn btn-link btn-sm p-0 text-muted"
+                                style="font-size:.72rem;text-decoration:none;display:none;" th:text="#{nav.notif.marcar.todas}">
+                            Marcar todas leídas
+                        </button>
+                    </li>
+                    <li><hr class="dropdown-divider mt-1 mb-0"></li>
+                    <li id="topbarNotifLista"></li>
+                    <li><hr class="dropdown-divider my-0"></li>
+                    <li>
+                        <a class="dropdown-item text-center py-2" th:href="@{/notificaciones}"
+                           style="font-size:.82rem;color:var(--dorado);" th:text="#{nav.notif.ver.todas}">
+                            Ver todas las notificaciones →
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </header>
+
+    <!-- Mobile backdrop -->
+    <div class="zymos-backdrop" id="zymosBackdrop"></div>
+
+    <!-- ── Toast de flash messages ── -->
     <div th:if="${mensaje}"
-         class="position-fixed end-0 p-3" style="z-index:1090;top:70px;">
+         class="position-fixed end-0 p-3" style="z-index:1090;top:60px;">
         <div id="zymosToast" class="toast border-0 shadow"
              role="alert" aria-live="assertive" aria-atomic="true"
              data-bs-autohide="true" data-bs-delay="5000">
@@ -592,7 +1019,7 @@
                 <i class="bi me-2"
                    th:classappend="${tipoMensaje == 'success'} ? 'bi-check-circle-fill' :
                                     (${tipoMensaje == 'warning'} ? 'bi-exclamation-triangle-fill' : 'bi-x-circle-fill')"></i>
-                <strong class="me-auto" th:text="${branding != null ? branding.name : 'Alera'}">Alera</strong>
+                <strong class="me-auto" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</strong>
                 <button type="button" class="btn-close"
                         th:classappend="${tipoMensaje == 'success' or tipoMensaje == 'danger'} ? 'btn-close-white' : ''"
                         data-bs-dismiss="toast"></button>
@@ -601,99 +1028,183 @@
         </div>
     </div>
 
+    <!-- ── Scripts ─────────────────────────────────────────────────── -->
     <script th:inline="javascript" th:attr="nonce=${cspNonce}">
     var ALERA_CSRF_TOKEN  = /*[[${_csrf != null ? _csrf.token : ''}]]*/ '';
     var ALERA_CSRF_HEADER = /*[[${_csrf != null ? _csrf.headerName : 'X-CSRF-TOKEN'}]]*/ 'X-CSRF-TOKEN';
     </script>
+
     <script th:attr="nonce=${cspNonce}">
-    // ── CSRF para fetch desde navbar ─────────────────────────────────
-    // Intenta meta tags del template (si existen); fallback a variables Thymeleaf inline.
+    // ── CSRF ───────────────────────────────────────────────────────
     function _csrfToken()  { return (document.querySelector('meta[name="_csrf"]') || {}).content || ALERA_CSRF_TOKEN || ''; }
     function _csrfHeader() { return (document.querySelector('meta[name="_csrf_header"]') || {}).content || ALERA_CSRF_HEADER || 'X-CSRF-TOKEN'; }
 
-    // ── Modo oscuro ─────────────────────────────────────────────────
+    // ── Dark mode ──────────────────────────────────────────────────
     function toggleDarkMode() {
-        const isDark = document.documentElement.classList.toggle('dark-mode');
+        var isDark = document.documentElement.classList.toggle('dark-mode');
         localStorage.setItem('zymos-theme', isDark ? 'dark' : 'light');
-        _updateDarkIcon(isDark);
+        _updateDarkIcons(isDark);
     }
-    function _updateDarkIcon(isDark) {
-        const icon = document.getElementById('darkModeIcon');
-        if (icon) icon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+    function _updateDarkIcons(isDark) {
+        ['darkModeIcon', 'darkModeIconTopbar'].forEach(function(id) {
+            var icon = document.getElementById(id);
+            if (icon) icon.className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+        });
     }
-    document.addEventListener('DOMContentLoaded', function() {
-        _updateDarkIcon(document.documentElement.classList.contains('dark-mode'));
-        // ── Toast ────────────────────────────────────────────────────
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var isDark = document.documentElement.classList.contains('dark-mode');
+        _updateDarkIcons(isDark);
+
+        // Toast
         var toastEl = document.getElementById('zymosToast');
         if (toastEl && typeof bootstrap !== 'undefined') {
             bootstrap.Toast.getOrCreateInstance(toastEl).show();
         }
-        // ── Notificaciones in-app ────────────────────────────────────
-        notifCargar();
-        setInterval(notifCargar, 300000); // refresca cada 5 minutos
-        var notifToggle = document.getElementById('notifDropdownToggle');
-        if (notifToggle) {
-            notifToggle.addEventListener('show.bs.dropdown', function() { notifCargar(); });
+
+        // Rail avatar initials (small rail + large in dropdown)
+        var hiddenName = document.getElementById('railUserNameHidden');
+        var initSpan   = document.getElementById('railAvatarInitials');
+        var initLg     = document.getElementById('railAvatarLg');
+        if (hiddenName) {
+            var parts    = hiddenName.textContent.trim().split(/[\s_.@-]+/).filter(Boolean);
+            var initials = parts.map(function(p) { return p[0] ? p[0].toUpperCase() : ''; })
+                               .join('').slice(0, 2) || '?';
+            if (initSpan) initSpan.textContent = initials;
+            if (initLg)   initLg.textContent   = initials;
         }
 
-        // ── Listeners CSP-safe (reemplazan onclick= en templates) ────
-        var _darkBtn = document.getElementById('darkToggleBtn');
-        if (_darkBtn) _darkBtn.addEventListener('click', toggleDarkMode);
+        // Bootstrap tooltips on rail items
+        if (typeof bootstrap !== 'undefined') {
+            [].slice.call(document.querySelectorAll('.zymos-rail-item[data-bs-toggle="tooltip"]'))
+              .forEach(function(el) { new bootstrap.Tooltip(el, { trigger: 'hover' }); });
+        }
 
-        var _marcarTodasBtn = document.getElementById('btnMarcarTodas');
-        if (_marcarTodasBtn) _marcarTodasBtn.addEventListener('click', notifMarcarTodas);
+        // Notifications: initial load + periodic refresh
+        notifCargar();
+        setInterval(notifCargar, 300000);
 
-        var _notifLista = document.getElementById('notifLista');
-        if (_notifLista) {
-            _notifLista.addEventListener('click', function(e) {
-                var btn = e.target.closest('.btn-notif-leer');
-                if (btn) notifMarcarLeida(parseInt(btn.dataset.notifId), btn);
+        // Open notifications → reload
+        ['railBellToggle', 'topbarNotifToggle'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener('show.bs.dropdown', function () { notifCargar(); });
+        });
+
+        // Rail bell: position the dropdown panel next to the button
+        var railBellDrop = document.getElementById('railBellDropdown');
+        if (railBellDrop) {
+            railBellDrop.addEventListener('show.bs.dropdown', function () {
+                var btn  = this.querySelector('[data-bs-toggle="dropdown"]');
+                var menu = this.querySelector('.dropdown-menu');
+                if (!btn || !menu) return;
+                var rect      = btn.getBoundingClientRect();
+                var menuH     = Math.min(380, window.innerHeight - 20);
+                var top       = Math.min(rect.top - 8, window.innerHeight - menuH - 10);
+                top = Math.max(top, 8);
+                menu.style.top    = top + 'px';
+                menu.style.bottom = 'auto';
             });
         }
 
-        // togglePwd: mostrar/ocultar contraseña (global, todos los templates)
-        document.addEventListener('click', function(e) {
+        // Dark mode buttons
+        ['darkToggleBtn', 'darkToggleBtnTopbar'].forEach(function(id) {
+            var btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', toggleDarkMode);
+        });
+
+        // "Marcar todas" — rail + topbar
+        ['btnMarcarTodas', 'topbarBtnMarcarTodas'].forEach(function(id) {
+            var btn = document.getElementById(id);
+            if (btn) btn.addEventListener('click', notifMarcarTodas);
+        });
+
+        // Notif item click (marcar leída) — rail + topbar lists
+        ['notifLista', 'topbarNotifLista'].forEach(function(listaId) {
+            var lista = document.getElementById(listaId);
+            if (lista) {
+                lista.addEventListener('click', function (e) {
+                    var btn = e.target.closest('.btn-notif-leer');
+                    if (btn) notifMarcarLeida(parseInt(btn.dataset.notifId), btn);
+                });
+            }
+        });
+
+        // Mobile drawer
+        var toggleBtn = document.getElementById('navToggleBtn');
+        var rail      = document.getElementById('zymosRail');
+        var panel     = document.getElementById('zymosPanel');
+        var backdrop  = document.getElementById('zymosBackdrop');
+        function openDrawer() {
+            rail.classList.add('nav-open');
+            panel.classList.add('nav-open');
+            backdrop.classList.add('show');
+        }
+        function closeDrawer() {
+            rail.classList.remove('nav-open');
+            panel.classList.remove('nav-open');
+            backdrop.classList.remove('show');
+        }
+        if (toggleBtn) toggleBtn.addEventListener('click', openDrawer);
+        if (backdrop)  backdrop.addEventListener('click', closeDrawer);
+
+        // Global event handlers (CSP-safe)
+        document.addEventListener('click', function (e) {
             var btn = e.target.closest('.btn-toggle-pwd');
             if (btn && typeof togglePwd === 'function') togglePwd(btn);
         });
-        // Imprimir página
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target.closest('.btn-print')) window.print();
         });
-        // Confirmar acción antes de continuar (reemplaza onclick="return confirm(...)")
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             var el = e.target.closest('[data-confirm]');
             if (el && !confirm(el.dataset.confirm)) e.preventDefault();
         }, true);
-        // Detener propagación de click (reemplaza onclick="event.stopPropagation()")
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             if (e.target.closest('[data-stop-propagation]')) e.stopPropagation();
         });
-        // Auto-submit formulario al cambiar un select (reemplaza onchange="this.form.submit()")
-        document.addEventListener('change', function(e) {
+        document.addEventListener('change', function (e) {
             if (e.target.matches('[data-auto-submit]') && e.target.form) e.target.form.submit();
         });
     });
-    // ── Notificaciones in-app ────────────────────────────────────
+
+    // ── Notifications ───────────────────────────────────────────────
     function notifCargar() {
         fetch('/notificaciones/recientes', { credentials: 'same-origin' })
-            .then(function(r) { return r.ok ? r.json() : null; })
-            .then(function(data) {
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
                 if (!data) return;
-                var item  = document.getElementById('alertaBellItem');
-                var badge = document.getElementById('alertaBadge');
-                var lista = document.getElementById('notifLista');
-                var btnTodas = document.getElementById('btnMarcarTodas');
-
-                if (data.total > 0) {
-                    if (badge) { badge.style.display = ''; badge.textContent = data.total > 99 ? '99+' : data.total; }
-                } else {
-                    if (badge) badge.style.display = 'none';
+                // Update rail badge
+                var railBadge = document.getElementById('alertaBadge');
+                if (railBadge) {
+                    if (data.total > 0) {
+                        railBadge.style.display = '';
+                    } else {
+                        railBadge.style.display = 'none';
+                    }
                 }
-                if (btnTodas) btnTodas.style.display = data.total > 0 ? '' : 'none';
-                if (lista)    lista.innerHTML = notifRenderLista(data.items);
+                // Update topbar mobile badge
+                var topBadge = document.getElementById('topbarAlertaBadge');
+                if (topBadge) {
+                    if (data.total > 0) {
+                        topBadge.style.display = '';
+                        topBadge.textContent = data.total > 99 ? '99+' : data.total;
+                    } else {
+                        topBadge.style.display = 'none';
+                    }
+                }
+                // Update "marcar todas" visibility in both dropdowns
+                ['btnMarcarTodas', 'topbarBtnMarcarTodas'].forEach(function(id) {
+                    var btn = document.getElementById(id);
+                    if (btn) btn.style.display = data.total > 0 ? '' : 'none';
+                });
+                // Render notification list in both dropdowns
+                var html = notifRenderLista(data.items);
+                ['notifLista', 'topbarNotifLista'].forEach(function(id) {
+                    var lista = document.getElementById(id);
+                    if (lista) lista.innerHTML = html;
+                });
             })
-            .catch(function() {});
+            .catch(function () {});
     }
 
     function notifRenderLista(items) {
@@ -702,122 +1213,111 @@
                    '<i class="bi bi-bell-slash d-block mb-1" style="font-size:1.4rem;opacity:.4;"></i>' +
                    'Sin notificaciones nuevas</div>';
         }
-        return items.map(function(n) {
-            return '<div class="d-flex align-items-start gap-2 px-3 py-2" ' +
-                   'style="border-bottom:1px solid rgba(0,0,0,.06);">' +
-                   '<i class="bi ' + notifEsc(n.icono) + ' ' + notifEsc(n.colorClase) +
-                   ' flex-shrink-0 mt-1" style="font-size:1rem;"></i>' +
+        return items.map(function (n) {
+            return '<div class="d-flex align-items-start gap-2 px-3 py-2" style="border-bottom:1px solid rgba(0,0,0,.06);">' +
+                   '<i class="bi ' + notifEsc(n.icono) + ' ' + notifEsc(n.colorClase) + ' flex-shrink-0 mt-1" style="font-size:1rem;"></i>' +
                    '<div class="flex-grow-1 overflow-hidden">' +
-                   '<div style="font-size:.84rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' +
-                   notifEsc(n.titulo) + '</div>' +
+                   '<div style="font-size:.84rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + notifEsc(n.titulo) + '</div>' +
                    '<div style="font-size:.72rem;color:#888;">' + notifEsc(n.tiempoRelativo) + '</div>' +
                    '</div>' +
                    '<div class="d-flex gap-1 flex-shrink-0">' +
                    (n.urlAccion ? '<a href="' + notifEsc(n.urlAccion) + '" class="btn btn-sm p-0 px-1 text-muted" title="Ver"><i class="bi bi-arrow-right"></i></a>' : '') +
-                   '<button class="btn btn-sm p-0 px-1 text-muted btn-notif-leer" title="Marcar leída" ' +
-                   'data-notif-id="' + n.id + '"><i class="bi bi-check2"></i></button>' +
+                   '<button class="btn btn-sm p-0 px-1 text-muted btn-notif-leer" title="Marcar leída" data-notif-id="' + n.id + '"><i class="bi bi-check2"></i></button>' +
                    '</div></div>';
         }).join('');
     }
 
     function notifMarcarLeida(id, btn) {
         fetch('/notificaciones/' + id + '/leer', {
-            method: 'POST',
-            credentials: 'same-origin',
+            method: 'POST', credentials: 'same-origin',
             headers: { [_csrfHeader()]: _csrfToken() }
         })
-        .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(data) {
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
             if (!data) return;
             var row = btn.closest('.d-flex.align-items-start');
             if (row) row.remove();
-            var badge = document.getElementById('alertaBadge');
+            // Update both badges
+            var railBadge = document.getElementById('alertaBadge');
+            var topBadge  = document.getElementById('topbarAlertaBadge');
             if (data.noLeidas > 0) {
-                if (badge) { badge.style.display = ''; badge.textContent = data.noLeidas > 99 ? '99+' : data.noLeidas; }
+                if (railBadge) railBadge.style.display = '';
+                if (topBadge)  { topBadge.style.display = ''; topBadge.textContent = data.noLeidas > 99 ? '99+' : data.noLeidas; }
             } else {
-                if (badge) badge.style.display = 'none';
-                var lista = document.getElementById('notifLista');
-                if (lista) lista.innerHTML = notifRenderLista([]);
+                if (railBadge) railBadge.style.display = 'none';
+                if (topBadge)  topBadge.style.display = 'none';
+                var emptyHtml = notifRenderLista([]);
+                ['notifLista', 'topbarNotifLista'].forEach(function(id2) {
+                    var lista = document.getElementById(id2);
+                    if (lista) lista.innerHTML = emptyHtml;
+                });
             }
         })
-        .catch(function() {});
+        .catch(function () {});
     }
 
     function notifMarcarTodas() {
         fetch('/notificaciones/leer-todas', {
-            method: 'POST',
-            credentials: 'same-origin',
+            method: 'POST', credentials: 'same-origin',
             headers: { [_csrfHeader()]: _csrfToken() }
         })
-        .then(function() { notifCargar(); })
-        .catch(function() {});
+        .then(function () { notifCargar(); })
+        .catch(function () {});
     }
 
     function notifEsc(s) {
         return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
 
-    // ── Búsqueda con autocompletado ─────────────────────────────
-    (function() {
+    // ── Global search (typeahead) ────────────────────────────────────
+    (function () {
         var debTimer, activeIdx = -1;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            var input   = document.getElementById('navSearchInput');
-            var suggest = document.getElementById('searchSuggest');
+        document.addEventListener('DOMContentLoaded', function () {
+            var input   = document.getElementById('panelSearchInput');
+            var suggest = document.getElementById('panelSearchSuggest');
             if (!input || !suggest) return;
 
-            input.addEventListener('input', function() {
-                clearTimeout(debTimer);
-                activeIdx = -1;
+            input.addEventListener('input', function () {
+                clearTimeout(debTimer); activeIdx = -1;
                 var q = this.value.trim();
                 if (q.length < 2) { hide(); return; }
-                debTimer = setTimeout(function() { doFetch(q); }, 260);
+                debTimer = setTimeout(function () { doFetch(q); }, 260);
             });
 
-            input.addEventListener('keydown', function(e) {
+            input.addEventListener('focus', function () {
+                var rect = input.getBoundingClientRect();
+                suggest.style.top = (rect.bottom + 6) + 'px';
+            });
+
+            input.addEventListener('keydown', function (e) {
                 var items = suggest.querySelectorAll('a.ss-item');
                 if (e.key === 'Escape') { hide(); this.blur(); return; }
                 if (!items.length) return;
-                if (e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    setActive(items, Math.min(activeIdx + 1, items.length - 1));
-                } else if (e.key === 'ArrowUp') {
-                    e.preventDefault();
-                    setActive(items, Math.max(activeIdx - 1, 0));
-                } else if (e.key === 'Enter' && activeIdx >= 0) {
-                    e.preventDefault();
-                    items[activeIdx].click();
-                }
+                if (e.key === 'ArrowDown')  { e.preventDefault(); setActive(items, Math.min(activeIdx + 1, items.length - 1)); }
+                else if (e.key === 'ArrowUp') { e.preventDefault(); setActive(items, Math.max(activeIdx - 1, 0)); }
+                else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); }
             });
 
-            document.addEventListener('click', function(e) {
+            document.addEventListener('click', function (e) {
                 if (!input.closest('form').contains(e.target)) hide();
             });
 
             function setActive(items, idx) {
-                items.forEach(function(a) { a.classList.remove('ss-active'); });
+                items.forEach(function (a) { a.classList.remove('ss-active'); });
                 activeIdx = idx;
                 if (items[idx]) items[idx].classList.add('ss-active');
             }
-
-            function hide() {
-                suggest.style.display = 'none';
-                suggest.innerHTML = '';
-                activeIdx = -1;
-            }
-
+            function hide() { suggest.style.display = 'none'; suggest.innerHTML = ''; activeIdx = -1; }
             function doFetch(q) {
                 fetch('/buscar/suggest?q=' + encodeURIComponent(q), { credentials: 'same-origin' })
-                    .then(function(r) { return r.ok ? r.json() : null; })
-                    .then(function(data) { if (data) render(data, q); })
-                    .catch(function() {});
+                    .then(function (r) { return r.ok ? r.json() : null; })
+                    .then(function (data) { if (data) render(data, q); })
+                    .catch(function () {});
             }
-
             function render(data, q) {
                 var prov  = data.proveedores || [];
                 var equip = data.equipos     || [];
-                var total = data.lotes.length + data.recetas.length + data.insumos.length
-                          + prov.length + equip.length;
+                var total = data.lotes.length + data.recetas.length + data.insumos.length + prov.length + equip.length;
                 var html = '';
                 if (total === 0) {
                     html = '<div class="ss-empty">Sin resultados para &ldquo;' + esc(q) + '&rdquo;</div>';
@@ -829,15 +1329,16 @@
                     html += buildSection(equip,        'Equipos',     'bi-gear');
                     html += '<div class="ss-footer"><a href="/buscar?q=' + encodeURIComponent(q) + '">Ver todos los resultados &rarr;</a></div>';
                 }
+                var rect = input.getBoundingClientRect();
+                suggest.style.top = (rect.bottom + 6) + 'px';
                 suggest.innerHTML = html;
                 suggest.style.display = 'block';
                 activeIdx = -1;
             }
-
             function buildSection(items, label, icon) {
                 if (!items.length) return '';
                 var html = '<div class="ss-section">' + esc(label) + '</div>';
-                items.forEach(function(item) {
+                items.forEach(function (item) {
                     html += '<a href="' + esc(item.url) + '" class="ss-item">' +
                         '<i class="bi ' + icon + ' ss-icon"></i>' +
                         '<span class="ss-title">' + esc(item.titulo) + '</span>' +
@@ -846,7 +1347,6 @@
                 });
                 return html;
             }
-
             function esc(s) {
                 return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
             }
@@ -855,6 +1355,6 @@
     </script>
     <script th:src="@{/js/numeros.js}"></script>
 
-</nav>
+</div>
 </body>
 </html>

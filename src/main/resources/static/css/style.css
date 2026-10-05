@@ -1150,6 +1150,54 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
     font-size: 0.875rem;
 }
 
+/* ── Page Header Modern — Accent Card ───────────────────────── */
+.page-header-modern {
+    background: #fff;
+    border-left: 4px solid var(--verde-zymos, #2563eb);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+}
+.phm-left { display: flex; align-items: center; gap: 14px; }
+.phm-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--verde-zymos, #2563eb) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--verde-zymos, #2563eb) 20%, transparent);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    color: var(--verde-zymos, #2563eb);
+    flex-shrink: 0;
+}
+.phm-crumb {
+    font-size: 0.72rem; color: #94a3b8;
+    display: flex; align-items: center; gap: 4px;
+    margin-bottom: 3px; font-weight: 500;
+}
+.phm-sep { font-size: 0.55rem; opacity: 0.7; }
+.phm-crumb b { color: var(--verde-zymos, #2563eb); font-weight: 600; }
+.page-header-modern h1 {
+    font-size: 1.4rem; font-weight: 800; color: #0f172a;
+    margin: 0; font-family: var(--font-body), sans-serif;
+}
+.phm-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+html.dark-mode .page-header-modern {
+    background: var(--dm-card);
+    border-left-color: var(--verde-zymos, #3b82f6);
+}
+html.dark-mode .phm-icon {
+    background: color-mix(in srgb, var(--verde-zymos, #3b82f6) 15%, transparent);
+    border-color: color-mix(in srgb, var(--verde-zymos, #3b82f6) 25%, transparent);
+}
+html.dark-mode .page-header-modern h1 { color: var(--dm-text-strong); }
+html.dark-mode .phm-crumb { color: var(--dm-text-faint); }
+html.dark-mode .phm-crumb b { color: var(--verde-zymos, #60a5fa); }
+
 /* Stat card simple */
 .stat-card-simple {
     background: #fff;
@@ -1183,6 +1231,28 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
     .stat-card-link {
         flex: 1 1 calc(50% - 0.5rem);
         min-width: 0;
+    }
+}
+
+/* Page headers y section headers — wrap en móvil para que los botones caigan debajo del título */
+@media (max-width: 575.98px) {
+    .page-header.d-flex,
+    .sh.d-flex {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+}
+
+/* Filter cards — inputs a ancho completo en móvil (sobreescribe inline width:Xpx) */
+@media (max-width: 575.98px) {
+    .filter-card .form-control,
+    .filter-card .form-select {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+    /* Form con d-flex ocupa todo el ancho para que sus flex-items se expandan */
+    .filter-card form.d-flex {
+        width: 100%;
     }
 }
 

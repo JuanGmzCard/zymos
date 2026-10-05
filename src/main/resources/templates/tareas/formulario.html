@@ -246,8 +246,48 @@
 
     // chips: [{key:"TIPO:id", tipo, id, label}] — permite varios del mismo tipo
     const chips = [];
+    // autoItemMap: chipKey → id del item-row creado automáticamente
+    const autoItemMap = {};
 
     function chipKey(tipo, id) { return tipo + ':' + id; }
+
+    function escItemVal(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function addAutoItem(label, key) {
+        const idx = itemCount++;
+        const rowId = 'item-' + idx;
+        autoItemMap[key] = rowId;
+        const noMsg = document.getElementById('noItemsMsg');
+        if (noMsg) noMsg.remove();
+        const div = document.createElement('div');
+        div.className = 'item-row';
+        div.id = rowId;
+        div.innerHTML =
+            '<div class="d-flex gap-2 align-items-center">' +
+              '<input type="text" name="itemDesc" class="form-control form-control-sm flex-grow-1" required maxlength="500" value="' + escItemVal(label) + '">' +
+              '<button type="button" class="btn btn-outline-danger btn-sm btn-remove" data-target="' + rowId + '" title="Eliminar"><i class="bi bi-x-lg"></i></button>' +
+            '</div>';
+        document.getElementById('itemsContainer').appendChild(div);
+    }
+
+    function removeAutoItem(key) {
+        const rowId = autoItemMap[key];
+        if (!rowId) return;
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.remove();
+            if (!document.querySelectorAll('.item-row').length) {
+                const msg = document.createElement('div');
+                msg.id = 'noItemsMsg';
+                msg.className = 'text-muted small text-center py-3';
+                msg.textContent = 'Sin ítems registrados';
+                document.getElementById('itemsContainer').appendChild(msg);
+            }
+        }
+        delete autoItemMap[key];
+    }
 
     function renderChips() {
         const container = document.getElementById('refChipsContainer');
@@ -272,11 +312,13 @@
         if (chips.some(function(c) { return c.key === key; })) return; // evitar duplicado exacto
         chips.push({key: key, tipo: tipo, id: String(id), label: label || ''});
         renderChips();
+        addAutoItem(label || '', key);
     }
 
     function removeChip(key) {
         const idx = chips.findIndex(function(c) { return c.key === key; });
         if (idx >= 0) chips.splice(idx, 1);
+        removeAutoItem(key);
         renderChips();
     }
 

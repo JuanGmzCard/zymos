@@ -32,7 +32,7 @@ public interface InsumoInventarioRepository extends JpaRepository<InsumoInventar
     List<InsumoInventario> findAllByTipoOrderByNombreAsc(String tipo);
 
     @Query("SELECT i FROM InsumoInventario i WHERE " +
-           "(:nombre = '' OR LOWER(i.nombre) LIKE LOWER(CONCAT('%', :nombre, '%'))) " +
+           "(:nombre = '' OR LOWER(i.nombre) LIKE LOWER(CONCAT('%', :nombre, '%')) OR LOWER(i.tipo) LIKE LOWER(CONCAT('%', :nombre, '%'))) " +
            "AND (:tipo IS NULL OR i.tipo = :tipo) " +
            "ORDER BY i.nombre ASC")
     Page<InsumoInventario> findByFiltros(@Param("nombre") String nombre,

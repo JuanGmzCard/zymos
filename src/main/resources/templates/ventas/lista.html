@@ -200,12 +200,15 @@
 <div class="container-fluid px-4">
 
     <!-- Cabecera de página -->
-    <div class="page-header d-flex justify-content-between align-items-start">
-        <div>
-            <h1><i class="bi bi-bag-check me-2"></i><span th:text="#{ventas.title}">Ventas</span></h1>
-            <p class="subtitle mb-0" th:text="#{ventas.subtitle}">Registro de salidas y despachos por lote</p>
+    <div class="page-header-modern">
+        <div class="phm-left">
+            <div class="phm-icon"><i class="bi bi-bag-check"></i></div>
+            <div>
+                <div class="phm-crumb">Comercial <i class="bi bi-chevron-right phm-sep"></i> <b th:text="#{ventas.title}">Ventas</b></div>
+                <h1 th:text="#{ventas.title}">Ventas</h1>
+            </div>
         </div>
-        <div class="d-flex gap-2 pt-1" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_VER','MODULO_COMERCIAL_CREAR')">
+        <div class="phm-actions" sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAnyAuthority('MODULO_COMERCIAL_VER','MODULO_COMERCIAL_CREAR')">
             <a th:href="@{/ventas/export(estado=${estadoFiltro},desde=${desde},hasta=${hasta})}"
                class="btn btn-outline-secondary btn-sm" th:title="#{action.export}" title="Exportar Excel">
                 <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{action.export}">Excel</span>
@@ -246,12 +249,12 @@
         <!-- Fila 1: fechas + búsqueda -->
         <form th:action="@{/ventas}" method="get" class="row g-2 align-items-end mb-3">
             <input type="hidden" name="estado" th:if="${estadoFiltro != null}" th:value="${estadoFiltro}">
-            <div class="col-auto">
+            <div class="col-12 col-sm-auto">
                 <label class="form-label form-label-sm mb-0 small text-muted" th:text="#{ventas.filter.desde}">Desde</label>
                 <input type="date" name="desde" class="form-control form-control-sm"
                        th:value="${desde}">
             </div>
-            <div class="col-auto">
+            <div class="col-12 col-sm-auto">
                 <label class="form-label form-label-sm mb-0 small text-muted" th:text="#{ventas.filter.hasta}">Hasta</label>
                 <input type="date" name="hasta" class="form-control form-control-sm"
                        th:value="${hasta}">
@@ -266,11 +269,11 @@
                    th:href="@{/ventas}" class="btn btn-outline-secondary btn-sm" th:text="#{action.limpiar}">Limpiar</a>
             </div>
             <!-- Typeahead -->
-            <div class="col-auto ms-auto">
+            <div class="col-12 col-sm-auto">
                 <div class="position-relative">
                     <input type="search" id="ventaSearch" class="form-control form-control-sm"
                            th:placeholder="#{ventas.filter.buscar.lote}" autocomplete="off"
-                           style="min-width:200px;" data-suggest-url="/ventas/suggest">
+                           data-suggest-url="/ventas/suggest">
                     <div id="ventaSuggest" class="search-suggest" style="display:none;"></div>
                 </div>
             </div>
