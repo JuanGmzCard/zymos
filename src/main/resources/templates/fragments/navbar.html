@@ -41,7 +41,7 @@
     /* ── Rail (56px) ── */
     .zymos-rail {
         position: fixed; left: 0; top: 0; bottom: 0; width: 56px;
-        background: #0f172a;
+        background: var(--verde-oscuro, #242E0D);
         display: flex; flex-direction: column; align-items: center;
         padding: 10px 0; z-index: 1030;
         border-right: 1px solid rgba(255,255,255,0.06);
@@ -74,12 +74,12 @@
     .zymos-rail-item {
         width: 40px; height: 40px; border-radius: 9px;
         display: flex; align-items: center; justify-content: center;
-        font-size: 1.05rem; color: #475569; cursor: pointer;
+        font-size: 1.05rem; color: rgba(255,255,255,0.45); cursor: pointer;
         position: relative; flex-shrink: 0;
         transition: background .15s, color .15s; text-decoration: none;
         margin: 1px 0; border: none; background: transparent;
     }
-    .zymos-rail-item:hover  { background: rgba(255,255,255,0.07); color: #94a3b8; }
+    .zymos-rail-item:hover  { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.75); }
     .zymos-rail-item.rail-active {
         background: color-mix(in srgb, var(--verde-alera, #364318) 25%, transparent);
         color: var(--dorado, #C9A028) !important;
@@ -87,7 +87,7 @@
     .zymos-rail-dot {
         position: absolute; top: 4px; right: 4px;
         width: 7px; height: 7px; border-radius: 50%;
-        background: #ef4444; border: 1.5px solid #0f172a;
+        background: #ef4444; border: 1.5px solid var(--verde-oscuro, #242E0D);
     }
     .zymos-rail-sep {
         width: 26px; height: 1px; background: rgba(255,255,255,0.08);
@@ -110,7 +110,7 @@
     /* ── Panel (196px) ── */
     .zymos-panel {
         position: fixed; left: 56px; top: 0; bottom: 0; width: 196px;
-        background: #1e293b;
+        background: color-mix(in srgb, var(--verde-oscuro, #242E0D) 60%, #0f172a);
         display: flex; flex-direction: column; z-index: 1029;
         border-right: 1px solid rgba(255,255,255,0.06);
         overflow: visible;
@@ -127,7 +127,7 @@
     .zymos-panel-footer {
         flex-shrink: 0; padding: 8px;
         border-top: 1px solid rgba(255,255,255,0.07);
-        background: #1e293b;
+        background: color-mix(in srgb, var(--verde-oscuro, #242E0D) 60%, #0f172a);
     }
     .zymos-panel-nuevo-btn {
         display: flex; align-items: center; gap: 8px; width: 100%;
@@ -186,24 +186,24 @@
     }
     .zymos-panel-section {
         font-size: 0.56rem; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.1em; color: #334155;
+        letter-spacing: 0.1em; color: rgba(255,255,255,0.28);
         padding: 10px 14px 3px; flex-shrink: 0; order: 2;
     }
     .zymos-panel-item {
         padding: 7px 12px; margin: 1px 6px; border-radius: 6px;
-        font-size: 0.76rem; color: #64748b; cursor: pointer;
+        font-size: 0.76rem; color: rgba(255,255,255,0.5); cursor: pointer;
         display: flex; align-items: center; gap: 7px;
         text-decoration: none; flex-shrink: 0; order: 2;
         transition: background .12s, color .12s;
     }
-    .zymos-panel-item:hover { background: rgba(255,255,255,0.06); color: #94a3b8; text-decoration: none; }
+    .zymos-panel-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); text-decoration: none; }
     .zymos-panel-item.panel-active {
         background: color-mix(in srgb, var(--verde-alera, #364318) 18%, transparent);
         color: var(--dorado, #C9A028); font-weight: 600;
     }
     .zymos-panel-item i { font-size: 0.82rem; width: 14px; text-align: center; flex-shrink: 0; }
     .zymos-panel-badge {
-        margin-left: auto; font-size: 0.62rem; font-weight: 600; color: #475569;
+        margin-left: auto; font-size: 0.62rem; font-weight: 600; color: rgba(255,255,255,0.3);
     }
 
     /* ── Topbar (48px) ── */
@@ -242,7 +242,7 @@
 
     /* ── Avatar dropdown dark ── */
     .rail-dropdown {
-        background: #1e293b !important;
+        background: color-mix(in srgb, var(--verde-oscuro, #242E0D) 60%, #0f172a) !important;
         border: 1px solid rgba(255,255,255,0.1) !important;
         border-radius: 10px !important;
         box-shadow: 0 10px 30px rgba(0,0,0,0.45) !important;
