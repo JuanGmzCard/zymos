@@ -16,7 +16,7 @@ WORKDIR /app
 RUN addgroup -S zymos && adduser -S zymos -G zymos
 
 COPY --from=build /app/target/alera-*.jar app.jar
-RUN chown zymos:zymos app.jar
+RUN mkdir -p /app/uploads && chown -R zymos:zymos /app
 
 USER zymos
 
