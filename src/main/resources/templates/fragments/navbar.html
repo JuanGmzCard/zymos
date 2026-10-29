@@ -469,6 +469,14 @@
 
         <div class="zymos-rail-sep"></div>
 
+        <!-- Manuales de usuario -->
+        <a class="zymos-rail-item"
+           href="/docs/index.html"
+           target="_blank"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.docs}">
+            <i class="bi bi-book"></i>
+        </a>
+
         <!-- Admin -->
         <a class="zymos-rail-item"
            sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')"

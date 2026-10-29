@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPM — Manual de Usuario · ZYMOS</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    color: #334155;
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ──────────────────────────────────────────── */
+  #sidebar {
+    width: 268px;
+    min-width: 268px;
+    background: #0f172a;
+    color: #cbd5e1;
+    height: 100vh;
+    position: fixed;
+    top: 0; left: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+  }
+  .sidebar-brand {
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-brand .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #c9a028;
+    letter-spacing: 2px;
+  }
+  .sidebar-brand .modulo {
+    font-size: 0.72rem;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+  .sidebar-brand .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    color: #475569;
+    text-decoration: none;
+    margin-top: 10px;
+  }
+  .sidebar-brand .back-link:hover { color: #c9a028; }
+
+  nav.sidebar-nav { padding: 10px 0 20px; flex: 1; }
+  .nav-section {
+    padding: 14px 20px 4px;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #475569;
+    font-weight: 700;
+  }
+  nav.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 20px;
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.855rem;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+  }
+  nav.sidebar-nav a:hover,
+  nav.sidebar-nav a.active {
+    color: #f1f5f9;
+    background: rgba(255,255,255,0.05);
+    border-left-color: #c9a028;
+  }
+  nav.sidebar-nav a .ic {
+    font-size: 1rem;
+    width: 18px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  nav.sidebar-nav a.sub {
+    padding-left: 48px;
+    font-size: 0.815rem;
+  }
+
+  /* ── Main content ─────────────────────────────────────── */
+  #main {
+    margin-left: 268px;
+    flex: 1;
+    min-width: 0;
+    padding: 0 0 80px;
+  }
+
+  /* ── Page header ──────────────────────────────────────── */
+  .page-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
+    padding: 48px 52px 40px;
+    border-bottom: 3px solid #c9a028;
+  }
+  .page-hero .breadcrumb {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .page-hero h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #c9a028;
+    margin-bottom: 8px;
+  }
+  .page-hero p {
+    font-size: 0.975rem;
+    color: #94a3b8;
+    max-width: 680px;
+    line-height: 1.65;
+  }
+  .role-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+  }
+  .badge-role {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-all    { background: rgba(201,160,40,0.18); color: #c9a028; border: 1px solid rgba(201,160,40,0.35); }
+  .badge-admin  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+  .badge-prod   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+
+  /* ── Content area ─────────────────────────────────────── */
+  .content { padding: 40px 52px; max-width: 900px; }
+
+  section { margin-bottom: 56px; }
+  section:target > h2 { color: #c9a028; }
+
+  h2 {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .ico { font-size: 1.3rem; }
+
+  h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 24px 0 10px;
+  }
+
+  p { margin-bottom: 12px; color: #475569; }
+
+  /* ── Callout boxes ────────────────────────────────────── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 0.875rem;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout .ci { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout.info    { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .callout.tip     { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .callout.warning { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .callout.danger  { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+  .callout strong  { display: block; margin-bottom: 3px; }
+
+  /* ── Steps ────────────────────────────────────────────── */
+  .steps { counter-reset: step; list-style: none; margin: 16px 0; }
+  .steps li {
+    counter-increment: step;
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .steps li::before {
+    content: counter(step);
+    width: 30px;
+    height: 30px;
+    background: #0f172a;
+    color: #c9a028;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .steps li .step-body { flex: 1; }
+  .steps li .step-body strong { color: #0f172a; display: block; margin-bottom: 3px; }
+
+  /* ── Field table ──────────────────────────────────────── */
+  .field-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.865rem;
+    margin: 14px 0 20px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+  }
+  .field-table thead th {
+    background: #1e293b;
+    color: #c9a028;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .field-table tbody tr:hover { background: #f1f5f9; }
+  .field-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+    color: #334155;
+  }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; font-family: monospace; font-size: 0.83rem; }
+  .req { color: #ef4444; font-size: 0.7rem; margin-left: 4px; vertical-align: super; }
+  .opt { color: #94a3b8; font-size: 0.78rem; }
+
+  /* ── Action cards ─────────────────────────────────────── */
+  .action-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 16px 0;
+  }
+  .action-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .action-card .ac-icon { font-size: 1.5rem; margin-bottom: 8px; }
+  .action-card h4 { font-size: 0.9rem; font-weight: 700; color: #0f172a; margin-bottom: 5px; }
+  .action-card p  { font-size: 0.82rem; color: #64748b; margin: 0; }
+
+  /* ── Flow diagram ─────────────────────────────────────── */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 16px 0;
+    padding: 16px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+  }
+  .flow-step {
+    padding: 7px 16px;
+    border-radius: 20px;
+    font-size: 0.83rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .flow-arrow { color: #94a3b8; font-size: 1.1rem; }
+  .fs-gray   { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .fs-green  { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  .fs-red    { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  .fs-yellow { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+  .fs-blue   { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+  .fs-gold   { background: rgba(201,160,40,0.15); color: #92400e; border: 1px solid rgba(201,160,40,0.4); }
+
+  /* ── Role chip inline ─────────────────────────────────── */
+  .role-chip {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    vertical-align: middle;
+  }
+  .rc-admin { background: #fee2e2; color: #991b1b; }
+  .rc-all   { background: #f1f5f9; color: #475569; }
+
+  /* ── Section divider ──────────────────────────────────── */
+  .sub-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .sub-section-header {
+    background: #f8fafc;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: #1e293b;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sub-section-body { padding: 18px 20px; }
+
+  /* ── Symptom list ─────────────────────────────────────── */
+  .symptom-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .symptom-chip {
+    padding: 5px 14px;
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  /* ── TOC visible only on wide screens ────────────────────*/
+  @media (max-width: 900px) {
+    #sidebar { width: 220px; min-width: 220px; }
+    #main    { margin-left: 220px; }
+    .content { padding: 28px 28px; }
+    .page-hero { padding: 32px 28px 26px; }
+  }
+  @media (max-width: 640px) {
+    #sidebar { display: none; }
+    #main    { margin-left: 0; }
+    .content { padding: 20px 18px; }
+    .page-hero { padding: 24px 18px 20px; }
+    .page-hero h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="modulo">Manual de Usuario</div>
+    <a href="index.html" class="back-link">← Todos los módulos</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Módulo BPM</div>
+    <a href="#intro"><span class="ic">📋</span> Introducción</a>
+    <a href="#flujo-diario"><span class="ic">🔄</span> Flujo diario obligatorio</a>
+    <a href="#dashboard"><span class="ic">📊</span> Dashboard BPM</a>
+
+    <div class="nav-section">Salud del personal</div>
+    <a href="#salud-diario"><span class="ic">🩺</span> Registro diario de salud</a>
+    <a href="#salud-bloqueado"><span class="ic">🔒</span> Acceso suspendido</a>
+    <a href="#salud-autorizaciones"><span class="ic">✅</span> Autorizaciones</a>
+
+    <div class="nav-section">Registros de inocuidad</div>
+    <a href="#soluciones"><span class="ic">🧪</span> Soluciones desinfectantes</a>
+    <a href="#plagas"><span class="ic">🐛</span> Control de plagas</a>
+    <a href="#residuos"><span class="ic">🗑️</span> Evacuación de residuos</a>
+    <a href="#limpieza"><span class="ic">🧹</span> Limpieza y desinfección</a>
+
+    <div class="nav-section">Recursos</div>
+    <a href="#firmas"><span class="ic">✍️</span> Firma digital</a>
+    <a href="#pdf"><span class="ic">📄</span> Exportar a PDF</a>
+    <a href="#referencia"><span class="ic">📑</span> Referencia de campos</a>
+  </nav>
+</aside>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN
+═══════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- Page hero -->
+  <div class="page-hero">
+    <div class="breadcrumb">Manuales ZYMOS › Módulos</div>
+    <h1>BPM — Buenas Prácticas de Manufactura</h1>
+    <p>
+      El módulo BPM permite documentar y auditar las prácticas de inocuidad alimentaria
+      de la cervecería: estado de salud del personal, soluciones desinfectantes, control
+      de plagas, evacuación de residuos y limpieza. Todos los registros generan PDF
+      con firma digital para respaldo ante inspecciones sanitarias.
+    </p>
+    <div class="role-badges">
+      <span class="badge-role badge-all">Todo el personal</span>
+      <span class="badge-role badge-admin">Admin — Autorizaciones de salud</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="intro">
+      <h2><span class="ico">📋</span> Introducción</h2>
+      <p>
+        El módulo BPM cubre los seis controles de inocuidad que exige la normativa sanitaria
+        para cervecerías artesanales (INVIMA en Colombia y equivalentes en otros países).
+        Cada registro queda firmado digitalmente y puede exportarse como PDF oficial para
+        auditorías o inspecciones.
+      </p>
+
+      <div class="action-grid">
+        <div class="action-card">
+          <div class="ac-icon">🩺</div>
+          <h4>Estado de salud</h4>
+          <p>Registro diario obligatorio para cada empleado antes de ingresar al área de producción.</p>
+        </div>
+        <div class="action-card">
+          <div class="ac-icon">🧪</div>
+          <h4>Soluciones desinfectantes</h4>
+          <p>Documentación de cada preparación: producto, concentración y responsable.</p>
+        </div>
+        <div class="action-card">
+          <div class="ac-icon">🐛</div>
+          <h4>Control de plagas</h4>
+          <p>Inspección periódica del estado de instalaciones y registro de avistamientos.</p>
+        </div>
+        <div class="action-card">
+          <div class="ac-icon">🗑️</div>
+          <h4>Evacuación de residuos</h4>
+          <p>Registro de salida de residuos con tipo, hora y responsable.</p>
+        </div>
+        <div class="action-card">
+          <div class="ac-icon">🧹</div>
+          <h4>Limpieza y desinfección</h4>
+          <p>Control de limpieza por área o utensilio con aprobación de visto bueno.</p>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>
+          <strong>¿Cómo acceder al módulo?</strong>
+          El módulo BPM está en la barra de navegación lateral, entre <em>Comercial</em> y <em>Admin</em>.
+          La ruta base es <code>/bpm</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="flujo-diario">
+      <h2><span class="ico">🔄</span> Flujo diario obligatorio</h2>
+      <p>
+        Cada día, antes de usar cualquier parte de ZYMOS, el sistema verifica si el usuario
+        completó su registro de salud. Este flujo se aplica a <strong>todos los usuarios</strong>
+        excepto administradores.
+      </p>
+
+      <div class="flow">
+        <span class="flow-step fs-gray">Usuario inicia sesión</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step fs-blue">¿Registro de salud hoy?</span>
+        <span class="flow-arrow">→ No →</span>
+        <span class="flow-step fs-yellow">Redirige a /bpm/salud/diario</span>
+      </div>
+      <div class="flow">
+        <span class="flow-step fs-blue">¿Síntomas declarados?</span>
+        <span class="flow-arrow">→ Sí →</span>
+        <span class="flow-step fs-red">Pantalla bloqueado</span>
+        <span class="flow-arrow">→ Admin autoriza →</span>
+        <span class="flow-step fs-green">Acceso restaurado</span>
+      </div>
+      <div class="flow">
+        <span class="flow-step fs-blue">¿Sin síntomas?</span>
+        <span class="flow-arrow">→</span>
+        <span class="flow-step fs-green">Acceso normal al sistema</span>
+      </div>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>
+          <strong>El administrador saltea este flujo.</strong>
+          Los usuarios con rol Administrador pueden acceder al sistema sin registrar salud diaria.
+          Sin embargo, pueden hacerlo voluntariamente desde <code>/bpm/salud/diario</code>.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="dashboard">
+      <h2><span class="ico">📊</span> Dashboard BPM</h2>
+      <p>
+        La pantalla principal del módulo (<code>/bpm</code>) muestra un resumen de
+        los registros completados durante el <strong>mes actual</strong>.
+      </p>
+
+      <table class="field-table">
+        <thead><tr><th>Tarjeta</th><th>Qué muestra</th><th>Enlace</th></tr></thead>
+        <tbody>
+          <tr><td>Control de Salud</td><td>Cantidad de registros de salud del mes</td><td>/bpm/sintomas</td></tr>
+          <tr><td>Soluciones Desinfectantes</td><td>Preparaciones registradas en el mes</td><td>/bpm/soluciones</td></tr>
+          <tr><td>Control de Plagas</td><td>Inspecciones registradas en el mes</td><td>/bpm/plagas</td></tr>
+          <tr><td>Evacuación de Residuos</td><td>Evacuaciones registradas en el mes</td><td>/bpm/residuos</td></tr>
+          <tr><td>Limpieza y Desinfección</td><td>Registros de limpieza en el mes</td><td>/bpm/limpieza</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Haz clic en cualquier tarjeta para ir al listado completo de ese submodulo.</div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="salud-diario">
+      <h2><span class="ico">🩺</span> Registro diario de salud</h2>
+      <p>
+        El registro de salud es el primer control BPM del día. El sistema lo solicita
+        automáticamente cuando el usuario entra a ZYMOS sin haberlo completado aún.
+        También se puede registrar manualmente desde <code>/bpm/salud/diario</code>.
+      </p>
+
+      <h3>Cómo completar el registro</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-body">
+            <strong>Abrir el formulario</strong>
+            El sistema te redirige automáticamente, o ve a <em>BPM › Estado de Salud › Registro de hoy</em>.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Revisar los síntomas</strong>
+            Marca todos los síntomas que presentes <strong>en este momento</strong>:
+            <div class="symptom-list">
+              <span class="symptom-chip">Diarrea</span>
+              <span class="symptom-chip">Vómito</span>
+              <span class="symptom-chip">Fiebre</span>
+              <span class="symptom-chip">Infección respiratoria</span>
+              <span class="symptom-chip">Lesión en piel</span>
+            </div>
+            Si no presentas ninguno, deja todos sin marcar.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Agregar observaciones (opcional)</strong>
+            Puedes escribir una nota adicional en el campo <em>Observaciones</em>.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Firmar</strong>
+            Dibuja tu firma en el recuadro gris usando el mouse o el dedo en pantalla táctil.
+            Si te equivocas, usa el botón <em>Limpiar</em> y vuelve a firmar.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Guardar</strong>
+            Clic en <em>Registrar y continuar</em>. Si declaraste síntomas, serás redirigido
+            a la pantalla de acceso suspendido. Si no, continuarás normalmente.
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout danger">
+        <span class="ci">🚨</span>
+        <div>
+          <strong>Solo se permite un registro por día.</strong>
+          Si ya completaste el registro hoy, el formulario mostrará un resumen de tu estado actual
+          y no te permitirá crear uno nuevo. Si cometiste un error, contacta al administrador.
+        </div>
+      </div>
+
+      <h3>Si ya registraste hoy</h3>
+      <p>
+        Al entrar a <code>/bpm/salud/diario</code> verás tu estado del día:
+      </p>
+      <ul style="margin: 8px 0 12px 24px; color: #475569;">
+        <li>Si declaraste síntomas y estás bloqueado: un botón <em>"Ver estado de acceso"</em>.</li>
+        <li>Si estás sin síntomas o autorizado: un botón <em>"Ir al Dashboard"</em>.</li>
+        <li>En ambos casos: un botón <em>"Descargar mi registro en PDF"</em>.</li>
+      </ul>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="salud-bloqueado">
+      <h2><span class="ico">🔒</span> Acceso suspendido por síntomas</h2>
+      <p>
+        Cuando un empleado declara uno o más síntomas, su acceso al sistema queda
+        suspendido hasta que un administrador lo autorice. Esto garantiza que ningún
+        manipulador de alimentos con síntomas trabaje sin supervisión.
+      </p>
+
+      <div class="callout danger">
+        <span class="ci">🚫</span>
+        <div>
+          <strong>¿Qué hacer si tu acceso está suspendido?</strong>
+          La pantalla mostrará los síntomas que declaraste. Comunícate con tu jefe inmediato
+          o administrador antes de continuar. El único botón disponible es <em>"Cerrar sesión"</em>.
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>
+          <strong>Para administradores:</strong> si ya autorizaste al empleado, dile que
+          <strong>recargue la página</strong> — el sistema verificará de nuevo su estado y le
+          dará acceso si fue autorizado correctamente.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="salud-autorizaciones">
+      <h2><span class="ico">✅</span> Autorizaciones de salud <span class="role-chip rc-admin">Solo Admin</span></h2>
+      <p>
+        Esta pantalla (<code>/bpm/salud/autorizaciones</code>) muestra los empleados que
+        declararon síntomas <strong>hoy</strong> y aún no han sido autorizados. Solo los
+        administradores pueden acceder.
+      </p>
+
+      <h3>Cómo autorizar a un empleado</h3>
+      <ol class="steps">
+        <li>
+          <div class="step-body">
+            <strong>Ir a BPM › Autorizaciones</strong>
+            La tabla muestra el nombre del empleado, los síntomas declarados, la hora del registro
+            y el estado actual (Bloqueado / Autorizado).
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Clic en "Firmar y autorizar"</strong>
+            Aparece un modal con un recuadro de firma digital.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Firmar como responsable</strong>
+            La firma es obligatoria — el botón de confirmación estará inactivo hasta que
+            dibujes tu firma. Al firmar, quedas registrado como el responsable de la autorización.
+          </div>
+        </li>
+        <li>
+          <div class="step-body">
+            <strong>Confirmar</strong>
+            Clic en <em>Confirmar autorización</em>. El estado del empleado cambia a
+            <em>Autorizado</em> y podrá acceder al sistema recargando su página.
+          </div>
+        </li>
+      </ol>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>
+          Al autorizar a un empleado con síntomas, <strong>tú como administrador asumes la responsabilidad</strong>
+          de esa decisión. La firma queda guardada permanentemente en el registro.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="soluciones">
+      <h2><span class="ico">🧪</span> Soluciones desinfectantes</h2>
+      <p>
+        Documenta cada preparación de solución desinfectante: qué producto se usó,
+        en qué cantidad, con cuánta agua y qué concentración final se obtuvo.
+      </p>
+
+      <div class="sub-section">
+        <div class="sub-section-header">📋 Crear nuevo registro</div>
+        <div class="sub-section-body">
+          <ol class="steps">
+            <li><div class="step-body"><strong>Ir a BPM › Soluciones Desinfectantes</strong> y clic en <em>Nuevo registro</em>.</div></li>
+            <li><div class="step-body"><strong>Completar los campos</strong> (ver tabla de campos abajo).</div></li>
+            <li>
+              <div class="step-body">
+                <strong>Seleccionar el producto</strong>
+                El campo <em>Producto</em> tiene autocompletado con los químicos registrados en
+                el Inventario. Si el producto no aparece, primero agrégalo en
+                <em>Inventario › Nuevo insumo</em> (tipo: Químico).
+              </div>
+            </li>
+            <li><div class="step-body"><strong>Firmar</strong> en el recuadro de firma digital.</div></li>
+            <li><div class="step-body"><strong>Guardar</strong>. El registro aparecerá en el listado.</div></li>
+          </ol>
+        </div>
+      </div>
+
+      <h3>Campos del formulario</h3>
+      <table class="field-table">
+        <thead><tr><th>Campo</th><th>Descripción</th><th>Requerido</th></tr></thead>
+        <tbody>
+          <tr><td>fecha</td><td>Fecha de preparación de la solución</td><td>Sí</td></tr>
+          <tr><td>hora</td><td>Hora de preparación</td><td>No</td></tr>
+          <tr><td>producto</td><td>Nombre del desinfectante (con sugerencias del inventario de Químicos)</td><td>Sí</td></tr>
+          <tr><td>cantidadAgua</td><td>Cantidad de agua usada + unidad (mL o L)</td><td>Sí</td></tr>
+          <tr><td>cantidadProducto</td><td>Cantidad de producto + unidad (mL, L, g, kg)</td><td>Sí</td></tr>
+          <tr><td>concentracionFinal</td><td>Concentración resultante en porcentaje (%)</td><td>Sí</td></tr>
+          <tr><td>responsable</td><td>Usuario que preparó la solución (lista de usuarios del tenant)</td><td>Sí</td></tr>
+          <tr><td>firma</td><td>Firma digital del responsable</td><td>Sí</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="plagas">
+      <h2><span class="ico">🐛</span> Control de plagas</h2>
+      <p>
+        Registra cada inspección del estado de las instalaciones respecto a plagas.
+        Incluye el estado de ventanas/puertas y las acciones tomadas si se detectaron.
+      </p>
+
+      <h3>Campos del formulario</h3>
+      <table class="field-table">
+        <thead><tr><th>Campo</th><th>Descripción</th><th>Requerido</th></tr></thead>
+        <tbody>
+          <tr><td>fecha</td><td>Fecha de la inspección</td><td>Sí</td></tr>
+          <tr><td>presenciaPlagas</td><td>¿Se detectaron plagas? (Sí / No)</td><td>Sí</td></tr>
+          <tr><td>estadoVentanasPuertas</td><td>Estado de cierres: OK o FALLA</td><td>Sí</td></tr>
+          <tr><td>tipoPlagas</td><td>Tipo de plaga detectada (ej: "cucarachas", "mosquitos")</td><td>No</td></tr>
+          <tr><td>accionTomada</td><td>Descripción de la acción correctiva tomada</td><td>No</td></tr>
+          <tr><td>firma</td><td>Firma digital del inspector</td><td>Sí</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>
+          Si <em>Presencia de plagas</em> es <strong>No</strong>, los campos
+          <em>Tipo de plagas</em> y <em>Acción tomada</em> pueden dejarse vacíos.
+          Si es <strong>Sí</strong>, documenta siempre la acción correctiva.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="residuos">
+      <h2><span class="ico">🗑️</span> Evacuación de residuos</h2>
+      <p>
+        Documenta cada salida de residuos de las instalaciones: qué tipo, a qué hora y
+        quién fue el responsable.
+      </p>
+
+      <h3>Campos del formulario</h3>
+      <table class="field-table">
+        <thead><tr><th>Campo</th><th>Descripción</th><th>Requerido</th></tr></thead>
+        <tbody>
+          <tr><td>fecha</td><td>Fecha de la evacuación</td><td>Sí</td></tr>
+          <tr><td>horaSalida</td><td>Hora en que salieron los residuos de las instalaciones</td><td>No</td></tr>
+          <tr><td>tipoResiduo</td><td>Tipo: Orgánico, Inorgánico, Peligroso, u otro</td><td>Sí</td></tr>
+          <tr><td>responsable</td><td>Usuario responsable del proceso</td><td>Sí</td></tr>
+          <tr><td>recipientesLimpios</td><td>¿Los recipientes quedaron limpios después? (Sí / No)</td><td>Sí</td></tr>
+          <tr><td>firma</td><td>Firma digital del responsable</td><td>Sí</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="limpieza">
+      <h2><span class="ico">🧹</span> Limpieza y desinfección</h2>
+      <p>
+        Registra cada actividad de limpieza por área o utensilio específico. Incluye
+        los productos utilizados y requiere un visto bueno de aprobación.
+      </p>
+
+      <h3>Campos del formulario</h3>
+      <table class="field-table">
+        <thead><tr><th>Campo</th><th>Descripción</th><th>Requerido</th></tr></thead>
+        <tbody>
+          <tr><td>fecha</td><td>Fecha de la limpieza</td><td>Sí</td></tr>
+          <tr><td>dia</td><td>Día de la semana (Lunes – Domingo)</td><td>Sí</td></tr>
+          <tr><td>areaUtensilio</td><td>Área o utensilio limpiado (ej: "Fermentador 1", "Piso sala de cocción")</td><td>Sí</td></tr>
+          <tr><td>detergenteUsado</td><td>Nombre del detergente utilizado</td><td>No</td></tr>
+          <tr><td>sanitizadorUsado</td><td>Nombre del sanitizador utilizado</td><td>No</td></tr>
+          <tr><td>concentracion</td><td>Concentración del sanitizador (ej: "1 oz/galón", "2 %")</td><td>No</td></tr>
+          <tr><td>responsable</td><td>Usuario que realizó la limpieza</td><td>Sí</td></tr>
+          <tr><td>vistoBueno</td><td>Estado de aprobación: Aprobado o Pendiente</td><td>Sí</td></tr>
+          <tr><td>firma</td><td>Firma digital del responsable</td><td>Sí</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>
+          El <strong>Visto Bueno</strong> puede setearse en <em>Pendiente</em> si la supervisión
+          se hará después. Un administrador puede editar el registro más tarde para cambiarlo a
+          <em>Aprobado</em> y agregar su firma.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="firmas">
+      <h2><span class="ico">✍️</span> Firma digital</h2>
+      <p>
+        Todos los formularios BPM incluyen un recuadro de firma digital. Las firmas se
+        guardan como imagen y aparecen en los reportes PDF.
+      </p>
+
+      <h3>Cómo usar el recuadro de firma</h3>
+      <ol class="steps">
+        <li><div class="step-body"><strong>Dibuja con el mouse</strong> (escritorio) o con el dedo (móvil/tablet) dentro del recuadro gris.</div></li>
+        <li><div class="step-body"><strong>Si te equivocas</strong>, usa el botón <em>Limpiar</em> debajo del recuadro para borrar y empezar de nuevo.</div></li>
+        <li><div class="step-body"><strong>La firma se guarda automáticamente</strong> al enviar el formulario. No necesitas hacer nada extra.</div></li>
+      </ol>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>
+          La firma es <strong>obligatoria</strong> en todos los formularios BPM y en las
+          autorizaciones de salud. El botón Guardar no funcionará si el recuadro está vacío.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="pdf">
+      <h2><span class="ico">📄</span> Exportar a PDF</h2>
+      <p>
+        Cada submodulo BPM permite exportar los registros a PDF. Hay dos tipos de exportación:
+      </p>
+
+      <table class="field-table">
+        <thead><tr><th>Tipo</th><th>Cómo acceder</th><th>Contenido</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>PDF de período</td>
+            <td>Botón <em>"PDF"</em> en el encabezado del listado. Puedes filtrar por fechas <em>desde</em> y <em>hasta</em> (por defecto: mes actual).</td>
+            <td>Todos los registros del período en una tabla ordenada por fecha.</td>
+          </tr>
+          <tr>
+            <td>PDF individual</td>
+            <td>Botón <em>"PDF"</em> en la fila del registro específico.</td>
+            <td>Un solo registro con todos sus campos, incluyendo la firma digital renderizada.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>
+          Para preparar documentación ante una inspección INVIMA, genera los PDFs de período
+          con el rango de fechas que solicite el inspector. El PDF incluye el nombre y logo
+          de tu cervecería automáticamente.
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════ -->
+    <section id="referencia">
+      <h2><span class="ico">📑</span> Referencia rápida de rutas</h2>
+      <table class="field-table">
+        <thead><tr><th>Pantalla</th><th>Ruta</th><th>Acceso</th></tr></thead>
+        <tbody>
+          <tr><td>Dashboard BPM</td><td>/bpm</td><td>Todo el personal</td></tr>
+          <tr><td>Registro de salud de hoy</td><td>/bpm/salud/diario</td><td>Todo el personal</td></tr>
+          <tr><td>Pantalla acceso suspendido</td><td>/bpm/salud/bloqueado</td><td>Usuarios bloqueados</td></tr>
+          <tr><td>Autorizaciones de salud</td><td>/bpm/salud/autorizaciones</td><td>Solo Admin</td></tr>
+          <tr><td>Historial de salud</td><td>/bpm/sintomas</td><td>Todo el personal</td></tr>
+          <tr><td>Soluciones desinfectantes</td><td>/bpm/soluciones</td><td>Todo el personal</td></tr>
+          <tr><td>Control de plagas</td><td>/bpm/plagas</td><td>Todo el personal</td></tr>
+          <tr><td>Evacuación de residuos</td><td>/bpm/residuos</td><td>Todo el personal</td></tr>
+          <tr><td>Limpieza y desinfección</td><td>/bpm/limpieza</td><td>Todo el personal</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+// Highlight active sidebar link on scroll
+const sections = document.querySelectorAll('section[id]');
+const links = document.querySelectorAll('nav.sidebar-nav a');
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`nav a[href="#${e.target.id}"]`);
+      if (a) a.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comercial y Finanzas · Manual ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 268px; flex-shrink: 0; background: #0f172a; min-height: 100vh; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+  .sb-brand { padding: 20px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back { display: block; padding: 10px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; padding: 8px 20px 4px; }
+  nav a { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #94a3b8; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; line-height: 1.4; }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #d97706 100%); margin: 0 -48px 0; padding: 48px 48px 40px; }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  .content { padding-top: 44px; }
+  h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; scroll-margin-top: 24px; }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; font-size: 0.83rem; color: #d97706; font-family: 'Fira Code', Consolas, monospace; }
+
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 20px 0; display: flex; gap: 12px; font-size: 0.88rem; line-height: 1.6; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li { counter-increment: step; padding: 10px 14px 10px 48px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; position: relative; font-size: 0.9rem; color: #334155; line-height: 1.55; }
+  .steps li::before { content: counter(step); position: absolute; left: 14px; top: 10px; width: 22px; height: 22px; background: #d97706; color: white; border-radius: 50%; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th { background: #f8fafc; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  .sub-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  /* Module nav pills */
+  .module-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 28px; }
+  .module-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: white; border: 1px solid #e2e8f0; color: #334155; text-decoration: none; transition: all 0.15s; }
+  .module-pill:hover { border-color: #d97706; color: #d97706; }
+
+  /* Status badges */
+  .status-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .sb { padding: 4px 12px; border-radius: 20px; font-size: 0.77rem; font-weight: 600; }
+  .sb-recibida  { background: #dbeafe; color: #1d4ed8; }
+  .sb-verif     { background: #fef3c7; color: #92400e; }
+  .sb-pagada    { background: #d1fae5; color: #065f46; }
+  .sb-vencida   { background: #fee2e2; color: #991b1b; }
+  .sb-pendiente { background: #f3e8ff; color: #7e22ce; }
+  .sb-progreso  { background: #dbeafe; color: #1d4ed8; }
+  .sb-completa  { background: #d1fae5; color: #065f46; }
+  .sb-cancelada { background: #f1f5f9; color: #64748b; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Comercial y Finanzas</div>
+  </div>
+  <a href="index.html" class="sb-back">← Todos los manuales</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Módulos</div>
+      <a href="#vision-general">Visión general</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Proveedores y Compras</div>
+      <a href="#proveedores">Proveedores</a>
+      <a href="#facturas">Facturas de proveedor</a>
+      <a href="#facturas-iva">IVA en facturas</a>
+      <a href="#adjuntos">Adjuntos</a>
+      <a href="#ordenes">Órdenes de compra</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Ventas</div>
+      <a href="#clientes">Clientes</a>
+      <a href="#ventas">Ventas</a>
+      <a href="#estados-venta">Estados de venta</a>
+      <a href="#cotizaciones">Cotizaciones</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Exportar</div>
+      <a href="#exportar">PDF y Excel</a>
+    </div>
+  </nav>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">Manual de usuario · Módulo</div>
+    <h1>💼 Comercial y Finanzas</h1>
+    <p>Gestiona toda la operación financiera de tu cervecería: facturas de proveedores con ítems e IVA por línea, ventas de cerveza a clientes, órdenes de compra y seguimiento de cuentas por cobrar.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Facturación</span>
+      <span class="role-badge">Inventario</span>
+      <span class="role-badge">Administrador</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 id="vision-general">Visión general</h2>
+    <p>El módulo Comercial agrupa cinco subáreas que cubren el flujo completo de dinero en la cervecería:</p>
+    <div class="module-nav">
+      <a href="#proveedores" class="module-pill">🏭 Proveedores</a>
+      <a href="#facturas" class="module-pill">🧾 Facturas</a>
+      <a href="#ordenes" class="module-pill">📋 Órdenes de compra</a>
+      <a href="#clientes" class="module-pill">👥 Clientes</a>
+      <a href="#ventas" class="module-pill">💰 Ventas</a>
+    </div>
+    <p>Las facturas de proveedor están conectadas al inventario: al registrar una factura con insumos, el stock se actualiza automáticamente. Las ventas están conectadas a los lotes de producción: cada venta referencia el lote y el formato de empaque.</p>
+
+    <!-- Proveedores -->
+    <h2 id="proveedores">Proveedores</h2>
+    <p>Registra los proveedores de tu cervecería (malteros, lupuleros, distribuidoras de químicos, etc.) para luego referenciarlos en facturas y órdenes de compra.</p>
+    <ol class="steps">
+      <li>Ve a Comercial → <strong>Proveedores</strong> → <strong>"+ Nuevo proveedor"</strong>.</li>
+      <li>Completa nombre, NIT/RUT, correo, teléfono, dirección y notas.</li>
+      <li>Guarda. El proveedor queda disponible en los formularios de factura y OC.</li>
+    </ol>
+    <p>Para desactivar un proveedor (ocultarlo de los formularios sin eliminarlo), edítalo y desactiva el campo <strong>Activo</strong>. Los registros históricos que lo referencian permanecen intactos.</p>
+
+    <!-- Facturas -->
+    <h2 id="facturas">Facturas de proveedor</h2>
+    <p>Registra las facturas que recibes de tus proveedores de insumos. Cada factura puede tener múltiples ítems (líneas), cada uno con su categoría, cantidad, precio unitario e IVA individual.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>Número de factura <span class="req">*</span></td><td>Número o código de la factura del proveedor.</td></tr>
+        <tr><td>Proveedor</td><td>Referencia al proveedor registrado. También puedes escribir el nombre libre si el proveedor no está en el sistema.</td></tr>
+        <tr><td>Fecha de factura <span class="req">*</span></td><td>Fecha de emisión de la factura (no la fecha de pago).</td></tr>
+        <tr><td>Fecha de vencimiento</td><td>Fecha límite de pago. Aparece en alertas del dashboard cuando se acerca.</td></tr>
+        <tr><td>Estado</td><td>Estado de la factura: Recibida, Verificada, Pagada, Vencida.</td></tr>
+        <tr><td>IVA incluido</td><td>Indica si los precios unitarios de los ítems ya incluyen IVA. Ver sección IVA abajo.</td></tr>
+        <tr><td>Notas</td><td>Observaciones libres sobre la factura.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Ítems de la factura</h3>
+    <p>Agrega una fila por cada línea de la factura. Haz clic en <strong>"+ Agregar ítem"</strong> para cada producto o servicio facturado.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>Tipo</td><td>Insumo (para materias primas) o Equipo (para maquinaria y herramientas).</td></tr>
+        <tr><td>Categoría</td><td>Para insumos: Malta, Lúpulo, Levadura, Clarificante, Químico, Envase. Para equipos: Fermentador, Caldera, Enfriador, etc.</td></tr>
+        <tr><td>Nombre</td><td>Nombre del ítem. Al escribir, el sistema sugiere insumos del inventario según la categoría seleccionada.</td></tr>
+        <tr><td>Cantidad</td><td>Cantidad comprada en la unidad del insumo correspondiente.</td></tr>
+        <tr><td>Precio unitario</td><td>Precio por unidad. Si el campo "IVA incluido" está activo, el sistema extrae el precio sin IVA automáticamente.</td></tr>
+        <tr><td>IVA %</td><td>Porcentaje de IVA de este ítem específico (ej: 19%). Puede ser diferente en cada línea.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Actualización automática del inventario</strong>
+        Al guardar la factura, ZYMOS suma automáticamente la cantidad de cada ítem al stock del insumo correspondiente (si el nombre del ítem coincide con un insumo del inventario). Al editar la factura, el sistema revierte el movimiento anterior y aplica el nuevo. Al eliminar la factura, el stock se restaura.
+      </div>
+    </div>
+
+    <!-- IVA -->
+    <h2 id="facturas-iva">Manejo del IVA</h2>
+    <p>ZYMOS permite dos situaciones de IVA en facturas de proveedor:</p>
+
+    <div class="sub-section">
+      <h4>Precios sin IVA (comportamiento por defecto)</h4>
+      <p style="font-size:0.88rem; color:#475569; margin:0;">El campo "IVA incluido" está <strong>desactivado</strong>. Los precios unitarios que ingresas son los precios base sin IVA. El sistema calcula el IVA sumando <code>precio × (IVA% / 100)</code> para cada línea. El total de la factura = subtotal + IVA total.</p>
+    </div>
+
+    <div class="sub-section">
+      <h4>Precios con IVA incluido</h4>
+      <p style="font-size:0.88rem; color:#475569; margin:0;">Activa el campo "IVA incluido" cuando los precios de tu proveedor ya incluyen impuestos (precio final al consumidor). ZYMOS extrae el precio sin IVA automáticamente: <code>precio_sin_iva = precio_con_iva / (1 + IVA%/100)</code>. Esta opción es común en facturas de venta al público.</p>
+    </div>
+
+    <!-- Adjuntos -->
+    <h2 id="adjuntos">Adjuntos en facturas</h2>
+    <p>Puedes adjuntar el PDF o imagen de cada factura directamente en ZYMOS para tener un respaldo digital de tus documentos contables.</p>
+    <ol class="steps">
+      <li>Abre el detalle de la factura.</li>
+      <li>En la sección <strong>"Adjuntos"</strong>, haz clic en <strong>"Subir archivo"</strong>.</li>
+      <li>Selecciona el PDF o imagen (JPG, PNG) desde tu computador. Tamaño máximo: 10 MB.</li>
+      <li>El archivo queda vinculado a la factura y puedes descargarlo o eliminarlo en cualquier momento.</li>
+    </ol>
+
+    <!-- Órdenes de compra -->
+    <h2 id="ordenes">Órdenes de compra</h2>
+    <p>Crea órdenes de compra para solicitar insumos a tus proveedores y llevar un registro de los pedidos pendientes.</p>
+    <ol class="steps">
+      <li>Ve a Comercial → <strong>Órdenes de compra</strong> → <strong>"+ Nueva OC"</strong>.</li>
+      <li>Selecciona el proveedor, la fecha de emisión y la fecha de entrega esperada.</li>
+      <li>Agrega los ítems solicitados (nombre, cantidad, precio estimado).</li>
+      <li>Guarda la OC. Puedes imprimirla en PDF para enviarla al proveedor.</li>
+    </ol>
+    <p>Las órdenes de compra tienen estados: <strong>Pendiente</strong>, <strong>En proceso</strong>, <strong>Completada</strong> y <strong>Cancelada</strong>. Cuando llegue la mercancía, cierra la OC cambiando su estado a Completada y ajusta el stock del inventario manualmente.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        Las órdenes de compra <strong>no actualizan el inventario automáticamente</strong>. Debes ajustar el stock del insumo manualmente cuando llegue la mercancía (editando el insumo en Inventario).
+      </div>
+    </div>
+
+    <!-- Clientes -->
+    <h2 id="clientes">Clientes</h2>
+    <p>El directorio de clientes almacena la información de los bares, restaurantes, distribuidoras y consumidores finales que compran tu cerveza.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>Nombre / Razón social <span class="req">*</span></td><td>Nombre del cliente o empresa.</td></tr>
+        <tr><td>NIT / Identificación</td><td>Número de identificación fiscal.</td></tr>
+        <tr><td>Correo electrónico</td><td>Para el envío de facturas y notificaciones.</td></tr>
+        <tr><td>Teléfono</td><td>Número de contacto.</td></tr>
+        <tr><td>Dirección</td><td>Dirección de entrega.</td></tr>
+        <tr><td>Ciudad</td><td>Ciudad del cliente.</td></tr>
+        <tr><td>Notas</td><td>Preferencias, condiciones de pago, notas especiales.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Ventas -->
+    <h2 id="ventas">Ventas</h2>
+    <p>Registra cada venta de cerveza. Una venta puede incluir múltiples ítems de diferentes lotes y formatos de empaque.</p>
+
+    <ol class="steps">
+      <li>Ve a Comercial → <strong>Ventas</strong> → <strong>"+ Nueva venta"</strong>.</li>
+      <li>Selecciona el cliente (o escribe el nombre si no está registrado).</li>
+      <li>Define la fecha de venta y fecha de entrega.</li>
+      <li>Agrega los ítems: selecciona el lote, el formato de empaque (botella 330ml, barril 20L, etc.), cantidad y precio.</li>
+      <li>Guarda. La venta queda en estado <strong>Pendiente</strong>.</li>
+    </ol>
+
+    <h3 id="estados-venta">Estados de una venta</h3>
+    <div class="status-grid">
+      <span class="sb sb-pendiente">Pendiente</span>
+      <span class="sb sb-progreso">En proceso</span>
+      <span class="sb sb-completa">Completada</span>
+      <span class="sb sb-vencida">Vencida</span>
+      <span class="sb sb-cancelada">Cancelada</span>
+    </div>
+    <p>Actualiza el estado de la venta conforme avanza: <strong>Pendiente</strong> al crearla, <strong>En proceso</strong> cuando está siendo preparada, <strong>Completada</strong> cuando se entregó y se cobró.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Formatos de empaque</strong>
+        Al seleccionar un lote, ZYMOS muestra los formatos de empaque configurados en ese lote (ej: "48 × Botella 330ml | 2 × Barril 20L"). Si el lote no tiene destino configurado, puedes elegir cualquier formato de la lista estándar.
+      </div>
+    </div>
+
+    <!-- Cotizaciones -->
+    <h2 id="cotizaciones">Cotizaciones</h2>
+    <p>Genera cotizaciones para clientes que necesitan una propuesta de precio antes de confirmar la compra. Las cotizaciones tienen una vigencia configurada (por defecto 15 días).</p>
+    <ol class="steps">
+      <li>Ve a Comercial → <strong>Ventas</strong> → <strong>"Nueva cotización"</strong>.</li>
+      <li>Completa los mismos campos que una venta (cliente, ítems, precios).</li>
+      <li>Define la fecha de vencimiento de la cotización (o deja el valor por defecto).</li>
+      <li>Descarga el PDF de la cotización para enviarlo al cliente.</li>
+      <li>Si el cliente acepta, convierte la cotización en venta con un clic.</li>
+    </ol>
+
+    <!-- Exportar -->
+    <h2 id="exportar">Exportar a PDF y Excel</h2>
+    <p>Todos los módulos comerciales tienen opciones de exportación disponibles en la parte superior de la lista:</p>
+    <ul>
+      <li><strong>PDF:</strong> genera un documento con formato de impresión para facturas individuales, OCs y listados.</li>
+      <li><strong>Excel:</strong> exporta la lista completa con todos los filtros aplicados. Útil para llevar datos a tu contador o sistema de contabilidad externo.</li>
+    </ul>
+
+    <div class="sub-section">
+      <h4>Estados de facturas que generan alertas</h4>
+      <p style="font-size:0.88rem; color:#475569; margin-bottom: 8px;">El dashboard muestra una alerta cuando hay facturas en estado <strong>Recibida</strong> o <strong>Verificada</strong> que llevan más de 30 días sin procesarse. Esto ayuda a evitar que facturas queden pendientes sin pagar.</p>
+      <div class="status-grid">
+        <span class="sb sb-recibida">Recibida</span>
+        <span class="sb sb-verif">Verificada</span>
+        <span class="sb sb-pagada">Pagada</span>
+        <span class="sb sb-vencida">Vencida</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

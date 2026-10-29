@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario — Trazabilidad de Lotes | Zymos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #f8fafc; font-size: 0.93rem; line-height: 1.65; }
+
+  /* LAYOUT */
+  .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; background: #0f172a; overflow-y: auto; padding: 0 0 40px; z-index: 100; }
+  .hero, .content, .footer { margin-left: 260px; }
+  .main { margin-left: 260px; padding: 0 48px 80px; max-width: 900px; }
+  @media (max-width: 900px) { .sidebar { display: none; } .hero, .content, .footer, .main { margin-left: 0; } .hero { padding: 32px 20px 28px; } section { padding: 32px 20px; } }
+
+  /* SIDEBAR */
+  .sb-brand { padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px; }
+  .sb-brand .logo { font-size: 1.1rem; font-weight: 800; color: #c9a028; letter-spacing: 0.02em; }
+  .sb-back { display: block; padding: 9px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  .sb-brand .module { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+  .sb-section { padding: 6px 20px 4px; font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; }
+  .sb-link { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #cbd5e1; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sb-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .sb-link.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.08); }
+  .sb-link-main { padding-left: 20px; font-weight: 600; font-size: 0.85rem; color: #e2e8f0; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #0f172a 0%, #4338ca 100%); color: #fff; padding: 52px 48px 44px; margin-bottom: 0; }
+  .hero .tag { display: inline-block; background: rgba(59,130,246,0.25); border: 1px solid rgba(59,130,246,0.4); color: #93c5fd; border-radius: 20px; padding: 3px 12px; font-size: 0.75rem; font-weight: 600; margin-bottom: 14px; }
+  .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+  .hero p { color: #94a3b8; font-size: 1rem; max-width: 560px; }
+  .hero .meta { margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .hero .meta span { font-size: 0.8rem; color: #64748b; }
+  .hero .meta strong { color: #cbd5e1; }
+
+  /* CONTENT */
+  .content { background: #fff; border-bottom: 1px solid #e2e8f0; }
+  section { padding: 40px 48px; border-bottom: 1px solid #f1f5f9; }
+  section:last-child { border-bottom: none; }
+
+  /* HEADINGS */
+  h2 { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; margin-top: 0; }
+  h2 .section-num { display: inline-block; background: #2563eb; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-right: 10px; vertical-align: middle; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h3 .icon { font-size: 1rem; }
+  h4 { font-size: 0.88rem; font-weight: 700; color: #334155; margin: 16px 0 6px; }
+
+  /* TEXT */
+  p { color: #475569; margin-bottom: 10px; }
+  strong { color: #1e293b; }
+  a { color: #2563eb; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { color: #475569; margin-bottom: 5px; }
+  li strong { color: #1e293b; }
+
+  /* CALLOUTS */
+  .callout { border-radius: 8px; padding: 12px 16px 12px 42px; margin: 14px 0; font-size: 0.875rem; position: relative; }
+  .callout::before { position: absolute; left: 14px; top: 13px; font-size: 1rem; }
+  .callout.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .callout.info::before { content: "ℹ️"; }
+  .callout.tip { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .callout.tip::before { content: "💡"; }
+  .callout.warning { background: #fefce8; border: 1px solid #fde68a; color: #713f12; }
+  .callout.warning::before { content: "⚠️"; }
+  .callout p { color: inherit; margin-bottom: 0; }
+
+  /* STEPS */
+  .steps { counter-reset: step-counter; margin: 16px 0; }
+  .step { display: flex; gap: 16px; margin-bottom: 20px; }
+  .step-num { flex-shrink: 0; width: 28px; height: 28px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; color: #1e293b; font-size: 0.95rem; margin-bottom: 4px; }
+  .step-body p { margin-bottom: 0; }
+
+  /* TABLES */
+  .data-table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.85rem; }
+  .data-table th { background: #f1f5f9; color: #475569; padding: 9px 14px; text-align: left; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e2e8f0; }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #f8fafc; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+  .badge-gray   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-teal   { background: #cffafe; color: #0e7490; }
+  .badge-amber  { background: #fef9c3; color: #a16207; }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-purple { background: #f3e8ff; color: #7e22ce; }
+
+  /* PHASE STEPS */
+  .phase-timeline { display: flex; align-items: center; gap: 0; margin: 16px 0; overflow-x: auto; padding-bottom: 4px; }
+  .ph { display: flex; align-items: center; }
+  .ph-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; border: 2px solid transparent; }
+  .ph-line { height: 2px; width: 40px; flex-shrink: 0; background: #e2e8f0; }
+  .ph-label { font-size: 0.72rem; text-align: center; margin-top: 4px; font-weight: 600; }
+  .ph-wrap { display: flex; flex-direction: column; align-items: center; }
+  .ph-green  .ph-dot { background: #dcfce7; color: #15803d; border-color: #86efac; }
+  .ph-teal   .ph-dot { background: #cffafe; color: #0e7490; border-color: #67e8f9; }
+  .ph-amber  .ph-dot { background: #fef9c3; color: #a16207; border-color: #fde047; }
+  .ph-blue   .ph-dot { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+  .ph-label  { color: #64748b; }
+
+  /* SCREEN MOCKUP */
+  .screen-mock { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 16px 0; font-size: 0.82rem; }
+  .screen-mock .bar { background: #1e293b; border-radius: 6px 6px 0 0; padding: 8px 14px; color: #94a3b8; font-size: 0.72rem; margin: -20px -20px 16px; font-family: monospace; }
+  .mock-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .mock-input { background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 10px; color: #374151; font-size: 0.8rem; }
+  .mock-btn-primary { background: #2563eb; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; }
+  .mock-btn-outline { background: #fff; border: 1px solid #d1d5db; color: #374151; border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; }
+  .mock-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; min-width: 100px; }
+  .mock-stat .l { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+  .mock-stat .v { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+  .mock-stat .v.blue { color: #2563eb; }
+  .mock-stat .v.green { color: #16a34a; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 40px 48px; color: #94a3b8; font-size: 0.82rem; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Trazabilidad de Lotes</div>
+  </div>
+  <a href="index.html" class="sb-back">← Todos los manuales</a>
+
+  <div class="sb-section">Contenido</div>
+  <a class="sb-link sb-link-main" href="#intro">Introducción</a>
+  <a class="sb-link" href="#listado">Lista de lotes</a>
+  <a class="sb-link" href="#filtros">Filtros y búsqueda</a>
+  <a class="sb-link" href="#kanban">Vista Kanban</a>
+
+  <div class="sb-section">Crear y editar</div>
+  <a class="sb-link sb-link-main" href="#nuevo">Crear un lote</a>
+  <a class="sb-link" href="#tab0">Tab 0: Datos Generales</a>
+  <a class="sb-link" href="#tab1">Tab 1: Receta / Insumos</a>
+  <a class="sb-link" href="#tab2">Tab 2: Fermentación</a>
+  <a class="sb-link" href="#tab3">Tab 3: Acondicionamiento</a>
+  <a class="sb-link" href="#tab4">Tab 4: Maduración</a>
+  <a class="sb-link" href="#tab5">Tab 5: Carbonatación</a>
+
+  <div class="sb-section">Detalle</div>
+  <a class="sb-link sb-link-main" href="#detalle">Vista detalle</a>
+  <a class="sb-link" href="#lecturas">Lecturas de fermentación</a>
+  <a class="sb-link" href="#bjcp">Evaluación BJCP</a>
+  <a class="sb-link" href="#historial">Historial</a>
+
+  <div class="sb-section">Más</div>
+  <a class="sb-link sb-link-main" href="#exports">Exportar PDF y Excel</a>
+  <a class="sb-link sb-link-main" href="#duplicar">Duplicar un lote</a>
+  <a class="sb-link sb-link-main" href="#barriles">Crear barriles</a>
+  <a class="sb-link sb-link-main" href="#faq">Preguntas frecuentes</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="tag">Módulo principal</span>
+  <h1>Trazabilidad de Lotes</h1>
+  <p>Guía completa para registrar, seguir y analizar cada lote de cerveza desde la elaboración hasta la carbonatación.</p>
+  <div class="meta">
+    <span><strong>Audiencia:</strong> Operarios de producción y administradores</span>
+    <span><strong>Versión:</strong> Zymos 2026</span>
+    <span><strong>Ruta en la app:</strong> Menú lateral → Trazabilidad</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<!-- ══════════ INTRO ══════════ -->
+<section id="intro">
+  <h2><span class="section-num">1</span>¿Qué es Trazabilidad?</h2>
+  <p>El módulo de <strong>Trazabilidad</strong> es el núcleo de Zymos. Aquí se registra cada <strong>lote de cerveza</strong> desde el día de elaboración hasta que el producto está carbonatado y listo para su destino final.</p>
+  <p>Un lote atraviesa hasta <strong>5 fases</strong>. Zymos calcula automáticamente en qué fase está según las fechas que vayas registrando:</p>
+
+  <div class="phase-timeline">
+    <div class="ph ph-green">
+      <div class="ph-wrap">
+        <div class="ph-dot">1</div>
+        <div class="ph-label">Elaboración</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-green">
+      <div class="ph-wrap">
+        <div class="ph-dot">2</div>
+        <div class="ph-label">Fermentación</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-teal">
+      <div class="ph-wrap">
+        <div class="ph-dot">3</div>
+        <div class="ph-label">Acondic.</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-amber">
+      <div class="ph-wrap">
+        <div class="ph-dot">4</div>
+        <div class="ph-label">Maduración</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-blue">
+      <div class="ph-wrap">
+        <div class="ph-dot">5</div>
+        <div class="ph-label">Carbonatación</div>
+      </div>
+    </div>
+  </div>
+
+  <p>Cada lote tiene un <strong>código único</strong> generado automáticamente a partir de las 3 primeras letras del estilo: <code>IPA-001</code>, <code>IPA-002</code>, <code>STO-001</code>, etc.</p>
+
+  <div class="callout info">
+    <p><strong>Requisito previo:</strong> Debes tener al menos una receta activa creada antes de poder crear tu primer lote. Si no ves el botón "Nuevo Lote", ve primero a <strong>Recetas → Nueva Receta</strong>.</p>
+  </div>
+</section>
+
+<!-- ══════════ LISTADO ══════════ -->
+<section id="listado">
+  <h2><span class="section-num">2</span>Lista de lotes</h2>
+  <p>Al entrar a Trazabilidad ves la <strong>lista de todos tus lotes</strong> con estadísticas rápidas en la parte superior:</p>
+
+  <div class="screen-mock">
+    <div class="bar">Zymos — Trazabilidad de Lotes</div>
+    <div class="mock-row">
+      <div class="mock-stat"><div class="l">Total</div><div class="v blue">24</div></div>
+      <div class="mock-stat"><div class="l">En proceso</div><div class="v green">5</div></div>
+      <div class="mock-stat"><div class="l">Completados</div><div class="v">18</div></div>
+      <div class="mock-stat"><div class="l">Estilos únicos</div><div class="v">7</div></div>
+    </div>
+  </div>
+
+  <h3><span class="icon">📋</span>Pestañas de la tabla</h3>
+  <p>La tabla tiene <strong>6 pestañas</strong>. Cada una muestra información de una fase específica para todos los lotes:</p>
+  <table class="data-table">
+    <tr><th>Pestaña</th><th>Qué muestra</th></tr>
+    <tr><td><span class="badge badge-gray">General e Insumos</span></td><td>Código, estilo, fecha, fermentador, fase actual, progreso, maltas, lúpulos, levadura, clarificante, litros finales</td></tr>
+    <tr><td><span class="badge badge-green">Fermentación</span></td><td>Fechas de inicio y fin (ideal y real), temperatura</td></tr>
+    <tr><td><span class="badge badge-teal">Acondicionamiento</span></td><td>Fechas de inicio y fin, temperatura</td></tr>
+    <tr><td><span class="badge badge-amber">Maduración</span></td><td>Fechas de inicio y fin, temperatura</td></tr>
+    <tr><td><span class="badge badge-blue">Carbonatación</span></td><td>Método (natural/forzada), CO₂, destino, fechas</td></tr>
+    <tr><td><span class="badge badge-purple">Densidad / Obs.</span></td><td>OG, FG, ABV, atenuación, eficiencia, observaciones</td></tr>
+  </table>
+
+  <h3><span class="icon">🏷️</span>Indicador de fase (píldora de color)</h3>
+  <p>Cada fila tiene una píldora de color que indica en qué fase está el lote:</p>
+  <table class="data-table">
+    <tr><th>Color</th><th>Fase</th></tr>
+    <tr><td><span class="badge badge-gray">Sin iniciar</span></td><td>Lote creado, ninguna fase comenzada</td></tr>
+    <tr><td><span class="badge badge-green">Fermentación</span></td><td>Fecha inicio de fermentación registrada</td></tr>
+    <tr><td><span class="badge badge-teal">Acondicionamiento</span></td><td>Fecha inicio de acondicionamiento registrada</td></tr>
+    <tr><td><span class="badge badge-amber">Maduración</span></td><td>Fecha inicio de maduración registrada</td></tr>
+    <tr><td><span class="badge badge-blue">Carbonatación</span></td><td>Fecha inicio de carbonatación registrada</td></tr>
+    <tr><td><span class="badge badge-purple">Completado</span></td><td>Fecha fin de carbonatación registrada</td></tr>
+  </table>
+
+  <h3><span class="icon">⚡</span>Acciones rápidas por lote</h3>
+  <p>Al pasar el cursor sobre una fila aparecen los botones de acción:</p>
+  <ul>
+    <li><strong>👁 Ver detalle</strong> — abre la vista completa del lote</li>
+    <li><strong>✏️ Editar</strong> — abre el formulario de edición</li>
+    <li><strong>📋 Duplicar</strong> — crea una copia del lote con los mismos insumos (sin fechas ni densidades)</li>
+    <li><strong>✔ Completar</strong> — marca el lote como completado directamente desde la lista (disponible solo si no está completado)</li>
+    <li><strong>🗃 Archivar</strong> — elimina el lote (con confirmación)</li>
+  </ul>
+</section>
+
+<!-- ══════════ FILTROS ══════════ -->
+<section id="filtros">
+  <h2><span class="section-num">3</span>Filtros y búsqueda</h2>
+  <p>Encima de la tabla hay un panel de filtros que te permite encontrar lotes rápidamente:</p>
+
+  <table class="data-table">
+    <tr><th>Filtro</th><th>Cómo usarlo</th></tr>
+    <tr>
+      <td><strong>Estilo / Código</strong></td>
+      <td>Escribe parte del nombre del estilo (ej: "IPA") o el código exacto (ej: "IPA-003"). Tiene autocompletar con los lotes existentes.</td>
+    </tr>
+    <tr>
+      <td><strong>Fase actual</strong></td>
+      <td>Selecciona una fase del menú desplegable para ver solo los lotes en esa etapa. Útil para ver "solo los que están en fermentación".</td>
+    </tr>
+    <tr>
+      <td><strong>Desde / Hasta</strong></td>
+      <td>Filtra por rango de fecha de elaboración. Puedes usar solo uno de los dos campos.</td>
+    </tr>
+  </table>
+
+  <div class="callout tip">
+    <p>El contador de lotes en la esquina superior derecha del filtro indica cuántos lotes están mostrándose. Si ves "(filtrados)" al lado, es porque hay un filtro activo. Haz clic en <strong>Limpiar</strong> para quitar todos los filtros.</p>
+  </div>
+
+  <h3><span class="icon">📥</span>Exportar el listado</h3>
+  <p>En la parte superior derecha hay dos botones para exportar todos los lotes (con los filtros aplicados):</p>
+  <ul>
+    <li><strong>PDF</strong> — genera un reporte en PDF con los datos principales</li>
+    <li><strong>Excel</strong> — genera un archivo .xlsx con 6 hojas (una por pestaña), ideal para análisis externos</li>
+  </ul>
+</section>
+
+<!-- ══════════ KANBAN ══════════ -->
+<section id="kanban">
+  <h2><span class="section-num">4</span>Vista Kanban</h2>
+  <p>El Kanban muestra los lotes <strong>organizados en columnas por fase</strong>, como un tablero visual. Accede desde el botón <strong>"Kanban"</strong> en el menú lateral o desde la barra de acciones.</p>
+
+  <h3><span class="icon">📌</span>Columnas del tablero</h3>
+  <p>Hay 6 columnas: <span class="badge badge-gray">Sin iniciar</span> · <span class="badge badge-green">Fermentación</span> · <span class="badge badge-teal">Acondicionamiento</span> · <span class="badge badge-amber">Maduración</span> · <span class="badge badge-blue">Carbonatación</span> · <span class="badge badge-purple">Completados</span></p>
+
+  <h3><span class="icon">🃏</span>Información en cada tarjeta</h3>
+  <p>Cada tarjeta muestra:</p>
+  <ul>
+    <li>Código del lote (ej: <code>IPA-004</code>)</li>
+    <li>Estilo</li>
+    <li>Fecha de elaboración</li>
+    <li><strong>Días en la fase actual</strong> (número en la esquina superior derecha)</li>
+    <li><strong>Alerta de retraso</strong> (en rojo) si la fecha fin ideal ya pasó</li>
+  </ul>
+
+  <h3><span class="icon">🖱️</span>Mover lotes arrastrando</h3>
+  <p>Los usuarios con permiso de edición pueden <strong>arrastrar una tarjeta</strong> de una columna a otra para cambiar la fase del lote.</p>
+
+  <div class="callout warning">
+    <p><strong>Importante:</strong> Para mover un lote a Fermentación, el lote debe tener un <strong>fermentador asignado</strong>. Si no lo tiene, el sistema devolverá la tarjeta a su posición original y mostrará un mensaje indicando que debes asignar uno primero desde el formulario de edición.</p>
+  </div>
+
+  <p>También puedes acceder al detalle o editar cada lote con los botones 👁 y ✏️ que aparecen en cada tarjeta.</p>
+</section>
+
+<!-- ══════════ NUEVO LOTE ══════════ -->
+<section id="nuevo">
+  <h2><span class="section-num">5</span>Crear un nuevo lote</h2>
+  <p>Haz clic en <strong>+ Nuevo Lote</strong>. Se abre un formulario tipo <em>wizard</em> con <strong>6 pestañas</strong>. No tienes que completar todo de una sola vez: puedes guardar en cualquier momento y volver a editar después.</p>
+
+  <div class="callout info">
+    <p><strong>Flujo recomendado:</strong> Al crear el lote, completa al menos el Tab 0 (Datos Generales) y el Tab 1 (Receta/Insumos). Los demás tabs se completan a medida que avanza el proceso productivo.</p>
+  </div>
+
+  <p>Las pestañas del wizard muestran un <strong>✓ verde</strong> cuando han sido completadas, ayudándote a saber qué falta.</p>
+</section>
+
+<!-- ══════════ TAB 0 ══════════ -->
+<section id="tab0">
+  <h2><span class="section-num">6</span>Tab 0: Datos Generales</h2>
+  <p>Es el primer paso y el más importante. Aquí defines los parámetros fundamentales del lote.</p>
+
+  <h3><span class="icon">📝</span>Campos obligatorios</h3>
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>Estilo <span style="color:red">*</span></strong></td><td>Nombre del estilo (ej: "India Pale Ale"). Tiene autocompletar con los tipos de cerveza registrados. El código del lote se genera automáticamente con las 3 primeras letras.</td></tr>
+    <tr><td><strong>Fecha de Elaboración</strong></td><td>Día en que se realizó la cocción principal.</td></tr>
+    <tr><td><strong>Hora Inicio / Fin</strong></td><td>Hora de inicio y fin de la cocción de la sesión 1.</td></tr>
+    <tr><td><strong>Litros Finales</strong></td><td>Volumen obtenido al final del proceso.</td></tr>
+    <tr><td><strong>Fermentador</strong></td><td>Equipo de fermentación asignado. Solo aparecen los fermentadores <em>disponibles</em> (sin lote activo). Obligatorio para mover el lote a Fermentación en el Kanban.</td></tr>
+  </table>
+
+  <h3><span class="icon">📐</span>Medición de densidades</h3>
+  <p>Zymos admite dos instrumentos de medición. Elige uno con el toggle <strong>Hidrómetro / Refractómetro</strong>:</p>
+
+  <table class="data-table">
+    <tr><th>Instrumento</th><th>Cómo ingresar OG</th><th>Cómo ingresar FG</th></tr>
+    <tr>
+      <td><strong>Hidrómetro (SG)</strong></td>
+      <td>Ingresa la gravedad específica directamente: <code>1052</code>, <code>1068</code>, etc. (formato XXXX, sin punto decimal)</td>
+      <td>Igual: <code>1012</code>, <code>1008</code>, etc.</td>
+    </tr>
+    <tr>
+      <td><strong>Refractómetro (°Brix)</strong></td>
+      <td>Ingresa los grados Brix: <code>12.5</code>, <code>16.2</code>. El sistema calcula el SG equivalente.</td>
+      <td>Para la FG con refractómetro, el sistema aplica la <em>corrección de Sean Terrill</em> para compensar el alcohol disuelto. Se muestra la diferencia con el método estándar.</td>
+    </tr>
+  </table>
+
+  <div class="callout info">
+    <p><strong>Rangos válidos:</strong> OG entre 1000 y 1150 · FG entre 990 y 1060. El valor debe ingresarse como número entero (sin coma ni punto): por ejemplo, 1.052 se escribe como <code>1052</code>.</p>
+  </div>
+
+  <h3><span class="icon">🔁</span>Multi-elaboración (1 a 4 sesiones)</h3>
+  <p>Si tu proceso de elaboración usa <strong>múltiples cocciones</strong> (ej: separar granos de 1ra y 2da cocción en distintos días), puedes registrar hasta 4 sesiones con el selector <strong>"Número de elaboraciones"</strong>.</p>
+  <p>Al seleccionar 2 o más sesiones, aparecen campos adicionales para fecha, hora, OG y volumen de cada sesión. El <strong>OG combinado</strong> se calcula automáticamente como una media ponderada por volumen de todas las sesiones y se escribe en el campo OG principal.</p>
+
+  <h3><span class="icon">💧</span>Otros campos</h3>
+  <ul>
+    <li><strong>Agua utilizada (L):</strong> total de agua empleada en la sesión 1 (las sesiones 2-4 tienen su propio campo)</li>
+    <li><strong>pH del agua:</strong> pH medido antes de la cocción</li>
+  </ul>
+</section>
+
+<!-- ══════════ TAB 1 ══════════ -->
+<section id="tab1">
+  <h2><span class="section-num">7</span>Tab 1: Receta / Insumos</h2>
+  <p>Aquí registras los ingredientes usados en este lote y opcionalmente los vinculas a facturas de proveedor para calcular costos.</p>
+
+  <h3><span class="icon">📦</span>Cargar desde receta</h3>
+  <p>El botón <strong>"Cargar Receta"</strong> en la parte superior rellena automáticamente todos los campos de ingredientes con las cantidades de la receta seleccionada. Puedes ajustar los valores después.</p>
+
+  <div class="callout tip">
+    <p>Al cargar la receta, el sistema también intenta buscar automáticamente los costos en las facturas de proveedor y pre-llena la sección de Costos de Producción.</p>
+  </div>
+
+  <h3><span class="icon">🌾</span>Grupos de ingredientes</h3>
+  <p>Cada grupo permite agregar múltiples filas con el botón <strong>+</strong>:</p>
+  <table class="data-table">
+    <tr><th>Grupo</th><th>Campos por ítem</th><th>Unidades disponibles</th></tr>
+    <tr><td><strong>Maltas</strong></td><td>Nombre (con autocompletar del inventario), cantidad</td><td>gr, kg</td></tr>
+    <tr><td><strong>Lúpulos</strong></td><td>Nombre, cantidad</td><td>gr, kg</td></tr>
+    <tr><td><strong>Levaduras</strong></td><td>Nombre, cantidad</td><td>gr, kg, mL, L</td></tr>
+    <tr><td><strong>Clarificantes</strong></td><td>Nombre, cantidad</td><td>gr, kg, mL, L, und</td></tr>
+  </table>
+  <p>Si un insumo no está en el inventario todavía, el botón <strong>⊞</strong> al lado del campo de nombre abre un formulario rápido para crearlo sin salir de la pantalla.</p>
+
+  <h3><span class="icon">💰</span>Costos de Producción</h3>
+  <p>La sección de Costos de Producción permite vincular ítems específicos de facturas de proveedor a este lote. El sistema calcula el costo real del lote a partir de los precios facturados.</p>
+  <ul>
+    <li>Usa el buscador para encontrar ítems de factura por nombre, proveedor o tipo</li>
+    <li>Indica la cantidad de ese ítem que se asigna a este lote</li>
+    <li>Si cantidad = 0, se asigna el costo completo del ítem</li>
+  </ul>
+  <p>Si no tienes facturas registradas, puedes igualmente ver un <strong>costo estimado</strong> en la vista de detalle, calculado con los precios unitarios del inventario.</p>
+</section>
+
+<!-- ══════════ TAB 2 ══════════ -->
+<section id="tab2">
+  <h2><span class="section-num">8</span>Tab 2: Fermentación</h2>
+  <p>Registra el inicio y fin de la fermentación primaria.</p>
+
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>Fecha de inicio</strong></td><td>Día en que el mosto comenzó a fermentar (se transfirió al fermentador). Marca el inicio de la fase Fermentación en la línea de tiempo.</td></tr>
+    <tr><td><strong>Fecha fin ideal</strong></td><td>Fecha estimada según el estilo y receta. Sirve como referencia; si se supera, el Kanban muestra una alerta de retraso.</td></tr>
+    <tr><td><strong>Temperatura</strong></td><td>Temperatura de fermentación. Según la configuración del tenant, puede mostrarse en °C o °F.</td></tr>
+    <tr><td><strong>Fecha fin real</strong></td><td>Día en que terminó la fermentación. Al guardar esta fecha, el lote avanza a la siguiente fase disponible.</td></tr>
+    <tr><td><strong>Fermentador</strong></td><td>Se muestra solo como referencia (solo lectura). Para cambiarlo, debes ir al Tab 0.</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <p>Las fases <strong>no bloquean</strong> el formulario. Puedes registrar la fecha de inicio de Maduración aunque no hayas completado Acondicionamiento. Zymos usa las fechas para calcular la fase actual, pero no impide que avances si tu proceso productivo lo requiere.</p>
+  </div>
+</section>
+
+<!-- ══════════ TAB 3 ══════════ -->
+<section id="tab3">
+  <h2><span class="section-num">9</span>Tab 3: Acondicionamiento</h2>
+  <p>Registra la etapa de clarificación, filtrado o maduración temprana del lote.</p>
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>Fecha de inicio</strong></td><td>Inicio del acondicionamiento. Define esta fase en la línea de tiempo.</td></tr>
+    <tr><td><strong>Fecha fin ideal</strong></td><td>Fecha estimada de finalización.</td></tr>
+    <tr><td><strong>Temperatura</strong></td><td>Temperatura durante el acondicionamiento.</td></tr>
+    <tr><td><strong>Fecha fin real</strong></td><td>Día en que terminó el acondicionamiento.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ TAB 4 ══════════ -->
+<section id="tab4">
+  <h2><span class="section-num">10</span>Tab 4: Maduración</h2>
+  <p>Registra la etapa de maduración o lagering del lote.</p>
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>Fecha de inicio</strong></td><td>Inicio de la maduración.</td></tr>
+    <tr><td><strong>Fecha fin ideal</strong></td><td>Fecha estimada.</td></tr>
+    <tr><td><strong>Temperatura</strong></td><td>Temperatura de maduración.</td></tr>
+    <tr><td><strong>Fecha fin real</strong></td><td>Fin de la maduración.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ TAB 5 ══════════ -->
+<section id="tab5">
+  <h2><span class="section-num">11</span>Tab 5: Carbonatación</h2>
+  <p>El último paso del proceso. Aquí registras cómo y cuándo se carbonató el lote, y defines el destino del producto terminado.</p>
+
+  <h3><span class="icon">💨</span>Parámetros de carbonatación</h3>
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>Fecha de inicio</strong></td><td>Cuando comenzó el proceso de carbonatación.</td></tr>
+    <tr><td><strong>CO₂ objetivo</strong></td><td>Volúmenes de CO₂ deseados según el estilo.</td></tr>
+    <tr><td><strong>Método</strong></td><td><strong>Natural</strong> (refermentación con azúcar) o <strong>Forzada</strong> (inyección de CO₂).</td></tr>
+  </table>
+
+  <h4>Carbonatación natural</h4>
+  <ul>
+    <li><strong>Tipo de azúcar:</strong> tipo de azúcar o extracto usado para el priming</li>
+    <li><strong>Gramos de azúcar:</strong> cantidad utilizada</li>
+  </ul>
+
+  <h4>Carbonatación forzada</h4>
+  <ul>
+    <li><strong>Presión (PSI):</strong> presión aplicada</li>
+    <li><strong>Tiempo:</strong> duración del proceso</li>
+    <li><strong>Técnica:</strong> descripción del método (ej: "shake & force", "set & forget")</li>
+  </ul>
+
+  <h4>Cierre del lote</h4>
+  <table class="data-table">
+    <tr><th>Campo</th><th>Descripción</th></tr>
+    <tr><td><strong>CO₂ real</strong></td><td>Volúmenes de CO₂ medidos finalmente.</td></tr>
+    <tr><td><strong>Validación organoléptica</strong></td><td>Notas de cata al momento de la carbonatación.</td></tr>
+    <tr><td><strong>Fecha fin real</strong></td><td><strong>Registrar esta fecha marca el lote como Completado.</strong> La píldora cambia a color púrpura.</td></tr>
+  </table>
+
+  <h3><span class="icon">📦</span>Destino y Empaque</h3>
+  <p>Define en qué formatos se envasó el lote. Agrega filas con el botón <strong>+</strong>. Cada fila indica:</p>
+  <ul>
+    <li><strong>Cantidad</strong> (ej: 48)</li>
+    <li><strong>Formato</strong> (ej: Botella 330ml, Barril 20L, Growler 1L)</li>
+  </ul>
+  <p>Los formatos incluyen los envases registrados en tu inventario más una lista completa de opciones estándar (botellas, latas, barriles, growlers).</p>
+
+  <h3><span class="icon">📝</span>Observaciones y notas</h3>
+  <ul>
+    <li><strong>Observaciones:</strong> cualquier nota técnica del proceso (incidencias, ajustes)</li>
+    <li><strong>Notas de cata:</strong> descripción sensorial del producto terminado</li>
+  </ul>
+</section>
+
+<!-- ══════════ DETALLE ══════════ -->
+<section id="detalle">
+  <h2><span class="section-num">12</span>Vista detalle del lote</h2>
+  <p>Haz clic en el botón <strong>👁 Ver</strong> de cualquier lote para abrir la vista completa. Aquí encuentras toda la información consolidada, métricas calculadas y el historial.</p>
+
+  <h3><span class="icon">📊</span>Métricas calculadas automáticamente</h3>
+  <p>En la parte superior aparecen tarjetas con los indicadores calculados por Zymos:</p>
+
+  <table class="data-table">
+    <tr><th>Métrica</th><th>Fórmula / Descripción</th><th>Cuándo está disponible</th></tr>
+    <tr>
+      <td><strong>ABV (% alcohol)</strong></td>
+      <td><code>(OG − FG) × 0.13125</code>. Con refractómetro usa la fórmula de Terrill para mayor precisión.</td>
+      <td>Cuando hay OG y FG registrados</td>
+    </tr>
+    <tr>
+      <td><strong>Atenuación aparente</strong></td>
+      <td><code>(OG − FG) × 100 / (OG − 1000)</code>. Indica qué porcentaje de azúcares fermentó la levadura.</td>
+      <td>Cuando hay OG y FG</td>
+    </tr>
+    <tr>
+      <td><strong>Eficiencia de macerado</strong></td>
+      <td><code>(puntos OG × litros) / (kg_malta × 308) × 100</code>. Compara la extracción real vs el potencial máximo.</td>
+      <td>Cuando hay OG, litros y maltas con cantidades en kg</td>
+    </tr>
+    <tr>
+      <td><strong>Puntaje BJCP</strong></td>
+      <td>Promedio de las evaluaciones sensoriales registradas (escala 0–50).</td>
+      <td>Cuando hay al menos una evaluación</td>
+    </tr>
+  </table>
+
+  <h3><span class="icon">🗺️</span>Línea de tiempo del proceso</h3>
+  <p>Debajo de las métricas hay un resumen visual de las 4 fases con sus fechas de inicio. Los pasos completados se muestran en color; los pendientes aparecen en gris.</p>
+
+  <h3><span class="icon">📋</span>Secciones de información</h3>
+  <p>El detalle organiza toda la información en tarjetas:</p>
+  <ul>
+    <li><strong>Información del lote:</strong> código, estilo, fermentador, receta, fechas de elaboración por sesión</li>
+    <li><strong>Parámetros de densidad:</strong> OG (con badge Refractómetro si se usó Brix), FG, fecha de toma</li>
+    <li><strong>Ingredientes:</strong> chips visuales con cada insumo y su cantidad</li>
+    <li><strong>Costos:</strong> si hay ítems de factura vinculados, muestra el costo real por ítem y el total. Si no hay facturas, puede mostrarse un costo estimado a partir de los precios del inventario.</li>
+    <li><strong>Fermentación / Acondicionamiento / Maduración / Carbonatación:</strong> una sección por cada fase con todos sus campos</li>
+    <li><strong>Lecturas de fermentación:</strong> historial de densidades y temperaturas tomadas durante el proceso</li>
+    <li><strong>Evaluación sensorial:</strong> evaluaciones BJCP registradas</li>
+    <li><strong>Historial:</strong> registro cronológico de cambios en el lote</li>
+  </ul>
+</section>
+
+<!-- ══════════ LECTURAS ══════════ -->
+<section id="lecturas">
+  <h2><span class="section-num">13</span>Lecturas de fermentación</h2>
+  <p>Durante la fermentación puedes registrar <strong>lecturas periódicas</strong> de densidad y temperatura para hacer seguimiento a la actividad de la levadura.</p>
+
+  <div class="callout info">
+    <p><strong>Disponible solo para Administradores.</strong> Si eres operario, puedes ver las lecturas pero no agregar ni eliminar.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Abre el detalle del lote</strong>
+        <p>Ve a 👁 Ver en cualquier lote con fermentación activa.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Localiza la sección "Lecturas de Fermentación"</strong>
+        <p>Está hacia la mitad de la página, con la tabla de lecturas previas.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Haz clic en "Agregar lectura"</strong>
+        <p>Ingresa la fecha, densidad actual y temperatura. El gráfico de densidad/temperatura se actualiza automáticamente.</p>
+      </div>
+    </div>
+  </div>
+
+  <p>Zymos crea automáticamente dos lecturas especiales:</p>
+  <ul>
+    <li><strong>OG inicial:</strong> se genera cuando guardas el OG por primera vez</li>
+    <li><strong>FG final:</strong> se genera cuando guardas la densidad final</li>
+  </ul>
+  <p>Estas lecturas aparecen al inicio y al final de la tabla respectivamente. Las lecturas manuales se insertan en el medio.</p>
+</section>
+
+<!-- ══════════ BJCP ══════════ -->
+<section id="bjcp">
+  <h2><span class="section-num">14</span>Evaluación sensorial BJCP</h2>
+  <p>La evaluación BJCP es una escala estándar internacional para calificar cervezas (0 a 50 puntos). Zymos permite registrar evaluaciones detalladas por cada lote.</p>
+
+  <div class="callout info">
+    <p><strong>Disponible solo para Administradores.</strong></p>
+  </div>
+
+  <h3><span class="icon">⭐</span>Criterios evaluados</h3>
+  <table class="data-table">
+    <tr><th>Criterio</th><th>Puntaje máx.</th><th>Qué evalúa</th></tr>
+    <tr><td>Aroma</td><td>12</td><td>Intensidad y carácter de los aromas</td></tr>
+    <tr><td>Apariencia</td><td>3</td><td>Color, transparencia, espuma</td></tr>
+    <tr><td>Sabor</td><td>20</td><td>Balance, complejidad, final</td></tr>
+    <tr><td>Sensación en boca</td><td>5</td><td>Cuerpo, carbonatación, textura</td></tr>
+    <tr><td>Impresión general</td><td>10</td><td>Valoración global del juez</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>50</strong></td><td></td></tr>
+  </table>
+
+  <h3><span class="icon">🏅</span>Clasificaciones</h3>
+  <table class="data-table">
+    <tr><th>Rango</th><th>Clasificación</th></tr>
+    <tr><td>45–50</td><td>Excepcional</td></tr>
+    <tr><td>38–44</td><td>Excelente</td></tr>
+    <tr><td>30–37</td><td>Muy buena</td></tr>
+    <tr><td>21–29</td><td>Buena</td></tr>
+    <tr><td>14–20</td><td>Aceptable</td></tr>
+    <tr><td>9–13</td><td>Deficiente</td></tr>
+    <tr><td>0–8</td><td>Inaceptable</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ HISTORIAL ══════════ -->
+<section id="historial">
+  <h2><span class="section-num">15</span>Historial del lote</h2>
+  <p>Cada acción significativa sobre el lote queda registrada en el historial: creación, ediciones, cambios de fase, inicio y fin de cada etapa. El historial es <strong>inmutable</strong>: si el lote se elimina, el historial permanece.</p>
+
+  <table class="data-table">
+    <tr><th>Evento</th><th>Color del badge</th></tr>
+    <tr><td>Creado</td><td><span class="badge badge-green">Verde</span></td></tr>
+    <tr><td>Fase iniciada (Fermentación/Acondicionamiento/Maduración/Carbonatación)</td><td><span class="badge badge-green">Verde</span></td></tr>
+    <tr><td>Fase completada</td><td><span class="badge badge-teal">Teal</span></td></tr>
+    <tr><td>Lote completado</td><td><span class="badge badge-blue">Azul</span></td></tr>
+    <tr><td>Editado</td><td><span class="badge badge-gray">Gris</span></td></tr>
+    <tr><td>Fase reiniciada</td><td><span class="badge badge-amber">Amarillo</span></td></tr>
+    <tr><td>Archivado</td><td>Rojo</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ EXPORTS ══════════ -->
+<section id="exports">
+  <h2><span class="section-num">16</span>Exportar un lote</h2>
+  <p>Desde la vista de detalle puedes generar:</p>
+
+  <h3><span class="icon">📄</span>PDF del lote</h3>
+  <p>Botón <strong>"PDF"</strong> en la cabecera del detalle. Genera un reporte completo del lote con todas las fases, ingredientes, densidades y evaluaciones. Incluye el logo y colores del tenant.</p>
+
+  <h3><span class="icon">🖨️</span>Imprimir</h3>
+  <p>El botón <strong>"Imprimir"</strong> abre el diálogo de impresión del navegador con la vista optimizada para papel.</p>
+
+  <h3><span class="icon">📊</span>Excel masivo (todos los lotes)</h3>
+  <p>Desde la lista de lotes, el botón <strong>"Excel"</strong> exporta todos los lotes visibles (con los filtros aplicados) a un archivo .xlsx con 6 hojas:</p>
+  <ul>
+    <li>General e Insumos</li>
+    <li>Fermentación</li>
+    <li>Acondicionamiento</li>
+    <li>Maduración</li>
+    <li>Carbonatación</li>
+    <li>Densidad y Observaciones</li>
+  </ul>
+</section>
+
+<!-- ══════════ DUPLICAR ══════════ -->
+<section id="duplicar">
+  <h2><span class="section-num">17</span>Duplicar un lote</h2>
+  <p>El botón <strong>"Duplicar"</strong> (disponible en la lista y en el detalle) crea una copia nueva del lote con:</p>
+  <ul>
+    <li>✅ Mismos ingredientes (maltas, lúpulos, levaduras, clarificantes)</li>
+    <li>✅ Mismo estilo y receta</li>
+    <li>❌ Sin fechas (elaboración, fermentación, etc.)</li>
+    <li>❌ Sin densidades (OG, FG)</li>
+    <li>❌ Sin fermentador asignado</li>
+    <li>❌ Código nuevo generado automáticamente</li>
+  </ul>
+  <p>Útil para repetir el mismo estilo de cerveza periódicamente.</p>
+</section>
+
+<!-- ══════════ BARRILES ══════════ -->
+<section id="barriles">
+  <h2><span class="section-num">18</span>Crear barriles desde un lote</h2>
+  <p>Si el destino del lote incluye barriles (ej: "2 × Barril 20L"), Zymos puede crear los registros de barril automáticamente.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Abre el detalle del lote</strong>
+        <p>El lote debe tener destinos de tipo barril registrados en el Tab 5.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Busca el botón "Crear Barriles"</strong>
+        <p>Aparece en la sección de Carbonatación del detalle cuando el destino incluye barriles.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Confirma la creación</strong>
+        <p>Zymos crea el número de registros de barril indicado, pre-llenados con el código del lote y el volumen correspondiente. Quedan disponibles en el módulo de Barriles.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section id="faq">
+  <h2><span class="section-num">19</span>Preguntas frecuentes</h2>
+
+  <h3>¿Por qué no aparece el botón "Nuevo Lote"?</h3>
+  <p>Necesitas tener al menos una <strong>receta activa</strong>. Ve a <strong>Recetas → Nueva Receta</strong> y crea una primero.</p>
+
+  <h3>¿Cómo sé en qué fase está un lote?</h3>
+  <p>La fase se calcula automáticamente a partir de las fechas que registraste: si hay fecha de inicio de carbonatación pero no fecha fin, el lote está en Carbonatación. Zymos nunca te pide seleccionar la fase manualmente.</p>
+
+  <h3>Ingresé una densidad incorrecta. ¿Cómo la corrijo?</h3>
+  <p>Ve a <strong>Editar</strong> el lote (Tab 0) y cambia los valores de OG o FG. Zymos recalculará el ABV, atenuación y eficiencia automáticamente.</p>
+
+  <h3>¿Puedo cambiar el fermentador una vez iniciada la fermentación?</h3>
+  <p>Sí. Ve a Editar → Tab 0 y cambia el fermentador. El sistema actualizará la disponibilidad de ambos equipos.</p>
+
+  <h3>¿Qué pasa si muevo un lote al Kanban pero no tiene fermentador?</h3>
+  <p>El sistema revierte el movimiento y muestra un aviso. Debes asignar un fermentador primero desde el formulario de edición (Tab 0).</p>
+
+  <h3>¿Los litros finales se suman solos en multi-elaboración?</h3>
+  <p>Sí. Al registrar el volumen de cada sesión (S1, S2, etc.), Zymos los suma automáticamente en el campo "Litros Finales".</p>
+
+  <h3>¿Puedo cambiar el idioma de la aplicación?</h3>
+  <p>Sí. En el menú de usuario (esquina superior derecha del navbar) hay un selector de idioma: Español / English.</p>
+
+  <h3>¿Dónde van los lotes "archivados"?</h3>
+  <p>Al archivar un lote, este se elimina de la lista principal. El historial de ese lote permanece en el sistema. Los barriles y facturas vinculadas a ese lote no se afectan.</p>
+</section>
+
+</div><!-- /.content -->
+
+<div class="footer">
+  Zymos — Manual de Usuario · Módulo Trazabilidad · Última actualización: Octubre 2026
+</div>
+
+<script>
+  // Highlight current section in sidebar
+  const links = document.querySelectorAll('.sb-link');
+  const sections = document.querySelectorAll('section[id], .hero');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector('.sb-link[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth scroll
+  document.querySelectorAll('.sb-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = link.getAttribute('href').slice(1);
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
