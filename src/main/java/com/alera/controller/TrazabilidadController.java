@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.dto.LoteFormDto;
 import com.alera.dto.InsumoDto;
+import com.alera.model.EscalonTemperatura;
 import com.alera.model.FacturaItem;
 import com.alera.model.LoteCerveza;
 import com.alera.model.RecetaIngrediente;
@@ -24,6 +25,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -228,6 +232,8 @@ public class TrazabilidadController {
             });
         }
         model.addAttribute("loteForm", dto);
+        model.addAttribute("initEscalonesAcond", Collections.emptyList());
+        model.addAttribute("initEscalonesMadur", Collections.emptyList());
         agregarInventarioAlModelo(model);
         return "trazabilidad/formulario";
     }
@@ -246,12 +252,16 @@ public class TrazabilidadController {
     public String guardar(@Valid @ModelAttribute("loteForm") LoteFormDto dto,
                           BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
+            model.addAttribute("initEscalonesAcond", Collections.emptyList());
+            model.addAttribute("initEscalonesMadur", Collections.emptyList());
             agregarInventarioAlModelo(model);
             return "trazabilidad/formulario";
         }
         if (dto.getFermFechaInicial() != null && dto.getEquipoFermentadorId() == null) {
             result.rejectValue("equipoFermentadorId", "required",
                     "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
+            model.addAttribute("initEscalonesAcond", Collections.emptyList());
+            model.addAttribute("initEscalonesMadur", Collections.emptyList());
             agregarInventarioAlModelo(model);
             return "trazabilidad/formulario";
         }
@@ -293,6 +303,8 @@ public class TrazabilidadController {
         model.addAttribute("loteForm", form);
         model.addAttribute("loteId", id);
         model.addAttribute("codigoLote", lote.getCodigoLote());
+        model.addAttribute("initEscalonesAcond", buildEscalonInit(lote, "ACONDICIONAMIENTO", tempUnit));
+        model.addAttribute("initEscalonesMadur", buildEscalonInit(lote, "MADURACION", tempUnit));
         agregarInventarioAlModelo(model);
         // Si el lote tiene fermentador asignado y no está en la lista (en uso por este lote),
         // lo agregamos para que aparezca seleccionado en el formulario
@@ -313,6 +325,8 @@ public class TrazabilidadController {
                              @Valid @ModelAttribute("loteForm") LoteFormDto dto,
                              BindingResult result, Model model, RedirectAttributes ra) {
         if (result.hasErrors()) {
+            model.addAttribute("initEscalonesAcond", Collections.emptyList());
+            model.addAttribute("initEscalonesMadur", Collections.emptyList());
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
             model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());
@@ -321,6 +335,8 @@ public class TrazabilidadController {
         if (dto.getFermFechaInicial() != null && dto.getEquipoFermentadorId() == null) {
             result.rejectValue("equipoFermentadorId", "required",
                     "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
+            model.addAttribute("initEscalonesAcond", Collections.emptyList());
+            model.addAttribute("initEscalonesMadur", Collections.emptyList());
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
             model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());
@@ -372,6 +388,14 @@ public class TrazabilidadController {
                 (costoEstimado != null && litros != null && litros.compareTo(BigDecimal.ZERO) > 0)
                         ? costoEstimado.divide(litros, 2, java.math.RoundingMode.HALF_UP)
                         : null);
+        model.addAttribute("escalonesAcond", lote.getEscalones().stream()
+                .filter(e -> "ACONDICIONAMIENTO".equals(e.getFase()))
+                .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+                .collect(Collectors.toList()));
+        model.addAttribute("escalonesMadur", lote.getEscalones().stream()
+                .filter(e -> "MADURACION".equals(e.getFase()))
+                .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+                .collect(Collectors.toList()));
         return "trazabilidad/detalle";
     }
 
@@ -653,5 +677,25 @@ public class TrazabilidadController {
         m.put("proveedor", f.getProveedor());
         m.put("fechaFactura", fechaStr);
         return m;
+    }
+
+    private List<Map<String, Object>> buildEscalonInit(LoteCerveza lote, String fase, String tempUnit) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        lote.getEscalones().stream()
+            .filter(e -> fase.equals(e.getFase()))
+            .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+            .forEach(e -> {
+                Map<String, Object> m = new LinkedHashMap<>();
+                BigDecimal tempDisplay = "F".equals(tempUnit)
+                        ? TempUtils.toDisplay(e.getTemperaturaObjetivo(), "F")
+                        : e.getTemperaturaObjetivo();
+                m.put("temp", tempDisplay != null ? tempDisplay.toPlainString() : "");
+                m.put("fechaObj",  e.getFechaObjetivo() != null ? e.getFechaObjetivo().toString() : "");
+                m.put("fechaReal", e.getFechaReal()     != null ? e.getFechaReal().toString()     : "");
+                m.put("logrado",   e.isLogrado() ? "true" : "false");
+                m.put("notas",     e.getNotas() != null ? e.getNotas() : "");
+                result.add(m);
+            });
+        return result;
     }
 }

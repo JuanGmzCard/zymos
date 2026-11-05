@@ -100,18 +100,28 @@ public class LoteCerveza extends AuditableEntity {
     private LocalDate fermFechaFinalIdeal;
     private BigDecimal fermTemperatura;
     private LocalDate fermFechaFinal;
+    @Column(columnDefinition = "TEXT", name = "notas_fermentacion")
+    private String notasFermentacion;
 
     // Acondicionamiento
     private LocalDate acondFechaInicial;
     private LocalDate acondFechaFinalIdeal;
     private BigDecimal acondTemperatura;
     private LocalDate acondFechaFinal;
+    @Column(columnDefinition = "TEXT", name = "notas_acondicionamiento")
+    private String notasAcondicionamiento;
 
     // Maduración
     private LocalDate madurFechaInicial;
     private LocalDate madurFechaFinalIdeal;
     private BigDecimal madurTemperatura;
     private LocalDate madurFechaFinal;
+    @Column(columnDefinition = "TEXT", name = "notas_maduracion")
+    private String notasMaduracion;
+
+    @OneToMany(mappedBy = "lote", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orden ASC")
+    private List<EscalonTemperatura> escalones = new ArrayList<>();
 
     // Carbonatación — fechas y temperatura
     private LocalDate carbFechaInicial;
@@ -458,4 +468,12 @@ public class LoteCerveza extends AuditableEntity {
     public void setReceta4(Receta receta4) { this.receta4 = receta4; }
     public List<LoteItemFactura> getItemsFactura() { return itemsFactura; }
     public void setItemsFactura(List<LoteItemFactura> itemsFactura) { this.itemsFactura = itemsFactura; }
+    public String getNotasFermentacion() { return notasFermentacion; }
+    public void setNotasFermentacion(String v) { this.notasFermentacion = v; }
+    public String getNotasAcondicionamiento() { return notasAcondicionamiento; }
+    public void setNotasAcondicionamiento(String v) { this.notasAcondicionamiento = v; }
+    public String getNotasMaduracion() { return notasMaduracion; }
+    public void setNotasMaduracion(String v) { this.notasMaduracion = v; }
+    public List<EscalonTemperatura> getEscalones() { return escalones; }
+    public void setEscalones(List<EscalonTemperatura> escalones) { this.escalones = escalones; }
 }

@@ -108,9 +108,9 @@ public class MigracionTemplateService {
         hojaInstrucciones(wb, es, "Producción / Trazabilidad",
             new String[][]{
                 {"*", "Campo obligatorio"},
-                {"Orden de llenado", "1) Recetas  →  2) Receta_Ingredientes  →  3) Receta_Escalones  →  4) Receta_Adiciones  →  5) Lotes  →  6) Lote_Ingredientes"},
+                {"Orden de llenado", "1) Recetas  →  2) Receta_Ingredientes  →  3) Receta_Escalones  →  4) Receta_Adiciones  →  5) Lotes  →  6) Lote_Ingredientes  →  7) Lote_Escalones"},
                 {"nombre_receta (hojas 2-4)", "Debe coincidir exactamente con el nombre en la hoja Recetas"},
-                {"codigo_lote (hoja 6)", "Debe coincidir con el codigo_lote de la hoja Lotes"},
+                {"codigo_lote (hojas 6-7)", "Debe coincidir con el codigo_lote de la hoja Lotes"},
                 {"tipo (ingredientes)", "MALTA | LUPULO | LEVADURA | CLARIFICANTE"},
                 {"cantidad_con_unidad", "Número + espacio + unidad  (ej: 5000 gr  |  4.5 kg  |  11.5 gr)"},
                 {"og_objetivo / fg_objetivo", "Densidad en formato XXXX  (ej: 1058 para 1.058)"},
@@ -127,7 +127,10 @@ public class MigracionTemplateService {
                 {"numero_elaboraciones", "1 = sesión única (default) | 2/3/4 = doble/triple/cuádruple cocción. Activa columnas sN"},
                 {"og_sN / vol_final_sN", "OG pre-mezcla (formato XXXX) y volumen en L de cada sesión. Solo para numero_elaboraciones ≥ 2"},
                 {"hora_inicio_sN / hora_fin_sN", "Hora de inicio/fin de cada sesión en formato HH:mm (ej: 08:00). Opcional"},
-                {"nombre_receta_sN", "Receta alternativa para sesión 2/3/4. Vacío = misma receta de S1"}
+                {"nombre_receta_sN", "Receta alternativa para sesión 2/3/4. Vacío = misma receta de S1"},
+                {"notas_fermentacion / notas_acondicionamiento / notas_maduracion", "Texto libre de observaciones por fase (cols 71-73 en hoja Lotes)"},
+                {"fase (Lote_Escalones)", "ACONDICIONAMIENTO | MADURACION"},
+                {"logrado (Lote_Escalones)", "true | false  (default: false)"}
             });
         hojaRecetas(wb, es);
         hojaRecetaIngredientes(wb, es);
@@ -135,6 +138,7 @@ public class MigracionTemplateService {
         hojaRecetaAdicionesHervor(wb, es);
         hojaLotes(wb, es);
         hojaLoteIngredientes(wb, es);
+        hojaLoteEscalones(wb, es);
         return bytes(wb);
     }
 
@@ -525,7 +529,11 @@ public class MigracionTemplateService {
             {"vol_final_s4",         "opt"},
             {"hora_inicio_s4",       "opt"},
             {"hora_fin_s4",          "opt"},
-            {"nombre_receta_s4",     "opt"}
+            {"nombre_receta_s4",     "opt"},
+            // Notas de fases (cols 71-73)
+            {"notas_fermentacion",   "opt"},
+            {"notas_acondicionamiento","opt"},
+            {"notas_maduracion",     "opt"}
         };
         cabecera(sh, es, cols);
         ejemplo(sh, es, new Object[]{
@@ -556,7 +564,9 @@ public class MigracionTemplateService {
                120, 120, 120, 110, 110,
                150, 110, 120, 110, 120, 110, 110, 200,
                150, 110, 120, 110, 120, 110, 110, 200,
-               150, 110, 120, 110, 120, 110, 110, 200);
+               150, 110, 120, 110, 120, 110, 110, 200,
+               // Notas de fases
+               250, 250, 250);
     }
 
     private void hojaLoteIngredientes(XSSFWorkbook wb, Estilos es) {
@@ -573,6 +583,29 @@ public class MigracionTemplateService {
         fila(ej2, es.example(), new Object[]{"IPA-001","LUPULO","Cascade","50 gr"});
         dropdown(sh, 1, 9999, 1, "MALTA","LUPULO","LEVADURA","CLARIFICANTE");
         anchos(sh, 160, 140, 220, 180);
+    }
+
+    private void hojaLoteEscalones(XSSFWorkbook wb, Estilos es) {
+        XSSFSheet sh = wb.createSheet("Lote_Escalones");
+        String[][] cols = {
+            {"codigo_lote",           "req"},
+            {"fase",                  "req"},
+            {"temperatura_objetivo",  "req"},
+            {"fecha_objetivo",        "opt"},
+            {"fecha_real",            "opt"},
+            {"logrado",               "opt"},
+            {"notas",                 "opt"},
+            {"orden",                 "opt"}
+        };
+        cabecera(sh, es, cols);
+        ejemplo(sh, es, new Object[]{"IPA-001","ACONDICIONAMIENTO",12.0,"2024-02-05","2024-02-05",false,"Temperatura estabilizada correctamente",0});
+        Row ej2 = sh.createRow(3);
+        fila(ej2, es.example(), new Object[]{"IPA-001","ACONDICIONAMIENTO",8.0,"2024-02-09","","false","",1});
+        Row ej3 = sh.createRow(4);
+        fila(ej3, es.example(), new Object[]{"IPA-001","MADURACION",3.0,"2024-02-15","","false","",0});
+        dropdown(sh, 1, 9999, 1, "ACONDICIONAMIENTO","MADURACION");
+        dropdown(sh, 1, 9999, 5, "false","true");
+        anchos(sh, 160, 200, 170, 150, 150, 100, 280, 100);
     }
 
     private void hojaClientes(XSSFWorkbook wb, Estilos es) {

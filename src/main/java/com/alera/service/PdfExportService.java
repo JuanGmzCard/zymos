@@ -1,8 +1,10 @@
 package com.alera.service;
 
 import com.alera.config.ExportBranding;
+import com.alera.config.TempUtils;
 import com.alera.model.AdicionHervor;
 import com.alera.model.EscalonMacerado;
+import com.alera.model.EscalonTemperatura;
 import com.alera.model.EvaluacionSensorial;
 import com.alera.model.Ingrediente;
 import com.alera.model.LecturaFermentacion;
@@ -33,6 +35,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -129,6 +132,32 @@ public class PdfExportService {
 
                 addTituloPdf(doc, t("pdf.title.fases_proceso"), pal);
                 addTablaFases(doc, lote, pal);
+
+                boolean hayNotasFerm  = notBlank(lote.getNotasFermentacion());
+                boolean hayNotasAcond = notBlank(lote.getNotasAcondicionamiento());
+                boolean hayNotasMadur = notBlank(lote.getNotasMaduracion());
+                if (hayNotasFerm || hayNotasAcond || hayNotasMadur) {
+                    addTituloPdf(doc, t("pdf.title.notas_fases"), pal);
+                    addNotasFases(doc, lote, hayNotasFerm, hayNotasAcond, hayNotasMadur, pal);
+                }
+
+                String tempUnit = branding.tempUnit();
+                List<EscalonTemperatura> escalAcond = lote.getEscalones().stream()
+                        .filter(e -> "ACONDICIONAMIENTO".equals(e.getFase()))
+                        .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+                        .collect(Collectors.toList());
+                List<EscalonTemperatura> escalMadur = lote.getEscalones().stream()
+                        .filter(e -> "MADURACION".equals(e.getFase()))
+                        .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+                        .collect(Collectors.toList());
+                if (!escalAcond.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.escalones_acond"), pal);
+                    addTablaEscalones(doc, escalAcond, tempUnit, pal);
+                }
+                if (!escalMadur.isEmpty()) {
+                    addTituloPdf(doc, t("pdf.title.escalones_madur"), pal);
+                    addTablaEscalones(doc, escalMadur, tempUnit, pal);
+                }
 
                 if (lecturas != null && !lecturas.isEmpty()) {
                     addCurvaFermentacion(doc, lote, lecturas, pal);
@@ -876,6 +905,68 @@ public class PdfExportService {
             par(t2, t("pdf.label.tecnica"), tecnica, lbl, val, pal);
             doc.add(t2);
         }
+    }
+
+    private void addNotasFases(Document doc, LoteCerveza lote,
+                               boolean hayFerm, boolean hayAcond, boolean hayMadur,
+                               Pal pal) throws DocumentException {
+        Font lblFont = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.verde());
+        Font valFont = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+        if (hayFerm) {
+            Paragraph p = new Paragraph();
+            p.add(new Phrase(t("pdf.header.fermentacion") + ":  ", lblFont));
+            p.add(new Phrase(lote.getNotasFermentacion(), valFont));
+            p.setSpacingAfter(4);
+            doc.add(p);
+        }
+        if (hayAcond) {
+            Paragraph p = new Paragraph();
+            p.add(new Phrase(t("pdf.header.acondic") + ":  ", lblFont));
+            p.add(new Phrase(lote.getNotasAcondicionamiento(), valFont));
+            p.setSpacingAfter(4);
+            doc.add(p);
+        }
+        if (hayMadur) {
+            Paragraph p = new Paragraph();
+            p.add(new Phrase(t("pdf.header.maduracion") + ":  ", lblFont));
+            p.add(new Phrase(lote.getNotasMaduracion(), valFont));
+            p.setSpacingAfter(4);
+            doc.add(p);
+        }
+    }
+
+    private void addTablaEscalones(Document doc, List<EscalonTemperatura> escalones,
+                                    String tempUnit, Pal pal) throws DocumentException {
+        Font thFont  = new Font(Font.HELVETICA, 8, Font.BOLD,   pal.crema());
+        Font valFont = new Font(Font.HELVETICA, 8, Font.NORMAL, Color.DARK_GRAY);
+        String tempLabel = "F".equals(tempUnit) ? "°F" : "°C";
+
+        PdfPTable tbl = new PdfPTable(new float[]{0.5f, 1.3f, 1.2f, 1.2f, 1.1f, 2.3f});
+        tbl.setWidthPercentage(100); tbl.setSpacingBefore(4);
+        for (String h : new String[]{
+                "#",
+                t("pdf.header.temp_objetivo") + " (" + tempLabel + ")",
+                t("pdf.header.fecha_planif"),
+                t("pdf.header.fin_real"),
+                t("pdf.header.estado_esc"),
+                t("pdf.header.notas")}) {
+            PdfPCell c = new PdfPCell(new Phrase(h, thFont));
+            c.setBackgroundColor(pal.verde()); c.setBorder(0);
+            c.setPadding(5); c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            tbl.addCell(c);
+        }
+        int i = 1;
+        for (EscalonTemperatura e : escalones) {
+            BigDecimal td = TempUtils.toDisplay(e.getTemperaturaObjetivo(), tempUnit);
+            String tempStr = td != null ? td.stripTrailingZeros().toPlainString() : "—";
+            tableCell(tbl, String.valueOf(i++), valFont);
+            tableCellC(tbl, tempStr, valFont);
+            tableCellC(tbl, fmt(e.getFechaObjetivo()) != null ? fmt(e.getFechaObjetivo()) : "—", valFont);
+            tableCellC(tbl, fmt(e.getFechaReal())     != null ? fmt(e.getFechaReal())     : "—", valFont);
+            tableCellC(tbl, e.isLogrado() ? t("pdf.text.logrado") : t("pdf.text.pendiente"), valFont);
+            tableCell(tbl, e.getNotas() != null && !e.getNotas().isBlank() ? e.getNotas() : "—", valFont);
+        }
+        doc.add(tbl);
     }
 
     private void addTablaFases(Document doc, LoteCerveza lote, Pal pal) throws DocumentException {
