@@ -644,6 +644,62 @@ El formulario tiene `<select id="selectRefTipo">` + campo de búsqueda + dropdow
 
 ---
 
+## MÓDULO ANALIZADOR DE FACTURAS CON IA (`/facturas/analizar-documento`)
+
+Extrae datos estructurados de PDFs e imágenes de facturas usando Claude Vision, pre-llenando el formulario de alta de factura. Implementado 2026-11-05.
+
+### Archivos
+
+- **`FacturaAnalizadorService`** — servicio principal. `analizar(MultipartFile)` → `FacturaAnalizadaDto`. Modo mock si `ANTHROPIC_API_KEY` no está configurada.
+- **`FacturaAnalizadaDto`** — DTO de respuesta: `proveedor`, `numeroFactura`, `fechaFactura`, `descripcion`, `costoEnvio`, `items[]` (`nombre`, `tipoItem`, `tipoInsumo`, `cantidad`, `unidad`, `valorUnitario`, `porcentajeIvaItem`), `modoMock`, `error`.
+- **`FacturaProveedorController`** — dos endpoints nuevos: `POST /facturas/analizar-documento` y `GET /facturas/analizador-estado`.
+- **`facturas/formulario.html`** — botón "Cargar desde documento" abre modal con file input, spinner, preview de items extraídos y botón "Aplicar al formulario".
+
+### Configuración
+
+- `app.anthropic.api-key=${ANTHROPIC_API_KEY:}` en `application.properties` — string vacío como default.
+- **Activar IA real**: solo agregar `ANTHROPIC_API_KEY=sk-ant-...` como env var. Sin cambios de código.
+- **Modo mock** (key ausente): devuelve 3 items hardcodeados (Malta/Lúpulo/Levadura) con badge "Modo de prueba".
+- **Modelo**: `claude-haiku-4-5` (~$0.002/análisis).
+- **Dependencia**: `com.anthropic:anthropic-java:2.34.0` en `pom.xml`.
+
+### SDK Anthropic Java 2.34.0 — API verificada
+
+```java
+// PDF
+DocumentBlockParam docParam = DocumentBlockParam.builder()
+    .source(Base64PdfSource.builder().data(base64).build()).build();
+ContentBlockParam bloque = ContentBlockParam.ofDocument(docParam);
+
+// Imagen
+ImageBlockParam imageParam = ImageBlockParam.builder()
+    .source(Base64ImageSource.builder().data(base64).mediaType(mediaType).build()).build();
+ContentBlockParam bloque = ContentBlockParam.ofImage(imageParam);
+
+// Texto
+TextBlockParam textoParam = TextBlockParam.builder().text(PROMPT).build();
+ContentBlockParam bloque = ContentBlockParam.ofText(textoParam);
+
+// Crear mensaje (método correcto: addUserMessageOfBlockParams, NO addUserMessageOfContentBlockParams)
+Message response = client.messages().create(
+    MessageCreateParams.builder()
+        .model("claude-haiku-4-5")
+        .maxTokens(2048L)
+        .addUserMessageOfBlockParams(List.of(documentoBlock, textoBlock))
+        .build());
+
+// Extraer respuesta
+String texto = response.content().stream()
+    .filter(b -> b.isText()).map(b -> b.asText().text())
+    .findFirst().orElse("{}");
+```
+
+### Tests
+
+`FacturaProveedorControllerTest` requiere `@MockBean FacturaAnalizadorService analizadorService`.
+
+---
+
 ## CONVENCIONES DEL PROYECTO
 
 La documentación técnica detallada del proyecto está dividida por tema en `docs/`:
