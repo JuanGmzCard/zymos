@@ -574,6 +574,10 @@ public class MigracionService {
                         java.time.LocalTime horaIniS4 = hora(row, 68);
                         java.time.LocalTime horaFinS4 = hora(row, 69);
                         String recNomS4           = texto(row, 70);
+                        // Notas de fases (cols 71-73)
+                        String notasFerm          = nulaSiBlank(texto(row, 71));
+                        String notasAcond         = nulaSiBlank(texto(row, 72));
+                        String notasMadur         = nulaSiBlank(texto(row, 73));
 
                         Long recId = null;
                         if (!recNom.isBlank()) {
@@ -621,9 +625,10 @@ public class MigracionService {
                                 "fecha_cuarta_elaboracion,agua_cuarta_elaboracion," +
                                 "og_cuarta_elaboracion,og_brix_cuarta_elaboracion,volumen_final_cuarta_elaboracion," +
                                 "hora_inicio_cuarta_elaboracion,hora_fin_cuarta_elaboracion,receta4_id," +
+                                "notas_fermentacion,notas_acondicionamiento,notas_maduracion," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
                                 "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?," +
-                                "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
+                                "?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 codigo, estilo, fecEl, litros, ogObj, fgObj,
                                 agua, phAgua, nulaSiBlank(clar), obsNula(obs), obsNula(notasCata),
                                 recId,
@@ -639,6 +644,7 @@ public class MigracionService {
                                 fechaS2, aguaS2, ogS2, ogBrixS2, volFinalS2, horaIniS2, horaFinS2, recId2,
                                 fechaS3, aguaS3, ogS3, ogBrixS3, volFinalS3, horaIniS3, horaFinS3, recId3,
                                 fechaS4, aguaS4, ogS4, ogBrixS4, volFinalS4, horaIniS4, horaFinS4, recId4,
+                                notasFerm, notasAcond, notasMadur,
                                 tenantId, usuario, usuario);
 
                         loteIds.put(codigo, loteId);
@@ -679,6 +685,44 @@ public class MigracionService {
                         ok++;
                     } catch (Exception e) {
                         errores.add("Lote_Ingredientes fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
+                    }
+                }
+            }
+
+            // 7) Lote_Escalones
+            Sheet shEsc = wb.getSheet("Lote_Escalones");
+            if (shEsc != null) {
+                for (Row row : shEsc) {
+                    if (row.getRowNum() < 3 || vacio(row, 0)) continue;
+                    total++;
+                    try {
+                        String codigo   = texto(row, 0);
+                        String fase     = texto(row, 1).toUpperCase();
+                        if (lotesExistentes.contains(codigo)) { ok++; continue; }
+                        Long loteId = loteIds.get(codigo);
+                        if (loteId == null) {
+                            List<Long> ids = jdbc.queryForList(
+                                    "SELECT id FROM lotes_cerveza WHERE codigo_lote=? AND tenant_id=? LIMIT 1",
+                                    Long.class, codigo, tenantId);
+                            if (ids.isEmpty()) throw new IllegalArgumentException("codigo_lote '" + codigo + "' no encontrado");
+                            loteId = ids.get(0);
+                        }
+                        validarEnum(fase, "fase", "ACONDICIONAMIENTO", "MADURACION");
+                        BigDecimal tempObj = decimal(row, 2);
+                        if (tempObj == null) throw new IllegalArgumentException("temperatura_objetivo es obligatoria");
+                        LocalDate fechaObj  = fecha(row, 3);
+                        LocalDate fechaReal = fecha(row, 4);
+                        String logradoStr = textoODefault(row, 5, "false");
+                        boolean logrado = "true".equalsIgnoreCase(logradoStr) || "si".equalsIgnoreCase(logradoStr) || "1".equals(logradoStr);
+                        String notas   = nulaSiBlank(texto(row, 6));
+                        Integer orden  = enteroODefault(row, 7, 0);
+                        jdbc.update("INSERT INTO lote_escalones_temperatura " +
+                                    "(lote_id,tenant_id,fase,temperatura_objetivo,fecha_objetivo,fecha_real,logrado,notas,orden) " +
+                                    "VALUES (?,?,?,?,?,?,?,?,?)",
+                                    loteId, tenantId, fase, tempObj, fechaObj, fechaReal, logrado, notas, orden);
+                        ok++;
+                    } catch (Exception e) {
+                        errores.add("Lote_Escalones fila " + (row.getRowNum() + 1) + ": " + e.getMessage());
                     }
                 }
             }

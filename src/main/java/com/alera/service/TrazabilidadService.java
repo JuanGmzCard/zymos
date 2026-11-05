@@ -485,14 +485,17 @@ public class TrazabilidadService {
         lote.setFermFechaFinalIdeal(dto.getFermFechaFinalIdeal());
         lote.setFermTemperatura(TempUtils.toStorage(dto.getFermTemperatura(), unit));
         lote.setFermFechaFinal(dto.getFermFechaFinal());
+        lote.setNotasFermentacion(dto.getNotasFermentacion());
         lote.setAcondFechaInicial(dto.getAcondFechaInicial());
         lote.setAcondFechaFinalIdeal(dto.getAcondFechaFinalIdeal());
         lote.setAcondTemperatura(TempUtils.toStorage(dto.getAcondTemperatura(), unit));
         lote.setAcondFechaFinal(dto.getAcondFechaFinal());
+        lote.setNotasAcondicionamiento(dto.getNotasAcondicionamiento());
         lote.setMadurFechaInicial(dto.getMadurFechaInicial());
         lote.setMadurFechaFinalIdeal(dto.getMadurFechaFinalIdeal());
         lote.setMadurTemperatura(TempUtils.toStorage(dto.getMadurTemperatura(), unit));
         lote.setMadurFechaFinal(dto.getMadurFechaFinal());
+        lote.setNotasMaduracion(dto.getNotasMaduracion());
         lote.setCarbFechaInicial(dto.getCarbFechaInicial());
         lote.setCarbFechaFinalIdeal(dto.getCarbFechaFinalIdeal());
         lote.setCarbTemperatura(TempUtils.toStorage(dto.getCarbTemperatura(), unit));
@@ -511,9 +514,18 @@ public class TrazabilidadService {
         lote.setNotasCata(dto.getNotasCata());
 
         lote.getItemsFactura().clear();
+        lote.getEscalones().clear();
         if (lote.getId() != null) {
             em.flush(); // fuerza los DELETE de orphans antes de los INSERT nuevos (solo en actualizar)
         }
+        processEscalones(lote, "ACONDICIONAMIENTO",
+                dto.getAcondEscalonTemperaturas(), dto.getAcondEscalonFechasObj(),
+                dto.getAcondEscalonFechasReal(),   dto.getAcondEscalonLogrados(),
+                dto.getAcondEscalonNotasArr(), unit);
+        processEscalones(lote, "MADURACION",
+                dto.getMadurEscalonTemperaturas(), dto.getMadurEscalonFechasObj(),
+                dto.getMadurEscalonFechasReal(),   dto.getMadurEscalonLogrados(),
+                dto.getMadurEscalonNotasArr(), unit);
         List<Long> itemsIds = dto.getItemsIds();
         List<java.math.BigDecimal> itemsCantidades = dto.getItemsCantidades();
         if (itemsIds != null) {
@@ -781,5 +793,38 @@ public class TrazabilidadService {
                     "Contacta al administrador para ampliar tu plan.");
             }
         });
+    }
+
+    private void processEscalones(LoteCerveza lote, String fase,
+            List<String> temps, List<String> fechasObj, List<String> fechasReal,
+            List<String> logrados, List<String> notasArr, String tempUnit) {
+        if (temps == null) return;
+        for (int i = 0; i < temps.size(); i++) {
+            String tempStr = get(temps, i);
+            if (tempStr == null || tempStr.isBlank()) continue;
+            java.math.BigDecimal tempVal;
+            try { tempVal = new java.math.BigDecimal(tempStr); }
+            catch (NumberFormatException ex) { continue; }
+            EscalonTemperatura e = new EscalonTemperatura();
+            e.setLote(lote);
+            e.setFase(fase);
+            e.setTemperaturaObjetivo(TempUtils.toStorage(tempVal, tempUnit));
+            e.setFechaObjetivo(parseDate(get(fechasObj, i)));
+            e.setFechaReal(parseDate(get(fechasReal, i)));
+            e.setLogrado("true".equals(get(logrados, i)));
+            String n = get(notasArr, i);
+            e.setNotas(n != null && n.isBlank() ? null : n);
+            e.setOrden(i);
+            lote.getEscalones().add(e);
+        }
+    }
+
+    private static String get(List<String> list, int i) {
+        return (list != null && i < list.size()) ? list.get(i) : null;
+    }
+
+    private static LocalDate parseDate(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return LocalDate.parse(s); } catch (Exception ex) { return null; }
     }
 }

@@ -14,7 +14,8 @@ public record ExportBranding(
         Color accent,        // colorAccent   → dorado (acento)
         Color cream,         // colorCream    → crema (texto sobre fondo oscuro)
         Color background,    // colorBodyBg   → fondo (filas alternas)
-        String simboloMoneda // símbolo de moneda del tenant
+        String simboloMoneda,// símbolo de moneda del tenant
+        String tempUnit      // "C" o "F" — unidad de temperatura del tenant
 ) {
     private static final Color DEF_PRIMARY      = new Color(54, 67, 24);
     private static final Color DEF_PRIMARY_DARK = new Color(36, 46, 13);
@@ -31,13 +32,14 @@ public record ExportBranding(
                 parseHex(tenant.getColorAccent(),   DEF_ACCENT),
                 parseHex(tenant.getColorCream(),    DEF_CREAM),
                 parseHex(tenant.getColorBodyBg(),   DEF_BACKGROUND),
-                tenant.getSimboloMoneda()
+                tenant.getSimboloMoneda(),
+                tenant.getUnidadTemperatura() != null ? tenant.getUnidadTemperatura() : "C"
         );
     }
 
     public static ExportBranding defaults(String name) {
         return new ExportBranding(name,
-                DEF_PRIMARY, DEF_PRIMARY_DARK, DEF_ACCENT, DEF_CREAM, DEF_BACKGROUND, "$");
+                DEF_PRIMARY, DEF_PRIMARY_DARK, DEF_ACCENT, DEF_CREAM, DEF_BACKGROUND, "$", "C");
     }
 
     /** Aclara un color mezclándolo con blanco según el factor (0=sin cambio, 1=blanco). */

@@ -516,6 +516,12 @@
                     <span class="fase-dato-val"
                           th:text="${T(com.alera.config.TempUtils).toDisplay(lote.fermTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
+                <div th:if="${lote.notasFermentacion != null and !lote.notasFermentacion.isBlank()}"
+                     class="fase-dato mt-2 pt-2" style="border-top:1px solid rgba(0,0,0,.08)">
+                    <span class="fase-dato-key" th:text="#{traz.det.notas.label}">Notas</span>
+                    <span class="fase-dato-val" style="white-space:pre-line;font-size:.8rem"
+                          th:text="${lote.notasFermentacion}"></span>
+                </div>
                 <div th:if="${lote.fermFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
                 <div class="fase-acciones"
                      th:if="${lote.fermFechaInicial == null or (lote.fermFechaInicial != null and lote.fermFechaFinal == null)}"
@@ -554,6 +560,12 @@
                     <span class="fase-dato-val"
                           th:text="${T(com.alera.config.TempUtils).toDisplay(lote.acondTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
                 </div>
+                <div th:if="${lote.notasAcondicionamiento != null and !lote.notasAcondicionamiento.isBlank()}"
+                     class="fase-dato mt-2 pt-2" style="border-top:1px solid rgba(0,0,0,.08)">
+                    <span class="fase-dato-key" th:text="#{traz.det.notas.label}">Notas</span>
+                    <span class="fase-dato-val" style="white-space:pre-line;font-size:.8rem"
+                          th:text="${lote.notasAcondicionamiento}"></span>
+                </div>
                 <div th:if="${lote.acondFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
                 <div class="fase-acciones"
                      th:if="${(lote.fermFechaFinal != null and lote.acondFechaInicial == null) or (lote.acondFechaInicial != null and lote.acondFechaFinal == null)}"
@@ -591,6 +603,12 @@
                     <span class="fase-dato-key" th:text="#{traz.table.temperatura}">Temperatura</span>
                     <span class="fase-dato-val"
                           th:text="${T(com.alera.config.TempUtils).toDisplay(lote.madurTemperatura, tempUnit).stripTrailingZeros().toPlainString()} + ' ' + ${T(com.alera.config.TempUtils).label(tempUnit)}"></span>
+                </div>
+                <div th:if="${lote.notasMaduracion != null and !lote.notasMaduracion.isBlank()}"
+                     class="fase-dato mt-2 pt-2" style="border-top:1px solid rgba(0,0,0,.08)">
+                    <span class="fase-dato-key" th:text="#{traz.det.notas.label}">Notas</span>
+                    <span class="fase-dato-val" style="white-space:pre-line;font-size:.8rem"
+                          th:text="${lote.notasMaduracion}"></span>
                 </div>
                 <div th:if="${lote.madurFechaInicial == null}" class="fase-pendiente-label" th:text="#{traz.det.fase.no.iniciada}">No iniciada</div>
                 <div class="fase-acciones"
@@ -645,6 +663,72 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Escalones de temperatura — Acondicionamiento -->
+    <div class="section-box mb-4" th:if="${not #lists.isEmpty(escalonesAcond)}">
+        <div class="sh"><i class="bi bi-ladder me-2"></i><span th:text="#{traz.det.escalon.titulo.acond}">Escalones de Temperatura — Acondicionamiento</span></div>
+        <div class="sb p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th style="font-size:.7rem;color:#64748b;padding:.5rem 1rem" th:text="#{traz.det.escalon.orden}">#</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.temp.obj}">Temp. obj.</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.fecha.planif}">Fecha planif.</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.fecha.real}">Fecha real</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.estado}">Estado</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.notas}">Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="esc,s : ${escalonesAcond}">
+                        <td style="padding:.5rem 1rem;color:#64748b" th:text="${s.index + 1}">1</td>
+                        <td class="fw-semibold"
+                            th:text="${T(com.alera.config.TempUtils).toDisplay(esc.temperaturaObjetivo,tempUnit).stripTrailingZeros().toPlainString() + ' ' + T(com.alera.config.TempUtils).label(tempUnit)}"></td>
+                        <td th:text="${esc.fechaObjetivo != null ? #temporals.format(esc.fechaObjetivo,'dd/MM/yyyy') : '—'}">—</td>
+                        <td th:text="${esc.fechaReal != null ? #temporals.format(esc.fechaReal,'dd/MM/yyyy') : '—'}">—</td>
+                        <td>
+                            <span th:if="${esc.logrado}" class="badge bg-success" th:text="#{traz.form.escalon.logrado}">Logrado ✓</span>
+                            <span th:unless="${esc.logrado}" class="badge bg-secondary" th:text="#{traz.form.escalon.pendiente}">Pendiente</span>
+                        </td>
+                        <td class="text-muted small" th:text="${esc.notas != null ? esc.notas : '—'}">—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Escalones de temperatura — Maduración -->
+    <div class="section-box mb-4" th:if="${not #lists.isEmpty(escalonesMadur)}">
+        <div class="sh"><i class="bi bi-ladder me-2"></i><span th:text="#{traz.det.escalon.titulo.madur}">Escalones de Temperatura — Maduración</span></div>
+        <div class="sb p-0">
+            <table class="table table-sm mb-0">
+                <thead>
+                    <tr>
+                        <th style="font-size:.7rem;color:#64748b;padding:.5rem 1rem" th:text="#{traz.det.escalon.orden}">#</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.temp.obj}">Temp. obj.</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.fecha.planif}">Fecha planif.</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.fecha.real}">Fecha real</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.estado}">Estado</th>
+                        <th style="font-size:.7rem;color:#64748b" th:text="#{traz.det.escalon.notas}">Notas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="esc,s : ${escalonesMadur}">
+                        <td style="padding:.5rem 1rem;color:#64748b" th:text="${s.index + 1}">1</td>
+                        <td class="fw-semibold"
+                            th:text="${T(com.alera.config.TempUtils).toDisplay(esc.temperaturaObjetivo,tempUnit).stripTrailingZeros().toPlainString() + ' ' + T(com.alera.config.TempUtils).label(tempUnit)}"></td>
+                        <td th:text="${esc.fechaObjetivo != null ? #temporals.format(esc.fechaObjetivo,'dd/MM/yyyy') : '—'}">—</td>
+                        <td th:text="${esc.fechaReal != null ? #temporals.format(esc.fechaReal,'dd/MM/yyyy') : '—'}">—</td>
+                        <td>
+                            <span th:if="${esc.logrado}" class="badge bg-success" th:text="#{traz.form.escalon.logrado}">Logrado ✓</span>
+                            <span th:unless="${esc.logrado}" class="badge bg-secondary" th:text="#{traz.form.escalon.pendiente}">Pendiente</span>
+                        </td>
+                        <td class="text-muted small" th:text="${esc.notas != null ? esc.notas : '—'}">—</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 

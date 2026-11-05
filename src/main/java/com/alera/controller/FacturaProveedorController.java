@@ -14,10 +14,12 @@ import com.alera.model.enums.TipoItemFactura;
 import com.alera.repository.EquipoRepository;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.InsumoInventarioRepository;
+import com.alera.dto.FacturaAnalizadaDto;
 import com.alera.service.CategoriaEquipoService;
 import com.alera.service.CategoriaInsumoService;
 import com.alera.service.EquipoService;
 import com.alera.service.ExcelExportService;
+import com.alera.service.FacturaAnalizadorService;
 import com.alera.service.FacturaProveedorService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.ProveedorService;
@@ -65,6 +67,7 @@ public class FacturaProveedorController {
     private final CategoriaInsumoService categoriaInsumoService;
     private final CategoriaEquipoService categoriaEquipoService;
     private final FacturaItemRepository facturaItemRepo;
+    private final FacturaAnalizadorService analizadorService;
 
     public FacturaProveedorController(FacturaProveedorService service,
                                        ProveedorService proveedorService,
@@ -75,7 +78,8 @@ public class FacturaProveedorController {
                                        ExcelExportService excelService,
                                        CategoriaInsumoService categoriaInsumoService,
                                        CategoriaEquipoService categoriaEquipoService,
-                                       FacturaItemRepository facturaItemRepo) {
+                                       FacturaItemRepository facturaItemRepo,
+                                       FacturaAnalizadorService analizadorService) {
         this.service = service;
         this.proveedorService = proveedorService;
         this.insumoRepo = insumoRepo;
@@ -86,6 +90,7 @@ public class FacturaProveedorController {
         this.categoriaInsumoService = categoriaInsumoService;
         this.categoriaEquipoService = categoriaEquipoService;
         this.facturaItemRepo = facturaItemRepo;
+        this.analizadorService = analizadorService;
     }
 
     @GetMapping
@@ -139,6 +144,28 @@ public class FacturaProveedorController {
     @ResponseBody
     public List<Map<String, Object>> suggest(@RequestParam(defaultValue = "") String q) {
         return service.suggest(q);
+    }
+
+    @PostMapping(value = "/analizar-documento", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public ResponseEntity<FacturaAnalizadaDto> analizarDocumento(
+            @RequestParam("archivo") MultipartFile archivo) {
+        if (archivo == null || archivo.isEmpty()) {
+            FacturaAnalizadaDto err = new FacturaAnalizadaDto();
+            err.setError("No se recibió ningún archivo");
+            return ResponseEntity.badRequest().body(err);
+        }
+        FacturaAnalizadaDto resultado = analizadorService.analizar(archivo);
+        if (resultado.getError() != null) {
+            return ResponseEntity.internalServerError().body(resultado);
+        }
+        return ResponseEntity.ok(resultado);
+    }
+
+    @GetMapping(value = "/analizador-estado", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Boolean> analizadorEstado() {
+        return Map.of("configurado", analizadorService.isConfigured());
     }
 
     @GetMapping(value = "/ultimo-precio", produces = MediaType.APPLICATION_JSON_VALUE)

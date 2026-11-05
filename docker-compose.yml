@@ -62,6 +62,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    volumes:
+      - uploads_data:/app/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -105,3 +107,4 @@ volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  uploads_data:

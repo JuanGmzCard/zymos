@@ -154,6 +154,7 @@ public class LoteFormDto {
     private BigDecimal fermTemperatura;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fermFechaFinal;
+    private String notasFermentacion;
 
     // Acondicionamiento
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -163,6 +164,12 @@ public class LoteFormDto {
     private BigDecimal acondTemperatura;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate acondFechaFinal;
+    private String notasAcondicionamiento;
+    private List<String> acondEscalonTemperaturas = new ArrayList<>();
+    private List<String> acondEscalonFechasObj    = new ArrayList<>();
+    private List<String> acondEscalonFechasReal   = new ArrayList<>();
+    private List<String> acondEscalonLogrados     = new ArrayList<>();
+    private List<String> acondEscalonNotasArr     = new ArrayList<>();
 
     // Maduración
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -172,6 +179,12 @@ public class LoteFormDto {
     private BigDecimal madurTemperatura;
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate madurFechaFinal;
+    private String notasMaduracion;
+    private List<String> madurEscalonTemperaturas = new ArrayList<>();
+    private List<String> madurEscalonFechasObj    = new ArrayList<>();
+    private List<String> madurEscalonFechasReal   = new ArrayList<>();
+    private List<String> madurEscalonLogrados     = new ArrayList<>();
+    private List<String> madurEscalonNotasArr     = new ArrayList<>();
 
     // Carbonatación — fechas y temperatura
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
@@ -378,4 +391,30 @@ public class LoteFormDto {
     public void setItemsIds(List<Long> itemsIds) { this.itemsIds = itemsIds; }
     public List<BigDecimal> getItemsCantidades() { return itemsCantidades; }
     public void setItemsCantidades(List<BigDecimal> itemsCantidades) { this.itemsCantidades = itemsCantidades; }
+    public String getNotasFermentacion() { return notasFermentacion; }
+    public void setNotasFermentacion(String v) { this.notasFermentacion = v; }
+    public String getNotasAcondicionamiento() { return notasAcondicionamiento; }
+    public void setNotasAcondicionamiento(String v) { this.notasAcondicionamiento = v; }
+    public String getNotasMaduracion() { return notasMaduracion; }
+    public void setNotasMaduracion(String v) { this.notasMaduracion = v; }
+    public List<String> getAcondEscalonTemperaturas() { return acondEscalonTemperaturas; }
+    public void setAcondEscalonTemperaturas(List<String> v) { this.acondEscalonTemperaturas = v; }
+    public List<String> getAcondEscalonFechasObj() { return acondEscalonFechasObj; }
+    public void setAcondEscalonFechasObj(List<String> v) { this.acondEscalonFechasObj = v; }
+    public List<String> getAcondEscalonFechasReal() { return acondEscalonFechasReal; }
+    public void setAcondEscalonFechasReal(List<String> v) { this.acondEscalonFechasReal = v; }
+    public List<String> getAcondEscalonLogrados() { return acondEscalonLogrados; }
+    public void setAcondEscalonLogrados(List<String> v) { this.acondEscalonLogrados = v; }
+    public List<String> getAcondEscalonNotasArr() { return acondEscalonNotasArr; }
+    public void setAcondEscalonNotasArr(List<String> v) { this.acondEscalonNotasArr = v; }
+    public List<String> getMadurEscalonTemperaturas() { return madurEscalonTemperaturas; }
+    public void setMadurEscalonTemperaturas(List<String> v) { this.madurEscalonTemperaturas = v; }
+    public List<String> getMadurEscalonFechasObj() { return madurEscalonFechasObj; }
+    public void setMadurEscalonFechasObj(List<String> v) { this.madurEscalonFechasObj = v; }
+    public List<String> getMadurEscalonFechasReal() { return madurEscalonFechasReal; }
+    public void setMadurEscalonFechasReal(List<String> v) { this.madurEscalonFechasReal = v; }
+    public List<String> getMadurEscalonLogrados() { return madurEscalonLogrados; }
+    public void setMadurEscalonLogrados(List<String> v) { this.madurEscalonLogrados = v; }
+    public List<String> getMadurEscalonNotasArr() { return madurEscalonNotasArr; }
+    public void setMadurEscalonNotasArr(List<String> v) { this.madurEscalonNotasArr = v; }
 }

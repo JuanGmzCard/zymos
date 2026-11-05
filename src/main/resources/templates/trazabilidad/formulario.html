@@ -1257,6 +1257,11 @@
                         <label class="form-label" for="fermFechaFinal" th:text="#{traz.form.ferm.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{fermFechaFinal}" class="form-control">
                     </div>
+                    <div class="col-12">
+                        <label class="form-label" for="notasFermentacion" th:text="#{traz.form.ferm.notas}">Notas de la fase</label>
+                        <textarea th:field="*{notasFermentacion}" class="form-control" rows="2"
+                                  th:placeholder="#{traz.form.fase.notas.placeholder}"></textarea>
+                    </div>
                 </div>
             </div>
 
@@ -1289,6 +1294,26 @@
                         <label class="form-label" for="acondFechaFinal" th:text="#{traz.form.acond.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{acondFechaFinal}" class="form-control">
                     </div>
+                    <div class="col-12">
+                        <label class="form-label" for="notasAcondicionamiento" th:text="#{traz.form.acond.notas}">Notas de la fase</label>
+                        <textarea th:field="*{notasAcondicionamiento}" class="form-control" rows="2"
+                                  th:placeholder="#{traz.form.fase.notas.placeholder}"></textarea>
+                    </div>
+                </div>
+                <!-- Escalones de temperatura -->
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-semibold" th:text="#{traz.form.escalon.titulo}">Cambios Escalonados de Temperatura</span>
+                                <small class="text-muted d-block" th:text="#{traz.form.escalon.desc.acond}">Registra bajadas o subidas graduales de temperatura.</small>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAddEscalonAcond">
+                                <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.escalon.agregar}">Agregar escalón</span>
+                            </button>
+                        </div>
+                        <div id="escalonAcondList"></div>
+                    </div>
                 </div>
             </div>
 
@@ -1320,6 +1345,26 @@
                     <div class="col-md-3">
                         <label class="form-label" for="madurFechaFinal" th:text="#{traz.form.madur.fecha.fin.real}">Fecha Fin Real</label>
                         <input type="date" th:field="*{madurFechaFinal}" class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="notasMaduracion" th:text="#{traz.form.madur.notas}">Notas de la fase</label>
+                        <textarea th:field="*{notasMaduracion}" class="form-control" rows="2"
+                                  th:placeholder="#{traz.form.fase.notas.placeholder}"></textarea>
+                    </div>
+                </div>
+                <!-- Escalones de temperatura -->
+                <div class="row g-3 mt-1">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="fw-semibold" th:text="#{traz.form.escalon.titulo}">Cambios Escalonados de Temperatura</span>
+                                <small class="text-muted d-block" th:text="#{traz.form.escalon.desc.madur}">Registra bajadas o subidas graduales de temperatura (ej: 20°C → 15 → 10 → 3°C).</small>
+                            </div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btnAddEscalonMadur">
+                                <i class="bi bi-plus-circle me-1"></i><span th:text="#{traz.form.escalon.agregar}">Agregar escalón</span>
+                            </button>
+                        </div>
+                        <div id="escalonMadurList"></div>
                     </div>
                 </div>
             </div>
@@ -2156,6 +2201,10 @@ var INVENTARIO_STOCK = /*[[${inventarioStock}]]*/ [];
 var INIT_INSTRUMENTO = /*[[${loteForm.instrumentoMedicion}]]*/ 'SG';
 var ENVASES_INVENTARIO = /*[[${envasesInventario.![nombre]}]]*/ [];
 var INIT_LOTE_ID = /*[[${loteId}]]*/ null;
+var INIT_ESCALONES_ACOND = /*[[${initEscalonesAcond}]]*/ [];
+var INIT_ESCALONES_MADUR = /*[[${initEscalonesMadur}]]*/ [];
+var TEMP_UNIT_ESC = /*[[${tempUnit}]]*/ 'C';
+var TEMP_LABEL_ESC = TEMP_UNIT_ESC === 'F' ? '°F' : '°C';
 /*]]>*/
 </script>
 <script th:attr="nonce=${cspNonce}">
@@ -2486,5 +2535,76 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <script th:src="@{/js/trazabilidad-ingredientes.js(v=20260702)}"></script>
 <script th:src="@{/js/trazabilidad-costos.js(v=20260702)}"></script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var MSG_PENDIENTE = 'Pendiente';
+    var MSG_LOGRADO   = 'Logrado ✓';
+
+    function crearFilaEscalon(fase, data) {
+        var d = data || {};
+        var row = document.createElement('div');
+        row.className = 'row g-2 align-items-end mb-2 escalon-row border-bottom pb-2';
+        var nTemp  = fase + 'EscalonTemperaturas';
+        var nFObj  = fase + 'EscalonFechasObj';
+        var nFReal = fase + 'EscalonFechasReal';
+        var nLog   = fase + 'EscalonLogrados';
+        var nNotas = fase + 'EscalonNotasArr';
+        row.innerHTML =
+            '<div class="col-md-2">' +
+              '<label class="form-label form-label-sm mb-1" style="font-size:.7rem">Temp. obj. (' + TEMP_LABEL_ESC + ')</label>' +
+              '<input type="number" step="0.1" name="' + nTemp + '" value="' + (d.temp||'') + '"' +
+              ' class="form-control form-control-sm">' +
+            '</div>' +
+            '<div class="col-md-2">' +
+              '<label class="form-label form-label-sm mb-1" style="font-size:.7rem">Fecha planif.</label>' +
+              '<input type="date" name="' + nFObj + '" value="' + (d.fechaObj||'') + '"' +
+              ' class="form-control form-control-sm">' +
+            '</div>' +
+            '<div class="col-md-2">' +
+              '<label class="form-label form-label-sm mb-1" style="font-size:.7rem">Fecha real</label>' +
+              '<input type="date" name="' + nFReal + '" value="' + (d.fechaReal||'') + '"' +
+              ' class="form-control form-control-sm">' +
+            '</div>' +
+            '<div class="col-md-2">' +
+              '<label class="form-label form-label-sm mb-1" style="font-size:.7rem">Estado</label>' +
+              '<select name="' + nLog + '" class="form-select form-select-sm">' +
+                '<option value="false"' + (d.logrado==='true' ? '' : ' selected') + '>' + MSG_PENDIENTE + '</option>' +
+                '<option value="true"'  + (d.logrado==='true' ? ' selected' : '') + '>' + MSG_LOGRADO   + '</option>' +
+              '</select>' +
+            '</div>' +
+            '<div class="col-md-3">' +
+              '<label class="form-label form-label-sm mb-1" style="font-size:.7rem">Notas del escalón</label>' +
+              '<input type="text" name="' + nNotas + '" value="' + ((d.notas||'').replace(/"/g,'&quot;')) + '"' +
+              ' class="form-control form-control-sm" maxlength="500">' +
+            '</div>' +
+            '<div class="col-md-1">' +
+              '<button type="button" class="btn btn-sm btn-outline-danger w-100 btn-rm-escalon" title="Quitar"><i class="bi bi-x"></i></button>' +
+            '</div>';
+        return row;
+    }
+
+    function initEscalonList(listId, btnId, initData) {
+        var container = document.getElementById(listId);
+        var btn       = document.getElementById(btnId);
+        if (!container || !btn) return;
+        var fase = listId === 'escalonAcondList' ? 'acond' : 'madur';
+        (initData || []).forEach(function(d) {
+            container.appendChild(crearFilaEscalon(fase, d));
+        });
+        btn.addEventListener('click', function() {
+            container.appendChild(crearFilaEscalon(fase, {}));
+        });
+        container.addEventListener('click', function(e) {
+            var rm = e.target.closest('.btn-rm-escalon');
+            if (rm) rm.closest('.escalon-row').remove();
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initEscalonList('escalonAcondList', 'btnAddEscalonAcond', INIT_ESCALONES_ACOND);
+        initEscalonList('escalonMadurList', 'btnAddEscalonMadur', INIT_ESCALONES_MADUR);
+    });
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventario de Insumos · Manual ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    color: #334155;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 268px;
+    flex-shrink: 0;
+    background: #0f172a;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sb-brand {
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back {
+    display: block;
+    padding: 10px 20px;
+    font-size: 0.77rem;
+    color: #64748b;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: color 0.2s;
+  }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #475569;
+    padding: 8px 20px 4px;
+  }
+  nav a {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  /* ── Main ── */
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  /* ── Page hero ── */
+  .page-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #0891b2 100%);
+    margin: 0 -48px 0;
+    padding: 48px 48px 40px;
+  }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.3px;
+  }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  /* ── Content ── */
+  .content { padding-top: 44px; }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+    scroll-margin-top: 24px;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.83rem;
+    color: #0891b2;
+    font-family: 'Fira Code', Consolas, monospace;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li {
+    counter-increment: step;
+    padding: 10px 14px 10px 48px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    position: relative;
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.55;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    width: 22px; height: 22px;
+    background: #0891b2;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Field table ── */
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  /* ── Type chips ── */
+  .type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .type-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--tc, #94a3b8);
+  }
+  .type-card .tc-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .type-card .tc-desc { font-size: 0.78rem; color: #64748b; line-height: 1.4; }
+  .tc-malta    { --tc: #d97706; }
+  .tc-lupulo   { --tc: #059669; }
+  .tc-levadura { --tc: #7c3aed; }
+  .tc-clar     { --tc: #0891b2; }
+  .tc-quim     { --tc: #dc2626; }
+  .tc-envase   { --tc: #475569; }
+
+  /* ── Alert badges ── */
+  .alert-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .alert-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+  }
+  .alert-row.bajo { background: #fef2f2; border: 1px solid #fecaca; }
+  .alert-row.vence { background: #fffbeb; border: 1px solid #fde68a; }
+  .alert-row .ar-icon { font-size: 1.1rem; }
+  .alert-row .ar-text strong { display: block; font-size: 0.82rem; color: #1e293b; }
+  .alert-row .ar-text span { font-size: 0.78rem; color: #64748b; }
+
+  /* ── Sub-section ── */
+  .sub-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Inventario de Insumos</div>
+  </div>
+  <a href="index.html" class="sb-back">← Todos los manuales</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Introducción</div>
+      <a href="#intro">¿Qué es el inventario?</a>
+      <a href="#tipos">Tipos de insumos</a>
+      <a href="#alertas">Alertas automáticas</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Operaciones</div>
+      <a href="#agregar">Agregar un insumo</a>
+      <a href="#editar">Editar y ajustar stock</a>
+      <a href="#buscar">Filtrar y buscar</a>
+      <a href="#eliminar">Eliminar o archivar</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Integración</div>
+      <a href="#descuento">Descuento automático</a>
+      <a href="#costo">Costo estimado de lote</a>
+      <a href="#ordenes">Órdenes de compra</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">Manual de usuario · Módulo</div>
+    <h1>📦 Inventario de Insumos</h1>
+    <p>Controla el stock de todos tus insumos de producción: maltas, lúpulos, levaduras, clarificantes, químicos y envases. ZYMOS actualiza el inventario automáticamente cada vez que creas o modificas un lote.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Inventario</span>
+      <span class="role-badge">Producción</span>
+      <span class="role-badge">Administrador</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Intro -->
+    <h2 id="intro">¿Qué es el inventario?</h2>
+    <p>El módulo de Inventario registra todos los insumos que tu cervecería utiliza para producir cerveza. Cada insumo tiene un tipo, una unidad de medida y una cantidad disponible. Cuando creas un lote de producción, ZYMOS descuenta automáticamente los ingredientes usados.</p>
+    <p>Accede al inventario desde el menú principal haciendo clic en <strong>Inventario</strong>. La lista muestra todos los insumos con su stock actual, tipo, unidad y fecha de vencimiento (si aplica).</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Prerequisito para crear lotes</strong>
+        Antes de registrar tu primer lote de producción necesitas tener insumos en el inventario. Sin maltas, lúpulos, levaduras o clarificantes registrados, no podrás seleccionarlos en la receta ni en el formulario de trazabilidad.
+      </div>
+    </div>
+
+    <!-- Tipos -->
+    <h2 id="tipos">Tipos de insumos</h2>
+    <p>ZYMOS organiza los insumos en 6 categorías. El tipo determina en qué sección aparece el insumo al construir recetas y lotes.</p>
+
+    <div class="type-grid">
+      <div class="type-card tc-malta">
+        <div class="tc-name">Malta</div>
+        <div class="tc-desc">Base de la cerveza: Pilsner, Munich, Crystal, Chocolate, etc.</div>
+      </div>
+      <div class="type-card tc-lupulo">
+        <div class="tc-name">Lúpulo</div>
+        <div class="tc-desc">Pellets o flores: Citra, Cascade, Saaz, Amarillo, etc.</div>
+      </div>
+      <div class="type-card tc-levadura">
+        <div class="tc-name">Levadura</div>
+        <div class="tc-desc">Cepas de fermentación: American Ale, Saison, Lager, etc.</div>
+      </div>
+      <div class="type-card tc-clar">
+        <div class="tc-name">Clarificante</div>
+        <div class="tc-desc">Irish Moss, Whirlfloc, Gelatina, Bentonita, etc.</div>
+      </div>
+      <div class="type-card tc-quim">
+        <div class="tc-name">Químico</div>
+        <div class="tc-desc">Productos para limpieza, desinfección y tratamiento de agua.</div>
+      </div>
+      <div class="type-card tc-envase">
+        <div class="tc-name">Envase</div>
+        <div class="tc-desc">Botellas, latas, tapas, etiquetas, cápsulas, etc.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Tip — Tipos de Químico para BPM</strong>
+        Los insumos marcados como <strong>Químico</strong> aparecen en el módulo BPM (Buenas Prácticas de Manufactura) en el formulario de Soluciones Desinfectantes. Registra todos tus productos de limpieza y saneamiento aquí para poder referenciarlos desde BPM.
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <h2 id="alertas">Alertas automáticas</h2>
+    <p>ZYMOS genera dos tipos de alertas que aparecen en el Dashboard y en la lista de inventario:</p>
+
+    <div class="alert-demo">
+      <div class="alert-row bajo">
+        <div class="ar-icon">🔴</div>
+        <div class="ar-text">
+          <strong>Bajo stock</strong>
+          <span>La cantidad actual está por debajo de la cantidad mínima configurada en el insumo.</span>
+        </div>
+      </div>
+      <div class="alert-row vence">
+        <div class="ar-icon">⚠️</div>
+        <div class="ar-text">
+          <strong>Próximo a vencer</strong>
+          <span>La fecha de vencimiento está dentro de los próximos 30 días.</span>
+        </div>
+      </div>
+    </div>
+
+    <p>Las alertas también aparecen en el Dashboard principal como tarjetas de acceso rápido: <strong>"Bajo stock"</strong> y <strong>"Próximos a vencer"</strong>. Haz clic en ellas para ir directamente a la lista filtrada.</p>
+
+    <!-- Agregar -->
+    <h2 id="agregar">Agregar un insumo nuevo</h2>
+    <ol class="steps">
+      <li>En la lista de inventario haz clic en el botón <strong>"+ Nuevo insumo"</strong>.</li>
+      <li>Completa el formulario con los datos del insumo (ver tabla de campos abajo).</li>
+      <li>Haz clic en <strong>"Guardar"</strong>. El insumo aparece inmediatamente en la lista.</li>
+    </ol>
+
+    <table class="field-table">
+      <thead>
+        <tr>
+          <th>Campo</th>
+          <th>Descripción</th>
+          <th>Ejemplo</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Nombre <span class="req">*</span></td>
+          <td>Nombre del insumo tal como lo reconocerán los productores al crear recetas.</td>
+          <td>Malta Pilsner Weyermann</td>
+        </tr>
+        <tr>
+          <td>Tipo <span class="req">*</span></td>
+          <td>Categoría del insumo (Malta, Lúpulo, Levadura, Clarificante, Químico, Envase).</td>
+          <td>Malta</td>
+        </tr>
+        <tr>
+          <td>Unidad <span class="req">*</span></td>
+          <td>Unidad de medida del stock. Opciones: <code>gr</code>, <code>kg</code>, <code>mL</code>, <code>L</code>, <code>gal</code>, <code>und</code>.</td>
+          <td>kg</td>
+        </tr>
+        <tr>
+          <td>Cantidad</td>
+          <td>Stock actual disponible. Puede dejarse en cero al registrar el insumo inicialmente.</td>
+          <td>50</td>
+        </tr>
+        <tr>
+          <td>Cantidad mínima</td>
+          <td>Nivel de alerta. Cuando la cantidad baja de este valor, aparece la alerta de bajo stock.</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>Fecha de vencimiento</td>
+          <td>Opcional. Para lúpulos, levaduras y productos con vida útil limitada.</td>
+          <td>15/06/2027</td>
+        </tr>
+        <tr>
+          <td>Precio por unidad</td>
+          <td>Costo unitario en la moneda del tenant (p.ej. $/kg). Usado para estimar el costo de producción de un lote.</td>
+          <td>2.50</td>
+        </tr>
+        <tr>
+          <td>Notas</td>
+          <td>Información adicional: proveedor, lote del fabricante, características especiales.</td>
+          <td>Lote #2024-A, proveedor Fermentis</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Elige bien la unidad desde el inicio</strong>
+        La unidad no puede cambiarse fácilmente después de que el insumo se haya usado en lotes y recetas. Si tu malta llega en sacos de 25 kg, regístrala en <code>kg</code> para que los cálculos de recetas sean directos.
+      </div>
+    </div>
+
+    <!-- Editar -->
+    <h2 id="editar">Editar y ajustar stock</h2>
+    <p>Puedes editar cualquier dato del insumo haciendo clic en el botón de edición (icono lápiz) en la fila correspondiente de la lista.</p>
+
+    <h3>Ajuste manual de cantidad</h3>
+    <p>Si necesitas corregir el stock (por ejemplo, después de un inventario físico), edita el insumo y modifica el campo <strong>Cantidad</strong> directamente. No hay un formulario de ajuste separado — simplemente edita el insumo y escribe la cantidad correcta.</p>
+
+    <div class="sub-section">
+      <h4>Casos comunes de ajuste</h4>
+      <ul>
+        <li><strong>Recepción de mercancía:</strong> suma la cantidad recibida al stock actual.</li>
+        <li><strong>Merma o pérdida:</strong> descuenta la cantidad de la pérdida.</li>
+        <li><strong>Inventario físico:</strong> escribe exactamente la cantidad contada.</li>
+        <li><strong>Error de registro:</strong> corrige el valor incorrecto.</li>
+      </ul>
+    </div>
+
+    <!-- Buscar -->
+    <h2 id="buscar">Filtrar y buscar</h2>
+    <p>La lista de inventario tiene varias opciones de filtrado en la parte superior:</p>
+    <ul>
+      <li><strong>Buscador de texto:</strong> filtra por nombre del insumo en tiempo real.</li>
+      <li><strong>Filtro por tipo:</strong> muestra solo Malta, solo Lúpulo, etc.</li>
+      <li><strong>Bajo stock:</strong> filtra solo insumos por debajo de su mínimo.</li>
+      <li><strong>Próximos a vencer:</strong> filtra solo insumos que vencen en los próximos 30 días.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        Puedes combinar filtros. Por ejemplo: tipo=Lúpulo + Bajo stock te muestra solo los lúpulos que necesitas reabastecer.
+      </div>
+    </div>
+
+    <!-- Eliminar -->
+    <h2 id="eliminar">Eliminar un insumo</h2>
+    <p>Para eliminar un insumo haz clic en el icono de basura en su fila. ZYMOS te pedirá confirmación antes de proceder.</p>
+
+    <div class="callout danger">
+      <div class="callout-icon">🚫</div>
+      <div class="callout-body">
+        <strong>No puedes eliminar insumos que estén en uso</strong>
+        Si el insumo está referenciado en recetas o lotes activos, ZYMOS impedirá la eliminación. Primero debes quitar el insumo de esos registros o completar/archivar los lotes correspondientes.
+      </div>
+    </div>
+
+    <!-- Descuento automático -->
+    <h2 id="descuento">Descuento automático al producir</h2>
+    <p>Esta es la integración más importante del inventario con la trazabilidad de lotes:</p>
+
+    <div class="sub-section">
+      <h4>¿Qué ocurre cuando creas un lote?</h4>
+      <ol style="padding-left: 20px;">
+        <li style="margin-bottom: 8px; color: #334155;">Al guardar el lote con sus ingredientes, ZYMOS descuenta automáticamente cada insumo del stock.</li>
+        <li style="margin-bottom: 8px; color: #334155;">Si el stock de algún insumo es insuficiente para cubrir la cantidad del lote, recibirás una <strong>advertencia</strong> (pero el lote se crea de todas formas).</li>
+        <li style="margin-bottom: 8px; color: #334155;">Si editas el lote y cambias las cantidades, ZYMOS <em>revierte</em> el descuento anterior y aplica el nuevo.</li>
+        <li style="color: #334155;">Si eliminas un lote, el stock de todos sus ingredientes se restaura.</li>
+      </ol>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Normalización de unidades</strong>
+        ZYMOS convierte automáticamente las cantidades para hacer el descuento correctamente. Por ejemplo, si el insumo está en <code>kg</code> y el lote especifica <code>5000 gr</code>, ZYMOS descuenta 5 kg del stock. Las conversiones soportadas son: kg ↔ gr, L ↔ mL, gal → mL.
+      </div>
+    </div>
+
+    <!-- Costo estimado -->
+    <h2 id="costo">Costo estimado de producción</h2>
+    <p>Si agregas el campo <strong>Precio por unidad</strong> a tus insumos, ZYMOS puede calcular automáticamente el costo estimado de producción de un lote.</p>
+    <p>Este cálculo aparece en el detalle del lote bajo la sección <strong>"Costo estimado"</strong>, pero solo cuando el lote <em>no</em> tiene facturas de compra asignadas (sistema de costos reales). Si tienes facturas asignadas, se muestra el costo real en lugar del estimado.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Cálculo</th><th>Descripción</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Costo estimado total</td>
+          <td>Suma de (cantidad de ingrediente × precio por unidad del insumo) para todos los ingredientes con precio.</td>
+        </tr>
+        <tr>
+          <td>Costo estimado por litro</td>
+          <td>Costo estimado total ÷ litros finales del lote.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Órdenes de compra -->
+    <h2 id="ordenes">Relación con órdenes de compra</h2>
+    <p>El módulo de <strong>Órdenes de Compra</strong> (en la sección Comercial) te permite crear pedidos a proveedores. Sin embargo, las órdenes de compra <em>no</em> actualizan el inventario automáticamente al crearlas.</p>
+    <p>Para registrar la entrada de mercancía al inventario cuando llega un pedido, debes ajustar manualmente la cantidad del insumo correspondiente (editar el insumo y sumar la cantidad recibida).</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Flujo recomendado de reabastecimiento</strong>
+        <ol style="margin-top: 6px; padding-left: 18px;">
+          <li style="margin-bottom: 4px;">Detecta la alerta de bajo stock en el Dashboard.</li>
+          <li style="margin-bottom: 4px;">Crea una Orden de Compra al proveedor desde el módulo Comercial.</li>
+          <li style="margin-bottom: 4px;">Cuando llegue la mercancía, edita el insumo en Inventario y suma la cantidad recibida.</li>
+          <li>Opcionalmente, registra la Factura del proveedor en el módulo Comercial.</li>
+        </ol>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

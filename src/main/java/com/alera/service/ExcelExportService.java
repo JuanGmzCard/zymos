@@ -1,7 +1,9 @@
 package com.alera.service;
 
 import com.alera.config.ExportBranding;
+import com.alera.config.TempUtils;
 import com.alera.config.UnidadUtils;
+import com.alera.model.EscalonTemperatura;
 import com.alera.dto.RentabilidadLoteDto;
 import com.alera.model.FacturaItem;
 import com.alera.model.FacturaProveedor;
@@ -1314,6 +1316,7 @@ public class ExcelExportService {
                         "MADUR");
                 construirSheetLotesCarbon(wb, lotes, branding.name(), pal);
                 construirSheetLotesDensidad(wb, lotes, branding.name(), pal);
+                construirSheetEscalones(wb, lotes, branding.name(), branding.tempUnit(), pal);
                 wb.write(baos);
             } catch (Exception e) {
                 throw new RuntimeException("Error generando Excel de lotes", e);
@@ -1427,7 +1430,7 @@ public class ExcelExportService {
         XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
         XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
 
-        int[] widths = {12, 18, 12, 12, 12, 14, 12};
+        int[] widths = {12, 18, 12, 12, 12, 14, 12, 35};
         for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
 
         int r = 0;
@@ -1441,6 +1444,11 @@ public class ExcelExportService {
 
         Row fH = sheet.createRow(r++);
         fH.setHeight((short) (16 * 20));
+        String notasHeader = switch (fase) {
+            case "FERM"  -> t("xls.header.notas_ferm");
+            case "ACOND" -> t("xls.header.notas_acond");
+            default      -> t("xls.header.notas_madur");
+        };
         celda(fH, 0, t("xls.header.codigo"),      stHeader);
         celda(fH, 1, t("xls.header.estilo"),       stHeader);
         celda(fH, 2, t("xls.header.estado"),       stHeader);
@@ -1448,6 +1456,7 @@ public class ExcelExportService {
         celda(fH, 4, t("xls.header.fin_ideal"),    stHeader);
         celda(fH, 5, t("xls.header.temperatura"),  stHeader);
         celda(fH, 6, t("xls.header.fin_real"),     stHeader);
+        celda(fH, 7, notasHeader,                  stHeader);
 
         for (int i = 0; i < lotes.size(); i++) {
             LoteCerveza l = lotes.get(i);
@@ -1458,10 +1467,11 @@ public class ExcelExportService {
 
             LocalDate inicio, finIdeal, finReal;
             BigDecimal temp;
+            String notas;
             switch (fase) {
-                case "FERM"  -> { inicio = l.getFermFechaInicial();  finIdeal = l.getFermFechaFinalIdeal();  temp = l.getFermTemperatura();  finReal = l.getFermFechaFinal();  }
-                case "ACOND" -> { inicio = l.getAcondFechaInicial(); finIdeal = l.getAcondFechaFinalIdeal(); temp = l.getAcondTemperatura(); finReal = l.getAcondFechaFinal(); }
-                default      -> { inicio = l.getMadurFechaInicial(); finIdeal = l.getMadurFechaFinalIdeal(); temp = l.getMadurTemperatura(); finReal = l.getMadurFechaFinal(); }
+                case "FERM"  -> { inicio = l.getFermFechaInicial();  finIdeal = l.getFermFechaFinalIdeal();  temp = l.getFermTemperatura();  finReal = l.getFermFechaFinal();  notas = l.getNotasFermentacion(); }
+                case "ACOND" -> { inicio = l.getAcondFechaInicial(); finIdeal = l.getAcondFechaFinalIdeal(); temp = l.getAcondTemperatura(); finReal = l.getAcondFechaFinal(); notas = l.getNotasAcondicionamiento(); }
+                default      -> { inicio = l.getMadurFechaInicial(); finIdeal = l.getMadurFechaFinalIdeal(); temp = l.getMadurTemperatura(); finReal = l.getMadurFechaFinal(); notas = l.getNotasMaduracion(); }
             }
 
             celda   (fila, 0, l.getCodigoLote(), sD);
@@ -1471,10 +1481,11 @@ public class ExcelExportService {
             celda   (fila, 4, finIdeal != null ? finIdeal.format(FMT_FECHA) : "", sD);
             celdaNum(fila, 5, toDouble(temp), sN);
             celda   (fila, 6, finReal != null ? finReal.format(FMT_FECHA) : "", sD);
+            celda   (fila, 7, notas != null ? notas : "", sD);
         }
 
         if (!lotes.isEmpty()) {
-            sheet.setAutoFilter(new CellRangeAddress(2, r - 1, 0, 6));
+            sheet.setAutoFilter(new CellRangeAddress(2, r - 1, 0, 7));
         }
     }
 
@@ -1544,6 +1555,76 @@ public class ExcelExportService {
 
         if (!lotes.isEmpty()) {
             sheet.setAutoFilter(new CellRangeAddress(2, r - 1, 0, headers.length - 1));
+        }
+    }
+
+    private void construirSheetEscalones(XSSFWorkbook wb, List<LoteCerveza> lotes,
+                                          String brandName, String tempUnit, Pal pal) {
+        Sheet sheet = wb.createSheet(t("xls.sheet.escalones"));
+
+        XSSFCellStyle stTitulo  = estiloTitulo(wb, pal);
+        XSSFCellStyle stHeader  = estiloHeader(wb, pal);
+        XSSFCellStyle stDato    = estiloDato(wb, pal, false);
+        XSSFCellStyle stDatoAlt = estiloDato(wb, pal, true);
+        XSSFCellStyle stNum     = estiloNumero(wb, pal, false);
+        XSSFCellStyle stNumAlt  = estiloNumero(wb, pal, true);
+
+        int[] widths = {12, 18, 20, 4, 16, 14, 14, 12, 35};
+        for (int i = 0; i < widths.length; i++) sheet.setColumnWidth(i, widths[i] * 256);
+
+        int r = 0;
+        Row fT = sheet.createRow(r++);
+        fT.setHeight((short) (20 * 20));
+        Cell cT = fT.createCell(0);
+        cT.setCellValue(tf("xls.titulo.lotes", brandName));
+        cT.setCellStyle(stTitulo);
+        sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, widths.length - 1));
+        r++;
+
+        Row fH = sheet.createRow(r++);
+        fH.setHeight((short) (16 * 20));
+        String tempHeader = t("xls.header.temp_objetivo") + " (°" + tempUnit + ")";
+        celda(fH, 0, t("xls.header.codigo"),       stHeader);
+        celda(fH, 1, t("xls.header.estilo"),        stHeader);
+        celda(fH, 2, t("xls.header.fase"),          stHeader);
+        celda(fH, 3, "#",                            stHeader);
+        celda(fH, 4, tempHeader,                    stHeader);
+        celda(fH, 5, t("xls.header.fecha_planif"),  stHeader);
+        celda(fH, 6, t("xls.header.fin_real"),      stHeader);
+        celda(fH, 7, t("xls.header.logrado"),       stHeader);
+        celda(fH, 8, t("xls.header.notas"),         stHeader);
+
+        int rowNum = r;
+        for (LoteCerveza l : lotes) {
+            List<EscalonTemperatura> escalones = l.getEscalones().stream()
+                    .filter(e -> "ACONDICIONAMIENTO".equals(e.getFase()) || "MADURACION".equals(e.getFase()))
+                    .sorted(java.util.Comparator
+                            .comparing(EscalonTemperatura::getFase)
+                            .thenComparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
+                    .collect(Collectors.toList());
+            for (int i = 0; i < escalones.size(); i++) {
+                EscalonTemperatura e = escalones.get(i);
+                boolean alt = rowNum % 2 != 0;
+                Row fila = sheet.createRow(rowNum++);
+                XSSFCellStyle sD = alt ? stDatoAlt : stDato;
+                XSSFCellStyle sN = alt ? stNumAlt  : stNum;
+
+                BigDecimal tempDisplay = TempUtils.toDisplay(e.getTemperaturaObjetivo(), tempUnit);
+
+                celda   (fila, 0, l.getCodigoLote(), sD);
+                celda   (fila, 1, l.getEstilo() != null ? l.getEstilo() : "", sD);
+                celda   (fila, 2, e.getFase(), sD);
+                celdaNum(fila, 3, (double) (i + 1), sN);
+                celdaNum(fila, 4, toDouble(tempDisplay), sN);
+                celda   (fila, 5, e.getFechaObjetivo() != null ? e.getFechaObjetivo().format(FMT_FECHA) : "", sD);
+                celda   (fila, 6, e.getFechaReal()     != null ? e.getFechaReal().format(FMT_FECHA)     : "", sD);
+                celda   (fila, 7, e.isLogrado() ? t("xls.text.completado") : t("pdf.text.pendiente"), sD);
+                celda   (fila, 8, e.getNotas() != null ? e.getNotas() : "", sD);
+            }
+        }
+
+        if (rowNum > r) {
+            sheet.setAutoFilter(new CellRangeAddress(2, rowNum - 1, 0, widths.length - 1));
         }
     }
 

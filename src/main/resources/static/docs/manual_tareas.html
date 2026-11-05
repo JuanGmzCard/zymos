@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tareas — Manual de Usuario · ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
+  #sidebar { width: 268px; min-width: 268px; background: #0f172a; color: #cbd5e1; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 20px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand .logo { font-size: 1.5rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sidebar-brand .modulo { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sidebar-brand .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; text-decoration: none; margin-top: 10px; }
+  .sidebar-brand .back-link:hover { color: #c9a028; }
+  nav.sidebar-nav { padding: 10px 0 20px; flex: 1; }
+  .nav-section { padding: 14px 20px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #475569; font-weight: 700; }
+  nav.sidebar-nav a { display: flex; align-items: center; gap: 9px; padding: 7px 20px; color: #94a3b8; text-decoration: none; font-size: 0.855rem; border-left: 3px solid transparent; transition: all 0.15s; }
+  nav.sidebar-nav a:hover, nav.sidebar-nav a.active { color: #f1f5f9; background: rgba(255,255,255,0.05); border-left-color: #c9a028; }
+  nav.sidebar-nav a .ic { font-size: 1rem; width: 18px; text-align: center; flex-shrink: 0; }
+  #main { margin-left: 268px; flex: 1; min-width: 0; padding: 0 0 80px; }
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 48px 52px 40px; border-bottom: 3px solid #c9a028; }
+  .page-hero .breadcrumb { font-size: 0.75rem; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; color: #c9a028; margin-bottom: 8px; }
+  .page-hero p { font-size: 0.975rem; color: #94a3b8; max-width: 680px; line-height: 1.65; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .badge-role { padding: 4px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-all { background: rgba(201,160,40,0.18); color: #c9a028; border: 1px solid rgba(201,160,40,0.35); }
+  .content { padding: 40px 52px; max-width: 920px; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  h2 .ico { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; }
+  p { margin-bottom: 12px; color: #475569; }
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 0.875rem; display: flex; gap: 12px; align-items: flex-start; }
+  .callout .ci { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .callout.tip { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .callout.warning { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .callout.danger { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+  .callout strong { display: block; margin-bottom: 3px; }
+  .steps { counter-reset: step; list-style: none; margin: 16px 0; }
+  .steps li { counter-increment: step; display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+  .steps li::before { content: counter(step); width: 30px; height: 30px; background: #0f172a; color: #c9a028; border-radius: 50%; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .steps li .step-body { flex: 1; }
+  .steps li .step-body strong { color: #0f172a; display: block; margin-bottom: 3px; }
+  .field-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; margin: 14px 0 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .field-table thead th { background: #1e293b; color: #c9a028; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .field-table tbody tr:hover { background: #f1f5f9; }
+  .field-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  .b-pend { background: #fef9c3; color: #854d0e; }
+  .b-prog { background: #dbeafe; color: #1e40af; }
+  .b-done { background: #dcfce7; color: #166534; }
+  .b-baja { background: #f1f5f9; color: #475569; }
+  .b-media { background: #dbeafe; color: #1e40af; }
+  .b-alta { background: #ffedd5; color: #9a3412; }
+  .b-urg { background: #fee2e2; color: #991b1b; }
+
+  /* Reference chip demo */
+  .ref-chip-demo { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.82rem; color: #334155; margin: 3px; }
+  .ref-chip-demo .rc-icon { font-size: 0.85rem; }
+  .ref-chip-demo .rc-x { color: #94a3b8; font-weight: 700; cursor: default; }
+
+  /* Checklist demo */
+  .check-demo { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .check-item.done { background: #f0fdf4; border-color: #bbf7d0; }
+  .check-item .cb { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+  .check-item .cb.empty { border: 2px solid #e2e8f0; }
+  .check-item .cb.checked { background: #22c55e; color: white; border: 2px solid #22c55e; }
+  .check-item .ct { font-size: 0.88rem; }
+  .check-item.done .ct { text-decoration: line-through; color: #94a3b8; }
+
+  /* Progress bar */
+  .prog-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 6px 0; }
+  .prog-fill { height: 100%; background: #22c55e; border-radius: 4px; }
+
+  /* Ref types grid */
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+  .ref-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+  .ref-card .rt-icon { font-size: 1.2rem; margin-bottom: 4px; }
+  .ref-card .rt-name { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+  .ref-card .rt-desc { font-size: 0.78rem; color: #64748b; }
+
+  @media (max-width: 640px) { #sidebar { display: none; } #main { margin-left: 0; } .content { padding: 20px 18px; } .page-hero { padding: 24px 18px 20px; } }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="modulo">Manual de Usuario</div>
+    <a href="index.html" class="back-link">← Todos los módulos</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Módulo Tareas</div>
+    <a href="#intro"><span class="ic">📋</span> Introducción</a>
+    <a href="#listado"><span class="ic">📄</span> Listado de tareas</a>
+    <a href="#crear"><span class="ic">➕</span> Crear una tarea</a>
+    <a href="#items"><span class="ic">☑️</span> Ítems del checklist</a>
+    <a href="#referencias"><span class="ic">🔗</span> Referencias</a>
+    <a href="#detalle"><span class="ic">👁️</span> Ver el detalle</a>
+    <a href="#progreso"><span class="ic">📊</span> Marcar progreso</a>
+    <a href="#estados"><span class="ic">🏷️</span> Estados y prioridades</a>
+    <a href="#notificaciones"><span class="ic">🔔</span> Notificaciones</a>
+    <a href="#roles"><span class="ic">🔑</span> Roles y permisos</a>
+  </nav>
+</aside>
+<main id="main">
+  <div class="page-hero">
+    <div class="breadcrumb">Manuales ZYMOS › Módulos</div>
+    <h1>Tareas Operativas</h1>
+    <p>El módulo de Tareas permite asignar y hacer seguimiento a las actividades del equipo, vinculándolas a lotes, equipos, insumos u otras entidades del sistema. Incluye checklist de progreso, alertas de vencimiento y notificaciones automáticas.</p>
+    <div class="role-badges">
+      <span class="badge-role badge-all">Administrador · Producción · RR.HH.</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <section id="intro">
+      <h2><span class="ico">📋</span> Introducción</h2>
+      <p>Una <strong>Tarea</strong> en ZYMOS es una actividad operativa pendiente que puede asignarse a un miembro del equipo, tener una fecha límite, un checklist de pasos y referencias a otros registros del sistema (lotes, equipos, facturas, etc.).</p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div><strong>Acceso:</strong> El módulo de Tareas está en la barra de navegación lateral, entre BPM y Admin. Ruta: <code>/tareas</code>.</div>
+      </div>
+
+      <h3>¿Qué son los ítems y las referencias?</h3>
+      <table class="field-table">
+        <thead><tr><th>Concepto</th><th>Para qué sirve</th><th>Ejemplo</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Ítem del checklist</td>
+            <td>Acción concreta <strong>a ejecutar</strong> dentro de la tarea. Se marca completado paso a paso. Su progreso determina el % de avance.</td>
+            <td>"Limpiar fermentador", "Verificar válvulas", "Pesar maltas"</td>
+          </tr>
+          <tr>
+            <td>Referencia</td>
+            <td><strong>Enlace de contexto</strong> a un registro del sistema que da información sobre la tarea. No se completa — es un link de navegación.</td>
+            <td>Lote IPA-001, Equipo Fermentador 2, Factura #345</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="listado">
+      <h2><span class="ico">📄</span> Listado de tareas</h2>
+      <p>El listado muestra todas las tareas del tenant con filtros por estado y usuario asignado.</p>
+
+      <h3>Filtros disponibles</h3>
+      <table class="field-table">
+        <thead><tr><th>Filtro</th><th>Opciones</th></tr></thead>
+        <tbody>
+          <tr><td>Estado</td><td>Todas · <span class="badge b-pend">Pendiente</span> · <span class="badge b-prog">En progreso</span> · <span class="badge b-done">Completada</span></td></tr>
+          <tr><td>Asignado a</td><td>Select con todos los usuarios del tenant. Por defecto muestra tareas de todos.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Columnas de la tabla</h3>
+      <table class="field-table">
+        <thead><tr><th>Columna</th><th>Descripción</th></tr></thead>
+        <tbody>
+          <tr><td>Tarea</td><td>Título (enlace al detalle) + descripción truncada + conteo de ítems si tiene checklist.</td></tr>
+          <tr><td>Referencia</td><td>Links a las entidades referenciadas (una por línea).</td></tr>
+          <tr><td>Asignado a</td><td>Nombre del usuario asignado (o "Sin asignar").</td></tr>
+          <tr><td>Prioridad</td><td>Badge de color según prioridad.</td></tr>
+          <tr><td>Vencimiento</td><td>Fecha límite. Si ya venció y la tarea no está completada, aparece en <strong style="color:#dc2626">rojo</strong> con badge "Vencida".</td></tr>
+          <tr><td>Progreso</td><td>Barra verde con porcentaje. Solo visible si la tarea tiene ítems en el checklist.</td></tr>
+          <tr><td>Estado</td><td>Badge de estado actual.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>Las filas de tareas vencidas aparecen con fondo rojo muy claro para que sean fácilmente identificables.</div>
+      </div>
+    </section>
+
+    <section id="crear">
+      <h2><span class="ico">➕</span> Crear una tarea</h2>
+      <p>Clic en el botón <strong>Nueva Tarea</strong> en la parte superior del listado.</p>
+
+      <ol class="steps">
+        <li><div class="step-body"><strong>Título</strong> — Nombre claro de la tarea (obligatorio, máx. 200 caracteres). Ej: "Mantenimiento preventivo Fermentador 2".</div></li>
+        <li><div class="step-body"><strong>Descripción</strong> — Contexto adicional sobre qué se debe hacer y por qué (opcional).</div></li>
+        <li><div class="step-body"><strong>Asignado a</strong> — Selecciona el usuario responsable de esta tarea. Si no seleccionas nadie, queda "Sin asignar".</div></li>
+        <li><div class="step-body"><strong>Prioridad</strong> — Elige entre Baja, Media (por defecto), Alta o Urgente.</div></li>
+        <li><div class="step-body"><strong>Fecha de vencimiento</strong> — Fecha límite para completar la tarea (opcional). Si se vence sin completar, aparecerá resaltada en rojo.</div></li>
+        <li><div class="step-body"><strong>Ítems del checklist</strong> — Agrega los pasos concretos que debe seguir quien ejecuta la tarea. Ver sección "Ítems del checklist".</div></li>
+        <li><div class="step-body"><strong>Referencias</strong> — Vincula la tarea a registros del sistema para dar contexto. Ver sección "Referencias".</div></li>
+        <li><div class="step-body"><strong>Guardar</strong> — Clic en Guardar. Si asignaste la tarea a otra persona, recibirá una notificación automática.</div></li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>No es obligatorio tener ítems ni referencias. Puedes crear una tarea simple con solo título y asignado.</div>
+      </div>
+    </section>
+
+    <section id="items">
+      <h2><span class="ico">☑️</span> Ítems del checklist</h2>
+      <p>Los ítems son los pasos concretos que componen la tarea. Cada ítem se puede marcar como completado desde el detalle de la tarea, y el sistema calcula el progreso automáticamente.</p>
+
+      <h3>Cómo agregar ítems al crear/editar la tarea</h3>
+      <ol class="steps">
+        <li><div class="step-body"><strong>Clic en "Agregar ítem"</strong> — Aparece un campo de texto nuevo debajo de los ítems existentes.</div></li>
+        <li><div class="step-body"><strong>Escribe la descripción del paso</strong> — Ej: "Desconectar fermentador de la línea de gas".</div></li>
+        <li><div class="step-body"><strong>Repite</strong> para cada paso adicional.</div></li>
+        <li><div class="step-body"><strong>Para eliminar un ítem</strong>, clic en el botón × a la derecha del campo.</div></li>
+      </ol>
+
+      <h3>Vista previa del checklist</h3>
+      <div class="check-demo">
+        <div class="check-item done"><span class="cb checked">✓</span><span class="ct">Desconectar fermentador de la línea de gas</span></div>
+        <div class="check-item done"><span class="cb checked">✓</span><span class="ct">Limpiar válvulas con solución Star San</span></div>
+        <div class="check-item"><span class="cb empty"></span><span class="ct">Verificar juntas y sellos</span></div>
+        <div class="check-item"><span class="cb empty"></span><span class="ct">Reconectar y probar presión</span></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:50%"></div></div>
+      <p style="font-size:0.82rem;color:#64748b">2 de 4 pasos completados — 50%</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>El estado de la tarea se actualiza automáticamente según el progreso del checklist: 0% → Pendiente, 1–99% → En progreso, 100% → Completada.</div>
+      </div>
+    </section>
+
+    <section id="referencias">
+      <h2><span class="ico">🔗</span> Referencias</h2>
+      <p>Las referencias vinculan la tarea a registros existentes del sistema. Son enlaces de contexto — no se completan, solo dan información sobre a qué se refiere la tarea.</p>
+
+      <h3>Tipos de referencia disponibles</h3>
+      <div class="ref-grid">
+        <div class="ref-card"><div class="rt-icon">🍺</div><div class="rt-name">Lote</div><div class="rt-desc">Lote de producción (ej: IPA-001)</div></div>
+        <div class="ref-card"><div class="rt-icon">⚙️</div><div class="rt-name">Equipo</div><div class="rt-desc">Fermentador, tanque, bomba, etc.</div></div>
+        <div class="ref-card"><div class="rt-icon">📦</div><div class="rt-name">Insumo</div><div class="rt-desc">Item del inventario</div></div>
+        <div class="ref-card"><div class="rt-icon">📅</div><div class="rt-name">Elaboración</div><div class="rt-desc">Elaboración planificada en el calendario</div></div>
+        <div class="ref-card"><div class="rt-icon">🛒</div><div class="rt-name">Orden de compra</div><div class="rt-desc">OC a un proveedor</div></div>
+        <div class="ref-card"><div class="rt-icon">💰</div><div class="rt-name">Venta</div><div class="rt-desc">Remisión o despacho</div></div>
+        <div class="ref-card"><div class="rt-icon">👤</div><div class="rt-name">Cliente</div><div class="rt-desc">Cliente del sistema</div></div>
+        <div class="ref-card"><div class="rt-icon">📄</div><div class="rt-name">Factura</div><div class="rt-desc">Factura de proveedor</div></div>
+        <div class="ref-card"><div class="rt-icon">🏭</div><div class="rt-name">Proveedor</div><div class="rt-desc">Proveedor de insumos</div></div>
+        <div class="ref-card"><div class="rt-icon">📖</div><div class="rt-name">Receta</div><div class="rt-desc">Receta de cerveza</div></div>
+        <div class="ref-card"><div class="rt-icon">🛢️</div><div class="rt-name">Barril</div><div class="rt-desc">Barril o keg</div></div>
+      </div>
+
+      <h3>Cómo agregar una referencia</h3>
+      <ol class="steps">
+        <li><div class="step-body"><strong>Selecciona el tipo</strong> en el selector desplegable (Lote, Equipo, Insumo, etc.).</div></li>
+        <li><div class="step-body"><strong>Escribe en el campo de búsqueda</strong> — Al escribir al menos 2 caracteres, aparecen sugerencias del sistema con coincidencias del tipo seleccionado.</div></li>
+        <li><div class="step-body"><strong>Selecciona el resultado</strong> en el dropdown — Se crea un chip (etiqueta) con el nombre del registro.</div></li>
+        <li><div class="step-body"><strong>Repite</strong> para agregar más referencias. Puedes agregar múltiples referencias, incluso del mismo tipo (ej: dos equipos).</div></li>
+        <li><div class="step-body"><strong>Para quitar una referencia</strong>, clic en el × del chip.</div></li>
+      </ol>
+
+      <h3>Ejemplo de chips de referencia</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+        <span class="ref-chip-demo"><span class="rc-icon">🍺</span> IPA-001 <span class="rc-x">×</span></span>
+        <span class="ref-chip-demo"><span class="rc-icon">⚙️</span> Fermentador 2 <span class="rc-x">×</span></span>
+        <span class="ref-chip-demo"><span class="rc-icon">📄</span> Factura #345 <span class="rc-x">×</span></span>
+      </div>
+    </section>
+
+    <section id="detalle">
+      <h2><span class="ico">👁️</span> Ver el detalle de una tarea</h2>
+      <p>Haz clic en el título de una tarea en el listado para abrir su detalle. La pantalla tiene dos columnas:</p>
+
+      <table class="field-table">
+        <thead><tr><th>Columna</th><th>Contenido</th></tr></thead>
+        <tbody>
+          <tr><td>Izquierda</td><td>Checklist interactivo — puedes marcar/desmarcar cada ítem haciendo clic.</td></tr>
+          <tr><td>Derecha</td><td>Información general: descripción, asignado a, creado por, fecha de vencimiento, fecha de creación, y lista de referencias con links.</td></tr>
+        </tbody>
+      </table>
+
+      <p>En la parte superior del detalle están los botones de <strong>Editar</strong> y <strong>Eliminar</strong> (sujeto a permisos).</p>
+    </section>
+
+    <section id="progreso">
+      <h2><span class="ico">📊</span> Marcar progreso en el checklist</h2>
+      <p>Desde el detalle de la tarea, haz clic en cualquier ítem del checklist para marcarlo como completado. El sistema se actualiza en tiempo real sin recargar la página.</p>
+
+      <ol class="steps">
+        <li><div class="step-body"><strong>Clic en el ítem</strong> — El recuadro cambia a verde con una marca ✓ y el texto queda tachado.</div></li>
+        <li><div class="step-body"><strong>La barra de progreso se actualiza</strong> automáticamente con el nuevo porcentaje.</div></li>
+        <li><div class="step-body"><strong>El badge de estado cambia</strong>: Pendiente → En progreso → Completada, según el porcentaje.</div></li>
+        <li><div class="step-body"><strong>Para desmarcar un ítem</strong>, clic de nuevo sobre él — el sistema también permite revertir.</div></li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Cuando todos los ítems están marcados, el estado pasa automáticamente a <span class="badge b-done">Completada</span>. No necesitas cambiarlo manualmente.</div>
+      </div>
+    </section>
+
+    <section id="estados">
+      <h2><span class="ico">🏷️</span> Estados y prioridades</h2>
+
+      <h3>Estados de una tarea</h3>
+      <table class="field-table">
+        <thead><tr><th>Estado</th><th>Significado</th><th>Cuándo se asigna</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-pend">Pendiente</span></td><td>Ningún ítem completado todavía.</td><td>Al crear la tarea, o si se desmarcan todos los ítems.</td></tr>
+          <tr><td><span class="badge b-prog">En progreso</span></td><td>Al menos un ítem completado pero no todos.</td><td>Automáticamente al marcar el primer ítem.</td></tr>
+          <tr><td><span class="badge b-done">Completada</span></td><td>Todos los ítems completados.</td><td>Automáticamente al marcar el último ítem.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Si la tarea no tiene ítems, el estado no cambia automáticamente — puedes editarla y ajustar el estado manualmente.</div>
+      </div>
+
+      <h3>Prioridades</h3>
+      <table class="field-table">
+        <thead><tr><th>Prioridad</th><th>Cuándo usarla</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-baja">Baja</span></td><td>Actividades de mejora o sin urgencia temporal.</td></tr>
+          <tr><td><span class="badge b-media">Media</span></td><td>Valor por defecto. Actividades normales del día a día.</td></tr>
+          <tr><td><span class="badge b-alta">Alta</span></td><td>Impacta la producción o tiene fecha límite próxima.</td></tr>
+          <tr><td><span class="badge b-urg">Urgente</span></td><td>Requiere atención inmediata. Afecta la calidad del producto o la seguridad.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="notificaciones">
+      <h2><span class="ico">🔔</span> Notificaciones automáticas</h2>
+      <p>ZYMOS envía notificaciones dentro del sistema (campana en la barra de navegación) en dos situaciones:</p>
+
+      <table class="field-table">
+        <thead><tr><th>Evento</th><th>Quién recibe</th><th>Cuándo</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Tarea asignada</td>
+            <td>El usuario asignado.</td>
+            <td>Al crear o editar una tarea, si el asignado es distinto al creador. (No se notifica si te asignas una tarea a ti mismo.)</td>
+          </tr>
+          <tr>
+            <td>Tarea vencida</td>
+            <td>El usuario asignado.</td>
+            <td>Revisión automática diaria: tareas con fecha vencida o que vencen hoy o mañana sin estar completadas.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Las notificaciones aparecen como un punto rojo en la campana de la barra de navegación. Haz clic en la campana para verlas todas.</div>
+      </div>
+    </section>
+
+    <section id="roles">
+      <h2><span class="ico">🔑</span> Roles y permisos</h2>
+      <p>El acceso al módulo de Tareas depende del rol asignado al usuario.</p>
+      <table class="field-table">
+        <thead><tr><th>Rol</th><th>Ver</th><th>Crear</th><th>Editar</th><th>Eliminar</th></tr></thead>
+        <tbody>
+          <tr><td>Administrador</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Producción</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Recursos Humanos</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Inventario</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Facturación</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Equipos</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        </tbody>
+      </table>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Los permisos pueden ajustarse si el administrador crea roles personalizados desde <em>Admin › Roles</em>.</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('nav.sidebar-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector(`nav a[href="#${e.target.id}"]`); if (a) a.classList.add('active'); } });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
