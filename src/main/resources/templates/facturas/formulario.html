@@ -37,8 +37,16 @@
 
 <div class="container-fluid px-4 pt-4">
     <div class="page-header d-flex justify-content-between align-items-start">
-        <h1 th:text="${facturaId != null} ? #{fact.form.title.editar} : #{fact.form.title.nueva}">Factura</h1>
-        <p class="text-muted mb-0" th:text="#{fact.form.subtitle}">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
+        <div>
+            <h1 th:text="${facturaId != null} ? #{fact.form.title.editar} : #{fact.form.title.nueva}">Factura</h1>
+            <p class="text-muted mb-0" th:text="#{fact.form.subtitle}">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
+        </div>
+        <button type="button" id="btnAnalizadorIA"
+                class="btn btn-primary btn-sm d-flex align-items-center gap-2"
+                data-bs-toggle="modal" data-bs-target="#modalAnalizadorIA">
+            <i class="bi bi-stars"></i>
+            <span th:text="#{fact.analiz.btn}">Cargar desde documento</span>
+        </button>
     </div>
 </div>
 
@@ -776,6 +784,281 @@ document.getElementById('items-container').addEventListener('click', e => {
     const crearBtn = e.target.closest('.btn-crear-item');
     if (crearBtn) abrirModalCrearItem(crearBtn);
 });
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL ANALIZADOR DE FACTURAS CON IA
+════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalAnalizadorIA" tabindex="-1" aria-labelledby="modalAnalizadorIALabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="modalAnalizadorIALabel">
+                    <i class="bi bi-stars text-primary"></i>
+                    <span th:text="#{fact.analiz.modal.title}">Analizador de Facturas con IA</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3" th:text="#{fact.analiz.modal.subtitle}">Sube una foto o PDF de la factura y Claude extraerá los datos automáticamente</p>
+
+                <!-- Upload -->
+                <div class="mb-3">
+                    <input type="file" id="analizadorArchivo" class="form-control"
+                           accept=".pdf,.jpg,.jpeg,.png,.webp">
+                </div>
+                <button type="button" id="btnAnalizarIA" class="btn btn-primary">
+                    <i class="bi bi-stars me-1"></i>
+                    <span th:text="#{fact.analiz.btn.analizar}">Analizar documento</span>
+                </button>
+
+                <!-- Spinner -->
+                <div id="analizadorSpinner" class="d-none mt-3 d-flex align-items-center gap-2 text-muted">
+                    <div class="spinner-border spinner-border-sm" role="status"></div>
+                    <span th:text="#{fact.analiz.cargando}">Analizando documento…</span>
+                </div>
+
+                <!-- Badge mock -->
+                <div id="analizadorMockBadge" class="d-none mt-3">
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-flask me-1"></i>
+                        <span th:text="#{fact.analiz.mock.badge}">Modo de prueba</span>
+                    </span>
+                    <small class="text-muted ms-2" th:text="#{fact.analiz.mock.hint}">Configurá ANTHROPIC_API_KEY para usar IA real</small>
+                </div>
+
+                <!-- Preview resultado -->
+                <div id="analizadorPreview" class="d-none mt-3">
+                    <hr>
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-6">
+                            <small class="text-muted d-block" th:text="#{fact.analiz.preview.proveedor}">Proveedor:</small>
+                            <strong id="prevProveedor">—</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block" th:text="#{fact.analiz.preview.numero}">N° Factura:</small>
+                            <strong id="prevNumero">—</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted d-block" th:text="#{fact.analiz.preview.fecha}">Fecha:</small>
+                            <strong id="prevFecha">—</strong>
+                        </div>
+                        <div class="col-md-4">
+                            <small class="text-muted d-block" th:text="#{fact.analiz.preview.envio}">Costo envío:</small>
+                            <strong id="prevEnvio">—</strong>
+                        </div>
+                    </div>
+                    <p class="fw-semibold mb-1" th:text="#{fact.analiz.preview.items}">Items detectados:</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th th:text="#{fact.analiz.preview.tipo}">Tipo</th>
+                                    <th th:text="#{fact.analiz.preview.nombre}">Nombre</th>
+                                    <th th:text="#{fact.analiz.preview.cant}">Cantidad</th>
+                                    <th th:text="#{fact.analiz.preview.vunit}">Valor Unit.</th>
+                                    <th th:text="#{fact.analiz.preview.iva}">IVA %</th>
+                                </tr>
+                            </thead>
+                            <tbody id="prevItemsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Error -->
+                <div id="analizadorError" class="d-none alert alert-danger mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
+                <button type="button" id="btnAplicarAnalisis" class="btn btn-primary d-none">
+                    <i class="bi bi-check-circle me-1"></i>
+                    <span th:text="#{fact.analiz.btn.aplicar}">Aplicar al formulario</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:attr="nonce=${cspNonce}">
+(function () {
+    'use strict';
+
+    const csrfToken  = document.querySelector('meta[name="_csrf"]')?.content;
+    const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+    let resultadoActual = null;
+
+    document.getElementById('btnAnalizarIA').addEventListener('click', async () => {
+        const fileInput = document.getElementById('analizadorArchivo');
+        if (!fileInput.files.length) {
+            mostrarError(/*[[#{fact.analiz.error.vacio}]]*/ 'Seleccioná un archivo antes de analizar');
+            return;
+        }
+
+        ocultarTodo();
+        document.getElementById('analizadorSpinner').classList.remove('d-none');
+
+        const formData = new FormData();
+        formData.append('archivo', fileInput.files[0]);
+
+        try {
+            const headers = {};
+            if (csrfToken && csrfHeader) headers[csrfHeader] = csrfToken;
+
+            const resp = await fetch('/facturas/analizar-documento', {
+                method: 'POST',
+                headers,
+                body: formData
+            });
+
+            const data = await resp.json();
+            document.getElementById('analizadorSpinner').classList.add('d-none');
+
+            if (!resp.ok || data.error) {
+                mostrarError(data.error || 'Error al analizar el documento');
+                return;
+            }
+
+            resultadoActual = data;
+            mostrarPreview(data);
+
+        } catch (e) {
+            document.getElementById('analizadorSpinner').classList.add('d-none');
+            mostrarError('Error de conexión: ' + e.message);
+        }
+    });
+
+    document.getElementById('btnAplicarAnalisis').addEventListener('click', () => {
+        if (!resultadoActual) return;
+        aplicarAlFormulario(resultadoActual);
+        bootstrap.Modal.getInstance(document.getElementById('modalAnalizadorIA')).hide();
+    });
+
+    function mostrarPreview(data) {
+        if (data.modoMock) document.getElementById('analizadorMockBadge').classList.remove('d-none');
+
+        document.getElementById('prevProveedor').textContent = data.proveedor || '—';
+        document.getElementById('prevNumero').textContent    = data.numeroFactura || '—';
+        document.getElementById('prevFecha').textContent     = data.fechaFactura || '—';
+        document.getElementById('prevEnvio').textContent     = data.costoEnvio != null ? data.costoEnvio : '—';
+
+        const tbody = document.getElementById('prevItemsBody');
+        tbody.innerHTML = '';
+        (data.items || []).forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${item.tipoItem || ''}</td>
+                            <td>${item.nombre || ''}</td>
+                            <td>${item.cantidad != null ? item.cantidad + ' ' + (item.unidad || '') : '—'}</td>
+                            <td>${item.valorUnitario != null ? item.valorUnitario : '—'}</td>
+                            <td>${item.porcentajeIvaItem != null ? item.porcentajeIvaItem : '—'}</td>`;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('analizadorPreview').classList.remove('d-none');
+        document.getElementById('btnAplicarAnalisis').classList.remove('d-none');
+    }
+
+    function aplicarAlFormulario(data) {
+        // Datos generales
+        if (data.proveedor) {
+            const provInput = document.querySelector('input[name="proveedor"]');
+            if (provInput) provInput.value = data.proveedor;
+        }
+        if (data.numeroFactura) {
+            const numInput = document.querySelector('input[name="numeroFactura"]');
+            if (numInput) numInput.value = data.numeroFactura;
+        }
+        if (data.fechaFactura) {
+            const fechaInput = document.querySelector('input[name="fechaFactura"]');
+            if (fechaInput) fechaInput.value = data.fechaFactura;
+        }
+        if (data.descripcion) {
+            const descInput = document.querySelector('input[name="descripcion"]');
+            if (descInput) descInput.value = data.descripcion;
+        }
+        if (data.costoEnvio != null) {
+            const envioInput = document.querySelector('input[name="costoEnvio"]');
+            if (envioInput) envioInput.value = data.costoEnvio;
+        }
+
+        // Items — reemplazar los existentes
+        if (data.items && data.items.length > 0) {
+            const container = document.getElementById('items-container');
+            if (!container) return;
+
+            // Eliminar filas actuales excepto la primera
+            const rows = container.querySelectorAll('.ingrediente-row');
+            rows.forEach((r, i) => { if (i > 0) r.remove(); });
+
+            // Llenar primera fila con primer ítem y agregar el resto
+            data.items.forEach((item, idx) => {
+                if (idx === 0) {
+                    llenarFila(container.querySelector('.ingrediente-row'), item, 0);
+                } else {
+                    document.getElementById('btnAddItem')?.click();
+                    const filas = container.querySelectorAll('.ingrediente-row');
+                    llenarFila(filas[filas.length - 1], item, idx);
+                }
+            });
+        }
+    }
+
+    function llenarFila(fila, item, idx) {
+        if (!fila) return;
+
+        const tipoSel = fila.querySelector('.tipo-select');
+        if (tipoSel && item.tipoItem) {
+            tipoSel.value = item.tipoItem;
+            tipoSel.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        // Esperar a que el change de tipo construya el select de categoría
+        setTimeout(() => {
+            const categSel = fila.querySelector('.categoria-select');
+            if (categSel && item.tipoInsumo) {
+                categSel.value = item.tipoInsumo;
+                categSel.dispatchEvent(new Event('change', { bubbles: true }));
+            }
+
+            const nombreInput = fila.querySelector('input.nombre-item');
+            if (nombreInput && item.nombre) nombreInput.value = item.nombre;
+
+            const cantInput = fila.querySelector('input[name*="cantidad"]');
+            if (cantInput && item.cantidad != null) cantInput.value = item.cantidad;
+
+            const unidadSel = fila.querySelector('select[name*="unidad"]');
+            if (unidadSel && item.unidad) unidadSel.value = item.unidad;
+
+            const valorInput = fila.querySelector('input[name*="valorUnitario"]');
+            if (valorInput && item.valorUnitario != null) valorInput.value = item.valorUnitario;
+
+            const ivaInput = fila.querySelector('input[name*="porcentajeIvaItem"]');
+            if (ivaInput && item.porcentajeIvaItem != null) ivaInput.value = item.porcentajeIvaItem;
+
+            // Recalcular totales si existe la función
+            const totInput = fila.querySelector('.total-item');
+            if (totInput && typeof recalcularFila === 'function') recalcularFila(fila);
+        }, 100);
+    }
+
+    function ocultarTodo() {
+        ['analizadorPreview', 'analizadorError', 'analizadorMockBadge', 'analizadorSpinner']
+            .forEach(id => document.getElementById(id).classList.add('d-none'));
+        document.getElementById('btnAplicarAnalisis').classList.add('d-none');
+        resultadoActual = null;
+    }
+
+    function mostrarError(msg) {
+        const el = document.getElementById('analizadorError');
+        el.textContent = msg;
+        el.classList.remove('d-none');
+    }
+
+    // Limpiar modal al cerrar
+    document.getElementById('modalAnalizadorIA').addEventListener('hidden.bs.modal', () => {
+        ocultarTodo();
+        document.getElementById('analizadorArchivo').value = '';
+    });
+})();
 </script>
 </body>
 </html>

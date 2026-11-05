@@ -58,6 +58,7 @@ class FacturaProveedorControllerTest {
     @MockBean CategoriaInsumoService        categoriaInsumoService;
     @MockBean CategoriaEquipoService        categoriaEquipoService;
     @MockBean FacturaItemRepository         facturaItemRepo;
+    @MockBean FacturaAnalizadorService      analizadorService;
 
     @BeforeEach
     void setUp() {
