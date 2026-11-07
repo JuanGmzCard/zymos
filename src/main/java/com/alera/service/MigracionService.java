@@ -367,18 +367,28 @@ public class MigracionService {
                         String unidSp        = texto(row, 11);
                         BigDecimal phAgua    = decimal(row, 12);
                         String notas         = texto(row, 13);
+                        // Perfil de agua V93 (cols 14-20, opcionales)
+                        Integer aguaCalcio      = entero(row, 14);
+                        Integer aguaMagnesio    = entero(row, 15);
+                        Integer aguaSodio       = entero(row, 16);
+                        Integer aguaSulfatos    = entero(row, 17);
+                        Integer aguaCloruros    = entero(row, 18);
+                        Integer aguaBicarbonatos= entero(row, 19);
+                        String aguaNotasH       = nulaSiBlank(texto(row, 20));
 
                         long recetaId = insertarYRetornarId(
                                 "INSERT INTO recetas " +
                                 "(nombre,estilo,descripcion,activa,volumen_base,tiempo_hervor_minutos," +
                                 "og_objetivo,fg_objetivo,agua_macerado,unidad_agua_macerado,agua_sparge,unidad_agua_sparge," +
                                 "ph_agua,notas,version," +
+                                "agua_calcio,agua_magnesio,agua_sodio,agua_sulfatos,agua_cloruros,agua_bicarbonatos,agua_notas," +
                                 "tenant_id,created_at,created_by,last_modified_at,last_modified_by) " +
-                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,NOW(),?,NOW(),?)",
+                                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?,?,?,?,?,?,?,NOW(),?,NOW(),?)",
                                 nombre, estilo, nulaSiBlank(desc), activa,
                                 volBase, hervor, ogObj, fgObj,
                                 aguaMac, unidadNula(unidMac), aguaSp, unidadNula(unidSp),
                                 phAgua, obsNula(notas),
+                                aguaCalcio, aguaMagnesio, aguaSodio, aguaSulfatos, aguaCloruros, aguaBicarbonatos, aguaNotasH,
                                 tenantId, usuario, usuario);
 
                         recetaIds.put(nombre, recetaId);

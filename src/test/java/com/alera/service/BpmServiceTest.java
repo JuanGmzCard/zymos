@@ -26,6 +26,8 @@ class BpmServiceTest {
     @Mock AvistamientoPlagasRepository   plagasRepo;
     @Mock EvacuacionResiduosRepository   residuosRepo;
     @Mock LimpiezaDesinfeccionRepository limpiezaRepo;
+    @Mock NotificacionService            notificacionService;
+    @Mock WhatsAppService                whatsAppService;
 
     @InjectMocks BpmService service;
 

@@ -24,19 +24,22 @@ public class BpmService {
     private final EvacuacionResiduosRepository residuosRepo;
     private final LimpiezaDesinfeccionRepository limpiezaRepo;
     private final NotificacionService notificacionService;
+    private final WhatsAppService whatsAppService;
 
     public BpmService(RegistroSintomasRepository sintomasRepo,
                       SolucionDesinfectanteRepository solucionesRepo,
                       AvistamientoPlagasRepository plagasRepo,
                       EvacuacionResiduosRepository residuosRepo,
                       LimpiezaDesinfeccionRepository limpiezaRepo,
-                      NotificacionService notificacionService) {
+                      NotificacionService notificacionService,
+                      WhatsAppService whatsAppService) {
         this.sintomasRepo = sintomasRepo;
         this.solucionesRepo = solucionesRepo;
         this.plagasRepo = plagasRepo;
         this.residuosRepo = residuosRepo;
         this.limpiezaRepo = limpiezaRepo;
         this.notificacionService = notificacionService;
+        this.whatsAppService = whatsAppService;
     }
 
     // ── Síntomas ──────────────────────────────────────────────────────────────
@@ -62,6 +65,8 @@ public class BpmService {
         log.info("BPM síntomas guardado: {} - {}", r.getFecha(), r.getNombreManipulador());
         if (r.tieneSintomas()) {
             notificacionService.crearAlertaBpmSalud(r.getNombreManipulador());
+            whatsAppService.notificarBpmSalud(
+                    com.alera.config.TenantContext.getCurrentTenant(), r.getNombreManipulador());
         }
     }
 

@@ -457,6 +457,39 @@
             </div>
         </div>
 
+        <!-- Perfil de agua -->
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-droplet-half me-2"></i><span th:text="#{recetas.form.sec.agua}">Perfil de Agua (ppm)</span></div>
+            <div class="row g-2 mb-2">
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.calcio}">Ca²⁺</label>
+                    <input type="number" min="0" max="500" th:field="*{aguaCalcio}" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.magnesio}">Mg²⁺</label>
+                    <input type="number" min="0" max="200" th:field="*{aguaMagnesio}" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.sodio}">Na⁺</label>
+                    <input type="number" min="0" max="200" th:field="*{aguaSodio}" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.sulfatos}">SO₄²⁻</label>
+                    <input type="number" min="0" max="500" th:field="*{aguaSulfatos}" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.cloruros}">Cl⁻</label>
+                    <input type="number" min="0" max="300" th:field="*{aguaCloruros}" class="form-control form-control-sm" placeholder="0">
+                </div>
+                <div class="col-6 col-md-4 col-lg-2">
+                    <label class="form-label small" th:text="#{recetas.form.agua.bicarbonatos}">HCO₃⁻</label>
+                    <input type="number" min="0" max="500" th:field="*{aguaBicarbonatos}" class="form-control form-control-sm" placeholder="0">
+                </div>
+            </div>
+            <input type="text" th:field="*{aguaNotas}" class="form-control form-control-sm"
+                   th:placeholder="#{recetas.form.agua.notas.ph}" placeholder="Perfil de referencia, fuente del agua, ajustes...">
+        </div>
+
         <!-- Notas -->
         <div class="form-section">
             <div class="form-section-title"><i class="bi bi-chat-left-text me-2"></i><span th:text="#{recetas.form.sec.notas}">Notas Técnicas</span></div>
@@ -820,6 +853,98 @@ document.addEventListener('DOMContentLoaded', function() {
     var btnAdicion = document.getElementById('btnAddAdicionHervor');
     if (btnAdicion) btnAdicion.addEventListener('click', addAdicionHervor);
 });
+
+// Pre-fill from AI assistant (sessionStorage set by lista.html)
+(function prefillFromAI() {
+    var raw = sessionStorage.getItem('zymos-receta-ai');
+    if (!raw) return;
+    var data;
+    try { data = JSON.parse(raw); } catch(e) { return; }
+    sessionStorage.removeItem('zymos-receta-ai');
+
+    function setVal(selector, val) {
+        var el = document.querySelector(selector);
+        if (el && val != null) el.value = val;
+    }
+    function addIngRow(containerId, tipo, nombre, cantidad, unidad) {
+        addRecetaRow(containerId, tipo, '');
+        var container = document.getElementById(containerId);
+        var rows = container.querySelectorAll('.ingrediente-row');
+        var row = rows[rows.length - 1];
+        if (!row) return;
+        var inputs = row.querySelectorAll('input');
+        if (inputs[0]) inputs[0].value = nombre || '';
+        if (inputs[1]) inputs[1].value = cantidad != null ? cantidad : '';
+        var sel = row.querySelector('select');
+        if (sel && unidad) sel.value = unidad;
+    }
+
+    // Basic fields
+    setVal('[name="nombre"]', data.nombre);
+    setVal('[name="estilo"]', data.estilo);
+    setVal('[name="descripcion"]', data.descripcion);
+    setVal('[name="volumenBase"]', data.volumenBase);
+    setVal('[name="tiempoHervorMinutos"]', data.tiempoHervorMinutos);
+    setVal('[name="ogObjetivo"]', data.ogObjetivo);
+    setVal('[name="fgObjetivo"]', data.fgObjetivo);
+    setVal('[name="aguaMacerado"]', data.aguaMacerado);
+    setVal('[name="unidadAguaMacerado"]', data.unidadAgua);
+    setVal('[name="aguaSparge"]', data.aguaSparge);
+    setVal('[name="unidadAguaSparge"]', data.unidadSparge);
+    setVal('[name="notas"]', data.notas);
+
+    // Ingredient rows — wait for DOM ready
+    var groups = [
+        { key: 'maltas',       cid: 'receta-maltas-container' },
+        { key: 'lupulos',      cid: 'receta-lupulos-container' },
+        { key: 'levaduras',    cid: 'receta-levaduras-container' },
+        { key: 'clarificantes',cid: 'receta-clarificantes-container' }
+    ];
+    groups.forEach(function(g) {
+        var items = data[g.key];
+        if (!items || !items.length) return;
+        // Remove any placeholder empty rows first
+        var container = document.getElementById(g.cid);
+        if (container) container.querySelectorAll('.ingrediente-row').forEach(function(r) { r.remove(); });
+        items.forEach(function(ing) {
+            addIngRow(g.cid, g.key, ing.nombre, ing.cantidad, ing.unidad);
+        });
+    });
+
+    // Escalones
+    var escContainer = document.getElementById('escalones-container');
+    if (escContainer && data.escalones && data.escalones.length) {
+        escContainer.querySelectorAll('.ingrediente-row').forEach(function(r) { r.remove(); });
+        data.escalones.forEach(function(esc) {
+            addEscalon();
+            var rows = escContainer.querySelectorAll('.ingrediente-row');
+            var row = rows[rows.length - 1];
+            if (!row) return;
+            var inputs = row.querySelectorAll('input');
+            if (inputs[0]) inputs[0].value = esc.nombre || '';
+            if (inputs[1]) inputs[1].value = esc.duracionMinutos != null ? esc.duracionMinutos : '';
+            if (inputs[2]) inputs[2].value = esc.temperatura != null ? esc.temperatura : '';
+        });
+    }
+
+    // Adiciones hervor
+    var hervorContainer = document.getElementById('adiciones-hervor-container');
+    if (hervorContainer && data.adicionesHervor && data.adicionesHervor.length) {
+        hervorContainer.querySelectorAll('.ingrediente-row').forEach(function(r) { r.remove(); });
+        data.adicionesHervor.forEach(function(ad) {
+            addAdicionHervor();
+            var rows = hervorContainer.querySelectorAll('.ingrediente-row');
+            var row = rows[rows.length - 1];
+            if (!row) return;
+            var inputs = row.querySelectorAll('input');
+            if (inputs[0]) inputs[0].value = ad.nombre || '';
+            if (inputs[1]) inputs[1].value = ad.minutosRestantes != null ? ad.minutosRestantes : '';
+            if (inputs[2]) inputs[2].value = ad.cantidad != null ? ad.cantidad : '';
+            var sel = row.querySelector('select');
+            if (sel && ad.unidad) sel.value = ad.unidad;
+        });
+    }
+})();
 
 document.getElementById('btnGuardarInsumoRapido').addEventListener('click', async () => {
     const nombre  = document.getElementById('nuevoInsumoNombre').value.trim();

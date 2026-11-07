@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - ' + #{wa.title}">Alera - WhatsApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .tipo-badge {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .wa-phone {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #334155;
+        }
+
+        html.dark-mode .tipo-badge { background: var(--dm-input); color: var(--dm-text-soft); border-color: var(--dm-border); }
+        html.dark-mode .wa-phone { color: var(--dm-text); }
+    </style>
+</head>
+<body>
+
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="page-header">
+    <div class="container-fluid px-4">
+        <div class="d-flex justify-content-between align-items-start">
+            <div>
+                <h1 th:text="#{wa.title}">Contactos WhatsApp</h1>
+                <span class="subtitle" th:text="#{wa.subtitle}">Gestiona los números que reciben alertas y reportes por WhatsApp</span>
+            </div>
+            <a href="/admin/whatsapp/nuevo" class="btn btn-primary btn-sm"
+               sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
+                <i class="bi bi-plus-lg me-1"></i>
+                <span th:text="#{wa.nuevo}">Nuevo contacto</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-4 pb-4">
+
+    <!-- Banner modo simulado -->
+    <div th:if="${!waConfigurado}" class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <span th:text="#{wa.modo.simulado}">Modo simulado activo — los mensajes se registran en el log pero no se envían.</span>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${mensaje}" class="alert alert-dismissible fade show"
+         th:classappend="'alert-' + ${tipoMensaje}" role="alert">
+        <span th:text="${mensaje}"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="table-card">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+            <span class="fw-600 text-secondary" style="font-size:0.85rem">
+                <span th:text="${#lists.size(contactos)}">0</span>
+                contacto(s) registrado(s)
+            </span>
+            <span th:if="${waConfigurado}" class="badge bg-success">
+                <i class="bi bi-whatsapp me-1"></i>Twilio activo
+            </span>
+            <span th:if="${!waConfigurado}" class="badge bg-secondary">
+                <i class="bi bi-whatsapp me-1"></i>Modo simulado
+            </span>
+        </div>
+
+        <div th:if="${#lists.isEmpty(contactos)}" class="p-4 text-center text-muted">
+            <i class="bi bi-whatsapp" style="font-size:2.5rem;opacity:.3"></i>
+            <p class="mt-2 mb-0" th:text="#{wa.sin.contactos}">No hay contactos registrados.</p>
+        </div>
+
+        <div th:if="${!#lists.isEmpty(contactos)}">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th th:text="#{wa.nombre}">Nombre</th>
+                        <th th:text="#{wa.telefono}">Teléfono</th>
+                        <th th:text="#{wa.suscripciones}">Alertas suscritas</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="c : ${contactos}">
+                        <td>
+                            <span class="fw-600" th:text="${c.nombre}">Nombre</span>
+                        </td>
+                        <td>
+                            <span class="wa-phone" th:text="${c.telefono}">+57300...</span>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-1">
+                                <th:block th:if="${#lists.isEmpty(c.tiposSuscritos)}">
+                                    <span class="text-muted" style="font-size:0.8rem">Sin suscripciones</span>
+                                </th:block>
+                                <th:block th:each="tipo : ${tiposAlerta}">
+                                    <span th:if="${c.tiposSuscritos.contains(tipo.name())}"
+                                          class="tipo-badge"
+                                          th:text="${tipo.displayName}">badge</span>
+                                </th:block>
+                            </div>
+                        </td>
+                        <td>
+                            <span th:if="${c.activo}" class="badge bg-success">Activo</span>
+                            <span th:unless="${c.activo}" class="badge bg-secondary">Inactivo</span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a th:href="@{/admin/whatsapp/editar/{id}(id=${c.id})}"
+                                   class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form th:action="@{/admin/whatsapp/toggle/{id}(id=${c.id})}"
+                                      method="post" style="display:contents">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                            th:title="${c.activo ? 'Desactivar' : 'Activar'}">
+                                        <i th:class="${c.activo ? 'bi bi-toggle-on' : 'bi bi-toggle-off'}"></i>
+                                    </button>
+                                </form>
+                                <form th:action="@{/admin/whatsapp/eliminar/{id}(id=${c.id})}"
+                                      method="post" style="display:contents"
+                                      th:attr="data-confirm=#{wa.confirm.eliminar}">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

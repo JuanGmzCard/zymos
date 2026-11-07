@@ -50,6 +50,7 @@ class TareaServiceTest {
     @Mock RecetaRepository                 recetaRepo;
     @Mock BarrilRepository                 barrilRepo;
     @Mock NotificacionService              notificacionService;
+    @Mock WhatsAppService                  whatsAppService;
 
     @InjectMocks TareaService service;
 

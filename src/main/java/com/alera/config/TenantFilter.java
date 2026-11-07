@@ -1,6 +1,7 @@
 package com.alera.config;
 
 import com.alera.model.Tenant;
+import com.alera.model.enums.PlanNivel;
 import com.alera.repository.TenantRepository;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -18,7 +19,17 @@ import java.util.concurrent.TimeUnit;
 public class TenantFilter extends OncePerRequestFilter {
 
     private static final Logger log = LoggerFactory.getLogger(TenantFilter.class);
-    private static final String TENANT_ATTR = "currentTenant";
+    public static final String TENANT_ATTR = "currentTenant";
+
+    // Rutas que requieren Plan Cocción o superior
+    private static final String[] RUTAS_COCCION = {
+        "/bpm", "/facturas", "/clientes", "/ventas", "/barriles", "/ordenes", "/reportes", "/tareas"
+    };
+
+    // Rutas que requieren Plan Fermentación
+    private static final String[] RUTAS_FERMENTACION = {
+        "/admin/roles", "/admin/migracion"
+    };
 
     private final TenantRepository tenantRepo;
     private final String defaultSubdomain;
@@ -42,7 +53,9 @@ public class TenantFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.startsWith("/css/") || path.startsWith("/js/")
             || path.startsWith("/img/") || path.startsWith("/webjars/")
-            || path.startsWith("/favicon") || path.equals("/error") || path.startsWith("/error/");
+            || path.startsWith("/favicon") || path.equals("/error") || path.startsWith("/error/")
+            // Rutas de checkout y pago — sin tenant (sistema global)
+            || path.startsWith("/checkout/") || path.startsWith("/webhook/");
     }
 
     @Override
@@ -61,14 +74,42 @@ public class TenantFilter extends OncePerRequestFilter {
         request.setAttribute(TENANT_ATTR, tenant);
         TenantContext.setCurrentTenant(tenant.getSubdomain());
         try {
-            if (planBloqueado(tenant) && !esRutaPermitidaConPlanVencido(request.getRequestURI())) {
+            String path = request.getRequestURI();
+
+            if (planBloqueado(tenant) && !esRutaPermitidaConPlanVencido(path)) {
                 response.sendRedirect("/plan-vencido");
                 return;
             }
+
+            PlanNivel nivelRequerido = nivelRequeridoPara(path);
+            if (nivelRequerido != null && !tenant.tieneAccesoNivel(nivelRequerido)) {
+                log.debug("Acceso denegado por plan: tenant={} nivel={} ruta={}", subdomain, tenant.getPlanNivel(), path);
+                response.sendRedirect("/plan-upgrade?requiere=" + nivelRequerido.name());
+                return;
+            }
+
+            // El tenant demo no puede acceder a páginas de administración cross-tenant
+            if ("demo".equals(tenant.getSubdomain()) && path.startsWith("/admin/migracion")) {
+                log.debug("Acceso bloqueado para tenant demo: {}", path);
+                response.sendRedirect("/");
+                return;
+            }
+
             chain.doFilter(request, response);
         } finally {
             TenantContext.clear();
         }
+    }
+
+    /** Retorna el PlanNivel mínimo requerido para la ruta, o null si no hay restricción. */
+    private PlanNivel nivelRequeridoPara(String path) {
+        for (String prefix : RUTAS_FERMENTACION) {
+            if (path.startsWith(prefix)) return PlanNivel.FERMENTACION;
+        }
+        for (String prefix : RUTAS_COCCION) {
+            if (path.startsWith(prefix)) return PlanNivel.COCCION;
+        }
+        return null;
     }
 
     /** true si el plan venció hace más de {@code diasGracia} días. */
@@ -78,7 +119,9 @@ public class TenantFilter extends OncePerRequestFilter {
     }
 
     private boolean esRutaPermitidaConPlanVencido(String path) {
-        return path.equals("/plan-vencido") || path.equals("/logout") || path.startsWith("/login");
+        return path.equals("/plan-vencido") || path.equals("/planes") || path.equals("/landing")
+                || path.equals("/demo") || path.equals("/plan-upgrade")
+                || path.equals("/logout") || path.startsWith("/login");
     }
 
     private Tenant resolveTenant(String subdomain) {

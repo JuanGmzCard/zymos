@@ -33,6 +33,10 @@
                th:title="#{recetas.detalle.btn.pdf}">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
+            <a th:href="@{/recetas/ver/{id}/beerxml(id=${receta.id})}" class="btn btn-sm btn-outline-secondary"
+               th:title="#{recetas.action.exportar.beerxml}">
+                <i class="bi bi-file-earmark-code me-1"></i>BeerXML
+            </a>
             <a th:href="@{/recetas/duplicar/{id}(id=${receta.id})}" class="btn btn-sm btn-outline-secondary"
                th:title="#{recetas.detalle.btn.duplicar}">
                 <i class="bi bi-copy me-1"></i><span th:text="#{recetas.action.duplicar}">Duplicar</span>
@@ -115,6 +119,41 @@
                     <div class="small text-muted" th:text="#{recetas.detalle.field.desc}">Descripción</div>
                     <div class="small mt-1" th:text="${receta.descripcion}">—</div>
                 </div>
+            </div>
+
+            <!-- Perfil de agua -->
+            <div class="content-card mb-3"
+                 th:if="${receta.aguaCalcio != null or receta.aguaMagnesio != null or receta.aguaSodio != null or receta.aguaSulfatos != null or receta.aguaCloruros != null or receta.aguaBicarbonatos != null}">
+                <div class="content-card-title pb-2 mb-3">
+                    <i class="bi bi-droplet-half me-2"></i><span th:text="#{recetas.detalle.sec.agua}">PERFIL DE AGUA</span>
+                </div>
+                <div class="d-flex flex-wrap gap-3">
+                    <div th:if="${receta.aguaCalcio != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.calcio}">Ca²⁺</div>
+                        <div class="fw-semibold" th:text="${receta.aguaCalcio + ' ppm'}">—</div>
+                    </div>
+                    <div th:if="${receta.aguaMagnesio != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.magnesio}">Mg²⁺</div>
+                        <div class="fw-semibold" th:text="${receta.aguaMagnesio + ' ppm'}">—</div>
+                    </div>
+                    <div th:if="${receta.aguaSodio != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.sodio}">Na⁺</div>
+                        <div class="fw-semibold" th:text="${receta.aguaSodio + ' ppm'}">—</div>
+                    </div>
+                    <div th:if="${receta.aguaSulfatos != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.sulfatos}">SO₄²⁻</div>
+                        <div class="fw-semibold" th:text="${receta.aguaSulfatos + ' ppm'}">—</div>
+                    </div>
+                    <div th:if="${receta.aguaCloruros != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.cloruros}">Cl⁻</div>
+                        <div class="fw-semibold" th:text="${receta.aguaCloruros + ' ppm'}">—</div>
+                    </div>
+                    <div th:if="${receta.aguaBicarbonatos != null}" class="text-center">
+                        <div class="small text-muted" th:text="#{recetas.form.agua.bicarbonatos}">HCO₃⁻</div>
+                        <div class="fw-semibold" th:text="${receta.aguaBicarbonatos + ' ppm'}">—</div>
+                    </div>
+                </div>
+                <div th:if="${receta.aguaNotas != null and !receta.aguaNotas.isBlank()}" class="mt-2 small text-muted" th:text="${receta.aguaNotas}"></div>
             </div>
 
             <!-- Escalones de macerado -->

@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.DemoDataSeeder;
 import com.alera.config.PasswordPolicy;
 import com.alera.model.Tenant;
 import com.alera.model.enums.RolUsuario;
@@ -39,17 +40,20 @@ public class TenantAdminController {
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final TenantMetricsService metricsService;
+    private final DemoDataSeeder demoDataSeeder;
 
     public TenantAdminController(TenantService tenantService,
                                   UsuarioRepository usuarioRepo, PasswordEncoder passwordEncoder,
                                   EmailService emailService, ObjectMapper objectMapper,
-                                  TenantMetricsService metricsService) {
+                                  TenantMetricsService metricsService,
+                                  DemoDataSeeder demoDataSeeder) {
         this.tenantService   = tenantService;
         this.usuarioRepo     = usuarioRepo;
         this.passwordEncoder = passwordEncoder;
         this.emailService    = emailService;
         this.objectMapper    = objectMapper;
         this.metricsService  = metricsService;
+        this.demoDataSeeder  = demoDataSeeder;
     }
 
     @GetMapping
@@ -152,6 +156,19 @@ public class TenantAdminController {
         tenantService.evictAllCache();
         ra.addFlashAttribute("mensaje", "Cache de tenants limpiado correctamente");
         ra.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/tenants";
+    }
+
+    @PostMapping("/demo/reset")
+    public String resetDemo(RedirectAttributes ra) {
+        try {
+            demoDataSeeder.resetear();
+            ra.addFlashAttribute("mensaje", "Datos demo reseteados correctamente");
+            ra.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error al resetear demo: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+        }
         return "redirect:/admin/tenants";
     }
 

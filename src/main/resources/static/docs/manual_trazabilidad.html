@@ -156,6 +156,12 @@
   <a class="sb-link sb-link-main" href="#duplicar">Duplicar un lote</a>
   <a class="sb-link sb-link-main" href="#barriles">Crear barriles</a>
   <a class="sb-link sb-link-main" href="#faq">Preguntas frecuentes</a>
+
+  <div class="sb-section">Inteligencia Artificial</div>
+  <a class="sb-link" href="#ia-diagnostico">Diagnóstico IA</a>
+  <a class="sb-link" href="#ia-descripcion">Descripción comercial IA</a>
+  <a class="sb-link" href="#ia-bjcp">BJCP Scorer IA</a>
+  <a class="sb-link" href="#email-fase">Email cambio de fase</a>
 </nav>
 
 <!-- HERO -->
@@ -438,6 +444,7 @@
     <tr><td><strong>Temperatura</strong></td><td>Temperatura de fermentación. Según la configuración del tenant, puede mostrarse en °C o °F.</td></tr>
     <tr><td><strong>Fecha fin real</strong></td><td>Día en que terminó la fermentación. Al guardar esta fecha, el lote avanza a la siguiente fase disponible.</td></tr>
     <tr><td><strong>Fermentador</strong></td><td>Se muestra solo como referencia (solo lectura). Para cambiarlo, debes ir al Tab 0.</td></tr>
+    <tr><td><strong>Notas de fermentación</strong></td><td>Texto libre para anotaciones del proceso: comportamiento de la levadura, ajustes de temperatura, incidencias, etc. Aparece en el detalle del lote y en el export Excel.</td></tr>
   </table>
 
   <div class="callout tip">
@@ -455,6 +462,7 @@
     <tr><td><strong>Fecha fin ideal</strong></td><td>Fecha estimada de finalización.</td></tr>
     <tr><td><strong>Temperatura</strong></td><td>Temperatura durante el acondicionamiento.</td></tr>
     <tr><td><strong>Fecha fin real</strong></td><td>Día en que terminó el acondicionamiento.</td></tr>
+    <tr><td><strong>Notas de acondicionamiento</strong></td><td>Observaciones durante esta fase: turbidez, tratamientos aplicados, ajustes de pH, etc.</td></tr>
   </table>
 </section>
 
@@ -468,6 +476,7 @@
     <tr><td><strong>Fecha fin ideal</strong></td><td>Fecha estimada.</td></tr>
     <tr><td><strong>Temperatura</strong></td><td>Temperatura de maduración.</td></tr>
     <tr><td><strong>Fecha fin real</strong></td><td>Fin de la maduración.</td></tr>
+    <tr><td><strong>Notas de maduración</strong></td><td>Observaciones durante el lagering o guarda: evolución del sabor, correcciones realizadas, notas de seguimiento.</td></tr>
   </table>
 </section>
 
@@ -728,9 +737,88 @@
   </div>
 </section>
 
+<!-- ══════════ IA DIAGNÓSTICO ══════════ -->
+<section id="ia-diagnostico">
+  <h2><span class="section-num">19</span>Diagnóstico de Fermentación con IA 🤖</h2>
+  <p>El diagnóstico de fermentación analiza la curva de densidad y temperatura del lote usando inteligencia artificial. Detecta anomalías, compara con el perfil esperado y sugiere acciones correctivas.</p>
+  <div class="callout info">
+    <p><strong>Requisito:</strong> el lote debe tener al menos 2 lecturas de fermentación registradas. La función requiere configuración de IA (ANTHROPIC_API_KEY). Si el botón no aparece, el sistema funciona sin IA.</p>
+  </div>
+  <h3><span class="icon">🔎</span>Cómo usar el diagnóstico</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Abre el detalle del lote</strong><p>Ve a la sección de Fermentación del detalle.</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Haz clic en "Diagnóstico IA"</strong><p>Botón disponible en la sección de Fermentación.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Revisa el diagnóstico</strong><p>El modal muestra: estado de la fermentación, anomalías detectadas, recomendaciones y advertencias de atención inmediata.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ IA DESCRIPCIÓN COMERCIAL ══════════ -->
+<section id="ia-descripcion">
+  <h2><span class="section-num">20</span>Descripción Comercial con IA 🤖</h2>
+  <p>Genera automáticamente textos de marketing para el lote: descripción corta, descripción larga, texto de etiqueta y hashtags para redes sociales, basados en el perfil del lote y las notas de cata.</p>
+  <h3><span class="icon">✍️</span>Cómo generar la descripción</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Abre el detalle del lote</strong></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Haz clic en "Descripción Comercial"</strong><p>Botón en la cabecera del detalle, junto a Editar y PDF.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Revisa y copia el texto</strong><p>El modal muestra 4 variantes: descripción corta (para menús y tapas), descripción larga (para web o etiqueta extendida), texto de etiqueta y hashtags. Usa el botón de copiar en cada sección.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ IA BJCP SCORER ══════════ -->
+<section id="ia-bjcp">
+  <h2><span class="section-num">21</span>BJCP Scorer con IA 🤖</h2>
+  <p>El BJCP Scorer analiza las notas de texto de la evaluación sensorial del lote y sugiere puntajes BJCP por criterio, fortalezas, defectos detectados y recomendaciones de mejora para la próxima elaboración.</p>
+  <h3><span class="icon">⭐</span>Cómo usar el BJCP Scorer</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Completa las notas de evaluación sensorial</strong><p>Asegúrate de que el lote tiene notas de cata en la sección de Evaluación del detalle (aroma, sabor, apariencia, etc.).</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Haz clic en "Analizar con IA"</strong><p>Botón disponible en la sección de Evaluación Sensorial.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Revisa y aplica los resultados</strong><p>El modal muestra el puntaje sugerido por criterio, fortalezas identificadas, defectos detectados y recomendaciones. Puedes aplicar los puntajes sugeridos haciendo clic en <strong>"Aplicar puntaje"</strong>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ EMAIL CAMBIO DE FASE ══════════ -->
+<section id="email-fase">
+  <h2><span class="section-num">22</span>Notificación por email al cambiar de fase</h2>
+  <p>ZYMOS puede enviar un email automático cada vez que un lote avanza a una nueva fase de producción (de Macerado a Fermentación, de Fermentación a Acondicionamiento, etc.).</p>
+  <div class="callout info">
+    <p><strong>Requisito:</strong> el sistema debe tener configurado un servidor SMTP (variable de entorno SMTP_HOST). Si no hay SMTP configurado, esta función no está disponible. El email se envía al correo del tenant configurado en la cuenta.</p>
+  </div>
+  <h3><span class="icon">📧</span>Contenido del email</h3>
+  <ul>
+    <li>Nombre y código del lote</li>
+    <li>Fase anterior y nueva fase alcanzada</li>
+    <li>Fecha del cambio</li>
+    <li>Link directo al detalle del lote en ZYMOS</li>
+  </ul>
+  <div class="callout tip">
+    <p>Útil en equipos donde distintas personas se encargan de cada etapa. El encargado de maduración puede configurar su correo para recibir la alerta cuando un lote entra a su fase.</p>
+  </div>
+  <div class="callout info">
+    <p><strong>📱 También por WhatsApp:</strong> Si el administrador configuró contactos en <em>Admin → WhatsApp</em> suscritos al tipo "Cambio de fase de lote", el mensaje llega por WhatsApp además del email (o como único canal si no hay SMTP). Ver <a href="manual_admin.html#whatsapp">Manual de Administración → Notificaciones WhatsApp</a>.</p>
+  </div>
+</section>
+
 <!-- ══════════ FAQ ══════════ -->
 <section id="faq">
-  <h2><span class="section-num">19</span>Preguntas frecuentes</h2>
+  <h2><span class="section-num">23</span>Preguntas frecuentes</h2>
 
   <h3>¿Por qué no aparece el botón "Nuevo Lote"?</h3>
   <p>Necesitas tener al menos una <strong>receta activa</strong>. Ve a <strong>Recetas → Nueva Receta</strong> y crea una primero.</p>

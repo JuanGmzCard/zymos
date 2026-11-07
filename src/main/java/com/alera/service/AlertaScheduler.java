@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Component
@@ -38,6 +39,7 @@ public class AlertaScheduler {
     private final LoteCervezaRepository    loteCervezaRepo;
     private final UsuarioRepository        usuarioRepo;
     private final TareaService             tareaService;
+    private final WhatsAppService          whatsAppService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -55,7 +57,8 @@ public class AlertaScheduler {
                             VentaService ventaService,
                             LoteCervezaRepository loteCervezaRepo,
                             UsuarioRepository usuarioRepo,
-                            TareaService tareaService) {
+                            TareaService tareaService,
+                            WhatsAppService whatsAppService) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -67,6 +70,7 @@ public class AlertaScheduler {
         this.loteCervezaRepo     = loteCervezaRepo;
         this.usuarioRepo         = usuarioRepo;
         this.tareaService        = tareaService;
+        this.whatsAppService     = whatsAppService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -119,6 +123,14 @@ public class AlertaScheduler {
                     log.info("Tenant '{}': {} cotización(es) expirada(s)", tenant.getSubdomain(), expiradas);
                 }
 
+                // WhatsApp — bajo stock, vencimientos, mantenimiento
+                whatsAppService.notificarBajoStock(tenant.getSubdomain(), bajoStock);
+                whatsAppService.notificarVencimiento(tenant.getSubdomain(), proximosAVencer);
+                whatsAppService.notificarMantenimiento(tenant.getSubdomain(), mantenimiento);
+                if (tenant.isPlanPorVencer() || tenant.isPlanVencido()) {
+                    whatsAppService.notificarPlanVencimiento(tenant.getSubdomain(), tenant.getPlanFin());
+                }
+
                 // Email — solo si SMTP configurado y tenant tiene email
                 boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();
                 if (emailService.mailConfigurado() && tieneEmail) {
@@ -146,5 +158,87 @@ public class AlertaScheduler {
 
         log.info("Alertas diarias: {} notificación(es) in-app creada(s), {} email(s) enviado(s) de {} tenant(s)",
                 notifs, enviados, tenants.size());
+    }
+
+    /**
+     * Emails de onboarding (días 1/3/7 desde planInicio) y recordatorios de expiración
+     * (4 y 1 días antes de planFin). Se salta el tenant "demo".
+     */
+    @Scheduled(cron = "${app.onboarding.cron:0 30 9 * * *}")
+    public void enviarEmailsOnboarding() {
+        if (!emailService.mailConfigurado()) return;
+
+        List<Tenant> tenants = tenantRepo.findAll().stream()
+                .filter(t -> t.isActive()
+                          && t.getEmailAdmin() != null
+                          && !t.getEmailAdmin().isBlank()
+                          && !"demo".equals(t.getSubdomain()))
+                .toList();
+
+        int onboarding = 0;
+        int expiracion = 0;
+
+        for (Tenant tenant : tenants) {
+            try {
+                LocalDate hoy = LocalDate.now();
+
+                if (tenant.getPlanInicio() != null) {
+                    long diasDesdeInicio = ChronoUnit.DAYS.between(tenant.getPlanInicio(), hoy);
+                    if (diasDesdeInicio == 1 || diasDesdeInicio == 3 || diasDesdeInicio == 7) {
+                        if (emailService.enviarOnboarding(tenant, (int) diasDesdeInicio)) onboarding++;
+                    }
+                }
+
+                if (tenant.getPlanFin() != null && !tenant.isPlanVencido()) {
+                    long diasHastaFin = ChronoUnit.DAYS.between(hoy, tenant.getPlanFin());
+                    if (diasHastaFin == 4 || diasHastaFin == 1) {
+                        if (emailService.enviarExpiracionTrial(tenant, diasHastaFin)) expiracion++;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error en emails onboarding para tenant '{}': {}",
+                        tenant.getSubdomain(), e.getMessage());
+            }
+        }
+
+        log.info("Emails onboarding: {} onboarding, {} expiración enviados de {} tenants activos",
+                onboarding, expiracion, tenants.size());
+    }
+
+    @Scheduled(cron = "${app.alert.monthly-cron:0 0 8 1 * *}")
+    public void enviarResumenMensual() {
+        java.time.LocalDate ayer = java.time.LocalDate.now().minusDays(1); // ayer = último día del mes anterior
+        int anio = ayer.getYear();
+        int mes  = ayer.getMonthValue();
+        java.time.LocalDate inicio = java.time.LocalDate.of(anio, mes, 1);
+        java.time.LocalDate fin    = ayer.withDayOfMonth(ayer.lengthOfMonth());
+
+        List<Tenant> tenants = tenantRepo.findAll().stream()
+                .filter(Tenant::isActive)
+                .toList();
+
+        int enviados = 0;
+        for (Tenant tenant : tenants) {
+            try {
+                TenantContext.setCurrentTenant(tenant.getSubdomain());
+                List<com.alera.model.LoteCerveza> lotesMes = loteCervezaRepo.findByPeriodo(inicio, fin);
+                boolean tieneEmail = tenant.getEmailAdmin() != null && !tenant.getEmailAdmin().isBlank();
+                if (emailService.mailConfigurado() && tieneEmail) {
+                    boolean ok = emailService.enviarResumenMensual(tenant, lotesMes, anio, mes);
+                    if (ok) enviados++;
+                }
+                long completados = lotesMes.stream()
+                        .filter(com.alera.model.LoteCerveza::isCompletado).count();
+                String nombreTenant = tenant.getName() != null && !tenant.getName().isBlank()
+                        ? tenant.getName() : tenant.getSubdomain();
+                whatsAppService.enviarResumenMensual(tenant.getSubdomain(), nombreTenant,
+                        lotesMes.size(), (int) completados, anio, mes);
+            } catch (Exception e) {
+                log.error("Error en resumen mensual para tenant '{}': {}", tenant.getSubdomain(), e.getMessage());
+            } finally {
+                TenantContext.clear();
+            }
+        }
+        log.info("Resumen mensual {}/{}: {} email(s) enviado(s) de {} tenant(s)", mes, anio, enviados, tenants.size());
     }
 }

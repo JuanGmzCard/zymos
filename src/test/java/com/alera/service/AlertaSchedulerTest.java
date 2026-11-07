@@ -33,6 +33,7 @@ class AlertaSchedulerTest {
     @Mock LoteCervezaRepository    loteCervezaRepo;
     @Mock UsuarioRepository        usuarioRepo;
     @Mock TareaService             tareaService;
+    @Mock WhatsAppService          whatsAppService;
 
     @InjectMocks AlertaScheduler scheduler;
 
@@ -52,6 +53,7 @@ class AlertaSchedulerTest {
         lenient().when(usuarioRepo.countByTenantId(any())).thenReturn(0L);
         lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of());
         lenient().when(loteCervezaRepo.findFasesVencidas(any())).thenReturn(List.of());
+        lenient().when(whatsAppService.isConfigured()).thenReturn(false);
     }
 
     @AfterEach

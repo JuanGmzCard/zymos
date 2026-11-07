@@ -159,6 +159,12 @@
       <a href="#archivar">Archivar</a>
       <a href="#usar">Usar en un lote</a>
     </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Avanzado</div>
+      <a href="#perfil-agua">Perfil de agua</a>
+      <a href="#beerxml">BeerXML</a>
+      <a href="#asistente-ia">Asistente IA 🤖</a>
+    </div>
   </nav>
 </aside>
 
@@ -391,6 +397,76 @@
       <div class="callout-body">
         Cargar la receta en el formulario de lote es un punto de partida — puedes ajustar las cantidades libremente antes de guardar el lote. Los cambios en el lote no afectan la receta original.
       </div>
+    </div>
+
+    <!-- Perfil de agua -->
+    <h2 id="perfil-agua">Perfil de agua</h2>
+    <p>El perfil de agua describe la composición mineral del agua que usarás para tu receta. Estos parámetros influyen en el pH de la maceración, el sabor y la percepción del amargor.</p>
+    <p>Todos los campos son opcionales. Se muestran en el detalle de la receta y se incluyen en la exportación a BeerXML.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Mineral</th><th>Unidad</th><th>Rango típico</th><th>Efecto principal</th></tr></thead>
+      <tbody>
+        <tr><td>Calcio (Ca²⁺)</td><td>ppm</td><td>50–150 ppm</td><td>Claridad, estabilidad enzimática, reduce pH</td></tr>
+        <tr><td>Magnesio (Mg²⁺)</td><td>ppm</td><td>10–30 ppm</td><td>Sabor salado/amargo en altas concentraciones</td></tr>
+        <tr><td>Sodio (Na⁺)</td><td>ppm</td><td>0–150 ppm</td><td>Redondea el sabor, intensifica el dulzor en bajas cantidades</td></tr>
+        <tr><td>Sulfatos (SO₄²⁻)</td><td>ppm</td><td>50–300 ppm</td><td>Accentúa el amargor seco en cervezas con lúpulo</td></tr>
+        <tr><td>Cloruros (Cl⁻)</td><td>ppm</td><td>50–200 ppm</td><td>Redondea el cuerpo, intensifica la malta</td></tr>
+        <tr><td>Bicarbonatos (HCO₃⁻)</td><td>ppm</td><td>0–300 ppm</td><td>Alcalinidad, eleva el pH de maceración</td></tr>
+        <tr><td>Notas de agua</td><td>—</td><td>—</td><td>Observaciones sobre la fuente de agua o ajustes realizados</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">Una relación sulfatos/cloruros alta (&gt;1.5) favorece cervezas lupuladas y secas. Una relación baja (&lt;0.5) favorece cervezas maltosas y redondas.</div>
+    </div>
+
+    <!-- BeerXML -->
+    <h2 id="beerxml">Exportar / Importar BeerXML</h2>
+    <p>BeerXML 1.0 es el formato estándar de la industria para intercambiar recetas entre software de elaboración (Beersmith, Brewer's Friend, etc.). ZYMOS puede exportar e importar recetas en este formato.</p>
+
+    <h3>Exportar una receta</h3>
+    <ol class="steps">
+      <li>Abre el detalle de la receta que quieres exportar.</li>
+      <li>Haz clic en el botón <strong>"BeerXML"</strong> en la cabecera del detalle.</li>
+      <li>Se descarga un archivo <code>.xml</code> con todos los datos de la receta: ingredientes, escalones de maceración, adiciones de hervor, perfil de agua y densidades objetivo.</li>
+    </ol>
+
+    <h3>Importar una receta desde BeerXML</h3>
+    <ol class="steps">
+      <li>En la lista de recetas, haz clic en <strong>"Importar BeerXML"</strong>.</li>
+      <li>En el modal que aparece, selecciona el archivo <code>.xml</code> de tu computador.</li>
+      <li>ZYMOS procesa el archivo, crea la receta y te redirige a su formulario de edición para que puedas ajustar los datos antes de guardar.</li>
+    </ol>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">El BeerXML importado puede incluir maltas, lúpulos, levaduras, clarificantes, escalones de maceración y perfil de agua. Los ingredientes se crean en el inventario con cantidad 0 si aún no existen.</div>
+    </div>
+
+    <!-- Asistente IA -->
+    <h2 id="asistente-ia">Asistente de Recetas con IA 🤖</h2>
+    <p>El asistente de recetas con IA genera una receta completa a partir de una descripción en texto libre. Describe el tipo de cerveza que quieres y la IA propone los ingredientes, densidades y parámetros de elaboración.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requiere configuración de IA.</strong> Esta función solo está disponible cuando el administrador ha configurado la clave de API de Anthropic (ANTHROPIC_API_KEY). Si el botón no aparece, el sistema funciona sin IA.</div>
+    </div>
+
+    <h3>Cómo usar el asistente</h3>
+    <ol class="steps">
+      <li>En la lista de recetas, haz clic en <strong>"Crear receta con IA"</strong>.</li>
+      <li>En el modal, describe la cerveza que quieres producir: estilo, notas de sabor, cuerpo, amargor, volumen. Por ejemplo: "Una IPA tropical de 20 litros con notas de mango y maracuyá, amargor moderado, eficiencia 75%".</li>
+      <li>Haz clic en <strong>"Generar receta"</strong>. La IA tarda unos segundos en procesar.</li>
+      <li>Revisa la propuesta en el panel de previsualización del modal.</li>
+      <li>Si la propuesta te parece bien, haz clic en <strong>"Usar esta receta"</strong>. ZYMOS pre-llena el formulario de nueva receta con todos los datos generados.</li>
+      <li>Ajusta lo que necesites y guarda normalmente.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">La IA tiene en cuenta los insumos disponibles en tu inventario para sugerir ingredientes que ya tienes registrados. Puedes ser tan específico o general como quieras en la descripción.</div>
     </div>
 
   </div><!-- /content -->

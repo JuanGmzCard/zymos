@@ -112,6 +112,13 @@
                     <i class="bi bi-arrow-clockwise me-1"></i><span th:text="#{admin.ten.btn.cache}">Limpiar cache</span>
                 </button>
             </form>
+            <form th:action="@{/admin/tenants/demo/reset}" method="post" class="d-inline"
+                  data-confirm="¿Resetear datos demo? Se borrarán todos los lotes, recetas, ventas, facturas e insumos del tenant demo y se volverán a sembrar.">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <button type="submit" class="btn btn-outline-warning btn-sm">
+                    <i class="bi bi-database-fill-gear me-1"></i>Reset Demo
+                </button>
+            </form>
             <a th:href="@{/admin/tenants/nuevo}" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-circle me-1"></i><span th:text="#{admin.ten.btn.nuevo}">Nuevo Tenant</span>
             </a>

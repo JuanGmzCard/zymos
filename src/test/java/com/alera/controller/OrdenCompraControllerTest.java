@@ -50,6 +50,7 @@ class OrdenCompraControllerTest {
 
     // ── Mocks del controller ──────────────────────────────────────────────
     @MockBean OrdenCompraService        service;
+    @MockBean com.alera.service.OptimizacionOcService optimizacionOcService;
     @MockBean FacturaProveedorService   facturaService;
     @MockBean ProveedorService          proveedorService;
     @MockBean CategoriaInsumoService    categoriaInsumoService;

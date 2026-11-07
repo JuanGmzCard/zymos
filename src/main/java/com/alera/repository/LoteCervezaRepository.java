@@ -152,4 +152,21 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
            nativeQuery = true)
     List<Object[]> findResumenPorEstilo(@Param("desde") LocalDate desde, @Param("hasta") LocalDate hasta,
                                         @Param("tenantId") String tenantId);
+
+    // Promedios de lotes del mismo estilo (excluye el lote actual) para la sección comparativa.
+    // AVG ignora filas con NULL, por lo que cada promedio usa solo las filas con dato válido.
+    @Query(value = "SELECT COUNT(*) AS total, " +
+                   "CAST(AVG(densidad_inicial) AS float) AS og_avg, " +
+                   "CAST(AVG(densidad_final)   AS float) AS fg_avg, " +
+                   "CAST(AVG(CAST(densidad_inicial - densidad_final AS float) * 131.25 / 1000.0) AS float) AS abv_avg, " +
+                   "CAST(AVG(litros_finales)   AS float) AS litros_avg " +
+                   "FROM lotes_cerveza " +
+                   "WHERE tenant_id = :tenantId " +
+                   "  AND LOWER(estilo) = LOWER(:estilo) " +
+                   "  AND id <> :excludeId " +
+                   "  AND deleted_at IS NULL",
+           nativeQuery = true)
+    List<Object[]> promediosPorEstilo(@Param("estilo") String estilo,
+                                      @Param("excludeId") Long excludeId,
+                                      @Param("tenantId") String tenantId);
 }

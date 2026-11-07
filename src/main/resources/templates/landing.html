@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Gestión integral para cervecerías artesanales: trazabilidad, recetas, inventario, BPM, ventas e IA. Prueba gratis 14 días.">
+    <title th:text="${branding != null ? branding.name : 'Zymos'} + ' — Gestión de Cervecerías Artesanales'">Zymos — Gestión de Cervecerías Artesanales</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&amp;family=Raleway:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style th:inline="text" th:attr="nonce=${cspNonce}">
+        :root {
+            --lp-dark:    #0f172a;
+            --lp-dark2:   #1e293b;
+            --lp-dark3:   #334155;
+            --lp-gold:    [[${branding != null ? branding.colorAccent : '#c9a028'}]];
+            --lp-gold-h:  [[${branding != null ? branding.colorAccentHover : '#e0b840'}]];
+            --lp-blue:    [[${branding != null ? branding.colorPrimary : '#2563eb'}]];
+            --lp-bg:      #f8fafc;
+            --lp-border:  #e2e8f0;
+            --lp-text:    #1e293b;
+            --lp-muted:   #64748b;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Raleway', sans-serif; background: #fff; color: var(--lp-text); margin: 0; }
+
+        /* ── NAVBAR ── */
+        .lp-nav {
+            background: var(--lp-dark);
+            padding: .75rem 0;
+            position: sticky; top: 0; z-index: 1050;
+            border-bottom: 1px solid rgba(255,255,255,.07);
+        }
+        .lp-nav .navbar-brand {
+            font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.25rem;
+            color: var(--lp-gold) !important; text-decoration: none;
+            display: flex; align-items: center; gap: .5rem;
+        }
+        .lp-nav .nav-link {
+            color: rgba(255,255,255,.75) !important; font-size: .88rem; font-weight: 500;
+            padding: .4rem .9rem !important; border-radius: 6px; transition: color .15s, background .15s;
+        }
+        .lp-nav .nav-link:hover { color: #fff !important; background: rgba(255,255,255,.07); }
+        .btn-nav-demo {
+            background: rgba(201,160,40,.15); border: 1px solid rgba(201,160,40,.35);
+            color: var(--lp-gold); border-radius: 20px; padding: .35rem 1rem;
+            font-size: .84rem; font-weight: 600; text-decoration: none; transition: background .2s;
+            white-space: nowrap;
+        }
+        .btn-nav-demo:hover { background: rgba(201,160,40,.28); color: var(--lp-gold); }
+        .btn-nav-primary {
+            background: var(--lp-blue); color: #fff; border: none; border-radius: 20px;
+            padding: .4rem 1.1rem; font-size: .84rem; font-weight: 600; text-decoration: none;
+            transition: opacity .18s; white-space: nowrap;
+        }
+        .btn-nav-primary:hover { opacity: .88; color: #fff; }
+        .navbar-toggler { border-color: rgba(255,255,255,.25) !important; }
+        .navbar-toggler-icon { filter: invert(1); }
+
+        /* ── HERO ── */
+        .lp-hero {
+            background: linear-gradient(135deg, var(--lp-dark) 0%, var(--lp-dark2) 100%);
+            padding: 5rem 1rem 4rem; text-align: center;
+            position: relative; overflow: hidden;
+        }
+        .lp-hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,160,40,.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-block; background: rgba(201,160,40,.13); border: 1px solid rgba(201,160,40,.3);
+            color: var(--lp-gold); border-radius: 20px; padding: .3rem 1rem; font-size: .82rem;
+            font-weight: 600; margin-bottom: 1.5rem; letter-spacing: .03em;
+        }
+        .hero-title {
+            font-family: 'Cinzel', serif; font-size: clamp(1.6rem, 5vw, 3rem);
+            font-weight: 700; color: #fff; margin-bottom: 1.25rem; line-height: 1.2;
+        }
+        .hero-title span { color: var(--lp-gold); }
+        .hero-sub {
+            color: #94a3b8; font-size: clamp(.95rem, 2vw, 1.1rem); max-width: 640px;
+            margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 400;
+        }
+        .hero-ctas { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
+        .btn-hero-primary {
+            background: var(--lp-gold); color: var(--lp-dark); font-weight: 700; font-size: 1rem;
+            border: none; border-radius: 10px; padding: .8rem 2rem; text-decoration: none;
+            transition: all .18s; display: inline-flex; align-items: center; gap: .4rem;
+        }
+        .btn-hero-primary:hover { background: var(--lp-gold-h); transform: translateY(-2px); color: var(--lp-dark); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
+        .btn-hero-outline {
+            background: transparent; color: #fff; font-weight: 600; font-size: 1rem;
+            border: 2px solid rgba(255,255,255,.3); border-radius: 10px; padding: .8rem 2rem;
+            text-decoration: none; transition: all .18s; display: inline-flex; align-items: center; gap: .4rem;
+        }
+        .btn-hero-outline:hover { border-color: rgba(255,255,255,.7); color: #fff; transform: translateY(-2px); }
+        .hero-trust { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+        .hero-trust span { color: #64748b; font-size: .84rem; display: flex; align-items: center; gap: .4rem; }
+        .hero-trust .bi-check-circle-fill { color: #22c55e; }
+
+        /* ── STATS STRIP ── */
+        .lp-stats {
+            background: var(--lp-dark2); padding: 1.25rem 0;
+            border-top: 1px solid rgba(255,255,255,.06);
+        }
+        .stat-pill { text-align: center; color: rgba(255,255,255,.8); font-size: .88rem; }
+        .stat-pill strong { color: var(--lp-gold); font-size: 1.3rem; font-weight: 700; display: block; }
+
+        /* ── FEATURES ── */
+        .lp-features { background: #fff; padding: 5rem 0; }
+        .section-label {
+            font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+            color: var(--lp-blue); margin-bottom: .6rem;
+        }
+        .section-title {
+            font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 3vw, 2rem);
+            font-weight: 700; color: var(--lp-text); margin-bottom: .6rem;
+        }
+        .section-sub { color: var(--lp-muted); font-size: 1rem; max-width: 580px; margin: 0 auto 3rem; }
+        .feat-card {
+            background: #fff; border: 1px solid var(--lp-border); border-radius: 14px;
+            padding: 1.75rem; height: 100%; transition: transform .18s, box-shadow .18s, border-color .18s;
+        }
+        .feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); border-color: var(--lp-blue); }
+        .feat-icon {
+            width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-size: 1.3rem; margin-bottom: 1rem;
+        }
+        .feat-icon.trazabilidad { background: rgba(37,99,235,.1); color: #2563eb; }
+        .feat-icon.recetas      { background: rgba(234,88,12,.1);  color: #ea580c; }
+        .feat-icon.inventario   { background: rgba(22,163,74,.1);  color: #16a34a; }
+        .feat-icon.bpm          { background: rgba(126,34,206,.1); color: #7e22ce; }
+        .feat-icon.comercial    { background: rgba(201,160,40,.13);color: #b45309; }
+        .feat-icon.ia           { background: rgba(6,182,212,.1);  color: #0891b2; }
+        .feat-title { font-weight: 700; color: var(--lp-text); margin-bottom: .5rem; font-size: .97rem; }
+        .feat-desc  { color: var(--lp-muted); font-size: .86rem; line-height: 1.6; margin: 0; }
+
+        /* ── APP PREVIEW ── */
+        .lp-preview { background: var(--lp-bg); padding: 5rem 0; }
+        .preview-window {
+            background: #fff; border-radius: 16px; border: 1px solid var(--lp-border);
+            overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.1);
+            max-width: 820px; margin: 0 auto;
+        }
+        .preview-topbar {
+            background: var(--lp-dark); padding: .6rem 1rem; display: flex;
+            align-items: center; justify-content: space-between;
+        }
+        .preview-topbar-title { color: rgba(255,255,255,.8); font-size: .82rem; display: flex; align-items: center; gap: .5rem; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .dot-r { background: #ef4444; }
+        .dot-y { background: #f59e0b; }
+        .dot-g { background: #22c55e; }
+        .preview-body { display: flex; min-height: 240px; }
+        .preview-sidebar {
+            background: #1e293b; width: 140px; flex-shrink: 0; padding: .75rem 0;
+        }
+        .preview-nav-item {
+            padding: .45rem .9rem; font-size: .78rem; color: #94a3b8; display: flex;
+            align-items: center; gap: .5rem;
+        }
+        .preview-nav-item.active { background: rgba(201,160,40,.12); color: var(--lp-gold); border-right: 2px solid var(--lp-gold); }
+        .preview-main { flex: 1; padding: 1rem 1.25rem; }
+        .preview-stats { display: flex; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+        .preview-stat-card {
+            background: var(--lp-bg); border: 1px solid var(--lp-border); border-radius: 8px;
+            padding: .6rem .9rem; min-width: 100px;
+        }
+        .preview-stat-num { font-size: 1.3rem; font-weight: 800; color: var(--lp-text); line-height: 1; }
+        .preview-stat-lbl { font-size: .7rem; color: var(--lp-muted); margin-top: 2px; }
+        .preview-table-mini { width: 100%; border-collapse: collapse; }
+        .preview-table-mini thead th { background: var(--lp-bg); font-size: .7rem; color: var(--lp-muted); text-transform: uppercase; font-weight: 700; padding: .35rem .5rem; border-bottom: 1px solid var(--lp-border); }
+        .preview-table-mini tbody td { font-size: .78rem; color: #334155; padding: .4rem .5rem; border-bottom: 1px solid #f1f5f9; }
+        .phase-mini { font-size: .7rem; font-weight: 600; border-radius: 20px; padding: .15rem .6rem; }
+        .phase-ferm { background: #dbeafe; color: #1d4ed8; }
+        .phase-carb { background: #f0fdf4; color: #15803d; }
+        .phase-mace { background: #fef3c7; color: #92400e; }
+
+        /* ── HOW IT WORKS ── */
+        .lp-steps { background: var(--lp-dark); padding: 5rem 0; }
+        .step-num {
+            width: 48px; height: 48px; border-radius: 50%; background: rgba(201,160,40,.15);
+            border: 2px solid var(--lp-gold); color: var(--lp-gold); font-weight: 800; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; flex-shrink: 0;
+        }
+        .step-title { font-weight: 700; color: #fff; font-size: .97rem; margin-bottom: .4rem; }
+        .step-desc  { color: #94a3b8; font-size: .86rem; line-height: 1.6; }
+        .step-connector {
+            display: none; width: 60px; height: 2px; background: rgba(201,160,40,.2);
+            align-self: flex-start; margin-top: 24px;
+        }
+        @media (min-width: 768px) { .step-connector { display: block; } }
+
+        /* ── DEMO CALLOUT ── */
+        .lp-demo-callout {
+            background: linear-gradient(135deg, #0f172a 0%, var(--lp-dark2) 100%);
+            border: 1px solid rgba(201,160,40,.2); border-radius: 16px;
+            padding: 2.5rem; text-align: center; max-width: 680px; margin: 0 auto;
+        }
+        .demo-cred-box {
+            display: inline-flex; gap: 2rem; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1);
+            border-radius: 10px; padding: .75rem 2rem; margin: 1.25rem 0 1.5rem; flex-wrap: wrap; justify-content: center;
+        }
+        .demo-cred { text-align: left; }
+        .demo-cred small { color: #64748b; font-size: .75rem; display: block; }
+        .demo-cred strong { color: #e2e8f0; font-size: 1rem; font-family: monospace; }
+        .btn-demo-enter {
+            background: var(--lp-gold); color: var(--lp-dark); border: none; border-radius: 10px;
+            padding: .75rem 2rem; font-weight: 700; font-size: .95rem; cursor: pointer;
+            transition: all .18s; display: inline-flex; align-items: center; gap: .5rem;
+        }
+        .btn-demo-enter:hover { background: var(--lp-gold-h); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
+
+        /* ── PLANES STRIP ── */
+        .lp-plans { background: #fff; padding: 5rem 0; }
+        .plan-strip-card {
+            background: #fff; border: 2px solid var(--lp-border); border-radius: 14px;
+            padding: 1.75rem; height: 100%; display: flex; flex-direction: column;
+            transition: transform .18s, box-shadow .18s, border-color .18s;
+        }
+        .plan-strip-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
+        .plan-strip-card.featured { border-color: var(--lp-blue); }
+        .plan-featured-badge {
+            background: var(--lp-blue); color: #fff; font-size: .72rem; font-weight: 700;
+            border-radius: 20px; padding: .2rem .8rem; text-transform: uppercase; letter-spacing: .04em;
+            display: inline-block; margin-bottom: .6rem;
+        }
+        .plan-strip-name { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1rem; color: var(--lp-text); margin-bottom: .2rem; }
+        .plan-strip-price { font-size: 1.75rem; font-weight: 800; color: var(--lp-text); }
+        .plan-strip-price span { font-size: .88rem; font-weight: 400; color: var(--lp-muted); }
+        .plan-strip-desc { color: var(--lp-muted); font-size: .84rem; margin: .4rem 0 1rem; }
+        .plan-strip-features { list-style: none; padding: 0; margin: 0 0 1.5rem; flex: 1; }
+        .plan-strip-features li { font-size: .84rem; color: #334155; padding: .3rem 0; display: flex; align-items: center; gap: .5rem; border-bottom: 1px solid #f1f5f9; }
+        .plan-strip-features li:last-child { border-bottom: none; }
+        .plan-strip-features .bi-check-circle-fill { color: #16a34a; flex-shrink: 0; }
+        .plan-strip-features .bi-dash-circle       { color: #cbd5e1; flex-shrink: 0; }
+        .btn-plan-strip {
+            width: 100%; padding: .7rem; border-radius: 10px; font-weight: 600; font-size: .9rem;
+            text-decoration: none; text-align: center; display: block; transition: all .18s;
+        }
+        .btn-plan-strip-primary { background: var(--lp-blue); color: #fff; border: none; }
+        .btn-plan-strip-primary:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+        .btn-plan-strip-outline { background: transparent; color: var(--lp-blue); border: 2px solid var(--lp-blue); }
+        .btn-plan-strip-outline:hover { background: var(--lp-blue); color: #fff; }
+
+        /* ── CTA FINAL ── */
+        .lp-cta-final {
+            background: linear-gradient(135deg, var(--lp-dark) 0%, #1e3a5f 100%);
+            padding: 5rem 0;
+        }
+        .cta-box {
+            max-width: 680px; margin: 0 auto; text-align: center;
+        }
+        .cta-title { font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 3vw, 2rem); color: #fff; margin-bottom: .75rem; }
+        .cta-sub   { color: #94a3b8; font-size: .95rem; margin-bottom: 2rem; }
+        .cta-form  { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 1.75rem; text-align: left; }
+        .cta-form .form-label { color: #cbd5e1; font-size: .84rem; font-weight: 600; }
+        .cta-form .form-control { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.15); color: #fff; }
+        .cta-form .form-control::placeholder { color: rgba(255,255,255,.35); }
+        .cta-form .form-control:focus { background: rgba(255,255,255,.12); border-color: var(--lp-gold); box-shadow: 0 0 0 3px rgba(201,160,40,.2); color: #fff; }
+        .subdom-preview-cta { background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.12); border-radius: 7px; padding: .4rem .8rem; font-family: monospace; font-size: .9rem; color: #94a3b8; margin-top: .35rem; }
+        .subdom-preview-cta .subdom-val { color: var(--lp-gold); }
+        .avail-cta { font-size: .8rem; margin-top: .3rem; display: none; }
+        .avail-cta.ok  { color: #22c55e; }
+        .avail-cta.err { color: #f87171; }
+        .btn-cta-submit {
+            width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none;
+            border-radius: 10px; padding: .85rem; font-weight: 700; font-size: 1rem;
+            cursor: pointer; transition: all .18s; margin-top: .5rem;
+        }
+        .btn-cta-submit:hover { background: var(--lp-gold-h); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
+        .cta-trust { text-align: center; color: #64748b; font-size: .8rem; margin-top: .75rem; }
+
+        /* ── FOOTER ── */
+        .lp-footer { background: var(--lp-dark); border-top: 1px solid rgba(255,255,255,.07); padding: 2rem 0; }
+        .footer-brand { font-family: 'Cinzel', serif; font-weight: 700; color: var(--lp-gold); font-size: 1.1rem; }
+        .footer-link { color: rgba(255,255,255,.5); font-size: .84rem; text-decoration: none; transition: color .15s; }
+        .footer-link:hover { color: rgba(255,255,255,.85); }
+        .footer-copy { color: #475569; font-size: .8rem; }
+
+        /* ── DARK MODE ── */
+        html.dark-mode .feat-card { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .feat-title { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .plan-strip-card { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .plan-strip-name, html.dark-mode .plan-strip-price { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .plan-strip-features li { color: var(--dm-text-soft, #cbd5e1); border-color: var(--dm-border-faint, rgba(100,116,139,.1)); }
+        html.dark-mode .preview-window { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .preview-stat-card { background: var(--dm-bg, #0f172a); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .preview-stat-num { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .lp-features, html.dark-mode .lp-plans { background: var(--dm-bg, #0f172a); }
+        html.dark-mode .lp-preview { background: var(--dm-bg-deep, #080d1a); }
+    </style>
+</head>
+<body>
+
+<!-- Hidden demo login form (CSP-compliant auto-submit) -->
+<form id="demoLoginForm" action="/login" method="post" style="display:none">
+    <input type="hidden" name="username" value="demo">
+    <input type="hidden" name="password" value="demo">
+    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+</form>
+
+<!-- ══════════════════════════════════════════════════════
+     NAVBAR
+     ══════════════════════════════════════════════════════ -->
+<nav class="lp-nav navbar navbar-expand-lg">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/landing}">
+            <i class="bi bi-droplet-fill"></i>
+            <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span>
+        </a>
+        <button class="navbar-toggler" type="button"
+                data-bs-toggle="collapse" data-bs-target="#navMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMenu">
+            <ul class="navbar-nav mx-auto gap-1">
+                <li class="nav-item"><a class="nav-link" href="#features">Módulos</a></li>
+                <li class="nav-item"><a class="nav-link" href="#como-funciona">Cómo funciona</a></li>
+                <li class="nav-item"><a class="nav-link" href="#planes-section">Planes</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/login}">Iniciar sesión</a></li>
+            </ul>
+            <div class="d-flex gap-2 mt-2 mt-lg-0">
+                <button type="button" class="btn-nav-demo" id="btnNavDemo">
+                    <i class="bi bi-flask me-1"></i>Ver demo
+                </button>
+                <a th:href="@{/planes}" class="btn-nav-primary">
+                    Prueba gratis <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════
+     HERO
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-hero">
+    <div class="container">
+        <div class="hero-badge">
+            <i class="bi bi-award-fill me-1"></i>Sistema SaaS para cervecerías artesanales
+        </div>
+        <h1 class="hero-title">
+            De la maceración a la venta —<br>
+            <span>todo en un solo sistema</span>
+        </h1>
+        <p class="hero-sub">
+            Trazabilidad completa de lotes, gestión de recetas, inventario inteligente, BPM,
+            ventas e inteligencia artificial integrada. Diseñado para cervecerías artesanales
+            que quieren crecer sin perder el control.
+        </p>
+        <div class="hero-ctas">
+            <button type="button" class="btn-hero-primary" id="btnHeroDemo">
+                <i class="bi bi-play-circle-fill"></i>Ver demo en vivo
+            </button>
+            <a th:href="@{/planes}" class="btn-hero-outline">
+                Prueba gratis 14 días <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        <div class="hero-trust">
+            <span><i class="bi bi-check-circle-fill"></i>Sin tarjeta de crédito</span>
+            <span><i class="bi bi-check-circle-fill"></i>14 días gratis</span>
+            <span><i class="bi bi-check-circle-fill"></i>Cancela cuando quieras</span>
+            <span><i class="bi bi-check-circle-fill"></i>Configuración en minutos</span>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     STATS STRIP
+     ══════════════════════════════════════════════════════ -->
+<div class="lp-stats">
+    <div class="container">
+        <div class="row g-3 justify-content-center">
+            <div class="col-6 col-sm-3 stat-pill">
+                <strong>15+</strong>Módulos integrados
+            </div>
+            <div class="col-6 col-sm-3 stat-pill">
+                <strong>Multi-tenant</strong>Cada cervecería aislada
+            </div>
+            <div class="col-6 col-sm-3 stat-pill">
+                <strong>IA</strong>Claude AI integrado
+            </div>
+            <div class="col-6 col-sm-3 stat-pill">
+                <strong>99%+</strong>Cobertura de tests
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     FEATURES / MÓDULOS
+     ══════════════════════════════════════════════════════ -->
+<section id="features" class="lp-features">
+    <div class="container">
+        <div class="text-center">
+            <div class="section-label">Módulos</div>
+            <h2 class="section-title">Todo lo que necesita tu cervecería</h2>
+            <p class="section-sub">Un sistema completo desde la primera maceración hasta el análisis de rentabilidad.</p>
+        </div>
+        <div class="row g-4">
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon trazabilidad"><i class="bi bi-layers-fill"></i></div>
+                    <div class="feat-title">Trazabilidad de lotes</div>
+                    <p class="feat-desc">Seguimiento completo desde macerado hasta carbonatación. Kanban de producción, lecturas de densidad y temperatura con gráficas en tiempo real, cálculo automático de ABV y eficiencia.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon recetas"><i class="bi bi-journal-text"></i></div>
+                    <div class="feat-title">Recetas y brewsheet</div>
+                    <p class="feat-desc">Gestión completa con escalones de macerado, hervor y adjuntos. Importa y exporta en BeerXML. Calculadora de escala automática. Asistente de recetas con IA.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon inventario"><i class="bi bi-box-seam-fill"></i></div>
+                    <div class="feat-title">Inventario inteligente</div>
+                    <p class="feat-desc">Control de stock con descuento automático al crear lotes. Alertas de bajo stock y vencimientos por email y WhatsApp. Órdenes de compra optimizadas con IA.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon bpm"><i class="bi bi-shield-fill-check"></i></div>
+                    <div class="feat-title">BPM e inocuidad</div>
+                    <p class="feat-desc">Control de salud diario con firma digital. Registro de desinfectantes, control de plagas y limpieza. Cumplimiento de buenas prácticas de manufactura alimentaria.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon comercial"><i class="bi bi-briefcase-fill"></i></div>
+                    <div class="feat-title">Comercial completo</div>
+                    <p class="feat-desc">Facturas de proveedores con análisis por IA, gestión de clientes, ventas por formato (botellas, barriles, latas), cotizaciones y reportes de rentabilidad por estilo.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4">
+                <div class="feat-card">
+                    <div class="feat-icon ia"><i class="bi bi-robot"></i></div>
+                    <div class="feat-title">Inteligencia artificial</div>
+                    <p class="feat-desc">Diagnóstico automático de fermentación, generación de recetas desde texto, análisis de rentabilidad, descripciones comerciales y puntuación BJCP — todo con Claude AI.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     APP PREVIEW
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-preview">
+    <div class="container">
+        <div class="text-center mb-4">
+            <div class="section-label">Vista previa</div>
+            <h2 class="section-title">Así se ve por dentro</h2>
+            <p class="section-sub" style="margin-bottom:2.5rem">Una interfaz limpia y eficiente, diseñada para el flujo diario de una cervecería.</p>
+        </div>
+        <div class="preview-window">
+            <div class="preview-topbar">
+                <div class="preview-topbar-title">
+                    <i class="bi bi-droplet-fill" style="color:#c9a028"></i>
+                    <span th:text="${branding != null ? branding.name : 'Zymos'} + ' — Dashboard'">Zymos — Dashboard</span>
+                </div>
+                <div class="d-flex gap-1">
+                    <span class="dot dot-r"></span>
+                    <span class="dot dot-y"></span>
+                    <span class="dot dot-g"></span>
+                </div>
+            </div>
+            <div class="preview-body">
+                <!-- Sidebar -->
+                <div class="preview-sidebar">
+                    <div class="preview-nav-item active"><i class="bi bi-grid-fill"></i> Dashboard</div>
+                    <div class="preview-nav-item"><i class="bi bi-layers"></i> Lotes</div>
+                    <div class="preview-nav-item"><i class="bi bi-journal-text"></i> Recetas</div>
+                    <div class="preview-nav-item"><i class="bi bi-box-seam"></i> Inventario</div>
+                    <div class="preview-nav-item"><i class="bi bi-bar-chart"></i> Reportes</div>
+                    <div class="preview-nav-item"><i class="bi bi-robot"></i> Chat IA</div>
+                </div>
+                <!-- Main content -->
+                <div class="preview-main">
+                    <div class="preview-stats">
+                        <div class="preview-stat-card">
+                            <div class="preview-stat-num">12</div>
+                            <div class="preview-stat-lbl">Lotes activos</div>
+                        </div>
+                        <div class="preview-stat-card">
+                            <div class="preview-stat-num">4</div>
+                            <div class="preview-stat-lbl">Fermentando</div>
+                        </div>
+                        <div class="preview-stat-card">
+                            <div class="preview-stat-num" style="color:#16a34a">87%</div>
+                            <div class="preview-stat-lbl">Capacidad</div>
+                        </div>
+                        <div class="preview-stat-card">
+                            <div class="preview-stat-num" style="color:#2563eb">$4.2M</div>
+                            <div class="preview-stat-lbl">Ventas mes</div>
+                        </div>
+                    </div>
+                    <table class="preview-table-mini">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Estilo</th>
+                                <th>Densidad</th>
+                                <th>Fase</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>IPA-024</strong></td>
+                                <td>IPA Americana</td>
+                                <td>1.048</td>
+                                <td><span class="phase-mini phase-ferm">Fermentación</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>STO-012</strong></td>
+                                <td>Stout Imperial</td>
+                                <td>1.018</td>
+                                <td><span class="phase-mini phase-carb">Carbonatación</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>APA-031</strong></td>
+                                <td>APA Tropical</td>
+                                <td>1.056</td>
+                                <td><span class="phase-mini phase-mace">Macerado</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CÓMO FUNCIONA
+     ══════════════════════════════════════════════════════ -->
+<section id="como-funciona" class="lp-steps">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label" style="color:var(--lp-gold)">Cómo funciona</div>
+            <h2 class="section-title" style="color:#fff">En marcha en menos de 5 minutos</h2>
+        </div>
+        <div class="d-flex flex-column flex-md-row justify-content-center align-items-start gap-4 gap-md-0">
+            <div class="text-center" style="max-width:220px;margin:0 auto">
+                <div class="step-num">1</div>
+                <div class="step-title">Registra tu cervecería</div>
+                <p class="step-desc">Elige un plan, crea tu subdominio único y recibe tus credenciales por email en menos de 60 segundos. Sin tarjeta requerida para el trial.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="text-center" style="max-width:220px;margin:0 auto">
+                <div class="step-num">2</div>
+                <div class="step-title">Carga tus datos</div>
+                <p class="step-desc">El asistente de bienvenida te guía paso a paso: agrega tus recetas, equipos e inventario inicial. Puedes importar desde Excel si ya tienes datos.</p>
+            </div>
+            <div class="step-connector"></div>
+            <div class="text-center" style="max-width:220px;margin:0 auto">
+                <div class="step-num">3</div>
+                <div class="step-title">Gestiona y crece</div>
+                <p class="step-desc">Registra lotes, controla fermentaciones, genera reportes y deja que la IA te ayude a identificar oportunidades de mejora en tus procesos.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     DEMO EN VIVO
+     ══════════════════════════════════════════════════════ -->
+<section class="py-5" style="background:var(--lp-bg)">
+    <div class="container">
+        <div class="lp-demo-callout">
+            <i class="bi bi-flask" style="font-size:2rem;color:var(--lp-gold);display:block;margin-bottom:.75rem"></i>
+            <h3 style="color:#fff;font-family:'Cinzel',serif;font-size:1.3rem;margin-bottom:.5rem">Prueba el sistema ahora mismo</h3>
+            <p style="color:#94a3b8;font-size:.9rem;margin-bottom:.25rem">Sin registro. Sin tarjeta. Los datos se reinician automáticamente cada 24 horas.</p>
+            <div class="demo-cred-box">
+                <div class="demo-cred">
+                    <small>Usuario</small>
+                    <strong>demo</strong>
+                </div>
+                <div class="demo-cred">
+                    <small>Contraseña</small>
+                    <strong>demo</strong>
+                </div>
+            </div>
+            <button type="button" class="btn-demo-enter" id="btnDemoEnter">
+                <i class="bi bi-box-arrow-in-right"></i>Entrar al demo
+            </button>
+            <p style="color:#475569;font-size:.78rem;margin-top:.75rem;margin-bottom:0">
+                El tenant demo incluye lotes reales, recetas, inventario, BPM y ventas precargados.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     PLANES
+     ══════════════════════════════════════════════════════ -->
+<section id="planes-section" class="lp-plans">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label">Precios</div>
+            <h2 class="section-title">Planes para cada etapa de tu cervecería</h2>
+            <p class="section-sub">Sin contrato. Cancela cuando quieras. Cambia de plan en cualquier momento.</p>
+        </div>
+        <div class="row g-4 justify-content-center" th:if="${planes != null}">
+            <div class="col-md-4" th:each="plan, stat : ${planes}">
+                <div class="plan-strip-card" th:classappend="${stat.index == 1 ? ' featured' : ''}">
+                    <div th:if="${stat.index == 1}" class="plan-featured-badge">Más popular</div>
+                    <div class="plan-strip-name" th:text="${plan.displayName}">Plan</div>
+                    <div class="plan-strip-price">
+                        <span th:switch="${plan.name()}">
+                            <span th:case="'MACERADO'">$150.000</span>
+                            <span th:case="'COCCION'">$320.000</span>
+                            <span th:case="*">$550.000</span>
+                        </span>
+                        <span>COP/mes</span>
+                    </div>
+                    <p class="plan-strip-desc" th:switch="${plan.name()}">
+                        <span th:case="'MACERADO'">Trazabilidad y producción completa</span>
+                        <span th:case="'COCCION'">Lo que necesita una cervecería en crecimiento</span>
+                        <span th:case="*">Acceso total con roles y migración masiva</span>
+                    </p>
+                    <ul class="plan-strip-features">
+                        <li><i class="bi bi-check-circle-fill"></i>Trazabilidad de lotes</li>
+                        <li><i class="bi bi-check-circle-fill"></i>Recetas e inventario</li>
+                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">Facturas y comercial</span></li>
+                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i>Facturas y comercial</li>
+                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">BPM y reportes</span></li>
+                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i>BPM y reportes</li>
+                        <li th:if="${plan.name() == 'FERMENTACION'}"><i class="bi bi-check-circle-fill"></i>Roles y permisos</li>
+                        <li th:unless="${plan.name() == 'FERMENTACION'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">Roles y permisos</span></li>
+                    </ul>
+                    <a th:href="@{/planes}" th:classappend="${stat.index == 1 ? ' btn-plan-strip-primary' : ' btn-plan-strip-outline'}" class="btn-plan-strip">
+                        Elegir <span th:text="${plan.displayName}">plan</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <a th:href="@{/planes}" style="color:var(--lp-muted);font-size:.88rem;text-decoration:none">
+                <i class="bi bi-table me-1"></i>Ver comparativa completa de módulos →
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     CTA FINAL — TRIAL FORM
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-cta-final">
+    <div class="container">
+        <div class="cta-box">
+            <h2 class="cta-title">Comienza tu prueba gratuita de 14 días</h2>
+            <p class="cta-sub">Acceso completo al plan Fermentación. Sin tarjeta de crédito. Sin compromiso.</p>
+            <div class="cta-form">
+                <form action="/checkout/trial" method="post" id="ctaTrialForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="ctaNombre" class="form-label">Nombre de tu cervecería</label>
+                            <input type="text" class="form-control" id="ctaNombre" name="nombreCerveceria"
+                                   placeholder="La Cervecería del Valle" required maxlength="200">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ctaSub" class="form-label">Subdominio <small style="color:#64748b">(tu URL única)</small></label>
+                            <input type="text" class="form-control" id="ctaSub" name="subdominio"
+                                   placeholder="lacerveceria" required maxlength="30" autocomplete="off">
+                            <div class="subdom-preview-cta">
+                                <span class="subdom-val" id="ctaSubVal">tucerveceria</span><span style="color:#475569">.zymos.app</span>
+                            </div>
+                            <div class="avail-cta" id="ctaAvail"></div>
+                        </div>
+                        <div class="col-12">
+                            <label for="ctaEmail" class="form-label">Email de acceso</label>
+                            <input type="email" class="form-control" id="ctaEmail" name="email"
+                                   placeholder="hola@tucerveceria.com" required maxlength="200">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-cta-submit" id="btnCtaSubmit">
+                        <i class="bi bi-gift-fill me-1"></i>Activar prueba gratuita
+                    </button>
+                </form>
+                <div class="cta-trust">
+                    <i class="bi bi-shield-check me-1"></i>Sin tarjeta · Sin cargo · Podés contratar un plan pagado cuando quieras
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     FOOTER
+     ══════════════════════════════════════════════════════ -->
+<footer class="lp-footer">
+    <div class="container">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+            <div class="footer-brand">
+                <i class="bi bi-droplet-fill me-1"></i>
+                <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span>
+            </div>
+            <div class="d-flex gap-4 flex-wrap justify-content-center">
+                <a th:href="@{/landing}" class="footer-link">Inicio</a>
+                <a href="#features" class="footer-link">Módulos</a>
+                <a th:href="@{/planes}" class="footer-link">Planes</a>
+                <a th:href="@{/login}" class="footer-link">Iniciar sesión</a>
+            </div>
+            <div class="footer-copy">
+                © 2026 <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span> · Todos los derechos reservados
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:attr="nonce=${cspNonce}">
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Demo login buttons ────────────────────────────────────────────────────
+    var demoForm = document.getElementById('demoLoginForm');
+    ['btnNavDemo', 'btnHeroDemo', 'btnDemoEnter'].forEach(function (id) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener('click', function () { demoForm.submit(); });
+    });
+
+    // ── Smooth scroll for anchor links ───────────────────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+            var target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                e.preventDefault();
+                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
+
+    // ── CTA Trial form — subdomain logic ─────────────────────────────────────
+    var ctaTimer = null;
+    var ctaAvail = false;
+
+    function limpiar(val) {
+        return val.normalize('NFD').replace(/[̀-ͯ]/g, '')
+                  .toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    function verificarCta(sub) {
+        fetch('/checkout/verificar-subdominio?s=' + encodeURIComponent(sub))
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var badge = document.getElementById('ctaAvail');
+                badge.style.display = 'block';
+                badge.className = 'avail-cta ' + (data.disponible ? 'ok' : 'err');
+                badge.innerHTML = (data.disponible ? '✓ ' : '✗ ') + data.mensaje;
+                ctaAvail = data.disponible;
+            });
+    }
+
+    function actualizarCtaSub(raw) {
+        var clean = limpiar(raw);
+        document.getElementById('ctaSub').value = clean;
+        document.getElementById('ctaSubVal').textContent = clean || 'tucerveceria';
+        clearTimeout(ctaTimer);
+        var badge = document.getElementById('ctaAvail');
+        badge.style.display = 'none';
+        ctaAvail = false;
+        if (clean.length >= 3) {
+            ctaTimer = setTimeout(function () { verificarCta(clean); }, 500);
+        }
+    }
+
+    var ctaNombre = document.getElementById('ctaNombre');
+    var ctaSub    = document.getElementById('ctaSub');
+    if (ctaNombre) {
+        ctaNombre.addEventListener('input', function () {
+            if (!ctaSub.dataset.editadoManual) actualizarCtaSub(this.value);
+        });
+    }
+    if (ctaSub) {
+        ctaSub.addEventListener('input', function () {
+            this.dataset.editadoManual = '1';
+            actualizarCtaSub(this.value);
+        });
+    }
+
+    var ctaForm = document.getElementById('ctaTrialForm');
+    if (ctaForm) {
+        ctaForm.addEventListener('submit', function (e) {
+            var sub = document.getElementById('ctaSub').value;
+            if (sub.length < 3) {
+                e.preventDefault();
+                alert('El subdominio debe tener al menos 3 caracteres.');
+                return;
+            }
+            if (!ctaAvail && sub.length >= 3) {
+                e.preventDefault();
+                alert('Verificá la disponibilidad del subdominio antes de continuar.');
+                return;
+            }
+            var btn = document.getElementById('btnCtaSubmit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creando tu cuenta…';
+        });
+    }
+});
+</script>
+</body>
+</html>

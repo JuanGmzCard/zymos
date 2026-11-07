@@ -2,6 +2,7 @@ package com.alera.controller;
 
 import com.alera.config.ExportBranding;
 import com.alera.config.TenantContext;
+import com.alera.dto.RentabilidadAnalisisDto;
 import com.alera.dto.RentabilidadLoteDto;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Tenant;
@@ -12,6 +13,7 @@ import com.alera.repository.LoteItemFacturaRepository;
 import com.alera.repository.VentaItemRepository;
 import com.alera.service.ExcelExportService;
 import com.alera.service.PdfExportService;
+import com.alera.service.RentabilidadAnalisisService;
 import com.alera.service.VentaService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Locale;
@@ -22,8 +24,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,19 +47,22 @@ public class ReporteController {
     private final VentaService              ventaService;
     private final LoteItemFacturaRepository loteItemFacturaRepo;
     private final VentaItemRepository       ventaItemRepo;
+    private final RentabilidadAnalisisService rentabilidadAnalisisService;
 
     public ReporteController(LoteCervezaRepository loteRepo,
                               ExcelExportService excelExportService,
                               PdfExportService pdfExportService,
                               VentaService ventaService,
                               LoteItemFacturaRepository loteItemFacturaRepo,
-                              VentaItemRepository ventaItemRepo) {
-        this.loteRepo            = loteRepo;
-        this.excelExportService  = excelExportService;
-        this.pdfExportService    = pdfExportService;
-        this.ventaService        = ventaService;
-        this.loteItemFacturaRepo = loteItemFacturaRepo;
-        this.ventaItemRepo       = ventaItemRepo;
+                              VentaItemRepository ventaItemRepo,
+                              RentabilidadAnalisisService rentabilidadAnalisisService) {
+        this.loteRepo                   = loteRepo;
+        this.excelExportService         = excelExportService;
+        this.pdfExportService           = pdfExportService;
+        this.ventaService               = ventaService;
+        this.loteItemFacturaRepo        = loteItemFacturaRepo;
+        this.ventaItemRepo              = ventaItemRepo;
+        this.rentabilidadAnalisisService = rentabilidadAnalisisService;
     }
 
     @GetMapping({"", "/"})
@@ -479,6 +486,28 @@ public class ReporteController {
         model.addAttribute("lotesEnRojo",        lotesEnRojo);
         model.addAttribute("chartMargen",        chartMargen);
         return "reportes/rentabilidad";
+    }
+
+    @PostMapping("/rentabilidad/analizar-ia")
+    @ResponseBody
+    public RentabilidadAnalisisDto analizarRentabilidadIa(
+            @RequestParam(required = false) String estilo,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+
+        List<RentabilidadLoteDto> filas = buildRentabilidadFilas(estilo, desde, hasta);
+
+        BigDecimal totalCosto    = filas.stream().filter(r -> r.costo() != null)
+                .map(RentabilidadLoteDto::costo).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalIngresos = filas.stream().filter(r -> r.ingresos() != null)
+                .map(RentabilidadLoteDto::ingresos).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalMargen   = totalIngresos.subtract(totalCosto).setScale(0, RoundingMode.HALF_UP);
+        BigDecimal totalMargenPct = totalIngresos.compareTo(BigDecimal.ZERO) > 0
+                ? totalMargen.multiply(BigDecimal.valueOf(100))
+                        .divide(totalIngresos, 1, RoundingMode.HALF_UP)
+                : null;
+
+        return rentabilidadAnalisisService.analizar(filas, totalIngresos, totalCosto, totalMargenPct);
     }
 
     @GetMapping("/ventas/excel")

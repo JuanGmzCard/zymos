@@ -216,16 +216,19 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
                 .requestMatchers("/error", "/error/**").permitAll()
-                .requestMatchers("/plan-vencido").permitAll()
+                .requestMatchers("/plan-vencido", "/plan-upgrade").permitAll()
+                .requestMatchers("/planes", "/landing", "/demo", "/checkout/**", "/webhook/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
 
+                .requestMatchers("/demo/**").authenticated()
                 .requestMatchers("/admin/tenants/**").hasRole("SUPERADMIN")
                 .requestMatchers("/usuarios/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/tipos-cerveza/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/admin/roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                .requestMatchers("/admin/whatsapp/**").access(adminOnly())
                 .requestMatchers("/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
 
                 // Trazabilidad — granular por operación
@@ -260,6 +263,9 @@ public class SecurityConfig {
 
                 // Tareas
                 .requestMatchers("/tareas/**").access(modulo("TAREAS"))
+
+                // Chat IA
+                .requestMatchers("/chat/**").authenticated()
 
                 // BPM
                 .requestMatchers("/bpm/salud/autorizaciones", "/bpm/salud/autorizar/**")
@@ -305,7 +311,7 @@ public class SecurityConfig {
                 // resuelve de forma directa (sin XOR) para compatibilidad con with(csrf()) en tests.
                 .csrfTokenRepository(new SafeHttpSessionCsrfTokenRepository())
                 .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
-                .ignoringRequestMatchers("/api/**", "/api/auth/**"));
+                .ignoringRequestMatchers("/api/**", "/api/auth/**", "/webhook/**"));
         return http.build();
     }
 }

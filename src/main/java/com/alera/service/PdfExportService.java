@@ -1,5 +1,10 @@
 package com.alera.service;
 
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.EncodeHintType;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
 import com.alera.config.ExportBranding;
 import com.alera.config.TempUtils;
 import com.alera.model.AdicionHervor;
@@ -29,6 +34,8 @@ import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -36,12 +43,14 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
 
 @Service
 public class PdfExportService {
@@ -2340,5 +2349,74 @@ public class PdfExportService {
         c.setBackgroundColor(bg); c.setBorderColor(C_BORDE);
         c.setPadding(5); c.setHorizontalAlignment(Element.ALIGN_CENTER);
         t.addCell(c);
+    }
+
+    // ── Etiqueta QR de lote ──────────────────────────────────────────────────
+
+    public byte[] generarEtiquetaQr(LoteCerveza lote, ExportBranding branding, String appBaseUrl, Locale locale) {
+        LOCALE_HOLDER.set(locale);
+        try {
+            com.lowagie.text.Rectangle pageSize = new com.lowagie.text.Rectangle(226, 283); // 80mm x 100mm
+            Document doc = new Document(pageSize, 12, 12, 14, 12);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            PdfWriter.getInstance(doc, bos);
+            doc.open();
+
+            Pal pal = Pal.of(branding);
+
+            // Header — nombre del tenant en color
+            Font fBrand = new Font(Font.HELVETICA, 9, Font.BOLD, pal.verde());
+            Paragraph header = new Paragraph(branding.name() != null ? branding.name().toUpperCase() : "ZYMOS", fBrand);
+            header.setAlignment(Element.ALIGN_CENTER);
+            header.setSpacingAfter(4);
+            doc.add(header);
+
+            // QR code
+            String url = appBaseUrl + "/ver/" + lote.getId();
+            byte[] qrBytes = generarQr(url, 180);
+            Image qrImg = Image.getInstance(qrBytes);
+            qrImg.setAlignment(Element.ALIGN_CENTER);
+            qrImg.scaleToFit(160, 160);
+            doc.add(qrImg);
+
+            // Código del lote
+            Font fCodigo = new Font(Font.HELVETICA, 13, Font.BOLD, new Color(30, 41, 59));
+            Paragraph codigo = new Paragraph(lote.getCodigoLote() != null ? lote.getCodigoLote() : "-", fCodigo);
+            codigo.setAlignment(Element.ALIGN_CENTER);
+            codigo.setSpacingBefore(6);
+            codigo.setSpacingAfter(2);
+            doc.add(codigo);
+
+            // Estilo
+            Font fEstilo = new Font(Font.HELVETICA, 9, Font.NORMAL, C_GRIS);
+            Paragraph estilo = new Paragraph(lote.getEstilo() != null ? lote.getEstilo() : "", fEstilo);
+            estilo.setAlignment(Element.ALIGN_CENTER);
+            estilo.setSpacingAfter(1);
+            doc.add(estilo);
+
+            // Fecha + Fase
+            Font fMeta = new Font(Font.HELVETICA, 7, Font.NORMAL, C_GRIS);
+            String meta = (lote.getFechaElaboracion() != null ? lote.getFechaElaboracion().format(FMT_FECHA) : "")
+                    + "  •  " + lote.getFaseActual();
+            Paragraph metaP = new Paragraph(meta, fMeta);
+            metaP.setAlignment(Element.ALIGN_CENTER);
+            doc.add(metaP);
+
+            doc.close();
+            return bos.toByteArray();
+        } catch (Exception e) {
+            throw new RuntimeException("Error generando etiqueta QR", e);
+        }
+    }
+
+    private byte[] generarQr(String contenido, int size) throws Exception {
+        Map<EncodeHintType, Object> hints = new EnumMap<>(EncodeHintType.class);
+        hints.put(EncodeHintType.ERROR_CORRECTION, ErrorCorrectionLevel.M);
+        hints.put(EncodeHintType.MARGIN, 1);
+        var matrix = new QRCodeWriter().encode(contenido, BarcodeFormat.QR_CODE, size, size, hints);
+        BufferedImage img = MatrixToImageWriter.toBufferedImage(matrix);
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(img, "PNG", bos);
+        return bos.toByteArray();
     }
 }

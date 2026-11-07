@@ -1,6 +1,7 @@
 package com.alera.controller;
 
 import com.alera.dto.OrdenCompraFormDto;
+import com.alera.dto.OptimizacionOcDto;
 import com.alera.model.Equipo;
 import com.alera.model.InsumoInventario;
 import com.alera.model.OrdenCompra;
@@ -43,6 +44,7 @@ public class OrdenCompraController {
     private final PdfExportService pdfExportService;
     private final InsumoInventarioRepository insumoRepo;
     private final EquipoRepository equipoRepo;
+    private final OptimizacionOcService optimizacionOcService;
 
     public OrdenCompraController(OrdenCompraService service,
                                  FacturaProveedorService facturaService,
@@ -51,7 +53,8 @@ public class OrdenCompraController {
                                  CategoriaEquipoService categoriaEquipoService,
                                  PdfExportService pdfExportService,
                                  InsumoInventarioRepository insumoRepo,
-                                 EquipoRepository equipoRepo) {
+                                 EquipoRepository equipoRepo,
+                                 OptimizacionOcService optimizacionOcService) {
         this.service                = service;
         this.facturaService         = facturaService;
         this.proveedorService       = proveedorService;
@@ -60,6 +63,7 @@ public class OrdenCompraController {
         this.pdfExportService       = pdfExportService;
         this.insumoRepo             = insumoRepo;
         this.equipoRepo             = equipoRepo;
+        this.optimizacionOcService  = optimizacionOcService;
     }
 
     // ── Lista ──────────────────────────────────────────────────────────────
@@ -295,5 +299,11 @@ public class OrdenCompraController {
             dto.getItems().add(d);
         });
         return dto;
+    }
+
+    @PostMapping(value = "/optimizar-ia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public OptimizacionOcDto optimizarIA(@RequestParam(defaultValue = "8") int semanas) {
+        return optimizacionOcService.analizar(semanas);
     }
 }

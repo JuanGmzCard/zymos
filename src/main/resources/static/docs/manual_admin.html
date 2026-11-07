@@ -124,6 +124,10 @@
       <a href="#plan">Plan y límites</a>
       <a href="#logs">Logs de acceso</a>
       <a href="#migracion">Importación masiva</a>
+      <a href="#moneda">Moneda y precios</a>
+      <a href="#whatsapp">Notificaciones WhatsApp</a>
+      <a href="#demo">Tenant demo</a>
+      <a href="#planes">Planes y pagos</a>
     </div>
   </nav>
 </aside>
@@ -368,6 +372,121 @@
         <strong>Orden recomendado de importación</strong>
         Importa los catálogos primero (tipos de cerveza), luego el almacén y equipos, luego producción (recetas primero, lotes después). Los módulos de ventas y barriles deben importarse después de producción porque referencian los lotes por su código.
       </div>
+    </div>
+
+    <!-- Moneda -->
+    <h2 id="moneda">Moneda y formato de precios</h2>
+    <p>Cada tenant puede configurar el símbolo de moneda que aparece en facturas, ventas, reportes de rentabilidad y exports de Excel y PDF.</p>
+    <ol class="steps">
+      <li>Ve a Admin → <strong>Cervecería</strong> → Editar datos del tenant.</li>
+      <li>En el campo <strong>"Símbolo de moneda"</strong> ingresa el símbolo de tu moneda local (ej: <code>$</code>, <code>COP</code>, <code>€</code>, <code>MXN</code>).</li>
+      <li>Guarda y limpia el caché con el botón <strong>"Limpiar caché"</strong> en la lista de tenants.</li>
+    </ol>
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">El símbolo de moneda es solo visual — ZYMOS no convierte valores entre divisas. Todos los cálculos se realizan en la moneda que configures.</div>
+    </div>
+
+    <!-- WhatsApp -->
+    <h2 id="whatsapp">Notificaciones WhatsApp</h2>
+    <p>ZYMOS puede enviar alertas automáticas por WhatsApp a los contactos que definas. Puedes registrar múltiples contactos y suscribir a cada uno solo a los tipos de alerta relevantes para su rol (el encargado de compras recibe alertas de bajo stock; el maestro cervecero recibe cambios de fase de lote).</p>
+    <p>Accede desde <strong>Admin → WhatsApp</strong>.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Requisito: cuenta Twilio</strong>
+        Las notificaciones WhatsApp se envían a través de <strong>Twilio WhatsApp Business API</strong>. Se requieren las variables de entorno <code>TWILIO_ACCOUNT_SID</code> y <code>TWILIO_AUTH_TOKEN</code>. Si no están configuradas, el sistema funciona en <strong>modo simulado</strong>: los mensajes se registran en el log pero no se envían.
+      </div>
+    </div>
+
+    <h3>Tipos de alerta disponibles</h3>
+    <table class="field-table">
+      <thead><tr><th>Tipo</th><th>Cuándo se envía</th></tr></thead>
+      <tbody>
+        <tr><td>Bajo stock</td><td>Revisión diaria: insumos cuyo stock está por debajo del mínimo configurado.</td></tr>
+        <tr><td>Vencimientos</td><td>Revisión diaria: insumos que vencen en los próximos 30 días.</td></tr>
+        <tr><td>Cambio de fase de lote</td><td>Inmediatamente cuando un lote avanza de fase (ej: de Cocción a Fermentación).</td></tr>
+        <tr><td>Mantenimiento pendiente</td><td>Revisión diaria: equipos en estado "En mantenimiento".</td></tr>
+        <tr><td>Alerta BPM salud</td><td>Inmediatamente cuando un empleado reporta síntomas y requiere autorización del admin.</td></tr>
+        <tr><td>Tarea asignada</td><td>Inmediatamente al crear o editar una tarea con un usuario asignado.</td></tr>
+        <tr><td>Plan por vencer</td><td>Revisión diaria: cuando el plan está vencido o próximo a vencer.</td></tr>
+        <tr><td>Resumen mensual</td><td>El primer día de cada mes con el resumen de producción del mes anterior.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Agregar un contacto WhatsApp</h3>
+    <ol class="steps">
+      <li>Ve a Admin → <strong>WhatsApp</strong> → <strong>"+ Nuevo contacto"</strong>.</li>
+      <li>Ingresa el nombre del contacto y su número de teléfono en formato <strong>E.164</strong> (con código de país, ej: <code>+573001234567</code>).</li>
+      <li>Marca las casillas de los tipos de alerta a los que quieres suscribir a este contacto. Puedes seleccionar uno o varios tipos.</li>
+      <li>Guarda. El contacto aparecerá en la lista con las suscripciones activas.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>El número debe haber aceptado mensajes de Twilio</strong>
+        En el sandbox de Twilio (entorno de pruebas), el destinatario debe primero enviar el mensaje <code>join &lt;sandbox-keyword&gt;</code> al número de Twilio antes de poder recibir mensajes. En producción con un número verificado esto no es necesario.
+      </div>
+    </div>
+
+    <h3>Gestionar contactos existentes</h3>
+    <ul>
+      <li><strong>Activar / desactivar:</strong> usa el botón de toggle en la lista para suspender temporalmente las notificaciones a un contacto sin eliminarlo.</li>
+      <li><strong>Editar suscripciones:</strong> haz clic en "Editar" para cambiar el número o las suscripciones del contacto.</li>
+      <li><strong>Eliminar:</strong> elimina el contacto y todas sus suscripciones permanentemente.</li>
+    </ul>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        Si el banner <em>"Modo simulado activo"</em> aparece en la lista de contactos, significa que las credenciales de Twilio no están configuradas. Los mensajes se registran en el log del servidor pero no llegan a WhatsApp.
+      </div>
+    </div>
+
+    <!-- Demo -->
+    <h2 id="demo">Tenant demo</h2>
+    <p>Si tu sistema incluye un tenant de demostración (<code>demo</code>), puedes reiniciarlo desde la lista de tenants. El tenant demo permite que potenciales clientes exploren el sistema con datos realistas sin afectar tu producción real.</p>
+
+    <h3>Resetear el tenant demo</h3>
+    <ol class="steps">
+      <li>Ve a Admin → <strong>Tenants</strong>.</li>
+      <li>Busca el tenant <code>demo</code> en la lista.</li>
+      <li>Haz clic en el botón <strong>"Reset Demo"</strong>.</li>
+      <li>ZYMOS borra todos los datos del tenant demo y los vuelve a sembrar con un conjunto de datos realistas: lotes en distintas fases, insumos, proveedores, clientes y una venta de ejemplo. El usuario <code>demo</code> / <code>demo</code> se restaura automáticamente.</li>
+    </ol>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">El reset borra todos los datos actuales del tenant <code>demo</code>. Esta operación no se puede deshacer. No afecta ningún otro tenant.</div>
+    </div>
+
+    <!-- Planes y pagos -->
+    <h2 id="planes">Planes y pagos self-service</h2>
+    <p>ZYMOS incluye un sistema de checkout que permite a nuevos clientes contratar un plan y auto-provisionarse sin intervención manual del equipo de ventas.</p>
+
+    <h3>Planes disponibles</h3>
+    <table class="field-table">
+      <thead><tr><th>Plan</th><th>Módulos incluidos</th></tr></thead>
+      <tbody>
+        <tr><td>Macerado</td><td>Trazabilidad, Recetas, Inventario, Equipos, BPM, Chat IA</td></tr>
+        <tr><td>Cocción</td><td>Todo Macerado + Comercial (facturas, ventas, OC), Barriles, Reportes, Tareas</td></tr>
+        <tr><td>Fermentación</td><td>Todo Cocción + Roles personalizados RBAC, Importación masiva</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Flujo de checkout para nuevos clientes</h3>
+    <ol class="steps">
+      <li>El nuevo cliente visita <code>/planes</code> y selecciona su plan.</li>
+      <li>Completa el nombre de su cervecería y correo. ZYMOS genera un subdominio único automáticamente (ej: <code>micerveceria.zymos.app</code>).</li>
+      <li>Se redirige a la pasarela de pago (MercadoPago). Al aprobar el pago, ZYMOS crea el tenant, los roles, los tipos de cerveza por defecto y envía un email de bienvenida con las credenciales de acceso.</li>
+      <li>El nuevo tenant puede iniciar sesión de inmediato en su subdominio.</li>
+    </ol>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">Si el sistema no tiene configurado un token de MercadoPago (MP_ACCESS_TOKEN), el checkout funciona en <strong>modo simulado</strong>: el pago se aprueba automáticamente para pruebas. Útil en entornos de desarrollo y demo.</div>
     </div>
 
   </div>

@@ -42,6 +42,7 @@ class TenantAdminControllerTest {
     @MockBean EmailService               emailService;
     @MockBean PasswordEncoder            passwordEncoder;
     @MockBean TenantMetricsService       metricsService;
+    @MockBean DemoDataSeeder             demoDataSeeder;
 
     @BeforeEach
     void setUp() {

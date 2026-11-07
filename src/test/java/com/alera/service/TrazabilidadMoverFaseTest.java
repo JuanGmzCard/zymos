@@ -27,15 +27,18 @@ import static org.mockito.Mockito.*;
 @DisplayName("TrazabilidadService — moverFase")
 class TrazabilidadMoverFaseTest {
 
-    @Mock private LoteCervezaRepository   loteRepo;
-    @Mock private EquipoRepository        equipoRepo;
-    @Mock private RecetaRepository        recetaRepo;
-    @Mock private FacturaItemRepository   facturaItemRepo;
-    @Mock private HistorialLoteRepository historialRepo;
-    @Mock private InsumoInventarioService insumoService;
-    @Mock private LoteMapper              loteMapper;
-    @Mock private EntityManager           em;
-    @Mock private TenantRepository        tenantRepo;
+    @Mock private LoteCervezaRepository        loteRepo;
+    @Mock private EquipoRepository             equipoRepo;
+    @Mock private RecetaRepository             recetaRepo;
+    @Mock private FacturaItemRepository        facturaItemRepo;
+    @Mock private HistorialLoteRepository      historialRepo;
+    @Mock private InsumoInventarioService      insumoService;
+    @Mock private LoteMapper                   loteMapper;
+    @Mock private EntityManager                em;
+    @Mock private TenantRepository             tenantRepo;
+    @Mock private LecturaFermentacionRepository lecturaRepo;
+    @Mock private EmailService                 emailService;
+    @Mock private WhatsAppService              whatsAppService;
 
     @InjectMocks
     private TrazabilidadService service;

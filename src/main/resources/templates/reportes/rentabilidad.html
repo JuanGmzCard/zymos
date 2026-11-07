@@ -97,7 +97,11 @@
             <h1><i class="bi bi-currency-dollar me-2"></i><span th:text="#{reportes.rent.title}">Rentabilidad por Lote</span></h1>
             <div class="subtitle" th:text="#{reportes.rent.subtitle}">Margen bruto por lote: ingresos de ventas despachadas vs. costos de producción asignados</div>
         </div>
-        <div class="d-flex gap-2 pt-1">
+        <div class="d-flex gap-2 pt-1 flex-wrap">
+            <button th:if="${iaConfigurada}" class="btn btn-primary btn-sm" id="btnAnalizarRentIA"
+                    data-bs-toggle="modal" data-bs-target="#modalRentIA">
+                <i class="bi bi-stars me-1"></i><span th:text="#{reporte.ia.rent.btn}">Analizar con IA</span>
+            </button>
             <a th:href="@{/reportes/rentabilidad/excel(desde=${desde != null ? #temporals.format(desde,'yyyy-MM-dd') : ''},hasta=${hasta != null ? #temporals.format(hasta,'yyyy-MM-dd') : ''},estilo=${estilo})}"
                class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-excel me-1"></i><span th:text="#{fact.btn.excel}">Excel</span>
@@ -351,12 +355,82 @@
 
 </div>
 
+<!-- Modal: Análisis de Rentabilidad IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalRentIA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2 text-primary"></i>
+                    <span th:text="#{reporte.ia.rent.title}">Análisis de Rentabilidad con IA</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Spinner -->
+                <div id="rentIaSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="mt-2 text-muted small" th:text="#{reporte.ia.rent.analizando}">Analizando datos...</div>
+                </div>
+                <!-- Error -->
+                <div id="rentIaError" class="alert alert-danger d-none"></div>
+                <!-- Resultados -->
+                <div id="rentIaResultados" class="d-none">
+                    <div id="rentIaMockBadge" class="d-none mb-3">
+                        <span class="badge bg-warning text-dark"><i class="bi bi-flask me-1"></i><span th:text="#{ia.mock.badge}">Modo de prueba</span></span>
+                    </div>
+                    <!-- Tendencia -->
+                    <div class="mb-3 p-3 rounded" style="background:#f0f9ff; border:1px solid #bae6fd;">
+                        <div class="fw-semibold text-primary mb-1" style="font-size:0.8rem; text-transform:uppercase; letter-spacing:.05em;" th:text="#{reporte.ia.rent.tendencia}">Tendencia general</div>
+                        <div id="rentIaTendencia" style="font-size:0.9rem;"></div>
+                    </div>
+                    <!-- Estilos -->
+                    <div class="d-flex gap-3 mb-3 flex-wrap">
+                        <div class="p-3 rounded flex-fill" style="background:#f0fdf4; border:1px solid #bbf7d0; min-width:160px;">
+                            <div class="fw-semibold mb-1" style="font-size:0.75rem; color:#15803d; text-transform:uppercase;" th:text="#{reporte.ia.rent.estilo.mejor}">Estilo más rentable</div>
+                            <div id="rentIaMejorEstilo" class="fw-bold" style="color:#166534;"></div>
+                        </div>
+                        <div class="p-3 rounded flex-fill" style="background:#fef2f2; border:1px solid #fecaca; min-width:160px;">
+                            <div class="fw-semibold mb-1" style="font-size:0.75rem; color:#dc2626; text-transform:uppercase;" th:text="#{reporte.ia.rent.estilo.peor}">Estilo en riesgo</div>
+                            <div id="rentIaPeorEstilo" class="fw-bold" style="color:#991b1b;"></div>
+                        </div>
+                    </div>
+                    <!-- Insights -->
+                    <div class="mb-3">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem; color:#475569; text-transform:uppercase; letter-spacing:.05em;" th:text="#{reporte.ia.rent.insights}">Insights clave</div>
+                        <ul id="rentIaInsightsList" class="mb-0" style="font-size:0.9rem; padding-left:1.25rem;"></ul>
+                    </div>
+                    <!-- Alertas -->
+                    <div id="rentIaAlertasSection" class="d-none mb-3">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem; color:#dc2626; text-transform:uppercase; letter-spacing:.05em;" th:text="#{reporte.ia.rent.alertas}">Alertas</div>
+                        <ul id="rentIaAlertasList" class="mb-0" style="font-size:0.9rem; padding-left:1.25rem; color:#dc2626;"></ul>
+                    </div>
+                    <!-- Recomendaciones -->
+                    <div>
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem; color:#475569; text-transform:uppercase; letter-spacing:.05em;" th:text="#{reporte.ia.rent.recomendaciones}">Recomendaciones</div>
+                        <ul id="rentIaRecsList" class="mb-0" style="font-size:0.9rem; padding-left:1.25rem;"></ul>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="rentIaReintentar" th:text="#{oc.ia.reintentar}">Reintentar</button>
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" th:attr="nonce=${cspNonce}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js" th:attr="nonce=${cspNonce}"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
 var CHART_DATA = /*[[${chartMargen}]]*/ {};
 var RPTRENT_MSG = {
     margenLabel: /*[[#{reportes.rent.js.margen.label}]]*/ 'Margen bruto ($)'
+};
+var RENT_IA_PARAMS = {
+    estilo: /*[[${estilo}]]*/ null,
+    desde:  /*[[${desde}]]*/ null,
+    hasta:  /*[[${hasta}]]*/ null
 };
 </script>
 <script th:attr="nonce=${cspNonce}">
@@ -412,6 +486,90 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var iaEjecutado = false;
+
+    function ejecutarAnalisisIA() {
+        document.getElementById('rentIaSpinner').classList.remove('d-none');
+        document.getElementById('rentIaResultados').classList.add('d-none');
+        document.getElementById('rentIaError').classList.add('d-none');
+
+        var csrf  = document.querySelector('meta[name="_csrf"]');
+        var hdr   = document.querySelector('meta[name="_csrf_header"]');
+        var params = new URLSearchParams();
+        if (RENT_IA_PARAMS.estilo) params.append('estilo', RENT_IA_PARAMS.estilo);
+        if (RENT_IA_PARAMS.desde)  params.append('desde',  RENT_IA_PARAMS.desde);
+        if (RENT_IA_PARAMS.hasta)  params.append('hasta',  RENT_IA_PARAMS.hasta);
+
+        var headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+        if (csrf && hdr) headers[hdr.content] = csrf.content;
+
+        fetch('/reportes/rentabilidad/analizar-ia', {
+            method: 'POST',
+            headers: headers,
+            body: params.toString()
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            document.getElementById('rentIaSpinner').classList.add('d-none');
+            if (data.error) {
+                document.getElementById('rentIaError').textContent = data.error;
+                document.getElementById('rentIaError').classList.remove('d-none');
+                return;
+            }
+            renderResultados(data);
+            document.getElementById('rentIaResultados').classList.remove('d-none');
+            iaEjecutado = true;
+        })
+        .catch(function(e) {
+            document.getElementById('rentIaSpinner').classList.add('d-none');
+            document.getElementById('rentIaError').textContent = 'Error al conectar: ' + e.message;
+            document.getElementById('rentIaError').classList.remove('d-none');
+        });
+    }
+
+    function renderResultados(data) {
+        document.getElementById('rentIaMockBadge').classList.toggle('d-none', !data.modoMock);
+        document.getElementById('rentIaTendencia').textContent = data.tendencia || '';
+        document.getElementById('rentIaMejorEstilo').textContent = data.estiloMasRentable || '—';
+        document.getElementById('rentIaPeorEstilo').textContent  = data.estiloMenosRentable || '—';
+
+        renderList('rentIaInsightsList', data.insights || []);
+        renderList('rentIaRecsList', data.recomendaciones || []);
+
+        var alertas = data.alertas || [];
+        document.getElementById('rentIaAlertasSection').classList.toggle('d-none', alertas.length === 0);
+        renderList('rentIaAlertasList', alertas);
+    }
+
+    function renderList(id, items) {
+        var ul = document.getElementById(id);
+        ul.innerHTML = '';
+        items.forEach(function(item) {
+            var li = document.createElement('li');
+            li.textContent = item;
+            li.style.marginBottom = '0.35rem';
+            ul.appendChild(li);
+        });
+        if (items.length === 0) {
+            var li = document.createElement('li');
+            li.textContent = '—';
+            li.style.color = '#94a3b8';
+            ul.appendChild(li);
+        }
+    }
+
+    document.getElementById('modalRentIA').addEventListener('show.bs.modal', function() {
+        if (!iaEjecutado) ejecutarAnalisisIA();
+    });
+
+    document.getElementById('rentIaReintentar').addEventListener('click', function() {
+        iaEjecutado = false;
+        ejecutarAnalisisIA();
+    });
+})();
 </script>
 </body>
 </html>

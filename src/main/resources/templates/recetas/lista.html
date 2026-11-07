@@ -158,7 +158,18 @@
                 <h1 th:text="#{recetas.title}">Recetas</h1>
             </div>
         </div>
-        <div class="phm-actions">
+        <div class="phm-actions d-flex gap-2">
+            <button th:if="${iaConfigurada}" type="button" id="btnCrearConIA"
+                    sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
+                    class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-stars me-1"></i><span th:text="#{recetas.ia.btn}">Crear con IA</span>
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm"
+                    sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
+                    data-bs-toggle="modal" data-bs-target="#modalBeerXml"
+                    th:title="#{recetas.action.importar.beerxml}">
+                <i class="bi bi-file-earmark-code me-1"></i><span th:text="#{recetas.action.importar.beerxml}">Importar BeerXML</span>
+            </button>
             <a th:href="@{/recetas/nueva}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN') or hasAuthority('MODULO_RECETAS_CREAR')"
                class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.nueva}">Nueva Receta</span>
@@ -326,6 +337,117 @@
 
 </div>
 
+<!-- Modal Importar BeerXML -->
+<div class="modal fade" id="modalBeerXml" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-code me-2"></i>
+                    <span th:text="#{recetas.importar.beerxml.title}">Importar receta desde BeerXML</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="/recetas/importar-beerxml" method="post" enctype="multipart/form-data">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <div class="modal-body">
+                    <p class="text-muted small mb-3" th:text="#{recetas.importar.beerxml.desc}">
+                        Sube un archivo .xml en formato BeerXML 1.0.
+                    </p>
+                    <div class="mb-3">
+                        <input type="file" name="archivo" accept=".xml,text/xml,application/xml"
+                               class="form-control" required>
+                    </div>
+                    <div class="alert alert-warning d-flex gap-2 align-items-start py-2 px-3 small mb-0">
+                        <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+                        <span th:text="#{recetas.importar.beerxml.warning}">Solo BeerXML 1.0.</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-upload me-1"></i><span th:text="#{recetas.action.importar.beerxml}">Importar BeerXML</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Asistente IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalRecetaIA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2" style="color:#fbbf24;"></i>
+                    <span th:text="#{recetas.ia.modal.title}">Asistente de Recetas con IA</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="iaModalBody">
+                <!-- Paso 1: Formulario -->
+                <div id="iaStep1">
+                    <p class="text-muted small mb-3" th:text="#{recetas.ia.modal.subtitle}">
+                        Describe la cerveza que quieres elaborar y la IA generará una receta completa con ingredientes, escalones de maceración y adiciones de lúpulo.
+                    </p>
+                    <div id="iaMockAlert" class="alert alert-warning small d-none" role="alert">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span th:text="#{recetas.ia.mock.aviso}">Modo de prueba activo — configura ANTHROPIC_API_KEY para recetas personalizadas.</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold" for="iaDescripcion" th:text="#{recetas.ia.desc.label}">Descripción de la cerveza *</label>
+                        <textarea id="iaDescripcion" class="form-control" rows="4"
+                                  th:placeholder="#{recetas.ia.desc.ph}"
+                                  placeholder="Ej: Quiero una IPA con notas cítricas, amargor moderado y cuerpo ligero, perfecta para el verano..."></textarea>
+                        <div id="iaDescError" class="text-danger small mt-1 d-none" th:text="#{recetas.ia.desc.requerida}">La descripción es obligatoria.</div>
+                    </div>
+                    <div class="mb-3 col-md-4">
+                        <label class="form-label fw-semibold" for="iaVolumen" th:text="#{recetas.ia.vol.label}">Volumen objetivo (L)</label>
+                        <input type="number" id="iaVolumen" class="form-control" min="1" max="2000"
+                               th:placeholder="#{recetas.ia.vol.ph}" placeholder="20">
+                    </div>
+                </div>
+                <!-- Paso 2: Spinner -->
+                <div id="iaStep2" class="text-center py-5 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:3rem;height:3rem;"></div>
+                    <p class="text-muted" th:text="#{recetas.ia.generando}">Generando receta con IA...</p>
+                </div>
+                <!-- Paso 3: Preview -->
+                <div id="iaStep3" class="d-none">
+                    <div id="iaMockBadge" class="d-none mb-3">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+                    <div class="p-3 rounded mb-3" style="background:#f8fafc;border:1px solid #e2e8f0;">
+                        <div class="d-flex align-items-center gap-3 mb-2">
+                            <span class="fw-bold fs-5" id="iaNombre"></span>
+                            <span class="badge bg-light text-dark border" id="iaEstilo" style="font-size:0.8rem;"></span>
+                        </div>
+                        <p class="text-muted small mb-2" id="iaDescPreview"></p>
+                        <div class="d-flex flex-wrap gap-3">
+                            <span class="text-muted small"><i class="bi bi-droplet me-1"></i><span id="iaVolPrev"></span> L</span>
+                            <span class="text-muted small"><i class="bi bi-clock me-1"></i><span id="iaHervorPrev"></span> min hervor</span>
+                            <span class="text-muted small"><i class="bi bi-graph-up me-1"></i>OG <span id="iaOgPrev"></span></span>
+                        </div>
+                    </div>
+                    <div class="row g-2 small" id="iaIngPreview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.cancel}">Cancelar</button>
+                <button type="button" id="iaBtnGenerar" class="btn btn-primary btn-sm">
+                    <i class="bi bi-stars me-1"></i><span th:text="#{recetas.ia.btn.generar}">Generar Receta</span>
+                </button>
+                <a id="iaBtnCrear" href="/recetas/nueva" class="btn btn-success btn-sm d-none">
+                    <i class="bi bi-plus-lg me-1"></i><span th:text="#{recetas.ia.btn.crear}">Usar esta Receta</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:inline="javascript" th:attr="nonce=${cspNonce}">
 /*<![CDATA[*/
@@ -420,6 +542,125 @@ var RECETA_MSG = {
     function esc(s) {
         return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
+})();
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var modal, recetaGenerada = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var btnOpen = document.getElementById('btnCrearConIA');
+        if (!btnOpen) return;
+
+        modal = new bootstrap.Modal(document.getElementById('modalRecetaIA'));
+
+        // Check if AI is configured
+        fetch('/recetas/asistente/estado', { credentials: 'same-origin' })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(data) {
+                if (data && !data.configurado) {
+                    var el = document.getElementById('iaMockAlert');
+                    if (el) el.classList.remove('d-none');
+                }
+            })
+            .catch(function() {});
+
+        btnOpen.addEventListener('click', function() {
+            resetModal();
+            modal.show();
+        });
+
+        document.getElementById('iaBtnGenerar').addEventListener('click', generarReceta);
+    });
+
+    function resetModal() {
+        recetaGenerada = null;
+        show('iaStep1'); hide('iaStep2'); hide('iaStep3');
+        show('iaBtnGenerar'); hide('iaBtnCrear');
+        var d = document.getElementById('iaDescripcion');
+        if (d) d.value = '';
+        hide('iaDescError');
+        hide('iaMockBadge');
+    }
+
+    function generarReceta() {
+        var desc = (document.getElementById('iaDescripcion')?.value || '').trim();
+        if (!desc) {
+            show('iaDescError');
+            document.getElementById('iaDescripcion')?.focus();
+            return;
+        }
+        hide('iaDescError');
+
+        var volumen = document.getElementById('iaVolumen')?.value || '';
+
+        hide('iaStep1'); show('iaStep2'); hide('iaStep3');
+        hide('iaBtnGenerar');
+
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        var params = new URLSearchParams({ descripcion: desc });
+        if (volumen) params.append('volumen', volumen);
+
+        fetch('/recetas/asistente', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded', [csrfHeader]: csrf },
+            body: params
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r); })
+        .then(function(data) {
+            if (data.error) {
+                alert(data.error);
+                show('iaStep1'); hide('iaStep2'); show('iaBtnGenerar');
+                return;
+            }
+            recetaGenerada = data;
+            renderPreview(data);
+            hide('iaStep2'); show('iaStep3');
+            show('iaBtnCrear'); hide('iaBtnGenerar');
+        })
+        .catch(function() {
+            show('iaStep1'); hide('iaStep2'); show('iaBtnGenerar');
+            alert('Error al conectar con el servidor.');
+        });
+    }
+
+    function renderPreview(data) {
+        setText('iaNombre', data.nombre || '');
+        setText('iaEstilo', data.estilo || '');
+        setText('iaDescPreview', data.descripcion || '');
+        setText('iaVolPrev', data.volumenBase || '');
+        setText('iaHervorPrev', data.tiempoHervorMinutos || '');
+        setText('iaOgPrev', data.ogObjetivo || '');
+
+        if (data.modoMock) show('iaMockBadge'); else hide('iaMockBadge');
+
+        var html = '';
+        var groups = [
+            { label: 'Maltas', items: data.maltas },
+            { label: 'Lúpulos', items: data.lupulos },
+            { label: 'Levaduras', items: data.levaduras }
+        ];
+        groups.forEach(function(g) {
+            if (!g.items || !g.items.length) return;
+            html += '<div class="col-md-4"><div class="fw-semibold text-muted mb-1" style="font-size:0.75rem;text-transform:uppercase;letter-spacing:.04em;">' + esc(g.label) + '</div>';
+            g.items.forEach(function(ing) {
+                html += '<div class="text-dark" style="font-size:0.85rem;">' + esc(ing.nombre) + ' <span class="text-muted">(' + (ing.cantidad || '') + ' ' + esc(ing.unidad || '') + ')</span></div>';
+            });
+            html += '</div>';
+        });
+        document.getElementById('iaIngPreview').innerHTML = html;
+
+        // Store in sessionStorage for formulario.html
+        sessionStorage.setItem('zymos-receta-ai', JSON.stringify(data));
+    }
+
+    function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function show(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function hide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 })();
 </script>
 </body>

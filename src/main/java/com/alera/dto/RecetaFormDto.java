@@ -33,6 +33,15 @@ public class RecetaFormDto {
     private BigDecimal phAgua;
     private String notas;
 
+    // Perfil de agua (ppm)
+    private Integer aguaCalcio;
+    private Integer aguaMagnesio;
+    private Integer aguaSodio;
+    private Integer aguaSulfatos;
+    private Integer aguaCloruros;
+    private Integer aguaBicarbonatos;
+    private String  aguaNotas;
+
     private List<InsumoDto> maltas           = new ArrayList<>();
     private List<InsumoDto> lupulos          = new ArrayList<>();
     private List<InsumoDto> levaduras        = new ArrayList<>();
@@ -116,6 +125,20 @@ public class RecetaFormDto {
     public void setPhAgua(BigDecimal phAgua) { this.phAgua = phAgua; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+    public Integer getAguaCalcio() { return aguaCalcio; }
+    public void setAguaCalcio(Integer aguaCalcio) { this.aguaCalcio = aguaCalcio; }
+    public Integer getAguaMagnesio() { return aguaMagnesio; }
+    public void setAguaMagnesio(Integer aguaMagnesio) { this.aguaMagnesio = aguaMagnesio; }
+    public Integer getAguaSodio() { return aguaSodio; }
+    public void setAguaSodio(Integer aguaSodio) { this.aguaSodio = aguaSodio; }
+    public Integer getAguaSulfatos() { return aguaSulfatos; }
+    public void setAguaSulfatos(Integer aguaSulfatos) { this.aguaSulfatos = aguaSulfatos; }
+    public Integer getAguaCloruros() { return aguaCloruros; }
+    public void setAguaCloruros(Integer aguaCloruros) { this.aguaCloruros = aguaCloruros; }
+    public Integer getAguaBicarbonatos() { return aguaBicarbonatos; }
+    public void setAguaBicarbonatos(Integer aguaBicarbonatos) { this.aguaBicarbonatos = aguaBicarbonatos; }
+    public String getAguaNotas() { return aguaNotas; }
+    public void setAguaNotas(String aguaNotas) { this.aguaNotas = aguaNotas; }
     public List<InsumoDto> getMaltas() { return maltas; }
     public void setMaltas(List<InsumoDto> maltas) { this.maltas = maltas; }
     public List<InsumoDto> getLupulos() { return lupulos; }

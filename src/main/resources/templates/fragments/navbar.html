@@ -10,8 +10,9 @@
               modCom=${currentUri != null and (currentUri.startsWith('/stock') or currentUri.contains('/ventas') or currentUri.contains('/facturas') or currentUri.contains('/proveedores') or currentUri.contains('/clientes') or currentUri.contains('/ordenes-compra') or currentUri.contains('/reportes/ventas') or currentUri.contains('/reportes/rentabilidad'))},
               modBpm=${currentUri != null and currentUri.startsWith('/bpm')},
               modTar=${currentUri != null and currentUri.startsWith('/tareas')},
+              modChat=${currentUri != null and currentUri.startsWith('/chat')},
               modAdm=${currentUri != null and (currentUri.contains('/admin') or currentUri.contains('/usuarios') or currentUri.contains('/tipos-cerveza'))},
-              modNone=${currentUri == null or (!currentUri.contains('/dashboard') and currentUri != '/' and currentUri != '/nuevo' and !currentUri.contains('/editar/') and !currentUri.contains('/kanban') and !currentUri.contains('/planificacion') and !currentUri.contains('/comparativa') and !currentUri.contains('/calendario') and !currentUri.contains('/reportes') and !currentUri.contains('/inventario') and !currentUri.contains('/recetas') and !currentUri.contains('/barriles') and !currentUri.contains('/equipos') and !currentUri.startsWith('/stock') and !currentUri.contains('/ventas') and !currentUri.contains('/facturas') and !currentUri.contains('/proveedores') and !currentUri.contains('/clientes') and !currentUri.contains('/ordenes-compra') and !currentUri.startsWith('/bpm') and !currentUri.startsWith('/tareas') and !currentUri.contains('/admin') and !currentUri.contains('/usuarios') and !currentUri.contains('/tipos-cerveza'))}">
+              modNone=${currentUri == null or (!currentUri.contains('/dashboard') and currentUri != '/' and currentUri != '/nuevo' and !currentUri.contains('/editar/') and !currentUri.contains('/kanban') and !currentUri.contains('/planificacion') and !currentUri.contains('/comparativa') and !currentUri.contains('/calendario') and !currentUri.contains('/reportes') and !currentUri.contains('/inventario') and !currentUri.contains('/recetas') and !currentUri.contains('/barriles') and !currentUri.contains('/equipos') and !currentUri.startsWith('/stock') and !currentUri.contains('/ventas') and !currentUri.contains('/facturas') and !currentUri.contains('/proveedores') and !currentUri.contains('/clientes') and !currentUri.contains('/ordenes-compra') and !currentUri.startsWith('/bpm') and !currentUri.startsWith('/tareas') and !currentUri.startsWith('/chat') and !currentUri.contains('/admin') and !currentUri.contains('/usuarios') and !currentUri.contains('/tipos-cerveza'))}">
 
     <!-- ── Dark mode init (anti-flash) ─────────────────────────────── -->
     <script th:attr="nonce=${cspNonce}">(function(){if(localStorage.getItem('zymos-theme')==='dark')document.documentElement.classList.add('dark-mode');})()</script>
@@ -467,6 +468,14 @@
             <i class="bi bi-check2-square"></i>
         </a>
 
+        <!-- Chat IA -->
+        <a th:if="${iaConfigurada != null and iaConfigurada}" class="zymos-rail-item"
+           th:href="@{/chat}"
+           th:classappend="${modChat} ? ' rail-active' : ''"
+           data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.chat}">
+            <i class="bi bi-chat-dots-fill"></i>
+        </a>
+
         <div class="zymos-rail-sep"></div>
 
         <!-- Manuales de usuario -->
@@ -785,6 +794,18 @@
             </a>
         </th:block>
 
+        <!-- ── Chat IA panel ── -->
+        <th:block th:if="${iaConfigurada != null and iaConfigurada and modChat}">
+            <div class="zymos-panel-header">
+                <div class="zymos-panel-mod" th:text="#{nav.chat}">Chat IA</div>
+                <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
+            </div>
+            <a class="zymos-panel-item" th:href="@{/chat}"
+               th:classappend="${currentUri != null and currentUri.startsWith('/chat')} ? ' panel-active' : ''">
+                <i class="bi bi-chat-dots-fill"></i><span th:text="#{chat.title}">Asistente IA</span>
+            </a>
+        </th:block>
+
         <!-- ── Admin panel ── -->
         <th:block th:if="${modAdm}" sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
             <div class="zymos-panel-header">
@@ -807,6 +828,10 @@
             <a class="zymos-panel-item" th:href="@{/admin/roles}"
                th:classappend="${currentUri != null and currentUri.contains('/admin/roles')} ? ' panel-active' : ''">
                 <i class="bi bi-shield-lock"></i><span th:text="#{nav.admin.roles}">Roles</span>
+            </a>
+            <a class="zymos-panel-item" th:href="@{/admin/whatsapp}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/whatsapp')} ? ' panel-active' : ''">
+                <i class="bi bi-whatsapp"></i><span th:text="#{nav.admin.whatsapp}">WhatsApp</span>
             </a>
             <div class="zymos-panel-section" th:text="#{nav.admin.sistema}">Sistema</div>
             <a class="zymos-panel-item" th:href="@{/admin/logs}"
@@ -917,6 +942,10 @@
                 <i class="bi bi-check2-square"></i>
                 <span th:text="#{nav.tareas}">Tareas</span>
             </th:block>
+            <th:block th:if="${iaConfigurada != null and iaConfigurada and modChat}">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span th:text="#{nav.chat}">Chat IA</span>
+            </th:block>
             <th:block th:if="${modAdm}">
                 <i class="bi bi-shield-lock"></i>
                 <span th:text="#{nav.admin}">Admin</span>
@@ -924,6 +953,31 @@
         </div>
 
         <div class="zymos-topbar-right">
+            <!-- Banner demo: visible cuando el tenant activo es el demo -->
+            <th:block th:if="${esTenantDemo}">
+                <a th:href="@{/planes}"
+                   style="display:inline-flex;align-items:center;gap:.35rem;background:rgba(201,160,40,.15);
+                          border:1px solid rgba(201,160,40,.35);color:var(--dorado,#c9a028);
+                          border-radius:20px;padding:.25rem .9rem;font-size:.78rem;font-weight:600;
+                          text-decoration:none;white-space:nowrap;transition:background .2s;">
+                    <i class="bi bi-flask"></i>Demo
+                    <span class="d-none d-md-inline">· Ver planes</span>
+                    <i class="bi bi-arrow-right-short"></i>
+                </a>
+                <form th:action="@{/demo/reset}" method="post" style="display:contents"
+                      data-confirm="¿Resetear todos los datos de demostración? Esta acción borra y recrea los datos de ejemplo.">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <button type="submit"
+                            style="display:inline-flex;align-items:center;gap:.3rem;background:rgba(201,160,40,.08);
+                                   border:1px solid rgba(201,160,40,.3);color:var(--dorado,#c9a028);
+                                   border-radius:20px;padding:.25rem .75rem;font-size:.75rem;font-weight:600;
+                                   cursor:pointer;white-space:nowrap;transition:background .2s;"
+                            title="Restaurar datos de demo">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span class="d-none d-md-inline">Resetear</span>
+                    </button>
+                </form>
+            </th:block>
             <!-- Botón buscar: solo en mobile donde el panel (con search) está oculto -->
             <a class="zymos-tb-icon d-flex d-lg-none" th:href="@{/buscar}"
                th:title="#{nav.search.aria}">
@@ -1362,6 +1416,115 @@
     })();
     </script>
     <script th:src="@{/js/numeros.js}"></script>
+
+    <!-- ── Modal de bienvenida demo ─────────────────────────────────────────── -->
+    <th:block th:if="${esTenantDemo}">
+        <style>
+            html.dark-mode #demoBienvenidaModal .modal-body { background:#1e293b; }
+            html.dark-mode #demoBienvenidaModal .modal-footer { background:#1e293b; border-top-color:#334155; }
+            html.dark-mode #demoBienvenidaModal .modal-content { background:#1e293b; }
+            html.dark-mode #demoBienvenidaModal .cred-box { background:#0f172a !important; border-color:#334155 !important; }
+            html.dark-mode #demoBienvenidaModal .cred-value { color:#e2e8f0 !important; }
+            html.dark-mode #demoBienvenidaModal .body-text { color:#94a3b8 !important; }
+            html.dark-mode #demoBienvenidaModal li { color:#94a3b8 !important; }
+        </style>
+
+        <div class="modal fade" id="demoBienvenidaModal" tabindex="-1"
+             aria-labelledby="demoBienvenidaLabel" aria-hidden="true"
+             data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+                <div class="modal-content" style="border-radius:12px;overflow:hidden;border:none;
+                     box-shadow:0 20px 60px rgba(0,0,0,.25);">
+
+                    <!-- Header oscuro con acento dorado -->
+                    <div class="modal-header" style="background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);
+                         border-bottom:2px solid rgba(201,160,40,.35);padding:1.25rem 1.5rem;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.3rem;">
+                                <i class="bi bi-flask" style="font-size:1.25rem;color:#c9a028;"></i>
+                                <h5 class="modal-title" id="demoBienvenidaLabel"
+                                    style="color:#f8fafc;font-weight:700;font-size:1.05rem;margin:0;"
+                                    th:text="#{demo.welcome.title}">Bienvenido a la demo de Zymos</h5>
+                            </div>
+                            <p style="color:#94a3b8;font-size:.8rem;margin:0;"
+                               th:text="#{demo.welcome.subtitle}">Explora todas las funcionalidades del sistema</p>
+                        </div>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="modal-body" style="padding:1.5rem;background:#fff;">
+                        <p class="body-text" style="font-size:.875rem;color:#475569;margin-bottom:1rem;"
+                           th:text="#{demo.welcome.intro}">
+                            Ya estás dentro. Estas son tus credenciales para compartir o recordar:
+                        </p>
+
+                        <!-- Credenciales -->
+                        <div class="cred-box" style="background:#f8fafc;border:1px solid #e2e8f0;
+                             border-radius:8px;padding:1rem 1.25rem;display:flex;gap:2.5rem;margin-bottom:1.25rem;">
+                            <div>
+                                <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;
+                                     color:#94a3b8;letter-spacing:.06em;" th:text="#{demo.welcome.user}">Usuario</div>
+                                <div class="cred-value" style="font-family:monospace;font-size:1.15rem;
+                                     font-weight:700;color:#1e293b;letter-spacing:.05em;">demo</div>
+                            </div>
+                            <div>
+                                <div style="font-size:.68rem;font-weight:700;text-transform:uppercase;
+                                     color:#94a3b8;letter-spacing:.06em;" th:text="#{demo.welcome.pass}">Contraseña</div>
+                                <div class="cred-value" style="font-family:monospace;font-size:1.15rem;
+                                     font-weight:700;color:#1e293b;letter-spacing:.05em;">demo</div>
+                            </div>
+                        </div>
+
+                        <!-- Lo que incluye -->
+                        <ul style="font-size:.8rem;padding-left:1.2rem;margin-bottom:1.1rem;line-height:1.8;">
+                            <li th:text="#{demo.welcome.feat1}">Lotes, recetas, inventario, equipos y fermentadores</li>
+                            <li th:text="#{demo.welcome.feat2}">Ventas, facturas, cotizaciones y órdenes de compra</li>
+                            <li th:text="#{demo.welcome.feat3}">Reportes de producción, rentabilidad y trazabilidad</li>
+                            <li th:text="#{demo.welcome.feat4}">BPM de inocuidad, tareas y notificaciones</li>
+                        </ul>
+
+                        <!-- Aviso auto-reset -->
+                        <div style="background:rgba(201,160,40,.08);border:1px solid rgba(201,160,40,.3);
+                             border-radius:6px;padding:.6rem .875rem;font-size:.78rem;color:#78350f;
+                             display:flex;align-items:center;gap:.5rem;">
+                            <i class="bi bi-arrow-counterclockwise" style="flex-shrink:0;"></i>
+                            <span th:text="#{demo.welcome.reset}">
+                                Los datos se restauran cada día a las 3 AM — experimenta con libertad.
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="modal-footer" style="border-top:1px solid #e2e8f0;
+                         padding:.875rem 1.5rem;background:#fff;justify-content:flex-end;">
+                        <button type="button" id="demoBienvenidaOk"
+                                class="btn btn-sm px-4"
+                                data-bs-dismiss="modal"
+                                style="background:#c9a028;border-color:#c9a028;color:#fff;font-weight:600;"
+                                th:text="#{demo.welcome.cta}">
+                            Comenzar a explorar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script th:attr="nonce=${cspNonce}">
+        (function () {
+            var KEY = 'zymos-demo-welcome-seen';
+            document.addEventListener('DOMContentLoaded', function () {
+                var el = document.getElementById('demoBienvenidaModal');
+                if (!el) return;
+                el.addEventListener('hidden.bs.modal', function () {
+                    localStorage.setItem(KEY, '1');
+                });
+                if (!localStorage.getItem(KEY)) {
+                    new bootstrap.Modal(el).show();
+                }
+            });
+        })();
+        </script>
+    </th:block>
 
 </div>
 </body>

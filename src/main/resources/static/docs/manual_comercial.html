@@ -108,6 +108,7 @@
       <a href="#facturas">Facturas de proveedor</a>
       <a href="#facturas-iva">IVA en facturas</a>
       <a href="#adjuntos">Adjuntos</a>
+      <a href="#analizador-ia">Analizador IA 🤖</a>
       <a href="#ordenes">Órdenes de compra</a>
     </div>
     <div class="nav-group">
@@ -223,6 +224,29 @@
       <li>Selecciona el PDF o imagen (JPG, PNG) desde tu computador. Tamaño máximo: 10 MB.</li>
       <li>El archivo queda vinculado a la factura y puedes descargarlo o eliminarlo en cualquier momento.</li>
     </ol>
+
+    <!-- Analizador IA -->
+    <h2 id="analizador-ia">Analizador IA de facturas 🤖</h2>
+    <p>El analizador de facturas usa inteligencia artificial (Claude Vision) para leer el PDF o imagen de tu factura y pre-llenar automáticamente los campos del formulario: proveedor, número de factura, fecha e ítems con sus cantidades y precios.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requiere configuración de IA.</strong> El botón "Analizar documento" solo aparece cuando el administrador ha configurado la clave de API de Anthropic (ANTHROPIC_API_KEY).</div>
+    </div>
+
+    <ol class="steps">
+      <li>Ve a Comercial → Facturas → <strong>"+ Nueva factura"</strong>.</li>
+      <li>Haz clic en el botón <strong>"Analizar documento"</strong> en la parte superior del formulario.</li>
+      <li>Selecciona el PDF o imagen de la factura desde tu computador (formatos soportados: PDF, JPG, PNG). Tamaño máximo recomendado: 10 MB.</li>
+      <li>La IA procesa el documento y pre-llena los campos detectados: número de factura, proveedor, fecha e ítems con cantidades y precios.</li>
+      <li>Revisa y corrige los campos si es necesario. La IA puede cometer errores en documentos de baja calidad o con formatos inusuales.</li>
+      <li>Guarda la factura normalmente.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">El analizador funciona mejor con PDFs digitales (no escaneados). Para imágenes escaneadas, asegúrate de que la resolución sea al menos 150 DPI para mejores resultados.</div>
+    </div>
 
     <!-- Órdenes de compra -->
     <h2 id="ordenes">Órdenes de compra</h2>
