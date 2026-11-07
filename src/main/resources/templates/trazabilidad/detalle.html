@@ -78,8 +78,16 @@
             <a th:href="@{/ver/{id}/pdf(id=${lote.id})}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-file-earmark-pdf me-1"></i>PDF
             </a>
+            <a th:href="@{/ver/{id}/etiqueta-qr(id=${lote.id})}" class="btn btn-outline-secondary btn-sm"
+               target="_blank" title="Etiqueta QR para imprimir">
+                <i class="bi bi-qr-code me-1"></i>QR
+            </a>
             <button class="btn btn-outline-secondary btn-sm btn-print">
                 <i class="bi bi-printer me-1"></i><span th:text="#{action.print}">Imprimir</span>
+            </button>
+            <button th:if="${iaConfigurada}" type="button" id="btnDescComercial" class="btn btn-outline-secondary btn-sm"
+                    data-bs-toggle="modal" data-bs-target="#modalDescComercial">
+                <i class="bi bi-stars me-1"></i><span th:text="#{traz.det.desc.btn}">Descripción Comercial IA</span>
             </button>
             <a th:href="@{/}" class="btn btn-outline-secondary btn-sm">
                 <i class="bi bi-arrow-left me-1"></i><span th:text="#{action.back}">Volver</span>
@@ -736,8 +744,15 @@
     <div class="section-box mb-4">
         <div class="sh d-flex justify-content-between align-items-center">
             <span><i class="bi bi-graph-up-arrow me-2"></i><span th:text="#{traz.det.sec.curva}">Curva de Fermentación</span></span>
-            <span class="fw-normal text-muted" style="font-size:0.8rem;"
-                  th:text="${#lists.size(lecturas)} + ' ' + (${#lists.size(lecturas) != 1} ? #{traz.det.curva.lecturas} : #{traz.det.curva.lectura})"></span>
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-normal text-muted" style="font-size:0.8rem;"
+                      th:text="${#lists.size(lecturas)} + ' ' + (${#lists.size(lecturas) != 1} ? #{traz.det.curva.lecturas} : #{traz.det.curva.lectura})"></span>
+                <button th:if="${iaConfigurada}" type="button" id="btnDiagnosticoIA"
+                        class="btn btn-outline-secondary btn-sm"
+                        style="font-size:0.75rem;padding:0.2rem 0.6rem;">
+                    <i class="bi bi-stars me-1"></i><span th:text="#{traz.det.diagnostico.btn}">Diagnóstico IA</span>
+                </button>
+            </div>
         </div>
         <div class="sb">
 
@@ -1013,6 +1028,123 @@
         </div>
     </div>
 
+    <!-- Comparativa con lotes del mismo estilo -->
+    <div class="section-box mb-4"
+         th:if="${comparativaEstilo != null and comparativaEstilo.hayDatos()}">
+        <div class="sh">
+            <i class="bi bi-bar-chart-line me-2"></i>
+            <span th:text="#{traz.det.sec.hist.estilo}">vs. Lotes del Mismo Estilo</span>
+            <span class="fw-normal text-muted ms-2" style="font-size:0.8rem"
+                  th:text="'(' + ${comparativaEstilo.totalLotes} + ' ' + (${comparativaEstilo.totalLotes == 1} ? #{traz.det.hist.estilo.total} : #{traz.det.hist.estilo.total.plural}) + ')'">
+            </span>
+        </div>
+        <div class="sb">
+            <div class="row g-3">
+
+                <!-- OG -->
+                <div class="col-6 col-md-3" th:if="${comparativaEstilo.ogPromedio != null}">
+                    <div class="text-center p-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                        <div class="detail-label mb-1" th:text="#{traz.det.hist.estilo.og}">OG Prom.</div>
+                        <div th:if="${lote.densidadInicial != null}"
+                             th:with="cur=${lote.densidadInicial}, prom=${comparativaEstilo.ogPromedio.intValue()}, diff=${lote.densidadInicial - comparativaEstilo.ogPromedio.intValue()}">
+                            <div class="fw-bold fs-5 mb-1" th:text="${cur}">—</div>
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${prom}">Promedio</div>
+                            <span th:if="${diff != 0}"
+                                  th:classappend="${diff > 0} ? 'text-primary' : 'text-muted'"
+                                  style="font-size:0.78rem;font-weight:600"
+                                  th:text="${diff > 0} ? ('+' + ${diff}) : ${diff}">±0</span>
+                            <span th:if="${diff == 0}" class="text-muted" style="font-size:0.78rem">≈ igual</span>
+                        </div>
+                        <div th:unless="${lote.densidadInicial != null}">
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${comparativaEstilo.ogPromedio.intValue()}">—</div>
+                            <div class="text-muted small" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FG -->
+                <div class="col-6 col-md-3" th:if="${comparativaEstilo.fgPromedio != null}">
+                    <div class="text-center p-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                        <div class="detail-label mb-1" th:text="#{traz.det.hist.estilo.fg}">FG Prom.</div>
+                        <div th:if="${lote.densidadFinal != null}"
+                             th:with="cur=${lote.densidadFinal}, prom=${comparativaEstilo.fgPromedio.intValue()}, diff=${lote.densidadFinal - comparativaEstilo.fgPromedio.intValue()}">
+                            <div class="fw-bold fs-5 mb-1" th:text="${cur}">—</div>
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${prom}">Promedio</div>
+                            <span th:if="${diff != 0}"
+                                  th:classappend="${diff > 0} ? 'text-primary' : 'text-muted'"
+                                  style="font-size:0.78rem;font-weight:600"
+                                  th:text="${diff > 0} ? ('+' + ${diff}) : ${diff}">±0</span>
+                            <span th:if="${diff == 0}" class="text-muted" style="font-size:0.78rem">≈ igual</span>
+                        </div>
+                        <div th:unless="${lote.densidadFinal != null}">
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${comparativaEstilo.fgPromedio.intValue()}">—</div>
+                            <div class="text-muted small" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ABV -->
+                <div class="col-6 col-md-3" th:if="${comparativaEstilo.abvPromedio != null}">
+                    <div class="text-center p-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                        <div class="detail-label mb-1" th:text="#{traz.det.hist.estilo.abv}">ABV Prom.</div>
+                        <div th:if="${lote.abv != null}"
+                             th:with="curAbv=${lote.abv}, promAbv=${comparativaEstilo.abvPromedio}">
+                            <div class="fw-bold fs-5 mb-1"
+                                 th:text="${curAbv.stripTrailingZeros().toPlainString()} + ' %'">—</div>
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${#numbers.formatDecimal(promAbv, 1, 'POINT', 1, 'POINT')} + ' %'">—</div>
+                            <span th:with="diffAbv=${T(java.math.BigDecimal).valueOf(promAbv).subtract(curAbv)}"
+                                  th:classappend="${curAbv.compareTo(T(java.math.BigDecimal).valueOf(promAbv)) > 0} ? 'text-primary' : 'text-muted'"
+                                  style="font-size:0.78rem;font-weight:600"
+                                  th:text="${curAbv.compareTo(T(java.math.BigDecimal).valueOf(promAbv)) > 0}
+                                           ? ('+' + ${#numbers.formatDecimal(curAbv.subtract(T(java.math.BigDecimal).valueOf(promAbv)),1,'POINT',1,'POINT')} + ' %')
+                                           : (${curAbv.compareTo(T(java.math.BigDecimal).valueOf(promAbv)) == 0}
+                                              ? '≈ igual'
+                                              : (${#numbers.formatDecimal(curAbv.subtract(T(java.math.BigDecimal).valueOf(promAbv)),1,'POINT',1,'POINT')} + ' %'))">
+                            </span>
+                        </div>
+                        <div th:unless="${lote.abv != null}">
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${#numbers.formatDecimal(comparativaEstilo.abvPromedio, 1, 'POINT', 1, 'POINT')} + ' %'">—</div>
+                            <div class="text-muted small" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Litros -->
+                <div class="col-6 col-md-3" th:if="${comparativaEstilo.litrosPromedio != null}">
+                    <div class="text-center p-2" style="background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+                        <div class="detail-label mb-1" th:text="#{traz.det.hist.estilo.litros}">Litros Prom.</div>
+                        <div th:if="${lote.litrosFinales != null}"
+                             th:with="curL=${lote.litrosFinales}, promL=${T(java.math.BigDecimal).valueOf(comparativaEstilo.litrosPromedio)}">
+                            <div class="fw-bold fs-5 mb-1"
+                                 th:text="${curL.stripTrailingZeros().toPlainString()} + ' L'">—</div>
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${#numbers.formatDecimal(promL,1,'POINT',1,'POINT')} + ' L'">—</div>
+                            <span th:with="diffL=${curL.subtract(promL)}"
+                                  th:classappend="${diffL.signum() > 0} ? 'text-primary' : 'text-muted'"
+                                  style="font-size:0.78rem;font-weight:600"
+                                  th:text="${diffL.signum() > 0}
+                                           ? ('+' + ${diffL.stripTrailingZeros().toPlainString()} + ' L')
+                                           : (${diffL.signum() == 0} ? '≈ igual' : (${diffL.stripTrailingZeros().toPlainString()} + ' L'))">
+                            </span>
+                        </div>
+                        <div th:unless="${lote.litrosFinales != null}">
+                            <div class="text-muted" style="font-size:0.78rem"
+                                 th:text="#{traz.det.hist.estilo.promedio} + ': ' + ${#numbers.formatDecimal(comparativaEstilo.litrosPromedio,1,'POINT',1,'POINT')} + ' L'">—</div>
+                            <div class="text-muted small" th:text="#{traz.det.comp.pendiente}">Pendiente</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /row -->
+        </div>
+    </div>
+
     <!-- Evaluación Sensorial (BJCP) -->
     <div class="section-box mb-4">
         <div class="sh d-flex justify-content-between align-items-center">
@@ -1171,9 +1303,14 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label detail-label" for="evalNotas" th:text="#{label.notas}">Notas</label>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <label class="form-label detail-label mb-0" for="evalNotas" th:text="#{label.notas}">Notas</label>
+                                <button th:if="${iaConfigurada}" type="button" id="btnBjcpScorer" class="btn btn-outline-secondary btn-sm">
+                                    <i class="bi bi-stars me-1"></i><span th:text="#{traz.det.bjcp.btn}">Analizar con IA</span>
+                                </button>
+                            </div>
                             <textarea id="evalNotas" name="notas" class="form-control form-control-sm"
-                                      rows="2" th:placeholder="#{traz.det.eval.form.notas.ph}" maxlength="1000"></textarea>
+                                      rows="3" th:placeholder="#{traz.det.eval.form.notas.ph}" maxlength="1000"></textarea>
                         </div>
 
                         <button type="submit" class="btn btn-primary btn-sm">
@@ -1479,6 +1616,229 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
+<!-- Modal: BJCP Scorer IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalBjcpScorer" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2" style="color:#fbbf24;"></i>
+                    <span th:text="#{traz.det.bjcp.title}">Scorer BJCP — Análisis con IA</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Sin notas -->
+                <div id="bjcpSinNotas" class="alert alert-warning d-none" th:text="#{traz.det.bjcp.sin.notas}">Escribe primero las notas de cata.</div>
+                <!-- Spinner -->
+                <div id="bjcpSpinner" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:2.5rem;height:2.5rem;"></div>
+                    <p class="text-muted small" th:text="#{traz.det.bjcp.analizando}">Analizando notas de cata...</p>
+                </div>
+                <!-- Resultado -->
+                <div id="bjcpResultado" class="d-none">
+                    <div id="bjcpMockBadge" class="mb-3 d-none">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+
+                    <!-- Scores individuales -->
+                    <div class="mb-4">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-bar-chart me-1"></i><span th:text="#{traz.det.bjcp.sugeridos}">Puntajes sugeridos</span>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-2" id="bjcpScoreCards"></div>
+                        <!-- Total -->
+                        <div class="d-flex align-items-center gap-2 mt-2">
+                            <span class="detail-label" th:text="#{label.total}">Total:</span>
+                            <span id="bjcpTotalBadge" class="badge rounded-pill fs-6"></span>
+                            <span id="bjcpClasifLabel" class="text-muted small fst-italic"></span>
+                        </div>
+                    </div>
+
+                    <!-- Fortalezas -->
+                    <div id="bjcpFortalezasSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#16a34a;">
+                            <i class="bi bi-check-circle me-1"></i><span th:text="#{traz.det.bjcp.fortalezas}">Fortalezas</span>
+                        </div>
+                        <ul id="bjcpFortalezas" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+
+                    <!-- Defectos -->
+                    <div id="bjcpDefectosSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#ef4444;">
+                            <i class="bi bi-exclamation-triangle me-1"></i><span th:text="#{traz.det.bjcp.defectos}">Defectos detectados</span>
+                        </div>
+                        <ul id="bjcpDefectos" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+
+                    <!-- Recomendaciones -->
+                    <div id="bjcpRecSec" class="mb-1 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#2563eb;">
+                            <i class="bi bi-lightbulb me-1"></i><span th:text="#{traz.det.bjcp.recomendaciones}">Recomendaciones</span>
+                        </div>
+                        <ul id="bjcpRecomendaciones" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="bjcpError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+                <button type="button" id="bjcpBtnReintentar" class="btn btn-outline-secondary btn-sm d-none"
+                        th:text="#{traz.det.bjcp.reintentar}">Reintentar</button>
+                <button type="button" id="bjcpBtnAplicar" class="btn btn-primary btn-sm d-none">
+                    <i class="bi bi-check2 me-1"></i><span th:text="#{traz.det.bjcp.aplicar}">Aplicar puntajes</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Descripción Comercial IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalDescComercial" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2" style="color:#fbbf24;"></i>
+                    <span th:text="#{traz.det.desc.title}">Generador de Descripción Comercial</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Spinner -->
+                <div id="descSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:2.5rem;height:2.5rem;"></div>
+                    <p class="text-muted small" th:text="#{traz.det.desc.generando}">Generando descripción con IA...</p>
+                </div>
+                <!-- Resultado -->
+                <div id="descResultado" class="d-none">
+                    <div id="descMockBadge" class="mb-3 d-none">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+                    <!-- Texto de etiqueta -->
+                    <div class="mb-3">
+                        <div class="fw-semibold mb-1" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-tag me-1"></i><span th:text="#{traz.det.desc.etiqueta}">Texto de etiqueta</span>
+                        </div>
+                        <div class="d-flex align-items-start gap-2">
+                            <div id="descEtiqueta" class="flex-grow-1 p-2 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;font-size:0.95rem;font-weight:600;"></div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 btn-copy" data-target="descEtiqueta">
+                                <i class="bi bi-clipboard me-1"></i><span th:text="#{traz.det.desc.copiar}">Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Descripción corta -->
+                    <div class="mb-3">
+                        <div class="fw-semibold mb-1" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-card-text me-1"></i><span th:text="#{traz.det.desc.corta}">Descripción corta</span>
+                        </div>
+                        <div class="d-flex align-items-start gap-2">
+                            <div id="descCorta" class="flex-grow-1 p-2 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;font-size:0.875rem;line-height:1.6;"></div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 btn-copy" data-target="descCorta">
+                                <i class="bi bi-clipboard me-1"></i><span th:text="#{traz.det.desc.copiar}">Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Descripción larga -->
+                    <div class="mb-3">
+                        <div class="fw-semibold mb-1" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-file-text me-1"></i><span th:text="#{traz.det.desc.larga}">Descripción larga</span>
+                        </div>
+                        <div class="d-flex align-items-start gap-2">
+                            <div id="descLarga" class="flex-grow-1 p-2 rounded" style="background:#f8fafc;border:1px solid #e2e8f0;font-size:0.875rem;line-height:1.6;"></div>
+                            <button type="button" class="btn btn-outline-secondary btn-sm flex-shrink-0 btn-copy" data-target="descLarga">
+                                <i class="bi bi-clipboard me-1"></i><span th:text="#{traz.det.desc.copiar}">Copiar</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Hashtags -->
+                    <div id="descHashtagsSec" class="d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-hash me-1"></i><span th:text="#{traz.det.desc.hashtags}">Hashtags sugeridos</span>
+                        </div>
+                        <div id="descHashtags" class="d-flex flex-wrap gap-2"></div>
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="descError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+                <button type="button" id="descBtnReintentar" class="btn btn-primary btn-sm d-none"
+                        th:text="#{traz.det.desc.reintentar}">Reintentar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Diagnóstico IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalDiagnosticoIA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2" style="color:#fbbf24;"></i>
+                    <span th:text="#{traz.det.diagnostico.title}">Diagnóstico de Fermentación</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Spinner -->
+                <div id="diagSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:2.5rem;height:2.5rem;"></div>
+                    <p class="text-muted small" th:text="#{traz.det.diagnostico.analizando}">Analizando datos de fermentación...</p>
+                </div>
+                <!-- Resultado -->
+                <div id="diagResultado" class="d-none">
+                    <div id="diagMockBadge" class="mb-3 d-none">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+                    <!-- Estado badge + resumen -->
+                    <div class="d-flex align-items-start gap-3 mb-4">
+                        <span id="diagEstadoBadge" class="badge fs-6 flex-shrink-0" style="margin-top:2px;"></span>
+                        <p id="diagResumen" class="mb-0" style="font-size:0.9rem;line-height:1.6;"></p>
+                    </div>
+                    <!-- Anomalías -->
+                    <div id="diagAnomaliasSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#ef4444;">
+                            <i class="bi bi-exclamation-triangle me-1"></i><span th:text="#{traz.det.diagnostico.anomalias}">Anomalías detectadas</span>
+                        </div>
+                        <ul id="diagAnomalias" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                    <!-- Recomendaciones -->
+                    <div id="diagRecSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#2563eb;">
+                            <i class="bi bi-lightbulb me-1"></i><span th:text="#{traz.det.diagnostico.recomendaciones}">Recomendaciones</span>
+                        </div>
+                        <ul id="diagRecomendaciones" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                    <!-- Pronóstico FG -->
+                    <div id="diagPronosticoSec" class="p-3 rounded d-none" style="background:#f0fdf4;border:1px solid #bbf7d0;">
+                        <span class="fw-semibold" style="font-size:0.8rem;color:#16a34a;">
+                            <i class="bi bi-graph-down-arrow me-1"></i><span th:text="#{traz.det.diagnostico.pronostico}">Pronóstico FG:</span>
+                        </span>
+                        <span id="diagPronostico" class="ms-2" style="font-size:0.875rem;"></span>
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="diagError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+                <button type="button" id="diagBtnReintentar" class="btn btn-primary btn-sm d-none"
+                        th:text="#{traz.det.diagnostico.reintentar}">Reintentar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Avanzar Fase -->
 <div class="modal fade" id="modalAvanzarFase" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
@@ -1572,6 +1932,379 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error de conexión');
         });
     });
+})();
+</script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var DIAG_LOTE_ID = /*[[${lote.id}]]*/ 0;
+/*]]>*/
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var modal;
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('btnDiagnosticoIA');
+        var btnReintentar = document.getElementById('diagBtnReintentar');
+        if (!btn) return;
+        modal = new bootstrap.Modal(document.getElementById('modalDiagnosticoIA'));
+        btn.addEventListener('click', function() {
+            resetDiag();
+            modal.show();
+            ejecutarDiagnostico();
+        });
+        if (btnReintentar) btnReintentar.addEventListener('click', function() {
+            resetDiag();
+            ejecutarDiagnostico();
+        });
+    });
+
+    function ejecutarDiagnostico() {
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        fetch('/ver/' + DIAG_LOTE_ID + '/diagnostico-ia', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [csrfHeader]: csrf }
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(data) {
+            hide('diagSpinner');
+            if (data.error) {
+                show('diagError');
+                document.getElementById('diagError').textContent = data.error;
+                show('diagBtnReintentar');
+                return;
+            }
+            renderDiag(data);
+            show('diagResultado');
+        })
+        .catch(function(status) {
+            hide('diagSpinner');
+            show('diagError');
+            document.getElementById('diagError').textContent = 'Error al conectar con el servidor (HTTP ' + status + ')';
+            show('diagBtnReintentar');
+        });
+    }
+
+    function renderDiag(data) {
+        // Mock badge
+        if (data.modoMock) show('diagMockBadge'); else hide('diagMockBadge');
+
+        // Estado badge
+        var badge = document.getElementById('diagEstadoBadge');
+        var estadoMap = {
+            normal:      { label: '✓ Normal',      bg: '#16a34a' },
+            advertencia: { label: '⚠ Advertencia', bg: '#d97706' },
+            critico:     { label: '✕ Crítico',     bg: '#dc2626' }
+        };
+        var est = estadoMap[data.estado] || estadoMap.normal;
+        badge.textContent = est.label;
+        badge.style.background = est.bg;
+
+        // Pronóstico bg según estado
+        var prSec = document.getElementById('diagPronosticoSec');
+        if (data.estado === 'critico') {
+            prSec.style.background = '#fef2f2';
+            prSec.style.borderColor = '#fecaca';
+        } else if (data.estado === 'advertencia') {
+            prSec.style.background = '#fffbeb';
+            prSec.style.borderColor = '#fde68a';
+        }
+
+        // Resumen
+        setText('diagResumen', data.resumen || '');
+
+        // Anomalías
+        if (data.anomalias && data.anomalias.length) {
+            show('diagAnomaliasSec');
+            var ul = document.getElementById('diagAnomalias');
+            ul.innerHTML = data.anomalias.map(function(a) {
+                return '<li>' + esc(a) + '</li>';
+            }).join('');
+        }
+
+        // Recomendaciones
+        if (data.recomendaciones && data.recomendaciones.length) {
+            show('diagRecSec');
+            var ul2 = document.getElementById('diagRecomendaciones');
+            ul2.innerHTML = data.recomendaciones.map(function(r) {
+                return '<li>' + esc(r) + '</li>';
+            }).join('');
+        }
+
+        // Pronóstico
+        if (data.pronosticoFg) {
+            show('diagPronosticoSec');
+            setText('diagPronostico', data.pronosticoFg);
+        }
+    }
+
+    function resetDiag() {
+        show('diagSpinner');
+        hide('diagResultado'); hide('diagError'); hide('diagBtnReintentar');
+        hide('diagMockBadge'); hide('diagAnomaliasSec'); hide('diagRecSec'); hide('diagPronosticoSec');
+    }
+
+    function setText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function show(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function hide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+})();
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var lastBjcpData = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('btnBjcpScorer');
+        var btnAplicar = document.getElementById('bjcpBtnAplicar');
+        var btnReintentar = document.getElementById('bjcpBtnReintentar');
+        if (!btn) return;
+
+        btn.addEventListener('click', function() {
+            var notas = (document.getElementById('evalNotas') || {}).value || '';
+            resetBjcp();
+            var modalEl = document.getElementById('modalBjcpScorer');
+            var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+            if (!notas.trim()) {
+                bShow('bjcpSinNotas');
+                return;
+            }
+            bShow('bjcpSpinner');
+            ejecutarBjcp(notas);
+        });
+
+        if (btnReintentar) btnReintentar.addEventListener('click', function() {
+            var notas = (document.getElementById('evalNotas') || {}).value || '';
+            resetBjcp();
+            if (!notas.trim()) { bShow('bjcpSinNotas'); return; }
+            bShow('bjcpSpinner');
+            ejecutarBjcp(notas);
+        });
+
+        if (btnAplicar) btnAplicar.addEventListener('click', function() {
+            if (!lastBjcpData) return;
+            aplicarPuntajes(lastBjcpData);
+            bootstrap.Modal.getInstance(document.getElementById('modalBjcpScorer')).hide();
+        });
+    });
+
+    function ejecutarBjcp(notas) {
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        var body = new URLSearchParams({ notas: notas });
+
+        fetch('/ver/' + DIAG_LOTE_ID + '/bjcp-scorer-ia', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [csrfHeader]: csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(data) {
+            bHide('bjcpSpinner');
+            if (data.error) {
+                bShow('bjcpError');
+                document.getElementById('bjcpError').textContent = data.error;
+                bShow('bjcpBtnReintentar');
+                return;
+            }
+            lastBjcpData = data;
+            renderBjcp(data);
+            bShow('bjcpResultado');
+            bShow('bjcpBtnAplicar');
+        })
+        .catch(function(status) {
+            bHide('bjcpSpinner');
+            bShow('bjcpError');
+            document.getElementById('bjcpError').textContent = 'Error al conectar (HTTP ' + status + ')';
+            bShow('bjcpBtnReintentar');
+        });
+    }
+
+    function renderBjcp(data) {
+        if (data.modoMock) bShow('bjcpMockBadge'); else bHide('bjcpMockBadge');
+
+        // Score cards
+        var cards = document.getElementById('bjcpScoreCards');
+        var items = [
+            { label: 'Aroma', val: data.aromaEstimado, max: 12 },
+            { label: 'Apariencia', val: data.aparienciaEstimada, max: 3 },
+            { label: 'Sabor', val: data.saborEstimado, max: 20 },
+            { label: 'Sensación', val: data.sensacionBocaEstimada, max: 5 },
+            { label: 'General', val: data.impresionGeneralEstimada, max: 10 }
+        ];
+        cards.innerHTML = items.map(function(it) {
+            var pct = it.max > 0 ? (it.val / it.max) : 0;
+            var color = pct >= 0.75 ? '#16a34a' : pct >= 0.5 ? '#2563eb' : '#f97316';
+            return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:0.5rem 0.75rem;min-width:90px;text-align:center;">' +
+                '<div style="font-size:0.7rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">' + esc3(it.label) + '</div>' +
+                '<div style="font-size:1.5rem;font-weight:700;color:' + color + ';">' + (it.val != null ? it.val : '—') + '</div>' +
+                '<div style="font-size:0.7rem;color:#94a3b8;">/ ' + it.max + '</div>' +
+                '</div>';
+        }).join('');
+
+        // Total
+        var total = data.puntajeTotalEstimado || 0;
+        var totalBadge = document.getElementById('bjcpTotalBadge');
+        totalBadge.textContent = total + ' / 50';
+        totalBadge.style.background = total >= 38 ? '#16a34a' : total >= 30 ? '#2563eb' : total >= 21 ? '#f97316' : '#dc2626';
+        bSetText('bjcpClasifLabel', data.clasificacion || '');
+
+        // Listas
+        renderList('bjcpFortalezasSec', 'bjcpFortalezas', data.fortalezas);
+        renderList('bjcpDefectosSec', 'bjcpDefectos', data.defectos);
+        renderList('bjcpRecSec', 'bjcpRecomendaciones', data.recomendaciones);
+    }
+
+    function renderList(secId, listId, items) {
+        if (items && items.length) {
+            bShow(secId);
+            document.getElementById(listId).innerHTML = items.map(function(i) {
+                return '<li>' + esc3(i) + '</li>';
+            }).join('');
+        }
+    }
+
+    function aplicarPuntajes(data) {
+        setSlider('evalAroma',           'valAroma',           data.aromaEstimado,            12);
+        setSlider('evalApariencia',      'valApariencia',      data.aparienciaEstimada,        3);
+        setSlider('evalSabor',           'valSabor',           data.saborEstimado,             20);
+        setSlider('evalSensacionBoca',   'valSensacionBoca',   data.sensacionBocaEstimada,     5);
+        setSlider('evalImpresionGeneral','valImpresionGeneral',data.impresionGeneralEstimada,  10);
+        // Expandir el formulario si está colapsado
+        var collapseEl = document.getElementById('formEvaluacion');
+        if (collapseEl && !collapseEl.classList.contains('show')) {
+            bootstrap.Collapse.getOrCreateInstance(collapseEl).show();
+        }
+        // Disparar syncEval para actualizar el badge total
+        if (typeof syncEval === 'function') syncEval('Aroma', data.aromaEstimado || 0);
+    }
+
+    function setSlider(inputId, valId, val, max) {
+        if (val == null) return;
+        var v = Math.max(0, Math.min(max, val));
+        var el = document.getElementById(inputId);
+        if (el) { el.value = v; }
+        var label = document.getElementById(valId);
+        if (label) { label.textContent = v; }
+    }
+
+    function resetBjcp() {
+        lastBjcpData = null;
+        bHide('bjcpSpinner'); bHide('bjcpResultado'); bHide('bjcpError');
+        bHide('bjcpSinNotas'); bHide('bjcpBtnAplicar'); bHide('bjcpBtnReintentar');
+        bHide('bjcpMockBadge'); bHide('bjcpFortalezasSec'); bHide('bjcpDefectosSec'); bHide('bjcpRecSec');
+    }
+
+    function bSetText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function bShow(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function bHide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function esc3(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+})();
+</script>
+<script th:inline="javascript" th:attr="nonce=${cspNonce}">
+/*<![CDATA[*/
+var DESC_COPIADO_LABEL = /*[[#{traz.det.desc.copiado}]]*/ '¡Copiado!';
+var DESC_COPIAR_LABEL  = /*[[#{traz.det.desc.copiar}]]*/ 'Copiar';
+/*]]>*/
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var COPIADO_LABEL = typeof DESC_COPIADO_LABEL !== 'undefined' ? DESC_COPIADO_LABEL : '¡Copiado!';
+    var COPIAR_LABEL  = typeof DESC_COPIAR_LABEL  !== 'undefined' ? DESC_COPIAR_LABEL  : 'Copiar';
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var modalEl = document.getElementById('modalDescComercial');
+        if (!modalEl) return;
+        var btnReintentar = document.getElementById('descBtnReintentar');
+
+        // Auto-ejecutar al abrir el modal
+        modalEl.addEventListener('show.bs.modal', function() {
+            resetDesc();
+            ejecutarDesc();
+        });
+
+        if (btnReintentar) btnReintentar.addEventListener('click', function() {
+            resetDesc();
+            ejecutarDesc();
+        });
+
+        // Copy buttons
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.btn-copy');
+            if (!btn) return;
+            var targetId = btn.dataset.target;
+            var el = document.getElementById(targetId);
+            if (!el) return;
+            navigator.clipboard.writeText(el.textContent.trim()).then(function() {
+                var span = btn.querySelector('span');
+                var orig = span ? span.textContent : COPIAR_LABEL;
+                if (span) span.textContent = COPIADO_LABEL;
+                btn.classList.replace('btn-outline-secondary', 'btn-success');
+                setTimeout(function() {
+                    if (span) span.textContent = orig;
+                    btn.classList.replace('btn-success', 'btn-outline-secondary');
+                }, 2000);
+            });
+        });
+    });
+
+    function ejecutarDesc() {
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        fetch('/ver/' + DIAG_LOTE_ID + '/descripcion-comercial-ia', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [csrfHeader]: csrf }
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(data) {
+            dHide('descSpinner');
+            if (data.error) {
+                dShow('descError');
+                document.getElementById('descError').textContent = data.error;
+                dShow('descBtnReintentar');
+                return;
+            }
+            renderDesc(data);
+            dShow('descResultado');
+        })
+        .catch(function(status) {
+            dHide('descSpinner');
+            dShow('descError');
+            document.getElementById('descError').textContent = 'Error al conectar (HTTP ' + status + ')';
+            dShow('descBtnReintentar');
+        });
+    }
+
+    function renderDesc(data) {
+        if (data.modoMock) dShow('descMockBadge'); else dHide('descMockBadge');
+        setText2('descEtiqueta', data.textoEtiqueta || '');
+        setText2('descCorta',    data.descripcionCorta || '');
+        setText2('descLarga',    data.descripcionLarga || '');
+        if (data.hashtags && data.hashtags.length) {
+            dShow('descHashtagsSec');
+            var container = document.getElementById('descHashtags');
+            container.innerHTML = data.hashtags.map(function(h) {
+                return '<span class="badge" style="background:#e0f2fe;color:#0284c7;font-size:0.8rem;font-weight:500;">' + esc2(h) + '</span>';
+            }).join('');
+        }
+    }
+
+    function resetDesc() {
+        dShow('descSpinner');
+        dHide('descResultado'); dHide('descError'); dHide('descBtnReintentar');
+        dHide('descMockBadge'); dHide('descHashtagsSec');
+    }
+
+    function setText2(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function dShow(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function dHide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function esc2(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 })();
 </script>
 </body>

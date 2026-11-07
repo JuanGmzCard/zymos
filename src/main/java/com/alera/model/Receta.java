@@ -43,6 +43,15 @@ public class Receta extends AuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String notas;
 
+    // ── Perfil de agua (ppm) ─────────────────────────────────────────────────
+    @Column(name = "agua_calcio")        private Integer aguaCalcio;
+    @Column(name = "agua_magnesio")      private Integer aguaMagnesio;
+    @Column(name = "agua_sodio")         private Integer aguaSodio;
+    @Column(name = "agua_sulfatos")      private Integer aguaSulfatos;
+    @Column(name = "agua_cloruros")      private Integer aguaCloruros;
+    @Column(name = "agua_bicarbonatos")  private Integer aguaBicarbonatos;
+    @Column(name = "agua_notas", columnDefinition = "TEXT") private String aguaNotas;
+
     @Column(nullable = false)
     private Integer version = 1;
 
@@ -105,6 +114,20 @@ public class Receta extends AuditableEntity {
     public void setPhAgua(BigDecimal phAgua) { this.phAgua = phAgua; }
     public String getNotas() { return notas; }
     public void setNotas(String notas) { this.notas = notas; }
+    public Integer getAguaCalcio() { return aguaCalcio; }
+    public void setAguaCalcio(Integer aguaCalcio) { this.aguaCalcio = aguaCalcio; }
+    public Integer getAguaMagnesio() { return aguaMagnesio; }
+    public void setAguaMagnesio(Integer aguaMagnesio) { this.aguaMagnesio = aguaMagnesio; }
+    public Integer getAguaSodio() { return aguaSodio; }
+    public void setAguaSodio(Integer aguaSodio) { this.aguaSodio = aguaSodio; }
+    public Integer getAguaSulfatos() { return aguaSulfatos; }
+    public void setAguaSulfatos(Integer aguaSulfatos) { this.aguaSulfatos = aguaSulfatos; }
+    public Integer getAguaCloruros() { return aguaCloruros; }
+    public void setAguaCloruros(Integer aguaCloruros) { this.aguaCloruros = aguaCloruros; }
+    public Integer getAguaBicarbonatos() { return aguaBicarbonatos; }
+    public void setAguaBicarbonatos(Integer aguaBicarbonatos) { this.aguaBicarbonatos = aguaBicarbonatos; }
+    public String getAguaNotas() { return aguaNotas; }
+    public void setAguaNotas(String aguaNotas) { this.aguaNotas = aguaNotas; }
     public Integer getVersion() { return version; }
     public void setVersion(Integer version) { this.version = version; }
     public LocalDateTime getDeletedAt() { return deletedAt; }

@@ -162,6 +162,9 @@
             </div>
         </div>
         <div class="phm-actions">
+            <button th:if="${iaConfigurada}" type="button" id="btnOptimizarIA" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-stars me-1"></i><span th:text="#{oc.ia.btn}">Optimizar con IA</span>
+            </button>
             <a th:href="@{/ordenes-compra/nueva}" class="btn btn-primary btn-sm"
                sec:authorize="hasAnyRole('ADMIN','FACTURACION','SUPERADMIN') or hasAuthority('MODULO_FACTURACION_CREAR')">
                 <i class="bi bi-plus-lg me-1"></i><span th:text="#{oc.action.nueva}">Nueva OC</span>
@@ -300,5 +303,221 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Modal: Optimizador OC IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalOptimizarIA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e293b,#334155);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-stars me-2" style="color:#fbbf24;"></i>
+                    <span th:text="#{oc.ia.title}">Optimizador de Órdenes de Compra</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Control de semanas + estado -->
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <div class="d-flex align-items-center gap-2">
+                        <label class="form-label mb-0 small fw-semibold" for="iaSemanasInput"
+                               th:text="#{oc.ia.semanas.label}">Semanas a analizar:</label>
+                        <select id="iaSemanasInput" class="form-select form-select-sm" style="width:80px;">
+                            <option value="4">4</option>
+                            <option value="8" selected>8</option>
+                            <option value="12">12</option>
+                            <option value="16">16</option>
+                        </select>
+                    </div>
+                    <button type="button" id="iaBtnAnalizar" class="btn btn-primary btn-sm">
+                        <i class="bi bi-arrow-clockwise me-1"></i><span th:text="#{oc.ia.btn}">Optimizar con IA</span>
+                    </button>
+                    <div id="iaMockBadge" class="d-none">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+                </div>
+                <!-- Spinner -->
+                <div id="iaSpinner" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:2.5rem;height:2.5rem;"></div>
+                    <p class="text-muted small" th:text="#{oc.ia.analizando}">Analizando elaboraciones e inventario...</p>
+                </div>
+                <!-- Resultado -->
+                <div id="iaResultado" class="d-none">
+                    <!-- Resumen -->
+                    <div id="iaResumenBox" class="p-3 rounded mb-3 d-none"
+                         style="background:#f0f9ff;border:1px solid #bae6fd;">
+                        <span class="fw-semibold small" style="color:#0284c7;">
+                            <i class="bi bi-info-circle me-1"></i><span th:text="#{oc.ia.resumen}">Resumen</span>:
+                        </span>
+                        <span id="iaResumenText" class="small ms-1"></span>
+                    </div>
+                    <!-- Alertas -->
+                    <div id="iaAlertasSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#ef4444;">
+                            <i class="bi bi-exclamation-triangle me-1"></i><span th:text="#{oc.ia.alertas}">Alertas</span>
+                        </div>
+                        <ul id="iaAlertas" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                    <!-- Tabla de ítems -->
+                    <div id="iaTablaWrap" class="d-none">
+                        <div class="table-responsive">
+                            <table class="table table-sm mb-0" style="font-size:0.82rem;">
+                                <thead style="background:#f8fafc;">
+                                    <tr>
+                                        <th th:text="#{oc.ia.tabla.ingrediente}">Ingrediente</th>
+                                        <th class="text-end" th:text="#{oc.ia.tabla.comprar}">A comprar</th>
+                                        <th th:text="#{oc.ia.tabla.unidad}">Unidad</th>
+                                        <th class="text-end" th:text="#{oc.ia.tabla.precio.ref}">Precio ref.</th>
+                                        <th class="text-end" th:text="#{oc.ia.tabla.costo}">Costo est.</th>
+                                        <th th:text="#{oc.ia.tabla.proveedor}">Proveedor</th>
+                                        <th th:text="#{oc.ia.tabla.elaboraciones}">Elaboraciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="iaTablaBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Sin ítems -->
+                    <div id="iaSinItems" class="alert alert-success d-none" th:text="#{oc.ia.sin.items}">
+                        El inventario cubre todas las elaboraciones.
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="iaError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+                <button type="button" id="iaBtnReintentar" class="btn btn-primary btn-sm d-none"
+                        th:text="#{oc.ia.reintentar}">Reintentar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    document.addEventListener('DOMContentLoaded', function() {
+        var btnAbrir   = document.getElementById('btnOptimizarIA');
+        var btnAnalizar = document.getElementById('iaBtnAnalizar');
+        var btnReintentar = document.getElementById('iaBtnReintentar');
+        if (!btnAbrir) return;
+
+        btnAbrir.addEventListener('click', function() {
+            var modalEl = document.getElementById('modalOptimizarIA');
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+
+        if (btnAnalizar) btnAnalizar.addEventListener('click', function() {
+            resetIa();
+            iaShow('iaSpinner');
+            ejecutarIA();
+        });
+
+        if (btnReintentar) btnReintentar.addEventListener('click', function() {
+            resetIa();
+            iaShow('iaSpinner');
+            ejecutarIA();
+        });
+
+        // Auto-ejecutar al abrir por primera vez
+        document.getElementById('modalOptimizarIA').addEventListener('show.bs.modal', function(e) {
+            if (document.getElementById('iaResultado').classList.contains('d-none') &&
+                document.getElementById('iaError').classList.contains('d-none') &&
+                document.getElementById('iaSpinner').classList.contains('d-none')) {
+                resetIa();
+                iaShow('iaSpinner');
+                ejecutarIA();
+            }
+        });
+    });
+
+    function ejecutarIA() {
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        var semanas    = document.getElementById('iaSemanasInput')?.value || '8';
+        var body       = new URLSearchParams({ semanas: semanas });
+
+        fetch('/ordenes-compra/optimizar-ia', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [csrfHeader]: csrf, 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString()
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(data) {
+            iaHide('iaSpinner');
+            if (data.error) {
+                iaShow('iaError');
+                document.getElementById('iaError').textContent = data.error;
+                iaShow('iaBtnReintentar');
+                return;
+            }
+            renderIA(data);
+            iaShow('iaResultado');
+        })
+        .catch(function(status) {
+            iaHide('iaSpinner');
+            iaShow('iaError');
+            document.getElementById('iaError').textContent = 'Error al conectar (HTTP ' + status + ')';
+            iaShow('iaBtnReintentar');
+        });
+    }
+
+    function renderIA(data) {
+        if (data.modoMock) iaShow('iaMockBadge'); else iaHide('iaMockBadge');
+
+        // Resumen
+        if (data.resumen) {
+            iaShow('iaResumenBox');
+            iaSetText('iaResumenText', data.resumen);
+        }
+
+        // Alertas
+        if (data.alertas && data.alertas.length) {
+            iaShow('iaAlertasSec');
+            document.getElementById('iaAlertas').innerHTML = data.alertas.map(function(a) {
+                return '<li>' + esc(a) + '</li>';
+            }).join('');
+        }
+
+        // Items
+        var items = data.itemsSugeridos || [];
+        if (items.length === 0) {
+            iaShow('iaSinItems');
+        } else {
+            iaShow('iaTablaWrap');
+            var tbody = document.getElementById('iaTablaBody');
+            tbody.innerHTML = items.map(function(it) {
+                var elab = (it.elaboraciones || []).slice(0, 2).join(', ');
+                if ((it.elaboraciones || []).length > 2) elab += ' +' + (it.elaboraciones.length - 2);
+                var proveedor = it.proveedorSugerido ? esc(it.proveedorSugerido) :
+                    '<span class="text-muted">—</span>';
+                return '<tr>' +
+                    '<td class="fw-semibold">' + esc(it.nombre || '') + '</td>' +
+                    '<td class="text-end">' + fmtNum(it.cantidadAComprar) + '</td>' +
+                    '<td>' + esc(it.unidad || '') + '</td>' +
+                    '<td class="text-end text-muted small">' + esc(it.precioUnitarioReferencia || '—') + '</td>' +
+                    '<td class="text-end">' + esc(it.costoEstimado || '—') + '</td>' +
+                    '<td class="small">' + proveedor + '</td>' +
+                    '<td class="text-muted small" style="max-width:160px;">' + esc(elab) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+    }
+
+    function resetIa() {
+        ['iaSpinner','iaResultado','iaError','iaBtnReintentar',
+         'iaResumenBox','iaAlertasSec','iaTablaWrap','iaSinItems','iaMockBadge']
+            .forEach(iaHide);
+    }
+
+    function iaSetText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function iaShow(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function iaHide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function fmtNum(n) { return n != null ? parseFloat(n.toFixed(1)).toString() : '—'; }
+})();
+</script>
 </body>
 </html>

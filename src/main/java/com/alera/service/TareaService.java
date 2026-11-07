@@ -1,5 +1,6 @@
 package com.alera.service;
 
+import com.alera.config.TenantContext;
 import com.alera.model.Tarea;
 import com.alera.model.TareaComentario;
 import com.alera.model.TareaItem;
@@ -36,6 +37,7 @@ public class TareaService {
     private final RecetaRepository                 recetaRepo;
     private final BarrilRepository                 barrilRepo;
     private final NotificacionService              notificacionService;
+    private final WhatsAppService                  whatsAppService;
 
     public TareaService(TareaRepository repo,
                         TareaItemRepository itemRepo,
@@ -51,7 +53,8 @@ public class TareaService {
                         ProveedorRepository proveedorRepo,
                         RecetaRepository recetaRepo,
                         BarrilRepository barrilRepo,
-                        NotificacionService notificacionService) {
+                        NotificacionService notificacionService,
+                        WhatsAppService whatsAppService) {
         this.repo               = repo;
         this.itemRepo           = itemRepo;
         this.comentarioRepo     = comentarioRepo;
@@ -67,6 +70,7 @@ public class TareaService {
         this.recetaRepo         = recetaRepo;
         this.barrilRepo         = barrilRepo;
         this.notificacionService = notificacionService;
+        this.whatsAppService     = whatsAppService;
     }
 
     @Transactional(readOnly = true)
@@ -114,6 +118,8 @@ public class TareaService {
 
         if (saved.getAsignadoA() != null && !saved.getAsignadoA().equals(creadoPor)) {
             notificacionService.crearAlertaTareaAsignada(saved);
+            whatsAppService.notificarTareaAsignada(TenantContext.getCurrentTenant(),
+                    saved.getTitulo(), saved.getAsignadoA());
         }
 
         return saved;
@@ -150,6 +156,8 @@ public class TareaService {
         String nuevoAsignado = saved.getAsignadoA();
         if (nuevoAsignado != null && !nuevoAsignado.equals(anteriorAsignado)) {
             notificacionService.crearAlertaTareaAsignada(saved);
+            whatsAppService.notificarTareaAsignada(TenantContext.getCurrentTenant(),
+                    saved.getTitulo(), nuevoAsignado);
         }
 
         return saved;

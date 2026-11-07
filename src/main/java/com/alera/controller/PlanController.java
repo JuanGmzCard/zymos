@@ -1,14 +1,15 @@
 package com.alera.controller;
 
 import com.alera.config.TenantContext;
+import com.alera.model.enums.PlanNivel;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.UsuarioRepository;
-import com.alera.repository.VentaItemRepository;
 import com.alera.service.StockService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -34,6 +35,19 @@ public class PlanController {
     @GetMapping("/plan-vencido")
     public String planVencido() {
         return "plan/vencido";
+    }
+
+    @GetMapping("/plan-upgrade")
+    public String planUpgrade(@RequestParam(defaultValue = "COCCION") String requiere, Model model) {
+        PlanNivel nivelRequerido;
+        try {
+            nivelRequerido = PlanNivel.valueOf(requiere);
+        } catch (IllegalArgumentException e) {
+            nivelRequerido = PlanNivel.COCCION;
+        }
+        model.addAttribute("nivelRequerido", nivelRequerido);
+        model.addAttribute("planes", PlanNivel.values());
+        return "plan/upgrade";
     }
 
     @GetMapping("/mi-plan")

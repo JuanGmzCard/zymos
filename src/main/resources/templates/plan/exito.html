@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' — ¡Listo!'">Zymos — ¡Listo!</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        body { background: #f1f5f9; min-height: 100vh; font-family: 'Raleway', sans-serif;
+            display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+        .exito-card {
+            background: #fff; border-radius: 16px; padding: 3rem 2.5rem 2.5rem;
+            max-width: 540px; width: 100%; text-align: center;
+            box-shadow: 0 8px 40px rgba(0,0,0,.1);
+        }
+        .exito-icon {
+            width: 80px; height: 80px; background: #dcfce7; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1.5rem; font-size: 2.5rem; color: #16a34a;
+        }
+        .exito-title {
+            font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700;
+            color: #1e293b; margin-bottom: .5rem;
+        }
+        .exito-sub { color: #64748b; font-size: 1rem; margin-bottom: 2rem; }
+        .info-box {
+            background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px;
+            padding: 1.25rem 1.5rem; text-align: left; margin-bottom: 1.5rem;
+        }
+        .info-row { display: flex; justify-content: space-between; align-items: center;
+            padding: .45rem 0; border-bottom: 1px solid #f1f5f9; font-size: .92rem; }
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #64748b; }
+        .info-value { color: #1e293b; font-weight: 600; font-family: monospace; }
+        .info-value.url { color: var(--verde-alera, #2563eb); font-family: inherit; }
+        .btn-ir {
+            display: block; width: 100%; padding: .85rem; border-radius: 10px;
+            background: var(--verde-alera, #2563eb); color: #fff; text-decoration: none;
+            font-weight: 700; font-size: 1rem; transition: opacity .18s;
+        }
+        .btn-ir:hover { opacity: .9; color: #fff; }
+        .email-note { font-size: .82rem; color: #94a3b8; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+<div class="exito-card">
+    <div class="exito-icon">
+        <i th:classappend="${esTrial} ? 'bi-gift-fill' : 'bi-check-lg'" class="bi"></i>
+    </div>
+    <div class="exito-title"
+         th:text="${esTrial} ? '¡Tu prueba gratuita está lista!' : '¡Tu cervecería está lista!'">
+        ¡Tu cervecería está lista!
+    </div>
+    <div class="exito-sub"
+         th:text="${esTrial} ? 'Acceso completo por 14 días — sin tarjeta de crédito ni compromiso.' : 'El pago fue aprobado y tu cuenta fue creada exitosamente.'">
+        El pago fue aprobado y tu cuenta fue creada exitosamente.
+    </div>
+
+    <div class="info-box" th:if="${checkout != null}">
+        <div class="info-row">
+            <span class="info-label">Cervecería</span>
+            <span class="info-value" th:text="${checkout.nombreCerveceria}">Mi Cervecería</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Plan</span>
+            <span th:if="${esTrial}" class="info-value" style="color:#16a34a">
+                <i class="bi bi-gift me-1"></i>14 días gratuitos · Acceso completo
+            </span>
+            <span th:unless="${esTrial}" class="info-value" th:text="${checkout.planNivel.displayName}">Plan</span>
+        </div>
+        <div class="info-row" th:if="${esTrial and trialFin != null}">
+            <span class="info-label">Prueba hasta</span>
+            <span class="info-value" th:text="${#temporals.format(trialFin, 'dd/MM/yyyy')}">fecha</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Usuario</span>
+            <span class="info-value" th:text="${checkout.email}">email</span>
+        </div>
+        <div class="info-row" th:if="${loginUrl != null}">
+            <span class="info-label">URL de acceso</span>
+            <span class="info-value url" th:text="${loginUrl}">https://...</span>
+        </div>
+    </div>
+
+    <a th:href="${loginUrl != null ? loginUrl : '/login'}" class="btn-ir">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Ingresar a mi cervecería
+    </a>
+
+    <div class="email-note">
+        <i class="bi bi-envelope me-1"></i>
+        Te enviamos las credenciales de acceso por email. Revisá tu bandeja de entrada.
+    </div>
+</div>
+</body>
+</html>

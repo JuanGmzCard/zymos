@@ -41,7 +41,7 @@
             <h1 th:text="${facturaId != null} ? #{fact.form.title.editar} : #{fact.form.title.nueva}">Factura</h1>
             <p class="text-muted mb-0" th:text="#{fact.form.subtitle}">Los insumos y equipos comprados se sincronizarán automáticamente con el inventario</p>
         </div>
-        <button type="button" id="btnAnalizadorIA"
+        <button th:if="${iaConfigurada}" type="button" id="btnAnalizadorIA"
                 class="btn btn-primary btn-sm d-flex align-items-center gap-2"
                 data-bs-toggle="modal" data-bs-target="#modalAnalizadorIA">
             <i class="bi bi-stars"></i>
@@ -789,7 +789,7 @@ document.getElementById('items-container').addEventListener('click', e => {
 <!-- ═══════════════════════════════════════════════════════════════
      MODAL ANALIZADOR DE FACTURAS CON IA
 ════════════════════════════════════════════════════════════════ -->
-<div class="modal fade" id="modalAnalizadorIA" tabindex="-1" aria-labelledby="modalAnalizadorIALabel" aria-hidden="true">
+<div th:if="${iaConfigurada}" class="modal fade" id="modalAnalizadorIA" tabindex="-1" aria-labelledby="modalAnalizadorIALabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

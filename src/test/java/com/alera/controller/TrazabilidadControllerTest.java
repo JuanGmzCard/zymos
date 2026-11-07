@@ -65,6 +65,9 @@ class TrazabilidadControllerTest {
     @MockBean VentaService                 ventaService;
     @MockBean LoteCervezaRepository        loteRepo;
     @MockBean BarrilService                barrilService;
+    @MockBean com.alera.service.FermentacionDiagnosticoService diagnosticoService;
+    @MockBean com.alera.service.DescripcionComercialService descripcionComercialService;
+    @MockBean com.alera.service.BjcpScorerService bjcpScorerService;
 
     @BeforeEach
     void setUp() {

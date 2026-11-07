@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding != null ? branding.name : 'Zymos'} + ' - ' + #{plan.upgrade.title}">Zymos - Actualizar Plan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        body { background: var(--fondo); min-height: 100vh; }
+        .upgrade-page {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 3rem 1rem;
+            min-height: 100vh;
+        }
+        .upgrade-wrap { max-width: 760px; width: 100%; }
+        .upgrade-header {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem 2rem 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+        }
+        .upgrade-icon { font-size: 2.5rem; color: var(--dorado); margin-bottom: .75rem; }
+        .upgrade-title { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--verde-alera); margin-bottom: .5rem; }
+        .upgrade-subtitle { color: #64748b; font-size: .9rem; }
+        .plan-card {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #e2e8f0;
+            padding: 1.5rem;
+            height: 100%;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .plan-card.requerido {
+            border-color: var(--dorado);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--dorado) 15%, transparent);
+        }
+        .plan-name { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--verde-alera); margin-bottom: .25rem; }
+        .plan-price { font-size: 1.5rem; font-weight: 700; color: #1e293b; margin-bottom: .25rem; }
+        .plan-desc { color: #64748b; font-size: .78rem; margin-bottom: 1rem; }
+        .plan-features { list-style: none; padding: 0; margin: 0; }
+        .plan-features li { font-size: .82rem; color: #334155; padding: .2rem 0; }
+        .plan-features li i { color: #16a34a; margin-right: .4rem; }
+        .plan-features li.bloqueado { color: #94a3b8; }
+        .plan-features li.bloqueado i { color: #cbd5e1; }
+        .badge-requerido { background: var(--dorado); color: #1e293b; font-size: .7rem; padding: .3rem .6rem; border-radius: 20px; font-weight: 600; }
+        .cta-card {
+            background: var(--verde-alera);
+            border-radius: 12px;
+            padding: 1.5rem 2rem;
+            color: var(--crema);
+            margin-top: 1.5rem;
+        }
+        .cta-card a { color: var(--dorado); }
+        html.dark-mode .upgrade-header { background: var(--dm-card); border: 1px solid var(--dm-border-light); }
+        html.dark-mode .upgrade-title { color: var(--dm-text); }
+        html.dark-mode .upgrade-subtitle { color: var(--dm-text-muted); }
+        html.dark-mode .plan-card { background: var(--dm-card); border-color: var(--dm-border); }
+        html.dark-mode .plan-card.requerido { border-color: var(--dorado); }
+        html.dark-mode .plan-name { color: var(--dm-text); }
+        html.dark-mode .plan-price { color: var(--dm-text-strong); }
+        html.dark-mode .plan-desc { color: var(--dm-text-muted); }
+        html.dark-mode .plan-features li { color: var(--dm-text); }
+        html.dark-mode .plan-features li.bloqueado { color: var(--dm-text-dimmer); }
+    </style>
+</head>
+<body>
+<div class="upgrade-page">
+<div class="upgrade-wrap">
+
+    <!-- Header -->
+    <div class="upgrade-header">
+        <div class="upgrade-icon"><i class="bi bi-lock-fill"></i></div>
+        <div class="upgrade-title" th:text="#{plan.upgrade.title}">Funcionalidad no incluida en tu plan</div>
+        <p class="upgrade-subtitle mb-0">
+            <span th:text="#{plan.upgrade.subtitle.pre}">Esta sección requiere el</span>
+            <strong th:text="${nivelRequerido.displayName}">Plan Cocción</strong><span th:text="#{plan.upgrade.subtitle.post}"> o superior.</span>
+        </p>
+    </div>
+
+    <!-- Planes -->
+    <div class="row g-3">
+        <!-- MACERADO -->
+        <div class="col-md-4">
+            <div class="plan-card" th:classappend="${nivelRequerido.name() == 'MACERADO'} ? 'requerido' : ''">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="plan-name" th:text="#{plan.nombre.macerado}">Plan Macerado</div>
+                    <span class="badge-requerido" th:if="${nivelRequerido.name() == 'MACERADO'}" th:text="#{plan.upgrade.badge.requerido}">Requerido</span>
+                </div>
+                <div class="plan-price">$150.000<span style="font-size:.8rem;font-weight:400;color:#64748b">/mes</span></div>
+                <div class="plan-desc" th:text="#{plan.desc.macerado}">Hasta 500 L/mes · 2 usuarios</div>
+                <ul class="plan-features">
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.trazabilidad}">Trazabilidad de lotes</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.inventario}">Inventario de insumos</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.recetas}">Recetas con escalado</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.reportes.basicos}">Reportes básicos (PDF)</span></li>
+                    <li class="bloqueado"><i class="bi bi-dash-circle"></i><span th:text="#{plan.feat.bpm}">BPM</span></li>
+                    <li class="bloqueado"><i class="bi bi-dash-circle"></i><span th:text="#{plan.feat.comercial}">Comercial y finanzas</span></li>
+                    <li class="bloqueado"><i class="bi bi-dash-circle"></i><span th:text="#{plan.feat.tareas}">Tareas operativas</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- COCCION -->
+        <div class="col-md-4">
+            <div class="plan-card" th:classappend="${nivelRequerido.name() == 'COCCION'} ? 'requerido' : ''">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="plan-name" th:text="#{plan.nombre.coccion}">Plan Cocción</div>
+                    <span class="badge-requerido" th:if="${nivelRequerido.name() == 'COCCION'}" th:text="#{plan.upgrade.badge.requerido}">Requerido</span>
+                </div>
+                <div class="plan-price">$320.000<span style="font-size:.8rem;font-weight:400;color:#64748b">/mes</span></div>
+                <div class="plan-desc" th:text="#{plan.desc.coccion}">Hasta 2.000 L/mes · 5 usuarios</div>
+                <ul class="plan-features">
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.todo.macerado}">Todo el Plan Macerado</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.bpm}">BPM</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.comercial}">Comercial y finanzas</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.tareas}">Tareas operativas</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.reportes.completos}">Reportes completos (Excel + PDF)</span></li>
+                    <li class="bloqueado"><i class="bi bi-dash-circle"></i><span th:text="#{plan.feat.rbac}">Roles personalizados (RBAC)</span></li>
+                    <li class="bloqueado"><i class="bi bi-dash-circle"></i><span th:text="#{plan.feat.migracion}">Migración de datos</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- FERMENTACION -->
+        <div class="col-md-4">
+            <div class="plan-card" th:classappend="${nivelRequerido.name() == 'FERMENTACION'} ? 'requerido' : ''">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <div class="plan-name" th:text="#{plan.nombre.fermentacion}">Plan Fermentación</div>
+                    <span class="badge-requerido" th:if="${nivelRequerido.name() == 'FERMENTACION'}" th:text="#{plan.upgrade.badge.requerido}">Requerido</span>
+                </div>
+                <div class="plan-price">$550.000<span style="font-size:.8rem;font-weight:400;color:#64748b">/mes</span></div>
+                <div class="plan-desc" th:text="#{plan.desc.fermentacion}">Sin límite · Usuarios ilimitados</div>
+                <ul class="plan-features">
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.todo.coccion}">Todo el Plan Cocción</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.rbac}">Roles personalizados (RBAC)</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.branding}">Branding propio</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.migracion}">Migración de datos</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.ia}">IA — Analizador de facturas</span></li>
+                    <li><i class="bi bi-check-circle-fill"></i><span th:text="#{plan.feat.soporte.dedicado}">Soporte dedicado</span></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-card">
+        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+            <div>
+                <div style="font-weight:600;font-size:.95rem;" th:text="#{plan.upgrade.cta.titulo}">¿Querés actualizar tu plan?</div>
+                <div style="font-size:.85rem;opacity:.85;" th:text="#{plan.upgrade.cta.desc}">Escribinos y te activamos el plan en menos de 24 horas.</div>
+            </div>
+            <div class="d-flex gap-2 flex-shrink-0">
+                <a href="mailto:hola@zymos.app" class="btn btn-sm"
+                   style="background:var(--dorado);color:#1e293b;font-weight:600;border:none;" th:text="#{plan.upgrade.cta.btn}">
+                    Contactar
+                </a>
+                <a th:href="@{/}" class="btn btn-sm btn-outline-light" th:text="#{plan.upgrade.volver}">Volver</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/dark-mode.js}"></script>
+</body>
+</html>

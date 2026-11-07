@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.dto.FermentacionDiagnosticoDto;
 import com.alera.dto.LoteFormDto;
 import com.alera.dto.InsumoDto;
 import com.alera.model.EscalonTemperatura;
@@ -23,6 +24,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -38,10 +41,16 @@ import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TipoCervezaRepository;
 import com.alera.service.BarrilService;
 import com.alera.service.EquipoService;
+import com.alera.service.FermentacionDiagnosticoService;
+import com.alera.service.DescripcionComercialService;
+import com.alera.dto.DescripcionComercialDto;
+import com.alera.service.BjcpScorerService;
+import com.alera.dto.BjcpScorerDto;
 import org.springframework.context.MessageSource;
 import com.alera.service.RecetaService;
 import com.alera.service.TrazabilidadService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import java.util.Locale;
 import org.springframework.stereotype.Controller;
@@ -69,6 +78,12 @@ public class TrazabilidadController {
     private final LoteCervezaRepository loteRepo;
     private final BarrilService barrilService;
     private final MessageSource messageSource;
+    private final FermentacionDiagnosticoService diagnosticoService;
+    private final DescripcionComercialService descripcionComercialService;
+    private final BjcpScorerService bjcpScorerService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.base-url:http://localhost:8080}")
+    private String appBaseUrl;
 
     public TrazabilidadController(TrazabilidadService service,
                                    EquipoService equipoService,
@@ -84,7 +99,10 @@ public class TrazabilidadController {
                                    VentaService ventaService,
                                    LoteCervezaRepository loteRepo,
                                    BarrilService barrilService,
-                                   MessageSource messageSource) {
+                                   MessageSource messageSource,
+                                   FermentacionDiagnosticoService diagnosticoService,
+                                   DescripcionComercialService descripcionComercialService,
+                                   BjcpScorerService bjcpScorerService) {
         this.service = service;
         this.equipoService = equipoService;
         this.recetaService = recetaService;
@@ -100,6 +118,9 @@ public class TrazabilidadController {
         this.loteRepo = loteRepo;
         this.barrilService = barrilService;
         this.messageSource = messageSource;
+        this.diagnosticoService = diagnosticoService;
+        this.descripcionComercialService = descripcionComercialService;
+        this.bjcpScorerService = bjcpScorerService;
     }
 
     private String msg(String key, Locale locale) {
@@ -117,7 +138,18 @@ public class TrazabilidadController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta,
             @RequestParam(defaultValue = "0") int page,
+            HttpSession session,
             Model model) {
+        // Redirigir a onboarding si el tenant está vacío y el admin no ha saltado el asistente
+        if (session.getAttribute(BienvenidaController.SESSION_SKIPPED) == null) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            boolean esAdmin = auth != null && auth.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")
+                               || a.getAuthority().equals("ROLE_SUPERADMIN"));
+            if (esAdmin && loteRepo.count() == 0 && recetaService.listarActivas().isEmpty()) {
+                return "redirect:/bienvenida";
+            }
+        }
         var paginaLotes = service.listarPaginado(estilo, fase, desde, hasta, page);
         model.addAttribute("lotes",        paginaLotes.getContent());
         model.addAttribute("paginaActual", page);
@@ -396,7 +428,32 @@ public class TrazabilidadController {
                 .filter(e -> "MADURACION".equals(e.getFase()))
                 .sorted(Comparator.comparingInt(e -> e.getOrden() != null ? e.getOrden() : 0))
                 .collect(Collectors.toList()));
+        model.addAttribute("comparativaEstilo", service.compararConEstilo(lote));
         return "trazabilidad/detalle";
+    }
+
+    @PostMapping(value = "/ver/{id}/diagnostico-ia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public FermentacionDiagnosticoDto diagnosticoIA(@PathVariable Long id) {
+        var lote    = service.buscarPorId(id);
+        var lecturas = lecturaService.listarPorLote(id);
+        return diagnosticoService.diagnosticar(lote, lecturas);
+    }
+
+    @PostMapping(value = "/ver/{id}/bjcp-scorer-ia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public BjcpScorerDto bjcpScorerIA(@PathVariable Long id,
+                                       @RequestParam(required = false) String notas) {
+        var lote = service.buscarPorId(id);
+        return bjcpScorerService.analizar(notas, lote.getEstilo());
+    }
+
+    @PostMapping(value = "/ver/{id}/descripcion-comercial-ia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public DescripcionComercialDto descripcionComercialIA(@PathVariable Long id) {
+        var lote        = service.buscarPorId(id);
+        var evaluaciones = evaluacionService.listarPorLote(id);
+        return descripcionComercialService.generar(lote, evaluaciones);
     }
 
     @PostMapping("/ver/{id}/lecturas/agregar")
@@ -408,9 +465,14 @@ public class TrazabilidadController {
             @RequestParam(required = false) BigDecimal temperatura,
             @RequestParam(required = false) String notas,
             RedirectAttributes ra) {
-        lecturaService.agregar(id, fecha, densidad, temperatura, notas);
-        ra.addFlashAttribute("mensaje", "Lectura registrada correctamente");
-        ra.addFlashAttribute("tipoMensaje", "success");
+        String advertencia = lecturaService.agregar(id, fecha, densidad, temperatura, notas);
+        if (advertencia != null) {
+            ra.addFlashAttribute("mensaje", "Lectura registrada — ⚠ Temperatura fuera del rango objetivo: " + advertencia);
+            ra.addFlashAttribute("tipoMensaje", "warning");
+        } else {
+            ra.addFlashAttribute("mensaje", "Lectura registrada correctamente");
+            ra.addFlashAttribute("tipoMensaje", "success");
+        }
         return "redirect:/ver/" + id;
     }
 
@@ -469,6 +531,19 @@ public class TrazabilidadController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_PDF)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .body(pdf);
+    }
+
+    @GetMapping("/ver/{id}/etiqueta-qr")
+    public ResponseEntity<byte[]> etiquetaQr(@PathVariable Long id, HttpServletRequest request, Locale locale) {
+        LoteCerveza lote = service.buscarPorId(id);
+        Tenant tenant = (Tenant) request.getAttribute("currentTenant");
+        ExportBranding branding = ExportBranding.from(tenant);
+        byte[] pdf = pdfExportService.generarEtiquetaQr(lote, branding, appBaseUrl, locale);
+        String filename = "etiqueta-" + (lote.getCodigoLote() != null ? lote.getCodigoLote().toLowerCase() : id) + ".pdf";
+        return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_PDF)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                 .body(pdf);
     }
 

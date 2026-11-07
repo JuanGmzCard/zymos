@@ -170,6 +170,13 @@ public class RecetaService {
         dto.setVolumenBase(r.getVolumenBase());
         dto.setPhAgua(r.getPhAgua());
         dto.setNotas(r.getNotas());
+        dto.setAguaCalcio(r.getAguaCalcio());
+        dto.setAguaMagnesio(r.getAguaMagnesio());
+        dto.setAguaSodio(r.getAguaSodio());
+        dto.setAguaSulfatos(r.getAguaSulfatos());
+        dto.setAguaCloruros(r.getAguaCloruros());
+        dto.setAguaBicarbonatos(r.getAguaBicarbonatos());
+        dto.setAguaNotas(r.getAguaNotas());
 
         r.getMaltas().forEach(i      -> dto.getMaltas().add(parseInsumoDto(i)));
         r.getLupulos().forEach(i     -> dto.getLupulos().add(parseInsumoDto(i)));
@@ -233,6 +240,13 @@ public class RecetaService {
         receta.setVolumenBase(dto.getVolumenBase());
         receta.setPhAgua(dto.getPhAgua());
         receta.setNotas(dto.getNotas());
+        receta.setAguaCalcio(dto.getAguaCalcio());
+        receta.setAguaMagnesio(dto.getAguaMagnesio());
+        receta.setAguaSodio(dto.getAguaSodio());
+        receta.setAguaSulfatos(dto.getAguaSulfatos());
+        receta.setAguaCloruros(dto.getAguaCloruros());
+        receta.setAguaBicarbonatos(dto.getAguaBicarbonatos());
+        receta.setAguaNotas(dto.getAguaNotas());
 
         addIngredientes(dto.getMaltas(),       TipoIngrediente.MALTA,        receta);
         addIngredientes(dto.getLupulos(),      TipoIngrediente.LUPULO,       receta);

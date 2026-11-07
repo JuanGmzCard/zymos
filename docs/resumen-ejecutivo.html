@@ -648,26 +648,26 @@
 
   <div class="stats-row">
     <div class="stat-pill">
-      <span class="stat-num">12</span>
+      <span class="stat-num">15</span>
       <span class="stat-lbl">Módulos integrados</span>
     </div>
     <div class="stat-pill">
-      <span class="stat-num">960+</span>
+      <span class="stat-num">999</span>
       <span class="stat-lbl">Tests automatizados</span>
     </div>
     <div class="stat-pill">
-      <span class="stat-num">88</span>
+      <span class="stat-num">94</span>
       <span class="stat-lbl">Migraciones Flyway</span>
     </div>
     <div class="stat-pill">
-      <span class="stat-num">∞</span>
-      <span class="stat-lbl">Roles por tenant</span>
+      <span class="stat-num">7</span>
+      <span class="stat-lbl">Servicios de IA</span>
     </div>
   </div>
 
   <div class="callout">
     <h3>Un solo sistema. Todo el negocio.</h3>
-    <p>Producción · Recetas · Inventario · Equipos · BPM · Comercial · Ventas · Barriles · Planificación · Reportes</p>
+    <p>Producción · Recetas · Inventario · Equipos · BPM · Comercial · Ventas · Barriles · Planificación · Reportes · Tareas · Notificaciones WhatsApp · Inteligencia Artificial · Chat IA · Checkout Self-Service · Landing Page · Embudo de Conversión</p>
   </div>
 
   <div class="page-footer">
@@ -750,9 +750,13 @@
       <ul>
         <li>Ciclo de vida completo: cocción (1–4 sesiones), fermentación, acondicionamiento, maduración y carbonatación</li>
         <li>Tablero Kanban con drag &amp; drop por fase</li>
+        <li>Notas de proceso por fase (fermentación, acondicionamiento, maduración)</li>
         <li>Gráfica de fermentación densidad/temperatura</li>
         <li>Cálculo automático de ABV, atenuación y eficiencia</li>
         <li>Evaluaciones sensoriales BJCP</li>
+        <li>Etiqueta QR PDF (80×100mm) por lote</li>
+        <li>Email automático al cambiar de fase (si SMTP configurado)</li>
+        <li>Diagnóstico IA, descripción comercial IA y BJCP scorer IA</li>
         <li>Exportación a PDF y Excel (6 hojas)</li>
       </ul>
     </div>
@@ -762,9 +766,10 @@
       <ul>
         <li>Biblioteca con ingredientes, escalones de macerado y adiciones de hervor</li>
         <li>Objetivos OG/FG/ABV e indicadores Brix (método Sean Terrill)</li>
-        <li>Cálculo de agua macerado y sparge</li>
-        <li>Calculadora de escala de volumen integrada</li>
-        <li>Datalist de insumos del inventario en formulario</li>
+        <li>Perfil de agua completo (Ca²⁺, Mg²⁺, Na⁺, SO₄²⁻, Cl⁻, HCO₃⁻ en ppm)</li>
+        <li>Calculadora de escala de volumen con creación de receta escalada</li>
+        <li>Export/import BeerXML 1.0 estándar</li>
+        <li>Asistente IA: genera receta completa desde descripción de texto</li>
         <li>Exportación a PDF</li>
       </ul>
     </div>
@@ -839,8 +844,10 @@
         <li>Registro y seguimiento de facturas de compra</li>
         <li>Estados: Recibida → Verificada → Pagada</li>
         <li>IVA por ítem e impuesto al consumo independientes</li>
+        <li>Adjuntos de archivo por factura (PDF, imágenes)</li>
+        <li>Analizador IA: Claude Vision pre-llena la factura desde foto o PDF</li>
         <li>Asignación de costos de factura directamente a lotes</li>
-        <li>Órdenes de compra a proveedores</li>
+        <li>Órdenes de compra con optimización IA</li>
         <li>Exportación a Excel con detalle de ítems</li>
       </ul>
     </div>
@@ -872,7 +879,8 @@
         <li>Dashboard personalizable (visibilidad y orden drag &amp; drop)</li>
         <li>Reporte de producción con gráficas por estilo y período</li>
         <li>Reporte de ventas y rentabilidad por lote</li>
-        <li>Alertas diarias por email (inventario, equipos, facturas)</li>
+        <li>Análisis IA de rentabilidad: insights, estilos top, tendencias y alertas</li>
+        <li>Alertas diarias y resumen mensual por email</li>
         <li>Exportación a PDF y Excel en todos los reportes</li>
       </ul>
     </div>
@@ -895,6 +903,45 @@
         <li>Notificaciones automáticas al asignado</li>
         <li>Estado automático según progreso del checklist</li>
         <li>Alerta de vencimiento diaria</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📱 Notificaciones WhatsApp</h3>
+      <ul>
+        <li>Multi-contacto: cada contacto se suscribe solo a los tipos de alerta de su rol</li>
+        <li>8 tipos: bajo stock, vencimientos, cambio de fase de lote, mantenimiento, BPM salud, tarea asignada, plan por vencer y resumen mensual</li>
+        <li>Integración Twilio WhatsApp Business API (sin SDK — HTTP directo)</li>
+        <li>Modo simulado cuando no hay credenciales Twilio configuradas</li>
+        <li>Administración desde <em>Admin → WhatsApp</em> con toggle activo/inactivo por contacto</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🤖 Inteligencia Artificial (Claude API)</h3>
+      <ul>
+        <li>Asistente de recetas: genera receta completa desde descripción libre</li>
+        <li>Analizador de facturas: Claude Vision pre-llena formulario desde imagen/PDF</li>
+        <li>Diagnóstico de fermentación: detecta anomalías en la curva densidad/temperatura</li>
+        <li>Descripción comercial: 4 variantes de texto de marketing por lote</li>
+        <li>BJCP Scorer: sugiere puntajes y detecta defectos en notas sensoriales</li>
+        <li>Optimizador de órdenes de compra y análisis de rentabilidad</li>
+        <li>Chat IA conversacional sobre los datos del tenant</li>
+        <li>Modo mock completo sin API key — funciona para demo sin costo</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>💳 Planes, Checkout y Embudo de Ventas</h3>
+      <ul>
+        <li>Landing page pública de marketing con 9 secciones y branding configurable</li>
+        <li>Demo auto-login: acceso instantáneo con un click a tenant de demostración realista</li>
+        <li>3 planes escalonados: Macerado, Cocción y Fermentación</li>
+        <li>Alta de nuevos tenants sin intervención manual — pago y aprovisionamiento automático</li>
+        <li>Integración MercadoPago con modo mock para desarrollo</li>
+        <li>Emails de onboarding días 1/3/7 y recordatorios 4 y 1 día antes del vencimiento del trial</li>
+        <li>Restricción de módulos según nivel del plan contratado</li>
+        <li>Bloqueo con gracia de 7 días + página de renovación</li>
       </ul>
     </div>
 
@@ -1083,18 +1130,21 @@
     </thead>
     <tbody>
       <tr><td>Backend</td><td>Spring Boot 3.4.4 + Java 21</td><td>Motor principal — LTS hasta 2031, Jakarta EE 10</td></tr>
-      <tr><td>Base de datos</td><td>PostgreSQL + Flyway (88 migraciones)</td><td>Almacenamiento relacional con control de versiones del schema</td></tr>
+      <tr><td>Base de datos</td><td>PostgreSQL + Flyway (93 migraciones)</td><td>Almacenamiento relacional con control de versiones del schema</td></tr>
       <tr><td>ORM</td><td>Hibernate 6 + Spring Data JPA</td><td>Filtro @TenantId, auditoría, Spring Session JDBC</td></tr>
       <tr><td>Frontend</td><td>Thymeleaf 3.1 + Bootstrap 5.3</td><td>SSR responsivo, dark mode, i18n ES/EN</td></tr>
       <tr><td>Gráficas / Calendario</td><td>Chart.js + FullCalendar</td><td>Visualizaciones interactivas y planificación</td></tr>
       <tr><td>Seguridad</td><td>Spring Security + JJWT</td><td>Autenticación, RBAC, CSP, JWT HS256, rate limiting</td></tr>
-      <tr><td>Documentos</td><td>OpenPDF + Apache POI</td><td>Generación de PDFs y archivos Excel (.xlsx)</td></tr>
+      <tr><td>Documentos</td><td>OpenPDF + Apache POI + ZXing</td><td>PDFs, Excel (.xlsx) y etiquetas QR por lote</td></tr>
+      <tr><td>Inteligencia Artificial</td><td>Anthropic Claude API SDK 2.34.0</td><td>7 servicios IA (recetas, facturas, fermentación, BJCP, chat…). Modo mock sin API key</td></tr>
+      <tr><td>WhatsApp</td><td>Twilio WhatsApp Business API (HTTP)</td><td>Notificaciones multi-contacto por suscripción a 8 tipos de alerta. Modo mock sin credenciales</td></tr>
+      <tr><td>Pagos</td><td>MercadoPago SDK 2.1.24</td><td>Checkout self-service de planes SaaS. Modo mock para desarrollo</td></tr>
       <tr><td>Cache</td><td>Caffeine + Spring Cache</td><td>Cache en memoria con TTL configurable, branding por tenant</td></tr>
       <tr><td>Métricas</td><td>Micrometer + Prometheus + Grafana</td><td>Monitoreo de producción, 12 paneles auto-provisionados</td></tr>
       <tr><td>Error tracking</td><td>Sentry 7.14 multi-tenant</td><td>Cada evento etiquetado con tenant y usuario activo</td></tr>
       <tr><td>Despliegue</td><td>Docker + Docker Compose</td><td>Contenedorización reproducible en cualquier proveedor de nube</td></tr>
       <tr><td>CI/CD</td><td>GitHub Actions + Dependabot</td><td>Build + Tests + SpotBugs en paralelo, dependencias semanales</td></tr>
-      <tr><td>Tests</td><td>JUnit 5 + Mockito + Testcontainers</td><td>960+ tests — unitarios e integración con PostgreSQL real</td></tr>
+      <tr><td>Tests</td><td>JUnit 5 + Mockito + Testcontainers</td><td>999 tests — unitarios e integración con PostgreSQL real</td></tr>
     </tbody>
   </table>
 
@@ -1114,8 +1164,13 @@
       <tr><td>i18n ES / EN</td><td><span class="badge-ok">Completo</span></td><td>Todos los templates, PDFs y controllers</td></tr>
       <tr><td>Dark mode</td><td><span class="badge-ok">Completo</span></td><td>Auditoría completa en todos los templates</td></tr>
       <tr><td>API REST + JWT</td><td><span class="badge-ok">Completo</span></td><td>HS256, rate limiting, SpringDoc OpenAPI</td></tr>
-      <tr><td>Migración de datos (11 módulos)</td><td><span class="badge-ok">Completo</span></td><td>Plantillas XLSX + log de auditoría</td></tr>
-      <tr><td>Suite de tests</td><td><span class="badge-ok">960+ tests</span></td><td>Unitarios + integración con Testcontainers (PostgreSQL real)</td></tr>
+      <tr><td>Migración de datos (11 módulos)</td><td><span class="badge-ok">Completo</span></td><td>Plantillas XLSX + perfil de agua V93 + log de auditoría</td></tr>
+      <tr><td>Inteligencia Artificial (7 servicios)</td><td><span class="badge-ok">Completo</span></td><td>Claude API SDK 2.34.0 · modo mock sin API key · 7 servicios integrados</td></tr>
+      <tr><td>Planes y Checkout Self-Service</td><td><span class="badge-ok">Completo</span></td><td>MercadoPago · 3 planes · aprovisionamiento automático de tenant</td></tr>
+      <tr><td>BeerXML 1.0 + Perfil de agua</td><td><span class="badge-ok">Completo</span></td><td>Export/import estándar · 7 minerales en ppm (V93)</td></tr>
+      <tr><td>Notificaciones WhatsApp</td><td><span class="badge-ok">Completo</span></td><td>Twilio API · 8 tipos de alerta · multi-contacto con suscripciones independientes (V94)</td></tr>
+      <tr><td>Landing Page + Embudo de ventas</td><td><span class="badge-ok">Completo</span></td><td>Landing 9 secciones · demo auto-login · emails onboarding días 1/3/7 · recordatorio trial 4/1 días</td></tr>
+      <tr><td>Suite de tests</td><td><span class="badge-ok">999 tests</span></td><td>Unitarios + integración con Testcontainers (PostgreSQL real)</td></tr>
     </tbody>
   </table>
 
@@ -1172,8 +1227,22 @@
     <div class="dif-item no-break">
       <div class="dif-num">6</div>
       <div class="dif-text">
-        <strong>Calidad de código enterprise con 960+ tests</strong>
-        <span>Análisis estático SpotBugs en CI, 88 migraciones sin regresión, documentación técnica exhaustiva. El código es mantenible, extensible y auditado continuamente.</span>
+        <strong>Calidad de código enterprise con 999 tests</strong>
+        <span>Análisis estático SpotBugs en CI, 94 migraciones sin regresión, documentación técnica exhaustiva. El código es mantenible, extensible y auditado continuamente.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">7</div>
+      <div class="dif-text">
+        <strong>Inteligencia Artificial integrada en el flujo operativo</strong>
+        <span>7 servicios IA con Claude API: genera recetas, pre-llena facturas desde fotos (Vision), diagnostica fermentaciones, produce textos comerciales, puntúa cervezas con BJCP y analiza rentabilidad. Funciona en modo mock sin API key — ideal para demo sin costo.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">8</div>
+      <div class="dif-text">
+        <strong>Embudo de conversión completo — de visitante a cliente operando</strong>
+        <span>Landing page pública → demo con un click (auto-login sin contraseña) → self-checkout con MercadoPago → tenant aprovisionado automáticamente → emails de onboarding días 1/3/7 → recordatorio antes del vencimiento del trial. Todo sin intervención del equipo operativo.</span>
       </div>
     </div>
   </div>
@@ -1192,20 +1261,20 @@
     <h2 class="section-title">Roadmap de Próximas Funcionalidades</h2>
   </div>
 
-  <p>El producto base está terminado. Las siguientes iniciativas representan la hoja de ruta natural una vez iniciada la operación comercial, ordenadas por horizonte de impacto.</p>
+  <p>El producto base está terminado y en producción. Las siguientes iniciativas representan la hoja de ruta de expansión una vez iniciada la operación comercial.</p>
 
   <div class="roadmap-section">
-    <div class="roadmap-horizon">⚡ Corto plazo — 0 a 6 meses &nbsp;·&nbsp; Consolidación y crecimiento de clientes</div>
+    <div class="roadmap-horizon">⚡ Corto plazo — 0 a 6 meses &nbsp;·&nbsp; Crecimiento de clientes y adopción</div>
     <table class="roadmap-table">
       <thead>
         <tr><th style="width:28%">Funcionalidad</th><th>Descripción</th><th style="width:22%">Valor</th></tr>
       </thead>
       <tbody>
-        <tr><td>Portal self-service</td><td>Registro y alta de tenants sin intervención manual del equipo operativo</td><td>Reduce fricción de onboarding</td></tr>
-        <tr><td>Pasarela de pagos</td><td>Integración con Stripe o MercadoPago para cobro automático de suscripciones</td><td>Monetización directa</td></tr>
         <tr><td>App móvil (PWA)</td><td>Conversión a Progressive Web App para uso desde celular en planta de producción</td><td>Adopción operativa</td></tr>
-        <tr><td>Notificaciones push</td><td>Alertas de lotes, vencimientos y tareas vía browser/email en tiempo real</td><td>Retención de usuarios</td></tr>
-        <tr><td>Dashboard analítico avanzado</td><td>Gráficos de tendencias, eficiencia y rentabilidad con filtros interactivos</td><td>Valor percibido</td></tr>
+        <tr><td>Notificaciones push</td><td>Alertas de lotes, vencimientos y tareas vía browser en tiempo real</td><td>Retención de usuarios</td></tr>
+        <tr><td>Trial gratuito (14 días)</td><td>Período de prueba sin tarjeta para tenants auto-registrados. Recordatorios de expiración ya implementados (4 y 1 día antes)</td><td>Reduce fricción de adopción</td></tr>
+        <tr><td>Integración contable</td><td>Exportación de facturas a Siigo, Alegra o sistemas contables locales</td><td>Elimina doble entrada</td></tr>
+        <tr><td>Stripe como pasarela alternativa</td><td>Cobro en USD para clientes fuera de Colombia/Argentina</td><td>Expansión internacional</td></tr>
       </tbody>
     </table>
   </div>
@@ -1218,26 +1287,25 @@
       </thead>
       <tbody>
         <tr><td>Control de temperatura IoT</td><td>Integración con sensores de fermentación (Tilt, Inkbird) vía API</td><td>Diferenciación premium</td></tr>
-        <tr><td>Etiquetado con QR</td><td>Código QR por lote para trazabilidad del producto terminado al consumidor</td><td>Cumplimiento normativo</td></tr>
-        <tr><td>Integración contable</td><td>Exportación de facturas a Siigo, Alegra o sistemas contables locales</td><td>Elimina doble entrada</td></tr>
         <tr><td>Módulo de distribución</td><td>Gestión de rutas de entrega, despachos y confirmación de recepción</td><td>Expansión del ciclo de venta</td></tr>
         <tr><td>API pública con webhooks</td><td>Endpoints para integración con e-commerce, marketplaces y sistemas propios</td><td>Ecosistema de partners</td></tr>
         <tr><td>Portugués (Brasil)</td><td>Expansión del i18n para el mayor mercado de la región</td><td>Crecimiento geográfico</td></tr>
+        <tr><td>IA predictiva de lotes</td><td>Predicción de ABV final y anomalías basada en historial de fermentaciones del tenant</td><td>Valor diferencial IA</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="roadmap-section">
-    <div class="roadmap-horizon">🌐 Largo plazo — 18+ meses &nbsp;·&nbsp; Plataforma e inteligencia</div>
+    <div class="roadmap-horizon">🌐 Largo plazo — 18+ meses &nbsp;·&nbsp; Plataforma e inteligencia de sector</div>
     <table class="roadmap-table">
       <thead>
         <tr><th style="width:28%">Funcionalidad</th><th>Descripción</th><th style="width:22%">Valor</th></tr>
       </thead>
       <tbody>
-        <tr><td>IA para optimización de recetas</td><td>Sugerencias basadas en historial de lotes, OG/FG y evaluaciones sensoriales</td><td>Ventaja competitiva sostenible</td></tr>
         <tr><td>Marketplace de recetas</td><td>Comunidad donde cervecerías comparten y venden recetas dentro de la plataforma</td><td>Network effect</td></tr>
         <tr><td>Certificaciones digitales</td><td>Documentos automáticos para INVIMA, SENASAG y equivalentes regionales</td><td>Valor normativo</td></tr>
         <tr><td>Zymos Analytics</td><td>Benchmarking anónimo del sector: eficiencia, costos y tendencias entre tenants</td><td>Monetización de datos agregados</td></tr>
+        <tr><td>Voz a texto en registros BPM</td><td>Dictado de observaciones en planta sin teclado — integración Speech-to-Text</td><td>Usabilidad en producción</td></tr>
       </tbody>
     </table>
   </div>
@@ -1263,27 +1331,27 @@
   <div class="inv-grid">
     <div class="inv-card no-break">
       <h4>📦 Código fuente completo</h4>
-      <p>Spring Boot + Thymeleaf + PostgreSQL. Arquitectura limpia, documentada con 300+ reglas de negocio en CLAUDE.md.</p>
+      <p>Spring Boot + Thymeleaf + PostgreSQL. Arquitectura limpia, documentada con 400+ reglas de negocio en CLAUDE.md.</p>
     </div>
     <div class="inv-card no-break">
-      <h4>🧪 Suite de 960+ tests</h4>
-      <p>Listos para regresión continua. CI/CD con GitHub Actions activo en cada push.</p>
+      <h4>🧪 Suite de 999 tests</h4>
+      <p>Listos para regresión continua. CI/CD con GitHub Actions activo en cada push. SpotBugs en cada build.</p>
     </div>
     <div class="inv-card no-break">
       <h4>🗄️ Schema de BD maduro</h4>
-      <p>88 migraciones Flyway sin deuda técnica. Testcontainers valida integridad con PostgreSQL real.</p>
+      <p>94 migraciones Flyway sin deuda técnica. Testcontainers valida integridad con PostgreSQL real.</p>
     </div>
     <div class="inv-card no-break">
-      <h4>📊 Infraestructura incluida</h4>
-      <p>Docker Compose, Prometheus/Grafana, perfil de producción configurado. VPS disponible listo para despliegue.</p>
+      <h4>🤖 IA lista para producción</h4>
+      <p>7 servicios Claude API integrados con modo mock. Activación inmediata con una sola variable de entorno.</p>
     </div>
     <div class="inv-card no-break">
-      <h4>🚀 Onboarding de clientes listo</h4>
-      <p>11 plantillas XLSX para migración de datos. El primer cliente puede estar operando en horas.</p>
+      <h4>🚀 Onboarding y monetización listos</h4>
+      <p>Checkout MercadoPago self-service + 11 plantillas XLSX para migración. El primer cliente operando en horas.</p>
     </div>
     <div class="inv-card no-break">
       <h4>🌎 Multi-mercado desde el día 1</h4>
-      <p>Español + inglés completo. Multi-moneda. Temperatura °C/°F. Branding 100% personalizable por cliente.</p>
+      <p>Español + inglés completo. Multi-moneda. Temperatura °C/°F. Branding 100% personalizable. BeerXML estándar.</p>
     </div>
   </div>
 

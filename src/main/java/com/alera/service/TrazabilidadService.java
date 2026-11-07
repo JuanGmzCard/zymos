@@ -45,6 +45,8 @@ public class TrazabilidadService {
     private final EntityManager em;
     private final com.alera.repository.TenantRepository tenantRepo;
     private final LecturaFermentacionRepository lecturaRepo;
+    private final EmailService emailService;
+    private final WhatsAppService whatsAppService;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -55,7 +57,9 @@ public class TrazabilidadService {
                                 LoteMapper loteMapper,
                                 EntityManager em,
                                 com.alera.repository.TenantRepository tenantRepo,
-                                LecturaFermentacionRepository lecturaRepo) {
+                                LecturaFermentacionRepository lecturaRepo,
+                                EmailService emailService,
+                                WhatsAppService whatsAppService) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -66,6 +70,8 @@ public class TrazabilidadService {
         this.em = em;
         this.tenantRepo = tenantRepo;
         this.lecturaRepo = lecturaRepo;
+        this.emailService = emailService;
+        this.whatsAppService = whatsAppService;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -306,6 +312,10 @@ public class TrazabilidadService {
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 eventoFase, currentUser(), null));
         log.info("Lote {} movido a fase: {}", lote.getCodigoLote(), fase);
+        String tenantId = TenantContext.getCurrentTenant();
+        tenantRepo.findById(tenantId).ifPresent(tenant ->
+                emailService.enviarCambioFaseLote(tenant, lote, eventoFase, currentUser()));
+        whatsAppService.notificarCambioFase(tenantId, lote, lote.getFaseActual());
     }
 
     @CacheEvict(value = "dashboard-stats", allEntries = true)
@@ -364,6 +374,10 @@ public class TrazabilidadService {
         historialRepo.save(HistorialLote.of(lote.getId(), lote.getCodigoLote(),
                 eventoAvance, currentUser(), null));
         log.info("Lote {} fase {} {}", lote.getCodigoLote(), fase, accion);
+        String tenantIdAvance = TenantContext.getCurrentTenant();
+        tenantRepo.findById(tenantIdAvance).ifPresent(tenant ->
+                emailService.enviarCambioFaseLote(tenant, lote, eventoAvance, currentUser()));
+        whatsAppService.notificarCambioFase(tenantIdAvance, lote, lote.getFaseActual());
     }
 
     @Caching(evict = {
@@ -826,5 +840,24 @@ public class TrazabilidadService {
     private static LocalDate parseDate(String s) {
         if (s == null || s.isBlank()) return null;
         try { return LocalDate.parse(s); } catch (Exception ex) { return null; }
+    }
+
+    @Transactional(readOnly = true)
+    public com.alera.dto.ComparativaEstiloDto compararConEstilo(LoteCerveza lote) {
+        String tenantId = TenantContext.getCurrentTenant();
+        List<Object[]> rows = loteRepo.promediosPorEstilo(lote.getEstilo(), lote.getId(), tenantId);
+        if (rows.isEmpty() || rows.get(0)[0] == null) {
+            return new com.alera.dto.ComparativaEstiloDto(0, null, null, null, null);
+        }
+        Object[] r = rows.get(0);
+        int total = ((Number) r[0]).intValue();
+        if (total == 0) return new com.alera.dto.ComparativaEstiloDto(0, null, null, null, null);
+        return new com.alera.dto.ComparativaEstiloDto(
+                total,
+                r[1] != null ? ((Number) r[1]).doubleValue() : null,
+                r[2] != null ? ((Number) r[2]).doubleValue() : null,
+                r[3] != null ? ((Number) r[3]).doubleValue() : null,
+                r[4] != null ? ((Number) r[4]).doubleValue() : null
+        );
     }
 }

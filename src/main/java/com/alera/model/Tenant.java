@@ -1,5 +1,6 @@
 package com.alera.model;
 
+import com.alera.model.enums.PlanNivel;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -78,6 +79,11 @@ public class Tenant {
     @Column(name = "plan_tipo", length = 20)
     private String planTipo;
 
+    /** Nivel comercial del plan — null = acceso completo (tenants pre-V91) */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "plan_nivel", length = 20)
+    private PlanNivel planNivel;
+
     @Column(name = "plan_inicio")
     private LocalDate planInicio;
 
@@ -149,4 +155,11 @@ public class Tenant {
     public void setPlanInicio(LocalDate v)              { this.planInicio = v; }
     public LocalDate getPlanFin()                       { return planFin; }
     public void setPlanFin(LocalDate v)                 { this.planFin = v; }
+    public PlanNivel getPlanNivel()                     { return planNivel; }
+    public void setPlanNivel(PlanNivel v)               { this.planNivel = v; }
+
+    /** true si este tenant tiene acceso al nivel requerido (null = acceso completo). */
+    public boolean tieneAccesoNivel(PlanNivel requerido) {
+        return planNivel == null || planNivel.includes(requerido);
+    }
 }

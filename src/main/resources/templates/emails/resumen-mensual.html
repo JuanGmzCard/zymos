@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="#{email.mensual.title}">Resumen mensual de producción</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F0EDE2;font-family:'Segoe UI',Arial,sans-serif;color:#333;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0EDE2;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- ENCABEZADO -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:28px 32px;'"
+              style="background-color:#242E0D;padding:28px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <div th:style="'font-family:Georgia,serif;font-size:22px;font-weight:700;color:' + ${tenant.colorAccent} + ';'"
+                       style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#C9A028;"
+                       th:text="${tenant.name}">Zymos</div>
+                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;" th:text="#{email.common.subtitulo}">Sistema de Trazabilidad Cervecera</div>
+                </td>
+                <td align="right">
+                  <div style="font-size:26px;">📊</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- TÍTULO -->
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <div style="display:inline-block;background:#dcfce7;color:#15803d;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:20px;padding:4px 14px;margin-bottom:16px;"
+                 th:text="#{email.mensual.badge}">Informe Mensual</div>
+            <h1 style="margin:0 0 6px;font-size:20px;color:#1a1a1a;"
+                th:text="#{email.mensual.heading(${periodo})}">Producción de enero 2026</h1>
+            <p style="margin:0;font-size:14px;color:#64748b;" th:text="#{email.mensual.subtitle}">Resumen de actividad de producción del mes.</p>
+          </td>
+        </tr>
+
+        <!-- ESTADÍSTICAS -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:18px 22px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;">
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;width:200px;" th:text="#{email.mensual.total.lotes}">Lotes del mes</td>
+                  <td style="color:#1e293b;font-weight:600;padding:5px 0;" th:text="${lotesMes.size()}">0</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.mensual.completados}">Completados</td>
+                  <td style="color:#15803d;font-weight:600;padding:5px 0;" th:text="${completados}">0</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.mensual.activos}">En proceso</td>
+                  <td style="color:#1d4ed8;font-weight:600;padding:5px 0;" th:text="${activos}">0</td>
+                </tr>
+                <tr th:if="${litrosTotales != null and litrosTotales.compareTo(T(java.math.BigDecimal).ZERO) > 0}">
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.mensual.litros}">Litros producidos</td>
+                  <td style="color:#1e293b;font-weight:600;padding:5px 0;"
+                      th:text="${litrosTotales.stripTrailingZeros().toPlainString() + ' L'}">0 L</td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+
+        <!-- LISTADO DE LOTES (máx 10) -->
+        <tr th:if="${!lotesMes.isEmpty()}">
+          <td style="padding:20px 32px 0;">
+            <p style="margin:0 0 10px;font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px;"
+               th:text="#{email.mensual.detalle}">Lotes del mes</p>
+            <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                   style="font-size:13px;border-collapse:collapse;">
+              <thead>
+                <tr style="background:#f1f5f9;">
+                  <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0;" th:text="#{email.mensual.col.codigo}">Código</th>
+                  <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0;" th:text="#{email.mensual.col.estilo}">Estilo</th>
+                  <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;border-bottom:1px solid #e2e8f0;" th:text="#{email.mensual.col.fase}">Fase</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="lote, s : ${lotesMes}" th:if="${s.index < 10}"
+                    th:style="${s.odd} ? 'background:#f8fafc;' : ''">
+                  <td style="padding:7px 10px;color:#1e293b;font-weight:600;border-bottom:1px solid #f1f5f9;" th:text="${lote.codigoLote}">IPA-001</td>
+                  <td style="padding:7px 10px;color:#374151;border-bottom:1px solid #f1f5f9;" th:text="${lote.estilo}">IPA</td>
+                  <td style="padding:7px 10px;color:#64748b;border-bottom:1px solid #f1f5f9;" th:text="${lote.faseActual}">Fermentación</td>
+                </tr>
+                <tr th:if="${lotesMes.size() > 10}">
+                  <td colspan="3" style="padding:7px 10px;color:#94a3b8;font-size:12px;">
+                    <span th:text="'+ ' + ${lotesMes.size() - 10} + ' '">+ 2 </span>
+                    <span th:text="#{email.mensual.mas.lotes}">lotes adicionales</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:24px 32px;">
+            <a th:href="${baseUrl + '/'}" href="#"
+               th:style="'display:inline-block;background-color:' + ${tenant.colorPrimary} + ';color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:12px 24px;'"
+               style="display:inline-block;background-color:#364318;color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:12px 24px;"
+               th:text="#{email.mensual.cta}">Ver producción completa →</a>
+          </td>
+        </tr>
+
+        <!-- PIE -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:18px 32px;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
+              <span th:text="#{email.common.auto_generado}">Este email fue generado automáticamente por</span>
+              <strong th:text="${tenant.name}"> Zymos</strong>.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

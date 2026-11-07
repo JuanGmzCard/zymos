@@ -2,6 +2,7 @@ package com.alera.config;
 
 import com.alera.model.Tenant;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,6 +12,9 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 public class GlobalControllerAdvice {
 
     private final BrandingProperties defaultBranding;
+
+    @Value("${app.anthropic.api-key:}")
+    private String anthropicApiKey;
 
     public GlobalControllerAdvice(BrandingProperties defaultBranding) {
         this.defaultBranding = defaultBranding;
@@ -67,5 +71,19 @@ public class GlobalControllerAdvice {
                 .findFirst()
                 .map(a -> a.substring("NOMBRE_ROL_".length()))
                 .orElse(null);
+    }
+
+    /** true cuando ANTHROPIC_API_KEY está configurada — oculta botones IA cuando es false. */
+    @ModelAttribute("iaConfigurada")
+    public boolean iaConfigurada() {
+        return anthropicApiKey != null && !anthropicApiKey.isBlank();
+    }
+
+    /** true cuando el tenant activo es el demo — el navbar muestra un banner para convertir. */
+    @ModelAttribute("esTenantDemo")
+    public boolean esTenantDemo(HttpServletRequest request) {
+        Object tenant = request.getAttribute(TenantFilter.TENANT_ATTR);
+        if (tenant instanceof Tenant t) return "demo".equals(t.getSubdomain());
+        return false;
     }
 }

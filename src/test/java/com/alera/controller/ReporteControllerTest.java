@@ -49,6 +49,7 @@ class ReporteControllerTest {
     @MockBean ExcelExportService         excelService;
     @MockBean PdfExportService           pdfService;
     @MockBean VentaService               ventaService;
+    @MockBean com.alera.service.RentabilidadAnalisisService rentabilidadAnalisisService;
 
     @BeforeEach
     void setUp() {

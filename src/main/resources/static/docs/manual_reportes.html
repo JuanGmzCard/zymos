@@ -99,6 +99,8 @@
     <a href="#rentabilidad"><span class="ic">📈</span> Rentabilidad</a>
     <div class="nav-section">Exportación</div>
     <a href="#exportar"><span class="ic">📤</span> PDF y Excel</a>
+    <div class="nav-section">Inteligencia Artificial</div>
+    <a href="#ia-rentabilidad"><span class="ic">🤖</span> Análisis IA</a>
   </nav>
 </aside>
 <main id="main">
@@ -293,6 +295,31 @@
         <span class="btn-export excel">📊 Excel</span>
       </div>
       <p>El Excel de Rentabilidad contiene 3 hojas: <strong>Rentabilidad</strong> (por lote), <strong>Por Estilo</strong> (resumen), <strong>Tendencia Mensual</strong> (evolución del margen).</p>
+    </section>
+
+    <section id="ia-rentabilidad">
+      <h2><span class="ico">🤖</span> Análisis IA de Rentabilidad</h2>
+      <p>El análisis de rentabilidad con IA procesa los datos del reporte actual y genera un diagnóstico automático: detecta el estilo más y menos rentable, identifica tendencias y genera recomendaciones accionables para mejorar el margen del negocio.</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Esta función requiere configuración de IA (ANTHROPIC_API_KEY). Si el botón <strong>"Analizar con IA"</strong> no aparece en el reporte, el sistema funciona sin IA.</div>
+      </div>
+
+      <h3>Cómo usar el análisis IA</h3>
+      <table class="field-table">
+        <thead><tr><th>Paso</th><th>Acción</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>En el Reporte de Rentabilidad, aplica los filtros de fecha y estilo que quieras analizar.</td></tr>
+          <tr><td>2</td><td>Haz clic en <strong>"Analizar con IA"</strong> en la parte superior del reporte.</td></tr>
+          <tr><td>3</td><td>El modal muestra: estilo más rentable, estilo menos rentable, tendencia del período, insights clave y recomendaciones específicas con alertas de atención.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>El análisis se basa en los datos del reporte filtrado actual. Para un análisis diferente, cierra el modal, cambia los filtros y ábrelo de nuevo.</div>
+      </div>
     </section>
 
     <section id="exportar">

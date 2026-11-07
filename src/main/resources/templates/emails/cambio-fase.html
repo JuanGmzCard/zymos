@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="#{email.fase.title}">Actualización de fase</title>
+</head>
+<body style="margin:0;padding:0;background-color:#F0EDE2;font-family:'Segoe UI',Arial,sans-serif;color:#333;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F0EDE2;padding:24px 0;">
+  <tr>
+    <td align="center">
+      <table width="600" cellpadding="0" cellspacing="0" border="0"
+             style="max-width:600px;width:100%;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+
+        <!-- ENCABEZADO -->
+        <tr>
+          <td th:style="'background-color:' + ${tenant.colorNavbar} + ';padding:28px 32px;'"
+              style="background-color:#242E0D;padding:28px 32px;">
+            <table width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td>
+                  <div th:style="'font-family:Georgia,serif;font-size:22px;font-weight:700;color:' + ${tenant.colorAccent} + ';'"
+                       style="font-family:Georgia,serif;font-size:22px;font-weight:700;color:#C9A028;"
+                       th:text="${tenant.name}">Zymos</div>
+                  <div style="font-size:13px;color:#c0c0a0;margin-top:4px;" th:text="#{email.common.subtitulo}">Sistema de Trazabilidad Cervecera</div>
+                </td>
+                <td align="right">
+                  <div style="font-size:26px;">🍺</div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <!-- EVENTO BADGE -->
+        <tr>
+          <td style="padding:28px 32px 0;">
+            <div style="display:inline-block;background:#dbeafe;color:#1d4ed8;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;border-radius:20px;padding:4px 14px;margin-bottom:16px;"
+                 th:text="${eventoLabel}">Fermentación iniciada</div>
+            <h1 style="margin:0 0 6px;font-size:20px;color:#1a1a1a;"
+                th:text="#{email.fase.heading(${lote.codigoLote})}">Lote IPA-001 actualizado</h1>
+            <p style="margin:0;font-size:14px;color:#64748b;"
+               th:text="${lote.estilo}">India Pale Ale</p>
+          </td>
+        </tr>
+
+        <!-- DETALLES DEL LOTE -->
+        <tr>
+          <td style="padding:20px 32px 0;">
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:18px 22px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px;">
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;width:160px;" th:text="#{email.fase.lote}">Código de lote</td>
+                  <td style="color:#1e293b;font-weight:600;padding:5px 0;" th:text="${lote.codigoLote}">IPA-001</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.fase.estilo}">Estilo</td>
+                  <td style="color:#1e293b;padding:5px 0;" th:text="${lote.estilo}">India Pale Ale</td>
+                </tr>
+                <tr th:if="${lote.litrosFinales != null}">
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.fase.volumen}">Volumen</td>
+                  <td style="color:#1e293b;padding:5px 0;"
+                      th:text="${lote.litrosFinales.stripTrailingZeros().toPlainString() + ' L'}">50 L</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.fase.evento}">Evento</td>
+                  <td style="color:#1e293b;font-weight:600;padding:5px 0;" th:text="${eventoLabel}">Fermentación iniciada</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.fase.usuario}">Registrado por</td>
+                  <td style="color:#1e293b;padding:5px 0;" th:text="${usuario}">admin</td>
+                </tr>
+                <tr>
+                  <td style="color:#64748b;padding:5px 0;" th:text="#{email.fase.fecha}">Fecha</td>
+                  <td style="color:#1e293b;padding:5px 0;" th:text="${fecha}">01/01/2026</td>
+                </tr>
+              </table>
+            </div>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:24px 32px;">
+            <a th:href="${detailUrl}" href="#"
+               th:style="'display:inline-block;background-color:' + ${tenant.colorPrimary} + ';color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:12px 24px;'"
+               style="display:inline-block;background-color:#364318;color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:12px 24px;"
+               th:text="#{email.fase.cta}">Ver lote en la aplicación →</a>
+          </td>
+        </tr>
+
+        <!-- PIE -->
+        <tr>
+          <td style="background:#f8fafc;border-top:1px solid #e2e8f0;padding:18px 32px;">
+            <p style="margin:0;font-size:12px;color:#94a3b8;text-align:center;">
+              <span th:text="#{email.common.auto_generado}">Este email fue generado automáticamente por</span>
+              <strong th:text="${tenant.name}"> Zymos</strong>.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

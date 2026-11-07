@@ -129,6 +129,7 @@ public class MigracionTemplateService {
                 {"hora_inicio_sN / hora_fin_sN", "Hora de inicio/fin de cada sesión en formato HH:mm (ej: 08:00). Opcional"},
                 {"nombre_receta_sN", "Receta alternativa para sesión 2/3/4. Vacío = misma receta de S1"},
                 {"notas_fermentacion / notas_acondicionamiento / notas_maduracion", "Texto libre de observaciones por fase (cols 71-73 en hoja Lotes)"},
+                {"agua_calcio_ppm ... agua_bicarbonatos_ppm", "Perfil de agua en ppm (entero). Columnas 14-19 en hoja Recetas, todas opcionales"},
                 {"fase (Lote_Escalones)", "ACONDICIONAMIENTO | MADURACION"},
                 {"logrado (Lote_Escalones)", "true | false  (default: false)"}
             });
@@ -380,27 +381,34 @@ public class MigracionTemplateService {
     private void hojaRecetas(XSSFWorkbook wb, Estilos es) {
         XSSFSheet sh = wb.createSheet("Recetas");
         String[][] cols = {
-            {"nombre",             "req"},
-            {"estilo",             "req"},
-            {"descripcion",        "opt"},
-            {"activa",             "opt"},
-            {"volumen_base_L",     "opt"},
-            {"hervor_minutos",     "opt"},
-            {"og_objetivo",        "opt"},
-            {"fg_objetivo",        "opt"},
-            {"agua_macerado",      "opt"},
-            {"unidad_agua_mac",    "opt"},
-            {"agua_sparge",        "opt"},
-            {"unidad_agua_sp",     "opt"},
-            {"ph_agua",            "opt"},
-            {"notas",              "opt"}
+            {"nombre",                "req"},
+            {"estilo",                "req"},
+            {"descripcion",           "opt"},
+            {"activa",                "opt"},
+            {"volumen_base_L",        "opt"},
+            {"hervor_minutos",        "opt"},
+            {"og_objetivo",           "opt"},
+            {"fg_objetivo",           "opt"},
+            {"agua_macerado",         "opt"},
+            {"unidad_agua_mac",       "opt"},
+            {"agua_sparge",           "opt"},
+            {"unidad_agua_sp",        "opt"},
+            {"ph_agua",               "opt"},
+            {"notas",                 "opt"},
+            {"agua_calcio_ppm",       "opt"},
+            {"agua_magnesio_ppm",     "opt"},
+            {"agua_sodio_ppm",        "opt"},
+            {"agua_sulfatos_ppm",     "opt"},
+            {"agua_cloruros_ppm",     "opt"},
+            {"agua_bicarbonatos_ppm", "opt"},
+            {"agua_notas",            "opt"}
         };
         cabecera(sh, es, cols);
-        ejemplo(sh, es, new Object[]{"IPA Clásica","IPA","Receta base IPA americana","TRUE",20,60,1058,1012,18,"L",8,"L",5.2,"Receta optimizada"});
+        ejemplo(sh, es, new Object[]{"IPA Clásica","IPA","Receta base IPA americana","TRUE",20,60,1058,1012,18,"L",8,"L",5.2,"Receta optimizada",null,null,null,null,null,null,null});
         dropdown(sh, 1, 9999, 3, "TRUE","FALSE");
         dropdown(sh, 1, 9999, 9, "L","mL","gal");
         dropdown(sh, 1, 9999, 11, "L","mL","gal");
-        anchos(sh, 200, 150, 280, 90, 130, 130, 130, 130, 140, 140, 140, 140, 110, 280);
+        anchos(sh, 200, 150, 280, 90, 130, 130, 130, 130, 140, 140, 140, 140, 110, 280, 140, 150, 130, 150, 140, 170, 280);
     }
 
     private void hojaRecetaIngredientes(XSSFWorkbook wb, Estilos es) {

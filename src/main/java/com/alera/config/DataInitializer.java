@@ -5,7 +5,7 @@ import com.alera.model.CategoriaInsumo;
 import com.alera.model.SuperAdmin;
 import com.alera.model.Tenant;
 import com.alera.model.TipoCerveza;
-import com.alera.model.Usuario;
+import com.alera.model.enums.PlanNivel;
 import com.alera.model.enums.RolUsuario;
 import com.alera.repository.CategoriaEquipoRepository;
 import com.alera.repository.CategoriaInsumoRepository;
@@ -36,6 +36,7 @@ public class DataInitializer implements CommandLineRunner {
     private final CategoriaInsumoRepository categoriaInsumoRepo;
     private final CategoriaEquipoRepository categoriaEquipoRepo;
     private final RolTenantService rolTenantService;
+    private final DemoDataSeeder demoDataSeeder;
 
     @Value("${app.default-subdomain:default}")
     private String defaultSubdomain;
@@ -62,7 +63,8 @@ public class DataInitializer implements CommandLineRunner {
                             SuperAdminRepository superAdminRepo,
                             CategoriaInsumoRepository categoriaInsumoRepo,
                             CategoriaEquipoRepository categoriaEquipoRepo,
-                            RolTenantService rolTenantService) {
+                            RolTenantService rolTenantService,
+                            DemoDataSeeder demoDataSeeder) {
         this.usuarioRepo         = usuarioRepo;
         this.tipoCervezaRepo     = tipoCervezaRepo;
         this.tenantRepo          = tenantRepo;
@@ -72,6 +74,7 @@ public class DataInitializer implements CommandLineRunner {
         this.categoriaInsumoRepo = categoriaInsumoRepo;
         this.categoriaEquipoRepo = categoriaEquipoRepo;
         this.rolTenantService    = rolTenantService;
+        this.demoDataSeeder      = demoDataSeeder;
     }
 
     @Override
@@ -79,6 +82,7 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         crearSuperAdmin();
         crearTenantDefault();
+        crearTenantDemo();
 
         // Inicializar todos los tenants existentes (no solo el default)
         for (Tenant tenant : tenantRepo.findAll()) {
@@ -92,6 +96,9 @@ public class DataInitializer implements CommandLineRunner {
                 TenantContext.clear();
             }
         }
+
+        // Sembrar datos demo (usa JdbcTemplate — no necesita TenantContext activo)
+        demoDataSeeder.seed();
     }
 
     private void crearSuperAdmin() {
@@ -132,8 +139,42 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Tenant '{}' creado con branding '{}'", defaultSubdomain, branding.getName());
     }
 
+    private void crearTenantDemo() {
+        if (tenantRepo.existsById("demo")) {
+            // Asegura que el plan esté definido si el tenant ya existía antes de V91
+            tenantRepo.findById("demo").ifPresent(t -> {
+                if (t.getPlanNivel() == null) {
+                    t.setPlanNivel(PlanNivel.FERMENTACION);
+                    tenantRepo.save(t);
+                    log.info("Tenant demo actualizado a plan FERMENTACION");
+                }
+            });
+            return;
+        }
+        Tenant demo = new Tenant();
+        demo.setSubdomain("demo");
+        demo.setName("Cervecería Demo");
+        demo.setTagline("Explora Zymos · Datos de demostración");
+        demo.setColorNavbar(branding.getColorNavbar());
+        demo.setColorPrimary(branding.getColorPrimary());
+        demo.setColorAccent(branding.getColorAccent());
+        demo.setColorAccentHover(branding.getColorAccentHover());
+        demo.setColorCream(branding.getColorCream());
+        demo.setColorBodyBg(branding.getColorBodyBg());
+        demo.setFontHeadings(branding.getFontHeadings());
+        demo.setFontBody(branding.getFontBody());
+        demo.setSimboloMoneda(branding.getSimboloMoneda());
+        demo.setUnidadTemperatura(branding.getUnidadTemperatura());
+        demo.setPlanNivel(PlanNivel.FERMENTACION);
+        demo.setActive(true);
+        tenantRepo.save(demo);
+        log.info("Tenant 'demo' creado con plan FERMENTACION");
+    }
+
     // Solo crea usuarios si el tenant no tiene ninguno — no sobreescribe configuraciones existentes
     private void crearUsuariosSiNoTiene(String subdomain) {
+        // El tenant demo tiene su propio usuario (demo/demo) gestionado por DemoDataSeeder
+        if ("demo".equals(subdomain)) return;
         if (usuarioRepo.findAllByTenantId(subdomain).isEmpty()) {
             crearUsuarioSiNoExiste(adminUsername,       adminPassword,       RolUsuario.ADMIN,       subdomain);
             crearUsuarioSiNoExiste(produccionUsername,  produccionPassword,  RolUsuario.PRODUCCION,  subdomain);

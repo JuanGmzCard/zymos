@@ -1,4 +1,4 @@
-# Zymos — Sistema de Gestión de Trazabilidad de Cerveza Artesanal
+el # Zymos — Sistema de Gestión de Trazabilidad de Cerveza Artesanal
 
 Zymos es una plataforma SaaS multi-tenant desarrollada con Spring Boot 3.4.4 + Java 21 (runtime Java 26) + Thymeleaf + PostgreSQL.
 Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es el nombre de uno de los tenants; la infraestructura del proyecto se llama Zymos.
@@ -22,8 +22,12 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Spring Boot Starter Mail — envío de emails HTML vía SMTP. `JavaMailSender` solo se auto-configura si `spring.mail.host` está definido (no vacío). `EmailService` usa `@Autowired(required = false)` para soportar entornos sin SMTP.
 - Apache POI 5.2.5 (`poi-ooxml`) — generación de Excel .xlsx. Clases en `org.apache.poi.xssf.usermodel.*`
 - JJWT 0.12.6 (`jjwt-api` + `jjwt-impl` + `jjwt-jackson`) — generación y validación de tokens JWT HS256 para la API REST
+- **Anthropic Java SDK 2.34.0** (`com.anthropic:anthropic-java`) — llamadas a la Claude API. 7 servicios de IA en `com.alera.service.*`. Activado con `ANTHROPIC_API_KEY`; sin la key todos los servicios funcionan en **modo mock** (respuestas hardcodeadas para demo). Import correcto del cliente: `com.anthropic.client.okhttp.AnthropicOkHttpClient`.
+- **MercadoPago Java SDK 2.1.24** (`com.mercadopago:sdk-java`) — pagos self-service de planes SaaS. Activado con `MP_ACCESS_TOKEN`; sin la key funciona en **modo mock** (pago simulado que aprueba automáticamente). Ver `MercadoPagoGateway.java`.
+- **Twilio WhatsApp Business API** (HTTP directo — sin SDK) — notificaciones WhatsApp multi-contacto. Activado con `TWILIO_ACCOUNT_SID` + `TWILIO_AUTH_TOKEN`; sin credenciales funciona en **modo mock** (mensajes solo logueados). `WhatsAppService` usa `RestTemplate` con Basic Auth. Ver sección MÓDULO WHATSAPP.
 - Sentry 7.14.0 (`sentry-spring-boot-starter-jakarta`) — error tracking multi-tenant. Deshabilitado si `SENTRY_DSN` está vacío. Cada evento incluye tag `tenant` (subdomain activo) y `user.username`. Ver configuración en `SentryConfig.java`.
 - SignaturePad 4.1.7 (CDN: `cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js`) — firma digital canvas en módulo BPM. Integrado vía `static/js/bpm-firma.js`
+- **ZXing 3.5.3** (`com.google.zxing:core` + `javase`) — generación de códigos QR. Usado en `PdfExportService.generarEtiquetaQr()` para etiquetas de lote (PDF 80×100mm). `GET /ver/{id}/etiqueta-qr` en `TrazabilidadController`. No es dependencia transitiva de Spring — declarar explícitamente en `pom.xml`.
 - JUnit 5 + Mockito (unitarios) + Testcontainers (integración con PostgreSQL real)
 - SpotBugs 4.8.6.4 (`spotbugs-maven-plugin`) — análisis estático de bytecode. Exclusiones en `spotbugs-exclude.xml` (EI_EXPOSE_REP de Lombok + clases `*Impl` de MapStruct). **Solo corre en CI (Java 21)** — ASM no soporta class file v70 (JDK 26 local).
 - Tipografías: Cinzel (headings), Raleway (body)
@@ -35,7 +39,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - BD: PostgreSQL localhost:5432/trazabilidad_cervezas
 - Credenciales via variables de entorno: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`
 - Usuarios adicionales por rol (opcionales): `PRODUCCION_USERNAME/PASSWORD`, `INVENTARIO_USERNAME/PASSWORD`, `FACTURACION_USERNAME/PASSWORD`, `EQUIPOS_USERNAME/PASSWORD`
-- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V71). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
+- Flyway: `baseline-on-migrate=true`, migraciones en `db/migration/` (V1–V93). En producción usa credenciales separadas: `FLYWAY_USERNAME=zymos_flyway` / `FLYWAY_PASSWORD` (rol con DDL); si no se definen, usa `DB_USERNAME`/`DB_PASSWORD` como fallback. Ver `db_security.sql` para crear los roles.
 - Sesión: timeout 8 horas de inactividad (`server.servlet.session.timeout=8h`). **Spring Session JDBC** (V86): sesiones persistidas en `spring_session` + `spring_session_attributes` en PostgreSQL — sobreviven reinicios. `spring.session.store-type=jdbc`, `spring.session.jdbc.initialize-schema=never`, `spring.session.jdbc.flush-mode=immediate`. `spring.devtools.restart.enabled=false` obligatorio: DevTools cambia el ClassLoader y causa `ClassNotFoundException` al deserializar sesiones guardadas en BD. **`SpringSessionConfig`** declara dos `TransactionManager` explícitos: `JpaTransactionManager` (`@Primary`, nombre `transactionManager`) y `DataSourceTransactionManager` (`@SpringSessionTransactionManager`) — necesario para aislar Spring Session JDBC de Hibernate (`DELAYED_ACQUISITION_AND_RELEASE_AFTER_TRANSACTION` hace que `findById()` devuelva null si comparte el JPA TM). Sin esta configuración, Spring Session usa `JpaTransactionManager` por defecto y las sesiones no se encuentran correctamente. **CSRF — `HttpSessionCsrfTokenRepository` + `CsrfTokenRequestAttributeHandler`**: el token CSRF se guarda en la sesión JDBC (PostgreSQL), NO en una cookie. `CookieCsrfTokenRepository` causaba `MissingCsrfTokenException` cuando la cookie `XSRF-TOKEN` estaba ausente (tras reinicio del servidor o limpieza de cookies del navegador), disparando `ZymosInvalidSessionStrategy` erróneamente. Con sesión, el token siempre está disponible mientras la sesión sea válida. `CsrfTokenRequestAttributeHandler` (no-XOR, eager) se mantiene para compatibilidad con `with(csrf())` en tests. Ningún JavaScript del proyecto lee la cookie XSRF-TOKEN directamente — todo AJAX usa `<meta name="_csrf">` del HTML.
 - Docker: `Dockerfile` + `docker-compose.yml` disponibles en raíz del proyecto
 - **Monitoreo** (solo en Docker — opcional): Prometheus `localhost:9090`, Grafana `localhost:3000`. Vars: `GRAFANA_ADMIN_USER` (def: admin), `GRAFANA_ADMIN_PASSWORD` (def: admin — cambiar en prod). Prometheus usa `ADMIN_USERNAME/PASSWORD` para autenticarse en `/actuator/prometheus`. Archivos en `monitoring/`: template `prometheus/prometheus.yml`, script `prometheus/docker-entrypoint.sh` (sustituye credenciales via `sed`), `grafana/provisioning/` (datasource + dashboard auto-provisionado).
@@ -47,12 +51,15 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **HikariCP base** (en `application.properties`, sobreescrito por prod): pool `ZymosPool`, `maximum-pool-size=10`, `minimum-idle=2`, `connection-timeout=20000`, `idle-timeout=300000`, `max-lifetime=1200000`.
 - **Multi-tenant**: `app.default-subdomain=${DEFAULT_SUBDOMAIN:default}` — subdomain usado en localhost y como tenant inicial
 - **Branding por tenant** (env vars con fallback): `APP_BRAND_NAME` (def: Zymos), `APP_BRAND_TAGLINE`, `APP_BRAND_LOGO_URL` (def: vacío — muestra ícono de gota), `APP_BRAND_COLOR_NAVBAR` (def: `#1e293b`), `APP_BRAND_COLOR_PRIMARY` (def: `#2563eb`), `APP_BRAND_COLOR_ACCENT` (def: `#0ea5e9`), `APP_BRAND_COLOR_ACCENT_HOVER` (def: `#38bdf8`), `APP_BRAND_COLOR_CREAM` (def: `#f8fafc`), `APP_BRAND_COLOR_BODY_BG` (def: `#f1f5f9`), `APP_BRAND_FONT_HEADINGS` (def: Inter), `APP_BRAND_FONT_BODY` (def: Roboto). Los defaults se aplican al tenant `default` al arrancar (via `DataInitializer`); para cambiarlos en BD sin reiniciar usar `/admin/tenants/editar/default` + "Limpiar cache".
-- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA
+- **Email/Alertas** (opcionales — si no se definen, las notificaciones quedan deshabilitadas): `SMTP_HOST`, `SMTP_PORT` (def: 587), `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTH` (def: true), `SMTP_STARTTLS` (def: true), `SMTP_FROM` (def: noreply@zymos.app), `APP_BASE_URL` (def: http://localhost:8080), `ALERT_CRON` (def: `0 0 8 * * MON-FRI`), `ALERT_VENCIMIENTO_DIAS` (def: 30), `FACTURAS_ALERTA_DIAS` → `app.facturas.alerta-dias` (def: 30) — días sin procesar para disparar alerta de facturas RECIBIDA/VERIFICADA. `app.alert.monthly-cron` (def: `0 0 8 1 * *`) — cron para resumen mensual por email (día 1 de cada mes a las 8am); `AlertaScheduler.enviarResumenMensual()` itera tenants activos con email, llama `EmailService.enviarResumenMensual()` con los lotes del mes anterior. Template: `emails/resumen-mensual.html`. `app.onboarding.cron` (def: `0 30 9 * * *`) — cron para emails de onboarding y trial; `AlertaScheduler.enviarEmailsOnboarding()` envía días 1/3/7 desde `planInicio` y avisos 4/1 días antes de `planFin`; salta tenant "demo". Templates: `emails/onboarding.html` (un solo template con `th:block th:if="${dia == X}"` para días 1/3/7), `emails/trial-expiracion.html` (tabla de planes, badge naranja/rojo según `diasRestantes`). i18n keys: `email.subject.onboarding.{1,3,7}`, `email.subject.trial.expira` en ES + EN.
 - **Cotizaciones**: `app.cotizacion.expiracion-dias=${COTIZACION_EXPIRACION_DIAS:15}` — días de validez por defecto al crear una cotización (si no se especifica fecha explícita)
 - **Protección contra fuerza bruta**: `LOGIN_MAX_INTENTOS` (def: 5), `LOGIN_BLOQUEO_MINUTOS` (def: 15)
 - **Rate limiting API**: `app.api.rate-limit=${API_RATE_LIMIT:100}` — máximo de peticiones a `/api/**` por IP en ventana fija de 1 minuto. Implementado en `ApiRateLimitFilter` con Caffeine (`expireAfterWrite`). Devuelve HTTP 429 con `{error:"Rate limit exceeded"}` al excederse.
 - **JWT API**: `JWT_SECRET` (obligatorio en prod — sin fallback en `application-prod.properties`; en dev usa `zymos-dev-secret-key-change-in-production-2024`), `JWT_TTL_HOURS` (def: 24). Configurado en `app.jwt.secret` y `app.jwt.ttl-hours`.
+- **IA con Claude** (opcional): `ANTHROPIC_API_KEY` — clave de la API de Anthropic (`sk-ant-...`). Sin definir, todos los servicios de IA funcionan en **modo mock** con respuestas de demo. Con la clave activa, usa `claude-haiku-4-5` (~$0.002/llamada). Configurado en `app.anthropic.api-key=${ANTHROPIC_API_KEY:}`. `GlobalControllerAdvice` expone `@ModelAttribute("iaConfigurada")` — boolean true cuando la key está presente. Los templates usan `th:if="${iaConfigurada != null and iaConfigurada}"` para ocultar botones/modales IA cuando no hay key. Ver sección MÓDULO IA.
+- **MercadoPago pagos** (opcional): `MP_ACCESS_TOKEN` — token de producción de MP. Sin definir, el checkout funciona en **modo mock** (pago siempre aprobado para testing). `app.mp.access-token=${MP_ACCESS_TOKEN:}`, `app.mp.success-url`, `app.mp.failure-url`, `app.mp.pending-url`. Ver sección MÓDULO PLANES Y PAGOS.
 - **Sentry — error tracking** (opcional): `SENTRY_DSN` (vacío → Sentry deshabilitado; en prod definir con el DSN del proyecto en sentry.io), `SENTRY_RELEASE` (def: `1.0.0` — pasar git SHA en CI para rastrear qué versión causó el error). Configurado en `SentryConfig.java` con dos beans: `EventProcessor` (agrega tag `tenant` desde `TenantContext` a cada evento) y `SentryUserProvider` (adjunta `username` del usuario autenticado vía `SecurityContextHolder`). `GlobalExceptionHandler` llama `Sentry.captureException(ex)` tanto en el handler de 500 (`Exception`) como en el de 400 (`RuntimeException`). `sentry.environment` es `dev` por defecto y `prod` en `application-prod.properties`.
+- **WhatsApp notificaciones** (opcional): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — credenciales de Twilio para enviar mensajes WhatsApp. Sin definir, `WhatsAppService` funciona en **modo mock** (mensajes solo logueados, no enviados). `TWILIO_WHATSAPP_FROM` (def: `whatsapp:+14155238886` — número sandbox de Twilio). Configurado en `app.twilio.account-sid/auth-token/whatsapp-from`. Ver sección MÓDULO WHATSAPP.
 
 ---
 
@@ -180,7 +187,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 47. **TrazabilidadController — redirect POST /guardar**: al crear un lote nuevo, el controller redirige a `redirect:/editar/{id}` (igual que `POST /actualizar/{id}`), NO a la lista `redirect:/`. La variable `loteId` es `Long` (objeto, no primitivo) — si fuera `long` y el ID fuera null, el autoboxing lanzaría NPE y el catch devolvería `"danger"` silenciosamente. Fallback a `redirect:/` solo si `loteId == null` (no ocurre en producción; el repo siempre asigna ID tras `save()`). **Tests**: los mocks de `service.guardar()` deben llamar `lote.setId(N)` antes de construir `LoteGuardadoResult`; de lo contrario `loteId` es null y la URL de redirección esperada es `"/"` en vez de `"/editar/N"`.
 
-42. **Plan de tenant — alertas y bloqueo**: `AlertaScheduler` llama diariamente a `NotificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios)` para generar notificaciones in-app (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) cuando el plan está vencido/por vencer (`Tenant.isPlanVencido()`/`isPlanPorVencer()`, ≤7 días) o cerca/sobre los límites `maxLotes`/`maxUsuarios` (≥90%/100%). Si `planFin + app.plan.dias-gracia (def: 7)` ya pasó, `TenantFilter` redirige todas las rutas (excepto `/plan-vencido`, `/logout`, `/login*`) a `/plan-vencido` (`PlanController` + `templates/plan/vencido.html`).
+42. **Plan de tenant — alertas, bloqueo y niveles**: `AlertaScheduler` llama diariamente a `NotificacionService.crearAlertaPlan(tenant, totalLotes, totalUsuarios)` para generar notificaciones in-app (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) cuando el plan está vencido/por vencer (`Tenant.isPlanVencido()`/`isPlanPorVencer()`, ≤7 días) o cerca/sobre los límites `maxLotes`/`maxUsuarios` (≥90%/100%). Si `planFin + app.plan.dias-gracia (def: 7)` ya pasó, `TenantFilter` redirige todas las rutas (excepto `/plan-vencido`, `/plan-upgrade`, `/logout`, `/login*`, `/planes`, `/checkout/**`, `/webhook/**`) a `/plan-vencido` (`PlanController` + `templates/plan/vencido.html`). Además, `TenantFilter` evalúa `nivelRequeridoPara(path)` según `Tenant.planNivel` (ver sección MÓDULO PLANES Y PAGOS) — si el tenant no tiene el nivel requerido, redirige a `/plan-upgrade?requiere=X`.
 
 48. **`ZymosAccessDeniedHandler` — usar `sendError`, nunca `sendRedirect`**: el handler debe llamar `resp.sendError(HttpServletResponse.SC_FORBIDDEN)`. Un `sendRedirect("/error?status=403")` crea una nueva petición GET sin atributos `RequestDispatcher.ERROR_STATUS_CODE`, por lo que `CustomErrorController` lee `statusAttr == null` y defaultea a 500. Con `sendError(403)` el Servlet container hace un forward interno a `/error` con todos los atributos de error correctamente seteados.
 
@@ -204,7 +211,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 59. **Unidad de temperatura configurable por tenant — `TempUtils`** (V84, 2026-08-03): `Tenant.unidadTemperatura` es `"C"` o `"F"`, DEFAULT `'C'`. La BD **siempre almacena Celsius**; la conversión ocurre en entrada (F→C antes de guardar) y en salida (C→F para mostrar). Clase estática `TempUtils` en `com.alera.config`: `toStorage(BigDecimal display, String unit)` convierte F→C (o devuelve el valor sin cambios si es C); `toDisplay(BigDecimal stored, String unit)` convierte C→F; `label(unit)` devuelve `"°F"` o `"°C"`; `inputMin/Max(unit)` devuelve rangos para el `<input>`. `GlobalControllerAdvice` expone `@ModelAttribute("tempUnit")` leyendo `Tenant.unidadTemperatura` del cache. **En templates**: `th:text="#{clave(${tempUnit == 'F' ? '°F' : '°C'})}"` para labels parametrizados; `T(com.alera.config.TempUtils).toDisplay(lote.campo, tempUnit)` para display en detalle; `th:attr="min=...,max=..."` condicional según `tempUnit`. **En el controller `editar()`**: recibir `@ModelAttribute("tempUnit") String tempUnit` y convertir los campos de temperatura del DTO antes de pasarlo al modelo. **En `actualizar()` / `guardar()`**: `TempUtils.toStorage(dto.getXxxTemperatura(), tempUnit)` antes de `mapearDto()`. El formulario admin (`tenant-formulario.html`) incluye selector `<select th:field="*{unidadTemperatura}">` con opciones `C` y `F`.
 
-60. **`LecturaFermentacion` — upsert automático, NUNCA crear en el controller**: Las lecturas "OG inicial" y "FG final" las gestiona exclusivamente `TrazabilidadService` via `upsertLecturaAuto(lote, notas, fecha, densidad, temperatura)`. Este método usa `lecturaRepo.findFirstByLoteIdAndNotas(loteId, notas)` para encontrar el registro existente o crear uno nuevo (evita duplicados). **NUNCA crear lecturas automáticas en el controller** — código legado que hacía esto generaba 2 registros por lote. En `actualizar()`, el trigger es `!ogDespues.equals(ogAntes) || tempCambiada(ogTempAntes, lote.getOgTemperatura())`. **`tempCambiada()` usa `compareTo()`, no `equals()`**: `BigDecimal.equals()` compara escala además de valor (`20.00.equals(20)` es `false`), lo que disparaba el upsert en cada edición sin cambio real. El ordering en `findByLoteIdOrdenadas` garantiza: "OG inicial" primero (CASE=0), lecturas manuales en medio (CASE=1), "FG final" al final (CASE=2). **V85** renombra lecturas huérfanas de tenants existentes (notas=NULL con densidad=densidad_inicial) a "OG inicial" para que el upsert las encuentre correctamente.
+60. **`LecturaFermentacion` — upsert automático, NUNCA crear en el controller**: Las lecturas "OG inicial" y "FG final" las gestiona exclusivamente `TrazabilidadService` via `upsertLecturaAuto(lote, notas, fecha, densidad, temperatura)`. Este método usa `lecturaRepo.findFirstByLoteIdAndNotas(loteId, notas)` para encontrar el registro existente o crear uno nuevo (evita duplicados). **NUNCA crear lecturas automáticas en el controller** — código legado que hacía esto generaba 2 registros por lote. En `actualizar()`, el trigger es `!ogDespues.equals(ogAntes) || tempCambiada(ogTempAntes, lote.getOgTemperatura())`. **`tempCambiada()` usa `compareTo()`, no `equals()`**: `BigDecimal.equals()` compara escala además de valor (`20.00.equals(20)` es `false`), lo que disparaba el upsert en cada edición sin cambio real. El ordering en `findByLoteIdOrdenadas` garantiza: "OG inicial" primero (CASE=0), lecturas manuales en medio (CASE=1), "FG final" al final (CASE=2). **V85** renombra lecturas huérfanas de tenants existentes (notas=NULL con densidad=densidad_inicial) a "OG inicial" para que el upsert las encuentre correctamente. **`LecturaFermentacionService.agregar()` retorna `String`**: devuelve `null` si todo es correcto o un mensaje de advertencia si la temperatura registrada difiere más de 3°C del objetivo (`lote.fermTemperatura`). `TrazabilidadController.agregarLectura()` usa este return: flash `"success"` si null, flash `"warning"` con el texto si hay advertencia.
 
 61. **`ZymosInvalidSessionStrategy` — comportamiento dual (sesión vs CSRF)**: Spring Security enruta `MissingCsrfTokenException` → `InvalidSessionAccessDeniedHandler` → `ZymosInvalidSessionStrategy.onInvalidSessionDetected()` cuando falta la cookie `XSRF-TOKEN`, aunque la sesión sea válida. El log "Invalid CSRF token found" de `CsrfFilter` se emite tanto para `InvalidCsrfTokenException` como para `MissingCsrfTokenException` — no distingue por el mensaje. **Distinctor**: `SessionManagementFilter` solo llama la estrategia cuando `request.isRequestedSessionIdValid() = false` (sesión no existe en BD). Si la sesión SÍ existe (`sessionIsValid=true`) y el usuario está autenticado, la estrategia fue invocada por CSRF missing, no por expiración. **Lógica en `onInvalidSessionDetected`**: `isAuthenticated && sessionIsValid` → `response.sendRedirect(safeReferer)` donde `safeReferer` es el header `Referer` validado al mismo origen (previene open redirect) o `/` como fallback — el usuario recibe nueva cookie CSRF al cargar la página; de lo contrario → `request.getSession()` + `response.sendRedirect("/login?expired=true")`. **NUNCA devolver 403 en la estrategia** — la misma se dispara durante el login cuando la sesión anterior fue invalidada por session fixation. **NUNCA redirigir a `/` hardcodeado** — el usuario pierde su contexto de navegación si estaba en otra página. **`CsrfConfigurer` en Spring Security 6.4.x NO tiene `accessDeniedHandler()`** — no se puede sobreescribir el handler CSRF directamente sin pasar por la estrategia. La estrategia emite `log.warn` con usuario, método, URI y destino para diagnóstico.
 
@@ -217,6 +224,18 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 65. **`InsumoInventario.costoUnitario`** (V88, `NUMERIC(14,2)`, nullable): precio por unidad de `insumo.unidad` (ej: `2.50` $/kg cuando `unidad="kg"`). `TrazabilidadService.calcularCostoEstimado(lote)` itera los ingredientes del lote, busca el insumo por nombre exacto via `insumoService.buscarPorNombreExacto()`, convierte la cantidad del ingrediente (formato `"5000 gr"`) a la unidad del insumo (`toInventoryUnit`: kg/L → divide por 1000; gr/mL/und → directo), multiplica por `costoUnitario` y suma. Retorna `null` si ningún ingrediente tiene precio. `TrazabilidadController.ver()` lo llama solo cuando `lote.getCostoTotal() == null` (sin facturas asignadas) y también calcula `costoEstimadoPorLitro`. `detalle.html` muestra la sección solo cuando `#lists.isEmpty(lote.itemsFactura) and costoEstimado != null` — nunca coexiste con la sección de costos reales.
 
 66. **`#messages.msgOrNull` para claves i18n dinámicas**: cuando la clave se construye concatenando un prefijo con el valor de un campo, usar `${#messages.msgOrNull('prefijo.' + variable) ?: variable}` — retorna `null` si la key no existe en el bundle y el operador Elvis `?:` de SpEL provee el fallback al valor crudo. **NO usar** `#{}` directamente con concatenación de variables (Thymeleaf no lo soporta en expresiones `${}` ni en literales `|...|`). Patrón aplicado en: historial de lotes (`traz.hist.accion.*`), clasificaciones BJCP (`traz.det.js.clasif.*`), historial de acciones BPM.
+
+67. **SpEL — null-safety en expresiones compuestas del navbar**: en el contexto de páginas de error (`error/error.html`), los `@ModelAttribute` de `GlobalControllerAdvice` pueden no estar en el modelo. Expresiones simples `th:if="${iaConfigurada}"` son seguras (Thymeleaf trata null como false). Expresiones compuestas SpEL `${iaConfigurada and modChat}` fallan con `SpelEvaluationException: cannot convert from null to boolean` cuando `iaConfigurada` es null. **Regla**: para cualquier `@ModelAttribute` boolean en expresiones compuestas del navbar o fragmentos globales, usar siempre `${nombreAttr != null and nombreAttr and otroAttr}`. Caso real: `th:if="${iaConfigurada and modChat}"` en navbar causaba `TemplateInputException` al renderizar `error/error.html` en `@WebMvcTest`.
+
+68. **`iaConfigurada` — patrón de gating de features IA**: todos los botones y modales de IA en templates deben estar envueltos con `th:if="${iaConfigurada}"` (en templates normales donde `GlobalControllerAdvice` siempre corre) o `th:if="${iaConfigurada != null and iaConfigurada}"` (en fragmentos globales como navbar que se renderizan en páginas de error). Los templates afectados: `trazabilidad/detalle.html` (btnDescComercial, btnDiagnosticoIA, btnBjcpScorer + 3 modales), `recetas/lista.html` (btnCrearConIA + modalRecetaIA), `ordenes-compra/lista.html` (btnOptimizarIA + modalOptimizarIA), `reportes/rentabilidad.html` (btnAnalizarRentIA + modalRentIA), `facturas/formulario.html` (btnAnalizadorIA + modalAnalizadorIA), `navbar.html` (Chat IA rail/panel/mobile). **NUNCA** mostrar funciones de IA sin verificar `iaConfigurada` — el usuario vería botones que no funcionan sin la API key.
+
+69. **Perfil de agua en recetas — V93**: `Receta` tiene 7 campos nullable: `aguaCalcio`, `aguaMagnesio`, `aguaSodio`, `aguaSulfatos`, `aguaCloruros`, `aguaBicarbonatos` (todos `Integer`, ppm) y `aguaNotas` (TEXT). Mapeados en `RecetaFormDto` con sus getters/setters, y en `RecetaService.toFormDto()` / `mapDtoToEntity()`. El formulario muestra la sección solo si al menos un campo está relleno en edición; en nuevo siempre visible. Estos campos se exportan/importan correctamente a BeerXML 1.0 vía el elemento `<WATER>`.
+
+70. **BeerXML 1.0 — `BeerXmlService`**: exporta e importa recetas en formato BeerXML 1.0 estándar. No requiere dependencia externa — usa `javax.xml.parsers.DocumentBuilderFactory` (incluido en Java). **Protección XXE**: `dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)` obligatorio en el parser de importación. **Mapeo de exportación**: `maltas`→`FERMENTABLES`; `adicionesHervor`→`HOPS` (con `TIME=minutosRestantes`); `lupulos` que NO están en `adicionesHervor` → `HOPS` adicionales con `TIME=60`; `levaduras`→`YEASTS`; `clarificantes`→`MISCS`; `escalones`→`MASH/MASH_STEPS`; agua*→`WATERS`. OG/FG: dividir por 1000 (1056→1.056). Cantidades: gr→kg, mL→L (÷1000). **Mapeo de importación**: `HOPS` con `USE=Boil` → `adicionesHervor` + `lupulos` (dedup por nombre); `FERMENTABLES`→`maltas`; `YEASTS`→`levaduras`; `MISCS`→`clarificantes` (+ `adicionesHervor` si `USE=Boil`); `MASH_STEPS`→`escalones`; `WATER`→agua*. Convierte kg/L→gr/mL (×1000). **Endpoints**: `GET /recetas/ver/{id}/beerxml` (descarga), `POST /recetas/importar-beerxml` (sube, guarda la receta, redirige a `/recetas/editar/{id}`). Botón "BeerXML" en `detalle.html` y botón "Importar BeerXML" con modal en `lista.html`. `@MockBean BeerXmlService` necesario en `RecetaControllerTest`.
+
+71. **Onboarding wizard — `/bienvenida`**: `BienvenidaController` muestra un wizard de 3 pasos (crear receta, invitar usuario, crear lote) si el tenant aún no tiene datos. Si `recetaService.listarActivas().isEmpty() == false && loteRepo.count() > 0` redirige a `/` directamente (tenant ya configurado). `POST /bienvenida/saltar` → `redirect:/`. Ruta en `SecurityConfig`: `.authenticated()` sin módulo RBAC. `BienvenidaControllerTest` tiene 6 tests con `@WebMvcTest`.
+
+72. **`TipoCerveza` cross-tenant provisioning**: `TipoCervezaRepository.existsByNombreIgnoreCaseAndTenantId(nombre, tenantId)` usa `nativeQuery=true` para bypassear el filtro `@TenantId` de Hibernate durante el aprovisionamiento. `TenantProvisioningService` llama este método (no el JPQL `existsByNombreIgnoreCase`) para evitar falsos positivos cuando el `TenantContext` no está correctamente configurado durante la creación del tenant.
 
 51. **Notificaciones — filtrado por rol**: `NotificacionService` filtra las notificaciones según las authorities del usuario. `TIPO_AUTHORITY` (Map estático) define qué authority requiere cada `TipoNotificacion`: `BAJO_STOCK`/`VENCIMIENTO` → `MODULO_INVENTARIO_VER`, `MANTENIMIENTO` → `MODULO_EQUIPOS_VER`, `SISTEMA` → `MODULO_FACTURACION_VER`, `BPM_SALUD` → `MODULO_BPM_VER`, `LOTE_FASE_VENCIDA` → `MODULO_TRAZABILIDAD_VER`, `TAREA_ASIGNADA`/`TAREA_VENCIMIENTO` → `MODULO_TAREAS_VER`. Tipos sin entrada en el mapa (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) solo los ven ADMIN/SUPERADMIN. `tiposVisibles(Collection<String> authorities)` calcula la lista filtrada. Los métodos `listarRecientes`, `contarNoLeidas` y `listarTodas` reciben `Collection<String> authorities` como parámetro — obtenerlas en el controller con `auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet())`. **Al agregar un nuevo `TipoNotificacion`**: añadir entrada en `TIPO_AUTHORITY` si no es admin-only; si es admin-only, simplemente no agregar entrada. `TipoNotificacion.BPM_SALUD` se genera en `BpmService.guardarSintoma()` cuando `r.tieneSintomas()` es true, con deduplicación de 1 por día via `existeEnPeriodo()`. `TipoNotificacion.LOTE_FASE_VENCIDA` se genera en `AlertaScheduler` diariamente para lotes con inicio de fase anterior al `fechaIdeal` calculado.
 
@@ -334,6 +353,13 @@ El CSP enforced (activo desde 2026-07-03, Fase D) bloquea **todos** los event ha
 | BPM módulo | `bpm.*` |
 | BPM PDFs (columnas, secciones) | `bpm.pdf.*` |
 | PDFs de lotes/recetas | `pdf.*` |
+| Recetas IA | `recetas.ia.*` |
+| Trazabilidad detalle IA (diagnóstico, desc. comercial, BJCP) | `traz.det.diagnostico.*`, `traz.det.desc.*`, `traz.det.bjcp.*` |
+| Órdenes de compra IA | `oc.ia.*` |
+| Reportes rentabilidad IA | `reporte.ia.rent.*` |
+| Chat IA | `chat.*` |
+| Facturas analizador | `fact.analiz.*` |
+| Planes y checkout | `plan.*`, `checkout.*` |
 
 ### Patrón en templates Thymeleaf
 ```html
@@ -644,51 +670,97 @@ El formulario tiene `<select id="selectRefTipo">` + campo de búsqueda + dropdow
 
 ---
 
-## MÓDULO ANALIZADOR DE FACTURAS CON IA (`/facturas/analizar-documento`)
+## MÓDULO IA (Inteligencia Artificial)
 
-Extrae datos estructurados de PDFs e imágenes de facturas usando Claude Vision, pre-llenando el formulario de alta de factura. Implementado 2026-11-05.
+7 servicios de IA integrados con Claude API (Anthropic SDK 2.34.0). Todos siguen el mismo patrón: **modo mock cuando `ANTHROPIC_API_KEY` no está configurada**. Activar con `ANTHROPIC_API_KEY=sk-ant-...` sin cambios de código. Modelo por defecto: `claude-haiku-4-5`.
 
-### Archivos
+### Patrón común de todos los servicios IA
 
-- **`FacturaAnalizadorService`** — servicio principal. `analizar(MultipartFile)` → `FacturaAnalizadaDto`. Modo mock si `ANTHROPIC_API_KEY` no está configurada.
-- **`FacturaAnalizadaDto`** — DTO de respuesta: `proveedor`, `numeroFactura`, `fechaFactura`, `descripcion`, `costoEnvio`, `items[]` (`nombre`, `tipoItem`, `tipoInsumo`, `cantidad`, `unidad`, `valorUnitario`, `porcentajeIvaItem`), `modoMock`, `error`.
-- **`FacturaProveedorController`** — dos endpoints nuevos: `POST /facturas/analizar-documento` y `GET /facturas/analizador-estado`.
-- **`facturas/formulario.html`** — botón "Cargar desde documento" abre modal con file input, spinner, preview de items extraídos y botón "Aplicar al formulario".
+```java
+@Service
+public class XxxIaService {
+    @Value("${app.anthropic.api-key:}") private String apiKey;
 
-### Configuración
+    public boolean isConfigured() { return !apiKey.isBlank(); }
 
-- `app.anthropic.api-key=${ANTHROPIC_API_KEY:}` en `application.properties` — string vacío como default.
-- **Activar IA real**: solo agregar `ANTHROPIC_API_KEY=sk-ant-...` como env var. Sin cambios de código.
-- **Modo mock** (key ausente): devuelve 3 items hardcodeados (Malta/Lúpulo/Levadura) con badge "Modo de prueba".
-- **Modelo**: `claude-haiku-4-5` (~$0.002/análisis).
-- **Dependencia**: `com.anthropic:anthropic-java:2.34.0` en `pom.xml`.
+    public XxxDto analizar(...) {
+        if (!isConfigured()) return mockResponse(...); // mock con datos hardcodeados
+        AnthropicOkHttpClient client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
+        // construir bloque de contenido y llamar API
+        Message response = client.messages().create(
+            MessageCreateParams.builder()
+                .model("claude-haiku-4-5")
+                .maxTokens(2048L)
+                .addUserMessageOfBlockParams(List.of(bloque))
+                .build());
+        String texto = response.content().stream()
+            .filter(b -> b.isText()).map(b -> b.asText().text())
+            .findFirst().orElse("{}");
+        // parsear JSON de respuesta
+        int i = texto.indexOf('{'), j = texto.lastIndexOf('}');
+        // ... ObjectMapper.readValue(texto.substring(i, j+1), Dto.class)
+    }
+}
+```
 
-### SDK Anthropic Java 2.34.0 — API verificada
+**Import correcto**: `com.anthropic.client.okhttp.AnthropicOkHttpClient` (NO `com.anthropic.client`).  
+**`addUserMessageOfBlockParams`** — método correcto (NO `addUserMessageOfContentBlockParams`).
+
+### Los 7 servicios
+
+| # | Servicio | Endpoint | Template | DTO de respuesta |
+|---|---|---|---|---|
+| 0 | `FacturaAnalizadorService` | `POST /facturas/analizar-documento` | `facturas/formulario.html` modal | `FacturaAnalizadaDto` |
+| 1 | `RecetaAsistenteService` | `POST /recetas/asistente` | `recetas/lista.html` modal | `RecetaAsistidaDto` |
+| 2 | `FermentacionDiagnosticoService` | `POST /ver/{id}/diagnostico-ia` | `trazabilidad/detalle.html` modal | `FermentacionDiagnosticoDto` |
+| 3 | `DescripcionComercialService` | `POST /ver/{id}/descripcion-comercial-ia` | `trazabilidad/detalle.html` modal | `DescripcionComercialDto` |
+| 4 | `BjcpScorerService` | `POST /ver/{id}/bjcp-scorer-ia` | `trazabilidad/detalle.html` modal | `BjcpScoreDto` |
+| 5 | `OrdenCompraOptimizerService` | `POST /ordenes-compra/optimizar-ia` | `ordenes-compra/lista.html` modal | `OrdenCompraOptimaDto` |
+| 6 | `RentabilidadAnalisisService` | `POST /reportes/rentabilidad/analizar-ia` | `reportes/rentabilidad.html` modal | `RentabilidadAnalisisDto` |
+| 7 | `TenantChatService` | `POST /chat/mensaje` | `chat/index.html` | `MensajeChatDto` |
+
+### Detalles por servicio
+
+**#0 — `FacturaAnalizadorService`**: Vision (PDF + imagen). Envía el archivo como `Base64PdfSource`/`Base64ImageSource` + prompt. Extrae `proveedor`, `numeroFactura`, `fechaFactura`, `costoEnvio`, `items[]`. Mock: 3 items hardcodeados (Malta/Lúpulo/Levadura).
+
+**#1 — `RecetaAsistenteService`**: Genera una receta completa desde descripción de texto. El prompt incluye el inventario disponible del tenant. Responde con JSON → preview en modal → `sessionStorage['zymos-receta-ai']` → `formulario.html` lo lee en DOMContentLoaded para pre-llenar todos los campos. Mock: IPA americana de ejemplo.
+
+**#2 — `FermentacionDiagnosticoService`**: Analiza la curva de densidad+temperatura del lote (lecturas de `LecturaFermentacion`). Detecta anomalías y sugiere acciones. El botón "Diagnóstico IA" aparece en la sección de Fermentación de `detalle.html`.
+
+**#3 — `DescripcionComercialService`**: Genera 4 variantes de texto de marketing para el lote: descripción corta, larga, texto de etiqueta y hashtags. Usa `EvaluacionSensorial.getPuntajeTotal()` (no `getScore()`). Botón en la cabecera del lote (junto a Editar/Duplicar/PDF).
+
+**#4 — `BjcpScorerService`**: Analiza las notas de texto libre de evaluación sensorial, sugiere puntaje BJCP, fortalezas, defectos y recomendaciones. Botón "Analizar con IA" junto a las notas de evaluación. `EvaluacionSensorial.clasificarBjcp()` actualiza los sliders.
+
+**#5 — `OrdenCompraOptimizerService`**: Analiza lotes planificados, inventario actual y precios históricos. Sugiere una OC optimizada con proveedor recomendado por ítem. Botón "Optimizar con IA" en `/ordenes-compra`.
+
+**#6 — `RentabilidadAnalisisService`**: Recibe `List<RentabilidadLoteDto>` ya calculados, totalIngresos, totalCosto, totalMargenPct. Retorna `RentabilidadAnalisisDto` con `insights[]`, `estiloMasRentable`, `estiloMenosRentable`, `tendencia`, `recomendaciones[]`, `alertas[]`. Se auto-ejecuta al abrir el modal la primera vez.
+
+**#7 — `TenantChatService`**: Chat conversacional sobre los datos del tenant. `buildContexto(tenantName)` agrega un resumen pre-calculado de lotes e insumos del tenant (multi-tenant safe — los repos ya tienen filtro `@TenantId`). El contexto se cachea con **Caffeine directo** (no `@Cacheable` — self-invocation de AOP no funciona): `Cache<String, String> contextoCache = Caffeine.newBuilder().expireAfterWrite(2, TimeUnit.MINUTES).maximumSize(50).build()` — el campo se inicializa inline en la clase, no en un `@Bean`. Uso: `contextoCache.get(tenantName, this::buildContexto)`. El historial de conversación (últimos 10 mensajes) se formatea como texto en el prompt. Ruta: `/chat` (`.authenticated()`, sin módulo RBAC). Navbar: ítem "Chat IA" en el rail (oculto si `!iaConfigurada`). Sin `iaConfigurada`, el modal muestra un banner amber (`chat.mock.banner` i18n). Tests en `ChatControllerTest`.
+
+### SDK Anthropic Java 2.34.0 — snippets clave
 
 ```java
 // PDF
-DocumentBlockParam docParam = DocumentBlockParam.builder()
-    .source(Base64PdfSource.builder().data(base64).build()).build();
-ContentBlockParam bloque = ContentBlockParam.ofDocument(docParam);
+ContentBlockParam bloque = ContentBlockParam.ofDocument(
+    DocumentBlockParam.builder()
+        .source(Base64PdfSource.builder().data(base64).build()).build());
 
 // Imagen
-ImageBlockParam imageParam = ImageBlockParam.builder()
-    .source(Base64ImageSource.builder().data(base64).mediaType(mediaType).build()).build();
-ContentBlockParam bloque = ContentBlockParam.ofImage(imageParam);
+ContentBlockParam bloque = ContentBlockParam.ofImage(
+    ImageBlockParam.builder()
+        .source(Base64ImageSource.builder().data(base64).mediaType(mediaType).build()).build());
 
 // Texto
-TextBlockParam textoParam = TextBlockParam.builder().text(PROMPT).build();
-ContentBlockParam bloque = ContentBlockParam.ofText(textoParam);
+ContentBlockParam bloque = ContentBlockParam.ofText(
+    TextBlockParam.builder().text(PROMPT).build());
 
-// Crear mensaje (método correcto: addUserMessageOfBlockParams, NO addUserMessageOfContentBlockParams)
+// Enviar mensaje
 Message response = client.messages().create(
     MessageCreateParams.builder()
-        .model("claude-haiku-4-5")
-        .maxTokens(2048L)
-        .addUserMessageOfBlockParams(List.of(documentoBlock, textoBlock))
+        .model("claude-haiku-4-5").maxTokens(2048L)
+        .addUserMessageOfBlockParams(List.of(bloque))
         .build());
 
-// Extraer respuesta
 String texto = response.content().stream()
     .filter(b -> b.isText()).map(b -> b.asText().text())
     .findFirst().orElse("{}");
@@ -696,7 +768,155 @@ String texto = response.content().stream()
 
 ### Tests
 
-`FacturaProveedorControllerTest` requiere `@MockBean FacturaAnalizadorService analizadorService`.
+Cada controller que inyecta un servicio IA requiere `@MockBean` del mismo:
+- `FacturaProveedorControllerTest` → `@MockBean FacturaAnalizadorService`
+- `RecetaControllerTest` → `@MockBean RecetaAsistenteService`, `@MockBean BeerXmlService`
+- `TrazabilidadControllerTest` → `@MockBean FermentacionDiagnosticoService`, `@MockBean DescripcionComercialService`
+- `OrdenCompraControllerTest` → `@MockBean OrdenCompraOptimizerService`
+- `ReporteControllerTest` → `@MockBean RentabilidadAnalisisService`
+- `ChatControllerTest` → `@MockBean TenantChatService`
+
+---
+
+## MÓDULO PLANES Y PAGOS
+
+Permite a nuevos clientes auto-provisionarse pagando desde la web, sin intervención manual. Implementado en V91+V92 (2026-11-05).
+
+### PlanNivel (V91)
+
+- **`PlanNivel` enum** en `com.alera.model.enums`: `MACERADO` ($150k/mes), `COCCION` ($320k/mes), `FERMENTACION` ($550k/mes). Método `includes(required)` compara ordinal. `precioNumerico` field.
+- **`Tenant.planNivel`** (VARCHAR 20, nullable): null = acceso completo (tenants pre-V91). `tieneAccesoNivel(requerido)` → `planNivel == null || planNivel.includes(requerido)`.
+- **`TenantFilter`** evalúa `nivelRequeridoPara(path)` y redirige a `/plan-upgrade?requiere=X` si el tenant no tiene el nivel:
+  - `RUTAS_COCCION`: `/bpm`, `/facturas`, `/clientes`, `/ventas`, `/barriles`, `/ordenes`, `/reportes`, `/tareas`
+  - `RUTAS_FERMENTACION`: `/admin/roles`, `/admin/migracion`
+- **`PlanController`** — `GET /plan-upgrade` (comparativa de planes), `GET /plan-vencido` (bloqueo por plan vencido). `SecurityConfig`: ambas rutas en `permitAll()`.
+- Selector `<select th:field="*{planNivel}">` en `admin/tenant-formulario.html`.
+
+### Checkout self-service con MercadoPago (V92)
+
+- **`CheckoutPendiente`** (tabla `checkout_pendientes`, sin `@TenantId`): registra intención de pago antes de que exista el tenant. Campos: `subdomain`, `email`, `planNivel`, `mpPaymentId`, `estado` (PENDIENTE/APROBADO/RECHAZADO), `procesado` (bool).
+- **`CheckoutPendienteRepository`**: `findByMpPaymentId`, `findBySubdominioAndEstado`, `marcarProcesado` (native UPDATE).
+- **`PasarelaPago` interface** — abstracción lista para Stripe. `MercadoPagoGateway` la implementa.
+- **`MercadoPagoGateway`** — SDK 2.1.24. Mock mode cuando `app.mp.access-token` está vacío (pago aprobado automáticamente para tests). `crearPreferencia(plan, subdomain, email)` → URL de pago MP.
+- **`TenantProvisioningService`** — crea tenant + usuario admin + tipos de cerveza + categorías + roles por defecto post-pago. Usa `JdbcTemplate` (bypass Hibernate filter). Llama `RolTenantService.crearRolesPorDefecto()` y `EmailService.enviarBienvenidaCompra()`.
+- **`CheckoutController`** — rutas públicas (en `permitAll()` y `shouldNotFilter`):
+  - `GET /planes` — página de selección de plan con 3 cards
+  - `POST /checkout/iniciar` — crea `CheckoutPendiente` + preferencia MP → redirect a URL de MP
+  - `GET /checkout/exito|fallo|pendiente` — páginas de resultado
+  - `POST /webhook/mp` — recibe notificación MP, verifica pago, llama `TenantProvisioningService`. CSRF ignorado para `/webhook/**`.
+- **Templates**: `plan/planes.html`, `plan/exito.html`, `plan/fallo.html`, `plan/pendiente.html`.
+- **CSP en páginas públicas**: igual que el resto — NUNCA `onclick=` / `oninput=` inline. Usar event delegation con `document.addEventListener` en `<script th:attr="nonce=${cspNonce}">`.
+- **Subdominio**: solo letras y números (`^[a-z0-9]{3,30}$`). JS `limpiarSubdominio()` normaliza acentos con `normalize('NFD')`. Auto-sugerencia desde nombre de cervecería; para cuando el usuario edita manualmente (`dataset.editadoManual`).
+
+### Tests
+
+`CheckoutControllerTest` — 14 tests `@WebMvcTest`. `@WithMockUser` a nivel de **método** (no clase) — `@WithAnonymousUser` en clase `@Nested` NO propaga a métodos en Spring Security Test.
+
+---
+
+## DEMO TENANT
+
+Tenant especial `demo` con datos realistas sembrados al arrancar. Permite que potenciales clientes exploren sin configuración.
+
+### `DemoDataSeeder`
+
+Ubicado en `com.alera.config`. Se ejecuta en `DataInitializer.run()` vía `demoDataSeeder.seed()`. Solo actúa si el tenant "demo" tiene cero lotes. Usa `JdbcTemplate` para bypassear el filtro `@TenantId` de Hibernate.
+
+**Datos sembrados**: 2 equipos (Fermentador Cónico 100L + 60L), 2 recetas (Pale Ale Clásica, IPA Americana), 6 insumos de inventario, 1 proveedor (Maltería del Norte), 1 factura con 2 ítems, 1 cliente (Bar Los Artesanos), 4 lotes en fases distintas (Completado, Carbonatación, Fermentación, Macerado), 1 venta con ítem.
+
+**Usuario**: `demo`/`demo`, rol ADMIN, creado por `DemoDataSeeder.crearUsuarioDemo()` vía JdbcTemplate (skippea `crearUsuariosSiNoTiene("demo")` en DataInitializer para evitar duplicados).
+
+**Plan**: `FERMENTACION` (acceso completo al sistema).
+
+**Reset**: `TenantAdminController.POST /admin/tenants/demo/reset` llama `demoDataSeeder.resetear()` (borra y vuelve a sembrar). Botón "Reset Demo" en `admin/tenants.html`.
+
+**`TenantAdminControllerTest`**: requiere `@MockBean DemoDataSeeder`.
+
+**Activar en local**: `DEFAULT_SUBDOMAIN=demo` como variable de entorno. En producción: DNS `demo.app.com` → servidor.
+
+**Al agregar campos NOT NULL sin DEFAULT** a lotes o recetas, actualizar `DemoDataSeeder.crearLote()`/`crearReceta()` para incluirlos.
+
+**Navbar — banner demo**: `GlobalControllerAdvice` expone `@ModelAttribute("esTenantDemo")` (true cuando `tenant.subdomain == "demo"`). `navbar.html` muestra banner de conversión cuando `esTenantDemo == true`.
+
+**Onboarding wizard — `/bienvenida`**: `BienvenidaController` muestra un wizard de 3 pasos (crear receta, invitar usuario, crear lote) para tenants nuevos sin datos. Si ya existen recetas activas Y lotes, redirige directamente a `/`. `POST /bienvenida/saltar` → `redirect:/`. Ruta en `SecurityConfig`: `.authenticated()` sin módulo RBAC. `BienvenidaControllerTest`: 6 tests `@WebMvcTest`; requiere stub `when(recetaService.listarActivas()).thenReturn(...)` y `when(loteRepo.count()).thenReturn(0L)`.
+
+**`GET /demo` auto-login**: `DemoController.demo()` retorna el template `demo`. El template `templates/demo.html` muestra un spinner dorado y un `<form id="f" action="/login" method="post" style="display:none">` con credenciales `demo`/`demo` y el token CSRF. Un script lo hace submit automáticamente en `DOMContentLoaded`. **CRÍTICO**: el `<script>` DEBE llevar `th:attr="nonce=${cspNonce}"` — sin el nonce, el CSP bloquea el script y el spinner queda atascado. Rutas de seguridad: `/demo` en `SecurityConfig` → `permitAll()`, en `BpmSaludFilter.shouldSkip()`, y en `TenantFilter.esRutaPermitidaConPlanVencido()` (no en `shouldNotFilter` — necesita el branding para el CSRF). **En local**: requiere `DEFAULT_SUBDOMAIN=demo` en la configuración de arranque; sin esta variable, `localhost` resuelve al tenant `default` donde el usuario `demo` no existe y el login falla (5 intentos fallidos en la protección brute-force con caché Caffeine — se limpia al reiniciar la app).
+
+---
+
+## LANDING PAGE (`/landing`)
+
+Página pública de marketing para convertir visitantes en clientes SaaS.
+
+- **`LandingController`** — `GET /landing`, pasa `PlanNivel.values()` al modelo como `planes`. Ruta en `SecurityConfig`: `permitAll()`. En `BpmSaludFilter.shouldSkip()`. En `TenantFilter.esRutaPermitidaConPlanVencido()`. **NO** está en `shouldNotFilter` de `TenantFilter` — necesita el branding del tenant activo (y el CSRF para el form de demo).
+- **`templates/landing.html`** — página standalone (sin fragment navbar). Usa Cinzel + Raleway desde Google Fonts CDN. CSS vars `--lp-gold` (desde `branding.colorAccent`) y `--lp-blue` (desde `branding.colorPrimary`) inyectadas via `th:inline="text"` en el `<style>`. Dark mode: bloque `html.dark-mode {...}` al final usando `--dm-*`. CSP compliant: `th:attr="nonce=${cspNonce}"` en `<style>` y `<script>`; sin `onclick` inline; event listeners en `DOMContentLoaded`.
+
+**9 secciones de la landing:**
+1. Navbar sticky oscuro (logo + links + "Ver demo" CTA + "Prueba gratis" CTA)
+2. Hero (gradiente dark, H1 + subtítulo + 2 botones + trust badges)
+3. Stats strip (15+ módulos, multi-tenant, IA, 99%+ tests)
+4. Features (6 cards: Trazabilidad, Recetas, Inventario, BPM, Comercial, IA)
+5. App preview (mockup HTML/CSS del dashboard)
+6. "Cómo funciona" (3 pasos sobre fondo dark)
+7. Demo callout (credenciales `demo`/`demo`, auto-login via hidden form + JS)
+8. Planes (3 cards desde `th:each="plan : ${planes}"`, el central con badge "Más popular")
+9. CTA final con form de trial inline: `name` cervecería, `subdomain` (auto-sugerido + validado `GET /checkout/verificar-subdominio?s=` con debounce 500ms), `email` → `POST /checkout/trial`; Pie de página
+
+**Decisión de demo login en landing**: el demo callout tiene un `<form id="demoLoginForm" action="/login" style="display:none">` con CSRF que JS envía al hacer click en el botón "Explorar demo". El botón usa `data-action="open-demo"` y un event listener global (no `onclick=`).
+
+---
+
+## MÓDULO WHATSAPP
+
+Notificaciones automáticas por WhatsApp a contactos configurables por tenant. Implementado en V94.
+
+### Entidades
+
+- **`ContactoWhatsApp`** (tabla `contactos_whatsapp`): extiende `AuditableEntity` (hereda `@TenantId`). Campos: `nombre` (VARCHAR 150), `telefono` (VARCHAR 30, formato E.164), `activo` (boolean). `getTiposSuscritos()` retorna `List<String>` con los tipos de alerta suscritos.
+- **`ContactoWhatsAppSuscripcion`** (tabla `contactos_whatsapp_suscripciones`): `contacto` (ManyToOne LAZY), `tipo` (VARCHAR 50 — nombre del enum `TipoAlertaWhatsApp`), `@TenantId` propio. FK con `ON DELETE CASCADE`.
+
+### `TipoAlertaWhatsApp` enum
+
+8 valores con `displayName` y `category`: `BAJO_STOCK`, `VENCIMIENTO`, `LOTE_FASE`, `MANTENIMIENTO`, `BPM_SALUD`, `TAREA_ASIGNADA`, `PLAN_VENCIMIENTO`, `RESUMEN_MENSUAL`.
+
+### `WhatsAppService`
+
+- Mock mode cuando `app.twilio.account-sid` está en blanco → `log.info("[WhatsApp MOCK]")` sin enviar.
+- `enviar(telefono, mensaje)` — HTTP POST a `https://api.twilio.com/2010-04-01/Accounts/{accountSid}/Messages.json` con `RestTemplate`, Basic Auth, `Content-Type: application/x-www-form-urlencoded`. El número destino se prefija con `whatsapp:` si no lo tiene.
+- `enviarATipo(tenantId, tipo, mensaje)` — llama `contactoRepo.findActivosByTenantIdAndTipo(tenantId, tipo.name())` y envía a cada contacto activo suscrito.
+- 8 métodos públicos: `notificarBajoStock`, `notificarVencimiento`, `notificarCambioFase`, `notificarMantenimiento`, `notificarBpmSalud`, `notificarTareaAsignada`, `notificarPlanVencimiento`, `enviarResumenMensual`.
+
+### `ContactoWhatsAppRepository`
+
+`findActivosByTenantIdAndTipo` usa `nativeQuery = true` para bypassar el filtro `@TenantId` de Hibernate:
+```sql
+SELECT cwa.* FROM contactos_whatsapp cwa
+JOIN contactos_whatsapp_suscripciones cwas ON cwas.contacto_id = cwa.id
+WHERE cwa.tenant_id = :tenantId AND cwas.tipo = :tipo AND cwa.activo = TRUE
+```
+
+### Integración en otros servicios
+
+- **`AlertaScheduler.enviarAlertasDiarias()`**: tras el bloque de notificaciones in-app, llama `notificarBajoStock`, `notificarVencimiento`, `notificarMantenimiento` y `notificarPlanVencimiento` (si aplica) para cada tenant activo.
+- **`AlertaScheduler.enviarResumenMensual()`**: llama `enviarResumenMensual()` para cada tenant activo (independientemente de si tiene email configurado).
+- **`TrazabilidadService.moverFase()` y `avanzarFase()`**: llaman `notificarCambioFase()` tras `emailService.enviarCambioFaseLote()`.
+- **`BpmService.guardarSintoma()`**: llama `notificarBpmSalud()` cuando `r.tieneSintomas() == true`.
+- **`TareaService.guardar()` y `actualizar()`**: llaman `notificarTareaAsignada()` si el asignado es distinto al creador (o cambió en la edición).
+
+### Admin UI
+
+- **`WhatsAppAdminController`**: rutas bajo `/admin/whatsapp/**`, protegidas con `adminOnly()`. Endpoints: `GET /`, `GET/POST /nuevo`+`/guardar`, `GET/POST /editar/{id}`+`/actualizar/{id}`, `POST /eliminar/{id}`, `POST /toggle/{id}`.
+- **`ContactoWhatsAppFormDto`**: `@Pattern(regexp = "^\\+[1-9]\\d{6,14}$")` para validar E.164. `List<String> tiposSuscritos` para binding de checkboxes.
+- **Templates**: `admin/whatsapp/lista.html` (tabla con badges de suscripciones, banner `waConfigurado`), `admin/whatsapp/formulario.html` (checkboxes agrupados por categoría).
+- **Navbar**: link "WhatsApp" en panel Admin (i18n: `nav.admin.whatsapp`).
+
+### Variables de entorno
+
+`app.twilio.account-sid=${TWILIO_ACCOUNT_SID:}`, `app.twilio.auth-token=${TWILIO_AUTH_TOKEN:}`, `app.twilio.whatsapp-from=${TWILIO_WHATSAPP_FROM:whatsapp:+14155238886}`.
+
+### Tests
+
+`WhatsAppAdminControllerTest` — 7 tests `@WebMvcTest`: 401 sin auth, 200 con ADMIN, 200 formulario nuevo, redirect en guardar válido, re-render en teléfono inválido, redirect en eliminar, redirect en toggle. **CLAUDE.md regla #38 aplica**: el test `403 sin ADMIN` fue eliminado por el comportamiento del `ZymosAccessDeniedHandler` mock. `@MockBean WhatsAppService whatsAppService` requerido además de `@MockBean ContactoWhatsAppService`. Los tests de `AlertaScheduler`, `TrazabilidadService`, `BpmService` y `TareaService` requieren `@Mock WhatsAppService whatsAppService`.
 
 ---
 

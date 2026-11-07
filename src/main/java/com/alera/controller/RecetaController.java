@@ -1,14 +1,17 @@
 package com.alera.controller;
 
 import com.alera.config.UnidadUtils;
+import com.alera.dto.RecetaAsistidaDto;
 import com.alera.dto.RecetaFormDto;
 import com.alera.model.FacturaItem;
 import com.alera.model.Receta;
 import com.alera.model.RecetaIngrediente;
 import com.alera.repository.FacturaItemRepository;
 import com.alera.repository.LoteCervezaRepository;
+import com.alera.service.BeerXmlService;
 import com.alera.service.InsumoInventarioService;
 import com.alera.service.PdfExportService;
+import com.alera.service.RecetaAsistenteService;
 import com.alera.service.RecetaService;
 import com.alera.service.TipoCervezaService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -38,18 +42,24 @@ public class RecetaController {
     private final TipoCervezaService tipoCervezaService;
     private final FacturaItemRepository facturaItemRepo;
     private final PdfExportService pdfService;
+    private final RecetaAsistenteService asistenteService;
+    private final BeerXmlService beerXmlService;
 
     public RecetaController(RecetaService service, LoteCervezaRepository loteRepo,
                             InsumoInventarioService insumoService,
                             TipoCervezaService tipoCervezaService,
                             FacturaItemRepository facturaItemRepo,
-                            PdfExportService pdfService) {
+                            PdfExportService pdfService,
+                            RecetaAsistenteService asistenteService,
+                            BeerXmlService beerXmlService) {
         this.service = service;
         this.loteRepo = loteRepo;
         this.insumoService = insumoService;
         this.tipoCervezaService = tipoCervezaService;
         this.facturaItemRepo = facturaItemRepo;
         this.pdfService = pdfService;
+        this.asistenteService = asistenteService;
+        this.beerXmlService = beerXmlService;
     }
 
     @GetMapping
@@ -288,6 +298,55 @@ public class RecetaController {
 
         model.addAttribute("costosIngredientes", costos);
         if (hayAlguno) model.addAttribute("totalCostoEstimado", totalEstimado);
+    }
+
+    @GetMapping("/ver/{id}/beerxml")
+    public ResponseEntity<byte[]> beerXml(@PathVariable Long id) {
+        Receta receta = service.buscarPorId(id);
+        byte[] bytes = beerXmlService.exportar(receta);
+        String filename = "receta-" + receta.getNombre().replaceAll("[^a-zA-Z0-9]", "-") + ".xml";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_XML)
+                .contentLength(bytes.length)
+                .body(bytes);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'INVENTARIO', 'SUPERADMIN')")
+    @PostMapping("/importar-beerxml")
+    public String importarBeerXml(@RequestParam("archivo") MultipartFile archivo,
+                                   RedirectAttributes ra) {
+        if (archivo.isEmpty()) {
+            ra.addFlashAttribute("mensaje", "Selecciona un archivo BeerXML (.xml)");
+            ra.addFlashAttribute("tipoMensaje", "warning");
+            return "redirect:/recetas";
+        }
+        try {
+            RecetaFormDto dto = beerXmlService.importar(archivo.getInputStream());
+            Receta receta = service.guardar(dto);
+            ra.addFlashAttribute("mensaje", "Receta importada: " + receta.getNombre());
+            ra.addFlashAttribute("tipoMensaje", "success");
+            return "redirect:/recetas/editar/" + receta.getId();
+        } catch (Exception e) {
+            ra.addFlashAttribute("mensaje", "Error al importar BeerXML: " + e.getMessage());
+            ra.addFlashAttribute("tipoMensaje", "danger");
+            return "redirect:/recetas";
+        }
+    }
+
+    @PostMapping(value = "/asistente", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public RecetaAsistidaDto asistente(@RequestParam String descripcion,
+                                       @RequestParam(required = false) Double volumen) {
+        return asistenteService.generar(descripcion, volumen);
+    }
+
+    @GetMapping(value = "/asistente/estado", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public Map<String, Object> asistenteEstado() {
+        Map<String, Object> estado = new LinkedHashMap<>();
+        estado.put("configurado", asistenteService.isConfigured());
+        return estado;
     }
 
     private BigDecimal estimarCosto(String cantidadTexto, BigDecimal valorUnitario, String unidadFactura) {

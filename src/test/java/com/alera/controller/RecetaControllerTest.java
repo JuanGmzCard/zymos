@@ -39,11 +39,13 @@ class RecetaControllerTest {
     @MockBean LoginAttemptService        loginAttemptService;
     @MockBean JwtService                 jwtService;
     @MockBean RecetaService              recetaService;
+    @MockBean RecetaAsistenteService     asistenteService;
     @MockBean LoteCervezaRepository      loteRepo;
     @MockBean InsumoInventarioService    insumoService;
     @MockBean TipoCervezaService         tipoCervezaService;
     @MockBean FacturaItemRepository      facturaItemRepo;
     @MockBean PdfExportService           pdfExportService;
+    @MockBean BeerXmlService             beerXmlService;
 
     @BeforeEach
     void setUp() {

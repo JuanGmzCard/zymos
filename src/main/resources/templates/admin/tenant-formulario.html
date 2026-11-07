@@ -153,6 +153,20 @@
                     <hr class="my-1">
                     <div class="detail-label mb-2" th:text="#{admin.tform.seccion.plan}">Límites del plan</div>
 
+                    <!-- Nivel comercial del plan -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-sm-12">
+                            <label class="form-label small text-muted" for="planNivel">Nivel del plan</label>
+                            <select th:field="*{planNivel}" id="planNivel" class="form-select form-select-sm">
+                                <option value="" th:text="#{admin.tform.plan.sin.venc}">Sin restricción (acceso completo)</option>
+                                <option value="MACERADO">Plan Macerado — $150.000/mes</option>
+                                <option value="COCCION">Plan Cocción — $320.000/mes</option>
+                                <option value="FERMENTACION">Plan Fermentación — $550.000/mes</option>
+                            </select>
+                            <div class="form-text">Define qué módulos puede usar este tenant. Vacío = acceso completo.</div>
+                        </div>
+                    </div>
+
                     <!-- Período de vigencia -->
                     <div class="row g-2 mb-2">
                         <div class="col-sm-4">

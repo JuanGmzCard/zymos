@@ -48,6 +48,8 @@ class TrazabilidadServiceTest {
     @Mock private EntityManager em;
     @Mock private TenantRepository tenantRepo;
     @Mock private LecturaFermentacionRepository lecturaRepo;
+    @Mock private EmailService emailService;
+    @Mock private WhatsAppService whatsAppService;
 
     @InjectMocks
     private TrazabilidadService service;
