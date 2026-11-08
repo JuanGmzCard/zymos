@@ -108,6 +108,12 @@
       <a href="#modulos">Permissions by module</a>
     </div>
     <div class="nav-group">
+      <div class="nav-group-title">Dashboard</div>
+      <a href="#dashboard">Overview</a>
+      <a href="#dashboard-secciones">Sections &amp; metrics</a>
+      <a href="#dashboard-personalizar">Customize</a>
+    </div>
+    <div class="nav-group">
       <div class="nav-group-title">Brewery</div>
       <a href="#branding">Branding &amp; colors</a>
       <a href="#temperatura">Temperature unit</a>
@@ -145,6 +151,50 @@
   </div>
 
   <div class="content">
+
+    <!-- Dashboard -->
+    <h2 id="dashboard">Dashboard</h2>
+    <p>The dashboard is the first screen you see after logging in. It provides an executive view of your brewery's real-time status: active batches, inventory, monthly sales, alerts and historical charts.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">👋</div>
+      <div class="callout-body">
+        <strong>Personalized greeting</strong>
+        The header shows a dynamic greeting ("Good morning/afternoon/evening"), your username and the current date. It confirms you are in the right session.
+      </div>
+    </div>
+
+    <h3 id="dashboard-secciones">Sections &amp; metrics</h3>
+    <p>The dashboard is divided into six sections, each with metrics calculated in real time from the database:</p>
+
+    <table class="field-table">
+      <thead><tr><th>Section</th><th>Main metrics</th></tr></thead>
+      <tbody>
+        <tr><td>🍺 Production Batches</td><td>Total batches, in progress, completed, distinct styles, <strong>liters in progress</strong> (sum of final liters of active batches), <strong>overdue phases</strong> (batches past their ideal date)</td></tr>
+        <tr><td>📦 Inventory &amp; Equipment</td><td>Total ingredients, low stock, expiring soon, total equipment, under maintenance, upcoming maintenance</td></tr>
+        <tr><td>🔔 Alerts</td><td>List of low-stock and expiring ingredients. If there are no active alerts, shows "All clear ✓"</td></tr>
+        <tr><td>📅 Upcoming Brews</td><td>Up to 5 future planned brews with date and recipe</td></tr>
+        <tr><td>📊 Charts</td><td>Liters produced last 6 months (bar chart) + distribution by style (donut). Shows explicit empty state if no data for the period.</td></tr>
+        <tr><td>💰 Finances</td><td>Month's spend (invoices in current month), total historical spend, total in maintenance. Monthly sales: number of dispatched sales, revenue and unique customers (all for the current month).</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="dashboard-personalizar">Customize the dashboard</h3>
+    <p>You can adjust which sections to show and in what order. Changes are saved in the browser (localStorage) and persist between sessions.</p>
+
+    <ol class="steps">
+      <li>Click <strong>"Customize"</strong> (top right of the dashboard).</li>
+      <li>Uncheck the sections you don't want to see.</li>
+      <li>Drag sections by the ⠿ handle to reorder them.</li>
+      <li>To restore the original layout, use the <strong>"Reset"</strong> button in the Customize dropdown.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        Dashboard configuration is <strong>per browser and user</strong>, not per account. If you access from another device or browser, the dashboard will revert to its default layout.
+      </div>
+    </div>
 
     <!-- Usuarios -->
     <h2 id="usuarios">User management</h2>

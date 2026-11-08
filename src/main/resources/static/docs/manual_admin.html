@@ -108,6 +108,12 @@
       <a href="#modulos">Permisos por módulo</a>
     </div>
     <div class="nav-group">
+      <div class="nav-group-title">Dashboard</div>
+      <a href="#dashboard">Vista general</a>
+      <a href="#dashboard-secciones">Secciones y métricas</a>
+      <a href="#dashboard-personalizar">Personalizar</a>
+    </div>
+    <div class="nav-group">
       <div class="nav-group-title">Cervecería</div>
       <a href="#branding">Branding y colores</a>
       <a href="#temperatura">Unidad de temperatura</a>
@@ -145,6 +151,50 @@
   </div>
 
   <div class="content">
+
+    <!-- Dashboard -->
+    <h2 id="dashboard">Dashboard</h2>
+    <p>El dashboard es la primera pantalla que ves al iniciar sesión. Ofrece una vista ejecutiva del estado de tu cervecería en tiempo real: lotes activos, inventario, ventas del mes, alertas y gráficas históricas.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">👋</div>
+      <div class="callout-body">
+        <strong>Saludo personalizado</strong>
+        El encabezado muestra un saludo dinámico ("Buenos días/tardes/noches"), tu nombre de usuario y la fecha actual. Es la confirmación de que estás en la sesión correcta.
+      </div>
+    </div>
+
+    <h3 id="dashboard-secciones">Secciones y métricas</h3>
+    <p>El dashboard se divide en seis secciones, cada una con métricas calculadas en tiempo real desde la base de datos:</p>
+
+    <table class="field-table">
+      <thead><tr><th>Sección</th><th>Métricas principales</th></tr></thead>
+      <tbody>
+        <tr><td>🍺 Lotes de Producción</td><td>Total lotes, en proceso, completados, estilos distintos, <strong>litros en proceso</strong> (suma de litros finales de lotes activos), <strong>fases vencidas</strong> (lotes con fecha ideal superada)</td></tr>
+        <tr><td>📦 Inventario y Equipos</td><td>Total insumos, bajo stock, próximos a vencer, total equipos, en mantenimiento, próximo mantenimiento</td></tr>
+        <tr><td>🔔 Alertas</td><td>Lista de insumos con bajo stock y próximos a vencer. Si no hay alertas activas, muestra "Todo en orden ✓"</td></tr>
+        <tr><td>📅 Próximas Elaboraciones</td><td>Hasta 5 elaboraciones planificadas futuras con fecha y receta</td></tr>
+        <tr><td>📊 Gráficas</td><td>Litros producidos últimos 6 meses (barras) + distribución por estilo (dona). Muestra estado vacío explícito si no hay datos en el período.</td></tr>
+        <tr><td>💰 Finanzas</td><td>Gasto del mes (facturas del mes en curso), total gastado histórico, total en mantenimientos. Ventas del mes: cantidad de ventas despachadas, ingresos y clientes únicos (todo referido al mes en curso).</td></tr>
+      </tbody>
+    </table>
+
+    <h3 id="dashboard-personalizar">Personalizar el dashboard</h3>
+    <p>Puedes ajustar qué secciones ver y en qué orden. Los cambios se guardan en el navegador (localStorage) y persisten entre sesiones.</p>
+
+    <ol class="steps">
+      <li>Haz clic en <strong>"Personalizar"</strong> (esquina superior derecha del dashboard).</li>
+      <li>Desmarca las secciones que no quieras ver.</li>
+      <li>Arrastra las secciones por el ícono ⠿ para reordenarlas.</li>
+      <li>Para volver al estado original, usa el botón <strong>"Restablecer"</strong> en el dropdown Personalizar.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        La configuración del dashboard es <strong>por navegador y usuario</strong>, no por cuenta. Si accedes desde otro dispositivo o navegador, el dashboard volverá a la disposición predeterminada.
+      </div>
+    </div>
 
     <!-- Usuarios -->
     <h2 id="usuarios">Gestión de usuarios</h2>
