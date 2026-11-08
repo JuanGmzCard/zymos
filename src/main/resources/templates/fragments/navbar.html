@@ -480,7 +480,7 @@
 
         <!-- Manuales de usuario -->
         <a class="zymos-rail-item"
-           href="/docs/index.html"
+           th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : '/docs/index.html'"
            target="_blank"
            data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.docs}">
             <i class="bi bi-book"></i>
@@ -626,7 +626,7 @@
                 <div class="zymos-panel-mod" th:text="#{nav.produccion}">Producción</div>
                 <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
             </div>
-            <div class="zymos-panel-section">Lotes</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.lotes}">Lotes</div>
             <a class="zymos-panel-item" th:href="@{/}"
                th:classappend="${currentUri != null and currentUri == '/'} ? ' panel-active' : ''">
                 <i class="bi bi-clipboard-data"></i><span th:text="#{nav.produccion.trazabilidad}">Trazabilidad</span>
@@ -639,7 +639,7 @@
                th:classappend="${currentUri != null and currentUri.contains('/planificacion')} ? ' panel-active' : ''">
                 <i class="bi bi-calendar-week"></i><span th:text="#{nav.produccion.planificacion}">Planificación</span>
             </a>
-            <div class="zymos-panel-section">Análisis</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.analisis}">Análisis</div>
             <a class="zymos-panel-item" th:href="@{/comparativa}"
                th:classappend="${currentUri != null and currentUri.contains('/comparativa')} ? ' panel-active' : ''">
                 <i class="bi bi-bar-chart-steps"></i><span th:text="#{nav.produccion.comparativa}">Comparativa</span>
@@ -700,7 +700,7 @@
                 <div class="zymos-panel-mod" th:text="#{nav.comercial}">Comercial</div>
                 <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
             </div>
-            <div class="zymos-panel-section">Ventas</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.ventas}">Ventas</div>
             <a class="zymos-panel-item" th:href="@{/ventas}"
                th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? ' panel-active' : ''">
                 <i class="bi bi-bag-check"></i><span th:text="#{nav.comercial.ventas}">Ventas</span>
@@ -721,7 +721,7 @@
                th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? ' panel-active' : ''">
                 <i class="bi bi-currency-dollar"></i><span th:text="#{nav.comercial.rentabilidad}">Rentabilidad</span>
             </a>
-            <div class="zymos-panel-section">Compras</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.compras}">Compras</div>
             <a class="zymos-panel-item" th:href="@{/ordenes-compra}"
                th:classappend="${currentUri != null and currentUri.contains('/ordenes-compra')} ? ' panel-active' : ''">
                 <i class="bi bi-cart-check"></i><span th:text="#{nav.comercial.ordenes}">Órdenes de Compra</span>
@@ -747,7 +747,7 @@
                th:classappend="${currentUri != null and currentUri == '/bpm'} ? ' panel-active' : ''">
                 <i class="bi bi-speedometer2"></i><span th:text="#{nav.bpm.dashboard}">Dashboard BPM</span>
             </a>
-            <div class="zymos-panel-section">Registro</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.registro}">Registro</div>
             <a class="zymos-panel-item" th:href="@{/bpm/salud/diario}"
                th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? ' panel-active' : ''">
                 <i class="bi bi-person-heart" style="color:#f59e0b;"></i><span th:text="#{nav.bpm.salud}">Estado de Salud</span>
@@ -769,7 +769,7 @@
                 <i class="bi bi-stars" style="color:#7c3aed;"></i><span th:text="#{nav.bpm.limpieza}">Limpieza y Desinfección</span>
             </a>
             <th:block sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <div class="zymos-panel-section">Admin</div>
+                <div class="zymos-panel-section" th:text="#{nav.section.admin}">Admin</div>
                 <a class="zymos-panel-item" th:href="@{/bpm/sintomas}"
                    th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? ' panel-active' : ''">
                     <i class="bi bi-list-check"></i><span th:text="#{nav.bpm.sintomas}">Todos los registros</span>
@@ -846,7 +846,7 @@
                 </a>
                 <a class="zymos-panel-item" th:href="@{/admin/tenants}"
                    th:classappend="${currentUri != null and currentUri.contains('/admin/migracion')} ? ' panel-active' : ''">
-                    <i class="bi bi-database-up"></i><span>Migración</span>
+                    <i class="bi bi-database-up"></i><span th:text="#{nav.admin.migracion}">Migración</span>
                 </a>
             </th:block>
         </th:block>

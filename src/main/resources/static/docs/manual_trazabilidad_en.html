@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Manual — Batch Traceability | Zymos</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; color: #1e293b; background: #f8fafc; font-size: 0.93rem; line-height: 1.65; }
+
+  /* LAYOUT */
+  .sidebar { position: fixed; top: 0; left: 0; width: 260px; height: 100vh; background: #0f172a; overflow-y: auto; padding: 0 0 40px; z-index: 100; }
+  .hero, .content, .footer { margin-left: 260px; }
+  .main { margin-left: 260px; padding: 0 48px 80px; max-width: 900px; }
+  @media (max-width: 900px) { .sidebar { display: none; } .hero, .content, .footer, .main { margin-left: 0; } .hero { padding: 32px 20px 28px; } section { padding: 32px 20px; } }
+
+  /* SIDEBAR */
+  .sb-brand { padding: 20px 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 12px; }
+  .sb-brand .logo { font-size: 1.1rem; font-weight: 800; color: #c9a028; letter-spacing: 0.02em; }
+  .sb-back { display: block; padding: 9px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  .sb-brand .module { font-size: 0.72rem; color: #94a3b8; margin-top: 2px; }
+  .sb-section { padding: 6px 20px 4px; font-size: 0.65rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 8px; }
+  .sb-link { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #cbd5e1; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+  .sb-link:hover { color: #fff; background: rgba(255,255,255,0.06); }
+  .sb-link.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.08); }
+  .sb-link-main { padding-left: 20px; font-weight: 600; font-size: 0.85rem; color: #e2e8f0; }
+
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #0f172a 0%, #4338ca 100%); color: #fff; padding: 52px 48px 44px; margin-bottom: 0; }
+  .hero .tag { display: inline-block; background: rgba(59,130,246,0.25); border: 1px solid rgba(59,130,246,0.4); color: #93c5fd; border-radius: 20px; padding: 3px 12px; font-size: 0.75rem; font-weight: 600; margin-bottom: 14px; }
+  .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 10px; }
+  .hero p { color: #94a3b8; font-size: 1rem; max-width: 560px; }
+  .hero .meta { margin-top: 20px; display: flex; gap: 20px; flex-wrap: wrap; }
+  .hero .meta span { font-size: 0.8rem; color: #64748b; }
+  .hero .meta strong { color: #cbd5e1; }
+
+  /* CONTENT */
+  .content { background: #fff; border-bottom: 1px solid #e2e8f0; }
+  section { padding: 40px 48px; border-bottom: 1px solid #f1f5f9; }
+  section:last-child { border-bottom: none; }
+
+  /* HEADINGS */
+  h2 { font-size: 1.35rem; font-weight: 800; color: #0f172a; margin-bottom: 8px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; margin-top: 0; }
+  h2 .section-num { display: inline-block; background: #2563eb; color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-right: 10px; vertical-align: middle; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; display: flex; align-items: center; gap: 8px; }
+  h3 .icon { font-size: 1rem; }
+  h4 { font-size: 0.88rem; font-weight: 700; color: #334155; margin: 16px 0 6px; }
+
+  /* TEXT */
+  p { color: #475569; margin-bottom: 10px; }
+  strong { color: #1e293b; }
+  a { color: #2563eb; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { color: #475569; margin-bottom: 5px; }
+  li strong { color: #1e293b; }
+
+  /* CALLOUTS */
+  .callout { border-radius: 8px; padding: 12px 16px 12px 42px; margin: 14px 0; font-size: 0.875rem; position: relative; }
+  .callout::before { position: absolute; left: 14px; top: 13px; font-size: 1rem; }
+  .callout.info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .callout.info::before { content: "ℹ️"; }
+  .callout.tip { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .callout.tip::before { content: "💡"; }
+  .callout.warning { background: #fefce8; border: 1px solid #fde68a; color: #713f12; }
+  .callout.warning::before { content: "⚠️"; }
+  .callout p { color: inherit; margin-bottom: 0; }
+
+  /* STEPS */
+  .steps { counter-reset: step-counter; margin: 16px 0; }
+  .step { display: flex; gap: 16px; margin-bottom: 20px; }
+  .step-num { flex-shrink: 0; width: 28px; height: 28px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; margin-top: 2px; }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; color: #1e293b; font-size: 0.95rem; margin-bottom: 4px; }
+  .step-body p { margin-bottom: 0; }
+
+  /* TABLES */
+  .data-table { width: 100%; border-collapse: collapse; margin: 14px 0 20px; font-size: 0.85rem; }
+  .data-table th { background: #f1f5f9; color: #475569; padding: 9px 14px; text-align: left; font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 2px solid #e2e8f0; }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; color: #334155; vertical-align: top; }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: #f8fafc; }
+
+  /* BADGES */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+  .badge-gray   { background: #f1f5f9; color: #64748b; border: 1px solid #e2e8f0; }
+  .badge-green  { background: #dcfce7; color: #15803d; }
+  .badge-teal   { background: #cffafe; color: #0e7490; }
+  .badge-amber  { background: #fef9c3; color: #a16207; }
+  .badge-blue   { background: #dbeafe; color: #1d4ed8; }
+  .badge-purple { background: #f3e8ff; color: #7e22ce; }
+
+  /* PHASE STEPS */
+  .phase-timeline { display: flex; align-items: center; gap: 0; margin: 16px 0; overflow-x: auto; padding-bottom: 4px; }
+  .ph { display: flex; align-items: center; }
+  .ph-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; border: 2px solid transparent; }
+  .ph-line { height: 2px; width: 40px; flex-shrink: 0; background: #e2e8f0; }
+  .ph-label { font-size: 0.72rem; text-align: center; margin-top: 4px; font-weight: 600; }
+  .ph-wrap { display: flex; flex-direction: column; align-items: center; }
+  .ph-green  .ph-dot { background: #dcfce7; color: #15803d; border-color: #86efac; }
+  .ph-teal   .ph-dot { background: #cffafe; color: #0e7490; border-color: #67e8f9; }
+  .ph-amber  .ph-dot { background: #fef9c3; color: #a16207; border-color: #fde047; }
+  .ph-blue   .ph-dot { background: #dbeafe; color: #1d4ed8; border-color: #93c5fd; }
+  .ph-label  { color: #64748b; }
+
+  /* SCREEN MOCKUP */
+  .screen-mock { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; margin: 16px 0; font-size: 0.82rem; }
+  .screen-mock .bar { background: #1e293b; border-radius: 6px 6px 0 0; padding: 8px 14px; color: #94a3b8; font-size: 0.72rem; margin: -20px -20px 16px; font-family: monospace; }
+  .mock-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 8px; }
+  .mock-input { background: #fff; border: 1px solid #d1d5db; border-radius: 6px; padding: 5px 10px; color: #374151; font-size: 0.8rem; }
+  .mock-btn-primary { background: #2563eb; color: #fff; border-radius: 6px; padding: 5px 14px; font-size: 0.8rem; font-weight: 600; }
+  .mock-btn-outline { background: #fff; border: 1px solid #d1d5db; color: #374151; border-radius: 6px; padding: 5px 12px; font-size: 0.8rem; }
+  .mock-stat { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; min-width: 100px; }
+  .mock-stat .l { font-size: 0.65rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
+  .mock-stat .v { font-size: 1.4rem; font-weight: 800; color: #1e293b; }
+  .mock-stat .v.blue { color: #2563eb; }
+  .mock-stat .v.green { color: #16a34a; }
+
+  /* FOOTER */
+  .footer { text-align: center; padding: 40px 48px; color: #94a3b8; font-size: 0.82rem; background: #f8fafc; border-top: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Batch Traceability</div>
+  </div>
+  <a href="index_en.html" class="sb-back">← All manuals</a>
+
+  <div class="sb-section">Contents</div>
+  <a class="sb-link sb-link-main" href="#intro">Introduction</a>
+  <a class="sb-link" href="#listado">Batch list</a>
+  <a class="sb-link" href="#filtros">Filters and search</a>
+  <a class="sb-link" href="#kanban">Kanban view</a>
+
+  <div class="sb-section">Create and edit</div>
+  <a class="sb-link sb-link-main" href="#nuevo">Create a batch</a>
+  <a class="sb-link" href="#tab0">Tab 0: General Info</a>
+  <a class="sb-link" href="#tab1">Tab 1: Recipe / Ingredients</a>
+  <a class="sb-link" href="#tab2">Tab 2: Fermentation</a>
+  <a class="sb-link" href="#tab3">Tab 3: Conditioning</a>
+  <a class="sb-link" href="#tab4">Tab 4: Maturation</a>
+  <a class="sb-link" href="#tab5">Tab 5: Carbonation</a>
+
+  <div class="sb-section">Detail</div>
+  <a class="sb-link sb-link-main" href="#detalle">Detail view</a>
+  <a class="sb-link" href="#lecturas">Fermentation readings</a>
+  <a class="sb-link" href="#bjcp">BJCP evaluation</a>
+  <a class="sb-link" href="#historial">History</a>
+
+  <div class="sb-section">More</div>
+  <a class="sb-link sb-link-main" href="#exports">Export PDF and Excel</a>
+  <a class="sb-link sb-link-main" href="#duplicar">Duplicate a batch</a>
+  <a class="sb-link sb-link-main" href="#barriles">Create kegs</a>
+  <a class="sb-link sb-link-main" href="#faq">Frequently asked questions</a>
+
+  <div class="sb-section">Artificial Intelligence</div>
+  <a class="sb-link" href="#ia-diagnostico">AI Diagnosis</a>
+  <a class="sb-link" href="#ia-descripcion">AI Commercial description</a>
+  <a class="sb-link" href="#ia-bjcp">AI BJCP Scorer</a>
+  <a class="sb-link" href="#email-fase">Phase change email</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="tag">Main module</span>
+  <h1>Batch Traceability</h1>
+  <p>Complete guide to recording, tracking and analyzing every beer batch from brewing to carbonation.</p>
+  <div class="meta">
+    <span><strong>Audience:</strong> Production operators and administrators</span>
+    <span><strong>Version:</strong> Zymos 2026</span>
+    <span><strong>App route:</strong> Side menu → Traceability</span>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+
+<!-- ══════════ INTRO ══════════ -->
+<section id="intro">
+  <h2><span class="section-num">1</span>What is Traceability?</h2>
+  <p>The <strong>Traceability</strong> module is the core of Zymos. Here you record each <strong>beer batch</strong> from brew day until the product is carbonated and ready for its final destination.</p>
+  <p>A batch goes through up to <strong>5 phases</strong>. Zymos automatically calculates which phase it is in based on the dates you register:</p>
+
+  <div class="phase-timeline">
+    <div class="ph ph-green">
+      <div class="ph-wrap">
+        <div class="ph-dot">1</div>
+        <div class="ph-label">Brewing</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-green">
+      <div class="ph-wrap">
+        <div class="ph-dot">2</div>
+        <div class="ph-label">Fermentation</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-teal">
+      <div class="ph-wrap">
+        <div class="ph-dot">3</div>
+        <div class="ph-label">Conditioning</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-amber">
+      <div class="ph-wrap">
+        <div class="ph-dot">4</div>
+        <div class="ph-label">Maturation</div>
+      </div>
+    </div>
+    <div class="ph-line"></div>
+    <div class="ph ph-blue">
+      <div class="ph-wrap">
+        <div class="ph-dot">5</div>
+        <div class="ph-label">Carbonation</div>
+      </div>
+    </div>
+  </div>
+
+  <p>Each batch has a <strong>unique code</strong> automatically generated from the first 3 letters of the style: <code>IPA-001</code>, <code>IPA-002</code>, <code>STO-001</code>, etc.</p>
+
+  <div class="callout info">
+    <p><strong>Prerequisite:</strong> You must have at least one active recipe before you can create your first batch. If you don't see the "New Batch" button, go to <strong>Recipes → New Recipe</strong> first.</p>
+  </div>
+</section>
+
+<!-- ══════════ LISTADO ══════════ -->
+<section id="listado">
+  <h2><span class="section-num">2</span>Batch list</h2>
+  <p>When you open Traceability you see the <strong>list of all your batches</strong> with quick statistics at the top:</p>
+
+  <div class="screen-mock">
+    <div class="bar">Zymos — Batch Traceability</div>
+    <div class="mock-row">
+      <div class="mock-stat"><div class="l">Total</div><div class="v blue">24</div></div>
+      <div class="mock-stat"><div class="l">In progress</div><div class="v green">5</div></div>
+      <div class="mock-stat"><div class="l">Completed</div><div class="v">18</div></div>
+      <div class="mock-stat"><div class="l">Unique styles</div><div class="v">7</div></div>
+    </div>
+  </div>
+
+  <h3><span class="icon">📋</span>Table tabs</h3>
+  <p>The table has <strong>6 tabs</strong>. Each one shows information for a specific phase across all batches:</p>
+  <table class="data-table">
+    <tr><th>Tab</th><th>What it shows</th></tr>
+    <tr><td><span class="badge badge-gray">General &amp; Ingredients</span></td><td>Code, style, date, fermenter, current phase, progress, malts, hops, yeast, fining agents, final litres</td></tr>
+    <tr><td><span class="badge badge-green">Fermentation</span></td><td>Start and end dates (ideal and actual), temperature</td></tr>
+    <tr><td><span class="badge badge-teal">Conditioning</span></td><td>Start and end dates, temperature</td></tr>
+    <tr><td><span class="badge badge-amber">Maturation</span></td><td>Start and end dates, temperature</td></tr>
+    <tr><td><span class="badge badge-blue">Carbonation</span></td><td>Method (natural/forced), CO₂, destination, dates</td></tr>
+    <tr><td><span class="badge badge-purple">Density / Notes</span></td><td>OG, FG, ABV, attenuation, efficiency, observations</td></tr>
+  </table>
+
+  <h3><span class="icon">🏷️</span>Phase indicator (colour pill)</h3>
+  <p>Each row has a colour pill indicating which phase the batch is in:</p>
+  <table class="data-table">
+    <tr><th>Colour</th><th>Phase</th></tr>
+    <tr><td><span class="badge badge-gray">Not started</span></td><td>Batch created, no phase begun</td></tr>
+    <tr><td><span class="badge badge-green">Fermentation</span></td><td>Fermentation start date registered</td></tr>
+    <tr><td><span class="badge badge-teal">Conditioning</span></td><td>Conditioning start date registered</td></tr>
+    <tr><td><span class="badge badge-amber">Maturation</span></td><td>Maturation start date registered</td></tr>
+    <tr><td><span class="badge badge-blue">Carbonation</span></td><td>Carbonation start date registered</td></tr>
+    <tr><td><span class="badge badge-purple">Completed</span></td><td>Carbonation end date registered</td></tr>
+  </table>
+
+  <h3><span class="icon">⚡</span>Quick actions per batch</h3>
+  <p>Hovering over a row shows the action buttons:</p>
+  <ul>
+    <li><strong>👁 View detail</strong> — opens the full batch view</li>
+    <li><strong>✏️ Edit</strong> — opens the edit form</li>
+    <li><strong>📋 Duplicate</strong> — creates a copy of the batch with the same ingredients (without dates or densities)</li>
+    <li><strong>✔ Complete</strong> — marks the batch as completed directly from the list (only available if not yet completed)</li>
+    <li><strong>🗃 Archive</strong> — deletes the batch (with confirmation)</li>
+  </ul>
+</section>
+
+<!-- ══════════ FILTROS ══════════ -->
+<section id="filtros">
+  <h2><span class="section-num">3</span>Filters and search</h2>
+  <p>Above the table there is a filter panel that lets you find batches quickly:</p>
+
+  <table class="data-table">
+    <tr><th>Filter</th><th>How to use it</th></tr>
+    <tr>
+      <td><strong>Style / Code</strong></td>
+      <td>Type part of the style name (e.g. "IPA") or the exact code (e.g. "IPA-003"). Has autocomplete with existing batches.</td>
+    </tr>
+    <tr>
+      <td><strong>Current phase</strong></td>
+      <td>Select a phase from the dropdown to show only batches in that stage. Useful to see "only batches in fermentation".</td>
+    </tr>
+    <tr>
+      <td><strong>From / To</strong></td>
+      <td>Filter by brew date range. You can use just one of the two fields.</td>
+    </tr>
+  </table>
+
+  <div class="callout tip">
+    <p>The batch counter in the top-right corner of the filter indicates how many batches are being shown. If you see "(filtered)" next to it, a filter is active. Click <strong>Clear</strong> to remove all filters.</p>
+  </div>
+
+  <h3><span class="icon">📥</span>Export the list</h3>
+  <p>In the top-right corner there are two buttons to export all batches (with the applied filters):</p>
+  <ul>
+    <li><strong>PDF</strong> — generates a PDF report with the main data</li>
+    <li><strong>Excel</strong> — generates a .xlsx file with 6 sheets (one per tab), ideal for external analysis</li>
+  </ul>
+</section>
+
+<!-- ══════════ KANBAN ══════════ -->
+<section id="kanban">
+  <h2><span class="section-num">4</span>Kanban view</h2>
+  <p>The Kanban shows batches <strong>organised in columns by phase</strong>, like a visual board. Access it from the <strong>"Kanban"</strong> button in the side menu or from the action bar.</p>
+
+  <h3><span class="icon">📌</span>Board columns</h3>
+  <p>There are 6 columns: <span class="badge badge-gray">Not started</span> · <span class="badge badge-green">Fermentation</span> · <span class="badge badge-teal">Conditioning</span> · <span class="badge badge-amber">Maturation</span> · <span class="badge badge-blue">Carbonation</span> · <span class="badge badge-purple">Completed</span></p>
+
+  <h3><span class="icon">🃏</span>Information on each card</h3>
+  <p>Each card shows:</p>
+  <ul>
+    <li>Batch code (e.g. <code>IPA-004</code>)</li>
+    <li>Style</li>
+    <li>Brew date</li>
+    <li><strong>Days in current phase</strong> (number in the top-right corner)</li>
+    <li><strong>Delay alert</strong> (in red) if the ideal end date has already passed</li>
+  </ul>
+
+  <h3><span class="icon">🖱️</span>Move batches by dragging</h3>
+  <p>Users with edit permission can <strong>drag a card</strong> from one column to another to change the batch's phase.</p>
+
+  <div class="callout warning">
+    <p><strong>Important:</strong> To move a batch to Fermentation, it must have a <strong>fermenter assigned</strong>. If it doesn't, the system will return the card to its original position and display a message indicating that you must assign one first from the edit form.</p>
+  </div>
+
+  <p>You can also access the detail or edit each batch with the 👁 and ✏️ buttons that appear on each card.</p>
+</section>
+
+<!-- ══════════ NUEVO LOTE ══════════ -->
+<section id="nuevo">
+  <h2><span class="section-num">5</span>Create a new batch</h2>
+  <p>Click <strong>+ New Batch</strong>. A <em>wizard</em>-style form opens with <strong>6 tabs</strong>. You don't have to complete everything at once: you can save at any time and come back to edit later.</p>
+
+  <div class="callout info">
+    <p><strong>Recommended flow:</strong> When creating the batch, complete at least Tab 0 (General Info) and Tab 1 (Recipe/Ingredients). The other tabs are filled in as the production process progresses.</p>
+  </div>
+
+  <p>The wizard tabs show a <strong>green ✓</strong> when they have been completed, helping you know what's missing.</p>
+</section>
+
+<!-- ══════════ TAB 0 ══════════ -->
+<section id="tab0">
+  <h2><span class="section-num">6</span>Tab 0: General Info</h2>
+  <p>This is the first and most important step. Here you define the fundamental parameters of the batch.</p>
+
+  <h3><span class="icon">📝</span>Required fields</h3>
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Style <span style="color:red">*</span></strong></td><td>Style name (e.g. "India Pale Ale"). Has autocomplete with registered beer types. The batch code is automatically generated from the first 3 letters.</td></tr>
+    <tr><td><strong>Brew Date</strong></td><td>Day on which the main boil took place.</td></tr>
+    <tr><td><strong>Start / End Time</strong></td><td>Start and end time of session 1's boil.</td></tr>
+    <tr><td><strong>Final Litres</strong></td><td>Volume obtained at the end of the process.</td></tr>
+    <tr><td><strong>Fermenter</strong></td><td>Assigned fermentation vessel. Only <em>available</em> fermenters appear (without an active batch). Required to move the batch to Fermentation in the Kanban.</td></tr>
+  </table>
+
+  <h3><span class="icon">📐</span>Density measurement</h3>
+  <p>Zymos supports two measurement instruments. Choose one with the <strong>Hydrometer / Refractometer</strong> toggle:</p>
+
+  <table class="data-table">
+    <tr><th>Instrument</th><th>How to enter OG</th><th>How to enter FG</th></tr>
+    <tr>
+      <td><strong>Hydrometer (SG)</strong></td>
+      <td>Enter the specific gravity directly: <code>1052</code>, <code>1068</code>, etc. (XXXX format, no decimal point)</td>
+      <td>Same: <code>1012</code>, <code>1008</code>, etc.</td>
+    </tr>
+    <tr>
+      <td><strong>Refractometer (°Brix)</strong></td>
+      <td>Enter the Brix degrees: <code>12.5</code>, <code>16.2</code>. The system calculates the equivalent SG.</td>
+      <td>For FG with refractometer, the system applies the <em>Sean Terrill correction</em> to compensate for dissolved alcohol. The difference from the standard method is shown.</td>
+    </tr>
+  </table>
+
+  <div class="callout info">
+    <p><strong>Valid ranges:</strong> OG between 1000 and 1150 · FG between 990 and 1060. The value must be entered as a whole number (without comma or point): for example, 1.052 is written as <code>1052</code>.</p>
+  </div>
+
+  <h3><span class="icon">🔁</span>Multi-session brewing (1 to 4 sessions)</h3>
+  <p>If your brewing process uses <strong>multiple boils</strong> (e.g. splitting grains from 1st and 2nd boil on different days), you can register up to 4 sessions with the <strong>"Number of sessions"</strong> selector.</p>
+  <p>When you select 2 or more sessions, additional fields appear for the date, time, OG and volume of each session. The <strong>combined OG</strong> is automatically calculated as a volume-weighted average of all sessions and written into the main OG field.</p>
+
+  <h3><span class="icon">💧</span>Other fields</h3>
+  <ul>
+    <li><strong>Water used (L):</strong> total water used in session 1 (sessions 2–4 have their own field)</li>
+    <li><strong>Water pH:</strong> pH measured before the boil</li>
+  </ul>
+</section>
+
+<!-- ══════════ TAB 1 ══════════ -->
+<section id="tab1">
+  <h2><span class="section-num">7</span>Tab 1: Recipe / Ingredients</h2>
+  <p>Here you record the ingredients used in this batch and optionally link them to supplier invoices to calculate costs.</p>
+
+  <h3><span class="icon">📦</span>Load from recipe</h3>
+  <p>The <strong>"Load Recipe"</strong> button at the top automatically fills all ingredient fields with the quantities from the selected recipe. You can adjust the values afterwards.</p>
+
+  <div class="callout tip">
+    <p>When loading the recipe, the system also tries to automatically find costs in supplier invoices and pre-fills the Production Costs section.</p>
+  </div>
+
+  <h3><span class="icon">🌾</span>Ingredient groups</h3>
+  <p>Each group allows adding multiple rows with the <strong>+</strong> button:</p>
+  <table class="data-table">
+    <tr><th>Group</th><th>Fields per item</th><th>Available units</th></tr>
+    <tr><td><strong>Malts</strong></td><td>Name (with inventory autocomplete), quantity</td><td>gr, kg</td></tr>
+    <tr><td><strong>Hops</strong></td><td>Name, quantity</td><td>gr, kg</td></tr>
+    <tr><td><strong>Yeasts</strong></td><td>Name, quantity</td><td>gr, kg, mL, L</td></tr>
+    <tr><td><strong>Fining agents</strong></td><td>Name, quantity</td><td>gr, kg, mL, L, und</td></tr>
+  </table>
+  <p>If an ingredient is not yet in inventory, the <strong>⊞</strong> button next to the name field opens a quick form to create it without leaving the screen.</p>
+
+  <h3><span class="icon">💰</span>Production Costs</h3>
+  <p>The Production Costs section lets you link specific invoice line items from suppliers to this batch. The system calculates the actual batch cost from the invoiced prices.</p>
+  <ul>
+    <li>Use the search box to find invoice items by name, supplier or type</li>
+    <li>Indicate the quantity of that item assigned to this batch</li>
+    <li>If quantity = 0, the full item cost is assigned</li>
+  </ul>
+  <p>If you have no invoices registered, you can still see an <strong>estimated cost</strong> in the detail view, calculated using unit prices from inventory.</p>
+</section>
+
+<!-- ══════════ TAB 2 ══════════ -->
+<section id="tab2">
+  <h2><span class="section-num">8</span>Tab 2: Fermentation</h2>
+  <p>Record the start and end of primary fermentation.</p>
+
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Start date</strong></td><td>Day the wort began fermenting (transferred to the fermenter). Marks the start of the Fermentation phase in the timeline.</td></tr>
+    <tr><td><strong>Ideal end date</strong></td><td>Estimated date based on the style and recipe. Used as a reference; if exceeded, the Kanban shows a delay alert.</td></tr>
+    <tr><td><strong>Temperature</strong></td><td>Fermentation temperature. Depending on tenant settings, may be shown in °C or °F.</td></tr>
+    <tr><td><strong>Actual end date</strong></td><td>Day fermentation finished. Saving this date advances the batch to the next available phase.</td></tr>
+    <tr><td><strong>Fermenter</strong></td><td>Shown for reference only (read-only). To change it, go to Tab 0.</td></tr>
+    <tr><td><strong>Fermentation notes</strong></td><td>Free text for process notes: yeast behaviour, temperature adjustments, incidents, etc. Appears in the batch detail and Excel export.</td></tr>
+  </table>
+
+  <div class="callout tip">
+    <p>Phases <strong>do not lock</strong> the form. You can register the Maturation start date even if Conditioning is not complete. Zymos uses dates to calculate the current phase but does not prevent you from advancing if your production process requires it.</p>
+  </div>
+</section>
+
+<!-- ══════════ TAB 3 ══════════ -->
+<section id="tab3">
+  <h2><span class="section-num">9</span>Tab 3: Conditioning</h2>
+  <p>Record the clarification, filtration or early maturation stage of the batch.</p>
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Start date</strong></td><td>Start of conditioning. Defines this phase in the timeline.</td></tr>
+    <tr><td><strong>Ideal end date</strong></td><td>Estimated completion date.</td></tr>
+    <tr><td><strong>Temperature</strong></td><td>Temperature during conditioning.</td></tr>
+    <tr><td><strong>Actual end date</strong></td><td>Day conditioning finished.</td></tr>
+    <tr><td><strong>Conditioning notes</strong></td><td>Observations during this phase: turbidity, applied treatments, pH adjustments, etc.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ TAB 4 ══════════ -->
+<section id="tab4">
+  <h2><span class="section-num">10</span>Tab 4: Maturation</h2>
+  <p>Record the maturation or lagering stage of the batch.</p>
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Start date</strong></td><td>Start of maturation.</td></tr>
+    <tr><td><strong>Ideal end date</strong></td><td>Estimated date.</td></tr>
+    <tr><td><strong>Temperature</strong></td><td>Maturation temperature.</td></tr>
+    <tr><td><strong>Actual end date</strong></td><td>End of maturation.</td></tr>
+    <tr><td><strong>Maturation notes</strong></td><td>Observations during lagering or conditioning: flavour evolution, corrections made, follow-up notes.</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ TAB 5 ══════════ -->
+<section id="tab5">
+  <h2><span class="section-num">11</span>Tab 5: Carbonation</h2>
+  <p>The final step of the process. Here you record how and when the batch was carbonated, and define the destination of the finished product.</p>
+
+  <h3><span class="icon">💨</span>Carbonation parameters</h3>
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Start date</strong></td><td>When the carbonation process began.</td></tr>
+    <tr><td><strong>Target CO₂</strong></td><td>Desired CO₂ volumes according to the style.</td></tr>
+    <tr><td><strong>Method</strong></td><td><strong>Natural</strong> (refermentation with sugar) or <strong>Forced</strong> (CO₂ injection).</td></tr>
+  </table>
+
+  <h4>Natural carbonation</h4>
+  <ul>
+    <li><strong>Sugar type:</strong> type of sugar or extract used for priming</li>
+    <li><strong>Grams of sugar:</strong> quantity used</li>
+  </ul>
+
+  <h4>Forced carbonation</h4>
+  <ul>
+    <li><strong>Pressure (PSI):</strong> pressure applied</li>
+    <li><strong>Time:</strong> duration of the process</li>
+    <li><strong>Technique:</strong> method description (e.g. "shake &amp; force", "set &amp; forget")</li>
+  </ul>
+
+  <h4>Closing the batch</h4>
+  <table class="data-table">
+    <tr><th>Field</th><th>Description</th></tr>
+    <tr><td><strong>Actual CO₂</strong></td><td>CO₂ volumes finally measured.</td></tr>
+    <tr><td><strong>Organoleptic validation</strong></td><td>Tasting notes at the time of carbonation.</td></tr>
+    <tr><td><strong>Actual end date</strong></td><td><strong>Recording this date marks the batch as Completed.</strong> The pill changes to purple.</td></tr>
+  </table>
+
+  <h3><span class="icon">📦</span>Destination and Packaging</h3>
+  <p>Define the formats in which the batch was packaged. Add rows with the <strong>+</strong> button. Each row indicates:</p>
+  <ul>
+    <li><strong>Quantity</strong> (e.g. 48)</li>
+    <li><strong>Format</strong> (e.g. 330ml Bottle, 20L Keg, 1L Growler)</li>
+  </ul>
+  <p>Formats include the containers registered in your inventory plus a full list of standard options (bottles, cans, kegs, growlers).</p>
+
+  <h3><span class="icon">📝</span>Observations and notes</h3>
+  <ul>
+    <li><strong>Observations:</strong> any technical process note (incidents, adjustments)</li>
+    <li><strong>Tasting notes:</strong> sensory description of the finished product</li>
+  </ul>
+</section>
+
+<!-- ══════════ DETALLE ══════════ -->
+<section id="detalle">
+  <h2><span class="section-num">12</span>Batch detail view</h2>
+  <p>Click the <strong>👁 View</strong> button on any batch to open the full view. Here you find all consolidated information, calculated metrics and the history.</p>
+
+  <h3><span class="icon">📊</span>Automatically calculated metrics</h3>
+  <p>At the top, cards show the indicators calculated by Zymos:</p>
+
+  <table class="data-table">
+    <tr><th>Metric</th><th>Formula / Description</th><th>When available</th></tr>
+    <tr>
+      <td><strong>ABV (% alcohol)</strong></td>
+      <td><code>(OG − FG) × 0.13125</code>. With refractometer uses the Terrill formula for greater precision.</td>
+      <td>When OG and FG are registered</td>
+    </tr>
+    <tr>
+      <td><strong>Apparent attenuation</strong></td>
+      <td><code>(OG − FG) × 100 / (OG − 1000)</code>. Indicates what percentage of sugars the yeast fermented.</td>
+      <td>When OG and FG are present</td>
+    </tr>
+    <tr>
+      <td><strong>Mash efficiency</strong></td>
+      <td><code>(OG points × litres) / (kg_malt × 308) × 100</code>. Compares actual extraction vs maximum potential.</td>
+      <td>When OG, litres and malts with quantities in kg are present</td>
+    </tr>
+    <tr>
+      <td><strong>BJCP score</strong></td>
+      <td>Average of registered sensory evaluations (scale 0–50).</td>
+      <td>When at least one evaluation exists</td>
+    </tr>
+  </table>
+
+  <h3><span class="icon">🗺️</span>Process timeline</h3>
+  <p>Below the metrics there is a visual summary of the 4 phases with their start dates. Completed steps are shown in colour; pending ones appear in grey.</p>
+
+  <h3><span class="icon">📋</span>Information sections</h3>
+  <p>The detail organises all information in cards:</p>
+  <ul>
+    <li><strong>Batch information:</strong> code, style, fermenter, recipe, brew dates by session</li>
+    <li><strong>Density parameters:</strong> OG (with Refractometer badge if Brix was used), FG, reading date</li>
+    <li><strong>Ingredients:</strong> visual chips with each ingredient and its quantity</li>
+    <li><strong>Costs:</strong> if invoice items are linked, shows the actual cost per item and the total. If no invoices exist, an estimated cost based on inventory prices may be shown.</li>
+    <li><strong>Fermentation / Conditioning / Maturation / Carbonation:</strong> one section per phase with all its fields</li>
+    <li><strong>Fermentation readings:</strong> history of densities and temperatures taken during the process</li>
+    <li><strong>Sensory evaluation:</strong> registered BJCP evaluations</li>
+    <li><strong>History:</strong> chronological record of changes to the batch</li>
+  </ul>
+</section>
+
+<!-- ══════════ LECTURAS ══════════ -->
+<section id="lecturas">
+  <h2><span class="section-num">13</span>Fermentation readings</h2>
+  <p>During fermentation you can record <strong>periodic readings</strong> of density and temperature to monitor yeast activity.</p>
+
+  <div class="callout info">
+    <p><strong>Available to Administrators only.</strong> If you are an operator, you can view readings but not add or delete them.</p>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Open the batch detail</strong>
+        <p>Go to 👁 View on any batch with active fermentation.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Find the "Fermentation Readings" section</strong>
+        <p>It is towards the middle of the page, with the previous readings table.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Click "Add reading"</strong>
+        <p>Enter the date, current density and temperature. The density/temperature chart updates automatically.</p>
+      </div>
+    </div>
+  </div>
+
+  <p>Zymos automatically creates two special readings:</p>
+  <ul>
+    <li><strong>Initial OG:</strong> generated when you save the OG for the first time</li>
+    <li><strong>Final FG:</strong> generated when you save the final density</li>
+  </ul>
+  <p>These readings appear at the beginning and end of the table respectively. Manual readings are inserted in the middle.</p>
+</section>
+
+<!-- ══════════ BJCP ══════════ -->
+<section id="bjcp">
+  <h2><span class="section-num">14</span>BJCP sensory evaluation</h2>
+  <p>BJCP evaluation is an international standard scale for scoring beers (0 to 50 points). Zymos allows you to record detailed evaluations for each batch.</p>
+
+  <div class="callout info">
+    <p><strong>Available to Administrators only.</strong></p>
+  </div>
+
+  <h3><span class="icon">⭐</span>Evaluated criteria</h3>
+  <table class="data-table">
+    <tr><th>Criterion</th><th>Max. score</th><th>What it evaluates</th></tr>
+    <tr><td>Aroma</td><td>12</td><td>Intensity and character of aromas</td></tr>
+    <tr><td>Appearance</td><td>3</td><td>Colour, clarity, head</td></tr>
+    <tr><td>Flavour</td><td>20</td><td>Balance, complexity, finish</td></tr>
+    <tr><td>Mouthfeel</td><td>5</td><td>Body, carbonation, texture</td></tr>
+    <tr><td>Overall impression</td><td>10</td><td>Judge's overall assessment</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>50</strong></td><td></td></tr>
+  </table>
+
+  <h3><span class="icon">🏅</span>Classifications</h3>
+  <table class="data-table">
+    <tr><th>Range</th><th>Classification</th></tr>
+    <tr><td>45–50</td><td>Exceptional</td></tr>
+    <tr><td>38–44</td><td>Excellent</td></tr>
+    <tr><td>30–37</td><td>Very good</td></tr>
+    <tr><td>21–29</td><td>Good</td></tr>
+    <tr><td>14–20</td><td>Acceptable</td></tr>
+    <tr><td>9–13</td><td>Poor</td></tr>
+    <tr><td>0–8</td><td>Unacceptable</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ HISTORIAL ══════════ -->
+<section id="historial">
+  <h2><span class="section-num">15</span>Batch history</h2>
+  <p>Every significant action on the batch is recorded in the history: creation, edits, phase changes, start and end of each stage. The history is <strong>immutable</strong>: if the batch is deleted, the history remains.</p>
+
+  <table class="data-table">
+    <tr><th>Event</th><th>Badge colour</th></tr>
+    <tr><td>Created</td><td><span class="badge badge-green">Green</span></td></tr>
+    <tr><td>Phase started (Fermentation/Conditioning/Maturation/Carbonation)</td><td><span class="badge badge-green">Green</span></td></tr>
+    <tr><td>Phase completed</td><td><span class="badge badge-teal">Teal</span></td></tr>
+    <tr><td>Batch completed</td><td><span class="badge badge-blue">Blue</span></td></tr>
+    <tr><td>Edited</td><td><span class="badge badge-gray">Grey</span></td></tr>
+    <tr><td>Phase reset</td><td><span class="badge badge-amber">Amber</span></td></tr>
+    <tr><td>Archived</td><td>Red</td></tr>
+  </table>
+</section>
+
+<!-- ══════════ EXPORTS ══════════ -->
+<section id="exports">
+  <h2><span class="section-num">16</span>Export a batch</h2>
+  <p>From the detail view you can generate:</p>
+
+  <h3><span class="icon">📄</span>Batch PDF</h3>
+  <p><strong>"PDF"</strong> button in the detail header. Generates a complete batch report with all phases, ingredients, densities and evaluations. Includes the tenant's logo and colours.</p>
+
+  <h3><span class="icon">🖨️</span>Print</h3>
+  <p>The <strong>"Print"</strong> button opens the browser's print dialog with the view optimised for paper.</p>
+
+  <h3><span class="icon">📊</span>Bulk Excel (all batches)</h3>
+  <p>From the batch list, the <strong>"Excel"</strong> button exports all visible batches (with applied filters) to a .xlsx file with 6 sheets:</p>
+  <ul>
+    <li>General &amp; Ingredients</li>
+    <li>Fermentation</li>
+    <li>Conditioning</li>
+    <li>Maturation</li>
+    <li>Carbonation</li>
+    <li>Density and Observations</li>
+  </ul>
+</section>
+
+<!-- ══════════ DUPLICAR ══════════ -->
+<section id="duplicar">
+  <h2><span class="section-num">17</span>Duplicate a batch</h2>
+  <p>The <strong>"Duplicate"</strong> button (available in the list and in the detail) creates a new copy of the batch with:</p>
+  <ul>
+    <li>✅ Same ingredients (malts, hops, yeasts, fining agents)</li>
+    <li>✅ Same style and recipe</li>
+    <li>❌ No dates (brew date, fermentation, etc.)</li>
+    <li>❌ No densities (OG, FG)</li>
+    <li>❌ No fermenter assigned</li>
+    <li>❌ New code generated automatically</li>
+  </ul>
+  <p>Useful for repeating the same beer style periodically.</p>
+</section>
+
+<!-- ══════════ BARRILES ══════════ -->
+<section id="barriles">
+  <h2><span class="section-num">18</span>Create kegs from a batch</h2>
+  <p>If the batch destination includes kegs (e.g. "2 × 20L Keg"), Zymos can create the keg records automatically.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <strong>Open the batch detail</strong>
+        <p>The batch must have keg-type destinations registered in Tab 5.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <strong>Find the "Create Kegs" button</strong>
+        <p>It appears in the Carbonation section of the detail when the destination includes kegs.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <strong>Confirm the creation</strong>
+        <p>Zymos creates the indicated number of keg records, pre-filled with the batch code and the corresponding volume. They become available in the Kegs module.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ IA DIAGNÓSTICO ══════════ -->
+<section id="ia-diagnostico">
+  <h2><span class="section-num">19</span>AI Fermentation Diagnosis 🤖</h2>
+  <p>The fermentation diagnosis analyses the batch's density and temperature curve using artificial intelligence. It detects anomalies, compares with the expected profile and suggests corrective actions.</p>
+  <div class="callout info">
+    <p><strong>Requirement:</strong> the batch must have at least 2 fermentation readings registered. The feature requires AI configuration (ANTHROPIC_API_KEY). If the button does not appear, the system is running without AI.</p>
+  </div>
+  <h3><span class="icon">🔎</span>How to use the diagnosis</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Open the batch detail</strong><p>Go to the Fermentation section of the detail.</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Click "AI Diagnosis"</strong><p>Button available in the Fermentation section.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Review the diagnosis</strong><p>The modal shows: fermentation status, detected anomalies, recommendations and immediate attention warnings.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ IA DESCRIPCIÓN COMERCIAL ══════════ -->
+<section id="ia-descripcion">
+  <h2><span class="section-num">20</span>AI Commercial Description 🤖</h2>
+  <p>Automatically generates marketing texts for the batch: short description, long description, label text and social media hashtags, based on the batch profile and tasting notes.</p>
+  <h3><span class="icon">✍️</span>How to generate the description</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Open the batch detail</strong></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Click "Commercial Description"</strong><p>Button in the detail header, next to Edit and PDF.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Review and copy the text</strong><p>The modal shows 4 variants: short description (for menus and taps), long description (for web or extended label), label text and hashtags. Use the copy button in each section.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ IA BJCP SCORER ══════════ -->
+<section id="ia-bjcp">
+  <h2><span class="section-num">21</span>AI BJCP Scorer 🤖</h2>
+  <p>The BJCP Scorer analyses the free-text notes from the batch's sensory evaluation and suggests BJCP scores by criterion, strengths, detected flaws and improvement recommendations for the next brew.</p>
+  <h3><span class="icon">⭐</span>How to use the BJCP Scorer</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Complete the sensory evaluation notes</strong><p>Make sure the batch has tasting notes in the Evaluation section of the detail (aroma, flavour, appearance, etc.).</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Click "Analyse with AI"</strong><p>Button available in the Sensory Evaluation section.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Review and apply the results</strong><p>The modal shows the suggested score by criterion, identified strengths, detected flaws and recommendations. You can apply the suggested scores by clicking <strong>"Apply score"</strong>.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ EMAIL CAMBIO DE FASE ══════════ -->
+<section id="email-fase">
+  <h2><span class="section-num">22</span>Email notification on phase change</h2>
+  <p>ZYMOS can automatically send an email every time a batch advances to a new production phase (from Mashing to Fermentation, from Fermentation to Conditioning, etc.).</p>
+  <div class="callout info">
+    <p><strong>Requirement:</strong> the system must have an SMTP server configured (SMTP_HOST environment variable). If no SMTP is configured, this feature is not available. The email is sent to the tenant's email address configured in the account.</p>
+  </div>
+  <h3><span class="icon">📧</span>Email content</h3>
+  <ul>
+    <li>Batch name and code</li>
+    <li>Previous phase and new phase reached</li>
+    <li>Date of change</li>
+    <li>Direct link to the batch detail in ZYMOS</li>
+  </ul>
+  <div class="callout tip">
+    <p>Useful in teams where different people handle each stage. The person responsible for maturation can configure their email to receive an alert when a batch enters their phase.</p>
+  </div>
+  <div class="callout info">
+    <p><strong>📱 Also via WhatsApp:</strong> If the administrator configured contacts in <em>Admin → WhatsApp</em> subscribed to the "Batch phase change" type, the message is also delivered via WhatsApp (or as the sole channel if no SMTP is set). See <a href="manual_admin_en.html#whatsapp">Administration Manual → WhatsApp Notifications</a>.</p>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section id="faq">
+  <h2><span class="section-num">23</span>Frequently asked questions</h2>
+
+  <h3>Why doesn't the "New Batch" button appear?</h3>
+  <p>You need at least one <strong>active recipe</strong>. Go to <strong>Recipes → New Recipe</strong> and create one first.</p>
+
+  <h3>How do I know which phase a batch is in?</h3>
+  <p>The phase is calculated automatically from the dates you registered: if there is a carbonation start date but no end date, the batch is in Carbonation. Zymos never asks you to manually select the phase.</p>
+
+  <h3>I entered an incorrect density. How do I correct it?</h3>
+  <p>Go to <strong>Edit</strong> the batch (Tab 0) and change the OG or FG values. Zymos will automatically recalculate ABV, attenuation and efficiency.</p>
+
+  <h3>Can I change the fermenter once fermentation has started?</h3>
+  <p>Yes. Go to Edit → Tab 0 and change the fermenter. The system will update the availability of both vessels.</p>
+
+  <h3>What happens if I move a batch on the Kanban but it has no fermenter?</h3>
+  <p>The system reverts the move and shows a notice. You must assign a fermenter first from the edit form (Tab 0).</p>
+
+  <h3>Are final litres summed automatically in multi-session brewing?</h3>
+  <p>Yes. When you register the volume of each session (S1, S2, etc.), Zymos automatically sums them in the "Final Litres" field.</p>
+
+  <h3>Can I change the application language?</h3>
+  <p>Yes. In the user menu (top-right corner of the navbar) there is a language selector: Español / English.</p>
+
+  <h3>Where do "archived" batches go?</h3>
+  <p>When a batch is archived, it is removed from the main list. The batch history remains in the system. Kegs and invoices linked to that batch are not affected.</p>
+</section>
+
+</div><!-- /.content -->
+
+<div class="footer">
+  Zymos — User Manual · Traceability Module · Last updated: October 2026
+</div>
+
+<script>
+  // Highlight current section in sidebar
+  const links = document.querySelectorAll('.sb-link');
+  const sections = document.querySelectorAll('section[id], .hero');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        links.forEach(l => l.classList.remove('active'));
+        const active = document.querySelector('.sb-link[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+
+  // Smooth scroll
+  document.querySelectorAll('.sb-link').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const id = link.getAttribute('href').slice(1);
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recipes · ZYMOS Manual</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    color: #334155;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 268px;
+    flex-shrink: 0;
+    background: #0f172a;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sb-brand { padding: 20px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back { display: block; padding: 10px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; padding: 8px 20px 4px; }
+  nav a { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #94a3b8; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; line-height: 1.4; }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  /* ── Main ── */
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  /* ── Page hero ── */
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #059669 100%); margin: 0 -48px 0; padding: 48px 48px 40px; }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  /* ── Content ── */
+  .content { padding-top: 44px; }
+  h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; scroll-margin-top: 24px; }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; font-size: 0.83rem; color: #059669; font-family: 'Fira Code', Consolas, monospace; }
+
+  /* ── Callout ── */
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 20px 0; display: flex; gap: 12px; font-size: 0.88rem; line-height: 1.6; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li { counter-increment: step; padding: 10px 14px 10px 48px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; position: relative; font-size: 0.9rem; color: #334155; line-height: 1.55; }
+  .steps li::before { content: counter(step); position: absolute; left: 14px; top: 10px; width: 22px; height: 22px; background: #059669; color: white; border-radius: 50%; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+  /* ── Field table ── */
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th { background: #f8fafc; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  /* ── Sub-section ── */
+  .sub-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  /* ── Ingredient section tabs ── */
+  .ing-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 16px 0 24px; }
+  .ing-tab { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; border-top: 3px solid var(--c, #e2e8f0); }
+  .ing-tab .it-name { font-size: 0.85rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .ing-tab .it-fields { font-size: 0.76rem; color: #64748b; line-height: 1.5; }
+  .it-malta   { --c: #d97706; }
+  .it-lupulo  { --c: #059669; }
+  .it-levadura{ --c: #7c3aed; }
+  .it-clar    { --c: #0891b2; }
+
+  /* ── Scale demo ── */
+  .scale-demo { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .scale-demo h4 { font-size: 0.88rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
+  .scale-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+  .scale-row:last-child { border-bottom: none; }
+  .scale-row .sr-name { flex: 1; color: #334155; }
+  .scale-row .sr-from { color: #94a3b8; min-width: 70px; text-align: right; font-size: 0.85rem; }
+  .scale-row .sr-arrow { color: #059669; font-size: 0.9rem; }
+  .scale-row .sr-to { color: #059669; font-weight: 700; min-width: 70px; font-size: 0.85rem; }
+
+  /* ── Hervor timeline ── */
+  .hervor-timeline { position: relative; padding-left: 24px; margin: 16px 0 24px; }
+  .hervor-timeline::before { content: ''; position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
+  .ht-item { position: relative; padding: 6px 0 6px 16px; margin-bottom: 4px; }
+  .ht-item::before { content: ''; position: absolute; left: -4px; top: 50%; transform: translateY(-50%); width: 10px; height: 10px; background: #059669; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px #059669; }
+  .ht-item.flameout::before { background: #dc2626; box-shadow: 0 0 0 2px #dc2626; }
+  .ht-item .hi-min { font-size: 0.75rem; font-weight: 700; color: #059669; }
+  .ht-item.flameout .hi-min { color: #dc2626; }
+  .ht-item .hi-name { font-size: 0.88rem; color: #334155; }
+  .ht-item .hi-qty { font-size: 0.78rem; color: #94a3b8; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Recipes</div>
+  </div>
+  <a href="index_en.html" class="sb-back">← All manuals</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Get started</div>
+      <a href="#intro">What is a recipe?</a>
+      <a href="#lista">Recipe list</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Create a recipe</div>
+      <a href="#datos-generales">General information</a>
+      <a href="#ingredientes">Ingredients</a>
+      <a href="#macerado">Mash steps</a>
+      <a href="#hervor">Boil additions</a>
+      <a href="#guardar">Save the recipe</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Operations</div>
+      <a href="#detalle">View detail</a>
+      <a href="#escala">Scale calculator</a>
+      <a href="#duplicar">Duplicate a recipe</a>
+      <a href="#archivar">Archive</a>
+      <a href="#usar">Use in a batch</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Advanced</div>
+      <a href="#perfil-agua">Water profile</a>
+      <a href="#beerxml">BeerXML</a>
+      <a href="#asistente-ia">AI Assistant 🤖</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">User manual · Module</div>
+    <h1>📖 Recipes</h1>
+    <p>Create and manage your beer formulas: malts, hops, yeasts, clarifiers, mash steps, and boil additions. Scale any recipe to a different volume with a single click.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Production</span>
+      <span class="role-badge">Administrator</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Intro -->
+    <h2 id="intro">What is a recipe?</h2>
+    <p>A recipe in ZYMOS is the complete formula for producing a specific beer. It includes the ingredient list with quantities, the mash profile (temperature and duration), and the schedule of hop and clarifier additions during the boil.</p>
+    <p>Recipes are the foundation of the Traceability module: when you create a production batch, you select a recipe and ZYMOS pre-loads all its ingredients automatically.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Prerequisite for production</strong>
+        ZYMOS requires at least one active recipe to create batches. If you have no recipes yet, the Traceability module will automatically redirect you to create one.
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <h2 id="lista">Recipe list</h2>
+    <p>Access from the main menu → <strong>Recipes</strong>. The list shows all active recipes (archived ones are hidden by default). For each recipe you can see:</p>
+    <ul>
+      <li>Name and beer style</li>
+      <li>Target volume in liters</li>
+      <li>Target OG / FG (gravities)</li>
+      <li>Estimated ABV</li>
+      <li>Actions: View, Edit, Duplicate, Archive</li>
+    </ul>
+
+    <!-- Datos generales -->
+    <h2 id="datos-generales">General information</h2>
+    <p>The new recipe form starts with the basic identification data and target production parameters.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Name <span class="req">*</span></td><td>Internal recipe name. Must be unique within your brewery.</td><td>Tropical IPA 20L</td></tr>
+        <tr><td>Style <span class="req">*</span></td><td>Beer type. Select from the list of registered styles (e.g. American IPA, Stout, Saison).</td><td>American IPA</td></tr>
+        <tr><td>Target volume <span class="req">*</span></td><td>Liters of finished beer expected to produce.</td><td>20</td></tr>
+        <tr><td>Target OG</td><td>Target original gravity in XXXX format (e.g. 1060). The gravity "1.060" is entered as "1060".</td><td>1060</td></tr>
+        <tr><td>Target FG</td><td>Target final gravity in XXXX format. Valid range: 990 – 1060.</td><td>1010</td></tr>
+        <tr><td>Expected efficiency %</td><td>Sugar extraction efficiency from the malts (percentage).</td><td>75</td></tr>
+        <tr><td>Mash water</td><td>Liters of water for mashing.</td><td>26</td></tr>
+        <tr><td>Sparge water</td><td>Liters of water for sparging.</td><td>14</td></tr>
+        <tr><td>Boil duration</td><td>Boil time in minutes (usually 60 or 90).</td><td>60</td></tr>
+        <tr><td>Notes</td><td>Free description, special instructions, expected flavor profile.</td><td>Tropical notes of mango and passion fruit</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Gravity format (XXXX)</strong>
+        Gravities are entered without a decimal point: gravity 1.060 is entered as <code>1060</code>, and 1.008 as <code>1008</code>. ZYMOS automatically calculates the estimated ABV: <code>(OG - FG) × 0.13125</code>.
+      </div>
+    </div>
+
+    <!-- Ingredientes -->
+    <h2 id="ingredientes">Ingredients</h2>
+    <p>The form divides ingredients into four sections. You can add as many rows as needed in each one by clicking <strong>"+ Add"</strong>.</p>
+
+    <div class="ing-grid">
+      <div class="ing-tab it-malta">
+        <div class="it-name">🌾 Malts</div>
+        <div class="it-fields">Name · Quantity · Unit (gr/kg)</div>
+      </div>
+      <div class="ing-tab it-lupulo">
+        <div class="it-name">🌿 Hops</div>
+        <div class="it-fields">Name · Quantity · Unit (gr/kg) · % AA</div>
+      </div>
+      <div class="ing-tab it-levadura">
+        <div class="it-name">🦠 Yeasts</div>
+        <div class="it-fields">Name · Quantity · Unit (gr/und)</div>
+      </div>
+      <div class="ing-tab it-clar">
+        <div class="it-name">💧 Clarifiers</div>
+        <div class="it-fields">Name · Quantity · Unit (gr/mL/und)</div>
+      </div>
+    </div>
+
+    <p>The <strong>Name</strong> field for each ingredient has autocomplete: as you type, ZYMOS suggests inventory items that match the type of that section (malts for malts, hops for hops, etc.).</p>
+
+    <div class="sub-section">
+      <h4>The ingredient doesn't appear in the list?</h4>
+      <p style="margin-bottom: 8px; font-size: 0.88rem; color: #475569;">If the ingredient you're looking for doesn't exist in the inventory, a <strong>⊞</strong> button appears at the end of the name field. Clicking it opens a quick-create modal that lets you register the ingredient without leaving the recipe form.</p>
+      <p style="margin: 0; font-size: 0.88rem; color: #475569;">The ingredient created from the modal is registered in the inventory with quantity 0. Remember to update its stock when you receive it.</p>
+    </div>
+
+    <!-- Macerado -->
+    <h2 id="macerado">Mash steps</h2>
+    <p>Mash steps define the temperature and time stages of the sugar extraction process. Most beers have a single step at 67–68°C, but more complex recipes can have several.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>Descriptive name for the step (optional).</td><td>Saccharification</td></tr>
+        <tr><td>Temperature</td><td>Target temperature for the step in °C (or °F if your tenant is configured in Fahrenheit).</td><td>67</td></tr>
+        <tr><td>Duration</td><td>Duration of the step in minutes.</td><td>60</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Hervor -->
+    <h2 id="hervor">Boil additions</h2>
+    <p>Boil additions record when hops and clarifiers are added during the boil. They are ordered from the first additions (most time remaining) to flameout.</p>
+
+    <div class="hervor-timeline">
+      <div class="ht-item"><div class="hi-min">60 min</div><div class="hi-name">Magnum</div><div class="hi-qty">15 gr · 14% AA</div></div>
+      <div class="ht-item"><div class="hi-min">15 min</div><div class="hi-name">Citra</div><div class="hi-qty">20 gr · 12% AA</div></div>
+      <div class="ht-item"><div class="hi-min">10 min</div><div class="hi-name">Whirlfloc</div><div class="hi-qty">1 tablet</div></div>
+      <div class="ht-item flameout"><div class="hi-min">0 min — Flameout</div><div class="hi-name">Citra + Mosaic</div><div class="hi-qty">30 gr each · Whirlpool</div></div>
+    </div>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Ingredient</td><td>Name of the hop or clarifier (autocomplete from inventory).</td></tr>
+        <tr><td>Quantity + Unit</td><td>Amount to add. Hops typically in gr; clarifiers in gr, mL, or und.</td></tr>
+        <tr><td>Minutes remaining</td><td>How many minutes are left in the boil when this addition is made. <code>0</code> = flameout. <code>60</code> = at the start of a 60-minute boil.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Guardar -->
+    <h2 id="guardar">Save the recipe</h2>
+    <ol class="steps">
+      <li>Fill in all required fields (marked with <span style="color:#dc2626">*</span>): name, style, and volume.</li>
+      <li>Add at least one ingredient in any of the sections (malt, hop, yeast, or clarifier).</li>
+      <li>Click <strong>"Save recipe"</strong> at the bottom of the form.</li>
+      <li>ZYMOS validates the data and redirects to the detail page of the newly created recipe.</li>
+    </ol>
+
+    <!-- Detalle -->
+    <h2 id="detalle">View recipe detail</h2>
+    <p>From the list, click on the recipe name or the eye button to view its full detail. The detail page shows:</p>
+    <ul>
+      <li>Target parameters: volume, OG, FG, estimated ABV, efficiency, mash and sparge water</li>
+      <li>Ingredient table by type</li>
+      <li>Mash steps</li>
+      <li>Boil addition schedule</li>
+      <li>Interactive scale calculator</li>
+      <li>Action buttons: Edit, Duplicate, Create batch, Archive</li>
+    </ul>
+
+    <!-- Escala -->
+    <h2 id="escala">Scale calculator</h2>
+    <p>The scale calculator appears in the recipe detail. It lets you see how all ingredients would look if you produced a different volume than the original.</p>
+
+    <div class="scale-demo">
+      <h4>Example: Scale from 20L → 40L (factor 2×)</h4>
+      <div class="scale-row"><div class="sr-name">Pilsner Malt</div><div class="sr-from">4.5 kg</div><div class="sr-arrow">→</div><div class="sr-to">9 kg</div></div>
+      <div class="scale-row"><div class="sr-name">Citra (boil)</div><div class="sr-from">20 gr</div><div class="sr-arrow">→</div><div class="sr-to">40 gr</div></div>
+      <div class="scale-row"><div class="sr-name">Mash water</div><div class="sr-from">26 L</div><div class="sr-arrow">→</div><div class="sr-to">52 L</div></div>
+      <div class="scale-row"><div class="sr-name">Sparge water</div><div class="sr-from">14 L</div><div class="sr-arrow">→</div><div class="sr-to">28 L</div></div>
+    </div>
+
+    <ol class="steps">
+      <li>In the recipe detail, find the <strong>"Scale calculator"</strong> section.</li>
+      <li>Enter the target volume in liters in the corresponding field.</li>
+      <li>The ingredient table updates in real time showing the scaled quantities.</li>
+      <li>If you want to save the scaled version as a new recipe, click <strong>"Create scaled recipe"</strong>. ZYMOS creates a copy with the adjusted quantities and an updated name.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        The scaled recipe is independent of the original. You can edit it, adjust ingredients, and use it to create batches without affecting the base recipe.
+      </div>
+    </div>
+
+    <!-- Duplicar -->
+    <h2 id="duplicar">Duplicate a recipe</h2>
+    <p>Duplicating creates an exact copy of the recipe with the name <code>Copy of [original name]</code>. It is useful for creating variations (for example, a dry-hop version with more hops) without altering the base recipe.</p>
+    <ol class="steps">
+      <li>In the recipe list, click the duplicate icon in the recipe row.</li>
+      <li>ZYMOS creates the copy and redirects you to its edit form.</li>
+      <li>Change the name and adjust whatever you need.</li>
+      <li>Save the modified recipe.</li>
+    </ol>
+
+    <!-- Archivar -->
+    <h2 id="archivar">Archive a recipe</h2>
+    <p>Archiving hides the recipe from the active list and from batch creation forms. It is not deleted — you can recover it in the future.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Difference between archiving and deleting</strong>
+        ZYMOS does not delete recipes that have been used in batches — instead it archives them. This preserves production history: existing batches continue to show the data of the recipe that originated them.
+      </div>
+    </div>
+
+    <p>To see archived recipes, enable the <strong>"Show archived"</strong> filter in the list. From there you can restore them if you need them again.</p>
+
+    <!-- Usar en lote -->
+    <h2 id="usar">Use a recipe to create a batch</h2>
+    <p>There are two ways to start a production batch from a recipe:</p>
+
+    <div class="sub-section">
+      <h4>Option A — From the recipe detail</h4>
+      <ol style="padding-left: 18px;">
+        <li style="margin-bottom: 6px; color: #334155;">Open the recipe detail.</li>
+        <li style="margin-bottom: 6px; color: #334155;">Click <strong>"Create batch"</strong>.</li>
+        <li style="color: #334155;">ZYMOS opens the new batch form with the recipe pre-selected.</li>
+      </ol>
+    </div>
+
+    <div class="sub-section">
+      <h4>Option B — From Traceability</h4>
+      <ol style="padding-left: 18px;">
+        <li style="margin-bottom: 6px; color: #334155;">Go to Traceability → <strong>"New batch"</strong>.</li>
+        <li style="margin-bottom: 6px; color: #334155;">In the form, select the recipe in the <strong>"Recipe"</strong> field.</li>
+        <li style="color: #334155;">Click <strong>"Load recipe"</strong> to pre-fill the ingredients automatically.</li>
+      </ol>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        Loading the recipe in the batch form is a starting point — you can freely adjust quantities before saving the batch. Changes to the batch do not affect the original recipe.
+      </div>
+    </div>
+
+    <!-- Perfil de agua -->
+    <h2 id="perfil-agua">Water profile</h2>
+    <p>The water profile describes the mineral composition of the water you will use for your recipe. These parameters influence mash pH, flavor, and bitterness perception.</p>
+    <p>All fields are optional. They are shown in the recipe detail and included in the BeerXML export.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Mineral</th><th>Unit</th><th>Typical range</th><th>Main effect</th></tr></thead>
+      <tbody>
+        <tr><td>Calcium (Ca²⁺)</td><td>ppm</td><td>50–150 ppm</td><td>Clarity, enzyme stability, lowers pH</td></tr>
+        <tr><td>Magnesium (Mg²⁺)</td><td>ppm</td><td>10–30 ppm</td><td>Salty/bitter flavor at high concentrations</td></tr>
+        <tr><td>Sodium (Na⁺)</td><td>ppm</td><td>0–150 ppm</td><td>Rounds the flavor, intensifies sweetness at low amounts</td></tr>
+        <tr><td>Sulfate (SO₄²⁻)</td><td>ppm</td><td>50–300 ppm</td><td>Accentuates dry bitterness in hoppy beers</td></tr>
+        <tr><td>Chloride (Cl⁻)</td><td>ppm</td><td>50–200 ppm</td><td>Rounds body, intensifies malt character</td></tr>
+        <tr><td>Bicarbonate (HCO₃⁻)</td><td>ppm</td><td>0–300 ppm</td><td>Alkalinity, raises mash pH</td></tr>
+        <tr><td>Water notes</td><td>—</td><td>—</td><td>Notes about the water source or adjustments made</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">A high sulfate/chloride ratio (&gt;1.5) favors hoppy, dry beers. A low ratio (&lt;0.5) favors malty, round beers.</div>
+    </div>
+
+    <!-- BeerXML -->
+    <h2 id="beerxml">Export / Import BeerXML</h2>
+    <p>BeerXML 1.0 is the industry standard format for exchanging recipes between brewing software (Beersmith, Brewer's Friend, etc.). ZYMOS can export and import recipes in this format.</p>
+
+    <h3>Export a recipe</h3>
+    <ol class="steps">
+      <li>Open the detail of the recipe you want to export.</li>
+      <li>Click the <strong>"BeerXML"</strong> button in the detail header.</li>
+      <li>A <code>.xml</code> file downloads with all the recipe data: ingredients, mash steps, boil additions, water profile, and target gravities.</li>
+    </ol>
+
+    <h3>Import a recipe from BeerXML</h3>
+    <ol class="steps">
+      <li>In the recipe list, click <strong>"Import BeerXML"</strong>.</li>
+      <li>In the modal that appears, select the <code>.xml</code> file from your computer.</li>
+      <li>ZYMOS processes the file, creates the recipe, and redirects you to its edit form so you can adjust the data before saving.</li>
+    </ol>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">The imported BeerXML can include malts, hops, yeasts, clarifiers, mash steps, and water profile. Ingredients are created in the inventory with quantity 0 if they don't already exist.</div>
+    </div>
+
+    <!-- Asistente IA -->
+    <h2 id="asistente-ia">AI Recipe Assistant 🤖</h2>
+    <p>The AI recipe assistant generates a complete recipe from a free-text description. Describe the type of beer you want and the AI proposes ingredients, gravities, and production parameters.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requires AI configuration.</strong> This feature is only available when the administrator has configured the Anthropic API key (ANTHROPIC_API_KEY). If the button doesn't appear, the system runs without AI.</div>
+    </div>
+
+    <h3>How to use the assistant</h3>
+    <ol class="steps">
+      <li>In the recipe list, click <strong>"Create recipe with AI"</strong>.</li>
+      <li>In the modal, describe the beer you want to produce: style, flavor notes, body, bitterness, volume. For example: "A 20-liter tropical IPA with mango and passion fruit notes, moderate bitterness, 75% efficiency".</li>
+      <li>Click <strong>"Generate recipe"</strong>. The AI takes a few seconds to process.</li>
+      <li>Review the proposal in the modal preview panel.</li>
+      <li>If the proposal looks good, click <strong>"Use this recipe"</strong>. ZYMOS pre-fills the new recipe form with all the generated data.</li>
+      <li>Adjust whatever you need and save normally.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">The AI takes into account the ingredients available in your inventory to suggest items you already have registered. You can be as specific or as general as you like in the description.</div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

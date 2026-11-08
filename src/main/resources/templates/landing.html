@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Gestión integral para cervecerías artesanales: trazabilidad, recetas, inventario, BPM, ventas e IA. Prueba gratis 14 días.">
-    <title th:text="${branding != null ? branding.name : 'Zymos'} + ' — Gestión de Cervecerías Artesanales'">Zymos — Gestión de Cervecerías Artesanales</title>
+    <meta name="description" th:content="#{landing.meta.description}" content="Gestión integral para cervecerías artesanales.">
+    <title th:text="${branding != null ? branding.name : 'Zymos'} + ' — ' + #{landing.title.suffix}">Zymos — Gestión de Cervecerías Artesanales</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&amp;family=Raleway:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
@@ -272,6 +272,11 @@
         .btn-cta-submit:hover { background: var(--lp-gold-h); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
         .cta-trust { text-align: center; color: #64748b; font-size: .8rem; margin-top: .75rem; }
 
+        /* ── LANG TOGGLE ── */
+        .lp-lang-btn { color:rgba(255,255,255,.5); font-size:.78rem; font-weight:600; padding:.2rem .5rem; border-radius:4px; text-decoration:none; transition:color .15s; }
+        .lp-lang-btn:hover { color:#fff; }
+        .lp-lang-active { color:var(--lp-gold) !important; }
+
         /* ── FOOTER ── */
         .lp-footer { background: var(--lp-dark); border-top: 1px solid rgba(255,255,255,.07); padding: 2rem 0; }
         .footer-brand { font-family: 'Cinzel', serif; font-weight: 700; color: var(--lp-gold); font-size: 1.1rem; }
@@ -316,17 +321,22 @@
         </button>
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav mx-auto gap-1">
-                <li class="nav-item"><a class="nav-link" href="#features">Módulos</a></li>
-                <li class="nav-item"><a class="nav-link" href="#como-funciona">Cómo funciona</a></li>
-                <li class="nav-item"><a class="nav-link" href="#planes-section">Planes</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/login}">Iniciar sesión</a></li>
+                <li class="nav-item"><a class="nav-link" href="#features" th:text="#{landing.nav.modulos}">Módulos</a></li>
+                <li class="nav-item"><a class="nav-link" href="#como-funciona" th:text="#{landing.nav.como}">Cómo funciona</a></li>
+                <li class="nav-item"><a class="nav-link" href="#planes-section" th:text="#{landing.nav.planes}">Planes</a></li>
+                <li class="nav-item"><a class="nav-link" th:href="@{/login}" th:text="#{landing.nav.login}">Iniciar sesión</a></li>
             </ul>
             <div class="d-flex gap-2 mt-2 mt-lg-0">
+                <div class="d-flex align-items-center gap-1 me-1">
+                    <a th:href="${currentUri + '?lang=es'}" th:classappend="${#locale.language == 'es'} ? ' lp-lang-active' : ''" class="lp-lang-btn">ES</a>
+                    <span style="color:rgba(255,255,255,.2);font-size:.7rem">|</span>
+                    <a th:href="${currentUri + '?lang=en'}" th:classappend="${#locale.language == 'en'} ? ' lp-lang-active' : ''" class="lp-lang-btn">EN</a>
+                </div>
                 <button type="button" class="btn-nav-demo" id="btnNavDemo">
-                    <i class="bi bi-flask me-1"></i>Ver demo
+                    <i class="bi bi-flask me-1"></i><span th:text="#{landing.nav.demo}">Ver demo</span>
                 </button>
                 <a th:href="@{/planes}" class="btn-nav-primary">
-                    Prueba gratis <i class="bi bi-arrow-right ms-1"></i>
+                    <span th:text="#{landing.nav.trial}">Prueba gratis</span> <i class="bi bi-arrow-right ms-1"></i>
                 </a>
             </div>
         </div>
@@ -339,30 +349,29 @@
 <section class="lp-hero">
     <div class="container">
         <div class="hero-badge">
-            <i class="bi bi-award-fill me-1"></i>Sistema SaaS para cervecerías artesanales
+            <i class="bi bi-award-fill me-1"></i><span th:text="#{landing.hero.badge}">Sistema SaaS para cervecerías artesanales</span>
         </div>
         <h1 class="hero-title">
-            De la maceración a la venta —<br>
-            <span>todo en un solo sistema</span>
+            <span th:text="#{landing.hero.title1}">De la maceración a la venta —</span><br>
+            <span th:text="#{landing.hero.title2}">todo en un solo sistema</span>
         </h1>
-        <p class="hero-sub">
+        <p class="hero-sub" th:text="#{landing.hero.sub}">
             Trazabilidad completa de lotes, gestión de recetas, inventario inteligente, BPM,
-            ventas e inteligencia artificial integrada. Diseñado para cervecerías artesanales
-            que quieren crecer sin perder el control.
+            ventas e inteligencia artificial integrada.
         </p>
         <div class="hero-ctas">
             <button type="button" class="btn-hero-primary" id="btnHeroDemo">
-                <i class="bi bi-play-circle-fill"></i>Ver demo en vivo
+                <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.hero.cta1}">Ver demo en vivo</span>
             </button>
             <a th:href="@{/planes}" class="btn-hero-outline">
-                Prueba gratis 14 días <i class="bi bi-arrow-right"></i>
+                <span th:text="#{landing.hero.cta2}">Prueba gratis 14 días</span> <i class="bi bi-arrow-right"></i>
             </a>
         </div>
         <div class="hero-trust">
-            <span><i class="bi bi-check-circle-fill"></i>Sin tarjeta de crédito</span>
-            <span><i class="bi bi-check-circle-fill"></i>14 días gratis</span>
-            <span><i class="bi bi-check-circle-fill"></i>Cancela cuando quieras</span>
-            <span><i class="bi bi-check-circle-fill"></i>Configuración en minutos</span>
+            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust1}">Sin tarjeta de crédito</span></span>
+            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust2}">14 días gratis</span></span>
+            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust3}">Cancela cuando quieras</span></span>
+            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust4}">Configuración en minutos</span></span>
         </div>
     </div>
 </section>
@@ -374,16 +383,16 @@
     <div class="container">
         <div class="row g-3 justify-content-center">
             <div class="col-6 col-sm-3 stat-pill">
-                <strong>15+</strong>Módulos integrados
+                <strong th:text="#{landing.stats.1.val}">15+</strong><span th:text="#{landing.stats.1.lbl}">Módulos integrados</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong>Multi-tenant</strong>Cada cervecería aislada
+                <strong th:text="#{landing.stats.2.val}">Multi-tenant</strong><span th:text="#{landing.stats.2.lbl}">Cada cervecería aislada</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong>IA</strong>Claude AI integrado
+                <strong th:text="#{landing.stats.3.val}">IA</strong><span th:text="#{landing.stats.3.lbl}">Claude AI integrado</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong>99%+</strong>Cobertura de tests
+                <strong th:text="#{landing.stats.4.val}">99%+</strong><span th:text="#{landing.stats.4.lbl}">Cobertura de tests</span>
             </div>
         </div>
     </div>
@@ -395,57 +404,57 @@
 <section id="features" class="lp-features">
     <div class="container">
         <div class="text-center">
-            <div class="section-label">Módulos</div>
-            <h2 class="section-title">Todo lo que necesita tu cervecería</h2>
-            <p class="section-sub">Un sistema completo desde la primera maceración hasta el análisis de rentabilidad.</p>
+            <div class="section-label" th:text="#{landing.feat.label}">Módulos</div>
+            <h2 class="section-title" th:text="#{landing.feat.title}">Todo lo que necesita tu cervecería</h2>
+            <p class="section-sub" th:text="#{landing.feat.sub}">Un sistema completo desde la primera maceración hasta el análisis de rentabilidad.</p>
         </div>
         <div class="row g-4">
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon trazabilidad"><i class="bi bi-layers-fill"></i></div>
-                    <div class="feat-title">Trazabilidad de lotes</div>
-                    <p class="feat-desc">Seguimiento completo desde macerado hasta carbonatación. Kanban de producción, lecturas de densidad y temperatura con gráficas en tiempo real, cálculo automático de ABV y eficiencia.</p>
+                    <div class="feat-title" th:text="#{landing.feat1.title}">Trazabilidad de lotes</div>
+                    <p class="feat-desc" th:text="#{landing.feat1.desc}">Seguimiento completo desde macerado hasta carbonatación.</p>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon recetas"><i class="bi bi-journal-text"></i></div>
-                    <div class="feat-title">Recetas y brewsheet</div>
-                    <p class="feat-desc">Gestión completa con escalones de macerado, hervor y adjuntos. Importa y exporta en BeerXML. Calculadora de escala automática. Asistente de recetas con IA.</p>
+                    <div class="feat-title" th:text="#{landing.feat2.title}">Recetas y brewsheet</div>
+                    <p class="feat-desc" th:text="#{landing.feat2.desc}">Gestión completa con escalones de macerado, hervor y adjuntos.</p>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon inventario"><i class="bi bi-box-seam-fill"></i></div>
-                    <div class="feat-title">Inventario inteligente</div>
-                    <p class="feat-desc">Control de stock con descuento automático al crear lotes. Alertas de bajo stock y vencimientos por email y WhatsApp. Órdenes de compra optimizadas con IA.</p>
+                    <div class="feat-title" th:text="#{landing.feat3.title}">Inventario inteligente</div>
+                    <p class="feat-desc" th:text="#{landing.feat3.desc}">Control de stock con descuento automático al crear lotes.</p>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon bpm"><i class="bi bi-shield-fill-check"></i></div>
-                    <div class="feat-title">BPM e inocuidad</div>
-                    <p class="feat-desc">Control de salud diario con firma digital. Registro de desinfectantes, control de plagas y limpieza. Cumplimiento de buenas prácticas de manufactura alimentaria.</p>
+                    <div class="feat-title" th:text="#{landing.feat4.title}">BPM e inocuidad</div>
+                    <p class="feat-desc" th:text="#{landing.feat4.desc}">Control de salud diario con firma digital.</p>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon comercial"><i class="bi bi-briefcase-fill"></i></div>
-                    <div class="feat-title">Comercial completo</div>
-                    <p class="feat-desc">Facturas de proveedores con análisis por IA, gestión de clientes, ventas por formato (botellas, barriles, latas), cotizaciones y reportes de rentabilidad por estilo.</p>
+                    <div class="feat-title" th:text="#{landing.feat5.title}">Comercial completo</div>
+                    <p class="feat-desc" th:text="#{landing.feat5.desc}">Facturas de proveedores con análisis por IA.</p>
                 </div>
             </div>
 
             <div class="col-md-6 col-lg-4">
                 <div class="feat-card">
                     <div class="feat-icon ia"><i class="bi bi-robot"></i></div>
-                    <div class="feat-title">Inteligencia artificial</div>
-                    <p class="feat-desc">Diagnóstico automático de fermentación, generación de recetas desde texto, análisis de rentabilidad, descripciones comerciales y puntuación BJCP — todo con Claude AI.</p>
+                    <div class="feat-title" th:text="#{landing.feat6.title}">Inteligencia artificial</div>
+                    <p class="feat-desc" th:text="#{landing.feat6.desc}">Diagnóstico automático de fermentación, generación de recetas desde texto.</p>
                 </div>
             </div>
 
@@ -459,9 +468,9 @@
 <section class="lp-preview">
     <div class="container">
         <div class="text-center mb-4">
-            <div class="section-label">Vista previa</div>
-            <h2 class="section-title">Así se ve por dentro</h2>
-            <p class="section-sub" style="margin-bottom:2.5rem">Una interfaz limpia y eficiente, diseñada para el flujo diario de una cervecería.</p>
+            <div class="section-label" th:text="#{landing.preview.label}">Vista previa</div>
+            <h2 class="section-title" th:text="#{landing.preview.title}">Así se ve por dentro</h2>
+            <p class="section-sub" style="margin-bottom:2.5rem" th:text="#{landing.preview.sub}">Una interfaz limpia y eficiente, diseñada para el flujo diario de una cervecería.</p>
         </div>
         <div class="preview-window">
             <div class="preview-topbar">
@@ -490,28 +499,28 @@
                     <div class="preview-stats">
                         <div class="preview-stat-card">
                             <div class="preview-stat-num">12</div>
-                            <div class="preview-stat-lbl">Lotes activos</div>
+                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat1.lbl}">Lotes activos</div>
                         </div>
                         <div class="preview-stat-card">
                             <div class="preview-stat-num">4</div>
-                            <div class="preview-stat-lbl">Fermentando</div>
+                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat2.lbl}">Fermentando</div>
                         </div>
                         <div class="preview-stat-card">
                             <div class="preview-stat-num" style="color:#16a34a">87%</div>
-                            <div class="preview-stat-lbl">Capacidad</div>
+                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat3.lbl}">Capacidad</div>
                         </div>
                         <div class="preview-stat-card">
                             <div class="preview-stat-num" style="color:#2563eb">$4.2M</div>
-                            <div class="preview-stat-lbl">Ventas mes</div>
+                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat4.lbl}">Ventas mes</div>
                         </div>
                     </div>
                     <table class="preview-table-mini">
                         <thead>
                             <tr>
-                                <th>Código</th>
-                                <th>Estilo</th>
-                                <th>Densidad</th>
-                                <th>Fase</th>
+                                <th th:text="#{landing.preview.th.codigo}">Código</th>
+                                <th th:text="#{landing.preview.th.estilo}">Estilo</th>
+                                <th th:text="#{landing.preview.th.densidad}">Densidad</th>
+                                <th th:text="#{landing.preview.th.fase}">Fase</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -519,19 +528,19 @@
                                 <td><strong>IPA-024</strong></td>
                                 <td>IPA Americana</td>
                                 <td>1.048</td>
-                                <td><span class="phase-mini phase-ferm">Fermentación</span></td>
+                                <td><span class="phase-mini phase-ferm" th:text="#{landing.preview.phase.ferm}">Fermentación</span></td>
                             </tr>
                             <tr>
                                 <td><strong>STO-012</strong></td>
                                 <td>Stout Imperial</td>
                                 <td>1.018</td>
-                                <td><span class="phase-mini phase-carb">Carbonatación</span></td>
+                                <td><span class="phase-mini phase-carb" th:text="#{landing.preview.phase.carb}">Carbonatación</span></td>
                             </tr>
                             <tr>
                                 <td><strong>APA-031</strong></td>
                                 <td>APA Tropical</td>
                                 <td>1.056</td>
-                                <td><span class="phase-mini phase-mace">Macerado</span></td>
+                                <td><span class="phase-mini phase-mace" th:text="#{landing.preview.phase.mace}">Macerado</span></td>
                             </tr>
                         </tbody>
                     </table>
@@ -547,26 +556,26 @@
 <section id="como-funciona" class="lp-steps">
     <div class="container">
         <div class="text-center mb-5">
-            <div class="section-label" style="color:var(--lp-gold)">Cómo funciona</div>
-            <h2 class="section-title" style="color:#fff">En marcha en menos de 5 minutos</h2>
+            <div class="section-label" style="color:var(--lp-gold)" th:text="#{landing.steps.label}">Cómo funciona</div>
+            <h2 class="section-title" style="color:#fff" th:text="#{landing.steps.title}">En marcha en menos de 5 minutos</h2>
         </div>
         <div class="d-flex flex-column flex-md-row justify-content-center align-items-start gap-4 gap-md-0">
             <div class="text-center" style="max-width:220px;margin:0 auto">
                 <div class="step-num">1</div>
-                <div class="step-title">Registra tu cervecería</div>
-                <p class="step-desc">Elige un plan, crea tu subdominio único y recibe tus credenciales por email en menos de 60 segundos. Sin tarjeta requerida para el trial.</p>
+                <div class="step-title" th:text="#{landing.step1.title}">Registra tu cervecería</div>
+                <p class="step-desc" th:text="#{landing.step1.desc}">Elige un plan, crea tu subdominio único y recibe tus credenciales por email en menos de 60 segundos.</p>
             </div>
             <div class="step-connector"></div>
             <div class="text-center" style="max-width:220px;margin:0 auto">
                 <div class="step-num">2</div>
-                <div class="step-title">Carga tus datos</div>
-                <p class="step-desc">El asistente de bienvenida te guía paso a paso: agrega tus recetas, equipos e inventario inicial. Puedes importar desde Excel si ya tienes datos.</p>
+                <div class="step-title" th:text="#{landing.step2.title}">Carga tus datos</div>
+                <p class="step-desc" th:text="#{landing.step2.desc}">El asistente de bienvenida te guía paso a paso.</p>
             </div>
             <div class="step-connector"></div>
             <div class="text-center" style="max-width:220px;margin:0 auto">
                 <div class="step-num">3</div>
-                <div class="step-title">Gestiona y crece</div>
-                <p class="step-desc">Registra lotes, controla fermentaciones, genera reportes y deja que la IA te ayude a identificar oportunidades de mejora en tus procesos.</p>
+                <div class="step-title" th:text="#{landing.step3.title}">Gestiona y crece</div>
+                <p class="step-desc" th:text="#{landing.step3.desc}">Registra lotes, controla fermentaciones, genera reportes.</p>
             </div>
         </div>
     </div>
@@ -579,22 +588,22 @@
     <div class="container">
         <div class="lp-demo-callout">
             <i class="bi bi-flask" style="font-size:2rem;color:var(--lp-gold);display:block;margin-bottom:.75rem"></i>
-            <h3 style="color:#fff;font-family:'Cinzel',serif;font-size:1.3rem;margin-bottom:.5rem">Prueba el sistema ahora mismo</h3>
-            <p style="color:#94a3b8;font-size:.9rem;margin-bottom:.25rem">Sin registro. Sin tarjeta. Los datos se reinician automáticamente cada 24 horas.</p>
+            <h3 style="color:#fff;font-family:'Cinzel',serif;font-size:1.3rem;margin-bottom:.5rem" th:text="#{landing.demo.title}">Prueba el sistema ahora mismo</h3>
+            <p style="color:#94a3b8;font-size:.9rem;margin-bottom:.25rem" th:text="#{landing.demo.sub}">Sin registro. Sin tarjeta. Los datos se reinician automáticamente cada 24 horas.</p>
             <div class="demo-cred-box">
                 <div class="demo-cred">
-                    <small>Usuario</small>
+                    <small th:text="#{landing.demo.cred.user}">Usuario</small>
                     <strong>demo</strong>
                 </div>
                 <div class="demo-cred">
-                    <small>Contraseña</small>
+                    <small th:text="#{landing.demo.cred.pass}">Contraseña</small>
                     <strong>demo</strong>
                 </div>
             </div>
             <button type="button" class="btn-demo-enter" id="btnDemoEnter">
-                <i class="bi bi-box-arrow-in-right"></i>Entrar al demo
+                <i class="bi bi-box-arrow-in-right"></i><span th:text="#{landing.demo.btn}">Entrar al demo</span>
             </button>
-            <p style="color:#475569;font-size:.78rem;margin-top:.75rem;margin-bottom:0">
+            <p style="color:#475569;font-size:.78rem;margin-top:.75rem;margin-bottom:0" th:text="#{landing.demo.note}">
                 El tenant demo incluye lotes reales, recetas, inventario, BPM y ventas precargados.
             </p>
         </div>
@@ -607,14 +616,14 @@
 <section id="planes-section" class="lp-plans">
     <div class="container">
         <div class="text-center mb-5">
-            <div class="section-label">Precios</div>
-            <h2 class="section-title">Planes para cada etapa de tu cervecería</h2>
-            <p class="section-sub">Sin contrato. Cancela cuando quieras. Cambia de plan en cualquier momento.</p>
+            <div class="section-label" th:text="#{landing.plans.label}">Precios</div>
+            <h2 class="section-title" th:text="#{landing.plans.title}">Planes para cada etapa de tu cervecería</h2>
+            <p class="section-sub" th:text="#{landing.plans.sub}">Sin contrato. Cancela cuando quieras. Cambia de plan en cualquier momento.</p>
         </div>
         <div class="row g-4 justify-content-center" th:if="${planes != null}">
             <div class="col-md-4" th:each="plan, stat : ${planes}">
                 <div class="plan-strip-card" th:classappend="${stat.index == 1 ? ' featured' : ''}">
-                    <div th:if="${stat.index == 1}" class="plan-featured-badge">Más popular</div>
+                    <div th:if="${stat.index == 1}" class="plan-featured-badge" th:text="#{landing.plans.popular}">Más popular</div>
                     <div class="plan-strip-name" th:text="${plan.displayName}">Plan</div>
                     <div class="plan-strip-price">
                         <span th:switch="${plan.name()}">
@@ -625,29 +634,29 @@
                         <span>COP/mes</span>
                     </div>
                     <p class="plan-strip-desc" th:switch="${plan.name()}">
-                        <span th:case="'MACERADO'">Trazabilidad y producción completa</span>
-                        <span th:case="'COCCION'">Lo que necesita una cervecería en crecimiento</span>
-                        <span th:case="*">Acceso total con roles y migración masiva</span>
+                        <span th:case="'MACERADO'" th:text="#{landing.plans.desc.macerado}">Trazabilidad y producción completa</span>
+                        <span th:case="'COCCION'" th:text="#{landing.plans.desc.coccion}">Lo que necesita una cervecería en crecimiento</span>
+                        <span th:case="*" th:text="#{landing.plans.desc.fermentacion}">Acceso total con roles y migración masiva</span>
                     </p>
                     <ul class="plan-strip-features">
-                        <li><i class="bi bi-check-circle-fill"></i>Trazabilidad de lotes</li>
-                        <li><i class="bi bi-check-circle-fill"></i>Recetas e inventario</li>
-                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">Facturas y comercial</span></li>
-                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i>Facturas y comercial</li>
-                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">BPM y reportes</span></li>
-                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i>BPM y reportes</li>
-                        <li th:if="${plan.name() == 'FERMENTACION'}"><i class="bi bi-check-circle-fill"></i>Roles y permisos</li>
-                        <li th:unless="${plan.name() == 'FERMENTACION'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8">Roles y permisos</span></li>
+                        <li><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.plans.feat.trazabilidad}">Trazabilidad de lotes</span></li>
+                        <li><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.plans.feat.recetas}">Recetas e inventario</span></li>
+                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8" th:text="#{landing.plans.feat.comercial}">Facturas y comercial</span></li>
+                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.plans.feat.comercial}">Facturas y comercial</span></li>
+                        <li th:if="${plan.name() == 'MACERADO'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8" th:text="#{landing.plans.feat.bpm}">BPM y reportes</span></li>
+                        <li th:unless="${plan.name() == 'MACERADO'}"><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.plans.feat.bpm}">BPM y reportes</span></li>
+                        <li th:if="${plan.name() == 'FERMENTACION'}"><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.plans.feat.roles}">Roles y permisos</span></li>
+                        <li th:unless="${plan.name() == 'FERMENTACION'}"><i class="bi bi-dash-circle"></i><span style="color:#94a3b8" th:text="#{landing.plans.feat.roles}">Roles y permisos</span></li>
                     </ul>
                     <a th:href="@{/planes}" th:classappend="${stat.index == 1 ? ' btn-plan-strip-primary' : ' btn-plan-strip-outline'}" class="btn-plan-strip">
-                        Elegir <span th:text="${plan.displayName}">plan</span>
+                        <span th:text="#{landing.plans.elegir}">Elegir</span> <span th:text="${plan.displayName}">plan</span>
                     </a>
                 </div>
             </div>
         </div>
         <div class="text-center mt-4">
             <a th:href="@{/planes}" style="color:var(--lp-muted);font-size:.88rem;text-decoration:none">
-                <i class="bi bi-table me-1"></i>Ver comparativa completa de módulos →
+                <i class="bi bi-table me-1"></i><span th:text="#{landing.plans.comparativa}">Ver comparativa completa de módulos</span>
             </a>
         </div>
     </div>
@@ -659,19 +668,19 @@
 <section class="lp-cta-final">
     <div class="container">
         <div class="cta-box">
-            <h2 class="cta-title">Comienza tu prueba gratuita de 14 días</h2>
-            <p class="cta-sub">Acceso completo al plan Fermentación. Sin tarjeta de crédito. Sin compromiso.</p>
+            <h2 class="cta-title" th:text="#{landing.cta.title}">Comienza tu prueba gratuita de 14 días</h2>
+            <p class="cta-sub" th:text="#{landing.cta.sub}">Acceso completo al plan Fermentación. Sin tarjeta de crédito. Sin compromiso.</p>
             <div class="cta-form">
                 <form action="/checkout/trial" method="post" id="ctaTrialForm">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="ctaNombre" class="form-label">Nombre de tu cervecería</label>
+                            <label for="ctaNombre" class="form-label" th:text="#{landing.cta.nombre.label}">Nombre de tu cervecería</label>
                             <input type="text" class="form-control" id="ctaNombre" name="nombreCerveceria"
                                    placeholder="La Cervecería del Valle" required maxlength="200">
                         </div>
                         <div class="col-md-6">
-                            <label for="ctaSub" class="form-label">Subdominio <small style="color:#64748b">(tu URL única)</small></label>
+                            <label for="ctaSub" class="form-label"><span th:text="#{landing.cta.subdom.label}">Subdominio</span> <small style="color:#64748b">(<span th:text="#{landing.cta.subdom.hint}">tu URL única</span>)</small></label>
                             <input type="text" class="form-control" id="ctaSub" name="subdominio"
                                    placeholder="lacerveceria" required maxlength="30" autocomplete="off">
                             <div class="subdom-preview-cta">
@@ -680,17 +689,17 @@
                             <div class="avail-cta" id="ctaAvail"></div>
                         </div>
                         <div class="col-12">
-                            <label for="ctaEmail" class="form-label">Email de acceso</label>
+                            <label for="ctaEmail" class="form-label" th:text="#{landing.cta.email.label}">Email de acceso</label>
                             <input type="email" class="form-control" id="ctaEmail" name="email"
                                    placeholder="hola@tucerveceria.com" required maxlength="200">
                         </div>
                     </div>
                     <button type="submit" class="btn-cta-submit" id="btnCtaSubmit">
-                        <i class="bi bi-gift-fill me-1"></i>Activar prueba gratuita
+                        <i class="bi bi-gift-fill me-1"></i><span th:text="#{landing.cta.submit}">Activar prueba gratuita</span>
                     </button>
                 </form>
                 <div class="cta-trust">
-                    <i class="bi bi-shield-check me-1"></i>Sin tarjeta · Sin cargo · Podés contratar un plan pagado cuando quieras
+                    <i class="bi bi-shield-check me-1"></i><span th:text="#{landing.cta.trust}">Sin tarjeta · Sin cargo · Podés contratar un plan pagado cuando quieras</span>
                 </div>
             </div>
         </div>
@@ -708,20 +717,25 @@
                 <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span>
             </div>
             <div class="d-flex gap-4 flex-wrap justify-content-center">
-                <a th:href="@{/landing}" class="footer-link">Inicio</a>
-                <a href="#features" class="footer-link">Módulos</a>
-                <a th:href="@{/planes}" class="footer-link">Planes</a>
-                <a th:href="@{/login}" class="footer-link">Iniciar sesión</a>
+                <a th:href="@{/landing}" class="footer-link" th:text="#{landing.footer.inicio}">Inicio</a>
+                <a href="#features" class="footer-link" th:text="#{landing.footer.modulos}">Módulos</a>
+                <a th:href="@{/planes}" class="footer-link" th:text="#{landing.footer.planes}">Planes</a>
+                <a th:href="@{/login}" class="footer-link" th:text="#{landing.footer.login}">Iniciar sesión</a>
             </div>
             <div class="footer-copy">
-                © 2026 <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span> · Todos los derechos reservados
+                © 2026 <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span> · <span th:text="#{landing.footer.copy}">Todos los derechos reservados</span>
             </div>
         </div>
     </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script th:attr="nonce=${cspNonce}">
+<script th:attr="nonce=${cspNonce}" th:inline="javascript">
+/*<![CDATA[*/
+var MSG_SUBDOM_MIN   = /*[[#{landing.js.subdom.min}]]*/ 'El subdominio debe tener al menos 3 caracteres.';
+var MSG_SUBDOM_CHECK = /*[[#{landing.js.subdom.check}]]*/ 'Verificá la disponibilidad del subdominio antes de continuar.';
+var MSG_SPINNER      = /*[[#{landing.js.spinner}]]*/ 'Creando tu cuenta…';
+/*]]>*/
 document.addEventListener('DOMContentLoaded', function () {
 
     // ── Demo login buttons ────────────────────────────────────────────────────
@@ -796,17 +810,17 @@ document.addEventListener('DOMContentLoaded', function () {
             var sub = document.getElementById('ctaSub').value;
             if (sub.length < 3) {
                 e.preventDefault();
-                alert('El subdominio debe tener al menos 3 caracteres.');
+                alert(MSG_SUBDOM_MIN);
                 return;
             }
             if (!ctaAvail && sub.length >= 3) {
                 e.preventDefault();
-                alert('Verificá la disponibilidad del subdominio antes de continuar.');
+                alert(MSG_SUBDOM_CHECK);
                 return;
             }
             var btn = document.getElementById('btnCtaSubmit');
             btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creando tu cuenta…';
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + MSG_SPINNER;
         });
     }
 });

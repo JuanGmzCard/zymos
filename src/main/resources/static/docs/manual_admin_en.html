@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration · ZYMOS Manual</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 268px; flex-shrink: 0; background: #0f172a; min-height: 100vh; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+  .sb-brand { padding: 20px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back { display: block; padding: 10px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; padding: 8px 20px 4px; }
+  nav a { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #94a3b8; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; line-height: 1.4; }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #475569 100%); margin: 0 -48px 0; padding: 48px 48px 40px; }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  .content { padding-top: 44px; }
+  h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; scroll-margin-top: 24px; }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; font-size: 0.83rem; color: #475569; font-family: 'Fira Code', Consolas, monospace; }
+
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 20px 0; display: flex; gap: 12px; font-size: 0.88rem; line-height: 1.6; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li { counter-increment: step; padding: 10px 14px 10px 48px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; position: relative; font-size: 0.9rem; color: #334155; line-height: 1.55; }
+  .steps li::before { content: counter(step); position: absolute; left: 14px; top: 10px; width: 22px; height: 22px; background: #475569; color: white; border-radius: 50%; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th { background: #f8fafc; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  .sub-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  /* Role permission grid */
+  .perm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin: 12px 0; }
+  .perm-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; }
+  .perm-card .pc-name { font-size: 0.8rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .perm-card .pc-ops { font-size: 0.72rem; color: #64748b; }
+  .perm-check { color: #059669; }
+  .perm-x { color: #dc2626; }
+
+  /* Color swatches */
+  .color-row { display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap; }
+  .color-swatch { width: 32px; height: 32px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.08); flex-shrink: 0; }
+  .color-label { font-size: 0.8rem; color: #64748b; align-self: center; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Administration</div>
+  </div>
+  <a href="index_en.html" class="sb-back">← All manuals</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Users</div>
+      <a href="#usuarios">User management</a>
+      <a href="#crear-usuario">Create a user</a>
+      <a href="#cambiar-rol">Change role</a>
+      <a href="#password">Passwords</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Roles &amp; Permissions</div>
+      <a href="#roles">System roles</a>
+      <a href="#roles-custom">Custom roles</a>
+      <a href="#modulos">Permissions by module</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Brewery</div>
+      <a href="#branding">Branding &amp; colors</a>
+      <a href="#temperatura">Temperature unit</a>
+      <a href="#idioma">Interface language</a>
+      <a href="#estilos">Beer styles</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Equipment &amp; Assets</div>
+      <a href="#equipos">Equipment</a>
+      <a href="#mantenimientos">Maintenance</a>
+      <a href="#barriles">Barrels &amp; kegs</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">System</div>
+      <a href="#plan">Plan &amp; limits</a>
+      <a href="#logs">Access logs</a>
+      <a href="#migracion">Bulk import</a>
+      <a href="#moneda">Currency &amp; pricing</a>
+      <a href="#whatsapp">WhatsApp notifications</a>
+      <a href="#demo">Demo tenant</a>
+      <a href="#planes">Plans &amp; payments</a>
+    </div>
+  </nav>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">User manual · Module</div>
+    <h1>⚙️ Administration</h1>
+    <p>Configure your brewery in ZYMOS: users and custom roles, branding with your brand colors, production equipment, barrels and all system settings.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Admin only</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Usuarios -->
+    <h2 id="usuarios">User management</h2>
+    <p>Users are the people who have access to your ZYMOS instance. Each user has a username, password and a role that determines which modules they can access.</p>
+    <p>Access from <strong>Admin → Users</strong>. The list shows all users with their username, role, status (active/inactive) and last login date.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Self-protection</strong>
+        ZYMOS does not allow you to delete, deactivate or change the role of your own user. This prevents you from accidentally locking yourself out of the system. These actions are only possible for other users.
+      </div>
+    </div>
+
+    <!-- Crear usuario -->
+    <h2 id="crear-usuario">Create a new user</h2>
+    <ol class="steps">
+      <li>Go to Admin → Users → <strong>"+ New user"</strong>.</li>
+      <li>Define the username (unique, no spaces) and the initial password (minimum 6 characters).</li>
+      <li>Select the user's <strong>role</strong> (see the Roles section below).</li>
+      <li>Save. The user can log in immediately.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        After creating the user, ask them to change their password from their profile (user icon in the top bar → "Change password"). The initial password is temporary.
+      </div>
+    </div>
+
+    <!-- Cambiar rol -->
+    <h2 id="cambiar-rol">Assign and change roles</h2>
+    <p>To change a user's role, edit them and select the new role. The change is immediate — the next time the user logs in they will have the new permissions (or in the active session if they reload the page).</p>
+
+    <!-- Password -->
+    <h2 id="password">Reset passwords</h2>
+    <p>If a user forgets their password, the administrator can reset it from the user's edit screen. The new password must be at least 6 characters.</p>
+    <p>Users can also change their own password from their profile, as long as they know their current password.</p>
+
+    <!-- Roles -->
+    <h2 id="roles">System roles</h2>
+    <p>ZYMOS includes 6 predefined ("system") roles that cannot be deleted:</p>
+
+    <table class="field-table">
+      <thead><tr><th>Role</th><th>Main access</th><th>Admin?</th></tr></thead>
+      <tbody>
+        <tr><td>Administrator</td><td>Full access to all modules and the Admin section.</td><td>Yes</td></tr>
+        <tr><td>Production</td><td>Traceability, Recipes, Inventory, GMP, Tasks.</td><td>No</td></tr>
+        <tr><td>Inventory</td><td>Inventory, GMP.</td><td>No</td></tr>
+        <tr><td>Billing</td><td>Commercial (invoices, sales, PO), GMP.</td><td>No</td></tr>
+        <tr><td>Equipment</td><td>Equipment and maintenance, GMP.</td><td>No</td></tr>
+        <tr><td>Human Resources</td><td>GMP and Tasks.</td><td>No</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Roles custom -->
+    <h2 id="roles-custom">Custom roles (RBAC)</h2>
+    <p>If the predefined roles don't fit your brewery's structure, you can create fully custom roles with granular permissions per module.</p>
+
+    <ol class="steps">
+      <li>Go to Admin → <strong>Roles</strong> → <strong>"+ New role"</strong>.</li>
+      <li>Define the role name (e.g. "Head of Production", "Quality Supervisor").</li>
+      <li>For each module, check which operations it can perform: View, Create, Edit, Delete.</li>
+      <li>Save the role. You can now assign it to users from each user's edit screen.</li>
+    </ol>
+
+    <!-- Módulos/permisos -->
+    <h2 id="modulos">Permissions by module</h2>
+    <p>Each module has 4 independent permission levels. A user can, for example, view recipes but not edit them, or create batches but not delete them.</p>
+
+    <div class="perm-grid">
+      <div class="perm-card"><div class="pc-name">🍺 Traceability</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+      <div class="perm-card"><div class="pc-name">📦 Inventory</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+      <div class="perm-card"><div class="pc-name">📖 Recipes</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+      <div class="perm-card"><div class="pc-name">🛡️ GMP</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+      <div class="perm-card"><div class="pc-name">💼 Commercial</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+      <div class="perm-card"><div class="pc-name">📊 Reports</div><div class="pc-ops">View</div></div>
+      <div class="perm-card"><div class="pc-name">✅ Tasks</div><div class="pc-ops">View · Create · Edit · Delete</div></div>
+    </div>
+
+    <!-- Branding -->
+    <h2 id="branding">Brewery branding &amp; colors</h2>
+    <p>Customize the appearance of ZYMOS with your brand's colors and logo. Changes are reflected immediately in the interface for all users.</p>
+    <p>Go to Admin → <strong>My brewery</strong> (or Admin → Tenants → Edit).</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>Your brewery name. Appears in the navigation bar, login screen and PDF documents.</td></tr>
+        <tr><td>Tagline</td><td>Short slogan. Appears below the name on the login screen.</td></tr>
+        <tr><td>Logo URL</td><td>URL or path of the logo. If left blank, ZYMOS shows a default droplet icon. Recommended formats: transparent PNG, max 240×90px.</td></tr>
+        <tr><td>Navbar color</td><td>Background color of the navigation bar (hex, e.g. <code>#242E0D</code>).</td></tr>
+        <tr><td>Primary color</td><td>Main color for buttons, table headers and action elements.</td></tr>
+        <tr><td>Accent color</td><td>Secondary color for details and hover states.</td></tr>
+        <tr><td>Headings font</td><td>Google Fonts font for titles (e.g. <code>Cinzel</code>, <code>Playfair Display</code>).</td></tr>
+        <tr><td>Body font</td><td>Font for body text (e.g. <code>Raleway</code>, <code>Roboto</code>).</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Clear cache after editing</strong>
+        If you edit the branding directly in the database (without using the ZYMOS form), click <strong>"Clear cache"</strong> in Admin → Tenants for the changes to take effect without restarting the server.
+      </div>
+    </div>
+
+    <!-- Temperatura -->
+    <h2 id="temperatura">Temperature unit</h2>
+    <p>ZYMOS supports temperatures in <strong>Celsius (°C)</strong> or <strong>Fahrenheit (°F)</strong>. The setting affects all forms and reports for the tenant.</p>
+    <p>Change the unit in Admin → My brewery → <strong>"Temperature unit"</strong> field.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        ZYMOS <strong>always stores in Celsius</strong> internally. When switching from °C to °F (or vice versa), historical data will be automatically displayed converted — there is no data loss or need to re-enter values.
+      </div>
+    </div>
+
+    <!-- Idioma -->
+    <h2 id="idioma">Interface language</h2>
+    <p>ZYMOS is available in <strong>Spanish</strong> and <strong>English</strong>. The language is persisted per user via a cookie and does not affect other users of the same tenant.</p>
+    <p>To change the language, click <strong>ES</strong> or <strong>EN</strong> in the top navigation bar (upper right corner of the side panel).</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>User manuals</strong> are also available in English. The help button (book icon in the bar) automatically detects the active language and opens the corresponding version.
+      </div>
+    </div>
+
+    <!-- Estilos -->
+    <h2 id="estilos">Beer styles</h2>
+    <p>Beer styles (American IPA, Stout, Saison, etc.) are the types that appear in the selector of the recipe form. You can add, edit and deactivate styles from Admin → <strong>Beer types</strong>.</p>
+    <p>ZYMOS includes a base list of BJCP styles on initialization. You can add your own or regional styles according to the beers you produce.</p>
+
+    <!-- Equipos -->
+    <h2 id="equipos">Equipment</h2>
+    <p>Register all production equipment in your brewery: fermenters, kettles, chillers, pumps, etc. Fermenters are especially important because they are assigned to production batches.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Name <span class="req">*</span></td><td>Equipment identifier (e.g. "Fermenter #1", "Main kettle").</td></tr>
+        <tr><td>Type</td><td>Category: Fermenter, Kettle/Pot, Chiller, Barrel/Keg, Pump, Other.</td></tr>
+        <tr><td>Capacity</td><td>Equipment capacity (liters for fermenters, kW for kettles, etc.).</td></tr>
+        <tr><td>Status</td><td>Available, In use, Under maintenance, Out of service.</td></tr>
+        <tr><td>Acquisition date</td><td>To calculate years of useful life and schedule maintenance.</td></tr>
+        <tr><td>Notes</td><td>Brand, model, serial number, observations.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        A fermenter can only be assigned to one active batch at a time. ZYMOS shows only available fermenters (without active batches assigned) in the traceability form selector.
+      </div>
+    </div>
+
+    <!-- Mantenimientos -->
+    <h2 id="mantenimientos">Maintenance</h2>
+    <p>Schedule and record preventive and corrective maintenance for your equipment. Upcoming maintenance generates alerts on the dashboard.</p>
+
+    <ol class="steps">
+      <li>Go to Admin → Equipment → select a piece of equipment → <strong>"Maintenance"</strong> tab.</li>
+      <li>Click <strong>"+ Log maintenance"</strong>.</li>
+      <li>Fill in type (preventive/corrective), description, date, cost and responsible technician.</li>
+      <li>Save. If the equipment status is "Under maintenance", remember to change it back to "Available" when done.</li>
+    </ol>
+
+    <!-- Barriles -->
+    <h2 id="barriles">Barrels &amp; kegs</h2>
+    <p>The barrels module tracks the inventory of returnable containers (kegs, wooden barrels, growlers). Register each barrel with its capacity, status and current location.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Status</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Available</td><td>Clean, empty and ready to be filled.</td></tr>
+        <tr><td>Full</td><td>Filled with beer, in storage or in transit to the customer.</td></tr>
+        <tr><td>At customer</td><td>Delivered to the customer. Pending return.</td></tr>
+        <tr><td>Dirty</td><td>Returned by the customer, pending cleaning.</td></tr>
+        <tr><td>Under repair</td><td>Physical damage, in the workshop.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Plan -->
+    <h2 id="plan">Plan &amp; limits</h2>
+    <p>Your ZYMOS instance has limits based on the contracted plan. You can view the plan status in Admin → <strong>My plan</strong>:</p>
+    <ul>
+      <li><strong>Expiry date:</strong> when the plan expires, ZYMOS shows a warning page. You have 7 grace days before access is blocked.</li>
+      <li><strong>Batch limit:</strong> maximum number of registered production batches. An alert appears at 90% of the limit.</li>
+      <li><strong>User limit:</strong> maximum number of user accounts. An alert appears at 90%.</li>
+    </ul>
+
+    <div class="callout danger">
+      <div class="callout-icon">🔴</div>
+      <div class="callout-body">
+        <strong>Expired plan</strong>
+        If the plan expires and 7 grace days pass without renewal, all users (except the administrator) will see a blocked screen with instructions to renew. Contact the ZYMOS team to renew the plan.
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <h2 id="logs">Access logs</h2>
+    <p>ZYMOS records all system accesses. Go to Admin → <strong>Access logs</strong> to see who logged in, from which IP and when. Useful for security auditing and detecting unauthorized access.</p>
+
+    <!-- Importación -->
+    <h2 id="migracion">Bulk data import</h2>
+    <p>If you have existing data in Excel or another system, you can bulk-import it into ZYMOS without entering it one by one. Go to Admin → <strong>Data import</strong>.</p>
+
+    <div class="sub-section">
+      <h4>Modules available for import</h4>
+      <ul style="margin:0; padding-left:18px;">
+        <li style="color:#334155; margin-bottom:5px;">Warehouse (ingredient inventory)</li>
+        <li style="color:#334155; margin-bottom:5px;">Equipment</li>
+        <li style="color:#334155; margin-bottom:5px;">Commercial (suppliers, invoices and items)</li>
+        <li style="color:#334155; margin-bottom:5px;">Production (recipes, ingredients, mash steps, additions and batches)</li>
+        <li style="color:#334155; margin-bottom:5px;">Customers</li>
+        <li style="color:#334155; margin-bottom:5px;">Sales and sale items</li>
+        <li style="color:#334155; margin-bottom:5px;">Barrels</li>
+        <li style="color:#334155; margin-bottom:5px;">Purchase orders</li>
+        <li style="color:#334155; margin-bottom:5px;">Batch tracking</li>
+        <li style="color:#334155; margin-bottom:5px;">Catalogs (beer types and categories)</li>
+        <li style="color:#334155;">Equipment maintenance</li>
+      </ul>
+    </div>
+
+    <ol class="steps">
+      <li>Download the Excel template for the module you want to import (button "Download template").</li>
+      <li>Fill in the template with your data. The "Instructions" sheet inside the file explains the format for each column.</li>
+      <li>Upload the file and click <strong>"Import"</strong>.</li>
+      <li>ZYMOS processes the file row by row and shows a summary with successful rows and any errors found.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Recommended import order</strong>
+        Import catalogs first (beer types), then warehouse and equipment, then production (recipes first, batches after). Sales and barrels modules should be imported after production because they reference batches by their code.
+      </div>
+    </div>
+
+    <!-- Moneda -->
+    <h2 id="moneda">Currency &amp; pricing format</h2>
+    <p>Each tenant can configure the currency symbol that appears in invoices, sales, profitability reports and Excel and PDF exports.</p>
+    <ol class="steps">
+      <li>Go to Admin → <strong>Brewery</strong> → Edit tenant data.</li>
+      <li>In the <strong>"Currency symbol"</strong> field enter your local currency symbol (e.g. <code>$</code>, <code>COP</code>, <code>€</code>, <code>MXN</code>).</li>
+      <li>Save and clear the cache with the <strong>"Clear cache"</strong> button in the tenant list.</li>
+    </ol>
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">The currency symbol is visual only — ZYMOS does not convert values between currencies. All calculations are performed in the currency you configure.</div>
+    </div>
+
+    <!-- WhatsApp -->
+    <h2 id="whatsapp">WhatsApp notifications</h2>
+    <p>ZYMOS can send automatic alerts via WhatsApp to the contacts you define. You can register multiple contacts and subscribe each one only to the alert types relevant to their role (the purchasing manager receives low-stock alerts; the brewmaster receives batch phase changes).</p>
+    <p>Access from <strong>Admin → WhatsApp</strong>.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Requirement: Twilio account</strong>
+        WhatsApp notifications are sent via <strong>Twilio WhatsApp Business API</strong>. The environment variables <code>TWILIO_ACCOUNT_SID</code> and <code>TWILIO_AUTH_TOKEN</code> are required. If not configured, the system works in <strong>simulation mode</strong>: messages are logged but not sent.
+      </div>
+    </div>
+
+    <h3>Available alert types</h3>
+    <table class="field-table">
+      <thead><tr><th>Type</th><th>When it is sent</th></tr></thead>
+      <tbody>
+        <tr><td>Low stock</td><td>Daily review: ingredients whose stock is below the configured minimum.</td></tr>
+        <tr><td>Expiry</td><td>Daily review: ingredients expiring in the next 30 days.</td></tr>
+        <tr><td>Batch phase change</td><td>Immediately when a batch advances to the next phase (e.g. from Brew day to Fermentation).</td></tr>
+        <tr><td>Pending maintenance</td><td>Daily review: equipment in "Under maintenance" status.</td></tr>
+        <tr><td>GMP health alert</td><td>Immediately when an employee reports symptoms and requires admin authorization.</td></tr>
+        <tr><td>Task assigned</td><td>Immediately when a task is created or edited with an assigned user.</td></tr>
+        <tr><td>Plan expiring</td><td>Daily review: when the plan is expired or about to expire.</td></tr>
+        <tr><td>Monthly summary</td><td>On the first day of each month with the previous month's production summary.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Add a WhatsApp contact</h3>
+    <ol class="steps">
+      <li>Go to Admin → <strong>WhatsApp</strong> → <strong>"+ New contact"</strong>.</li>
+      <li>Enter the contact's name and phone number in <strong>E.164 format</strong> (with country code, e.g. <code>+13001234567</code>).</li>
+      <li>Check the boxes for the alert types you want to subscribe this contact to. You can select one or multiple types.</li>
+      <li>Save. The contact will appear in the list with active subscriptions.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>The number must have accepted Twilio messages</strong>
+        In the Twilio sandbox (test environment), the recipient must first send the message <code>join &lt;sandbox-keyword&gt;</code> to the Twilio number before they can receive messages. In production with a verified number this is not necessary.
+      </div>
+    </div>
+
+    <h3>Manage existing contacts</h3>
+    <ul>
+      <li><strong>Activate / deactivate:</strong> use the toggle button in the list to temporarily suspend notifications to a contact without deleting it.</li>
+      <li><strong>Edit subscriptions:</strong> click "Edit" to change the contact's number or subscriptions.</li>
+      <li><strong>Delete:</strong> permanently deletes the contact and all their subscriptions.</li>
+    </ul>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        If the banner <em>"Simulation mode active"</em> appears in the contact list, it means the Twilio credentials are not configured. Messages are logged in the server log but do not reach WhatsApp.
+      </div>
+    </div>
+
+    <!-- Demo -->
+    <h2 id="demo">Demo tenant</h2>
+    <p>If your system includes a demo tenant (<code>demo</code>), you can reset it from the tenant list. The demo tenant allows potential customers to explore the system with realistic data without affecting your real production.</p>
+
+    <h3>Reset the demo tenant</h3>
+    <ol class="steps">
+      <li>Go to Admin → <strong>Tenants</strong>.</li>
+      <li>Find the <code>demo</code> tenant in the list.</li>
+      <li>Click the <strong>"Reset Demo"</strong> button.</li>
+      <li>ZYMOS deletes all demo tenant data and re-seeds it with a realistic dataset: batches at different phases, ingredients, suppliers, customers and a sample sale. The <code>demo</code> / <code>demo</code> user is automatically restored.</li>
+    </ol>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">The reset deletes all current data in the <code>demo</code> tenant. This operation cannot be undone. It does not affect any other tenant.</div>
+    </div>
+
+    <!-- Planes y pagos -->
+    <h2 id="planes">Plans &amp; self-service payments</h2>
+    <p>ZYMOS includes a checkout system that allows new customers to subscribe to a plan and self-provision without manual intervention from the sales team.</p>
+
+    <h3>Available plans</h3>
+    <table class="field-table">
+      <thead><tr><th>Plan</th><th>Included modules</th></tr></thead>
+      <tbody>
+        <tr><td>Mash</td><td>Traceability, Recipes, Inventory, Equipment, GMP, AI Chat</td></tr>
+        <tr><td>Boil</td><td>Everything in Mash + Commercial (invoices, sales, PO), Barrels, Reports, Tasks</td></tr>
+        <tr><td>Fermentation</td><td>Everything in Boil + Custom RBAC roles, Bulk import</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Checkout flow for new customers</h3>
+    <ol class="steps">
+      <li>The new customer visits <code>/planes</code> and selects their plan.</li>
+      <li>They fill in their brewery name and email. ZYMOS automatically generates a unique subdomain (e.g. <code>mybrewery.zymos.app</code>).</li>
+      <li>They are redirected to the payment gateway (MercadoPago). Once payment is approved, ZYMOS creates the tenant, roles, default beer styles and sends a welcome email with login credentials.</li>
+      <li>The new tenant can log in immediately at their subdomain.</li>
+    </ol>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">If the system does not have a MercadoPago token configured (MP_ACCESS_TOKEN), the checkout works in <strong>simulation mode</strong>: payment is automatically approved for testing. Useful in development and demo environments.</div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

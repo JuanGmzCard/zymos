@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commercial & Finance · ZYMOS Manual</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; display: flex; min-height: 100vh; }
+
+  .sidebar { width: 268px; flex-shrink: 0; background: #0f172a; min-height: 100vh; position: sticky; top: 0; height: 100vh; overflow-y: auto; display: flex; flex-direction: column; }
+  .sb-brand { padding: 20px 20px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back { display: block; padding: 10px 20px; font-size: 0.77rem; color: #64748b; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,0.04); transition: color 0.2s; }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #475569; padding: 8px 20px 4px; }
+  nav a { display: block; padding: 6px 20px 6px 28px; font-size: 0.82rem; color: #94a3b8; text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; line-height: 1.4; }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #d97706 100%); margin: 0 -48px 0; padding: 48px 48px 40px; }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge { font-size: 0.7rem; font-weight: 600; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  .content { padding-top: 44px; }
+  h2 { font-size: 1.25rem; font-weight: 800; color: #0f172a; margin-top: 48px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #e2e8f0; scroll-margin-top: 24px; }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 1px 6px; font-size: 0.83rem; color: #d97706; font-family: 'Fira Code', Consolas, monospace; }
+
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 20px 0; display: flex; gap: 12px; font-size: 0.88rem; line-height: 1.6; }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li { counter-increment: step; padding: 10px 14px 10px 48px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; position: relative; font-size: 0.9rem; color: #334155; line-height: 1.55; }
+  .steps li::before { content: counter(step); position: absolute; left: 14px; top: 10px; width: 22px; height: 22px; background: #d97706; color: white; border-radius: 50%; font-size: 0.72rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th { background: #f8fafc; color: #64748b; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; padding: 8px 12px; text-align: left; border-bottom: 2px solid #e2e8f0; }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  .sub-section { background: white; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin: 20px 0; }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  /* Module nav pills */
+  .module-nav { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0 28px; }
+  .module-pill { padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: white; border: 1px solid #e2e8f0; color: #334155; text-decoration: none; transition: all 0.15s; }
+  .module-pill:hover { border-color: #d97706; color: #d97706; }
+
+  /* Status badges */
+  .status-grid { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .sb { padding: 4px 12px; border-radius: 20px; font-size: 0.77rem; font-weight: 600; }
+  .sb-recibida  { background: #dbeafe; color: #1d4ed8; }
+  .sb-verif     { background: #fef3c7; color: #92400e; }
+  .sb-pagada    { background: #d1fae5; color: #065f46; }
+  .sb-vencida   { background: #fee2e2; color: #991b1b; }
+  .sb-pendiente { background: #f3e8ff; color: #7e22ce; }
+  .sb-progreso  { background: #dbeafe; color: #1d4ed8; }
+  .sb-completa  { background: #d1fae5; color: #065f46; }
+  .sb-cancelada { background: #f1f5f9; color: #64748b; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Commercial &amp; Finance</div>
+  </div>
+  <a href="index_en.html" class="sb-back">← All manuals</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Modules</div>
+      <a href="#vision-general">Overview</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Suppliers &amp; Purchasing</div>
+      <a href="#proveedores">Suppliers</a>
+      <a href="#facturas">Supplier invoices</a>
+      <a href="#facturas-iva">VAT on invoices</a>
+      <a href="#adjuntos">Attachments</a>
+      <a href="#analizador-ia">AI Analyzer 🤖</a>
+      <a href="#ordenes">Purchase orders</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Sales</div>
+      <a href="#clientes">Customers</a>
+      <a href="#ventas">Sales</a>
+      <a href="#estados-venta">Sale statuses</a>
+      <a href="#cotizaciones">Quotes</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Export</div>
+      <a href="#exportar">PDF and Excel</a>
+    </div>
+  </nav>
+</aside>
+
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">User manual · Module</div>
+    <h1>💼 Commercial &amp; Finance</h1>
+    <p>Manage your brewery's entire financial operation: supplier invoices with line items and per-line VAT, beer sales to customers, purchase orders, and accounts receivable tracking.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Billing</span>
+      <span class="role-badge">Inventory</span>
+      <span class="role-badge">Administrator</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <h2 id="vision-general">Overview</h2>
+    <p>The Commercial module groups five sub-areas that cover the complete money flow in the brewery:</p>
+    <div class="module-nav">
+      <a href="#proveedores" class="module-pill">🏭 Suppliers</a>
+      <a href="#facturas" class="module-pill">🧾 Invoices</a>
+      <a href="#ordenes" class="module-pill">📋 Purchase orders</a>
+      <a href="#clientes" class="module-pill">👥 Customers</a>
+      <a href="#ventas" class="module-pill">💰 Sales</a>
+    </div>
+    <p>Supplier invoices are connected to inventory: when you register an invoice with ingredients, the stock is updated automatically. Sales are connected to production batches: each sale references the batch and packaging format.</p>
+
+    <!-- Proveedores -->
+    <h2 id="proveedores">Suppliers</h2>
+    <p>Register your brewery's suppliers (maltsters, hop merchants, chemical distributors, etc.) so you can reference them in invoices and purchase orders.</p>
+    <ol class="steps">
+      <li>Go to Commercial → <strong>Suppliers</strong> → <strong>"+ New supplier"</strong>.</li>
+      <li>Fill in name, tax ID, email, phone, address, and notes.</li>
+      <li>Save. The supplier becomes available in the invoice and PO forms.</li>
+    </ol>
+    <p>To deactivate a supplier (hide it from forms without deleting it), edit it and disable the <strong>Active</strong> field. Historical records that reference it remain intact.</p>
+
+    <!-- Facturas -->
+    <h2 id="facturas">Supplier invoices</h2>
+    <p>Register the invoices you receive from your ingredient suppliers. Each invoice can have multiple items (lines), each with its own category, quantity, unit price, and individual VAT.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Invoice number <span class="req">*</span></td><td>Number or code of the supplier's invoice.</td></tr>
+        <tr><td>Supplier</td><td>Reference to the registered supplier. You can also type the name freely if the supplier is not in the system.</td></tr>
+        <tr><td>Invoice date <span class="req">*</span></td><td>Issue date of the invoice (not the payment date).</td></tr>
+        <tr><td>Due date</td><td>Payment deadline. Appears in dashboard alerts when it is approaching.</td></tr>
+        <tr><td>Status</td><td>Invoice status: Received, Verified, Paid, Overdue.</td></tr>
+        <tr><td>VAT included</td><td>Indicates whether the item unit prices already include VAT. See the VAT section below.</td></tr>
+        <tr><td>Notes</td><td>Free notes about the invoice.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Invoice items</h3>
+    <p>Add one row for each line of the invoice. Click <strong>"+ Add item"</strong> for each product or service billed.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Type</td><td>Ingredient (for raw materials) or Equipment (for machinery and tools).</td></tr>
+        <tr><td>Category</td><td>For ingredients: Malt, Hop, Yeast, Clarifier, Chemical, Packaging. For equipment: Fermenter, Kettle, Chiller, etc.</td></tr>
+        <tr><td>Name</td><td>Item name. As you type, the system suggests inventory ingredients based on the selected category.</td></tr>
+        <tr><td>Quantity</td><td>Quantity purchased in the corresponding ingredient's unit.</td></tr>
+        <tr><td>Unit price</td><td>Price per unit. If the "VAT included" field is active, the system extracts the price without VAT automatically.</td></tr>
+        <tr><td>VAT %</td><td>VAT percentage for this specific item (e.g. 19%). Can differ on each line.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Automatic inventory update</strong>
+        When you save the invoice, ZYMOS automatically adds the quantity of each item to the corresponding ingredient's stock (if the item name matches an inventory ingredient). When you edit the invoice, the system reverses the previous movement and applies the new one. When you delete the invoice, the stock is restored.
+      </div>
+    </div>
+
+    <!-- IVA -->
+    <h2 id="facturas-iva">VAT handling</h2>
+    <p>ZYMOS supports two VAT situations in supplier invoices:</p>
+
+    <div class="sub-section">
+      <h4>Prices without VAT (default behavior)</h4>
+      <p style="font-size:0.88rem; color:#475569; margin:0;">The "VAT included" field is <strong>disabled</strong>. The unit prices you enter are the base prices without VAT. The system calculates the VAT by adding <code>price × (VAT% / 100)</code> for each line. Invoice total = subtotal + total VAT.</p>
+    </div>
+
+    <div class="sub-section">
+      <h4>Prices with VAT included</h4>
+      <p style="font-size:0.88rem; color:#475569; margin:0;">Enable the "VAT included" field when your supplier's prices already include taxes (consumer-facing price). ZYMOS automatically extracts the price without VAT: <code>price_without_vat = price_with_vat / (1 + VAT%/100)</code>. This option is common in retail invoices.</p>
+    </div>
+
+    <!-- Adjuntos -->
+    <h2 id="adjuntos">Invoice attachments</h2>
+    <p>You can attach the PDF or image of each invoice directly in ZYMOS to maintain a digital backup of your accounting documents.</p>
+    <ol class="steps">
+      <li>Open the invoice detail.</li>
+      <li>In the <strong>"Attachments"</strong> section, click <strong>"Upload file"</strong>.</li>
+      <li>Select the PDF or image (JPG, PNG) from your computer. Maximum size: 10 MB.</li>
+      <li>The file is linked to the invoice and you can download or delete it at any time.</li>
+    </ol>
+
+    <!-- Analizador IA -->
+    <h2 id="analizador-ia">AI Invoice Analyzer 🤖</h2>
+    <p>The invoice analyzer uses artificial intelligence (Claude Vision) to read the PDF or image of your invoice and automatically pre-fill the form fields: supplier, invoice number, date, and items with their quantities and prices.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requires AI configuration.</strong> The "Analyze document" button only appears when the administrator has configured the Anthropic API key (ANTHROPIC_API_KEY).</div>
+    </div>
+
+    <ol class="steps">
+      <li>Go to Commercial → Invoices → <strong>"+ New invoice"</strong>.</li>
+      <li>Click the <strong>"Analyze document"</strong> button at the top of the form.</li>
+      <li>Select the PDF or image of the invoice from your computer (supported formats: PDF, JPG, PNG). Recommended maximum size: 10 MB.</li>
+      <li>The AI processes the document and pre-fills the detected fields: invoice number, supplier, date, and items with quantities and prices.</li>
+      <li>Review and correct the fields if necessary. The AI can make errors with low-quality documents or unusual formats.</li>
+      <li>Save the invoice normally.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">The analyzer works best with digital PDFs (not scanned). For scanned images, make sure the resolution is at least 150 DPI for best results.</div>
+    </div>
+
+    <!-- Órdenes de compra -->
+    <h2 id="ordenes">Purchase orders</h2>
+    <p>Create purchase orders to request ingredients from your suppliers and keep a record of pending orders.</p>
+    <ol class="steps">
+      <li>Go to Commercial → <strong>Purchase orders</strong> → <strong>"+ New PO"</strong>.</li>
+      <li>Select the supplier, issue date, and expected delivery date.</li>
+      <li>Add the requested items (name, quantity, estimated price).</li>
+      <li>Save the PO. You can print it as a PDF to send to the supplier.</li>
+    </ol>
+    <p>Purchase orders have statuses: <strong>Pending</strong>, <strong>In progress</strong>, <strong>Completed</strong>, and <strong>Cancelled</strong>. When the goods arrive, close the PO by changing its status to Completed and manually adjust the inventory stock.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        Purchase orders <strong>do not update the inventory automatically</strong>. You must manually adjust the ingredient stock when goods arrive (by editing the ingredient in Inventory).
+      </div>
+    </div>
+
+    <!-- Clientes -->
+    <h2 id="clientes">Customers</h2>
+    <p>The customer directory stores information about the bars, restaurants, distributors, and end consumers that buy your beer.</p>
+
+    <table class="field-table">
+      <thead><tr><th>Field</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>Name / Business name <span class="req">*</span></td><td>Customer name or company.</td></tr>
+        <tr><td>Tax ID</td><td>Tax identification number.</td></tr>
+        <tr><td>Email</td><td>For sending invoices and notifications.</td></tr>
+        <tr><td>Phone</td><td>Contact number.</td></tr>
+        <tr><td>Address</td><td>Delivery address.</td></tr>
+        <tr><td>City</td><td>Customer city.</td></tr>
+        <tr><td>Notes</td><td>Preferences, payment terms, special notes.</td></tr>
+      </tbody>
+    </table>
+
+    <!-- Ventas -->
+    <h2 id="ventas">Sales</h2>
+    <p>Record each beer sale. A sale can include multiple items from different batches and packaging formats.</p>
+
+    <ol class="steps">
+      <li>Go to Commercial → <strong>Sales</strong> → <strong>"+ New sale"</strong>.</li>
+      <li>Select the customer (or type the name if not registered).</li>
+      <li>Set the sale date and delivery date.</li>
+      <li>Add items: select the batch, packaging format (330ml bottle, 20L keg, etc.), quantity, and price.</li>
+      <li>Save. The sale is created with status <strong>Pending</strong>.</li>
+    </ol>
+
+    <h3 id="estados-venta">Sale statuses</h3>
+    <div class="status-grid">
+      <span class="sb sb-pendiente">Pending</span>
+      <span class="sb sb-progreso">In progress</span>
+      <span class="sb sb-completa">Completed</span>
+      <span class="sb sb-vencida">Overdue</span>
+      <span class="sb sb-cancelada">Cancelled</span>
+    </div>
+    <p>Update the sale status as it progresses: <strong>Pending</strong> when created, <strong>In progress</strong> when being prepared, <strong>Completed</strong> when delivered and paid.</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Packaging formats</strong>
+        When selecting a batch, ZYMOS shows the packaging formats configured for that batch (e.g. "48 × 330ml Bottle | 2 × 20L Keg"). If the batch has no packaging destination configured, you can choose any format from the standard list.
+      </div>
+    </div>
+
+    <!-- Cotizaciones -->
+    <h2 id="cotizaciones">Quotes</h2>
+    <p>Generate quotes for customers who need a price proposal before confirming a purchase. Quotes have a configurable validity period (15 days by default).</p>
+    <ol class="steps">
+      <li>Go to Commercial → <strong>Sales</strong> → <strong>"New quote"</strong>.</li>
+      <li>Fill in the same fields as a sale (customer, items, prices).</li>
+      <li>Set the quote expiration date (or leave the default value).</li>
+      <li>Download the quote PDF to send to the customer.</li>
+      <li>If the customer accepts, convert the quote to a sale with one click.</li>
+    </ol>
+
+    <!-- Exportar -->
+    <h2 id="exportar">Export to PDF and Excel</h2>
+    <p>All commercial modules have export options available at the top of the list:</p>
+    <ul>
+      <li><strong>PDF:</strong> generates a print-formatted document for individual invoices, POs, and listings.</li>
+      <li><strong>Excel:</strong> exports the full list with all applied filters. Useful for taking data to your accountant or external accounting system.</li>
+    </ul>
+
+    <div class="sub-section">
+      <h4>Invoice statuses that trigger alerts</h4>
+      <p style="font-size:0.88rem; color:#475569; margin-bottom: 8px;">The dashboard shows an alert when there are invoices with status <strong>Received</strong> or <strong>Verified</strong> that have gone more than 30 days without being processed. This helps prevent invoices from remaining unpaid.</p>
+      <div class="status-grid">
+        <span class="sb sb-recibida">Received</span>
+        <span class="sb sb-verif">Verified</span>
+        <span class="sb sb-pagada">Paid</span>
+        <span class="sb sb-vencida">Overdue</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

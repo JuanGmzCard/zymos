@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — User Manual · ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
+  #sidebar { width: 268px; min-width: 268px; background: #0f172a; color: #cbd5e1; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 20px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand .logo { font-size: 1.5rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sidebar-brand .modulo { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sidebar-brand .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; text-decoration: none; margin-top: 10px; }
+  .sidebar-brand .back-link:hover { color: #c9a028; }
+  nav.sidebar-nav { padding: 10px 0 20px; flex: 1; }
+  .nav-section { padding: 14px 20px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #475569; font-weight: 700; }
+  nav.sidebar-nav a { display: flex; align-items: center; gap: 9px; padding: 7px 20px; color: #94a3b8; text-decoration: none; font-size: 0.855rem; border-left: 3px solid transparent; transition: all 0.15s; }
+  nav.sidebar-nav a:hover, nav.sidebar-nav a.active { color: #f1f5f9; background: rgba(255,255,255,0.05); border-left-color: #c9a028; }
+  nav.sidebar-nav a .ic { font-size: 1rem; width: 18px; text-align: center; flex-shrink: 0; }
+  #main { margin-left: 268px; flex: 1; min-width: 0; padding: 0 0 80px; }
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 48px 52px 40px; border-bottom: 3px solid #c9a028; }
+  .page-hero .breadcrumb { font-size: 0.75rem; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; color: #c9a028; margin-bottom: 8px; }
+  .page-hero p { font-size: 0.975rem; color: #94a3b8; max-width: 680px; line-height: 1.65; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .badge-role { padding: 4px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-all { background: rgba(201,160,40,0.18); color: #c9a028; border: 1px solid rgba(201,160,40,0.35); }
+  .content { padding: 40px 52px; max-width: 960px; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  h2 .ico { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; }
+  p { margin-bottom: 12px; color: #475569; }
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 0.875rem; display: flex; gap: 12px; align-items: flex-start; }
+  .callout .ci { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .callout.tip { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .callout.warning { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .callout strong { display: block; margin-bottom: 3px; }
+  .field-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; margin: 14px 0 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .field-table thead th { background: #1e293b; color: #c9a028; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .field-table tbody tr:hover { background: #f1f5f9; }
+  .field-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; }
+
+  /* Stat card grid */
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+  .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; }
+  .stat-card .sc-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 4px; }
+  .stat-card .sc-value { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+  .stat-card.sc-gold .sc-value { color: #c9a028; }
+  .stat-card.sc-green .sc-value { color: #16a34a; }
+  .stat-card.sc-blue .sc-value { color: #0284c7; }
+  .stat-card.sc-red .sc-value { color: #dc2626; }
+
+  /* Report tabs */
+  .report-tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0; }
+  .report-tab { padding: 9px 20px; font-size: 0.875rem; font-weight: 600; color: #64748b; border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; cursor: default; }
+  .report-tab.active { background: #0f172a; color: #c9a028; border-color: #e2e8f0; margin-bottom: -2px; }
+
+  /* Chart pill */
+  .chart-pill { display: inline-block; padding: 3px 10px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.78rem; color: #475569; margin: 2px; }
+
+  /* Export bar */
+  .export-bar { display: flex; gap: 8px; align-items: center; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin: 16px 0; }
+  .export-bar span { font-size: 0.82rem; color: #64748b; margin-right: 4px; }
+  .btn-export { padding: 5px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #e2e8f0; background: white; color: #334155; cursor: default; }
+  .btn-export.pdf { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+  .btn-export.excel { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+  .btn-export.print { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+
+  /* Margen badges */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-red   { background: #fee2e2; color: #991b1b; }
+  .badge-gray  { background: #f1f5f9; color: #64748b; }
+
+  @media (max-width: 640px) { #sidebar { display: none; } #main { margin-left: 0; } .content { padding: 20px 18px; } .page-hero { padding: 24px 18px 20px; } }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="modulo">User Manual</div>
+    <a href="index_en.html" class="back-link">← All modules</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Reports Module</div>
+    <a href="#intro"><span class="ic">📊</span> Introduction</a>
+    <a href="#navegacion"><span class="ic">🔀</span> Navigating between reports</a>
+    <a href="#filtros"><span class="ic">🔍</span> Filters &amp; periods</a>
+    <div class="nav-section">The three reports</div>
+    <a href="#produccion"><span class="ic">🍺</span> Production</a>
+    <a href="#ventas"><span class="ic">💰</span> Sales</a>
+    <a href="#rentabilidad"><span class="ic">📈</span> Profitability</a>
+    <div class="nav-section">Export</div>
+    <a href="#exportar"><span class="ic">📤</span> PDF &amp; Excel</a>
+    <div class="nav-section">Artificial Intelligence</div>
+    <a href="#ia-rentabilidad"><span class="ic">🤖</span> AI Analysis</a>
+  </nav>
+</aside>
+<main id="main">
+  <div class="page-hero">
+    <div class="breadcrumb">ZYMOS Manuals › Modules</div>
+    <h1>Reports &amp; Analytics</h1>
+    <p>The Reports module consolidates production, sales and profitability data in one place. It offers historical charts, filterable tables and PDF/Excel export for business analysis.</p>
+    <div class="role-badges">
+      <span class="badge-role badge-all">Administrator · Manager · Production</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <section id="intro">
+      <h2><span class="ico">📊</span> Introduction</h2>
+      <p>The Reports module is available in the navigation bar. It contains three independent reports, each with their own filters, statistics and charts. All reports allow exporting the filtered data to PDF or Excel.</p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div><strong>Access path:</strong> <code>/reportes</code> — automatically redirects to the Production Report. The others are accessed from the navigation tabs.</div>
+      </div>
+    </section>
+
+    <section id="navegacion">
+      <h2><span class="ico">🔀</span> Navigating between reports</h2>
+      <p>At the top of each report there are three tabs to switch between reports without losing your date filters:</p>
+      <div class="report-tabs">
+        <div class="report-tab active">📦 Production</div>
+        <div class="report-tab">💰 Sales</div>
+        <div class="report-tab">📈 Profitability</div>
+      </div>
+      <p>The active tab is highlighted. Click any tab to switch reports.</p>
+    </section>
+
+    <section id="filtros">
+      <h2><span class="ico">🔍</span> Filters &amp; periods</h2>
+      <p>All reports share the same date filtering logic. Filters are applied immediately on click.</p>
+      <table class="field-table">
+        <thead><tr><th>Filter</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>From / To</td><td>Date range. Defaults to the last 3 months.</td></tr>
+          <tr><td>This month</td><td>Quick shortcut: from the 1st of the current month to today.</td></tr>
+          <tr><td>Last month</td><td>Quick shortcut: complete previous month.</td></tr>
+          <tr><td>3 months</td><td>Quick shortcut: last 90 days.</td></tr>
+          <tr><td>This year</td><td>Quick shortcut: from January 1st of the current year.</td></tr>
+          <tr><td>Style</td><td>Production and Profitability only. Filter by beer style.</td></tr>
+          <tr><td>Status</td><td>Sales only. Filter by status: Shipped, Pending, Cancelled.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Filters also apply to PDF and Excel exports. What you see on screen is exactly what gets downloaded.</div>
+      </div>
+    </section>
+
+    <section id="produccion">
+      <h2><span class="ico">🍺</span> Production Report</h2>
+      <p>Shows the brewery's production performance: batches brewed, volume produced, efficiency and costs for the selected period.</p>
+
+      <h3>Main metrics (stat cards)</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="sc-label">Batches Brewed</div><div class="sc-value">Total batches</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Liters Produced</div><div class="sc-value">Total volume</div></div>
+        <div class="stat-card"><div class="sc-label">Avg. per Batch</div><div class="sc-value">Liters/batch</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">Avg. ABV</div><div class="sc-value">% alcohol</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Avg. Efficiency</div><div class="sc-value">% efficiency</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">Total Cost</div><div class="sc-value">Period cost</div></div>
+        <div class="stat-card"><div class="sc-label">Distinct Styles</div><div class="sc-value">Variety</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Completed</div><div class="sc-value">% finished</div></div>
+      </div>
+
+      <h3>Available charts</h3>
+      <p>
+        <span class="chart-pill">📈 Monthly trend</span>
+        <span class="chart-pill">📊 Liters by style</span>
+        <span class="chart-pill">📊 ABV distribution</span>
+        <span class="chart-pill">📉 OG achieved vs target (with style filter)</span>
+        <span class="chart-pill">📉 Efficiency &amp; ABV per batch (with style filter)</span>
+      </p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>The <em>OG achieved vs target</em> and <em>Efficiency &amp; ABV</em> charts only appear when you select a specific style in the filter.</div>
+      </div>
+
+      <h3>Batch table</h3>
+      <p>Below the charts there is a table with all batches in the period. Columns:</p>
+      <table class="field-table">
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Code</td><td>Batch code (link to batch detail)</td></tr>
+          <tr><td>Style</td><td>Beer style</td></tr>
+          <tr><td>Recipe</td><td>Name of the recipe used</td></tr>
+          <tr><td>Date</td><td>Batch creation date</td></tr>
+          <tr><td>Liters</td><td>Final volume produced</td></tr>
+          <tr><td>ABV</td><td>Alcohol by volume (in gold)</td></tr>
+          <tr><td>Efficiency</td><td>Green ≥75%, gold 60–74%, red &lt;60%</td></tr>
+          <tr><td>Cost/L</td><td>Production cost per liter</td></tr>
+          <tr><td>Status</td><td>Current batch phase (colored badge)</td></tr>
+        </tbody>
+      </table>
+      <p>The table shows 15 batches per page. Use the pagination buttons to navigate.</p>
+
+      <h3>Summary by style</h3>
+      <p>Side panel with a progress bar per style showing what percentage of total volume each style represents, along with the batch count.</p>
+
+      <div class="export-bar">
+        <span>Export:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+        <span class="btn-export print">🖨️ Print</span>
+      </div>
+      <p>The Production Excel contains 3 sheets: <strong>Batches</strong> (full table), <strong>By Style</strong> (style summary), <strong>Monthly Trend</strong> (month-by-month evolution).</p>
+    </section>
+
+    <section id="ventas">
+      <h2><span class="ico">💰</span> Sales Report</h2>
+      <p>Consolidates all sales in the period with breakdown by customer, status and revenue evolution.</p>
+
+      <h3>Main metrics</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="sc-label">Total Sales</div><div class="sc-value">No. of sales</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Shipped</div><div class="sc-value">Completed</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">Pending</div><div class="sc-value">In process</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Revenue</div><div class="sc-value">Total</div></div>
+        <div class="stat-card"><div class="sc-label">Cancelled</div><div class="sc-value">Voided</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Unique Customers</div><div class="sc-value">Buyers</div></div>
+      </div>
+
+      <h3>Available charts</h3>
+      <p>
+        <span class="chart-pill">📊 Monthly revenue (bar)</span>
+        <span class="chart-pill">🍩 Distribution by status (donut)</span>
+      </p>
+
+      <h3>Sales table</h3>
+      <table class="field-table">
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Reference</td><td>Dispatch number or sale reference</td></tr>
+          <tr><td>Customer</td><td>Customer name</td></tr>
+          <tr><td>Date</td><td>Sale date</td></tr>
+          <tr><td>Batch</td><td>Sold batch code</td></tr>
+          <tr><td>Items</td><td>Number of items in the sale</td></tr>
+          <tr><td>Total</td><td>Total sale value</td></tr>
+          <tr><td>Status</td><td><span class="badge badge-green">SHIPPED</span> <span class="badge" style="background:#fef9c3;color:#854d0e">PENDING</span> <span class="badge badge-gray">CANCELLED</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Top customers</h3>
+      <p>Panel with the most active customers in the period: name, number of sales and total revenue.</p>
+
+      <div class="export-bar">
+        <span>Export:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+        <span class="btn-export print">🖨️ Print</span>
+      </div>
+      <p>The Sales Excel contains 5 sheets: <strong>Sales</strong>, <strong>Items</strong>, <strong>By Customer</strong>, <strong>By Status</strong>, <strong>Trend</strong>.</p>
+    </section>
+
+    <section id="rentabilidad">
+      <h2><span class="ico">📈</span> Profitability Report</h2>
+      <p>Calculates the gross margin of each batch by comparing revenue from shipped sales against assigned production costs.</p>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>
+          <strong>For the margin to appear, the batch must have both:</strong>
+          assigned costs (from the batch form, Costs tab) AND shipped sales.
+          A batch without costs or without sales will appear with a special label instead of the margin.
+        </div>
+      </div>
+
+      <h3>Margin statuses per batch</h3>
+      <table class="field-table">
+        <thead><tr><th>Label</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">Profitable</span></td><td>Revenue exceeds costs — positive margin.</td></tr>
+          <tr><td><span class="badge badge-red">At a loss</span></td><td>Costs exceed revenue — negative margin.</td></tr>
+          <tr><td><span class="badge badge-gray">No sales</span></td><td>Batch has costs but no shipped sales yet.</td></tr>
+          <tr><td><span class="badge badge-gray">No cost</span></td><td>Batch has sales but no assigned production costs.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Profitability table</h3>
+      <p>Columns: Batch Code, Style, Liters, Total Cost, Revenue, Gross Margin, Margin %, Status. The totals row at the bottom sums all batches in the period.</p>
+      <p>You can sort the table by clicking the column headers.</p>
+
+      <div class="export-bar">
+        <span>Export:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+      </div>
+      <p>The Profitability Excel contains 3 sheets: <strong>Profitability</strong> (by batch), <strong>By Style</strong> (summary), <strong>Monthly Trend</strong> (margin evolution).</p>
+    </section>
+
+    <section id="ia-rentabilidad">
+      <h2><span class="ico">🤖</span> AI Profitability Analysis</h2>
+      <p>The AI profitability analysis processes the current report data and generates an automatic diagnosis: it detects the most and least profitable style, identifies trends and generates actionable recommendations to improve business margins.</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>This feature requires AI configuration (ANTHROPIC_API_KEY). If the <strong>"Analyze with AI"</strong> button does not appear in the report, the system is running without AI.</div>
+      </div>
+
+      <h3>How to use the AI analysis</h3>
+      <table class="field-table">
+        <thead><tr><th>Step</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>In the Profitability Report, apply the date and style filters you want to analyze.</td></tr>
+          <tr><td>2</td><td>Click <strong>"Analyze with AI"</strong> at the top of the report.</td></tr>
+          <tr><td>3</td><td>The modal shows: most profitable style, least profitable style, period trend, key insights and specific recommendations with attention alerts.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>The analysis is based on the current filtered report data. For a different analysis, close the modal, change the filters and open it again.</div>
+      </div>
+    </section>
+
+    <section id="exportar">
+      <h2><span class="ico">📤</span> Export to PDF and Excel</h2>
+      <p>Each report has export buttons that generate the file with the same filters active on screen.</p>
+      <table class="field-table">
+        <thead><tr><th>Button</th><th>What it generates</th><th>When to use it</th></tr></thead>
+        <tbody>
+          <tr><td>📄 PDF</td><td>PDF document with tables and statistics, ready to print or share.</td><td>Presentations, partner reports, documentation.</td></tr>
+          <tr><td>📊 Excel</td><td>.xlsx file with multiple sheets of detailed data.</td><td>Own analysis, cross-referencing with other data, accounting.</td></tr>
+          <tr><td>🖨️ Print</td><td>Opens the browser print dialog with the paper-optimized view.</td><td>Direct paper printing.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>If you export without date filters, the system includes all historical data. For monthly reports, always apply the period filter before exporting.</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('nav.sidebar-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector(`nav a[href="#${e.target.id}"]`); if (a) a.classList.add('active'); } });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

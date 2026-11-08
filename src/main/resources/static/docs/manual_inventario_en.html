@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingredient Inventory · ZYMOS Manual</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    color: #334155;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 268px;
+    flex-shrink: 0;
+    background: #0f172a;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sb-brand {
+    padding: 20px 20px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .sb-brand .logo { font-size: 1.3rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sb-brand .module { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+  .sb-back {
+    display: block;
+    padding: 10px 20px;
+    font-size: 0.77rem;
+    color: #64748b;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: color 0.2s;
+  }
+  .sb-back:hover { color: #c9a028; }
+  nav { padding: 16px 0; flex: 1; }
+  .nav-group { margin-bottom: 4px; }
+  .nav-group-title {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #475569;
+    padding: 8px 20px 4px;
+  }
+  nav a {
+    display: block;
+    padding: 6px 20px 6px 28px;
+    font-size: 0.82rem;
+    color: #94a3b8;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+  nav a:hover { color: #e2e8f0; background: rgba(255,255,255,0.03); }
+  nav a.active { color: #c9a028; border-left-color: #c9a028; background: rgba(201,160,40,0.06); }
+
+  /* ── Main ── */
+  .main { flex: 1; max-width: 860px; padding: 0 48px 80px; }
+
+  /* ── Page hero ── */
+  .page-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #0891b2 100%);
+    margin: 0 -48px 0;
+    padding: 48px 48px 40px;
+  }
+  .hero-eyebrow { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.45); margin-bottom: 8px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 900; color: white; margin-bottom: 10px; }
+  .page-hero p { font-size: 0.95rem; color: rgba(255,255,255,0.65); line-height: 1.65; max-width: 580px; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .role-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.8);
+    letter-spacing: 0.3px;
+  }
+  .role-badge.gold { background: rgba(201,160,40,0.25); color: #fbbf24; }
+
+  /* ── Content ── */
+  .content { padding-top: 44px; }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+    scroll-margin-top: 24px;
+  }
+  h2:first-child { margin-top: 0; }
+  h3 { font-size: 1rem; font-weight: 700; color: #1e293b; margin-top: 28px; margin-bottom: 10px; scroll-margin-top: 24px; }
+  p { line-height: 1.7; margin-bottom: 14px; color: #475569; font-size: 0.92rem; }
+  ul, ol { padding-left: 20px; margin-bottom: 14px; }
+  li { line-height: 1.65; margin-bottom: 5px; color: #475569; font-size: 0.92rem; }
+  strong { color: #1e293b; font-weight: 700; }
+  code {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.83rem;
+    color: #0891b2;
+    font-family: 'Fira Code', Consolas, monospace;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin: 20px 0;
+    display: flex;
+    gap: 12px;
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+  .callout-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { color: #334155; }
+  .callout-body strong { display: block; margin-bottom: 4px; }
+  .callout.info    { background: #eff6ff; border: 1px solid #bfdbfe; }
+  .callout.tip     { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .callout.warning { background: #fffbeb; border: 1px solid #fde68a; }
+  .callout.danger  { background: #fef2f2; border: 1px solid #fecaca; }
+
+  /* ── Steps ── */
+  .steps { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 20px; }
+  .steps li {
+    counter-increment: step;
+    padding: 10px 14px 10px 48px;
+    margin-bottom: 8px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    position: relative;
+    font-size: 0.9rem;
+    color: #334155;
+    line-height: 1.55;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 14px;
+    top: 10px;
+    width: 22px; height: 22px;
+    background: #0891b2;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ── Field table ── */
+  .field-table { width: 100%; border-collapse: collapse; margin: 16px 0 24px; font-size: 0.87rem; }
+  .field-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  .field-table td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; white-space: nowrap; }
+  .req { color: #dc2626; font-size: 0.75rem; font-weight: 700; margin-left: 2px; }
+
+  /* ── Type chips ── */
+  .type-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 16px 0 24px; }
+  .type-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-left: 3px solid var(--tc, #94a3b8);
+  }
+  .type-card .tc-name { font-size: 0.9rem; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+  .type-card .tc-desc { font-size: 0.78rem; color: #64748b; line-height: 1.4; }
+  .tc-malta    { --tc: #d97706; }
+  .tc-lupulo   { --tc: #059669; }
+  .tc-levadura { --tc: #7c3aed; }
+  .tc-clar     { --tc: #0891b2; }
+  .tc-quim     { --tc: #dc2626; }
+  .tc-envase   { --tc: #475569; }
+
+  /* ── Alert badges ── */
+  .alert-demo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+  }
+  .alert-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.88rem;
+  }
+  .alert-row.bajo { background: #fef2f2; border: 1px solid #fecaca; }
+  .alert-row.vence { background: #fffbeb; border: 1px solid #fde68a; }
+  .alert-row .ar-icon { font-size: 1.1rem; }
+  .alert-row .ar-text strong { display: block; font-size: 0.82rem; color: #1e293b; }
+  .alert-row .ar-text span { font-size: 0.78rem; color: #64748b; }
+
+  /* ── Sub-section ── */
+  .sub-section {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+  }
+  .sub-section h4 { font-size: 0.92rem; font-weight: 700; color: #0f172a; margin-bottom: 12px; }
+
+  @media (max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 0 18px 60px; }
+    .page-hero { margin: 0 -18px; padding: 32px 18px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="module">Ingredient Inventory</div>
+  </div>
+  <a href="index_en.html" class="sb-back">← All manuals</a>
+  <nav>
+    <div class="nav-group">
+      <div class="nav-group-title">Introduction</div>
+      <a href="#intro">What is the inventory?</a>
+      <a href="#tipos">Ingredient types</a>
+      <a href="#alertas">Automatic alerts</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Operations</div>
+      <a href="#agregar">Add an ingredient</a>
+      <a href="#editar">Edit and adjust stock</a>
+      <a href="#buscar">Filter and search</a>
+      <a href="#eliminar">Delete or archive</a>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">Integration</div>
+      <a href="#descuento">Automatic deduction</a>
+      <a href="#costo">Estimated batch cost</a>
+      <a href="#ordenes">Purchase orders</a>
+    </div>
+  </nav>
+</aside>
+
+<!-- Main -->
+<main class="main">
+
+  <div class="page-hero">
+    <div class="hero-eyebrow">User manual · Module</div>
+    <h1>📦 Ingredient Inventory</h1>
+    <p>Track the stock of all your production ingredients: malts, hops, yeasts, clarifiers, chemicals, and packaging. ZYMOS updates the inventory automatically every time you create or modify a batch.</p>
+    <div class="role-badges">
+      <span class="role-badge gold">Inventory</span>
+      <span class="role-badge">Production</span>
+      <span class="role-badge">Administrator</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- Intro -->
+    <h2 id="intro">What is the inventory?</h2>
+    <p>The Inventory module records all the ingredients your brewery uses to produce beer. Each ingredient has a type, a unit of measure, and an available quantity. When you create a production batch, ZYMOS automatically deducts the used ingredients.</p>
+    <p>Access the inventory from the main menu by clicking <strong>Inventory</strong>. The list shows all ingredients with their current stock, type, unit, and expiration date (if applicable).</p>
+
+    <div class="callout info">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Prerequisite for creating batches</strong>
+        Before registering your first production batch you need ingredients in the inventory. Without malts, hops, yeasts, or clarifiers registered, you won't be able to select them in the recipe or in the traceability form.
+      </div>
+    </div>
+
+    <!-- Tipos -->
+    <h2 id="tipos">Ingredient types</h2>
+    <p>ZYMOS organizes ingredients into 6 categories. The type determines which section the ingredient appears in when building recipes and batches.</p>
+
+    <div class="type-grid">
+      <div class="type-card tc-malta">
+        <div class="tc-name">Malt</div>
+        <div class="tc-desc">Beer base: Pilsner, Munich, Crystal, Chocolate, etc.</div>
+      </div>
+      <div class="type-card tc-lupulo">
+        <div class="tc-name">Hop</div>
+        <div class="tc-desc">Pellets or flowers: Citra, Cascade, Saaz, Amarillo, etc.</div>
+      </div>
+      <div class="type-card tc-levadura">
+        <div class="tc-name">Yeast</div>
+        <div class="tc-desc">Fermentation strains: American Ale, Saison, Lager, etc.</div>
+      </div>
+      <div class="type-card tc-clar">
+        <div class="tc-name">Clarifier</div>
+        <div class="tc-desc">Irish Moss, Whirlfloc, Gelatin, Bentonite, etc.</div>
+      </div>
+      <div class="type-card tc-quim">
+        <div class="tc-name">Chemical</div>
+        <div class="tc-desc">Products for cleaning, sanitation, and water treatment.</div>
+      </div>
+      <div class="type-card tc-envase">
+        <div class="tc-name">Packaging</div>
+        <div class="tc-desc">Bottles, cans, caps, labels, capsules, etc.</div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <div class="callout-icon">✅</div>
+      <div class="callout-body">
+        <strong>Tip — Chemical type for BPM</strong>
+        Ingredients marked as <strong>Chemical</strong> appear in the BPM (Good Manufacturing Practices) module in the Sanitizing Solutions form. Register all your cleaning and sanitation products here so they can be referenced from BPM.
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <h2 id="alertas">Automatic alerts</h2>
+    <p>ZYMOS generates two types of alerts that appear in the Dashboard and in the inventory list:</p>
+
+    <div class="alert-demo">
+      <div class="alert-row bajo">
+        <div class="ar-icon">🔴</div>
+        <div class="ar-text">
+          <strong>Low stock</strong>
+          <span>The current quantity is below the minimum quantity configured for the ingredient.</span>
+        </div>
+      </div>
+      <div class="alert-row vence">
+        <div class="ar-icon">⚠️</div>
+        <div class="ar-text">
+          <strong>Expiring soon</strong>
+          <span>The expiration date is within the next 30 days.</span>
+        </div>
+      </div>
+    </div>
+
+    <p>Alerts also appear on the main Dashboard as quick-access cards: <strong>"Low stock"</strong> and <strong>"Expiring soon"</strong>. Click on them to go directly to the filtered list.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">📱</div>
+      <div class="callout-body">
+        <strong>WhatsApp alerts</strong>
+        If the administrator configured contacts in <em>Admin → WhatsApp</em>, these same alerts are also sent daily as WhatsApp messages to contacts subscribed to "Low stock" or "Expiration dates".
+      </div>
+    </div>
+
+    <!-- Agregar -->
+    <h2 id="agregar">Add a new ingredient</h2>
+    <ol class="steps">
+      <li>In the inventory list click the <strong>"+ New ingredient"</strong> button.</li>
+      <li>Fill out the form with the ingredient details (see field table below).</li>
+      <li>Click <strong>"Save"</strong>. The ingredient appears immediately in the list.</li>
+    </ol>
+
+    <table class="field-table">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Description</th>
+          <th>Example</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Name <span class="req">*</span></td>
+          <td>Ingredient name as it will be recognized by producers when creating recipes.</td>
+          <td>Weyermann Pilsner Malt</td>
+        </tr>
+        <tr>
+          <td>Type <span class="req">*</span></td>
+          <td>Ingredient category (Malt, Hop, Yeast, Clarifier, Chemical, Packaging).</td>
+          <td>Malt</td>
+        </tr>
+        <tr>
+          <td>Unit <span class="req">*</span></td>
+          <td>Stock unit of measure. Options: <code>gr</code>, <code>kg</code>, <code>mL</code>, <code>L</code>, <code>gal</code>, <code>und</code>.</td>
+          <td>kg</td>
+        </tr>
+        <tr>
+          <td>Quantity</td>
+          <td>Current available stock. Can be left at zero when first registering the ingredient.</td>
+          <td>50</td>
+        </tr>
+        <tr>
+          <td>Minimum quantity</td>
+          <td>Alert threshold. When the quantity drops below this value, the low stock alert appears.</td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>Expiration date</td>
+          <td>Optional. For hops, yeasts, and products with a limited shelf life.</td>
+          <td>06/15/2027</td>
+        </tr>
+        <tr>
+          <td>Price per unit</td>
+          <td>Unit cost in the tenant's currency (e.g. $/kg). Used to estimate the production cost of a batch.</td>
+          <td>2.50</td>
+        </tr>
+        <tr>
+          <td>Notes</td>
+          <td>Additional information: supplier, manufacturer lot, special characteristics.</td>
+          <td>Lot #2024-A, supplier Fermentis</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body">
+        <strong>Choose the unit carefully from the start</strong>
+        The unit cannot be changed easily after the ingredient has been used in batches and recipes. If your malt arrives in 25 kg bags, register it in <code>kg</code> so recipe calculations are straightforward.
+      </div>
+    </div>
+
+    <!-- Editar -->
+    <h2 id="editar">Edit and adjust stock</h2>
+    <p>You can edit any ingredient data by clicking the edit button (pencil icon) in the corresponding row of the list.</p>
+
+    <h3>Manual quantity adjustment</h3>
+    <p>If you need to correct the stock (for example, after a physical inventory count), edit the ingredient and modify the <strong>Quantity</strong> field directly. There is no separate adjustment form — simply edit the ingredient and enter the correct quantity.</p>
+
+    <div class="sub-section">
+      <h4>Common adjustment scenarios</h4>
+      <ul>
+        <li><strong>Receiving goods:</strong> add the received quantity to the current stock.</li>
+        <li><strong>Waste or loss:</strong> deduct the lost quantity.</li>
+        <li><strong>Physical inventory:</strong> enter exactly the counted quantity.</li>
+        <li><strong>Recording error:</strong> correct the incorrect value.</li>
+      </ul>
+    </div>
+
+    <!-- Buscar -->
+    <h2 id="buscar">Filter and search</h2>
+    <p>The inventory list has several filtering options at the top:</p>
+    <ul>
+      <li><strong>Text search:</strong> filters by ingredient name in real time.</li>
+      <li><strong>Type filter:</strong> shows only Malt, only Hop, etc.</li>
+      <li><strong>Low stock:</strong> filters only ingredients below their minimum.</li>
+      <li><strong>Expiring soon:</strong> filters only ingredients expiring in the next 30 days.</li>
+    </ul>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        You can combine filters. For example: type=Hop + Low stock shows only the hops you need to restock.
+      </div>
+    </div>
+
+    <!-- Eliminar -->
+    <h2 id="eliminar">Delete an ingredient</h2>
+    <p>To delete an ingredient click the trash icon in its row. ZYMOS will ask for confirmation before proceeding.</p>
+
+    <div class="callout danger">
+      <div class="callout-icon">🚫</div>
+      <div class="callout-body">
+        <strong>You cannot delete ingredients that are in use</strong>
+        If the ingredient is referenced in active recipes or batches, ZYMOS will prevent the deletion. You must first remove the ingredient from those records or complete/archive the corresponding batches.
+      </div>
+    </div>
+
+    <!-- Descuento automático -->
+    <h2 id="descuento">Automatic deduction when producing</h2>
+    <p>This is the most important integration between inventory and batch traceability:</p>
+
+    <div class="sub-section">
+      <h4>What happens when you create a batch?</h4>
+      <ol style="padding-left: 20px;">
+        <li style="margin-bottom: 8px; color: #334155;">When you save the batch with its ingredients, ZYMOS automatically deducts each ingredient from the stock.</li>
+        <li style="margin-bottom: 8px; color: #334155;">If the stock of any ingredient is insufficient to cover the batch quantity, you will receive a <strong>warning</strong> (but the batch is created anyway).</li>
+        <li style="margin-bottom: 8px; color: #334155;">If you edit the batch and change quantities, ZYMOS <em>reverses</em> the previous deduction and applies the new one.</li>
+        <li style="color: #334155;">If you delete a batch, the stock of all its ingredients is restored.</li>
+      </ol>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Unit normalization</strong>
+        ZYMOS automatically converts quantities to perform the deduction correctly. For example, if the ingredient is in <code>kg</code> and the batch specifies <code>5000 gr</code>, ZYMOS deducts 5 kg from the stock. Supported conversions: kg ↔ gr, L ↔ mL, gal → mL.
+      </div>
+    </div>
+
+    <!-- Costo estimado -->
+    <h2 id="costo">Estimated production cost</h2>
+    <p>If you add the <strong>Price per unit</strong> field to your ingredients, ZYMOS can automatically calculate the estimated production cost of a batch.</p>
+    <p>This calculation appears in the batch detail under the <strong>"Estimated cost"</strong> section, but only when the batch does <em>not</em> have purchase invoices assigned (real cost system). If you have invoices assigned, the real cost is shown instead of the estimate.</p>
+
+    <table class="field-table">
+      <thead>
+        <tr><th>Calculation</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total estimated cost</td>
+          <td>Sum of (ingredient quantity × ingredient unit price) for all ingredients with a price.</td>
+        </tr>
+        <tr>
+          <td>Estimated cost per liter</td>
+          <td>Total estimated cost ÷ final liters of the batch.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Órdenes de compra -->
+    <h2 id="ordenes">Relationship with purchase orders</h2>
+    <p>The <strong>Purchase Orders</strong> module (in the Commercial section) lets you create orders to suppliers. However, purchase orders do <em>not</em> automatically update the inventory when created.</p>
+    <p>To record the receipt of goods into the inventory when an order arrives, you must manually adjust the quantity of the corresponding ingredient (edit the ingredient and add the received quantity).</p>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>Recommended restocking workflow</strong>
+        <ol style="margin-top: 6px; padding-left: 18px;">
+          <li style="margin-bottom: 4px;">Detect the low stock alert in the Dashboard.</li>
+          <li style="margin-bottom: 4px;">Create a Purchase Order to the supplier from the Commercial module.</li>
+          <li style="margin-bottom: 4px;">When the goods arrive, edit the ingredient in Inventory and add the received quantity.</li>
+          <li>Optionally, register the supplier Invoice in the Commercial module.</li>
+        </ol>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<script>
+  const sections = document.querySelectorAll('h2[id], h3[id]');
+  const links = document.querySelectorAll('nav a');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => obs.observe(s));
+</script>
+</body>
+</html>

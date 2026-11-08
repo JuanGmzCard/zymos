@@ -423,6 +423,25 @@ El selector en `navbar.html` usa `th:href="${currentUri + '?lang=es'}"` — `cur
 
 **NO usar** `th:href="@{''(lang='es')}"`: genera solo `?lang=es` sin ruta (puede no recargar). **NO usar** `href="#" + listener JS delegado en document`: Bootstrap puede interceptar el click dentro del dropdown antes de que el evento burbujee al listener.
 
+### Manuales de usuario — docs estáticos con `_en.html`
+
+Los archivos en `src/main/resources/static/docs/` son HTML estático (no Thymeleaf) — no pueden usar `#{}`. Solución: archivos `_en.html` separados (`index_en.html`, `manual_admin_en.html`, etc.). El selector de idioma en `navbar.html` apunta al archivo correcto según `${#locale.language}`:
+```html
+th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : '/docs/index.html'"
+```
+
+### Landing page y páginas públicas — toggle ES/EN inline
+
+`landing.html` y `plan/planes.html` son páginas standalone (sin fragment navbar de la app). Incluyen su propio toggle ES/EN usando el mismo patrón `${currentUri + '?lang=XX'}`. CSS class `.lp-lang-active` para el idioma activo, `.lp-lang-btn` para el estilo. Patrón:
+```html
+<a th:href="${currentUri + '?lang=es'}" th:classappend="${#locale.language == 'es'} ? ' lp-lang-active' : ''" class="lp-lang-btn">ES</a>
+<a th:href="${currentUri + '?lang=en'}" th:classappend="${#locale.language == 'en'} ? ' lp-lang-active' : ''" class="lp-lang-btn">EN</a>
+```
+
+### Cobertura i18n — 100% (2026-11-08)
+
+Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN), landing, planes y checkout están internacionalizados. `messages.properties` (ES) y `messages_en.properties` (EN) tienen exactamente las mismas keys — diff vacío. Gaps menores resueltos: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados.
+
 ---
 
 ## MÓDULO RBAC DINÁMICO (roles por tenant)

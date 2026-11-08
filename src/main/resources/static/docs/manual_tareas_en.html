@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tasks — User Manual · ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
+  #sidebar { width: 268px; min-width: 268px; background: #0f172a; color: #cbd5e1; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 20px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand .logo { font-size: 1.5rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sidebar-brand .modulo { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sidebar-brand .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; text-decoration: none; margin-top: 10px; }
+  .sidebar-brand .back-link:hover { color: #c9a028; }
+  nav.sidebar-nav { padding: 10px 0 20px; flex: 1; }
+  .nav-section { padding: 14px 20px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #475569; font-weight: 700; }
+  nav.sidebar-nav a { display: flex; align-items: center; gap: 9px; padding: 7px 20px; color: #94a3b8; text-decoration: none; font-size: 0.855rem; border-left: 3px solid transparent; transition: all 0.15s; }
+  nav.sidebar-nav a:hover, nav.sidebar-nav a.active { color: #f1f5f9; background: rgba(255,255,255,0.05); border-left-color: #c9a028; }
+  nav.sidebar-nav a .ic { font-size: 1rem; width: 18px; text-align: center; flex-shrink: 0; }
+  #main { margin-left: 268px; flex: 1; min-width: 0; padding: 0 0 80px; }
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 48px 52px 40px; border-bottom: 3px solid #c9a028; }
+  .page-hero .breadcrumb { font-size: 0.75rem; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; color: #c9a028; margin-bottom: 8px; }
+  .page-hero p { font-size: 0.975rem; color: #94a3b8; max-width: 680px; line-height: 1.65; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .badge-role { padding: 4px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-all { background: rgba(201,160,40,0.18); color: #c9a028; border: 1px solid rgba(201,160,40,0.35); }
+  .content { padding: 40px 52px; max-width: 920px; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  h2 .ico { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; }
+  p { margin-bottom: 12px; color: #475569; }
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 0.875rem; display: flex; gap: 12px; align-items: flex-start; }
+  .callout .ci { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .callout.tip { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .callout.warning { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .callout.danger { background: #fef2f2; border-left: 4px solid #ef4444; color: #991b1b; }
+  .callout strong { display: block; margin-bottom: 3px; }
+  .steps { counter-reset: step; list-style: none; margin: 16px 0; }
+  .steps li { counter-increment: step; display: flex; gap: 16px; margin-bottom: 16px; align-items: flex-start; }
+  .steps li::before { content: counter(step); width: 30px; height: 30px; background: #0f172a; color: #c9a028; border-radius: 50%; font-weight: 700; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+  .steps li .step-body { flex: 1; }
+  .steps li .step-body strong { color: #0f172a; display: block; margin-bottom: 3px; }
+  .field-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; margin: 14px 0 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .field-table thead th { background: #1e293b; color: #c9a028; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .field-table tbody tr:hover { background: #f1f5f9; }
+  .field-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  .b-pend { background: #fef9c3; color: #854d0e; }
+  .b-prog { background: #dbeafe; color: #1e40af; }
+  .b-done { background: #dcfce7; color: #166534; }
+  .b-baja { background: #f1f5f9; color: #475569; }
+  .b-media { background: #dbeafe; color: #1e40af; }
+  .b-alta { background: #ffedd5; color: #9a3412; }
+  .b-urg { background: #fee2e2; color: #991b1b; }
+
+  /* Reference chip demo */
+  .ref-chip-demo { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; font-size: 0.82rem; color: #334155; margin: 3px; }
+  .ref-chip-demo .rc-icon { font-size: 0.85rem; }
+  .ref-chip-demo .rc-x { color: #94a3b8; font-weight: 700; cursor: default; }
+
+  /* Checklist demo */
+  .check-demo { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .check-item.done { background: #f0fdf4; border-color: #bbf7d0; }
+  .check-item .cb { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; flex-shrink: 0; }
+  .check-item .cb.empty { border: 2px solid #e2e8f0; }
+  .check-item .cb.checked { background: #22c55e; color: white; border: 2px solid #22c55e; }
+  .check-item .ct { font-size: 0.88rem; }
+  .check-item.done .ct { text-decoration: line-through; color: #94a3b8; }
+
+  /* Progress bar */
+  .prog-bar { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin: 6px 0; }
+  .prog-fill { height: 100%; background: #22c55e; border-radius: 4px; }
+
+  /* Ref types grid */
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 14px 0; }
+  .ref-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; }
+  .ref-card .rt-icon { font-size: 1.2rem; margin-bottom: 4px; }
+  .ref-card .rt-name { font-size: 0.88rem; font-weight: 700; color: #0f172a; }
+  .ref-card .rt-desc { font-size: 0.78rem; color: #64748b; }
+
+  @media (max-width: 640px) { #sidebar { display: none; } #main { margin-left: 0; } .content { padding: 20px 18px; } .page-hero { padding: 24px 18px 20px; } }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="modulo">User Manual</div>
+    <a href="index_en.html" class="back-link">← All manuals</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Tasks Module</div>
+    <a href="#intro"><span class="ic">📋</span> Introduction</a>
+    <a href="#listado"><span class="ic">📄</span> Task list</a>
+    <a href="#crear"><span class="ic">➕</span> Create a task</a>
+    <a href="#items"><span class="ic">☑️</span> Checklist items</a>
+    <a href="#referencias"><span class="ic">🔗</span> References</a>
+    <a href="#detalle"><span class="ic">👁️</span> View detail</a>
+    <a href="#progreso"><span class="ic">📊</span> Mark progress</a>
+    <a href="#estados"><span class="ic">🏷️</span> Statuses and priorities</a>
+    <a href="#notificaciones"><span class="ic">🔔</span> Notifications</a>
+    <a href="#roles"><span class="ic">🔑</span> Roles and permissions</a>
+  </nav>
+</aside>
+<main id="main">
+  <div class="page-hero">
+    <div class="breadcrumb">ZYMOS Manuals › Modules</div>
+    <h1>Operational Tasks</h1>
+    <p>The Tasks module lets you assign and track team activities, linking them to batches, equipment, ingredients, or other system entities. Includes a progress checklist, due date alerts, and automatic notifications.</p>
+    <div class="role-badges">
+      <span class="badge-role badge-all">Administrator · Production · HR</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <section id="intro">
+      <h2><span class="ico">📋</span> Introduction</h2>
+      <p>A <strong>Task</strong> in ZYMOS is a pending operational activity that can be assigned to a team member, have a deadline, a checklist of steps, and references to other system records (batches, equipment, invoices, etc.).</p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div><strong>Access:</strong> The Tasks module is in the side navigation bar, between BPM and Admin. Route: <code>/tareas</code>.</div>
+      </div>
+
+      <h3>What are items and references?</h3>
+      <table class="field-table">
+        <thead><tr><th>Concept</th><th>Purpose</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Checklist item</td>
+            <td>A concrete action <strong>to execute</strong> within the task. Marked as completed step by step. Its progress determines the % completion.</td>
+            <td>"Clean fermenter", "Check valves", "Weigh malts"</td>
+          </tr>
+          <tr>
+            <td>Reference</td>
+            <td><strong>Context link</strong> to a system record that provides information about the task. Not completed — it is a navigation link.</td>
+            <td>Batch IPA-001, Fermenter 2 equipment, Invoice #345</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="listado">
+      <h2><span class="ico">📄</span> Task list</h2>
+      <p>The list shows all tenant tasks with filters by status and assigned user.</p>
+
+      <h3>Available filters</h3>
+      <table class="field-table">
+        <thead><tr><th>Filter</th><th>Options</th></tr></thead>
+        <tbody>
+          <tr><td>Status</td><td>All · <span class="badge b-pend">Pending</span> · <span class="badge b-prog">In progress</span> · <span class="badge b-done">Completed</span></td></tr>
+          <tr><td>Assigned to</td><td>Select with all tenant users. By default shows tasks of all users.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Table columns</h3>
+      <table class="field-table">
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Task</td><td>Title (link to detail) + truncated description + item count if it has a checklist.</td></tr>
+          <tr><td>Reference</td><td>Links to referenced entities (one per line).</td></tr>
+          <tr><td>Assigned to</td><td>Name of the assigned user (or "Unassigned").</td></tr>
+          <tr><td>Priority</td><td>Colored badge based on priority.</td></tr>
+          <tr><td>Due date</td><td>Deadline. If past due and the task is not completed, appears in <strong style="color:#dc2626">red</strong> with "Overdue" badge.</td></tr>
+          <tr><td>Progress</td><td>Green bar with percentage. Only visible if the task has checklist items.</td></tr>
+          <tr><td>Status</td><td>Current status badge.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>Overdue task rows appear with a very light red background so they are easily identifiable.</div>
+      </div>
+    </section>
+
+    <section id="crear">
+      <h2><span class="ico">➕</span> Create a task</h2>
+      <p>Click the <strong>New Task</strong> button at the top of the list.</p>
+
+      <ol class="steps">
+        <li><div class="step-body"><strong>Title</strong> — Clear task name (required, max 200 characters). E.g. "Preventive maintenance Fermenter 2".</div></li>
+        <li><div class="step-body"><strong>Description</strong> — Additional context about what needs to be done and why (optional).</div></li>
+        <li><div class="step-body"><strong>Assigned to</strong> — Select the user responsible for this task. If you don't select anyone, it remains "Unassigned".</div></li>
+        <li><div class="step-body"><strong>Priority</strong> — Choose between Low, Medium (default), High, or Urgent.</div></li>
+        <li><div class="step-body"><strong>Due date</strong> — Deadline to complete the task (optional). If it expires without being completed, it will be highlighted in red.</div></li>
+        <li><div class="step-body"><strong>Checklist items</strong> — Add the concrete steps that whoever executes the task must follow. See the "Checklist items" section.</div></li>
+        <li><div class="step-body"><strong>References</strong> — Link the task to system records to provide context. See the "References" section.</div></li>
+        <li><div class="step-body"><strong>Save</strong> — Click Save. If you assigned the task to another person, they will receive an automatic notification.</div></li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>It is not required to have items or references. You can create a simple task with just a title and assignee.</div>
+      </div>
+    </section>
+
+    <section id="items">
+      <h2><span class="ico">☑️</span> Checklist items</h2>
+      <p>Items are the concrete steps that make up the task. Each item can be marked as completed from the task detail, and the system automatically calculates progress.</p>
+
+      <h3>How to add items when creating/editing a task</h3>
+      <ol class="steps">
+        <li><div class="step-body"><strong>Click "Add item"</strong> — A new text field appears below existing items.</div></li>
+        <li><div class="step-body"><strong>Write the step description</strong> — E.g. "Disconnect fermenter from the gas line".</div></li>
+        <li><div class="step-body"><strong>Repeat</strong> for each additional step.</div></li>
+        <li><div class="step-body"><strong>To delete an item</strong>, click the × button on the right side of the field.</div></li>
+      </ol>
+
+      <h3>Checklist preview</h3>
+      <div class="check-demo">
+        <div class="check-item done"><span class="cb checked">✓</span><span class="ct">Disconnect fermenter from the gas line</span></div>
+        <div class="check-item done"><span class="cb checked">✓</span><span class="ct">Clean valves with Star San solution</span></div>
+        <div class="check-item"><span class="cb empty"></span><span class="ct">Check gaskets and seals</span></div>
+        <div class="check-item"><span class="cb empty"></span><span class="ct">Reconnect and test pressure</span></div>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" style="width:50%"></div></div>
+      <p style="font-size:0.82rem;color:#64748b">2 of 4 steps completed — 50%</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>The task status updates automatically based on checklist progress: 0% → Pending, 1–99% → In progress, 100% → Completed.</div>
+      </div>
+    </section>
+
+    <section id="referencias">
+      <h2><span class="ico">🔗</span> References</h2>
+      <p>References link the task to existing system records. They are context links — they are not completed, they only provide information about what the task refers to.</p>
+
+      <h3>Available reference types</h3>
+      <div class="ref-grid">
+        <div class="ref-card"><div class="rt-icon">🍺</div><div class="rt-name">Batch</div><div class="rt-desc">Production batch (e.g. IPA-001)</div></div>
+        <div class="ref-card"><div class="rt-icon">⚙️</div><div class="rt-name">Equipment</div><div class="rt-desc">Fermenter, tank, pump, etc.</div></div>
+        <div class="ref-card"><div class="rt-icon">📦</div><div class="rt-name">Ingredient</div><div class="rt-desc">Inventory item</div></div>
+        <div class="ref-card"><div class="rt-icon">📅</div><div class="rt-name">Brew session</div><div class="rt-desc">Planned brew in the calendar</div></div>
+        <div class="ref-card"><div class="rt-icon">🛒</div><div class="rt-name">Purchase order</div><div class="rt-desc">PO to a supplier</div></div>
+        <div class="ref-card"><div class="rt-icon">💰</div><div class="rt-name">Sale</div><div class="rt-desc">Delivery or dispatch</div></div>
+        <div class="ref-card"><div class="rt-icon">👤</div><div class="rt-name">Customer</div><div class="rt-desc">System customer</div></div>
+        <div class="ref-card"><div class="rt-icon">📄</div><div class="rt-name">Invoice</div><div class="rt-desc">Supplier invoice</div></div>
+        <div class="ref-card"><div class="rt-icon">🏭</div><div class="rt-name">Supplier</div><div class="rt-desc">Ingredient supplier</div></div>
+        <div class="ref-card"><div class="rt-icon">📖</div><div class="rt-name">Recipe</div><div class="rt-desc">Beer recipe</div></div>
+        <div class="ref-card"><div class="rt-icon">🛢️</div><div class="rt-name">Keg</div><div class="rt-desc">Keg or barrel</div></div>
+      </div>
+
+      <h3>How to add a reference</h3>
+      <ol class="steps">
+        <li><div class="step-body"><strong>Select the type</strong> in the dropdown selector (Batch, Equipment, Ingredient, etc.).</div></li>
+        <li><div class="step-body"><strong>Type in the search field</strong> — After entering at least 2 characters, system suggestions appear with matches of the selected type.</div></li>
+        <li><div class="step-body"><strong>Select the result</strong> in the dropdown — A chip (tag) is created with the record name.</div></li>
+        <li><div class="step-body"><strong>Repeat</strong> to add more references. You can add multiple references, even of the same type (e.g. two equipment items).</div></li>
+        <li><div class="step-body"><strong>To remove a reference</strong>, click the × on the chip.</div></li>
+      </ol>
+
+      <h3>Reference chip examples</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+        <span class="ref-chip-demo"><span class="rc-icon">🍺</span> IPA-001 <span class="rc-x">×</span></span>
+        <span class="ref-chip-demo"><span class="rc-icon">⚙️</span> Fermenter 2 <span class="rc-x">×</span></span>
+        <span class="ref-chip-demo"><span class="rc-icon">📄</span> Invoice #345 <span class="rc-x">×</span></span>
+      </div>
+    </section>
+
+    <section id="detalle">
+      <h2><span class="ico">👁️</span> View task detail</h2>
+      <p>Click the title of a task in the list to open its detail. The screen has two columns:</p>
+
+      <table class="field-table">
+        <thead><tr><th>Column</th><th>Content</th></tr></thead>
+        <tbody>
+          <tr><td>Left</td><td>Interactive checklist — you can check/uncheck each item by clicking.</td></tr>
+          <tr><td>Right</td><td>General information: description, assigned to, created by, due date, creation date, and list of references with links.</td></tr>
+        </tbody>
+      </table>
+
+      <p>At the top of the detail are the <strong>Edit</strong> and <strong>Delete</strong> buttons (subject to permissions).</p>
+    </section>
+
+    <section id="progreso">
+      <h2><span class="ico">📊</span> Mark checklist progress</h2>
+      <p>From the task detail, click on any checklist item to mark it as completed. The system updates in real time without reloading the page.</p>
+
+      <ol class="steps">
+        <li><div class="step-body"><strong>Click the item</strong> — The checkbox turns green with a ✓ mark and the text is crossed out.</div></li>
+        <li><div class="step-body"><strong>The progress bar updates</strong> automatically with the new percentage.</div></li>
+        <li><div class="step-body"><strong>The status badge changes</strong>: Pending → In progress → Completed, based on the percentage.</div></li>
+        <li><div class="step-body"><strong>To uncheck an item</strong>, click it again — the system also allows reverting.</div></li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>When all items are checked, the status automatically changes to <span class="badge b-done">Completed</span>. You don't need to change it manually.</div>
+      </div>
+    </section>
+
+    <section id="estados">
+      <h2><span class="ico">🏷️</span> Statuses and priorities</h2>
+
+      <h3>Task statuses</h3>
+      <table class="field-table">
+        <thead><tr><th>Status</th><th>Meaning</th><th>When assigned</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-pend">Pending</span></td><td>No items completed yet.</td><td>When the task is created, or if all items are unchecked.</td></tr>
+          <tr><td><span class="badge b-prog">In progress</span></td><td>At least one item completed but not all.</td><td>Automatically when the first item is checked.</td></tr>
+          <tr><td><span class="badge b-done">Completed</span></td><td>All items completed.</td><td>Automatically when the last item is checked.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>If the task has no items, the status does not change automatically — you can edit it and adjust the status manually.</div>
+      </div>
+
+      <h3>Priorities</h3>
+      <table class="field-table">
+        <thead><tr><th>Priority</th><th>When to use it</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge b-baja">Low</span></td><td>Improvement activities or those without time urgency.</td></tr>
+          <tr><td><span class="badge b-media">Medium</span></td><td>Default value. Normal day-to-day activities.</td></tr>
+          <tr><td><span class="badge b-alta">High</span></td><td>Impacts production or has an upcoming deadline.</td></tr>
+          <tr><td><span class="badge b-urg">Urgent</span></td><td>Requires immediate attention. Affects product quality or safety.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="notificaciones">
+      <h2><span class="ico">🔔</span> Automatic notifications</h2>
+      <p>ZYMOS sends in-system notifications (bell in the navigation bar) in two situations:</p>
+
+      <table class="field-table">
+        <thead><tr><th>Event</th><th>Who receives it</th><th>When</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Task assigned</td>
+            <td>The assigned user.</td>
+            <td>When creating or editing a task, if the assignee is different from the creator. (Not notified if you assign a task to yourself.)</td>
+          </tr>
+          <tr>
+            <td>Task overdue</td>
+            <td>The assigned user.</td>
+            <td>Automatic daily check: tasks with past or today/tomorrow due dates that are not completed.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Notifications appear as a red dot on the bell in the navigation bar. Click the bell to see all of them.</div>
+      </div>
+
+      <div class="callout info">
+        <span class="ci">📱</span>
+        <div>
+          <strong>Also via WhatsApp</strong>
+          If the administrator has configured WhatsApp contacts in <em>Admin → WhatsApp</em>, <strong>task assigned</strong> events also generate a WhatsApp message to the contact subscribed to the "Task assigned" type. See <a href="manual_admin_en.html#whatsapp">Administration Manual → WhatsApp Notifications</a>.
+        </div>
+      </div>
+    </section>
+
+    <section id="roles">
+      <h2><span class="ico">🔑</span> Roles and permissions</h2>
+      <p>Access to the Tasks module depends on the role assigned to the user.</p>
+      <table class="field-table">
+        <thead><tr><th>Role</th><th>View</th><th>Create</th><th>Edit</th><th>Delete</th></tr></thead>
+        <tbody>
+          <tr><td>Administrator</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Production</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Human Resources</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          <tr><td>Inventory</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Billing</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+          <tr><td>Equipment</td><td>❌</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        </tbody>
+      </table>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Permissions can be adjusted if the administrator creates custom roles from <em>Admin › Roles</em>.</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('nav.sidebar-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector(`nav a[href="#${e.target.id}"]`); if (a) a.classList.add('active'); } });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
