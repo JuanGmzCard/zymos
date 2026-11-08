@@ -1185,6 +1185,9 @@ html.dark-mode .audit-meta strong { color: var(--dm-text-strong); }
     margin: 0; font-family: var(--font-body), sans-serif;
 }
 .phm-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.phm-greeting { font-size: 0.8rem; color: #64748b; margin-top: 0.15rem; }
+.phm-greeting .fw-semibold { color: #334155; }
+.phm-greeting-date { font-weight: 400; opacity: 0.75; text-transform: capitalize; }
 
 html.dark-mode .page-header-modern {
     background: var(--dm-card);
@@ -1197,6 +1200,8 @@ html.dark-mode .phm-icon {
 html.dark-mode .page-header-modern h1 { color: var(--dm-text-strong); }
 html.dark-mode .phm-crumb { color: var(--dm-text-faint); }
 html.dark-mode .phm-crumb b { color: var(--verde-zymos, #60a5fa); }
+html.dark-mode .phm-greeting { color: var(--dm-text-muted); }
+html.dark-mode .phm-greeting .fw-semibold { color: var(--dm-text); }
 
 /* Stat card simple */
 .stat-card-simple {
