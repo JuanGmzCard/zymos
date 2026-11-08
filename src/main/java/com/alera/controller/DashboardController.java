@@ -11,6 +11,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.time.LocalDate;
+import java.util.Locale;
+
 @Controller
 @RequestMapping("/dashboard")
 public class DashboardController {
@@ -31,34 +34,47 @@ public class DashboardController {
     }
 
     @GetMapping
-    public String dashboard(Model model) {
+    public String dashboard(Model model, Locale locale) {
         DashboardStats stats = dashboardService.obtenerEstadisticas();
+        LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
+
         model.addAttribute("stats", stats);
-        model.addAttribute("totalLotes",            stats.getTotalLotes());
-        model.addAttribute("enProceso",             stats.getEnProceso());
-        model.addAttribute("completados",           stats.getCompletados());
-        model.addAttribute("estilosDistintos",      stats.getEstilosDistintos());
-        model.addAttribute("totalInsumos",          stats.getTotalInsumos());
-        model.addAttribute("bajoStock",             stats.getBajoStock());
-        model.addAttribute("proximosAVencer",       stats.getProximosAVencer());
-        model.addAttribute("totalEquipos",          stats.getTotalEquipos());
-        model.addAttribute("equiposMantenimiento",  stats.getEquiposMantenimiento());
-        model.addAttribute("mantenimientoPendiente",stats.getMantenimientoPendiente());
-        model.addAttribute("totalFacturas",         stats.getTotalFacturas());
-        model.addAttribute("totalGastado",          stats.getTotalGastado());
-        model.addAttribute("totalMantenimientos",   stats.getTotalMantenimientos());
-        model.addAttribute("ultimosLotes",          stats.getUltimosLotes());
-        model.addAttribute("chartLitrosMes",  dashboardService.getLitrosPorMes());
+        model.addAttribute("totalLotes",             stats.getTotalLotes());
+        model.addAttribute("enProceso",              stats.getEnProceso());
+        model.addAttribute("completados",            stats.getCompletados());
+        model.addAttribute("estilosDistintos",       stats.getEstilosDistintos());
+        model.addAttribute("totalInsumos",           stats.getTotalInsumos());
+        model.addAttribute("bajoStock",              stats.getBajoStock());
+        model.addAttribute("proximosAVencer",        stats.getProximosAVencer());
+        model.addAttribute("totalEquipos",           stats.getTotalEquipos());
+        model.addAttribute("equiposMantenimiento",   stats.getEquiposMantenimiento());
+        model.addAttribute("mantenimientoPendiente", stats.getMantenimientoPendiente());
+        model.addAttribute("totalFacturas",          stats.getTotalFacturas());
+        model.addAttribute("totalGastado",           stats.getTotalGastado());
+        model.addAttribute("totalMantenimientos",    stats.getTotalMantenimientos());
+        model.addAttribute("ultimosLotes",           stats.getUltimosLotes());
+
+        // Producción activa
+        model.addAttribute("litrosActivos",   stats.getLitrosActivos());
+        model.addAttribute("fasesVencidas",   stats.getFasesVencidas());
+
+        // Ventas del mes
+        model.addAttribute("ventasDespachadasMes", stats.getVentasDespachadasMes());
+        model.addAttribute("ingresosesMes",        stats.getIngresosesMes());
+        model.addAttribute("clientesMes",          stats.getClientesMes());
+        model.addAttribute("gastoMes",             stats.getGastoMes());
+
+        // Legacy — mantenidos para compatibilidad con secciones que los usen
+        model.addAttribute("ventasDespachadas", ventaService.countByEstado(EstadoVenta.DESPACHADO));
+        model.addAttribute("ventasPendientes",  ventaService.countByEstado(EstadoVenta.PENDIENTE));
+
+        model.addAttribute("chartLitrosMes",  dashboardService.getLitrosPorMes(locale));
         model.addAttribute("chartEstilos",    dashboardService.getLotesPorEstilo());
         model.addAttribute("alertasBajoStock",    insumoService.listarBajoStock());
         model.addAttribute("alertasProxVencer",   insumoService.listarProximosAVencer(30));
         var proximas = planificacionService.listarProximas();
         model.addAttribute("proximasElaboraciones",
             proximas.size() > 5 ? proximas.subList(0, 5) : proximas);
-        model.addAttribute("ventasDespachadas", ventaService.countByEstado(EstadoVenta.DESPACHADO));
-        model.addAttribute("ventasPendientes",  ventaService.countByEstado(EstadoVenta.PENDIENTE));
-        model.addAttribute("ventasIngresos",    ventaService.sumIngresosDespachados());
-        model.addAttribute("ventasClientes",    ventaService.countClientesUnicos());
         return "dashboard";
     }
 }

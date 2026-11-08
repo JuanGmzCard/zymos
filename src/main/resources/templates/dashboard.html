@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,25 +8,46 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style th:attr="nonce=${cspNonce}">
+        /* ── Drag handle ── */
         .dash-handle {
             display: flex; align-items: center; justify-content: center;
             height: 20px; cursor: grab; color: var(--dorado);
-            opacity: 0; transition: opacity 0.15s; font-size: 1.1rem;
-            margin-bottom: 4px; border-radius: 4px;
-            user-select: none;
+            opacity: 0.35; transition: opacity 0.15s; font-size: 1.1rem;
+            margin-bottom: 4px; border-radius: 4px; user-select: none;
         }
-        .dash-section:hover .dash-handle { opacity: 0.55; }
+        .dash-section:hover .dash-handle { opacity: 0.65; }
         .dash-handle:hover { opacity: 1 !important; background: color-mix(in srgb, var(--dorado) 8%, transparent); }
         .dash-handle:active { cursor: grabbing; }
         .dash-ghost { opacity: 0.25; outline: 2px dashed var(--dorado); border-radius: 8px; }
         .dash-drag  { box-shadow: 0 8px 28px rgba(0,0,0,0.15); }
+
+        /* ── Stat card links ── */
         .stat-card-link {
             display: block; text-decoration: none; color: inherit;
             transition: transform 0.15s;
         }
         .stat-card-link:hover { transform: translateY(-2px); }
-        .stat-card-link:hover .stat-card { box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+        .stat-card-link:hover .stat-card-simple { box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
 
+        /* ── Stat period sub-label ── */
+        .stat-period {
+            font-size: 0.65rem; font-weight: 500; color: #94a3b8;
+            text-transform: uppercase; letter-spacing: 0.04em; margin-top: 0.1rem;
+        }
+
+        /* ── Alertas OK state ── */
+        .alertas-ok {
+            background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+            padding: 1.25rem 1.5rem; display: flex; align-items: center; gap: 1rem;
+        }
+        .alertas-ok-icon { font-size: 1.75rem; color: #16a34a; flex-shrink: 0; }
+        .alertas-ok-text .ok-title { font-weight: 600; color: #15803d; font-size: 0.9rem; }
+        .alertas-ok-text .ok-desc  { font-size: 0.8rem; color: #4ade80; margin-top: 0.1rem; color: #16a34a; }
+        html.dark-mode .alertas-ok { background: rgba(22,163,74,0.1); border-color: rgba(22,163,74,0.25); }
+        html.dark-mode .alertas-ok-text .ok-title { color: #4ade80; }
+        html.dark-mode .alertas-ok-text .ok-desc  { color: #86efac; }
+
+        /* ── Table card ── */
         .table-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
         .table-card .table-count { padding:0.875rem 1.25rem; font-size:0.875rem; font-weight:600; color:#1e293b; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; }
         .table-card table thead th { background:#f8fafc !important; color:#64748b !important; font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; padding:0.65rem 1rem; border-bottom:1px solid #e2e8f0; }
@@ -34,28 +55,36 @@
         .table-card table tbody tr:last-child td { border-bottom:none; }
         .table-card table tbody tr:hover { background:#f8fafc; }
         .table-card .tc-footer { padding:0.75rem 1.25rem; border-top:1px solid #e2e8f0; }
-
-        .fin-metric { padding:0.875rem 0; border-bottom:1px solid #f1f5f9; }
-        .fin-metric:last-child { border-bottom:none; }
-        .fin-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:0.2rem; }
-        .fin-value { font-size:1.5rem; font-weight:700; color:#1e293b; line-height:1.1; }
-        .fin-value.primary { color:var(--verde-zymos, #2563eb); }
-        .fin-sub { font-size:0.75rem; color:#94a3b8; }
-
         html.dark-mode .table-card { background:var(--dm-card); border-color:var(--dm-border-light); }
         html.dark-mode .table-card .table-count { color:var(--dm-text); border-color:var(--dm-border-light); }
         html.dark-mode .table-card table thead th { background:var(--dm-input) !important; color:var(--dm-text-muted) !important; border-color:var(--dm-border-light); }
         html.dark-mode .table-card table tbody td { color:var(--dm-text); border-color:var(--dm-border-faint); }
         html.dark-mode .table-card table tbody tr:hover { background:var(--dm-hover); }
         html.dark-mode .table-card .tc-footer { border-color:var(--dm-border-light); }
+
+        /* ── Financiero ── */
+        .fin-metric { padding:0.875rem 0; border-bottom:1px solid #f1f5f9; }
+        .fin-metric:last-child { border-bottom:none; }
+        .fin-label { font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; color:#94a3b8; margin-bottom:0.2rem; }
+        .fin-value { font-size:1.5rem; font-weight:700; color:#1e293b; line-height:1.1; }
+        .fin-value.primary { color:var(--verde-zymos, #2563eb); }
+        .fin-sub { font-size:0.75rem; color:#94a3b8; }
+        .fin-sub-value { font-size:0.8rem; color:#64748b; font-weight:500; margin-top:0.15rem; }
         html.dark-mode .fin-metric { border-color:var(--dm-border-faint); }
         html.dark-mode .fin-label { color:var(--dm-text-muted); }
         html.dark-mode .fin-value { color:var(--dm-text); }
+        html.dark-mode .fin-sub-value { color:var(--dm-text-faint); }
 
+        /* ── Chart card + badges ── */
         .chart-card { background:#fff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; }
-        .chart-card-header { padding:0.875rem 1.25rem; font-size:0.8rem; font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; }
+        .chart-card-header { padding:0.875rem 1.25rem; font-size:0.8rem; font-weight:600; color:#475569; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; }
+        .chart-period-badge { font-size:0.65rem; font-weight:500; color:#94a3b8; background:#f1f5f9; border-radius:20px; padding:2px 8px; }
+        .chart-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.5rem; color:#94a3b8; font-size:0.82rem; padding:2rem 1rem; }
+        .chart-empty i { font-size:1.75rem; }
         html.dark-mode .chart-card { background:var(--dm-card); border-color:var(--dm-border-light); }
         html.dark-mode .chart-card-header { color:var(--dm-text-muted); border-color:var(--dm-border-light); }
+        html.dark-mode .chart-period-badge { background:var(--dm-input); color:var(--dm-text-faint); }
+        html.dark-mode .chart-empty { color:var(--dm-text-muted); }
     </style>
 </head>
 <body>
@@ -71,7 +100,6 @@
         </div>
     </div>
     <div class="phm-actions">
-        <!-- Botón personalizar -->
         <div class="dropdown">
             <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button"
                     data-bs-toggle="dropdown" aria-expanded="false">
@@ -123,21 +151,22 @@
 <div class="container-fluid px-4 py-4">
 <div id="dash-sortable">
 
-    <!-- Stats Lotes -->
+    <!-- ── Stats Lotes (6 cards) ── -->
     <div id="dash-stats-lotes" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
         <div class="row g-3">
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <a th:href="@{/}" class="stat-card-link">
                     <div class="stat-card-simple">
                         <div class="stat-label" th:text="#{dashboard.stats.total.lotes}">Total Lotes</div>
                         <div class="stat-value" th:text="${totalLotes}">0</div>
+                        <div class="stat-period" th:text="#{dashboard.stats.periodo.total}">total</div>
                     </div>
                 </a>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <a th:href="@{/kanban}" class="stat-card-link">
                     <div class="stat-card-simple">
                         <div class="stat-label" th:text="#{dashboard.stats.en.proceso}">En Proceso</div>
@@ -145,7 +174,7 @@
                     </div>
                 </a>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <a th:href="@{/(fase='completados')}" class="stat-card-link">
                     <div class="stat-card-simple">
                         <div class="stat-label" th:text="#{dashboard.stats.completados}">Completados</div>
@@ -153,18 +182,39 @@
                     </div>
                 </a>
             </div>
-            <div class="col-6 col-md-3">
+            <div class="col-6 col-md-2">
                 <a th:href="@{/reportes/produccion}" class="stat-card-link">
                     <div class="stat-card-simple">
-                        <div class="stat-label" th:text="#{dashboard.stats.estilos}">Estilos Distintos</div>
+                        <div class="stat-label" th:text="#{dashboard.stats.estilos}">Estilos</div>
                         <div class="stat-value info" th:text="${estilosDistintos}">0</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-2">
+                <a th:href="@{/kanban}" class="stat-card-link">
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.litros.activos}">Litros en Proceso</div>
+                        <div class="stat-value info"
+                             th:text="${litrosActivos != null and litrosActivos.compareTo(T(java.math.BigDecimal).ZERO) > 0}
+                                       ? ${litrosActivos.stripTrailingZeros().toPlainString()} + ' L'
+                                       : '—'">— L</div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-6 col-md-2">
+                <a th:href="@{/kanban}" class="stat-card-link">
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.fases.vencidas}">Fases Vencidas</div>
+                        <div class="stat-value"
+                             th:classappend="${fasesVencidas > 0} ? 'warning' : 'success'"
+                             th:text="${fasesVencidas}">0</div>
                     </div>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Stats Inventario y Equipos -->
+    <!-- ── Stats Inventario y Equipos (slate/simple) ── -->
     <div id="dash-stats-inventario" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
@@ -172,66 +222,62 @@
         <div class="row g-3">
             <div class="col-6 col-md-3">
                 <a th:href="@{/inventario}" class="stat-card-link">
-                    <div class="stat-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${totalInsumos}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.stats.total.insumos}">Insumos</div>
-                            </div>
-                            <i class="bi bi-box-seam stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.total.insumos}">Insumos</div>
+                        <div class="stat-value" th:text="${totalInsumos}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/inventario(filtroBajoStock=true)}" class="stat-card-link">
-                    <div class="stat-card" th:classappend="${bajoStock > 0} ? 'danger' : 'success'">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${bajoStock}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.stats.bajo.stock}">Bajo Stock</div>
-                            </div>
-                            <i class="bi bi-exclamation-triangle stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.bajo.stock}">Bajo Stock</div>
+                        <div class="stat-value"
+                             th:classappend="${bajoStock > 0} ? 'warning' : 'success'"
+                             th:text="${bajoStock}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/inventario(filtroPorVencer=true)}" class="stat-card-link">
-                    <div class="stat-card" th:classappend="${proximosAVencer > 0} ? 'warning' : ''">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${proximosAVencer}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.stats.por.vencer}">Próx. Vencer</div>
-                            </div>
-                            <i class="bi bi-calendar-x stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.por.vencer}">Próx. Vencer</div>
+                        <div class="stat-value"
+                             th:classappend="${proximosAVencer > 0} ? 'warning' : 'success'"
+                             th:text="${proximosAVencer}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/equipos(estado='MANTENIMIENTO')}" class="stat-card-link">
-                    <div class="stat-card" th:classappend="${mantenimientoPendiente > 0} ? 'warning' : ''">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${mantenimientoPendiente}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.stats.mantenimiento}">Mantenimientos</div>
-                            </div>
-                            <i class="bi bi-wrench stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.stats.mantenimiento}">Mantenimientos</div>
+                        <div class="stat-value"
+                             th:classappend="${mantenimientoPendiente > 0} ? 'warning' : 'muted'"
+                             th:text="${mantenimientoPendiente}">0</div>
                     </div>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Panel de alertas -->
-    <div id="dash-alertas" class="dash-section mb-4"
-         th:if="${!#lists.isEmpty(alertasBajoStock)} or ${!#lists.isEmpty(alertasProxVencer)}">
+    <!-- ── Alertas (siempre en DOM para SortableJS) ── -->
+    <div id="dash-alertas" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
         </div>
-        <div class="row g-3">
+        <!-- Estado OK -->
+        <div th:if="${#lists.isEmpty(alertasBajoStock) and #lists.isEmpty(alertasProxVencer)}"
+             class="alertas-ok">
+            <div class="alertas-ok-icon"><i class="bi bi-check-circle-fill"></i></div>
+            <div class="alertas-ok-text">
+                <div class="ok-title" th:text="#{dashboard.alerta.ok.titulo}">Sin alertas</div>
+                <div class="ok-desc" th:text="#{dashboard.alerta.ok.desc}">Todo el inventario está en orden</div>
+            </div>
+        </div>
+        <!-- Con alertas -->
+        <div th:unless="${#lists.isEmpty(alertasBajoStock) and #lists.isEmpty(alertasProxVencer)}"
+             class="row g-3">
             <div class="col-md-6" th:if="${!#lists.isEmpty(alertasBajoStock)}">
                 <div class="table-card">
                     <div class="table-count">
@@ -283,7 +329,7 @@
         </div>
     </div>
 
-    <!-- Próximas Elaboraciones -->
+    <!-- ── Próximas Elaboraciones ── -->
     <div id="dash-elaboraciones" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
@@ -295,61 +341,61 @@
                     <i class="bi bi-calendar3 me-1"></i><span th:text="#{dashboard.elaboraciones.ver.cal}">Ver calendario</span>
                 </a>
             </div>
-                <div th:if="${#lists.isEmpty(proximasElaboraciones)}" class="empty-state py-4">
-                    <i class="bi bi-calendar"></i>
-                    <p th:text="#{dashboard.elaboraciones.empty}">No hay elaboraciones planificadas</p>
-                    <a th:href="@{/planificacion}" class="btn btn-primary btn-sm" th:text="#{dashboard.elaboraciones.planificar}">Planificar</a>
-                </div>
-                <div th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table-responsive">
-                <table th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table table-hover mb-0">
-                    <thead>
-                    <tr>
-                        <th class="ps-3" th:text="#{dashboard.elaboraciones.fecha}">Fecha</th>
-                        <th th:text="#{dashboard.elaboraciones.nombre}">Elaboración</th>
-                        <th th:text="#{dashboard.elaboraciones.receta}">Receta</th>
-                        <th th:text="#{dashboard.elaboraciones.volumen}">Volumen</th>
-                        <th th:text="#{dashboard.elaboraciones.estado}">Estado</th>
-                        <th></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="plan : ${proximasElaboraciones}">
-                        <td class="ps-3">
-                            <small th:text="${#temporals.format(plan.fechaPlaneada,'dd/MM/yyyy')}">-</small>
-                        </td>
-                        <td th:text="${plan.nombreElaboracion}">-</td>
-                        <td>
-                            <small class="text-muted"
-                                   th:text="${plan.receta != null ? plan.receta.nombre : '—'}">—</small>
-                        </td>
-                        <td>
-                            <small th:text="${plan.volumenEstimado != null ? plan.volumenEstimado + ' L' : '—'}">—</small>
-                        </td>
-                        <td>
-                            <span class="badge"
-                                  th:style="'background:' + ${plan.estado.color} + ';color:' + ${plan.estado.colorTexto}"
-                                  th:text="${plan.estado.displayName}">—</span>
-                        </td>
-                        <td class="pe-3 text-end">
-                            <a th:href="@{/nuevo(planId=${plan.id})}"
-                               th:if="${plan.estado.name() == 'PLANIFICADA'}"
-                               class="btn btn-sm btn-primary" th:title="#{dashboard.elaboraciones.iniciar}">
-                                <i class="bi bi-play-fill"></i>
-                            </a>
-                            <a th:href="@{/planificacion}"
-                               th:unless="${plan.estado.name() == 'PLANIFICADA'}"
-                               class="btn btn-sm btn-outline-secondary" th:title="#{dashboard.elaboraciones.ver.plan}">
-                                <i class="bi bi-eye"></i>
-                            </a>
-                        </td>
-                    </tr>
-                    </tbody>
-                </table>
-                </div>
+            <div th:if="${#lists.isEmpty(proximasElaboraciones)}" class="empty-state py-4">
+                <i class="bi bi-calendar"></i>
+                <p th:text="#{dashboard.elaboraciones.empty}">No hay elaboraciones planificadas</p>
+                <a th:href="@{/planificacion}" class="btn btn-primary btn-sm" th:text="#{dashboard.elaboraciones.planificar}">Planificar</a>
+            </div>
+            <div th:unless="${#lists.isEmpty(proximasElaboraciones)}" class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                <tr>
+                    <th class="ps-3" th:text="#{dashboard.elaboraciones.fecha}">Fecha</th>
+                    <th th:text="#{dashboard.elaboraciones.nombre}">Elaboración</th>
+                    <th th:text="#{dashboard.elaboraciones.receta}">Receta</th>
+                    <th th:text="#{dashboard.elaboraciones.volumen}">Volumen</th>
+                    <th th:text="#{dashboard.elaboraciones.estado}">Estado</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="plan : ${proximasElaboraciones}">
+                    <td class="ps-3">
+                        <small th:text="${#temporals.format(plan.fechaPlaneada,'dd/MM/yyyy')}">-</small>
+                    </td>
+                    <td th:text="${plan.nombreElaboracion}">-</td>
+                    <td>
+                        <small class="text-muted"
+                               th:text="${plan.receta != null ? plan.receta.nombre : '—'}">—</small>
+                    </td>
+                    <td>
+                        <small th:text="${plan.volumenEstimado != null ? plan.volumenEstimado + ' L' : '—'}">—</small>
+                    </td>
+                    <td>
+                        <span class="badge"
+                              th:style="'background:' + ${plan.estado.color} + ';color:' + ${plan.estado.colorTexto}"
+                              th:text="${plan.estado.displayName}">—</span>
+                    </td>
+                    <td class="pe-3 text-end">
+                        <a th:href="@{/nuevo(planId=${plan.id})}"
+                           th:if="${plan.estado.name() == 'PLANIFICADA'}"
+                           class="btn btn-sm btn-primary" th:title="#{dashboard.elaboraciones.iniciar}">
+                            <i class="bi bi-play-fill"></i>
+                        </a>
+                        <a th:href="@{/planificacion}"
+                           th:unless="${plan.estado.name() == 'PLANIFICADA'}"
+                           class="btn btn-sm btn-outline-secondary" th:title="#{dashboard.elaboraciones.ver.plan}">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+            </div>
         </div>
     </div>
 
-    <!-- Gráficas -->
+    <!-- ── Gráficas ── -->
     <div id="dash-charts" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
@@ -357,24 +403,38 @@
         <div class="row g-4">
             <div class="col-md-7">
                 <div class="chart-card h-100">
-                    <div class="chart-card-header"><i class="bi bi-bar-chart-line me-2"></i><span th:text="#{dashboard.charts.litros}">Litros Producidos por Mes</span></div>
+                    <div class="chart-card-header">
+                        <span><i class="bi bi-bar-chart-line me-2"></i><span th:text="#{dashboard.charts.litros}">Litros Producidos por Mes</span></span>
+                        <span class="chart-period-badge" th:text="#{dashboard.charts.ultimos.6m}">Últimos 6 meses</span>
+                    </div>
                     <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                         <canvas id="chartLitros" style="max-height:200px;"></canvas>
+                        <div id="chartLitrosEmpty" class="chart-empty" style="display:none;">
+                            <i class="bi bi-bar-chart"></i>
+                            <span th:text="#{dashboard.charts.sin.datos}">Sin datos para el período</span>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="col-md-5">
                 <div class="chart-card h-100">
-                    <div class="chart-card-header"><i class="bi bi-pie-chart me-2"></i><span th:text="#{dashboard.charts.lotes}">Lotes por Estilo</span></div>
+                    <div class="chart-card-header">
+                        <span><i class="bi bi-pie-chart me-2"></i><span th:text="#{dashboard.charts.lotes}">Lotes por Estilo</span></span>
+                        <span class="chart-period-badge" th:text="#{dashboard.charts.top6}">Top 6</span>
+                    </div>
                     <div class="p-3 d-flex align-items-center justify-content-center" style="min-height:220px;">
                         <canvas id="chartEstilos" style="max-height:200px;"></canvas>
+                        <div id="chartEstilosEmpty" class="chart-empty" style="display:none;">
+                            <i class="bi bi-pie-chart"></i>
+                            <span th:text="#{dashboard.charts.sin.datos}">Sin datos para el período</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Ventas y Despacho -->
+    <!-- ── Ventas y Despacho (mes corriente) ── -->
     <div id="dash-ventas" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
@@ -382,60 +442,46 @@
         <div class="row g-3">
             <div class="col-6 col-md-3">
                 <a th:href="@{/ventas(estado='DESPACHADO')}" class="stat-card-link">
-                    <div class="stat-card success">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${ventasDespachadas}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.ventas.despachadas}">Despachadas</div>
-                            </div>
-                            <i class="bi bi-bag-check stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.ventas.despachadas}">Despachadas</div>
+                        <div class="stat-value success" th:text="${ventasDespachadasMes}">0</div>
+                        <div class="stat-period" th:text="#{dashboard.stats.periodo.mes}">este mes</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/ventas(estado='PENDIENTE')}" class="stat-card-link">
-                    <div class="stat-card warning">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${ventasPendientes}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.ventas.pendientes}">Pendientes</div>
-                            </div>
-                            <i class="bi bi-hourglass-split stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.ventas.pendientes}">Pendientes</div>
+                        <div class="stat-value"
+                             th:classappend="${ventasPendientes > 0} ? 'warning' : 'muted'"
+                             th:text="${ventasPendientes}">0</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/ventas}" class="stat-card-link">
-                    <div class="stat-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ventasIngresos,1,'COMMA',0,'POINT')}">$0</div>
-                                <div class="stat-label" th:text="#{dashboard.ventas.ingresos}">Ingresos</div>
-                            </div>
-                            <i class="bi bi-currency-dollar stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.ventas.ingresos}">Ingresos</div>
+                        <div class="stat-value success"
+                             th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(ingresosesMes,1,'COMMA',0,'POINT')}">$0</div>
+                        <div class="stat-period" th:text="#{dashboard.stats.periodo.mes}">este mes</div>
                     </div>
                 </a>
             </div>
             <div class="col-6 col-md-3">
                 <a th:href="@{/ventas}" class="stat-card-link">
-                    <div class="stat-card info">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div>
-                                <div class="stat-number" th:text="${ventasClientes}">0</div>
-                                <div class="stat-label" th:text="#{dashboard.ventas.clientes}">Clientes Únicos</div>
-                            </div>
-                            <i class="bi bi-people stat-icon"></i>
-                        </div>
+                    <div class="stat-card-simple">
+                        <div class="stat-label" th:text="#{dashboard.ventas.clientes}">Clientes Únicos</div>
+                        <div class="stat-value info" th:text="${clientesMes}">0</div>
+                        <div class="stat-period" th:text="#{dashboard.stats.periodo.mes}">este mes</div>
                     </div>
                 </a>
             </div>
         </div>
     </div>
 
-    <!-- Finanzas + Últimos Lotes -->
+    <!-- ── Finanzas + Últimos Lotes ── -->
     <div id="dash-finanzas" class="dash-section mb-4">
         <div class="dash-handle" th:title="#{dashboard.drag.hint}">
             <i class="bi bi-grip-horizontal"></i>
@@ -448,15 +494,16 @@
                     </div>
                     <div class="px-3 py-2 flex-grow-1">
                         <div class="fin-metric">
-                            <div class="fin-label" th:text="#{dashboard.fin.total.facturas}">Total Facturas</div>
-                            <div class="fin-value primary" th:text="${totalFacturas}">0</div>
-                            <div class="fin-sub" th:text="#{dashboard.fin.docs}">documentos registrados</div>
+                            <div class="fin-label" th:text="#{dashboard.fin.gasto.mes}">Gasto del Mes</div>
+                            <div class="fin-value primary"
+                                 th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(gastoMes, 1, 'COMMA', 0, 'POINT')}">$0</div>
+                            <div class="fin-sub-value"
+                                 th:text="#{dashboard.fin.gasto} + ': ' + ${branding.simboloMoneda} + ${#numbers.formatDecimal(totalGastado, 1, 'COMMA', 0, 'POINT')}">Total: $0</div>
                         </div>
                         <div class="fin-metric">
-                            <div class="fin-label" th:text="#{dashboard.fin.gasto}">Gasto Total Compras</div>
-                            <div class="fin-value">
-                                <span th:text="${branding.simboloMoneda} + ${#numbers.formatDecimal(totalGastado, 1, 'COMMA', 0, 'POINT')}">$0</span>
-                            </div>
+                            <div class="fin-label" th:text="#{dashboard.fin.total.facturas}">Total Facturas</div>
+                            <div class="fin-value" th:text="${totalFacturas}">0</div>
+                            <div class="fin-sub" th:text="#{dashboard.fin.docs}">documentos registrados</div>
                         </div>
                         <div class="fin-metric">
                             <div class="fin-label" th:text="#{dashboard.fin.mantenimientos}">Costo Mantenimientos</div>
@@ -491,6 +538,7 @@
                             <tr>
                                 <th style="padding-left:1.25rem;" th:text="#{dashboard.recientes.codigo}">Código</th>
                                 <th th:text="#{dashboard.recientes.estilo}">Estilo</th>
+                                <th th:text="#{dashboard.recientes.litros}">Litros</th>
                                 <th th:text="#{dashboard.recientes.fase}">Fase</th>
                                 <th th:text="#{dashboard.elaboraciones.fecha}">Fecha</th>
                                 <th></th>
@@ -505,6 +553,9 @@
                                        th:text="${lote.codigoLote}">-</a>
                                 </td>
                                 <td th:text="${lote.estilo}">-</td>
+                                <td class="text-muted small">
+                                    <span th:text="${lote.litrosFinales != null} ? ${lote.litrosFinales.stripTrailingZeros().toPlainString()} + ' L' : '—'">—</span>
+                                </td>
                                 <td>
                                     <span class="phase-badge"
                                           th:classappend="${lote.faseActual == 'Carbonatación'} ? 'carbonatacion' :
@@ -542,11 +593,10 @@
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script th:attr="nonce=${cspNonce}">
 // ── Claves localStorage ───────────────────────────────────────────
-const DASH_VIS_KEY   = 'zymos-dashboard-secciones';
-const DASH_ORDEN_KEY = 'zymos-dashboard-orden';
+const DASH_VIS_KEY    = 'zymos-dashboard-secciones';
+const DASH_ORDEN_KEY  = 'zymos-dashboard-orden';
 const TODAS_SECCIONES = ['stats-lotes','stats-inventario','alertas','elaboraciones','charts','ventas','finanzas'];
 
-// ── Orden ─────────────────────────────────────────────────────────
 function guardarOrden() {
     const orden = [...document.querySelectorAll('#dash-sortable .dash-section')]
         .map(el => el.id.replace('dash-', ''));
@@ -563,7 +613,6 @@ function restaurarOrden() {
     });
 }
 
-// ── Visibilidad ───────────────────────────────────────────────────
 function guardarVisibilidad() {
     const estado = {};
     document.querySelectorAll('.dash-toggle').forEach(function(cb) {
@@ -583,19 +632,16 @@ function restaurarVisibilidad() {
     });
 }
 
-// ── Reset ─────────────────────────────────────────────────────────
 function resetDashboard() {
     localStorage.removeItem(DASH_VIS_KEY);
     localStorage.removeItem(DASH_ORDEN_KEY);
     location.reload();
 }
 
-// ── Init ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-    restaurarOrden();       // primero orden, luego visibilidad
+    restaurarOrden();
     restaurarVisibilidad();
 
-    // Cambios de visibilidad en tiempo real
     document.querySelectorAll('.dash-toggle').forEach(function(cb) {
         cb.addEventListener('change', function() {
             const seccion = document.getElementById('dash-' + this.dataset.seccion);
@@ -604,7 +650,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // SortableJS — arrastrar secciones
     Sortable.create(document.getElementById('dash-sortable'), {
         handle:     '.dash-handle',
         animation:  200,
@@ -631,41 +676,63 @@ document.addEventListener('DOMContentLoaded', function() {
         VERDE,
         DORADO,
         cvars.getPropertyValue('--dorado-claro').trim() || '#E0B840',
-        '#556B2F', '#8B7355', '#6B8E23'
+        '#556B2F','#8B7355','#6B8E23',
+        '#4682B4','#B8860B','#2E8B57',
+        '#8B4513','#4169E1','#9370DB'
     ];
 
-    new Chart(document.getElementById('chartLitros'), {
-        type: 'bar',
-        data: {
-            labels: Object.keys(litrosMesData),
-            datasets: [{ label: DASH_LITROS_LABEL, data: Object.values(litrosMesData),
-                backgroundColor: DORADO, borderColor: VERDE, borderWidth: 1, borderRadius: 4 }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { font: { family: 'Raleway' } } },
-                x: { ticks: { font: { family: 'Raleway', size: 11 } } }
+    // Gráfica de barras — litros por mes
+    var litrosVals = Object.values(litrosMesData);
+    var litrosSum  = litrosVals.reduce(function(a, b) { return a + (b || 0); }, 0);
+    if (litrosSum > 0) {
+        document.getElementById('chartLitros').style.display = '';
+        document.getElementById('chartLitrosEmpty').style.display = 'none';
+        new Chart(document.getElementById('chartLitros'), {
+            type: 'bar',
+            data: {
+                labels: Object.keys(litrosMesData),
+                datasets: [{ label: DASH_LITROS_LABEL, data: litrosVals,
+                    backgroundColor: DORADO, borderColor: VERDE, borderWidth: 1, borderRadius: 4 }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { font: { family: 'Raleway' } } },
+                    x: { ticks: { font: { family: 'Raleway', size: 11 } } }
+                }
             }
-        }
-    });
+        });
+    } else {
+        document.getElementById('chartLitros').style.display = 'none';
+        document.getElementById('chartLitrosEmpty').style.display = '';
+    }
 
-    new Chart(document.getElementById('chartEstilos'), {
-        type: 'doughnut',
-        data: {
-            labels: Object.keys(estilosData),
-            datasets: [{ data: Object.values(estilosData),
-                backgroundColor: COLORES, borderWidth: 2, borderColor: '#fff' }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: { position: 'bottom',
-                    labels: { font: { family: 'Raleway', size: 11 }, padding: 12 } }
+    // Gráfica de donut — estilos
+    var estilosVals = Object.values(estilosData);
+    var estilosSum  = estilosVals.reduce(function(a, b) { return a + (b || 0); }, 0);
+    if (estilosSum > 0) {
+        document.getElementById('chartEstilos').style.display = '';
+        document.getElementById('chartEstilosEmpty').style.display = 'none';
+        new Chart(document.getElementById('chartEstilos'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(estilosData),
+                datasets: [{ data: estilosVals,
+                    backgroundColor: COLORES, borderWidth: 2, borderColor: '#fff' }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom',
+                        labels: { font: { family: 'Raleway', size: 11 }, padding: 12 } }
+                }
             }
-        }
-    });
+        });
+    } else {
+        document.getElementById('chartEstilos').style.display = 'none';
+        document.getElementById('chartEstilosEmpty').style.display = '';
+    }
 });
 /*]]>*/
 </script>

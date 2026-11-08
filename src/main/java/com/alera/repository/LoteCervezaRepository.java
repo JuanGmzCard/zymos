@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -169,4 +170,17 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     List<Object[]> promediosPorEstilo(@Param("estilo") String estilo,
                                       @Param("excludeId") Long excludeId,
                                       @Param("tenantId") String tenantId);
+
+    @Query("SELECT COUNT(l) FROM LoteCerveza l WHERE " +
+           "l.carbFechaFinal IS NULL AND (" +
+           "  (l.fermFechaInicial IS NOT NULL AND l.fermFechaFinal IS NULL AND l.fermFechaFinalIdeal < :hoy) OR " +
+           "  (l.acondFechaInicial IS NOT NULL AND l.acondFechaFinal IS NULL AND l.acondFechaFinalIdeal < :hoy) OR " +
+           "  (l.madurFechaInicial IS NOT NULL AND l.madurFechaFinal IS NULL AND l.madurFechaFinalIdeal < :hoy) OR " +
+           "  (l.carbFechaInicial IS NOT NULL AND l.carbFechaFinalIdeal < :hoy)" +
+           ")")
+    long countFasesVencidas(@Param("hoy") LocalDate hoy);
+
+    @Query("SELECT COALESCE(SUM(COALESCE(l.litrosFinales, 0)), 0) FROM LoteCerveza l WHERE " +
+           "l.fermFechaInicial IS NOT NULL AND l.carbFechaFinal IS NULL")
+    BigDecimal sumLitrosActivos();
 }

@@ -302,6 +302,22 @@ public class VentaService {
         return v != null ? v : BigDecimal.ZERO;
     }
 
+    @Transactional(readOnly = true)
+    public long countByEstadoDesde(EstadoVenta estado, LocalDate desde) {
+        return ventaRepo.countByEstadoDesde(estado, desde);
+    }
+
+    @Transactional(readOnly = true)
+    public long countClientesUnicosDesde(LocalDate desde) {
+        return ventaRepo.countClientesUnicosDesde(desde);
+    }
+
+    @Transactional(readOnly = true)
+    public BigDecimal sumIngresosDespachadosDesde(LocalDate desde) {
+        BigDecimal v = ventaItemRepo.sumIngresosDespachadosDesde(desde);
+        return v != null ? v : BigDecimal.ZERO;
+    }
+
     // ── Helpers privados ──────────────────────────────────────────────────────
 
     private void mapearDto(VentaFormDto dto, Venta v) {

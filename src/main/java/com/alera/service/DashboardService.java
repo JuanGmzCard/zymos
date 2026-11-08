@@ -3,6 +3,7 @@ package com.alera.service;
 import com.alera.config.TenantContext;
 import com.alera.dto.DashboardStats;
 import com.alera.model.enums.EstadoEquipo;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,21 +28,28 @@ public class DashboardService {
     private final EquipoRepository equipoRepo;
     private final FacturaProveedorRepository facturaRepo;
     private final MantenimientoEquipoRepository mantenimientoRepo;
+    private final VentaRepository ventaRepo;
+    private final VentaItemRepository ventaItemRepo;
 
     public DashboardService(LoteCervezaRepository loteRepo,
                              InsumoInventarioRepository insumoRepo,
                              EquipoRepository equipoRepo,
                              FacturaProveedorRepository facturaRepo,
-                             MantenimientoEquipoRepository mantenimientoRepo) {
+                             MantenimientoEquipoRepository mantenimientoRepo,
+                             VentaRepository ventaRepo,
+                             VentaItemRepository ventaItemRepo) {
         this.loteRepo = loteRepo;
         this.insumoRepo = insumoRepo;
         this.equipoRepo = equipoRepo;
         this.facturaRepo = facturaRepo;
         this.mantenimientoRepo = mantenimientoRepo;
+        this.ventaRepo = ventaRepo;
+        this.ventaItemRepo = ventaItemRepo;
     }
 
-    @Cacheable(value = "dashboard-litros-mes", key = "T(com.alera.config.TenantContext).getCurrentTenant()")
-    public Map<String, Number> getLitrosPorMes() {
+    @Cacheable(value = "dashboard-litros-mes",
+               key = "T(com.alera.config.TenantContext).getCurrentTenant() + '-' + #locale.language")
+    public Map<String, Number> getLitrosPorMes(Locale locale) {
         String tenantId = TenantContext.getCurrentTenant();
         LocalDate desde = LocalDate.now().minusMonths(5).withDayOfMonth(1);
         List<Object[]> raw = loteRepo.findLitrosPorMes(desde, tenantId);
@@ -50,13 +58,13 @@ public class DashboardService {
         LocalDate now = LocalDate.now();
         for (int i = 5; i >= 0; i--) {
             LocalDate mes = now.minusMonths(i).withDayOfMonth(1);
-            result.put(labelMes(mes), 0);
+            result.put(labelMes(mes, locale), 0);
         }
         for (Object[] row : raw) {
             int year  = ((Number) row[0]).intValue();
             int month = ((Number) row[1]).intValue();
             Number litros = (Number) row[2];
-            String label = labelMes(LocalDate.of(year, month, 1));
+            String label = labelMes(LocalDate.of(year, month, 1), locale);
             if (result.containsKey(label)) result.put(label, litros);
         }
         return result;
@@ -73,39 +81,51 @@ public class DashboardService {
         return result;
     }
 
-    private String labelMes(LocalDate date) {
-        return date.getMonth().getDisplayName(TextStyle.SHORT, Locale.forLanguageTag("es"))
-               + " " + date.getYear();
+    private String labelMes(LocalDate date, Locale locale) {
+        return date.getMonth().getDisplayName(TextStyle.SHORT, locale) + " " + date.getYear();
     }
 
     @Cacheable(value = "dashboard-stats", key = "T(com.alera.config.TenantContext).getCurrentTenant()")
     public DashboardStats obtenerEstadisticas() {
         log.debug("Calculando estadísticas del dashboard");
 
-        LocalDate hoy = LocalDate.now();
+        LocalDate hoy       = LocalDate.now();
+        LocalDate inicioMes = hoy.withDayOfMonth(1);
 
         BigDecimal totalGastado = facturaRepo.sumTotalFacturas();
         BigDecimal totalMant    = mantenimientoRepo.sumTotalCostos();
 
+        BigDecimal gastoMes = facturaRepo.sumTotalFiltered(null, inicioMes, hoy);
+        BigDecimal ingMes   = ventaItemRepo.sumIngresosDespachadosDesde(inicioMes);
+        BigDecimal litrosAct = loteRepo.sumLitrosActivos();
+
         return new DashboardStats()
-                // Lotes — todo a nivel de BD
+                // Lotes
                 .totalLotes(loteRepo.count())
                 .enProceso(loteRepo.countEnProceso())
                 .completados(loteRepo.countCompletados())
                 .estilosDistintos(loteRepo.countDistinctEstilos())
-                // Inventario — COUNT queries en lugar de findAll().size()
+                // Inventario
                 .totalInsumos(insumoRepo.count())
                 .bajoStock(insumoRepo.countBajoStock())
                 .proximosAVencer(insumoRepo.countProximosAVencer(hoy.plusDays(30)))
-                // Equipos — COUNT queries en lugar de findList().size()
+                // Equipos
                 .totalEquipos(equipoRepo.count())
                 .equiposMantenimiento(equipoRepo.countByEstado(EstadoEquipo.MANTENIMIENTO))
                 .mantenimientoPendiente(equipoRepo.countMantenimientoPendiente(hoy.plusDays(7)))
                 // Financiero
                 .totalFacturas(facturaRepo.countTotal())
-                .totalGastado(totalGastado  != null ? totalGastado : BigDecimal.ZERO)
+                .totalGastado(totalGastado != null ? totalGastado : BigDecimal.ZERO)
                 .totalMantenimientos(totalMant != null ? totalMant : BigDecimal.ZERO)
-                // Últimos 5 lotes — LIMIT a nivel de BD, no stream().limit()
+                .gastoMes(gastoMes != null ? gastoMes : BigDecimal.ZERO)
+                // Ventas del mes
+                .ventasDespachadasMes(ventaRepo.countByEstadoDesde(EstadoVenta.DESPACHADO, inicioMes))
+                .ingresosesMes(ingMes != null ? ingMes : BigDecimal.ZERO)
+                .clientesMes(ventaRepo.countClientesUnicosDesde(inicioMes))
+                // Producción activa
+                .litrosActivos(litrosAct != null ? litrosAct : BigDecimal.ZERO)
+                .fasesVencidas(loteRepo.countFasesVencidas(hoy))
+                // Últimos 5 lotes
                 .ultimosLotes(loteRepo.findTop5(PageRequest.of(0, 5)));
     }
 }

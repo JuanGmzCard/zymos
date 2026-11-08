@@ -63,4 +63,10 @@ public interface VentaRepository extends JpaRepository<Venta, Long> {
            "WHERE v.tenant_id = :tenantId AND v.deleted_at IS NULL AND v.estado = 'DESPACHADO' " +
            "GROUP BY v.cliente ORDER BY total_ingresos DESC LIMIT 5")
     List<Map<String, Object>> findTopClientes(@Param("tenantId") String tenantId);
+
+    @Query("SELECT COUNT(v) FROM Venta v WHERE v.estado = :estado AND v.fechaDespacho >= :desde")
+    long countByEstadoDesde(@Param("estado") EstadoVenta estado, @Param("desde") LocalDate desde);
+
+    @Query("SELECT COUNT(DISTINCT v.cliente) FROM Venta v WHERE v.fechaDespacho >= :desde")
+    long countClientesUnicosDesde(@Param("desde") LocalDate desde);
 }

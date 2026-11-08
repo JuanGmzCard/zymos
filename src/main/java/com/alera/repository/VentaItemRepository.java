@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -80,4 +81,9 @@ public interface VentaItemRepository extends JpaRepository<VentaItem, Long> {
     @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +
            "FROM VentaItem i WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO")
     BigDecimal sumIngresosDespachados();
+
+    @Query("SELECT COALESCE(SUM(i.cantidad * i.precioUnitario * (1 - i.descuentoPct / 100.0)), 0.0) " +
+           "FROM VentaItem i WHERE i.venta.estado = com.alera.model.enums.EstadoVenta.DESPACHADO " +
+           "AND i.venta.fechaDespacho >= :desde")
+    BigDecimal sumIngresosDespachadosDesde(@Param("desde") LocalDate desde);
 }
