@@ -4,6 +4,7 @@ import com.alera.config.*;
 import com.alera.model.CheckoutPendiente;
 import com.alera.model.enums.PlanNivel;
 import com.alera.payment.MercadoPagoGateway;
+import com.alera.payment.StripeGateway;
 import com.alera.repository.CheckoutPendienteRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.*;
@@ -36,6 +37,7 @@ class CheckoutControllerTest {
     @MockBean TenantRepository               tenantRepo;
     @MockBean CheckoutPendienteRepository    checkoutRepo;
     @MockBean MercadoPagoGateway             pasarela;
+    @MockBean StripeGateway                  stripeGateway;
     @MockBean TenantProvisioningService      provisioningService;
     @MockBean BrandingProperties             brandingProperties;
     @MockBean ZymosAuthSuccessHandler        successHandler;
@@ -53,6 +55,8 @@ class CheckoutControllerTest {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(pasarela.isHabilitado()).thenReturn(false);
         when(pasarela.verificarFirmaWebhook(any(), any(), any(), anyMap())).thenReturn(true);
+        when(stripeGateway.isHabilitado()).thenReturn(false);
+        when(stripeGateway.verificarFirmaWebhook(any(), any(), any(), anyMap())).thenReturn(true);
     }
 
     @Nested
@@ -60,12 +64,12 @@ class CheckoutControllerTest {
     class Planes {
         @Test
         @WithMockUser
-        @DisplayName("retorna 200 y el modelo tiene planes")
+        @DisplayName("retorna 200 y el modelo tiene planes, mpHabilitado y stripeHabilitado")
         void planes_retorna200() throws Exception {
             mockMvc.perform(get("/planes"))
                     .andExpect(status().isOk())
                     .andExpect(view().name("plan/planes"))
-                    .andExpect(model().attributeExists("planes", "mpHabilitado"));
+                    .andExpect(model().attributeExists("planes", "mpHabilitado", "stripeHabilitado"));
         }
     }
 
@@ -297,6 +301,93 @@ class CheckoutControllerTest {
                     .andExpect(view().name("plan/exito"))
                     .andExpect(model().attribute("esTrial", true))
                     .andExpect(model().attributeExists("checkout", "loginUrl", "trialFin"));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /checkout/iniciar-stripe")
+    class IniciarStripe {
+        @Test
+        @WithMockUser
+        @DisplayName("datos válidos redirige a URL de Stripe")
+        void datosValidos_redirige() throws Exception {
+            when(stripeGateway.isHabilitado()).thenReturn(true);
+            when(tenantRepo.existsById("micerve")).thenReturn(false);
+            when(checkoutRepo.findBySubdominioAndEstado("micerve", "PENDIENTE"))
+                    .thenReturn(Optional.empty());
+            when(checkoutRepo.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(stripeGateway.crearSesion(any(), anyString()))
+                    .thenReturn("https://checkout.stripe.com/pay/cs_test_123");
+
+            mockMvc.perform(post("/checkout/iniciar-stripe").with(csrf())
+                    .param("planNivel", "COCCION")
+                    .param("nombreCerveceria", "Mi Cervecería")
+                    .param("subdominio", "micerve")
+                    .param("email", "test@test.com"))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("https://checkout.stripe.com/pay/cs_test_123"));
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("subdominio inválido muestra error en planes")
+        void subdominioInvalido_retornaError() throws Exception {
+            when(stripeGateway.isHabilitado()).thenReturn(true);
+
+            mockMvc.perform(post("/checkout/iniciar-stripe").with(csrf())
+                    .param("planNivel", "MACERADO")
+                    .param("nombreCerveceria", "Test")
+                    .param("subdominio", "a")
+                    .param("email", "test@test.com"))
+                    .andExpect(status().isOk())
+                    .andExpect(view().name("plan/planes"))
+                    .andExpect(model().attributeExists("error"));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /webhook/stripe")
+    class WebhookStripe {
+        @Test
+        @WithMockUser
+        @DisplayName("Stripe no configurado retorna 200 sin procesar")
+        void stripeNoConfigurado_retorna200() throws Exception {
+            when(stripeGateway.isHabilitado()).thenReturn(false);
+
+            mockMvc.perform(post("/webhook/stripe").with(csrf())
+                    .header("Stripe-Signature", "t=1234,v1=abc")
+                    .contentType("application/json")
+                    .content("{\"type\":\"checkout.session.completed\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("firma inválida retorna 401")
+        void firmaInvalida_retorna401() throws Exception {
+            when(stripeGateway.isHabilitado()).thenReturn(true);
+            when(stripeGateway.verificarFirmaWebhook(any(), any(), any(), anyMap())).thenReturn(false);
+
+            mockMvc.perform(post("/webhook/stripe").with(csrf())
+                    .header("Stripe-Signature", "invalid")
+                    .contentType("application/json")
+                    .content("{\"type\":\"checkout.session.completed\"}"))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("evento con firma válida retorna 200")
+        void eventoValido_retorna200() throws Exception {
+            when(stripeGateway.isHabilitado()).thenReturn(true);
+            when(stripeGateway.verificarFirmaWebhook(any(), any(), any(), anyMap())).thenReturn(true);
+            when(stripeGateway.construirEvento(any(), any())).thenReturn(Optional.empty());
+
+            mockMvc.perform(post("/webhook/stripe").with(csrf())
+                    .header("Stripe-Signature", "t=1234,v1=abc")
+                    .contentType("application/json")
+                    .content("{\"type\":\"checkout.session.completed\"}"))
+                    .andExpect(status().isOk());
         }
     }
 

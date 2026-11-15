@@ -78,6 +78,20 @@
             border: 2px solid var(--verde-alera, #2563eb);
         }
         .btn-plan-outline:hover { background: var(--verde-alera, #2563eb); color: #fff; }
+        .btn-plan-stripe {
+            background: #635bff; color: #fff;
+        }
+        .btn-plan-stripe:hover { background: #4f46e5; transform: translateY(-1px); }
+        .pago-sep {
+            text-align: center; color: #94a3b8; font-size: .78rem; margin: .6rem 0;
+            position: relative;
+        }
+        .pago-sep::before, .pago-sep::after {
+            content: ''; position: absolute; top: 50%; width: calc(50% - 2rem); height: 1px;
+            background: #e2e8f0;
+        }
+        .pago-sep::before { left: 0; }
+        .pago-sep::after  { right: 0; }
 
         /* Form section */
         .form-section {
@@ -496,9 +510,25 @@
             </div>
 
             <div class="mt-4">
-                <button type="submit" class="btn-plan btn-plan-primary" id="btnPagar">
+                <!-- Botón MercadoPago (COP) -->
+                <button th:if="${mpHabilitado}"
+                        type="submit" formaction="/checkout/iniciar"
+                        class="btn-plan btn-plan-primary js-pago-btn" id="btnPagar"
+                        th:attr="data-spinner=#{planes.js.spinner.mp}">
                     <i class="bi bi-lock-fill me-1"></i>
                     <span th:text="#{planes.form.pagar}">Pagar con MercadoPago</span>
+                </button>
+                <!-- Separador (solo si ambas pasarelas activas) -->
+                <div class="pago-sep" th:if="${mpHabilitado and stripeHabilitado}">
+                    <span th:text="#{planes.form.pago.sep}">o pagar con</span>
+                </div>
+                <!-- Botón Stripe (USD) -->
+                <button th:if="${stripeHabilitado}"
+                        type="submit" formaction="/checkout/iniciar-stripe"
+                        class="btn-plan btn-plan-stripe js-pago-btn" id="btnPagarStripe"
+                        th:attr="data-spinner=#{planes.js.spinner.stripe}">
+                    <i class="bi bi-credit-card me-1"></i>
+                    <span th:text="#{planes.form.pagar.stripe}">Pagar con Stripe (USD)</span>
                 </button>
                 <div class="secure-badge mt-2">
                     <i class="bi bi-shield-check me-1"></i><span th:text="#{planes.form.pago.trust}">Pago seguro · 30 días de acceso · Sin cargo automático</span>
@@ -517,8 +547,9 @@
 /*<![CDATA[*/
 var MSG_SUBDOM_MIN    = /*[[#{planes.js.subdom.min}]]*/ 'El subdominio debe tener al menos 3 caracteres.';
 var MSG_SUBDOM_CHECK  = /*[[#{planes.js.subdom.check}]]*/ 'Verificá la disponibilidad del subdominio antes de continuar.';
-var MSG_SPINNER_TRIAL = /*[[#{planes.js.spinner.trial}]]*/ 'Creando tu cuenta…';
-var MSG_SPINNER_MP    = /*[[#{planes.js.spinner.mp}]]*/ 'Redirigiendo a MercadoPago…';
+var MSG_SPINNER_TRIAL  = /*[[#{planes.js.spinner.trial}]]*/ 'Creando tu cuenta…';
+var MSG_SPINNER_MP     = /*[[#{planes.js.spinner.mp}]]*/ 'Redirigiendo a MercadoPago…';
+var MSG_SPINNER_STRIPE = /*[[#{planes.js.spinner.stripe}]]*/ 'Redirigiendo a Stripe…';
 /*]]>*/
 document.addEventListener('DOMContentLoaded', function () {
     let availTimer = null;
@@ -599,13 +630,22 @@ document.addEventListener('DOMContentLoaded', function () {
         actualizarSubdominio(this.value);
     });
 
+    // Rastrear qué botón de pago fue clickeado para mostrar el spinner correcto
+    let lastPayBtn = null;
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('.js-pago-btn');
+        if (btn) lastPayBtn = btn;
+    });
+
     document.getElementById('checkoutForm').addEventListener('submit', function (e) {
         const sub = document.getElementById('subdominio').value;
         if (sub.length < 3) { e.preventDefault(); alert(MSG_SUBDOM_MIN); return; }
         if (!subdomAvail && sub.length >= 3) { e.preventDefault(); alert(MSG_SUBDOM_CHECK); return; }
-        const btn = document.getElementById('btnPagar');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + MSG_SPINNER_MP;
+        document.querySelectorAll('.js-pago-btn').forEach(b => { b.disabled = true; });
+        if (lastPayBtn) {
+            const spinnerMsg = lastPayBtn.dataset.spinner || MSG_SPINNER_MP;
+            lastPayBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + spinnerMsg;
+        }
     });
 
     const planVal = document.getElementById('planNivel').value;
