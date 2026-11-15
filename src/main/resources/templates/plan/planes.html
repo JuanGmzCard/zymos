@@ -194,6 +194,8 @@
         <a th:href="${currentUri + '?lang=es'}" th:classappend="${#locale.language == 'es'} ? ' pl-lang-active' : ''" class="pl-lang-btn">ES</a>
         <span style="color:rgba(255,255,255,.2);font-size:.7rem;padding:.2rem .2rem">|</span>
         <a th:href="${currentUri + '?lang=en'}" th:classappend="${#locale.language == 'en'} ? ' pl-lang-active' : ''" class="pl-lang-btn">EN</a>
+        <span style="color:rgba(255,255,255,.2);font-size:.7rem;padding:.2rem .2rem">|</span>
+        <a th:href="${currentUri + '?lang=pt'}" th:classappend="${#locale.language == 'pt'} ? ' pl-lang-active' : ''" class="pl-lang-btn">PT</a>
     </div>
     <div class="hero-title" th:text="${branding.name} + ' — ' + #{planes.hero.title.suffix}">Zymos — Planes</div>
     <div class="hero-sub" th:text="#{planes.hero.sub}">Elegí el plan ideal para tu cervecería artesanal. Sin contrato, cancelás cuando querés.</div>
