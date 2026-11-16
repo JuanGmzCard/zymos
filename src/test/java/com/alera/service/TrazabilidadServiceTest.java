@@ -50,6 +50,7 @@ class TrazabilidadServiceTest {
     @Mock private LecturaFermentacionRepository lecturaRepo;
     @Mock private EmailService emailService;
     @Mock private WhatsAppService whatsAppService;
+    @Mock private WebhookService webhookService;
 
     @InjectMocks
     private TrazabilidadService service;

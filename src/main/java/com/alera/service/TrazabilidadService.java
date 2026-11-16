@@ -47,6 +47,7 @@ public class TrazabilidadService {
     private final LecturaFermentacionRepository lecturaRepo;
     private final EmailService emailService;
     private final WhatsAppService whatsAppService;
+    private final WebhookService webhookService;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -59,7 +60,8 @@ public class TrazabilidadService {
                                 com.alera.repository.TenantRepository tenantRepo,
                                 LecturaFermentacionRepository lecturaRepo,
                                 EmailService emailService,
-                                WhatsAppService whatsAppService) {
+                                WhatsAppService whatsAppService,
+                                WebhookService webhookService) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -72,6 +74,7 @@ public class TrazabilidadService {
         this.lecturaRepo = lecturaRepo;
         this.emailService = emailService;
         this.whatsAppService = whatsAppService;
+        this.webhookService = webhookService;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -316,6 +319,7 @@ public class TrazabilidadService {
         tenantRepo.findById(tenantId).ifPresent(tenant ->
                 emailService.enviarCambioFaseLote(tenant, lote, eventoFase, currentUser()));
         whatsAppService.notificarCambioFase(tenantId, lote, lote.getFaseActual());
+        if (webhookService != null) webhookService.notificarFaseCambiada(tenantId, lote, eventoFase);
     }
 
     @CacheEvict(value = "dashboard-stats", allEntries = true)
@@ -378,6 +382,7 @@ public class TrazabilidadService {
         tenantRepo.findById(tenantIdAvance).ifPresent(tenant ->
                 emailService.enviarCambioFaseLote(tenant, lote, eventoAvance, currentUser()));
         whatsAppService.notificarCambioFase(tenantIdAvance, lote, lote.getFaseActual());
+        if (webhookService != null) webhookService.notificarFaseCambiada(tenantIdAvance, lote, eventoAvance);
     }
 
     @Caching(evict = {

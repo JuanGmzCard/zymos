@@ -877,6 +877,10 @@
                th:classappend="${currentUri != null and currentUri.contains('/admin/whatsapp')} ? ' panel-active' : ''">
                 <i class="bi bi-whatsapp"></i><span th:text="#{nav.admin.whatsapp}">WhatsApp</span>
             </a>
+            <a class="zymos-panel-item" th:href="@{/admin/webhooks}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/webhooks')} ? ' panel-active' : ''">
+                <i class="bi bi-braces-asterisk"></i><span th:text="#{nav.admin.webhooks}">Webhooks</span>
+            </a>
             <div class="zymos-panel-section" th:text="#{nav.admin.sistema}">Sistema</div>
             <a class="zymos-panel-item" th:href="@{/admin/logs}"
                th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? ' panel-active' : ''">
