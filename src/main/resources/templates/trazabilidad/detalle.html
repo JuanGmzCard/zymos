@@ -752,6 +752,11 @@
                         style="font-size:0.75rem;padding:0.2rem 0.6rem;">
                     <i class="bi bi-stars me-1"></i><span th:text="#{traz.det.diagnostico.btn}">Diagnóstico IA</span>
                 </button>
+                <button th:if="${iaConfigurada}" type="button" id="btnPrediccionIA"
+                        class="btn btn-outline-secondary btn-sm"
+                        style="font-size:0.75rem;padding:0.2rem 0.6rem;">
+                    <i class="bi bi-graph-up me-1"></i><span th:text="#{traz.det.pred.btn}">Predicción IA</span>
+                </button>
             </div>
         </div>
         <div class="sb">
@@ -1839,6 +1844,96 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+<!-- Modal: Predicción IA -->
+<div th:if="${iaConfigurada}" class="modal fade" id="modalPrediccionIA" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background:linear-gradient(135deg,#1e3a5f,#1d4ed8);color:#fff;">
+                <h5 class="modal-title">
+                    <i class="bi bi-graph-up me-2" style="color:#93c5fd;"></i>
+                    <span th:text="#{traz.det.pred.title}">Predicción de Fermentación</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Spinner -->
+                <div id="predSpinner" class="text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status" style="width:2.5rem;height:2.5rem;"></div>
+                    <p class="text-muted small" th:text="#{traz.det.pred.analizando}">Analizando historial y calculando predicción...</p>
+                </div>
+                <!-- Resultado -->
+                <div id="predResultado" class="d-none">
+                    <div id="predMockBadge" class="mb-3 d-none">
+                        <span class="badge" style="background:#f59e0b;font-size:0.75rem;">
+                            <i class="bi bi-flask me-1"></i><span th:text="#{recetas.ia.modo.prueba}">Modo de prueba</span>
+                        </span>
+                    </div>
+                    <!-- Encabezado: tendencia + confianza -->
+                    <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+                        <span id="predTendenciaBadge" class="badge fs-6 flex-shrink-0"></span>
+                        <div class="flex-grow-1">
+                            <p id="predResumen" class="mb-0" style="font-size:0.9rem;line-height:1.6;"></p>
+                        </div>
+                        <div id="predConfianzaSec" class="text-center d-none flex-shrink-0" style="min-width:70px;">
+                            <div id="predConfianza" class="fw-bold" style="font-size:1.5rem;color:#2563eb;"></div>
+                            <div class="text-muted" style="font-size:0.7rem;" th:text="#{traz.det.pred.confianza}">confianza</div>
+                        </div>
+                    </div>
+                    <!-- FG predicho + días restantes -->
+                    <div id="predNumericosSec" class="row g-3 mb-4 d-none">
+                        <div class="col-auto">
+                            <div class="p-3 rounded text-center" style="background:#eff6ff;border:1px solid #bfdbfe;min-width:120px;">
+                                <div class="fw-semibold mb-1" style="font-size:0.72rem;color:#1d4ed8;text-transform:uppercase;" th:text="#{traz.det.pred.fg}">FG predicho</div>
+                                <div id="predFgRango" class="fw-bold font-monospace" style="font-size:1.1rem;color:#1e40af;"></div>
+                            </div>
+                        </div>
+                        <div id="predDiasSec" class="col-auto d-none">
+                            <div class="p-3 rounded text-center" style="background:#f0fdf4;border:1px solid #bbf7d0;min-width:120px;">
+                                <div class="fw-semibold mb-1" style="font-size:0.72rem;color:#15803d;text-transform:uppercase;" th:text="#{traz.det.pred.dias}">Días restantes</div>
+                                <div id="predDias" class="fw-bold" style="font-size:1.1rem;color:#166534;"></div>
+                            </div>
+                        </div>
+                        <div id="predFechaSec" class="col-auto d-none">
+                            <div class="p-3 rounded text-center" style="background:#fefce8;border:1px solid #fde68a;min-width:140px;">
+                                <div class="fw-semibold mb-1" style="font-size:0.72rem;color:#92400e;text-transform:uppercase;" th:text="#{traz.det.pred.fecha_est}">Fin estimado</div>
+                                <div id="predFecha" class="fw-bold" style="font-size:1.1rem;color:#78350f;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Comparación histórica -->
+                    <div id="predHistorialSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">
+                            <i class="bi bi-clock-history me-1"></i><span th:text="#{traz.det.pred.historial}">Contexto histórico</span>
+                        </div>
+                        <p id="predHistorial" class="mb-0 text-muted" style="font-size:0.875rem;"></p>
+                    </div>
+                    <!-- Insights -->
+                    <div id="predInsightsSec" class="mb-3 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#2563eb;">
+                            <i class="bi bi-lightbulb me-1"></i><span th:text="#{traz.det.pred.insights}">Insights del historial</span>
+                        </div>
+                        <ul id="predInsights" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                    <!-- Recomendaciones -->
+                    <div id="predRecSec" class="mb-1 d-none">
+                        <div class="fw-semibold mb-2" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em;color:#16a34a;">
+                            <i class="bi bi-check2-circle me-1"></i><span th:text="#{traz.det.pred.recomendaciones}">Recomendaciones</span>
+                        </div>
+                        <ul id="predRecomendaciones" class="mb-0" style="font-size:0.875rem;"></ul>
+                    </div>
+                </div>
+                <!-- Error -->
+                <div id="predError" class="alert alert-danger d-none" role="alert"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal" th:text="#{action.close}">Cerrar</button>
+                <button type="button" id="predBtnReintentar" class="btn btn-primary btn-sm d-none"
+                        th:text="#{traz.det.diagnostico.reintentar}">Reintentar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Modal: Avanzar Fase -->
 <div class="modal fade" id="modalAvanzarFase" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-sm">
@@ -2050,6 +2145,132 @@ var DIAG_LOTE_ID = /*[[${lote.id}]]*/ 0;
     function show(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
     function hide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
     function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+})();
+</script>
+<script th:attr="nonce=${cspNonce}">
+(function() {
+    var predModal;
+    document.addEventListener('DOMContentLoaded', function() {
+        var btn = document.getElementById('btnPrediccionIA');
+        var btnReintentar = document.getElementById('predBtnReintentar');
+        if (!btn) return;
+        predModal = new bootstrap.Modal(document.getElementById('modalPrediccionIA'));
+        btn.addEventListener('click', function() {
+            resetPred();
+            predModal.show();
+            ejecutarPrediccion();
+        });
+        if (btnReintentar) btnReintentar.addEventListener('click', function() {
+            resetPred();
+            ejecutarPrediccion();
+        });
+    });
+
+    function ejecutarPrediccion() {
+        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
+        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        fetch('/ver/' + DIAG_LOTE_ID + '/prediccion-ia', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { [csrfHeader]: csrf }
+        })
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(function(data) {
+            pHide('predSpinner');
+            if (data.error) {
+                pShow('predError');
+                document.getElementById('predError').textContent = data.error;
+                pShow('predBtnReintentar');
+                return;
+            }
+            renderPred(data);
+            pShow('predResultado');
+        })
+        .catch(function(status) {
+            pHide('predSpinner');
+            pShow('predError');
+            document.getElementById('predError').textContent = 'Error al conectar con el servidor (HTTP ' + status + ')';
+            pShow('predBtnReintentar');
+        });
+    }
+
+    function renderPred(data) {
+        if (data.modoMock) pShow('predMockBadge'); else pHide('predMockBadge');
+
+        // Tendencia badge
+        var tendenciaMap = {
+            NORMAL:       { label: '▲ Normal',      bg: '#16a34a' },
+            LENTA:        { label: '⏳ Lenta',       bg: '#d97706' },
+            RAPIDA:       { label: '⚡ Rápida',      bg: '#2563eb' },
+            ATASCADA:     { label: '⚠ Atascada',    bg: '#dc2626' },
+            INSUFICIENTE: { label: '— Sin datos',   bg: '#64748b' }
+        };
+        var tend = tendenciaMap[data.tendencia] || tendenciaMap.INSUFICIENTE;
+        var badge = document.getElementById('predTendenciaBadge');
+        badge.textContent = tend.label;
+        badge.style.background = tend.bg;
+
+        pSetText('predResumen', data.resumen || '');
+
+        // Confianza
+        if (data.confianza != null) {
+            pShow('predConfianzaSec');
+            pSetText('predConfianza', data.confianza + '%');
+        }
+
+        // FG predicho + días + fecha
+        var hayNumericos = (data.fgPredichoMin != null || data.diasRestantes != null);
+        if (hayNumericos) {
+            pShow('predNumericosSec');
+            if (data.fgPredichoMin != null) {
+                var rango = data.fgPredichoMin === data.fgPredichoMax
+                        ? String(data.fgPredichoMin)
+                        : data.fgPredichoMin + '–' + data.fgPredichoMax;
+                pSetText('predFgRango', rango);
+            }
+            if (data.diasRestantes != null) {
+                pShow('predDiasSec');
+                pSetText('predDias', data.diasRestantes === 0 ? '✓ Completo' : data.diasRestantes + ' días');
+            }
+            if (data.fechaEstimadaFin) {
+                pShow('predFechaSec');
+                pSetText('predFecha', data.fechaEstimadaFin);
+            }
+        }
+
+        // Comparación histórica
+        if (data.comparacionHistorica) {
+            pShow('predHistorialSec');
+            pSetText('predHistorial', data.comparacionHistorica);
+        }
+
+        // Insights
+        if (data.insights && data.insights.length) {
+            pShow('predInsightsSec');
+            document.getElementById('predInsights').innerHTML =
+                data.insights.map(function(s) { return '<li>' + pEsc(s) + '</li>'; }).join('');
+        }
+
+        // Recomendaciones
+        if (data.recomendaciones && data.recomendaciones.length) {
+            pShow('predRecSec');
+            document.getElementById('predRecomendaciones').innerHTML =
+                data.recomendaciones.map(function(s) { return '<li>' + pEsc(s) + '</li>'; }).join('');
+        }
+    }
+
+    function resetPred() {
+        pShow('predSpinner');
+        pHide('predResultado'); pHide('predError'); pHide('predBtnReintentar');
+        pHide('predMockBadge'); pHide('predConfianzaSec'); pHide('predNumericosSec');
+        pHide('predDiasSec'); pHide('predFechaSec'); pHide('predHistorialSec');
+        pHide('predInsightsSec'); pHide('predRecSec');
+    }
+
+    function pSetText(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; }
+    function pShow(id) { var el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+    function pHide(id) { var el = document.getElementById(id); if (el) el.classList.add('d-none'); }
+    function pEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 })();
 </script>
 <script th:attr="nonce=${cspNonce}">

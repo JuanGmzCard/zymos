@@ -183,4 +183,12 @@ public interface LoteCervezaRepository extends JpaRepository<LoteCerveza, Long> 
     @Query("SELECT COALESCE(SUM(COALESCE(l.litrosFinales, 0)), 0) FROM LoteCerveza l WHERE " +
            "l.fermFechaInicial IS NOT NULL AND l.carbFechaFinal IS NULL")
     BigDecimal sumLitrosActivos();
+
+    // Lotes completados del mismo estilo — para contexto histórico en predicción IA
+    @Query("SELECT l FROM LoteCerveza l WHERE l.carbFechaFinal IS NOT NULL " +
+           "AND LOWER(l.estilo) = LOWER(:estilo) AND l.id <> :excludeId " +
+           "ORDER BY l.fechaElaboracion DESC")
+    List<LoteCerveza> findCompletadosPorEstilo(@Param("estilo") String estilo,
+                                               @Param("excludeId") Long excludeId,
+                                               Pageable pageable);
 }

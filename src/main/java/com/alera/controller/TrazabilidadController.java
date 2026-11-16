@@ -42,6 +42,8 @@ import com.alera.repository.TipoCervezaRepository;
 import com.alera.service.BarrilService;
 import com.alera.service.EquipoService;
 import com.alera.service.FermentacionDiagnosticoService;
+import com.alera.service.FermentacionPredictivaService;
+import com.alera.dto.PrediccionFermentacionDto;
 import com.alera.service.DescripcionComercialService;
 import com.alera.dto.DescripcionComercialDto;
 import com.alera.service.BjcpScorerService;
@@ -79,6 +81,7 @@ public class TrazabilidadController {
     private final BarrilService barrilService;
     private final MessageSource messageSource;
     private final FermentacionDiagnosticoService diagnosticoService;
+    private final FermentacionPredictivaService  predictivaService;
     private final DescripcionComercialService descripcionComercialService;
     private final BjcpScorerService bjcpScorerService;
 
@@ -101,6 +104,7 @@ public class TrazabilidadController {
                                    BarrilService barrilService,
                                    MessageSource messageSource,
                                    FermentacionDiagnosticoService diagnosticoService,
+                                   FermentacionPredictivaService predictivaService,
                                    DescripcionComercialService descripcionComercialService,
                                    BjcpScorerService bjcpScorerService) {
         this.service = service;
@@ -119,6 +123,7 @@ public class TrazabilidadController {
         this.barrilService = barrilService;
         this.messageSource = messageSource;
         this.diagnosticoService = diagnosticoService;
+        this.predictivaService  = predictivaService;
         this.descripcionComercialService = descripcionComercialService;
         this.bjcpScorerService = bjcpScorerService;
     }
@@ -438,6 +443,14 @@ public class TrazabilidadController {
         var lote    = service.buscarPorId(id);
         var lecturas = lecturaService.listarPorLote(id);
         return diagnosticoService.diagnosticar(lote, lecturas);
+    }
+
+    @PostMapping(value = "/ver/{id}/prediccion-ia", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public PrediccionFermentacionDto prediccionIA(@PathVariable Long id) {
+        var lote    = service.buscarPorId(id);
+        var lecturas = lecturaService.listarPorLote(id);
+        return predictivaService.predecir(lote, lecturas);
     }
 
     @PostMapping(value = "/ver/{id}/bjcp-scorer-ia", produces = MediaType.APPLICATION_JSON_VALUE)
