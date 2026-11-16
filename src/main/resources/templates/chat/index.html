@@ -169,7 +169,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" th:attr="nonce=${cspNonce}"></script>
-<script th:attr="nonce=${cspNonce}">
+<script th:attr="nonce=${cspNonce}" th:inline="javascript">
+/*<![CDATA[*/
+var MSG_MOCK_BADGE = /*[[#{ia.mock.badge}]]*/ 'Modo de prueba';
+/*]]>*/
 (function() {
     var historial = [];
     var enviando  = false;
@@ -204,7 +207,7 @@
         if (modoMock && role === 'bot') {
             var badge = document.createElement('div');
             badge.className = 'mock-badge';
-            badge.innerHTML = '<i class="bi bi-flask"></i> Modo de prueba';
+            badge.innerHTML = '<i class="bi bi-flask"></i> ' + MSG_MOCK_BADGE;
             inner.appendChild(badge);
         }
 

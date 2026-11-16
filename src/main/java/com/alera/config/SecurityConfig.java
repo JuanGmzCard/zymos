@@ -215,6 +215,9 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/css/**", "/js/**", "/img/**", "/webjars/**").permitAll()
+                .requestMatchers("/manifest.webmanifest", "/sw.js", "/offline.html").permitAll()
+                .requestMatchers(HttpMethod.GET, "/push/vapid-public-key").permitAll()
+                .requestMatchers("/push/**").authenticated()
                 .requestMatchers("/error", "/error/**").permitAll()
                 .requestMatchers("/plan-vencido", "/plan-upgrade").permitAll()
                 .requestMatchers("/planes", "/landing", "/demo", "/checkout/**", "/webhook/**").permitAll()

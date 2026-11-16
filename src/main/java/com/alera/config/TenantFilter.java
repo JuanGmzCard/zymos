@@ -54,6 +54,8 @@ public class TenantFilter extends OncePerRequestFilter {
         return path.startsWith("/css/") || path.startsWith("/js/")
             || path.startsWith("/img/") || path.startsWith("/webjars/")
             || path.startsWith("/favicon") || path.equals("/error") || path.startsWith("/error/")
+            // Recursos PWA estáticos — sin tenant
+            || path.equals("/sw.js") || path.equals("/offline.html")
             // Rutas de checkout y pago — sin tenant (sistema global)
             || path.startsWith("/checkout/") || path.startsWith("/webhook/");
     }
@@ -121,7 +123,8 @@ public class TenantFilter extends OncePerRequestFilter {
     private boolean esRutaPermitidaConPlanVencido(String path) {
         return path.equals("/plan-vencido") || path.equals("/planes") || path.equals("/landing")
                 || path.equals("/demo") || path.equals("/plan-upgrade")
-                || path.equals("/logout") || path.startsWith("/login");
+                || path.equals("/logout") || path.startsWith("/login")
+                || path.equals("/manifest.webmanifest") || path.equals("/offline.html");
     }
 
     private Tenant resolveTenant(String subdomain) {

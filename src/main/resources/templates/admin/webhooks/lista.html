@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${branding.name} + ' - Webhooks'">Zymos - Webhooks</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style th:attr="nonce=${cspNonce}">
+        .event-badge { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 20px;
+                       background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd;
+                       display: inline-block; margin: 1px; }
+        .secret-mono { font-family: monospace; font-size: 0.75rem; color: #64748b;
+                       background: #f8fafc; padding: 0.15rem 0.4rem; border-radius: 4px;
+                       border: 1px solid #e2e8f0; }
+        html.dark-mode .event-badge { background: rgba(14,165,233,.15); color: #38bdf8;
+                                      border-color: rgba(14,165,233,.3); }
+        html.dark-mode .secret-mono { background: var(--dm-input); color: var(--dm-text-faint);
+                                      border-color: var(--dm-border); }
+    </style>
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+<main class="zymos-main">
+
+    <div class="container-fluid px-4">
+        <div class="page-header">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                <div>
+                    <h1 class="mb-0" th:text="#{webhook.title}">Webhooks de Integración</h1>
+                    <p class="subtitle mt-1" th:text="#{webhook.subtitle}">Notifica sistemas externos cuando ocurren eventos</p>
+                </div>
+                <a th:href="@{/admin/webhooks/nuevo}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-lg me-1"></i><span th:text="#{webhook.btn.nuevo}">Nuevo Webhook</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="table-card mt-3">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <span class="fw-semibold" style="font-size:.85rem"
+                      th:text="${#lists.size(webhooks)} + ' ' + #{label.registros}">0 registros</span>
+            </div>
+
+            <div th:if="${webhooks.isEmpty()}" class="text-center py-5" style="color:#94a3b8">
+                <i class="bi bi-webhook" style="font-size:2.5rem; display:block; margin-bottom:.75rem"></i>
+                <p class="mb-0" th:text="#{webhook.empty}">Sin webhooks configurados</p>
+                <a th:href="@{/admin/webhooks/nuevo}" class="btn btn-primary btn-sm mt-3"
+                   th:text="#{webhook.btn.nuevo}">Nuevo Webhook</a>
+            </div>
+
+            <div th:unless="${webhooks.isEmpty()}" class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th th:text="#{webhook.table.nombre}">Nombre</th>
+                            <th th:text="#{webhook.table.url}">URL</th>
+                            <th th:text="#{webhook.table.eventos}">Eventos</th>
+                            <th th:text="#{webhook.table.secreto}">Secreto</th>
+                            <th th:text="#{webhook.table.estado}">Estado</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="wh : ${webhooks}">
+                            <td class="fw-semibold" th:text="${wh.nombre}">Nombre</td>
+                            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">
+                                <a th:href="${wh.url}" target="_blank" th:text="${wh.url}"
+                                   style="font-size:.8rem">URL</a>
+                            </td>
+                            <td>
+                                <span th:each="ev : ${wh.eventosList}"
+                                      class="event-badge"
+                                      th:text="${#messages.msgOrNull('webhook.evento.' + ev) ?: ev}">
+                                    evento
+                                </span>
+                            </td>
+                            <td><span class="secret-mono" th:text="${#strings.substring(wh.secret,0,8) + '...'}">••••</span></td>
+                            <td>
+                                <span th:if="${wh.activo}"  class="badge bg-success" th:text="#{label.activo}">Activo</span>
+                                <span th:unless="${wh.activo}" class="badge bg-secondary" th:text="#{label.inactivo}">Inactivo</span>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                    <form th:action="@{/admin/webhooks/probar/{id}(id=${wh.id})}" method="post" style="display:contents">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                                th:title="#{webhook.btn.probar}">
+                                            <i class="bi bi-send"></i>
+                                        </button>
+                                    </form>
+                                    <a th:href="@{/admin/webhooks/editar/{id}(id=${wh.id})}"
+                                       class="btn btn-outline-secondary btn-sm">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <form th:action="@{/admin/webhooks/toggle/{id}(id=${wh.id})}" method="post" style="display:contents">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-secondary btn-sm"
+                                                th:title="${wh.activo} ? #{action.deactivate} : #{action.activate}">
+                                            <i th:class="${wh.activo} ? 'bi bi-toggle-on' : 'bi bi-toggle-off'"></i>
+                                        </button>
+                                    </form>
+                                    <form th:action="@{/admin/webhooks/eliminar/{id}(id=${wh.id})}" method="post" style="display:contents"
+                                          th:attr="data-confirm=#{action.delete} + ' ' + ${wh.nombre} + '?'">
+                                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Docs section -->
+        <div class="filter-card mt-4">
+            <h6 class="fw-semibold mb-3" style="font-size:.85rem; color:#475569" th:text="#{webhook.docs.title}">Integración</h6>
+            <p style="font-size:.82rem; color:#64748b" th:text="#{webhook.docs.body}"></p>
+            <div style="background:#f8fafc; border-radius:6px; padding:.75rem 1rem; font-family:monospace; font-size:.78rem; color:#334155; border:1px solid #e2e8f0">
+                POST /tu-endpoint HTTP/1.1<br>
+                Content-Type: application/json<br>
+                X-Zymos-Event: lote.fase_cambiada<br>
+                X-Zymos-Signature-256: sha256=&lt;hmac-sha256&gt;<br>
+                X-Zymos-Delivery: &lt;uuid&gt;<br><br>
+                {"event":"lote.fase_cambiada","tenant":"mi-cerveceria","timestamp":"...","data":{...}}
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

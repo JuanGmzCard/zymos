@@ -40,6 +40,7 @@ public class AlertaScheduler {
     private final UsuarioRepository        usuarioRepo;
     private final TareaService             tareaService;
     private final WhatsAppService          whatsAppService;
+    private final WebhookService           webhookService;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -58,7 +59,8 @@ public class AlertaScheduler {
                             LoteCervezaRepository loteCervezaRepo,
                             UsuarioRepository usuarioRepo,
                             TareaService tareaService,
-                            WhatsAppService whatsAppService) {
+                            WhatsAppService whatsAppService,
+                            WebhookService webhookService) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -71,6 +73,7 @@ public class AlertaScheduler {
         this.usuarioRepo         = usuarioRepo;
         this.tareaService        = tareaService;
         this.whatsAppService     = whatsAppService;
+        this.webhookService      = webhookService;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -129,6 +132,11 @@ public class AlertaScheduler {
                 whatsAppService.notificarMantenimiento(tenant.getSubdomain(), mantenimiento);
                 if (tenant.isPlanPorVencer() || tenant.isPlanVencido()) {
                     whatsAppService.notificarPlanVencimiento(tenant.getSubdomain(), tenant.getPlanFin());
+                }
+
+                // Webhooks — bajo stock
+                if (!bajoStock.isEmpty()) {
+                    webhookService.notificarBajoStock(tenant.getSubdomain(), bajoStock);
                 }
 
                 // Email — solo si SMTP configurado y tenant tiene email

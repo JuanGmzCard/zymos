@@ -18,4 +18,7 @@ public interface LecturaFermentacionRepository extends JpaRepository<LecturaFerm
     List<LecturaFermentacion> findByLoteIdOrdenadas(@Param("loteId") Long loteId);
 
     Optional<LecturaFermentacion> findFirstByLoteIdAndNotas(Long loteId, String notas);
+
+    @Query("SELECT l FROM LecturaFermentacion l WHERE l.lote.id IN :loteIds ORDER BY l.lote.id ASC, l.fecha ASC")
+    List<LecturaFermentacion> findByLoteIdIn(@Param("loteIds") List<Long> loteIds);
 }

@@ -5,9 +5,13 @@ import com.alera.service.*;
 import com.alera.repository.LoteCervezaRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @RestController
@@ -15,22 +19,31 @@ import java.util.*;
 @Tag(name = "API v1", description = "REST API para integración con apps móviles y herramientas externas. Autenticación: HTTP Basic.")
 public class ApiController {
 
-    private final TrazabilidadService trazabilidadService;
-    private final LoteCervezaRepository loteRepo;
-    private final RecetaService recetaService;
-    private final InsumoInventarioService insumoService;
-    private final DashboardService dashboardService;
+    private final TrazabilidadService         trazabilidadService;
+    private final LoteCervezaRepository       loteRepo;
+    private final RecetaService               recetaService;
+    private final InsumoInventarioService     insumoService;
+    private final DashboardService            dashboardService;
+    private final VentaService                ventaService;
+    private final EquipoService               equipoService;
+    private final LecturaFermentacionService  lecturaService;
 
     public ApiController(TrazabilidadService trazabilidadService,
                          LoteCervezaRepository loteRepo,
                          RecetaService recetaService,
                          InsumoInventarioService insumoService,
-                         DashboardService dashboardService) {
+                         DashboardService dashboardService,
+                         VentaService ventaService,
+                         EquipoService equipoService,
+                         LecturaFermentacionService lecturaService) {
         this.trazabilidadService = trazabilidadService;
-        this.loteRepo = loteRepo;
-        this.recetaService = recetaService;
-        this.insumoService = insumoService;
-        this.dashboardService = dashboardService;
+        this.loteRepo            = loteRepo;
+        this.recetaService       = recetaService;
+        this.insumoService       = insumoService;
+        this.dashboardService    = dashboardService;
+        this.ventaService        = ventaService;
+        this.equipoService       = equipoService;
+        this.lecturaService      = lecturaService;
     }
 
     // ── Lotes ────────────────────────────────────────────────────────
@@ -182,6 +195,94 @@ public class ApiController {
         res.put("totalFacturas",       stats.getTotalFacturas());
         res.put("totalGastado",        stats.getTotalGastado());
         return res;
+    }
+
+    // ── Lecturas de fermentación (write) ─────────────────────────────
+
+    @Operation(summary = "Agregar lectura de fermentación", description = "Registra densidad y temperatura en un lote activo")
+    @PostMapping("/lotes/{id}/lecturas")
+    public Map<String, Object> agregarLectura(@PathVariable Long id,
+                                              @RequestBody Map<String, Object> body) {
+        LocalDate fecha;
+        try {
+            String fechaStr = body.getOrDefault("fecha", LocalDate.now().toString()).toString();
+            fecha = LocalDate.parse(fechaStr);
+        } catch (DateTimeParseException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "fecha debe ser YYYY-MM-DD");
+        }
+        Integer densidad = body.get("densidad") != null
+                ? ((Number) body.get("densidad")).intValue() : null;
+        BigDecimal temperatura = body.get("temperatura") != null
+                ? new BigDecimal(body.get("temperatura").toString()) : null;
+        String notas = body.get("notas") != null ? body.get("notas").toString() : null;
+
+        String advertencia = lecturaService.agregar(id, fecha, densidad, temperatura, notas);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("ok",          true);
+        res.put("loteId",      id);
+        res.put("fecha",       fecha);
+        res.put("densidad",    densidad);
+        res.put("temperatura", temperatura);
+        if (advertencia != null) res.put("advertencia", advertencia);
+        return res;
+    }
+
+    // ── Ventas ───────────────────────────────────────────────────────
+
+    @Operation(summary = "Listar ventas paginadas")
+    @GetMapping("/ventas")
+    public Map<String, Object> ventas(@RequestParam(defaultValue = "0") int page) {
+        var pagina = ventaService.listarPaginado(null, null, null, page);
+        Map<String, Object> res = new LinkedHashMap<>();
+        res.put("total",        pagina.getTotalElements());
+        res.put("totalPaginas", pagina.getTotalPages());
+        res.put("pagina",       page);
+        res.put("ventas",       pagina.getContent().stream().map(v -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id",          v.getId());
+            m.put("remision",    v.getRemisionNumero());
+            m.put("cliente",     v.getCliente());
+            m.put("estado",      v.getEstado() != null ? v.getEstado().name() : null);
+            m.put("fecha",       v.getFechaDespacho());
+            m.put("total",       v.getValorTotal());
+            return m;
+        }).toList());
+        return res;
+    }
+
+    // ── Equipos ──────────────────────────────────────────────────────
+
+    @Operation(summary = "Listar equipos")
+    @GetMapping("/equipos")
+    public List<Map<String, Object>> equipos() {
+        return equipoService.listarTodos().stream().map(e -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id",           e.getId());
+            m.put("nombre",       e.getNombre());
+            m.put("tipo",         e.getTipo());
+            m.put("estado",       e.getEstado() != null ? e.getEstado().name() : null);
+            m.put("capacidad",    e.getCapacidad());
+            m.put("unidadCapacidad", e.getUnidadCapacidad());
+            return m;
+        }).toList();
+    }
+
+    // ── Inventario (full list) ────────────────────────────────────────
+
+    @Operation(summary = "Listar insumos del inventario")
+    @GetMapping("/inventario")
+    public List<Map<String, Object>> inventario() {
+        return insumoService.listarTodos().stream().map(i -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id",          i.getId());
+            m.put("nombre",      i.getNombre());
+            m.put("tipo",        i.getTipo());
+            m.put("cantidad",    i.getCantidad());
+            m.put("unidad",      i.getUnidad());
+            m.put("stockMinimo", i.getStockMinimo());
+            m.put("vencimiento", i.getFechaVencimiento());
+            return m;
+        }).toList();
     }
 
     // ── Utilidades ───────────────────────────────────────────────────

@@ -22,9 +22,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import org.springframework.http.MediaType;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ApiController.class)
@@ -32,12 +34,15 @@ class ApiControllerTest {
 
     @Autowired MockMvc mockMvc;
 
-    @MockBean TrazabilidadService    trazabilidadService;
-    @MockBean LoteCervezaRepository  loteRepo;
-    @MockBean RecetaService          recetaService;
-    @MockBean InsumoInventarioService insumoService;
-    @MockBean DashboardService       dashboardService;
-    @MockBean LogAccesoService       logAccesoService;
+    @MockBean TrazabilidadService         trazabilidadService;
+    @MockBean LoteCervezaRepository       loteRepo;
+    @MockBean RecetaService               recetaService;
+    @MockBean InsumoInventarioService     insumoService;
+    @MockBean DashboardService            dashboardService;
+    @MockBean VentaService                ventaService;
+    @MockBean EquipoService               equipoService;
+    @MockBean LecturaFermentacionService  lecturaService;
+    @MockBean LogAccesoService            logAccesoService;
     @MockBean UsuarioService         usuarioService;
     @MockBean TenantRepository       tenantRepo;
     @MockBean BrandingProperties     brandingProperties;
@@ -182,5 +187,80 @@ class ApiControllerTest {
                 .andExpect(jsonPath("$.totalLotes").value(10))
                 .andExpect(jsonPath("$.lotesEnProceso").value(3))
                 .andExpect(jsonPath("$.lotesCompletados").value(7));
+    }
+
+    // ── GET /api/v1/ventas ────────────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void ventasRetornaJsonPaginado() throws Exception {
+        when(ventaService.listarPaginado(any(), any(), any(), anyInt()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        mockMvc.perform(get("/api/v1/ventas"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$.total").value(0))
+                .andExpect(jsonPath("$.ventas").isArray());
+    }
+
+    // ── GET /api/v1/equipos ───────────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void equiposRetornaListaJson() throws Exception {
+        when(equipoService.listarTodos()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/equipos"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    // ── GET /api/v1/inventario ────────────────────────────────────────
+
+    @Test
+    @WithMockUser
+    void inventarioRetornaListaJson() throws Exception {
+        when(insumoService.listarTodos()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/inventario"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("application/json"))
+                .andExpect(jsonPath("$").isArray());
+    }
+
+    // ── POST /api/v1/lotes/{id}/lecturas ──────────────────────────────
+
+    @Test
+    @WithMockUser
+    void agregarLecturaRetornaOk() throws Exception {
+        LoteCerveza lote = new LoteCerveza();
+        lote.setId(1L);
+        when(trazabilidadService.buscarPorId(1L)).thenReturn(lote);
+        when(lecturaService.agregar(anyLong(), any(), any(), any(), any())).thenReturn(null);
+
+        mockMvc.perform(post("/api/v1/lotes/1/lecturas")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"fecha\":\"2026-01-15\",\"densidad\":1048,\"temperatura\":19.5}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ok").value(true))
+                .andExpect(jsonPath("$.densidad").value(1048));
+    }
+
+    @Test
+    @WithMockUser
+    void agregarLecturaConAdvertenciaRetornaOkConAdvertencia() throws Exception {
+        when(lecturaService.agregar(anyLong(), any(), any(), any(), any()))
+                .thenReturn("19.5°C (objetivo: 22°C)");
+
+        mockMvc.perform(post("/api/v1/lotes/1/lecturas")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"densidad\":1050}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ok").value(true))
+                .andExpect(jsonPath("$.advertencia").exists());
     }
 }

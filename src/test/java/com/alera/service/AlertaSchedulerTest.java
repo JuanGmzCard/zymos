@@ -34,6 +34,7 @@ class AlertaSchedulerTest {
     @Mock UsuarioRepository        usuarioRepo;
     @Mock TareaService             tareaService;
     @Mock WhatsAppService          whatsAppService;
+    @Mock WebhookService           webhookService;
 
     @InjectMocks AlertaScheduler scheduler;
 

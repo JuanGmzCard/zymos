@@ -159,8 +159,10 @@
 
   <div class="sb-section">Inteligencia Artificial</div>
   <a class="sb-link" href="#ia-diagnostico">Diagnóstico IA</a>
+  <a class="sb-link" href="#ia-prediccion">Predicción IA</a>
   <a class="sb-link" href="#ia-descripcion">Descripción comercial IA</a>
   <a class="sb-link" href="#ia-bjcp">BJCP Scorer IA</a>
+  <a class="sb-link" href="#qr-etiqueta">Etiqueta QR</a>
   <a class="sb-link" href="#email-fase">Email cambio de fase</a>
 </nav>
 
@@ -794,9 +796,67 @@
   </div>
 </section>
 
+<!-- ══════════ IA PREDICCIÓN ══════════ -->
+<section id="ia-prediccion">
+  <h2><span class="section-num">22</span>Predicción IA de Fermentación 🔮</h2>
+  <p>La predicción de fermentación usa inteligencia artificial para estimar cuándo terminará la fermentación y cuál será la densidad final (FG), basándose en las lecturas actuales del lote <strong>y el historial de lotes anteriores del mismo estilo</strong>.</p>
+  <div class="callout info">
+    <p><strong>Diferencia con el Diagnóstico IA:</strong> El diagnóstico responde "¿qué está pasando ahora?". La predicción responde "¿cuándo termina y en qué FG?"</p>
+  </div>
+  <h3><span class="icon">🔮</span>Cómo usar la predicción</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Abre el detalle del lote</strong><p>El lote debe estar en fase de Fermentación con al menos una lectura de densidad registrada.</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Haz clic en "Predicción IA"</strong><p>Botón junto a "Diagnóstico IA" en la sección de Curva de Fermentación.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Interpreta los resultados</strong><p>El modal muestra: tendencia de fermentación (Normal / Lenta / Rápida / Atascada), rango de FG predicho, días restantes estimados, fecha estimada de fin, nivel de confianza (%), comparación con lotes históricos, e insights y recomendaciones personalizadas.</p></div>
+    </div>
+  </div>
+  <h3><span class="icon">📊</span>Indicadores de tendencia</h3>
+  <div class="data-table">
+    <table>
+      <thead><tr><th>Tendencia</th><th>Significado</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Normal</strong></td><td>La fermentación avanza según lo esperado para el estilo</td></tr>
+        <tr><td><strong>Lenta</strong></td><td>La fermentación está progresando más despacio de lo normal</td></tr>
+        <tr><td><strong>Rápida</strong></td><td>La fermentación está progresando más rápido de lo normal</td></tr>
+        <tr><td><strong>Atascada</strong></td><td>La densidad no está bajando; posible fermentación detenida</td></tr>
+        <tr><td><strong>Datos insuficientes</strong></td><td>Se necesitan más lecturas para hacer una predicción confiable</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout tip">
+    <p>El nivel de confianza aumenta con más lecturas registradas y más lotes históricos del mismo estilo disponibles. Con al menos 3 lecturas y 2 lotes históricos, el modelo alcanza confianza alta (&gt;80%).</p>
+  </div>
+</section>
+
+<!-- ══════════ QR ETIQUETA ══════════ -->
+<section id="qr-etiqueta">
+  <h2><span class="section-num">23</span>Etiqueta QR del Lote</h2>
+  <p>Genera un PDF de etiqueta 80×100 mm con un código QR que enlaza directamente al detalle del lote en Zymos. Útil para identificar barriles, tanques o cajas durante el proceso de producción y almacenamiento.</p>
+  <h3><span class="icon">🏷️</span>Cómo generar la etiqueta</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Abre el detalle del lote</strong></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Haz clic en "Etiqueta QR"</strong><p>Botón disponible en el encabezado del detalle del lote, junto a las opciones PDF, Duplicar y Descripción Comercial.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Imprime o guarda el PDF</strong><p>El navegador descarga un PDF de 80×100 mm con el código QR, el nombre del lote y el código. Imprime en etiquetas adhesivas para pegar en el recipiente.</p></div>
+    </div>
+  </div>
+  <div class="callout tip">
+    <p>Al escanear el QR con un teléfono, el navegador abre directamente el detalle del lote en Zymos. Requiere que el dispositivo tenga acceso a la URL base configurada en la aplicación.</p>
+  </div>
+</section>
+
 <!-- ══════════ EMAIL CAMBIO DE FASE ══════════ -->
 <section id="email-fase">
-  <h2><span class="section-num">22</span>Notificación por email al cambiar de fase</h2>
+  <h2><span class="section-num">24</span>Notificación por email al cambiar de fase</h2>
   <p>ZYMOS puede enviar un email automático cada vez que un lote avanza a una nueva fase de producción (de Macerado a Fermentación, de Fermentación a Acondicionamiento, etc.).</p>
   <div class="callout info">
     <p><strong>Requisito:</strong> el sistema debe tener configurado un servidor SMTP (variable de entorno SMTP_HOST). Si no hay SMTP configurado, esta función no está disponible. El email se envía al correo del tenant configurado en la cuenta.</p>
@@ -818,7 +878,7 @@
 
 <!-- ══════════ FAQ ══════════ -->
 <section id="faq">
-  <h2><span class="section-num">23</span>Preguntas frecuentes</h2>
+  <h2><span class="section-num">25</span>Preguntas frecuentes</h2>
 
   <h3>¿Por qué no aparece el botón "Nuevo Lote"?</h3>
   <p>Necesitas tener al menos una <strong>receta activa</strong>. Ve a <strong>Recetas → Nueva Receta</strong> y crea una primero.</p>
@@ -839,7 +899,7 @@
   <p>Sí. Al registrar el volumen de cada sesión (S1, S2, etc.), Zymos los suma automáticamente en el campo "Litros Finales".</p>
 
   <h3>¿Puedo cambiar el idioma de la aplicación?</h3>
-  <p>Sí. En el menú de usuario (esquina superior derecha del navbar) hay un selector de idioma: Español / English.</p>
+  <p>Sí. En el navbar hay un selector de idioma: <strong>ES · EN · PT</strong> (Español, English, Português do Brasil). El idioma seleccionado persiste en una cookie.</p>
 
   <h3>¿Dónde van los lotes "archivados"?</h3>
   <p>Al archivar un lote, este se elimina de la lista principal. El historial de ese lote permanece en el sistema. Los barriles y facturas vinculadas a ese lote no se afectan.</p>
@@ -848,7 +908,7 @@
 </div><!-- /.content -->
 
 <div class="footer">
-  Zymos — Manual de Usuario · Módulo Trazabilidad · Última actualización: Octubre 2026
+  Zymos — Manual de Usuario · Módulo Trazabilidad · Última actualización: Noviembre 2026
 </div>
 
 <script>

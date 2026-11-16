@@ -51,6 +51,7 @@ class TareaServiceTest {
     @Mock BarrilRepository                 barrilRepo;
     @Mock NotificacionService              notificacionService;
     @Mock WhatsAppService                  whatsAppService;
+    @Mock WebhookService                   webhookService;
 
     @InjectMocks TareaService service;
 

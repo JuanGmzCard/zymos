@@ -30,6 +30,15 @@ public class DashboardStats {
     // Listados
     private List<LoteCerveza> ultimosLotes;
 
+    // Período actual (mes corriente)
+    private long ventasDespachadasMes;
+    private BigDecimal ingresosesMes;
+    private long clientesMes;
+    private BigDecimal gastoMes;
+    // Producción activa
+    private BigDecimal litrosActivos;
+    private long fasesVencidas;
+
     // Builder-style setters encadenados
     public DashboardStats totalLotes(long v)            { this.totalLotes = v; return this; }
     public DashboardStats enProceso(long v)             { this.enProceso = v; return this; }
@@ -45,6 +54,12 @@ public class DashboardStats {
     public DashboardStats totalGastado(BigDecimal v)    { this.totalGastado = v; return this; }
     public DashboardStats totalMantenimientos(BigDecimal v){ this.totalMantenimientos = v; return this; }
     public DashboardStats ultimosLotes(List<LoteCerveza> v){ this.ultimosLotes = v; return this; }
+    public DashboardStats ventasDespachadasMes(long v)   { this.ventasDespachadasMes = v; return this; }
+    public DashboardStats ingresosesMes(BigDecimal v)     { this.ingresosesMes = v; return this; }
+    public DashboardStats clientesMes(long v)             { this.clientesMes = v; return this; }
+    public DashboardStats gastoMes(BigDecimal v)          { this.gastoMes = v; return this; }
+    public DashboardStats litrosActivos(BigDecimal v)     { this.litrosActivos = v; return this; }
+    public DashboardStats fasesVencidas(long v)           { this.fasesVencidas = v; return this; }
 
     // Getters
     public long getTotalLotes()             { return totalLotes; }
@@ -61,4 +76,10 @@ public class DashboardStats {
     public BigDecimal getTotalGastado()     { return totalGastado; }
     public BigDecimal getTotalMantenimientos(){ return totalMantenimientos; }
     public List<LoteCerveza> getUltimosLotes(){ return ultimosLotes; }
+    public long getVentasDespachadasMes()   { return ventasDespachadasMes; }
+    public BigDecimal getIngresosesMes()    { return ingresosesMes; }
+    public long getClientesMes()            { return clientesMes; }
+    public BigDecimal getGastoMes()         { return gastoMes; }
+    public BigDecimal getLitrosActivos()    { return litrosActivos; }
+    public long getFasesVencidas()          { return fasesVencidas; }
 }

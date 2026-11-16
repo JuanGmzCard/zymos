@@ -34,6 +34,38 @@
     }
     </style>
 
+    <!-- ── PWA: manifest, theme-color y service worker ──────────────── -->
+    <script th:attr="nonce=${cspNonce}">
+    document.addEventListener('DOMContentLoaded', function () {
+        var tc = getComputedStyle(document.documentElement).getPropertyValue('--verde-oscuro').trim() || '#1e293b';
+
+        var ml = document.createElement('link');
+        ml.rel = 'manifest'; ml.href = '/manifest.webmanifest';
+        document.head.appendChild(ml);
+
+        var tm = document.createElement('meta');
+        tm.name = 'theme-color'; tm.content = tc;
+        document.head.appendChild(tm);
+
+        var ai = document.createElement('link');
+        ai.rel = 'apple-touch-icon'; ai.href = '/img/icon-192.png';
+        document.head.appendChild(ai);
+
+        var am = document.createElement('meta');
+        am.name = 'apple-mobile-web-app-capable'; am.content = 'yes';
+        document.head.appendChild(am);
+
+        var as_ = document.createElement('meta');
+        as_.name = 'apple-mobile-web-app-status-bar-style'; as_.content = 'black-translucent';
+        document.head.appendChild(as_);
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .catch(function (err) { console.warn('[PWA] SW registration failed:', err); });
+        }
+    });
+    </script>
+
     <!-- ── Sidebar layout styles ───────────────────────────────────── -->
     <style th:attr="nonce=${cspNonce}">
     /* ── Body offset ── */
@@ -480,7 +512,7 @@
 
         <!-- Manuales de usuario -->
         <a class="zymos-rail-item"
-           href="/docs/index.html"
+           th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : (${#locale.language == 'pt'} ? '/docs/index_pt.html' : '/docs/index.html')"
            target="_blank"
            data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.docs}">
             <i class="bi bi-book"></i>
@@ -524,6 +556,15 @@
                 </li>
             </ul>
         </div>
+
+        <!-- Push notifications toggle — oculto hasta que el browser confirme soporte -->
+        <button class="zymos-rail-item position-relative" id="pushToggleBtn" style="display:none;color:#64748b;"
+                data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.push.toggle}">
+            <i class="bi bi-bell" id="pushToggleIcon"></i>
+            <span style="position:absolute;bottom:4px;right:6px;font-size:0.45rem;font-weight:700;
+                         letter-spacing:0;line-height:1;color:#64748b;opacity:.8"
+                  id="pushBadgeLabel">PC</span>
+        </button>
 
         <!-- Dark mode toggle -->
         <button class="zymos-rail-item" id="darkToggleBtn"
@@ -579,6 +620,9 @@
                         <span style="color:#334155;">·</span>
                         <a th:href="${currentUri + '?lang=en'}"
                            th:classappend="${currentLang == 'en'} ? ' lang-active' : ''">EN</a>
+                        <span style="color:#334155;">·</span>
+                        <a th:href="${currentUri + '?lang=pt'}"
+                           th:classappend="${currentLang == 'pt'} ? ' lang-active' : ''">PT</a>
                     </div>
                 </li>
                 <li><hr class="rd-divider dropdown-divider"></li>
@@ -626,7 +670,7 @@
                 <div class="zymos-panel-mod" th:text="#{nav.produccion}">Producción</div>
                 <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
             </div>
-            <div class="zymos-panel-section">Lotes</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.lotes}">Lotes</div>
             <a class="zymos-panel-item" th:href="@{/}"
                th:classappend="${currentUri != null and currentUri == '/'} ? ' panel-active' : ''">
                 <i class="bi bi-clipboard-data"></i><span th:text="#{nav.produccion.trazabilidad}">Trazabilidad</span>
@@ -639,7 +683,7 @@
                th:classappend="${currentUri != null and currentUri.contains('/planificacion')} ? ' panel-active' : ''">
                 <i class="bi bi-calendar-week"></i><span th:text="#{nav.produccion.planificacion}">Planificación</span>
             </a>
-            <div class="zymos-panel-section">Análisis</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.analisis}">Análisis</div>
             <a class="zymos-panel-item" th:href="@{/comparativa}"
                th:classappend="${currentUri != null and currentUri.contains('/comparativa')} ? ' panel-active' : ''">
                 <i class="bi bi-bar-chart-steps"></i><span th:text="#{nav.produccion.comparativa}">Comparativa</span>
@@ -700,7 +744,7 @@
                 <div class="zymos-panel-mod" th:text="#{nav.comercial}">Comercial</div>
                 <div class="zymos-panel-title" th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</div>
             </div>
-            <div class="zymos-panel-section">Ventas</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.ventas}">Ventas</div>
             <a class="zymos-panel-item" th:href="@{/ventas}"
                th:classappend="${currentUri != null and currentUri.contains('/ventas') and !currentUri.contains('/reportes')} ? ' panel-active' : ''">
                 <i class="bi bi-bag-check"></i><span th:text="#{nav.comercial.ventas}">Ventas</span>
@@ -721,7 +765,7 @@
                th:classappend="${currentUri != null and currentUri.contains('/reportes/rentabilidad')} ? ' panel-active' : ''">
                 <i class="bi bi-currency-dollar"></i><span th:text="#{nav.comercial.rentabilidad}">Rentabilidad</span>
             </a>
-            <div class="zymos-panel-section">Compras</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.compras}">Compras</div>
             <a class="zymos-panel-item" th:href="@{/ordenes-compra}"
                th:classappend="${currentUri != null and currentUri.contains('/ordenes-compra')} ? ' panel-active' : ''">
                 <i class="bi bi-cart-check"></i><span th:text="#{nav.comercial.ordenes}">Órdenes de Compra</span>
@@ -747,7 +791,7 @@
                th:classappend="${currentUri != null and currentUri == '/bpm'} ? ' panel-active' : ''">
                 <i class="bi bi-speedometer2"></i><span th:text="#{nav.bpm.dashboard}">Dashboard BPM</span>
             </a>
-            <div class="zymos-panel-section">Registro</div>
+            <div class="zymos-panel-section" th:text="#{nav.section.registro}">Registro</div>
             <a class="zymos-panel-item" th:href="@{/bpm/salud/diario}"
                th:classappend="${currentUri != null and currentUri.contains('/bpm/salud/diario')} ? ' panel-active' : ''">
                 <i class="bi bi-person-heart" style="color:#f59e0b;"></i><span th:text="#{nav.bpm.salud}">Estado de Salud</span>
@@ -769,7 +813,7 @@
                 <i class="bi bi-stars" style="color:#7c3aed;"></i><span th:text="#{nav.bpm.limpieza}">Limpieza y Desinfección</span>
             </a>
             <th:block sec:authorize="hasAnyRole('ADMIN','SUPERADMIN')">
-                <div class="zymos-panel-section">Admin</div>
+                <div class="zymos-panel-section" th:text="#{nav.section.admin}">Admin</div>
                 <a class="zymos-panel-item" th:href="@{/bpm/sintomas}"
                    th:classappend="${currentUri != null and currentUri.contains('/bpm/sintomas')} ? ' panel-active' : ''">
                     <i class="bi bi-list-check"></i><span th:text="#{nav.bpm.sintomas}">Todos los registros</span>
@@ -833,6 +877,10 @@
                th:classappend="${currentUri != null and currentUri.contains('/admin/whatsapp')} ? ' panel-active' : ''">
                 <i class="bi bi-whatsapp"></i><span th:text="#{nav.admin.whatsapp}">WhatsApp</span>
             </a>
+            <a class="zymos-panel-item" th:href="@{/admin/webhooks}"
+               th:classappend="${currentUri != null and currentUri.contains('/admin/webhooks')} ? ' panel-active' : ''">
+                <i class="bi bi-braces-asterisk"></i><span th:text="#{nav.admin.webhooks}">Webhooks</span>
+            </a>
             <div class="zymos-panel-section" th:text="#{nav.admin.sistema}">Sistema</div>
             <a class="zymos-panel-item" th:href="@{/admin/logs}"
                th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? ' panel-active' : ''">
@@ -846,7 +894,7 @@
                 </a>
                 <a class="zymos-panel-item" th:href="@{/admin/tenants}"
                    th:classappend="${currentUri != null and currentUri.contains('/admin/migracion')} ? ' panel-active' : ''">
-                    <i class="bi bi-database-up"></i><span>Migración</span>
+                    <i class="bi bi-database-up"></i><span th:text="#{nav.admin.migracion}">Migración</span>
                 </a>
             </th:block>
         </th:block>
@@ -1173,6 +1221,112 @@
             var btn = document.getElementById(id);
             if (btn) btn.addEventListener('click', toggleDarkMode);
         });
+
+        // ── Push notifications ────────────────────────────────────────
+        (function initPush() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+            var btn  = document.getElementById('pushToggleBtn');
+            var icon = document.getElementById('pushToggleIcon');
+            if (!btn) return;
+            btn.style.display = '';
+
+            function urlBase64ToUint8Array(b64) {
+                var pad = '='.repeat((4 - b64.length % 4) % 4);
+                var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+                var arr = new Uint8Array(raw.length);
+                for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+                return arr;
+            }
+
+            function csrfHeaders() {
+                var token  = document.querySelector('meta[name="_csrf"]');
+                var header = document.querySelector('meta[name="_csrf_header"]');
+                var h = { 'Content-Type': 'application/json' };
+                if (token && header) h[header.content] = token.content;
+                return h;
+            }
+
+            function setSubscribedState(subscribed) {
+                if (!icon) return;
+                icon.className = subscribed ? 'bi bi-bell-fill' : 'bi bi-bell';
+                btn.style.color = subscribed ? 'var(--dorado)' : '#64748b';
+                btn.setAttribute('title', subscribed ? '[[#{nav.push.desactivar}]]' : '[[#{nav.push.activar}]]');
+                var lbl = document.getElementById('pushBadgeLabel');
+                if (lbl) lbl.style.display = subscribed ? 'none' : '';
+            }
+
+            function showPushToast(msg, type) {
+                var container = document.createElement('div');
+                container.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:1095;';
+                var colors = { success: 'bg-success text-white', warning: 'bg-warning text-dark', danger: 'bg-danger text-white' };
+                container.innerHTML = '<div class="toast border-0 shadow show" role="alert" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">' +
+                    '<div class="toast-header border-0 ' + (colors[type] || colors.warning) + '">' +
+                    '<strong class="me-auto">[[#{nav.push.toggle}]]</strong>' +
+                    '<button type="button" class="btn-close ' + (type !== 'warning' ? 'btn-close-white' : '') + '" data-bs-dismiss="toast"></button>' +
+                    '</div><div class="toast-body">' + msg + '</div></div>';
+                document.body.appendChild(container);
+                if (typeof bootstrap !== 'undefined') {
+                    var t = bootstrap.Toast.getOrCreateInstance(container.querySelector('.toast'));
+                    t.show();
+                    container.querySelector('.toast').addEventListener('hidden.bs.toast', function() { container.remove(); });
+                } else {
+                    setTimeout(function() { container.remove(); }, 5000);
+                }
+            }
+
+            navigator.serviceWorker.ready.then(function (reg) {
+                reg.pushManager.getSubscription().then(function (sub) {
+                    setSubscribedState(!!sub);
+                });
+            });
+
+            btn.addEventListener('click', function () {
+                navigator.serviceWorker.ready.then(function (reg) {
+                    reg.pushManager.getSubscription().then(function (existing) {
+                        if (existing) {
+                            existing.unsubscribe().then(function () {
+                                fetch('/push/unsubscribe', {
+                                    method: 'POST', headers: csrfHeaders(),
+                                    body: JSON.stringify({ endpoint: existing.endpoint })
+                                });
+                                setSubscribedState(false);
+                                showPushToast('[[#{nav.push.desactivado}]]', 'warning');
+                            });
+                        } else {
+                            fetch('/push/vapid-public-key').then(function (r) { return r.json(); }).then(function (data) {
+                                if (!data.publicKey) {
+                                    showPushToast('[[#{nav.push.sin.vapid}]]', 'warning');
+                                    return;
+                                }
+                                reg.pushManager.subscribe({
+                                    userVisibleOnly: true,
+                                    applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+                                }).then(function (sub) {
+                                    var k = sub.getKey ? sub.getKey('p256dh') : null;
+                                    var a = sub.getKey ? sub.getKey('auth')   : null;
+                                    var payload = {
+                                        endpoint: sub.endpoint,
+                                        p256dh:   k ? btoa(String.fromCharCode.apply(null, new Uint8Array(k))) : '',
+                                        auth:     a ? btoa(String.fromCharCode.apply(null, new Uint8Array(a))) : ''
+                                    };
+                                    fetch('/push/subscribe', {
+                                        method: 'POST', headers: csrfHeaders(),
+                                        body: JSON.stringify(payload)
+                                    });
+                                    setSubscribedState(true);
+                                    showPushToast('[[#{nav.push.activado}]]', 'success');
+                                }).catch(function (err) {
+                                    console.warn('[Push] Suscripción rechazada:', err);
+                                    if (err.name === 'NotAllowedError') {
+                                        showPushToast('[[#{nav.push.permiso.denegado}]]', 'danger');
+                                    }
+                                });
+                            });
+                        }
+                    });
+                });
+            });
+        })();
 
         // "Marcar todas" — rail + topbar
         ['btnMarcarTodas', 'topbarBtnMarcarTodas'].forEach(function(id) {

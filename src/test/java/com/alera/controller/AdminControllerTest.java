@@ -4,6 +4,7 @@ import com.alera.config.*;
 import com.alera.repository.TenantRepository;
 import com.alera.service.JwtService;
 import com.alera.service.LogAccesoService;
+import com.alera.service.PushNotificationService;
 import com.alera.service.UsuarioService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,15 +29,16 @@ class AdminControllerTest {
 
     @Autowired MockMvc mockMvc;
 
-    @MockBean TenantRepository           tenantRepo;
-    @MockBean BrandingProperties         brandingProperties;
-    @MockBean ZymosAuthSuccessHandler    successHandler;
-    @MockBean ZymosAuthFailureHandler    failureHandler;
-    @MockBean ZymosAccessDeniedHandler   accessDeniedHandler;
-    @MockBean UsuarioService             usuarioService;
-    @MockBean LogAccesoService           logAccesoService;
-    @MockBean LoginAttemptService        loginAttemptService;
-    @MockBean JwtService                 jwtService;
+    @MockBean TenantRepository              tenantRepo;
+    @MockBean BrandingProperties            brandingProperties;
+    @MockBean ZymosAuthSuccessHandler       successHandler;
+    @MockBean ZymosAuthFailureHandler       failureHandler;
+    @MockBean ZymosAccessDeniedHandler      accessDeniedHandler;
+    @MockBean UsuarioService                usuarioService;
+    @MockBean LogAccesoService              logAccesoService;
+    @MockBean LoginAttemptService           loginAttemptService;
+    @MockBean JwtService                    jwtService;
+    @MockBean PushNotificationService       pushNotificationService;
 
     @BeforeEach
     void setUp() {

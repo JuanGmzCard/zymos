@@ -27,6 +27,7 @@ class LecturaFermentacionServiceTest {
 
     @Mock LecturaFermentacionRepository repo;
     @Mock LoteCervezaRepository loteRepo;
+    @Mock WebhookService webhookService;
 
     @InjectMocks LecturaFermentacionService service;
 

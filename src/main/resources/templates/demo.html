@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html th:lang="${#locale.language}" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargando demo...</title>
+    <title th:text="#{demo.title}">Cargando demo...</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -29,7 +29,7 @@
 <body>
     <div class="logo">⬡ Zymos</div>
     <div class="spinner"></div>
-    <p class="msg">Preparando el <strong>entorno de demo</strong>...</p>
+    <p class="msg"><span th:text="#{demo.msg.prefix}">Preparando el</span> <strong th:text="#{demo.msg.strong}">entorno de demo</strong>...</p>
 
     <form id="f" action="/login" method="post" style="display:none">
         <input type="hidden" name="username" value="demo">

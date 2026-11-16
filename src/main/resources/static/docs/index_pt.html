@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manuais do Usuário · ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 15px; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    color: #334155;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: #0f172a;
+    padding: 0 52px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 3px solid #c9a028;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar .brand { font-size: 1.5rem; font-weight: 800; color: #c9a028; letter-spacing: 3px; }
+  .topbar .tagline { font-size: 0.78rem; color: #475569; }
+
+  /* ── Hero ── */
+  .hero {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #0f172a 100%);
+    padding: 72px 52px 64px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.5rem; font-weight: 900; color: white; margin-bottom: 12px; letter-spacing: -0.5px; }
+  .hero h1 span { color: #c9a028; }
+  .hero p { font-size: 1.05rem; color: #94a3b8; max-width: 560px; margin: 0 auto 28px; line-height: 1.65; }
+  .hero-meta {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-meta .hm-item {
+    text-align: center;
+  }
+  .hero-meta .hm-val { font-size: 1.8rem; font-weight: 800; color: #c9a028; }
+  .hero-meta .hm-label { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Section ── */
+  .section { max-width: 1100px; margin: 0 auto; padding: 56px 52px; }
+  .section-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #94a3b8;
+    margin-bottom: 20px;
+  }
+
+  /* ── Module grid ── */
+  .module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+  .module-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 24px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  .module-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--accent, #e2e8f0);
+  }
+  .module-card:hover {
+    border-color: var(--accent, #c9a028);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+  }
+  .module-card .mc-icon { font-size: 2rem; line-height: 1; }
+  .module-card h3 { font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+  .module-card p { font-size: 0.85rem; color: #64748b; line-height: 1.5; flex: 1; }
+  .module-card .mc-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+  }
+  .mc-role {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+  }
+  .mc-arrow { color: #94a3b8; font-size: 1rem; }
+  .module-card:hover .mc-arrow { color: var(--accent, #c9a028); }
+
+  /* accent colors per module */
+  .acc-traz   { --accent: #6366f1; }
+  .acc-inv    { --accent: #0891b2; }
+  .acc-rec    { --accent: #059669; }
+  .acc-bpm    { --accent: #dc2626; }
+  .acc-com    { --accent: #d97706; }
+  .acc-rep    { --accent: #7c3aed; }
+  .acc-tar    { --accent: #0284c7; }
+  .acc-adm    { --accent: #475569; }
+
+  /* ── Audience section ── */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 6px;
+  }
+  .audience-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .audience-card h4 { font-size: 0.95rem; font-weight: 700; color: #0f172a; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .audience-card ul { list-style: none; }
+  .audience-card ul li { font-size: 0.83rem; color: #475569; padding: 3px 0; display: flex; align-items: center; gap: 7px; }
+  .audience-card ul li::before { content: "→"; color: #c9a028; font-size: 0.75rem; flex-shrink: 0; }
+  .audience-card ul a { color: #0284c7; text-decoration: none; }
+  .audience-card ul a:hover { text-decoration: underline; }
+
+  /* ── Footer ── */
+  .footer {
+    background: #0f172a;
+    color: #475569;
+    text-align: center;
+    padding: 28px;
+    font-size: 0.82rem;
+    margin-top: 40px;
+  }
+  .footer strong { color: #c9a028; }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 0 18px; }
+    .hero { padding: 40px 18px 36px; }
+    .hero h1 { font-size: 1.8rem; }
+    .section { padding: 36px 18px; }
+    .hero-meta { gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Topbar -->
+<header class="topbar">
+  <div class="brand">ZYMOS</div>
+  <div class="tagline">Sistema de Gestão para Cervejarias Artesanais</div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <h1>Manuais do <span>Usuário</span></h1>
+  <p>Guias completos para cada módulo do ZYMOS. Encontre o manual do módulo que você precisa e aprenda passo a passo como aproveitá-lo ao máximo.</p>
+  <div class="hero-meta">
+    <div class="hm-item"><div class="hm-val">8</div><div class="hm-label">Módulos</div></div>
+    <div class="hm-item"><div class="hm-val">8</div><div class="hm-label">Manuais</div></div>
+    <div class="hm-item"><div class="hm-val">ES / EN / PT</div><div class="hm-label">Idiomas</div></div>
+  </div>
+</div>
+
+<!-- Modules -->
+<div class="section">
+  <div class="section-title">Manuais por módulo</div>
+  <div class="module-grid">
+
+    <a href="manual_trazabilidad_pt.html" class="module-card acc-traz">
+      <div class="mc-icon">🍺</div>
+      <h3>Rastreabilidade de Lotes</h3>
+      <p>Ciclo completo de produção: brassagem (até 4 sessões), fermentação, condicionamento, maturação e carbonatação. Controle de densidades, ABV, custos e avaliação sensorial BJCP.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Produção</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_inventario_pt.html" class="module-card acc-inv">
+      <div class="mc-icon">📦</div>
+      <h3>Inventário de Insumos</h3>
+      <p>Controle de estoque de maltes, lúpulos, leveduras, clarificantes, químicos e embalagens. Alertas de estoque baixo e vencimentos, ajustes manuais e desconto automático ao criar lotes.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Estoque · Produção</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_recetas_pt.html" class="module-card acc-rec">
+      <div class="mc-icon">📖</div>
+      <h3>Receitas</h3>
+      <p>Gestão de receitas com ingredientes, adições de fervura, etapas de mostura e calculadora de escala automática por volume. Duplicar e criar lotes a partir de uma receita.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Produção</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_bpm_pt.html" class="module-card acc-bpm">
+      <div class="mc-icon">🛡️</div>
+      <h3>BPM — Boas Práticas de Fabricação</h3>
+      <p>Controle diário de saúde do pessoal com fluxo de autorização, soluções desinfetantes, controle de pragas, descarte de resíduos e limpeza. Assinatura digital e relatórios em PDF.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Toda a equipe</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_comercial_pt.html" class="module-card acc-com">
+      <div class="mc-icon">💼</div>
+      <h3>Comercial e Finanças</h3>
+      <p>Faturas de fornecedores, ordens de compra, gestão de clientes, vendas por lote e contas a receber. Anexos de arquivos, exportação para PDF e Excel.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Faturamento · Admin</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_reportes_pt.html" class="module-card acc-rep">
+      <div class="mc-icon">📊</div>
+      <h3>Relatórios e Análise</h3>
+      <p>Três relatórios: Produção (lotes, eficiência, ABV), Vendas (receitas, clientes, estados) e Rentabilidade (margem bruta por lote). Gráficos históricos e exportação para PDF e Excel.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Admin · Gerente</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_tareas_pt.html" class="module-card acc-tar">
+      <div class="mc-icon">✅</div>
+      <h3>Tarefas Operacionais</h3>
+      <p>Atribuição de tarefas com checklist de progresso, referências a lotes, equipamentos e outros registros, prioridades, prazos e notificações automáticas de atribuição e vencimento.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Produção · RH</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+    <a href="manual_admin_pt.html" class="module-card acc-adm">
+      <div class="mc-icon">⚙️</div>
+      <h3>Administração</h3>
+      <p>Gestão de usuários e funções personalizadas (RBAC), identidade visual da cervejaria, equipamentos e manutenções, barris/barriletes. Notificações WhatsApp multi-contato, controle de plano e limites.</p>
+      <div class="mc-footer">
+        <span class="mc-role">Somente Administrador</span>
+        <span class="mc-arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+</div>
+
+<!-- By role -->
+<div class="section" style="padding-top: 0">
+  <div class="section-title">Qual manual eu preciso? — Por perfil de usuário</div>
+  <div class="audience-grid">
+
+    <div class="audience-card">
+      <h4>🧑‍🍳 Mestre cervejeiro / Produção</h4>
+      <ul>
+        <li><a href="manual_trazabilidad_pt.html">Rastreabilidade de Lotes</a> — registre sua produção diária</li>
+        <li><a href="manual_recetas_pt.html">Receitas</a> — crie e escale receitas</li>
+        <li><a href="manual_inventario_pt.html">Inventário</a> — controle o estoque de insumos</li>
+        <li><a href="manual_bpm_pt.html">BPM</a> — registro de saúde e limpeza</li>
+      </ul>
+    </div>
+
+    <div class="audience-card">
+      <h4>💰 Responsável de faturamento</h4>
+      <ul>
+        <li><a href="manual_comercial_pt.html">Comercial e Finanças</a> — faturas, vendas e clientes</li>
+        <li><a href="manual_reportes_pt.html">Relatórios</a> — receitas e rentabilidade</li>
+        <li><a href="manual_bpm_pt.html">BPM</a> — registro diário de saúde obrigatório</li>
+      </ul>
+    </div>
+
+    <div class="audience-card">
+      <h4>📦 Responsável de estoque</h4>
+      <ul>
+        <li><a href="manual_inventario_pt.html">Inventário</a> — gestão completa de insumos</li>
+        <li><a href="manual_comercial_pt.html">Ordens de compra</a> — pedidos a fornecedores</li>
+        <li><a href="manual_bpm_pt.html">BPM</a> — registro diário de saúde obrigatório</li>
+      </ul>
+    </div>
+
+    <div class="audience-card">
+      <h4>👔 Proprietário / Gerente</h4>
+      <ul>
+        <li><a href="manual_reportes_pt.html">Relatórios</a> — visão geral do negócio</li>
+        <li><a href="manual_admin_pt.html">Administração</a> — usuários, identidade visual e configurações</li>
+        <li><a href="manual_tareas_pt.html">Tarefas</a> — acompanhamento da equipe</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<footer class="footer">
+  <strong>ZYMOS</strong> — Sistema SaaS de Gestão para Cervejarias Artesanais &nbsp;·&nbsp; Novembro 2026
+</footer>
+
+</body>
+</html>

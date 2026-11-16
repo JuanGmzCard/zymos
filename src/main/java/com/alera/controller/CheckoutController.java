@@ -3,6 +3,8 @@ package com.alera.controller;
 import com.alera.model.CheckoutPendiente;
 import com.alera.model.enums.PlanNivel;
 import com.alera.payment.MercadoPagoGateway;
+import com.alera.payment.PasarelaPago;
+import com.alera.payment.StripeGateway;
 import com.alera.repository.CheckoutPendienteRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.service.TenantProvisioningService;
@@ -32,6 +34,7 @@ public class CheckoutController {
     private final TenantRepository            tenantRepo;
     private final CheckoutPendienteRepository checkoutRepo;
     private final MercadoPagoGateway          pasarela;
+    private final StripeGateway               stripeGateway;
     private final TenantProvisioningService   provisioning;
 
     @Value("${app.base-url:http://localhost:8080}")
@@ -40,10 +43,12 @@ public class CheckoutController {
     public CheckoutController(TenantRepository tenantRepo,
                                CheckoutPendienteRepository checkoutRepo,
                                MercadoPagoGateway pasarela,
+                               StripeGateway stripeGateway,
                                TenantProvisioningService provisioning) {
         this.tenantRepo    = tenantRepo;
         this.checkoutRepo  = checkoutRepo;
         this.pasarela      = pasarela;
+        this.stripeGateway = stripeGateway;
         this.provisioning  = provisioning;
     }
 
@@ -53,6 +58,7 @@ public class CheckoutController {
     public String planes(Model model) {
         model.addAttribute("planes", PlanNivel.values());
         model.addAttribute("mpHabilitado", pasarela.isHabilitado());
+        model.addAttribute("stripeHabilitado", stripeGateway.isHabilitado());
         return "plan/planes";
     }
 
@@ -81,7 +87,7 @@ public class CheckoutController {
         return resp;
     }
 
-    // ─── Iniciar checkout ──────────────────────────────────────────────────────
+    // ─── Iniciar checkout MercadoPago ──────────────────────────────────────────
 
     @PostMapping("/checkout/iniciar")
     public String iniciarCheckout(@RequestParam String planNivel,
@@ -90,9 +96,26 @@ public class CheckoutController {
                                    @RequestParam String email,
                                    Model model,
                                    HttpServletRequest request) {
+        return iniciarConPasarela(planNivel, nombreCerveceria, subdominio, email, pasarela, model, request);
+    }
+
+    // ─── Iniciar checkout Stripe ───────────────────────────────────────────────
+
+    @PostMapping("/checkout/iniciar-stripe")
+    public String iniciarStripe(@RequestParam String planNivel,
+                                 @RequestParam String nombreCerveceria,
+                                 @RequestParam String subdominio,
+                                 @RequestParam String email,
+                                 Model model,
+                                 HttpServletRequest request) {
+        return iniciarConPasarela(planNivel, nombreCerveceria, subdominio, email, stripeGateway, model, request);
+    }
+
+    private String iniciarConPasarela(String planNivel, String nombreCerveceria, String subdominio,
+                                       String email, PasarelaPago pago, Model model,
+                                       HttpServletRequest request) {
         String sub = subdominio.toLowerCase(Locale.ROOT).trim();
 
-        // Validaciones
         if (!SUBDOMINIO_RE.matcher(sub).matches()) {
             return errorPlanes(model, "El subdominio solo puede contener letras y números (3–30 caracteres, sin guiones ni espacios).", planNivel);
         }
@@ -116,7 +139,6 @@ public class CheckoutController {
             return errorPlanes(model, "Plan no reconocido.", null);
         }
 
-        // Crear registro de checkout
         CheckoutPendiente checkout = new CheckoutPendiente();
         checkout.setId(UUID.randomUUID().toString());
         checkout.setSubdominio(sub);
@@ -125,10 +147,9 @@ public class CheckoutController {
         checkout.setPlanNivel(nivel);
         checkoutRepo.save(checkout);
 
-        // Crear preferencia en MP y redirigir
         try {
             String baseUrl = resolverBaseUrl(request);
-            String checkoutUrl = pasarela.crearSesion(checkout, baseUrl);
+            String checkoutUrl = pago.crearSesion(checkout, baseUrl);
             return "redirect:" + checkoutUrl;
         } catch (Exception e) {
             log.error("Error creando sesión de pago: {}", e.getMessage(), e);
@@ -186,7 +207,7 @@ public class CheckoutController {
         return "plan/exito";
     }
 
-    // ─── Retorno desde MP ──────────────────────────────────────────────────────
+    // ─── Retorno desde pasarela (MP y Stripe comparten este endpoint) ──────────
 
     @GetMapping("/checkout/exito")
     public String exito(@RequestParam(value = "external_reference", required = false) String externalRef,
@@ -207,11 +228,17 @@ public class CheckoutController {
 
         CheckoutPendiente checkout = opt.get();
         if ("PROCESADO".equals(checkout.getEstado())) {
-            // Ya fue provisionado (por webhook o por clic doble)
             return mostrarExito(model, checkout);
         }
 
-        boolean aprobado = "approved".equals(status) || pasarela.pagoAprobado(paymentId);
+        boolean aprobado = "approved".equals(status);
+        if (!aprobado) {
+            // Detectar gateway por el formato del paymentId
+            aprobado = isStripePaymentId(paymentId)
+                    ? stripeGateway.pagoAprobado(paymentId)
+                    : pasarela.pagoAprobado(paymentId);
+        }
+
         if (!aprobado) {
             model.addAttribute("error", "El pago no fue aprobado (estado: " + status + ").");
             return "plan/fallo";
@@ -259,13 +286,76 @@ public class CheckoutController {
                                                            : pasarela.obtenerExternalReference(paymentId);
             if (extRef == null) return ResponseEntity.ok().build();
 
-            checkoutRepo.findById(extRef).ifPresent(checkout -> {
+            Optional<CheckoutPendiente> checkoutOpt = checkoutRepo.findById(extRef);
+            if (checkoutOpt.isPresent()) {
+                CheckoutPendiente checkout = checkoutOpt.get();
                 if (!"PROCESADO".equals(checkout.getEstado())) {
-                    provisionar(checkout, paymentId, appBaseUrl, null);
+                    String vista = provisionar(checkout, paymentId, appBaseUrl, null);
+                    if ("plan/fallo".equals(vista)) {
+                        log.error("Webhook MP: provisioning fallido para checkout={} payment={}", checkout.getId(), paymentId);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
                 }
-            });
+            }
         } catch (Exception e) {
             log.error("Error procesando webhook MP: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().build();
+    }
+
+    // ─── Webhook Stripe ────────────────────────────────────────────────────────
+
+    @PostMapping("/webhook/stripe")
+    @ResponseBody
+    public ResponseEntity<Void> webhookStripe(
+            @RequestBody(required = false) String payload,
+            @RequestHeader(value = "Stripe-Signature", required = false) String stripeSig) {
+        log.debug("Webhook Stripe recibido");
+
+        if (!stripeGateway.isHabilitado()) {
+            return ResponseEntity.ok().build(); // no configurado — ignorar
+        }
+        if (!stripeGateway.verificarFirmaWebhook(stripeSig, null, payload, Map.of())) {
+            log.warn("Webhook Stripe rechazado: firma inválida");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        try {
+            var eventoOpt = stripeGateway.construirEvento(payload, stripeSig);
+            if (eventoOpt.isEmpty()) return ResponseEntity.ok().build();
+
+            var evento = eventoOpt.get();
+            if (!"checkout.session.completed".equals(evento.getType())) {
+                return ResponseEntity.ok().build();
+            }
+
+            var sessionOpt = stripeGateway.extraerSesion(evento);
+            if (sessionOpt.isEmpty()) return ResponseEntity.ok().build();
+
+            var session    = sessionOpt.get();
+            String checkoutId = session.getClientReferenceId();
+            String sessionId  = session.getId();
+
+            if (checkoutId == null) {
+                log.warn("Webhook Stripe: checkout.session.completed sin client_reference_id");
+                return ResponseEntity.ok().build();
+            }
+
+            Optional<CheckoutPendiente> checkoutOpt = checkoutRepo.findById(checkoutId);
+            if (checkoutOpt.isPresent()) {
+                CheckoutPendiente checkout = checkoutOpt.get();
+                if (!"PROCESADO".equals(checkout.getEstado())) {
+                    String vista = provisionar(checkout, sessionId, appBaseUrl, null);
+                    if ("plan/fallo".equals(vista)) {
+                        log.error("Webhook Stripe: provisioning fallido para checkout={} session={}", checkout.getId(), sessionId);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error procesando webhook Stripe: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.ok().build();
     }
@@ -289,7 +379,6 @@ public class CheckoutController {
             return "plan/fallo";
         }
 
-        // Marcar como procesado DESPUÉS de confirmar provisión exitosa (o ya existente)
         checkoutRepo.marcarProcesado(checkout.getId(), paymentId, "PROCESADO");
         checkout.setEstado("PROCESADO");
 
@@ -307,6 +396,8 @@ public class CheckoutController {
     private String errorPlanes(Model model, String mensaje, String planSeleccionado) {
         model.addAttribute("error", mensaje);
         model.addAttribute("planes", PlanNivel.values());
+        model.addAttribute("mpHabilitado", pasarela.isHabilitado());
+        model.addAttribute("stripeHabilitado", stripeGateway.isHabilitado());
         model.addAttribute("planSeleccionado", planSeleccionado);
         return "plan/planes";
     }
@@ -325,5 +416,9 @@ public class CheckoutController {
             return appBaseUrl;
         }
         return appBaseUrl.replaceFirst("://([^./]+)", "://" + subdomain);
+    }
+
+    private static boolean isStripePaymentId(String paymentId) {
+        return paymentId != null && (paymentId.startsWith("cs_") || paymentId.startsWith("STRIPE-MOCK-"));
     }
 }

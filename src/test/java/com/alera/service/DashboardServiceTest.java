@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.dto.DashboardStats;
 import com.alera.model.enums.EstadoEquipo;
+import com.alera.model.enums.EstadoVenta;
 import com.alera.repository.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,6 +28,8 @@ class DashboardServiceTest {
     @Mock private EquipoRepository equipoRepo;
     @Mock private FacturaProveedorRepository facturaRepo;
     @Mock private MantenimientoEquipoRepository mantenimientoRepo;
+    @Mock private VentaRepository ventaRepo;
+    @Mock private VentaItemRepository ventaItemRepo;
 
     @InjectMocks
     private DashboardService service;
@@ -47,7 +50,13 @@ class DashboardServiceTest {
         when(equipoRepo.countMantenimientoPendiente(any(LocalDate.class))).thenReturn(2L);
         when(facturaRepo.countTotal()).thenReturn(8L);
         when(facturaRepo.sumTotalFacturas()).thenReturn(new BigDecimal("1500000"));
+        when(facturaRepo.sumTotalFiltered(any(), any(LocalDate.class), any(LocalDate.class))).thenReturn(new BigDecimal("200000"));
         when(mantenimientoRepo.sumTotalCostos()).thenReturn(new BigDecimal("250000"));
+        when(ventaRepo.countByEstadoDesde(any(EstadoVenta.class), any(LocalDate.class))).thenReturn(3L);
+        when(ventaRepo.countClientesUnicosDesde(any(LocalDate.class))).thenReturn(2L);
+        when(ventaItemRepo.sumIngresosDespachadosDesde(any(LocalDate.class))).thenReturn(new BigDecimal("500000"));
+        when(loteRepo.sumLitrosActivos()).thenReturn(new BigDecimal("300"));
+        when(loteRepo.countFasesVencidas(any(LocalDate.class))).thenReturn(0L);
         when(loteRepo.findTop5(any(Pageable.class))).thenReturn(List.of());
 
         DashboardStats stats = service.obtenerEstadisticas();
@@ -76,8 +85,14 @@ class DashboardServiceTest {
         when(equipoRepo.countByEstado(any())).thenReturn(0L);
         when(equipoRepo.countMantenimientoPendiente(any())).thenReturn(0L);
         when(facturaRepo.countTotal()).thenReturn(0L);
-        when(facturaRepo.sumTotalFacturas()).thenReturn(null);      // BD vacía → null
-        when(mantenimientoRepo.sumTotalCostos()).thenReturn(null);  // BD vacía → null
+        when(facturaRepo.sumTotalFacturas()).thenReturn(null);
+        when(facturaRepo.sumTotalFiltered(any(), any(LocalDate.class), any(LocalDate.class))).thenReturn(null);
+        when(mantenimientoRepo.sumTotalCostos()).thenReturn(null);
+        when(ventaRepo.countByEstadoDesde(any(EstadoVenta.class), any(LocalDate.class))).thenReturn(0L);
+        when(ventaRepo.countClientesUnicosDesde(any(LocalDate.class))).thenReturn(0L);
+        when(ventaItemRepo.sumIngresosDespachadosDesde(any(LocalDate.class))).thenReturn(null);
+        when(loteRepo.sumLitrosActivos()).thenReturn(null);
+        when(loteRepo.countFasesVencidas(any(LocalDate.class))).thenReturn(0L);
         when(loteRepo.findTop5(any())).thenReturn(List.of());
 
         DashboardStats stats = service.obtenerEstadisticas();

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatórios — Manual do Usuário · ZYMOS</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; font-size: 15px; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8fafc; color: #334155; line-height: 1.6; display: flex; min-height: 100vh; }
+  #sidebar { width: 268px; min-width: 268px; background: #0f172a; color: #cbd5e1; height: 100vh; position: fixed; top: 0; left: 0; overflow-y: auto; display: flex; flex-direction: column; z-index: 100; }
+  .sidebar-brand { padding: 20px 20px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-brand .logo { font-size: 1.5rem; font-weight: 800; color: #c9a028; letter-spacing: 2px; }
+  .sidebar-brand .modulo { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+  .sidebar-brand .back-link { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #475569; text-decoration: none; margin-top: 10px; }
+  .sidebar-brand .back-link:hover { color: #c9a028; }
+  nav.sidebar-nav { padding: 10px 0 20px; flex: 1; }
+  .nav-section { padding: 14px 20px 4px; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #475569; font-weight: 700; }
+  nav.sidebar-nav a { display: flex; align-items: center; gap: 9px; padding: 7px 20px; color: #94a3b8; text-decoration: none; font-size: 0.855rem; border-left: 3px solid transparent; transition: all 0.15s; }
+  nav.sidebar-nav a:hover, nav.sidebar-nav a.active { color: #f1f5f9; background: rgba(255,255,255,0.05); border-left-color: #c9a028; }
+  nav.sidebar-nav a .ic { font-size: 1rem; width: 18px; text-align: center; flex-shrink: 0; }
+  #main { margin-left: 268px; flex: 1; min-width: 0; padding: 0 0 80px; }
+  .page-hero { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: white; padding: 48px 52px 40px; border-bottom: 3px solid #c9a028; }
+  .page-hero .breadcrumb { font-size: 0.75rem; color: #64748b; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .page-hero h1 { font-size: 2rem; font-weight: 800; color: #c9a028; margin-bottom: 8px; }
+  .page-hero p { font-size: 0.975rem; color: #94a3b8; max-width: 680px; line-height: 1.65; }
+  .role-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .badge-role { padding: 4px 12px; border-radius: 20px; font-size: 0.73rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-all { background: rgba(201,160,40,0.18); color: #c9a028; border: 1px solid rgba(201,160,40,0.35); }
+  .content { padding: 40px 52px; max-width: 960px; }
+  section { margin-bottom: 56px; }
+  h2 { font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+  h2 .ico { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin: 24px 0 10px; }
+  p { margin-bottom: 12px; color: #475569; }
+  .callout { border-radius: 8px; padding: 14px 18px; margin: 16px 0; font-size: 0.875rem; display: flex; gap: 12px; align-items: flex-start; }
+  .callout .ci { font-size: 1.1rem; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #eff6ff; border-left: 4px solid #3b82f6; color: #1e40af; }
+  .callout.tip { background: #f0fdf4; border-left: 4px solid #22c55e; color: #166534; }
+  .callout.warning { background: #fffbeb; border-left: 4px solid #f59e0b; color: #92400e; }
+  .callout strong { display: block; margin-bottom: 3px; }
+  .field-table { width: 100%; border-collapse: collapse; font-size: 0.865rem; margin: 14px 0 20px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+  .field-table thead th { background: #1e293b; color: #c9a028; padding: 10px 14px; text-align: left; font-weight: 700; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-table tbody tr:nth-child(even) { background: #f8fafc; }
+  .field-table tbody tr:hover { background: #f1f5f9; }
+  .field-table td { padding: 9px 14px; border-bottom: 1px solid #f1f5f9; vertical-align: top; color: #334155; }
+  .field-table td:first-child { font-weight: 600; color: #0f172a; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 16px 0; }
+  .stat-card { background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; }
+  .stat-card .sc-label { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 4px; }
+  .stat-card .sc-value { font-size: 1.4rem; font-weight: 700; color: #0f172a; }
+  .stat-card.sc-gold .sc-value { color: #c9a028; }
+  .stat-card.sc-green .sc-value { color: #16a34a; }
+  .stat-card.sc-blue .sc-value { color: #0284c7; }
+  .stat-card.sc-red .sc-value { color: #dc2626; }
+
+  .report-tabs { display: flex; gap: 4px; margin-bottom: 28px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0; }
+  .report-tab { padding: 9px 20px; font-size: 0.875rem; font-weight: 600; color: #64748b; border-radius: 6px 6px 0 0; border: 1px solid transparent; border-bottom: none; cursor: default; }
+  .report-tab.active { background: #0f172a; color: #c9a028; border-color: #e2e8f0; margin-bottom: -2px; }
+
+  .chart-pill { display: inline-block; padding: 3px 10px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.78rem; color: #475569; margin: 2px; }
+
+  .export-bar { display: flex; gap: 8px; align-items: center; padding: 12px 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; margin: 16px 0; }
+  .export-bar span { font-size: 0.82rem; color: #64748b; margin-right: 4px; }
+  .btn-export { padding: 5px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: 600; border: 1px solid #e2e8f0; background: white; color: #334155; cursor: default; }
+  .btn-export.pdf { background: #fee2e2; border-color: #fecaca; color: #991b1b; }
+  .btn-export.excel { background: #dcfce7; border-color: #bbf7d0; color: #166534; }
+  .btn-export.print { background: #f1f5f9; border-color: #e2e8f0; color: #475569; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
+  .badge-green { background: #dcfce7; color: #166534; }
+  .badge-red   { background: #fee2e2; color: #991b1b; }
+  .badge-gray  { background: #f1f5f9; color: #64748b; }
+
+  @media (max-width: 640px) { #sidebar { display: none; } #main { margin-left: 0; } .content { padding: 20px 18px; } .page-hero { padding: 24px 18px 20px; } }
+</style>
+</head>
+<body>
+<aside id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ZYMOS</div>
+    <div class="modulo">Manual do Usuário</div>
+    <a href="index_pt.html" class="back-link">← Todos os módulos</a>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">Módulo Relatórios</div>
+    <a href="#intro"><span class="ic">📊</span> Introdução</a>
+    <a href="#navegacion"><span class="ic">🔀</span> Navegação entre relatórios</a>
+    <a href="#filtros"><span class="ic">🔍</span> Filtros e períodos</a>
+    <div class="nav-section">Os três relatórios</div>
+    <a href="#produccion"><span class="ic">🍺</span> Produção</a>
+    <a href="#ventas"><span class="ic">💰</span> Vendas</a>
+    <a href="#rentabilidad"><span class="ic">📈</span> Rentabilidade</a>
+    <div class="nav-section">Exportação</div>
+    <a href="#exportar"><span class="ic">📤</span> PDF e Excel</a>
+    <div class="nav-section">Inteligência Artificial</div>
+    <a href="#ia-rentabilidad"><span class="ic">🤖</span> Análise IA</a>
+  </nav>
+</aside>
+<main id="main">
+  <div class="page-hero">
+    <div class="breadcrumb">Manuais ZYMOS › Módulos</div>
+    <h1>Relatórios e Analítica</h1>
+    <p>O módulo de Relatórios consolida as informações de produção, vendas e rentabilidade em um único lugar. Oferece gráficos históricos, tabelas filtráveis e exportação para PDF e Excel para a análise do negócio.</p>
+    <div class="role-badges">
+      <span class="badge-role badge-all">Administrador · Gerente · Produção</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <section id="intro">
+      <h2><span class="ico">📊</span> Introdução</h2>
+      <p>O módulo de Relatórios está disponível na barra de navegação. Contém três relatórios independentes, cada um com seus próprios filtros, estatísticas e gráficos. Todos os relatórios permitem exportar os dados filtrados para PDF ou Excel.</p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div><strong>Rota de acesso:</strong> <code>/reportes</code> — redireciona automaticamente para o Relatório de Produção. Os demais são acessados pelas abas de navegação.</div>
+      </div>
+    </section>
+
+    <section id="navegacion">
+      <h2><span class="ico">🔀</span> Navegação entre relatórios</h2>
+      <p>Na parte superior de cada relatório há três abas para trocar entre relatórios sem perder os filtros de data:</p>
+      <div class="report-tabs">
+        <div class="report-tab active">📦 Produção</div>
+        <div class="report-tab">💰 Vendas</div>
+        <div class="report-tab">📈 Rentabilidade</div>
+      </div>
+      <p>A aba ativa aparece destacada. Clique em qualquer aba para mudar de relatório.</p>
+    </section>
+
+    <section id="filtros">
+      <h2><span class="ico">🔍</span> Filtros e períodos</h2>
+      <p>Todos os relatórios compartilham a mesma lógica de filtragem por datas. Os filtros são aplicados imediatamente ao clicar.</p>
+      <table class="field-table">
+        <thead><tr><th>Filtro</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>De / Até</td><td>Intervalo de datas. Por padrão mostra os últimos 3 meses.</td></tr>
+          <tr><td>Este mês</td><td>Atalho rápido: desde o dia 1 do mês atual até hoje.</td></tr>
+          <tr><td>Último mês</td><td>Atalho rápido: mês anterior completo.</td></tr>
+          <tr><td>3 meses</td><td>Atalho rápido: últimos 90 dias.</td></tr>
+          <tr><td>Este ano</td><td>Atalho rápido: desde o 1º de janeiro do ano atual.</td></tr>
+          <tr><td>Estilo</td><td>Apenas em Produção e Rentabilidade. Filtra por estilo de cerveja.</td></tr>
+          <tr><td>Estado</td><td>Apenas em Vendas. Filtra por estado: Despachada, Pendente, Cancelada.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Os filtros também se aplicam às exportações de PDF e Excel. O que você vê na tela é exatamente o que é baixado.</div>
+      </div>
+    </section>
+
+    <section id="produccion">
+      <h2><span class="ico">🍺</span> Relatório de Produção</h2>
+      <p>Mostra o desempenho produtivo da cervejaria: lotes elaborados, volume produzido, eficiência e custos no período selecionado.</p>
+
+      <h3>Métricas principais (cartões de estatísticas)</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="sc-label">Lotes Elaborados</div><div class="sc-value">Total de lotes</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Litros Produzidos</div><div class="sc-value">Volume total</div></div>
+        <div class="stat-card"><div class="sc-label">Méd. por Lote</div><div class="sc-value">Litros/lote</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">ABV Médio</div><div class="sc-value">% álcool</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Eficiência Méd.</div><div class="sc-value">% eficiência</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">Custo Total</div><div class="sc-value">BRL período</div></div>
+        <div class="stat-card"><div class="sc-label">Estilos Distintos</div><div class="sc-value">Variedade</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Concluídos</div><div class="sc-value">% finalizado</div></div>
+      </div>
+
+      <h3>Gráficos disponíveis</h3>
+      <p>
+        <span class="chart-pill">📈 Tendência mensal</span>
+        <span class="chart-pill">📊 Litros por estilo</span>
+        <span class="chart-pill">📊 Distribuição de ABV</span>
+        <span class="chart-pill">📉 OG alcançado vs objetivo (com estilo filtrado)</span>
+        <span class="chart-pill">📉 Eficiência &amp; ABV por lote (com estilo filtrado)</span>
+      </p>
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Os gráficos de <em>OG alcançado vs objetivo</em> e <em>Eficiência &amp; ABV</em> só aparecem quando você seleciona um estilo específico no filtro.</div>
+      </div>
+
+      <h3>Tabela de lotes</h3>
+      <p>Abaixo dos gráficos há uma tabela com todos os lotes do período. Colunas:</p>
+      <table class="field-table">
+        <thead><tr><th>Coluna</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Código</td><td>Código do lote (link para o detalhe do lote)</td></tr>
+          <tr><td>Estilo</td><td>Estilo da cerveja</td></tr>
+          <tr><td>Receita</td><td>Nome da receita utilizada</td></tr>
+          <tr><td>Data</td><td>Data de criação do lote</td></tr>
+          <tr><td>Litros</td><td>Volume final produzido</td></tr>
+          <tr><td>ABV</td><td>Álcool por volume (em dourado)</td></tr>
+          <tr><td>Eficiência</td><td>Verde ≥75%, dourado 60–74%, vermelho &lt;60%</td></tr>
+          <tr><td>Custo/L</td><td>Custo de produção por litro</td></tr>
+          <tr><td>Estado</td><td>Fase atual do lote (badge colorido)</td></tr>
+        </tbody>
+      </table>
+      <p>A tabela mostra 15 lotes por página. Use os botões de paginação para navegar.</p>
+
+      <h3>Resumo por estilo</h3>
+      <p>Painel lateral com uma barra de progresso por estilo mostrando qual porcentagem do volume total representa cada estilo, junto com a contagem de lotes.</p>
+
+      <div class="export-bar">
+        <span>Exportar:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+        <span class="btn-export print">🖨️ Imprimir</span>
+      </div>
+      <p>O Excel de Produção contém 3 planilhas: <strong>Lotes</strong> (tabela completa), <strong>Por Estilo</strong> (resumo por estilo), <strong>Tendência Mensal</strong> (evolução mês a mês).</p>
+    </section>
+
+    <section id="ventas">
+      <h2><span class="ico">💰</span> Relatório de Vendas</h2>
+      <p>Consolida todas as vendas do período com detalhamento por cliente, estado e evolução de receitas.</p>
+
+      <h3>Métricas principais</h3>
+      <div class="stat-grid">
+        <div class="stat-card"><div class="sc-label">Total Vendas</div><div class="sc-value">N° de vendas</div></div>
+        <div class="stat-card sc-green"><div class="sc-label">Despachadas</div><div class="sc-value">Concluídas</div></div>
+        <div class="stat-card sc-gold"><div class="sc-label">Pendentes</div><div class="sc-value">Em processo</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Receita</div><div class="sc-value">Total BRL</div></div>
+        <div class="stat-card"><div class="sc-label">Canceladas</div><div class="sc-value">Anuladas</div></div>
+        <div class="stat-card sc-blue"><div class="sc-label">Clientes Únicos</div><div class="sc-value">Compradores</div></div>
+      </div>
+
+      <h3>Gráficos disponíveis</h3>
+      <p>
+        <span class="chart-pill">📊 Receita mensal (barras)</span>
+        <span class="chart-pill">🍩 Distribuição por estado (donut)</span>
+      </p>
+
+      <h3>Tabela de vendas</h3>
+      <table class="field-table">
+        <thead><tr><th>Coluna</th><th>Descrição</th></tr></thead>
+        <tbody>
+          <tr><td>Remissão</td><td>Número de remissão ou referência da venda</td></tr>
+          <tr><td>Cliente</td><td>Nome do cliente</td></tr>
+          <tr><td>Data</td><td>Data da venda</td></tr>
+          <tr><td>Lote</td><td>Código do lote vendido</td></tr>
+          <tr><td>Itens</td><td>Quantidade de itens na venda</td></tr>
+          <tr><td>Total</td><td>Valor total da venda</td></tr>
+          <tr><td>Estado</td><td><span class="badge badge-green">DESPACHADA</span> <span class="badge" style="background:#fef9c3;color:#854d0e">PENDENTE</span> <span class="badge badge-gray">CANCELADA</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Top clientes</h3>
+      <p>Painel com os clientes mais ativos do período: nome, número de vendas e total de receitas.</p>
+
+      <div class="export-bar">
+        <span>Exportar:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+        <span class="btn-export print">🖨️ Imprimir</span>
+      </div>
+      <p>O Excel de Vendas contém 5 planilhas: <strong>Vendas</strong>, <strong>Itens</strong>, <strong>Por Cliente</strong>, <strong>Por Estado</strong>, <strong>Tendência</strong>.</p>
+    </section>
+
+    <section id="rentabilidad">
+      <h2><span class="ico">📈</span> Relatório de Rentabilidade</h2>
+      <p>Calcula a margem bruta de cada lote comparando as receitas de vendas despachadas com os custos de produção atribuídos.</p>
+
+      <div class="callout warning">
+        <span class="ci">⚠️</span>
+        <div>
+          <strong>Para que a margem apareça, o lote deve ter ambos os dados:</strong>
+          custos atribuídos (do formulário do lote, aba Custos) E vendas despachadas.
+          Um lote sem custos ou sem vendas aparecerá com uma etiqueta especial em vez da margem.
+        </div>
+      </div>
+
+      <h3>Estados da margem por lote</h3>
+      <table class="field-table">
+        <thead><tr><th>Etiqueta</th><th>Significado</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge badge-green">Lucrativo</span></td><td>As receitas superam os custos — margem positiva.</td></tr>
+          <tr><td><span class="badge badge-red">Em prejuízo</span></td><td>Os custos superam as receitas — margem negativa.</td></tr>
+          <tr><td><span class="badge badge-gray">Sem vendas</span></td><td>O lote tem custos mas ainda não tem vendas despachadas.</td></tr>
+          <tr><td><span class="badge badge-gray">Sem custo</span></td><td>O lote tem vendas mas não tem custos de produção atribuídos.</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Tabela de rentabilidade</h3>
+      <p>Colunas: Código Lote, Estilo, Litros, Custo Total, Receita, Margem Bruta, Margem %, Estado. A linha de totais no final soma todos os lotes do período.</p>
+      <p>Você pode ordenar a tabela clicando nos cabeçalhos de coluna.</p>
+
+      <div class="export-bar">
+        <span>Exportar:</span>
+        <span class="btn-export pdf">📄 PDF</span>
+        <span class="btn-export excel">📊 Excel</span>
+      </div>
+      <p>O Excel de Rentabilidade contém 3 planilhas: <strong>Rentabilidade</strong> (por lote), <strong>Por Estilo</strong> (resumo), <strong>Tendência Mensal</strong> (evolução da margem).</p>
+    </section>
+
+    <section id="ia-rentabilidad">
+      <h2><span class="ico">🤖</span> Análise IA de Rentabilidade</h2>
+      <p>A análise de rentabilidade com IA processa os dados do relatório atual e gera um diagnóstico automático: detecta o estilo mais e menos lucrativo, identifica tendências e gera recomendações acionáveis para melhorar a margem do negócio.</p>
+
+      <div class="callout info">
+        <span class="ci">ℹ️</span>
+        <div>Esta função requer configuração de IA (ANTHROPIC_API_KEY). Se o botão <strong>"Analisar com IA"</strong> não aparecer no relatório, o sistema funciona sem IA.</div>
+      </div>
+
+      <h3>Como usar a análise IA</h3>
+      <table class="field-table">
+        <thead><tr><th>Passo</th><th>Ação</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>No Relatório de Rentabilidade, aplique os filtros de data e estilo que quiser analisar.</td></tr>
+          <tr><td>2</td><td>Clique em <strong>"Analisar com IA"</strong> na parte superior do relatório.</td></tr>
+          <tr><td>3</td><td>O modal mostra: estilo mais lucrativo, estilo menos lucrativo, tendência do período, insights-chave e recomendações específicas com alertas de atenção.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>A análise é baseada nos dados do relatório filtrado atual. Para uma análise diferente, feche o modal, mude os filtros e abra-o novamente.</div>
+      </div>
+    </section>
+
+    <section id="exportar">
+      <h2><span class="ico">📤</span> Exportar para PDF e Excel</h2>
+      <p>Cada relatório tem botões de exportação que geram o arquivo com os mesmos filtros ativos na tela.</p>
+      <table class="field-table">
+        <thead><tr><th>Botão</th><th>O que gera</th><th>Quando usar</th></tr></thead>
+        <tbody>
+          <tr><td>📄 PDF</td><td>Documento PDF com tabelas e estatísticas, pronto para imprimir ou compartilhar.</td><td>Apresentações, relatórios para sócios, documentação.</td></tr>
+          <tr><td>📊 Excel</td><td>Arquivo .xlsx com múltiplas planilhas de dados detalhados.</td><td>Análise própria, cruzar com outros dados, contabilidade.</td></tr>
+          <tr><td>🖨️ Imprimir</td><td>Abre o diálogo de impressão do navegador com a visão otimizada para papel.</td><td>Impressão direta em papel.</td></tr>
+        </tbody>
+      </table>
+      <div class="callout tip">
+        <span class="ci">💡</span>
+        <div>Se exportar sem filtros de data, o sistema inclui todos os dados históricos. Para relatórios mensais, sempre aplique o filtro de período antes de exportar.</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+<script>
+  const sections = document.querySelectorAll('section[id]');
+  const links = document.querySelectorAll('nav.sidebar-nav a');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { links.forEach(l => l.classList.remove('active')); const a = document.querySelector(`nav a[href="#${e.target.id}"]`); if (a) a.classList.add('active'); } });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

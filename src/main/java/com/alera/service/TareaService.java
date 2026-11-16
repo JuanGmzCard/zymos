@@ -38,6 +38,7 @@ public class TareaService {
     private final BarrilRepository                 barrilRepo;
     private final NotificacionService              notificacionService;
     private final WhatsAppService                  whatsAppService;
+    private final WebhookService                   webhookService;
 
     public TareaService(TareaRepository repo,
                         TareaItemRepository itemRepo,
@@ -54,7 +55,8 @@ public class TareaService {
                         RecetaRepository recetaRepo,
                         BarrilRepository barrilRepo,
                         NotificacionService notificacionService,
-                        WhatsAppService whatsAppService) {
+                        WhatsAppService whatsAppService,
+                        WebhookService webhookService) {
         this.repo               = repo;
         this.itemRepo           = itemRepo;
         this.comentarioRepo     = comentarioRepo;
@@ -71,6 +73,7 @@ public class TareaService {
         this.barrilRepo         = barrilRepo;
         this.notificacionService = notificacionService;
         this.whatsAppService     = whatsAppService;
+        this.webhookService      = webhookService;
     }
 
     @Transactional(readOnly = true)
@@ -120,6 +123,7 @@ public class TareaService {
             notificacionService.crearAlertaTareaAsignada(saved);
             whatsAppService.notificarTareaAsignada(TenantContext.getCurrentTenant(),
                     saved.getTitulo(), saved.getAsignadoA());
+            if (webhookService != null) webhookService.notificarTareaAsignada(TenantContext.getCurrentTenant(), saved);
         }
 
         return saved;
@@ -158,6 +162,7 @@ public class TareaService {
             notificacionService.crearAlertaTareaAsignada(saved);
             whatsAppService.notificarTareaAsignada(TenantContext.getCurrentTenant(),
                     saved.getTitulo(), nuevoAsignado);
+            if (webhookService != null) webhookService.notificarTareaAsignada(TenantContext.getCurrentTenant(), saved);
         }
 
         return saved;

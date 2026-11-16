@@ -60,6 +60,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **MercadoPago pagos** (opcional): `MP_ACCESS_TOKEN` — token de producción de MP. Sin definir, el checkout funciona en **modo mock** (pago siempre aprobado para testing). `app.mp.access-token=${MP_ACCESS_TOKEN:}`, `app.mp.success-url`, `app.mp.failure-url`, `app.mp.pending-url`. Ver sección MÓDULO PLANES Y PAGOS.
 - **Sentry — error tracking** (opcional): `SENTRY_DSN` (vacío → Sentry deshabilitado; en prod definir con el DSN del proyecto en sentry.io), `SENTRY_RELEASE` (def: `1.0.0` — pasar git SHA en CI para rastrear qué versión causó el error). Configurado en `SentryConfig.java` con dos beans: `EventProcessor` (agrega tag `tenant` desde `TenantContext` a cada evento) y `SentryUserProvider` (adjunta `username` del usuario autenticado vía `SecurityContextHolder`). `GlobalExceptionHandler` llama `Sentry.captureException(ex)` tanto en el handler de 500 (`Exception`) como en el de 400 (`RuntimeException`). `sentry.environment` es `dev` por defecto y `prod` en `application-prod.properties`.
 - **WhatsApp notificaciones** (opcional): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — credenciales de Twilio para enviar mensajes WhatsApp. Sin definir, `WhatsAppService` funciona en **modo mock** (mensajes solo logueados, no enviados). `TWILIO_WHATSAPP_FROM` (def: `whatsapp:+14155238886` — número sandbox de Twilio). Configurado en `app.twilio.account-sid/auth-token/whatsapp-from`. Ver sección MÓDULO WHATSAPP.
+- **Push Notifications — VAPID** (opcional): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` — par de claves EC VAPID para Web Push (prime256v1, base64url sin padding). `VAPID_SUBJECT` (def: `mailto:noreply@zymos.app`). Sin definir, `PushNotificationService` funciona en **modo mock** (push solo logueado, no enviado). Generar keys iniciales vía `GET /admin/push/generate-keys`. Configurado en `app.vapid.public-key/private-key/subject`. Ver sección MÓDULO PUSH NOTIFICATIONS.
 
 ---
 
@@ -237,6 +238,8 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 72. **`TipoCerveza` cross-tenant provisioning**: `TipoCervezaRepository.existsByNombreIgnoreCaseAndTenantId(nombre, tenantId)` usa `nativeQuery=true` para bypassear el filtro `@TenantId` de Hibernate durante el aprovisionamiento. `TenantProvisioningService` llama este método (no el JPQL `existsByNombreIgnoreCase`) para evitar falsos positivos cuando el `TenantContext` no está correctamente configurado durante la creación del tenant.
 
+73. **Webhook handlers — HTTP 500 en fallo de provisioning**: los endpoints `POST /webhook/mp` y `POST /webhook/stripe` **NUNCA deben retornar HTTP 200 cuando el provisioning falla**. Los gateways de pago (MercadoPago, Stripe) reintentan el webhook automáticamente ante cualquier respuesta 5xx — esto garantiza que ningún pago quede sin procesar silenciosamente. Patrón obligatorio: usar un check `Optional` explícito (NO `ifPresent()`) para capturar el valor de retorno de `provisionar()`: `Optional.ofNullable(...).ifPresent()` descarta el retorno. Si `provisionar()` retorna `"plan/fallo"` → `return ResponseEntity.status(500).build()`. Si ocurre una excepción en el `catch` → idem. HTTP 200 solo cuando el checkout quedó marcado como procesado. Este mismo principio aplica a cualquier otro webhook de pago que se agregue en el futuro. **`WebhookAdminController` — error paths**: tanto `guardar()` como `actualizar()` deben incluir `model.addAttribute("secretGenerado", WebhookService.generarSecret())` en el bloque `if (result.hasErrors())` — de lo contrario el campo `secret` aparece vacío en el re-render del formulario de error.
+
 51. **Notificaciones — filtrado por rol**: `NotificacionService` filtra las notificaciones según las authorities del usuario. `TIPO_AUTHORITY` (Map estático) define qué authority requiere cada `TipoNotificacion`: `BAJO_STOCK`/`VENCIMIENTO` → `MODULO_INVENTARIO_VER`, `MANTENIMIENTO` → `MODULO_EQUIPOS_VER`, `SISTEMA` → `MODULO_FACTURACION_VER`, `BPM_SALUD` → `MODULO_BPM_VER`, `LOTE_FASE_VENCIDA` → `MODULO_TRAZABILIDAD_VER`, `TAREA_ASIGNADA`/`TAREA_VENCIMIENTO` → `MODULO_TAREAS_VER`. Tipos sin entrada en el mapa (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) solo los ven ADMIN/SUPERADMIN. `tiposVisibles(Collection<String> authorities)` calcula la lista filtrada. Los métodos `listarRecientes`, `contarNoLeidas` y `listarTodas` reciben `Collection<String> authorities` como parámetro — obtenerlas en el controller con `auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet())`. **Al agregar un nuevo `TipoNotificacion`**: añadir entrada en `TIPO_AUTHORITY` si no es admin-only; si es admin-only, simplemente no agregar entrada. `TipoNotificacion.BPM_SALUD` se genera en `BpmService.guardarSintoma()` cuando `r.tieneSintomas()` es true, con deduplicación de 1 por día via `existeEnPeriodo()`. `TipoNotificacion.LOTE_FASE_VENCIDA` se genera en `AlertaScheduler` diariamente para lotes con inicio de fase anterior al `fechaIdeal` calculado.
 
 ---
@@ -251,7 +254,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - Bean Validation en DTOs + `@DateTimeFormat(iso=DATE)` en todos los campos `LocalDate`
 - **Visualización de cantidades en templates — regla obligatoria**: para valores `BigDecimal` con unidad (litros, °C, %, gramos, kg, etc.), usar siempre `valor.stripTrailingZeros().toPlainString()` en lugar de `#numbers.formatDecimal`. Esto elimina ceros decimales superfluos: `5.000` → `5`, `2.500` → `2.5`, `2.501` → `2.501`. Para valores nullable: `${valor != null ? valor.stripTrailingZeros().toPlainString() + ' L' : '—'}`. Para expresiones aritméticas Java (Integer − Integer) * double que producen `Double` en SpEL y no soportan `stripTrailingZeros()` directamente, envolver con `T(java.math.BigDecimal).valueOf(expr).stripTrailingZeros().toPlainString()`. En JavaScript inline (cálculos en tiempo real), usar el helper `fmtNum`: `function fmtNum(n, maxDec) { return parseFloat((+n).toFixed(maxDec)).toString(); }` — reemplaza `.toFixed()` en displays de usuario. **No aplicar** a: valores de `<input th:value>` (binding de formulario), arrays de datos para Chart.js, valores monetarios con formato fijo `#numbers.formatDecimal(v,1,'COMMA',2,'POINT')`.
 - Dark mode: toggle luna/sol en navbar, clase `html.dark-mode` en `<html>`, persiste en `localStorage`. Variables centralizadas `--dm-*` en `style.css` (usarlas siempre en reglas `html.dark-mode`, no hardcodear hex oscuros). Los `<style>` inline de templates con dark mode propio incluyen el bloque `html.dark-mode {...}` al final del mismo `<style>`. `!important` requerido para sobreescribir inline styles de elementos (ej: `kanban-dias`, `.subtipo-placeholder`). **CRÍTICO — cascada CSS `!important`**: `style="background:#X !important"` en un elemento NO puede sobreescribirse desde ninguna regla stylesheet (ni siquiera con `!important` autor). La única solución es eliminar el `style` inline y mover el valor a una clase CSS con su override `html.dark-mode`. **Bootstrap Toast**: `.toast-body` usa `--bs-body-bg` (blanco) por defecto — override en `navbar.html`: `html.dark-mode .toast { background: var(--dm-card); border-color: var(--dm-border-light) !important; }` y `html.dark-mode .toast-body { color: var(--dm-text); }`. **Auditoría dark mode completada 2026-07-06** — todos los templates cubiertos.
-- Dashboard personalizable (todo localStorage, sin backend): visibilidad (`zymos-dashboard-secciones`) y orden drag & drop (`zymos-dashboard-orden`) via SortableJS 1.15.2 (`handle:'.dash-handle'`, `ghostClass:'dash-ghost'`, `dragClass:'dash-drag'`). Secciones (`id="dash-{nombre}"`, clase `dash-section`): `stats-lotes`, `stats-inventario`, `alertas`, `elaboraciones`, `charts`, `finanzas`. `restaurarOrden()` antes de `restaurarVisibilidad()`. `alertas` usa `th:if` → puede no existir en DOM; null-check en `restaurarOrden()`. Stat-cards en `<a class="stat-card-link">` con `translateY(-2px)` en hover. Links: totalLotes→`/`, enProceso→`/kanban`, completados→`/?fase=completados`, estilosDistintos→`/reportes/produccion`, totalInsumos→`/inventario`, bajoStock→`/inventario?filtroBajoStock=true`, proximosAVencer→`/inventario?filtroPorVencer=true`, mantenimientoPendiente→`/equipos?estado=MANTENIMIENTO`. Stats Lotes: 4 cards (`totalLotes`, `enProceso`, `completados`, `estilosDistintos`). Chart.js colors via `getComputedStyle(…).getPropertyValue('--verde-alera'/'--dorado')` en `DOMContentLoaded`, fallback hex. Próximas Elaboraciones (`dash-elaboraciones`): hasta 5 futuras, PLANIFICADA→`/nuevo?planId={id}`, otros→`/planificacion`. "Restablecer" borra ambas claves localStorage.
+- Dashboard empresarial (`dashboard.html`) — personalizable, sin backend para personalización (todo localStorage): visibilidad (`zymos-dashboard-secciones`) y orden drag & drop (`zymos-dashboard-orden`) via SortableJS 1.15.2 (`handle:'.dash-handle'`, `ghostClass:'dash-ghost'`, `dragClass:'dash-drag'`). Secciones (`id="dash-{nombre}"`, clase `dash-section`): `stats-lotes`, `stats-inventario`, `alertas`, `elaboraciones`, `charts`, `ventas`, `finanzas`. `restaurarOrden()` antes de `restaurarVisibilidad()`. `alertas` usa `th:if` → puede no existir en DOM; null-check en `restaurarOrden()`. **Page header**: saludo dinámico (`#{dashboard.saludo.manana/tarde/noche}` según hora) + `${#authentication.name}` + fecha (`|EEEE d de MMMM|` con template literal en Thymeleaf — NO escapar `'` dentro de SpEL). **Stats Lotes** (6 cards, `col-md-2`): `totalLotes`, `enProceso`, `completados`, `estilosDistintos`, `litrosActivos` (`loteRepo.sumLitrosActivos()` — lotes con fermFechaInicial ≠ NULL y carbFechaFinal NULL), `fasesVencidas` (`loteRepo.countFasesVencidas(hoy)` — lotes con alguna fase activa pasada su fecha ideal). **Alertas**: muestra `.alertas-ok` ("Todo en orden ✓") cuando ambas listas `bajoStock` y `proximosAVencer` están vacías. **Charts** (gráficas): cada canvas tiene un div gemelo `#chartXEmpty` para estado vacío; JS lo alterna según `litrosSum > 0` / `estilosSum > 0`; `DashboardService.getLitrosPorMes(Locale locale)` recibe locale (clave de cache incluye `locale.language`). Paleta donut extendida a 12 colores. **Finanzas**: `gastoMes` = `facturaRepo.sumTotalFiltered(null, inicioMes, hoy)` (facturas del mes), `totalGastado` histórico separado. **Sección Ventas** (new): `ventasDespachadasMes`, `ingresosesMes`, `clientesMes` — todos calculados desde `inicioMes = LocalDate.now().withDayOfMonth(1)`. Stat-cards usan `.stat-card-simple` + `.stat-period` ("este mes") como sub-label. Links: totalLotes→`/`, enProceso→`/kanban`, completados→`/?fase=completados`, estilosDistintos→`/reportes/produccion`, totalInsumos→`/inventario`, bajoStock→`/inventario?filtroBajoStock=true`, proximosAVencer→`/inventario?filtroPorVencer=true`, mantenimientoPendiente→`/equipos?estado=MANTENIMIENTO`. Próximas Elaboraciones (`dash-elaboraciones`): hasta 5 futuras, PLANIFICADA→`/nuevo?planId={id}`, otros→`/planificacion`. "Restablecer" borra ambas claves localStorage. **Script único**: un solo `<script th:inline="javascript" th:attr="nonce=${cspNonce}">` — las variables Thymeleaf `/*[[...]]*/` están al inicio del bloque; SortableJS y Chart.js comparten el mismo `DOMContentLoaded`.
 - Búsqueda global: `GET /buscar?q=` (página completa) + `GET /buscar/suggest?q=` (JSON para typeahead del navbar)
 - **Patrón typeahead/suggest**: cada módulo con lista expone `GET /{modulo}/suggest?q=` (`@ResponseBody`, `produces=JSON`). El servicio filtra en memoria (listas pequeñas) o via query DB con LIKE (facturas). El JS del template usa debounce 260ms, flechas ↑↓ para navegar, Escape para cerrar. CSS del dropdown definido en `navbar.html` (clases `.search-suggest`, `.ss-item`, `.ss-title`, `.ss-sub`, `.ss-section`, `.ss-footer`, `.ss-empty`) — disponibles globalmente por ser parte del fragment. El `data-*` attribute en el input inyecta filtros activos (tipo, estado, activa) sin inline JS. Usuarios: sin página de detalle — el click usa `href="#usuario-{id}"` + CSS `tr:target { animation: rowFlash }` para scroll+flash sin navegación.
 - Mapeos entidad→DTO: usar `LoteMapper` en `com.alera.mapper` (MapStruct). No escribir asignaciones manuales campo a campo en servicios.
@@ -338,11 +341,12 @@ El CSP enforced (activo desde 2026-07-03, Fase D) bloquea **todos** los event ha
 
 ## INTERNACIONALIZACIÓN (i18n)
 
-**Estado (2026-07-07): cobertura completa** — todos los templates, servicios PDF y controllers están internacionalizados.
+**Estado (2026-11-15): 3 idiomas — ES, EN, PT-BR.** Todos los templates, servicios PDF y controllers están internacionalizados. El sistema soporta español (default), inglés y portugués de Brasil.
 
 ### Archivos de mensajes
 - `src/main/resources/messages.properties` — idioma por defecto (español)
 - `src/main/resources/messages_en.properties` — inglés
+- `src/main/resources/messages_pt.properties` — Português do Brasil (agregado 2026-11-15, ~600+ keys)
 
 ### Convención de keys
 | Módulo | Prefijo |
@@ -419,9 +423,49 @@ Spring MVC inyecta `Locale locale` automáticamente como parámetro de método �
 
 El selector en `navbar.html` usa `th:href="${currentUri + '?lang=es'}"` — `currentUri` es un `@ModelAttribute` de `GlobalControllerAdvice` que expone `request.getRequestURI()`. El navegador navega via GET normal, `LocaleChangeInterceptor` procesa el param `lang`, guarda la cookie y la página se recarga en el nuevo idioma de forma inmediata. No requiere JS.
 
+El selector de la navbar muestra **ES · EN · PT** (sección `.rd-lang` con clase `lang-active` en el idioma activo).
+
 **CRÍTICO — Thymeleaf 3.1**: `#request` ya NO está disponible en expresiones `${}` (`IllegalArgumentException: The 'request'... expression utility objects are no longer available by default`). Para acceder a datos del request en templates, siempre exponer via `@ModelAttribute` en `GlobalControllerAdvice`.
 
 **NO usar** `th:href="@{''(lang='es')}"`: genera solo `?lang=es` sin ruta (puede no recargar). **NO usar** `href="#" + listener JS delegado en document`: Bootstrap puede interceptar el click dentro del dropdown antes de que el evento burbujee al listener.
+
+### Manuales de usuario — docs estáticos con `_en.html`
+
+Los archivos en `src/main/resources/static/docs/` son HTML estático (no Thymeleaf) — no pueden usar `#{}`. Solución: archivos `_en.html` y `_pt.html` separados. El selector de idioma en `navbar.html` apunta al archivo correcto según `${#locale.language}`:
+```html
+th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : (${#locale.language == 'pt'} ? '/docs/index_pt.html' : '/docs/index.html')"
+```
+**Existen versiones `_pt.html`** para todos los módulos (2026-11-16): `index_pt.html`, `manual_trazabilidad_pt.html`, `manual_inventario_pt.html`, `manual_recetas_pt.html`, `manual_bpm_pt.html`, `manual_comercial_pt.html`, `manual_reportes_pt.html`, `manual_tareas_pt.html`, `manual_admin_pt.html`. El navbar ya enruta PT a la versión `_pt.html` correspondiente.
+
+### Landing page y páginas públicas — toggle ES/EN/PT inline
+
+`landing.html` y `plan/planes.html` son páginas standalone (sin fragment navbar de la app). Incluyen su propio toggle ES/EN/PT usando el mismo patrón `${currentUri + '?lang=XX'}`. CSS class `.lp-lang-active` para el idioma activo, `.lp-lang-btn` para el estilo. Patrón:
+```html
+<a th:href="${currentUri + '?lang=es'}" th:classappend="${#locale.language == 'es'} ? ' lp-lang-active' : ''" class="lp-lang-btn">ES</a>
+<a th:href="${currentUri + '?lang=en'}" th:classappend="${#locale.language == 'en'} ? ' lp-lang-active' : ''" class="lp-lang-btn">EN</a>
+<span style="color:rgba(255,255,255,.2);font-size:.7rem">|</span>
+<a th:href="${currentUri + '?lang=pt'}" th:classappend="${#locale.language == 'pt'} ? ' lp-lang-active' : ''" class="lp-lang-btn">PT</a>
+```
+(`planes.html` usa `.pl-lang-btn` / `.pl-lang-active` en lugar de `.lp-*`)
+
+### Agregar un nuevo idioma — checklist
+
+Al agregar un cuarto idioma (ej: FR):
+1. Crear `messages_fr.properties` con todas las keys — verificar que coincidan con el template usando `Select-String -Pattern '#\{([^}]+)\}'` antes de commitear.
+2. `messages.properties`: agregar `lang.fr=Francés` + `admin.tform.idioma.fr=🇫🇷 Français`.
+3. `messages_en.properties`: agregar `lang.fr=French` + `admin.tform.idioma.fr=🇫🇷 Français`.
+4. `messages_pt.properties`: agregar `lang.fr=Francês` + `admin.tform.idioma.fr=🇫🇷 Français`.
+5. `navbar.html` `.rd-lang`: agregar botón FR.
+6. `landing.html` y `plan/planes.html`: agregar botón FR en toggles inline.
+7. `admin/tenant-formulario.html`: el `<select th:field="*{idioma}">` se puebla desde keys `admin.tform.idioma.*` — disponible automáticamente.
+
+### Cobertura i18n — 100% (2026-11-16)
+
+3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN+PT), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys (3441 cada uno). Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados EN eliminados. PT-BR completado en 2026-11-15 (591 keys faltantes + limpieza de 3140 keys huérfanas con nombres incorrectos).
+
+**Manuales de usuario:** ES + EN + PT-BR (`static/docs/*_en.html` + `*_pt.html`). Los 9 módulos tienen versión real en los 3 idiomas. El navbar enruta automáticamente al archivo correcto según el idioma activo.
+
+**Resúmenes ejecutivos:** `docs/resumen-ejecutivo.html` (ES) + `resumen-ejecutivo_en.html` (EN) + `resumen-ejecutivo_pt.html` (PT-BR) — 10 páginas c/u con traducción completa del cuerpo (no solo títulos). Accesibles desde `/docs/resumen-ejecutivo.html` directamente (HTML estático con botón "Exportar PDF" vía `window.print()`).
 
 ---
 
@@ -803,7 +847,8 @@ Permite a nuevos clientes auto-provisionarse pagando desde la web, sin intervenc
   - `GET /planes` — página de selección de plan con 3 cards
   - `POST /checkout/iniciar` — crea `CheckoutPendiente` + preferencia MP → redirect a URL de MP
   - `GET /checkout/exito|fallo|pendiente` — páginas de resultado
-  - `POST /webhook/mp` — recibe notificación MP, verifica pago, llama `TenantProvisioningService`. CSRF ignorado para `/webhook/**`.
+  - `POST /webhook/mp` — recibe notificación MP, verifica pago, llama `TenantProvisioningService`. CSRF ignorado para `/webhook/**`. Retorna HTTP 500 cuando `provisionar()` falla (retorna `"plan/fallo"`) o cuando ocurre una excepción — los gateways de pago reintentan ante cualquier 5xx. **NUNCA** retornar 200 si el provisioning falló.
+  - `POST /webhook/stripe` — recibe notificación Stripe, verifica firma via `stripe.webhooks.constructEvent()`. Mismo comportamiento: HTTP 500 en error de provisioning o firma inválida. HTTP 200 solo si el checkout quedó procesado exitosamente.
 - **Templates**: `plan/planes.html`, `plan/exito.html`, `plan/fallo.html`, `plan/pendiente.html`.
 - **CSP en páginas públicas**: igual que el resto — NUNCA `onclick=` / `oninput=` inline. Usar event delegation con `document.addEventListener` en `<script th:attr="nonce=${cspNonce}">`.
 - **Subdominio**: solo letras y números (`^[a-z0-9]{3,30}$`). JS `limpiarSubdominio()` normaliza acentos con `normalize('NFD')`. Auto-sugerencia desde nombre de cervecería; para cuando el usuario edita manualmente (`dataset.editadoManual`).
@@ -917,6 +962,93 @@ WHERE cwa.tenant_id = :tenantId AND cwas.tipo = :tipo AND cwa.activo = TRUE
 ### Tests
 
 `WhatsAppAdminControllerTest` — 7 tests `@WebMvcTest`: 401 sin auth, 200 con ADMIN, 200 formulario nuevo, redirect en guardar válido, re-render en teléfono inválido, redirect en eliminar, redirect en toggle. **CLAUDE.md regla #38 aplica**: el test `403 sin ADMIN` fue eliminado por el comportamiento del `ZymosAccessDeniedHandler` mock. `@MockBean WhatsAppService whatsAppService` requerido además de `@MockBean ContactoWhatsAppService`. Los tests de `AlertaScheduler`, `TrazabilidadService`, `BpmService` y `TareaService` requieren `@Mock WhatsAppService whatsAppService`.
+
+---
+
+## MÓDULO PUSH NOTIFICATIONS
+
+Notificaciones push en el navegador vía Web Push API (RFC 8030) + VAPID (RFC 8292). Implementado en V95.
+
+### Dependencias
+
+- `nl.martijndwars:web-push:5.1.1` — envío VAPID/Web Push HTTP.
+- `org.bouncycastle:bcprov-jdk15on:1.70` — cripto EC (web-push lo declara `provided`, se agrega explícitamente en pom.xml).
+
+### Entidad
+
+- **`PushSubscription`** (tabla `push_subscriptions`): `tenantId` (VARCHAR 100), `username` (VARCHAR 100), `endpoint` (TEXT), `p256dh` (TEXT), `auth_key` (TEXT), `createdAt` (`@CreatedDate`). **Sin `@TenantId`** — queries usan `tenantId` explícito para evitar conflictos con el filtro Hibernate en schedulers y jobs. Constraint `UNIQUE(endpoint)` — una suscripción por dispositivo/navegador.
+
+### `PushNotificationService`
+
+- **Mock mode** cuando `app.vapid.public-key` o `app.vapid.private-key` están en blanco → `log.info("[Push MOCK]")`.
+- **`init()` `@PostConstruct`**: registra BouncyCastleProvider si aún no está, crea `PushService` con las tres propiedades VAPID.
+- **`generateVapidKeys()`**: genera par EC prime256v1 con `KeyPairGenerator.getInstance("EC","BC")`. Public key: `BCECPublicKey.getQ().getEncoded(false)` (punto no comprimido, 65 bytes) → Base64URL sin padding. Private key: `BCECPrivateKey.getD().toByteArray()` → strip del byte 0x00 líder si length==33 → Base64URL sin padding. **NUNCA** usar `Utils.generateVAPIDKeyPair()` / `Utils.savePublicKey()` / `Utils.savePrivateKey()` — esos métodos no existen en web-push 5.1.1.
+- **`enviarAUsuario(username, tenantId, title, body, url)`** — push al usuario específico (usado por `NotificacionService.crearAlertaTareaAsignada`). Asíncrono via `CompletableFuture.runAsync()`.
+- **`enviarATenant(tenantId, title, body, url)`** — push a todos los suscriptores del tenant.
+- **`enviarRaw(sub, title, body, url)`** — construye `Subscription(endpoint, Keys(p256dh, auth))`, serializa payload JSON `{title, body, icon, badge, url}`, llama `pushService.send(Notification)`. Si respuesta HTTP 410/404 → elimina la suscripción (expirada/inválida).
+
+### `PushSubscriptionController`
+
+Rutas REST bajo `/push/`:
+
+| Endpoint | Descripción |
+|---|---|
+| `GET /push/vapid-public-key` | Devuelve `{publicKey, isConfigured}` — `permitAll()` para que el JS del navbar pueda leerlo sin auth |
+| `POST /push/subscribe` | Body: `{endpoint, p256dh, auth}` — llama `upsertSubscription` |
+| `POST /push/unsubscribe` | Body: `{endpoint}` — llama `removeSubscription` |
+| `GET /push/status` | Devuelve `{subscribed: bool}` para el usuario autenticado |
+
+### Service Worker (`sw.js`)
+
+Handlers agregados al service worker existente (antes de `networkFirstWithOffline`):
+
+- **`push`** — `event.data.json()`, llama `self.registration.showNotification(title, options)`.
+- **`notificationclick`** — cierra la notificación, foca una ventana existente o abre `data.url` con `clients.openWindow()`.
+
+### Navbar — botón toggle
+
+Botón `#pushToggleBtn` en el icon rail (posición: entre campana de notificaciones y dark-mode toggle):
+- Se muestra solo si `'serviceWorker' in navigator && 'PushManager' in window`.
+- **Íconos — CRÍTICO**: Bootstrap Icons 1.11.3 NO tiene `bi-bell-plus`, `bi-bell-check`, ni `bi-bell-check-fill`. Usar `bi-bell` (gris, no suscrito) → `bi-bell-fill` (dorado, suscrito). Usar cualquiera de los inexistentes produce un cuadro en blanco.
+- Badge estático `"PC"` en esquina inferior del botón (oculto en estado suscrito) para distinguirlo visualmente de la campana de notificaciones in-app que ya usa `bi-bell-fill`.
+- **`showPushToast(msg, type)`**: crea y muestra un Bootstrap toast dinámico (bottom-right, 5s) desde JS. Usado para feedback de cada acción: sin VAPID configurado, activado, desactivado, permiso denegado. 4 keys i18n: `nav.push.activado`, `nav.push.desactivado`, `nav.push.sin.vapid`, `nav.push.permiso.denegado`.
+- En subscribe: si `!data.publicKey` → `showPushToast(#{nav.push.sin.vapid}, 'warning')` y return. Si el usuario deniega el permiso (`NotAllowedError`) → toast danger.
+- `urlBase64ToUint8Array(b64)`: añade padding, decodifica base64, retorna `Uint8Array`.
+
+### `AdminController` — generador de keys
+
+`GET /admin/push/generate-keys` → `@ResponseBody Map<String,String>` con `publicKey`, `privateKey`, `instrucciones`. Protegido por `adminOnly()` (ya cubre `/admin/**`). Requiere `@MockBean PushNotificationService` en `AdminControllerTest`.
+
+### Integración con `NotificacionService`
+
+Constructor recibe `PushNotificationService pushService`. En `crearAlertaTareaAsignada(tarea)`: si `pushService != null && tarea.getAsignadoA() != null` → `pushService.enviarAUsuario(asignadoA, tenantId, titulo, mensaje, url)`. El null-check es necesario porque `@InjectMocks` en `NotificacionServiceTest` puede pasar `null` para parámetros no mocked.
+
+### Seguridad
+
+- `SecurityConfig`: `GET /push/vapid-public-key` → `permitAll()`; resto `/push/**` → `authenticated()`.
+- `BpmSaludFilter.shouldSkip()`: agrega `path.startsWith("/push/")`.
+- CSRF: endpoints POST usan el token estándar del meta tag `_csrf` del HTML (mismo patrón AJAX del proyecto).
+
+### Variables de entorno y defaults de desarrollo
+
+`application.properties` incluye claves VAPID de desarrollo como defaults (sobrescribibles con env vars en producción):
+```properties
+app.vapid.public-key=${VAPID_PUBLIC_KEY:BGvAWhet5cOdqnJGbqLbN6tSMybjtY-rc0kNj9k8lfLAUxUel6sI5kr8DQoVGEWeXBv1U6e5F_ThNxfvLDSfKRc}
+app.vapid.private-key=${VAPID_PRIVATE_KEY:vb8OH-Z9Aut4Vg_jFWcW9RGvxrjN0VnMh1ZT0NSxEhE}
+app.vapid.subject=${VAPID_SUBJECT:mailto:noreply@zymos.app}
+```
+En desarrollo local no se requiere configurar nada — la app arranca con VAPID activo. El log confirma: `[Push] Notificaciones push habilitadas (VAPID configurado)`.
+
+### Tests
+
+`PushSubscriptionControllerTest` — 5 tests `@WebMvcTest`: GET vapid-public-key → 200, POST subscribe → 200, POST unsubscribe → 200, GET status → 200, POST sin auth → 401. **1011 tests totales**.
+
+### Activar en producción
+
+1. `GET /admin/push/generate-keys` (autenticado como ADMIN) → copiar `publicKey` y `privateKey` **nuevos** (no usar los defaults de dev)
+2. Agregar `VAPID_PUBLIC_KEY=<valor>` y `VAPID_PRIVATE_KEY=<valor>` a variables de entorno del servidor
+3. Reiniciar la app — el service worker existente ya tiene los handlers listos
+4. Las claves VAPID deben mantenerse estables — cambiarlas invalida todas las suscripciones existentes
 
 ---
 

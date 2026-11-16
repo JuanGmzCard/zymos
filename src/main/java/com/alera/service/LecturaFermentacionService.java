@@ -1,5 +1,6 @@
 package com.alera.service;
 
+import com.alera.config.TenantContext;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
 import com.alera.repository.LecturaFermentacionRepository;
@@ -17,11 +18,14 @@ public class LecturaFermentacionService {
 
     private final LecturaFermentacionRepository repo;
     private final LoteCervezaRepository loteRepo;
+    private final WebhookService webhookService;
 
     public LecturaFermentacionService(LecturaFermentacionRepository repo,
-                                       LoteCervezaRepository loteRepo) {
+                                       LoteCervezaRepository loteRepo,
+                                       WebhookService webhookService) {
         this.repo = repo;
         this.loteRepo = loteRepo;
+        this.webhookService = webhookService;
     }
 
     @Transactional(readOnly = true)
@@ -44,6 +48,9 @@ public class LecturaFermentacionService {
         lectura.setTemperatura(temperatura);
         lectura.setNotas(notas != null && !notas.isBlank() ? notas.trim() : null);
         repo.save(lectura);
+
+        webhookService.notificarLecturaAgregada(TenantContext.getCurrentTenant(),
+                loteId, lote.getCodigoLote(), densidad, temperatura);
 
         if (temperatura != null && lote.getFermTemperatura() != null) {
             BigDecimal diff = temperatura.subtract(lote.getFermTemperatura()).abs();

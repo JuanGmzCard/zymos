@@ -27,6 +27,9 @@ jobs:
 
       - name: Run tests
         run: mvn test --batch-mode
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
+          DOCKER_HOST: "unix:///var/run/docker.sock"
 
   spotbugs:
     name: SpotBugs
