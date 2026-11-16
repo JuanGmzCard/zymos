@@ -554,9 +554,12 @@
         </div>
 
         <!-- Push notifications toggle — oculto hasta que el browser confirme soporte -->
-        <button class="zymos-rail-item" id="pushToggleBtn" style="display:none;color:#64748b;"
+        <button class="zymos-rail-item position-relative" id="pushToggleBtn" style="display:none;color:#64748b;"
                 data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.push.toggle}">
-            <i class="bi bi-bell-plus" id="pushToggleIcon"></i>
+            <i class="bi bi-bell" id="pushToggleIcon"></i>
+            <span style="position:absolute;bottom:4px;right:6px;font-size:0.45rem;font-weight:700;
+                         letter-spacing:0;line-height:1;color:#64748b;opacity:.8"
+                  id="pushBadgeLabel">PC</span>
         </button>
 
         <!-- Dark mode toggle -->
@@ -1237,9 +1240,11 @@
 
             function setSubscribedState(subscribed) {
                 if (!icon) return;
-                icon.className = subscribed ? 'bi bi-bell-check-fill' : 'bi bi-bell-plus';
+                icon.className = subscribed ? 'bi bi-bell-fill' : 'bi bi-bell';
                 btn.style.color = subscribed ? 'var(--dorado)' : '#64748b';
                 btn.setAttribute('title', subscribed ? '[[#{nav.push.desactivar}]]' : '[[#{nav.push.activar}]]');
+                var lbl = document.getElementById('pushBadgeLabel');
+                if (lbl) lbl.style.display = subscribed ? 'none' : '';
             }
 
             function showPushToast(msg, type) {
