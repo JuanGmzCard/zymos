@@ -1004,8 +1004,10 @@ Handlers agregados al service worker existente (antes de `networkFirstWithOfflin
 
 Botón `#pushToggleBtn` en el icon rail (posición: entre campana de notificaciones y dark-mode toggle):
 - Se muestra solo si `'serviceWorker' in navigator && 'PushManager' in window`.
-- Ícono: `bi-bell-plus` gris (no suscrito) → `bi-bell-check-fill` dorado (suscrito).
-- En subscribe: fetch `/push/vapid-public-key`, `urlBase64ToUint8Array(publicKey)` para convertir la clave VAPID a `Uint8Array`, `pushManager.subscribe({userVisibleOnly:true, applicationServerKey})`, POST a `/push/subscribe` con el objeto serializado.
+- **Íconos — CRÍTICO**: Bootstrap Icons 1.11.3 NO tiene `bi-bell-plus`, `bi-bell-check`, ni `bi-bell-check-fill`. Usar `bi-bell` (gris, no suscrito) → `bi-bell-fill` (dorado, suscrito). Usar cualquiera de los inexistentes produce un cuadro en blanco.
+- Badge estático `"PC"` en esquina inferior del botón (oculto en estado suscrito) para distinguirlo visualmente de la campana de notificaciones in-app que ya usa `bi-bell-fill`.
+- **`showPushToast(msg, type)`**: crea y muestra un Bootstrap toast dinámico (bottom-right, 5s) desde JS. Usado para feedback de cada acción: sin VAPID configurado, activado, desactivado, permiso denegado. 4 keys i18n: `nav.push.activado`, `nav.push.desactivado`, `nav.push.sin.vapid`, `nav.push.permiso.denegado`.
+- En subscribe: si `!data.publicKey` → `showPushToast(#{nav.push.sin.vapid}, 'warning')` y return. Si el usuario deniega el permiso (`NotAllowedError`) → toast danger.
 - `urlBase64ToUint8Array(b64)`: añade padding, decodifica base64, retorna `Uint8Array`.
 
 ### `AdminController` — generador de keys
@@ -1022,13 +1024,15 @@ Constructor recibe `PushNotificationService pushService`. En `crearAlertaTareaAs
 - `BpmSaludFilter.shouldSkip()`: agrega `path.startsWith("/push/")`.
 - CSRF: endpoints POST usan el token estándar del meta tag `_csrf` del HTML (mismo patrón AJAX del proyecto).
 
-### Variables de entorno
+### Variables de entorno y defaults de desarrollo
 
+`application.properties` incluye claves VAPID de desarrollo como defaults (sobrescribibles con env vars en producción):
 ```properties
-app.vapid.public-key=${VAPID_PUBLIC_KEY:}
-app.vapid.private-key=${VAPID_PRIVATE_KEY:}
+app.vapid.public-key=${VAPID_PUBLIC_KEY:BGvAWhet5cOdqnJGbqLbN6tSMybjtY-rc0kNj9k8lfLAUxUel6sI5kr8DQoVGEWeXBv1U6e5F_ThNxfvLDSfKRc}
+app.vapid.private-key=${VAPID_PRIVATE_KEY:vb8OH-Z9Aut4Vg_jFWcW9RGvxrjN0VnMh1ZT0NSxEhE}
 app.vapid.subject=${VAPID_SUBJECT:mailto:noreply@zymos.app}
 ```
+En desarrollo local no se requiere configurar nada — la app arranca con VAPID activo. El log confirma: `[Push] Notificaciones push habilitadas (VAPID configurado)`.
 
 ### Tests
 
@@ -1036,9 +1040,10 @@ app.vapid.subject=${VAPID_SUBJECT:mailto:noreply@zymos.app}
 
 ### Activar en producción
 
-1. `GET /admin/push/generate-keys` (autenticado como ADMIN) → copiar `publicKey` y `privateKey`
-2. Agregar `VAPID_PUBLIC_KEY=<valor>` y `VAPID_PRIVATE_KEY=<valor>` a variables de entorno
+1. `GET /admin/push/generate-keys` (autenticado como ADMIN) → copiar `publicKey` y `privateKey` **nuevos** (no usar los defaults de dev)
+2. Agregar `VAPID_PUBLIC_KEY=<valor>` y `VAPID_PRIVATE_KEY=<valor>` a variables de entorno del servidor
 3. Reiniciar la app — el service worker existente ya tiene los handlers listos
+4. Las claves VAPID deben mantenerse estables — cambiarlas invalida todas las suscripciones existentes
 
 ---
 
