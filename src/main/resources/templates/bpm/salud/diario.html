@@ -8,14 +8,14 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{/css/style.css}">
     <style>
-        body { background: #f1f5f9; }
+        body { background: var(--fondo); }
         .salud-wrap { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem 3rem; }
         .salud-card { width: 100%; max-width: 580px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem 2rem 1.75rem; box-shadow: 0 4px 24px rgba(0,0,0,.07); }
         .salud-header { text-align: center; margin-bottom: 1.75rem; }
-        .salud-icon { font-size: 2.75rem; color: #0ea5e9; line-height: 1; }
+        .salud-icon { font-size: 2.75rem; color: var(--dorado); line-height: 1; }
         .salud-title { font-size: 1.35rem; font-weight: 700; color: #1e293b; margin: .6rem 0 .2rem; }
         .salud-sub { font-size: .85rem; color: #94a3b8; margin: 0; }
-        .user-badge { display: inline-flex; align-items: center; gap: .5rem; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: .5rem 1.1rem; font-size: .9rem; color: #0369a1; font-weight: 600; }
+        .user-badge { display: inline-flex; align-items: center; gap: .5rem; background: color-mix(in srgb, var(--dorado) 12%, transparent); border: 1px solid color-mix(in srgb, var(--dorado) 35%, transparent); border-radius: 8px; padding: .5rem 1.1rem; font-size: .9rem; color: var(--verde-alera); font-weight: 600; }
         .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: .6rem; }
         .check-item { background: #fafafa; border: 1px solid #e2e8f0; border-radius: 8px; padding: .7rem .9rem; display: flex; align-items: center; gap: .5rem; cursor: pointer; transition: background .15s; user-select: none; }
         .check-item:hover { background: #f1f5f9; }
@@ -25,7 +25,7 @@
         html.dark-mode .salud-card { background: var(--dm-card); border-color: var(--dm-border-light); }
         html.dark-mode .salud-title { color: var(--dm-text); }
         html.dark-mode .salud-sub { color: var(--dm-text-muted); }
-        html.dark-mode .user-badge { background: var(--dm-verde-bg); border-color: var(--dm-verde-border); color: var(--dm-text); }
+        html.dark-mode .user-badge { background: var(--dm-verde-bg); border-color: var(--dm-verde-border); color: var(--dm-text-strong); }
         html.dark-mode .check-item { background: var(--dm-input); border-color: var(--dm-border-light); color: var(--dm-text); }
         html.dark-mode .check-item:hover { background: var(--dm-hover); }
         .firma-canvas-wrap { border:1px solid #dee2e6; border-radius:6px; background:#fff; position:relative; height:120px; }
