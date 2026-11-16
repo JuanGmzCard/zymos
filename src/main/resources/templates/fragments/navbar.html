@@ -48,12 +48,16 @@
         document.head.appendChild(tm);
 
         var ai = document.createElement('link');
-        ai.rel = 'apple-touch-icon'; ai.href = '/img/icon.svg';
+        ai.rel = 'apple-touch-icon'; ai.href = '/img/icon-192.png';
         document.head.appendChild(ai);
 
         var am = document.createElement('meta');
         am.name = 'apple-mobile-web-app-capable'; am.content = 'yes';
         document.head.appendChild(am);
+
+        var as_ = document.createElement('meta');
+        as_.name = 'apple-mobile-web-app-status-bar-style'; as_.content = 'black-translucent';
+        document.head.appendChild(as_);
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js', { scope: '/' })
