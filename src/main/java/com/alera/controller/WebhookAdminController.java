@@ -87,6 +87,7 @@ public class WebhookAdminController {
         }
         if (result.hasErrors()) {
             model.addAttribute("eventosDisponibles", WebhookService.EVENTOS_DISPONIBLES);
+            model.addAttribute("secretGenerado",     WebhookService.generarSecret());
             return "admin/webhooks/formulario";
         }
         webhookService.actualizar(id, formDto);

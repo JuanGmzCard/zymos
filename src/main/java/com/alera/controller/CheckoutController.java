@@ -286,13 +286,20 @@ public class CheckoutController {
                                                            : pasarela.obtenerExternalReference(paymentId);
             if (extRef == null) return ResponseEntity.ok().build();
 
-            checkoutRepo.findById(extRef).ifPresent(checkout -> {
+            Optional<CheckoutPendiente> checkoutOpt = checkoutRepo.findById(extRef);
+            if (checkoutOpt.isPresent()) {
+                CheckoutPendiente checkout = checkoutOpt.get();
                 if (!"PROCESADO".equals(checkout.getEstado())) {
-                    provisionar(checkout, paymentId, appBaseUrl, null);
+                    String vista = provisionar(checkout, paymentId, appBaseUrl, null);
+                    if ("plan/fallo".equals(vista)) {
+                        log.error("Webhook MP: provisioning fallido para checkout={} payment={}", checkout.getId(), paymentId);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
                 }
-            });
+            }
         } catch (Exception e) {
             log.error("Error procesando webhook MP: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.ok().build();
     }
@@ -335,13 +342,20 @@ public class CheckoutController {
                 return ResponseEntity.ok().build();
             }
 
-            checkoutRepo.findById(checkoutId).ifPresent(checkout -> {
+            Optional<CheckoutPendiente> checkoutOpt = checkoutRepo.findById(checkoutId);
+            if (checkoutOpt.isPresent()) {
+                CheckoutPendiente checkout = checkoutOpt.get();
                 if (!"PROCESADO".equals(checkout.getEstado())) {
-                    provisionar(checkout, sessionId, appBaseUrl, null);
+                    String vista = provisionar(checkout, sessionId, appBaseUrl, null);
+                    if ("plan/fallo".equals(vista)) {
+                        log.error("Webhook Stripe: provisioning fallido para checkout={} session={}", checkout.getId(), sessionId);
+                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+                    }
                 }
-            });
+            }
         } catch (Exception e) {
             log.error("Error procesando webhook Stripe: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
         return ResponseEntity.ok().build();
     }
