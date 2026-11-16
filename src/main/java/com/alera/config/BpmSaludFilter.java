@@ -91,6 +91,7 @@ public class BpmSaludFilter extends OncePerRequestFilter {
             || path.equals("/favicon.ico")
             || path.equals("/manifest.webmanifest")
             || path.equals("/sw.js")
-            || path.equals("/offline.html");
+            || path.equals("/offline.html")
+            || path.startsWith("/push/");
     }
 }

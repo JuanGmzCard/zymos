@@ -553,6 +553,12 @@
             </ul>
         </div>
 
+        <!-- Push notifications toggle — oculto hasta que el browser confirme soporte -->
+        <button class="zymos-rail-item" id="pushToggleBtn" style="display:none;color:#64748b;"
+                data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.push.toggle}">
+            <i class="bi bi-bell-plus" id="pushToggleIcon"></i>
+        </button>
+
         <!-- Dark mode toggle -->
         <button class="zymos-rail-item" id="darkToggleBtn"
                 data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.dark.toggle}">
@@ -1204,6 +1210,83 @@
             var btn = document.getElementById(id);
             if (btn) btn.addEventListener('click', toggleDarkMode);
         });
+
+        // ── Push notifications ────────────────────────────────────────
+        (function initPush() {
+            if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+            var btn  = document.getElementById('pushToggleBtn');
+            var icon = document.getElementById('pushToggleIcon');
+            if (!btn) return;
+            btn.style.display = '';
+
+            function urlBase64ToUint8Array(b64) {
+                var pad = '='.repeat((4 - b64.length % 4) % 4);
+                var raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+                var arr = new Uint8Array(raw.length);
+                for (var i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+                return arr;
+            }
+
+            function csrfHeaders() {
+                var token  = document.querySelector('meta[name="_csrf"]');
+                var header = document.querySelector('meta[name="_csrf_header"]');
+                var h = { 'Content-Type': 'application/json' };
+                if (token && header) h[header.content] = token.content;
+                return h;
+            }
+
+            function setSubscribedState(subscribed) {
+                if (!icon) return;
+                icon.className = subscribed ? 'bi bi-bell-check-fill' : 'bi bi-bell-plus';
+                btn.style.color = subscribed ? 'var(--dorado)' : '#64748b';
+                btn.title = subscribed ? '[[#{nav.push.desactivar}]]' : '[[#{nav.push.activar}]]';
+            }
+
+            navigator.serviceWorker.ready.then(function (reg) {
+                reg.pushManager.getSubscription().then(function (sub) {
+                    setSubscribedState(!!sub);
+                });
+            });
+
+            btn.addEventListener('click', function () {
+                navigator.serviceWorker.ready.then(function (reg) {
+                    reg.pushManager.getSubscription().then(function (existing) {
+                        if (existing) {
+                            existing.unsubscribe().then(function () {
+                                fetch('/push/unsubscribe', {
+                                    method: 'POST', headers: csrfHeaders(),
+                                    body: JSON.stringify({ endpoint: existing.endpoint })
+                                });
+                                setSubscribedState(false);
+                            });
+                        } else {
+                            fetch('/push/vapid-public-key').then(function (r) { return r.json(); }).then(function (data) {
+                                if (!data.publicKey) return;
+                                reg.pushManager.subscribe({
+                                    userVisibleOnly: true,
+                                    applicationServerKey: urlBase64ToUint8Array(data.publicKey)
+                                }).then(function (sub) {
+                                    var k = sub.getKey ? sub.getKey('p256dh') : null;
+                                    var a = sub.getKey ? sub.getKey('auth')   : null;
+                                    var payload = {
+                                        endpoint: sub.endpoint,
+                                        p256dh:   k ? btoa(String.fromCharCode.apply(null, new Uint8Array(k))) : '',
+                                        auth:     a ? btoa(String.fromCharCode.apply(null, new Uint8Array(a))) : ''
+                                    };
+                                    fetch('/push/subscribe', {
+                                        method: 'POST', headers: csrfHeaders(),
+                                        body: JSON.stringify(payload)
+                                    });
+                                    setSubscribedState(true);
+                                }).catch(function (err) {
+                                    console.warn('[Push] Suscripción rechazada:', err);
+                                });
+                            });
+                        }
+                    });
+                });
+            });
+        })();
 
         // "Marcar todas" — rail + topbar
         ['btnMarcarTodas', 'topbarBtnMarcarTodas'].forEach(function(id) {

@@ -63,6 +63,36 @@ function cacheFirst(request) {
     });
 }
 
+/* ── Push notifications ──────────────────────────────────────────── */
+
+self.addEventListener('push', function (event) {
+    var data = {};
+    try { data = event.data ? event.data.json() : {}; } catch (e) {}
+    var title   = data.title  || 'Zymos';
+    var options = {
+        body:  data.body  || '',
+        icon:  data.icon  || '/img/icon.svg',
+        badge: data.badge || '/img/icon.svg',
+        data:  { url: data.url || '/notificaciones' }
+    };
+    event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', function (event) {
+    event.notification.close();
+    var url = (event.notification.data && event.notification.data.url) || '/notificaciones';
+    event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
+            for (var i = 0; i < clientList.length; i++) {
+                if ('focus' in clientList[i]) return clientList[i].focus();
+            }
+            if (clients.openWindow) return clients.openWindow(url);
+        })
+    );
+});
+
+/* ── Network helpers ─────────────────────────────────────────────── */
+
 function networkFirstWithOffline(request) {
     return fetch(request).then(function (response) {
         if (response.ok) {

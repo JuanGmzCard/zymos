@@ -8,6 +8,7 @@ import com.alera.model.Notificacion;
 import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.model.enums.TipoNotificacion;
+import com.alera.config.TenantContext;
 import com.alera.repository.NotificacionRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -40,12 +41,14 @@ public class NotificacionService {
     );
 
     private final NotificacionRepository repo;
+    private final PushNotificationService pushService;
 
     @Value("${app.page-size:15}")
     private int pageSize;
 
-    public NotificacionService(NotificacionRepository repo) {
+    public NotificacionService(NotificacionRepository repo, PushNotificationService pushService) {
         this.repo = repo;
+        this.pushService = pushService;
     }
 
     /** Calcula qué TipoNotificacion puede ver este usuario según sus authorities. */
@@ -229,7 +232,13 @@ public class NotificacionService {
         String titulo  = "Tarea asignada: " + tarea.getTitulo();
         String mensaje = "Te asignaron la tarea \"" + tarea.getTitulo() + "\""
                 + (tarea.getFechaVencimiento() != null ? " — vence el " + tarea.getFechaVencimiento() : "") + ".";
-        repo.save(Notificacion.of(TipoNotificacion.TAREA_ASIGNADA, titulo, mensaje, "/tareas/" + tarea.getId()));
+        String url = "/tareas/" + tarea.getId();
+        repo.save(Notificacion.of(TipoNotificacion.TAREA_ASIGNADA, titulo, mensaje, url));
+        // Push al usuario asignado específicamente (pushService es null en tests)
+        if (pushService != null && tarea.getAsignadoA() != null) {
+            String tenantId = TenantContext.getCurrentTenant();
+            if (tenantId != null) pushService.enviarAUsuario(tarea.getAsignadoA(), tenantId, titulo, mensaje, url);
+        }
     }
 
     public void crearAlertaTareaVencimiento(List<Tarea> tareas) {
