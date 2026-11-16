@@ -35,6 +35,8 @@ public class CspNonceFilter extends OncePerRequestFilter {
                 + "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net data:; "
                 + "img-src 'self' data: https:; "
                 + "connect-src 'self'; "
+                + "worker-src 'self'; "
+                + "manifest-src 'self'; "
                 + "object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
 
         filterChain.doFilter(request, response);
