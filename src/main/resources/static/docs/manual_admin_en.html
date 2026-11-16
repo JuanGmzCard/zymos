@@ -133,6 +133,9 @@
       <a href="#migracion">Bulk import</a>
       <a href="#moneda">Currency &amp; pricing</a>
       <a href="#whatsapp">WhatsApp notifications</a>
+      <a href="#push">Push notifications</a>
+      <a href="#api-rest">Public REST API</a>
+      <a href="#webhooks">Outbound webhooks</a>
       <a href="#demo">Demo tenant</a>
       <a href="#planes">Plans &amp; payments</a>
     </div>
@@ -316,13 +319,13 @@
 
     <!-- Idioma -->
     <h2 id="idioma">Interface language</h2>
-    <p>ZYMOS is available in <strong>Spanish</strong> and <strong>English</strong>. The language is persisted per user via a cookie and does not affect other users of the same tenant.</p>
-    <p>To change the language, click <strong>ES</strong> or <strong>EN</strong> in the top navigation bar (upper right corner of the side panel).</p>
+    <p>ZYMOS is available in <strong>Spanish</strong>, <strong>English</strong> and <strong>Portuguese (Brazil)</strong>. The language is persisted per user via a cookie and does not affect other users of the same tenant.</p>
+    <p>To change the language, click <strong>ES</strong>, <strong>EN</strong> or <strong>PT</strong> in the top navigation bar.</p>
 
     <div class="callout info">
       <div class="callout-icon">💡</div>
       <div class="callout-body">
-        <strong>User manuals</strong> are also available in English. The help button (book icon in the bar) automatically detects the active language and opens the corresponding version.
+        <strong>User manuals</strong> are available in Spanish and English. The help button (book icon in the bar) automatically detects the active language and opens the corresponding version. The full interface (menus, forms, PDFs, emails) is 100% translated into all 3 languages.
       </div>
     </div>
 
@@ -539,17 +542,115 @@
       </tbody>
     </table>
 
+    <h3>14-day free trial</h3>
+    <p>From the <code>/planes</code> page, new customers can also start a <strong>14-day free trial</strong> without entering payment details. At the end of the trial, the system shows upgrade options.</p>
+
+    <h3>Supported payment gateways</h3>
+    <ul>
+      <li><strong>MercadoPago</strong> (Latin America) — activated with the <code>MP_ACCESS_TOKEN</code> environment variable.</li>
+      <li><strong>Stripe</strong> (global) — activated with <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_PUBLISHABLE_KEY</code>. Supports credit/debit cards worldwide.</li>
+    </ul>
+
     <h3>Checkout flow for new customers</h3>
     <ol class="steps">
       <li>The new customer visits <code>/planes</code> and selects their plan.</li>
       <li>They fill in their brewery name and email. ZYMOS automatically generates a unique subdomain (e.g. <code>mybrewery.zymos.app</code>).</li>
-      <li>They are redirected to the payment gateway (MercadoPago). Once payment is approved, ZYMOS creates the tenant, roles, default beer styles and sends a welcome email with login credentials.</li>
+      <li>They are redirected to the payment gateway. Once payment is approved, ZYMOS creates the tenant, roles, default beer styles and sends a welcome email with login credentials.</li>
       <li>The new tenant can log in immediately at their subdomain.</li>
     </ol>
 
     <div class="callout info">
       <div class="callout-icon">ℹ️</div>
-      <div class="callout-body">If the system does not have a MercadoPago token configured (MP_ACCESS_TOKEN), the checkout works in <strong>simulation mode</strong>: payment is automatically approved for testing. Useful in development and demo environments.</div>
+      <div class="callout-body">If no payment gateway is configured, the checkout works in <strong>simulation mode</strong>: payment is automatically approved for testing. Useful in development and demo environments.</div>
+    </div>
+
+    <!-- Push Notifications -->
+    <h2 id="push">Browser push notifications</h2>
+    <p>ZYMOS can send push notifications directly to users' browsers, even when the application tab is closed. It is activated once per device using the 🔔 button in the left sidebar.</p>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">
+        <strong>Requirement: VAPID keys</strong>
+        Push notifications use the Web Push standard (VAPID). Generate initial keys from <strong>Admin → GET /admin/push/generate-keys</strong>. Without the <code>VAPID_PUBLIC_KEY</code> and <code>VAPID_PRIVATE_KEY</code> environment variables, the system works in <strong>simulation mode</strong> (logged only). In local development no configuration is needed — development keys are already included.
+      </div>
+    </div>
+
+    <h3>How to enable push notifications</h3>
+    <ol class="steps">
+      <li>Click the 🔔 icon in the left sidebar.</li>
+      <li>The browser will request permission to send notifications. Click <strong>"Allow"</strong>.</li>
+      <li>The icon changes to 🔔 (gold) to indicate that notifications are active.</li>
+      <li>To disable them, click the same icon again.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">Push notifications are independent per browser and device. If you use ZYMOS on 3 different devices, you can enable or disable them individually on each one. VAPID keys must remain stable — changing them invalidates all existing subscriptions.</div>
+    </div>
+
+    <!-- API REST -->
+    <h2 id="api-rest">Public REST API</h2>
+    <p>ZYMOS exposes a public REST API under <code>/api/v1/</code> for integration with external systems: ERPs, dashboards, automations and custom tools.</p>
+
+    <h3>JWT authentication</h3>
+    <ol class="steps">
+      <li>Get a JWT token by making a <code>POST /api/v1/token</code> request with your username and password:
+        <br><code>{"username": "admin", "password": "***"}</code></li>
+      <li>Include the token in the header of each request:
+        <br><code>Authorization: Bearer &lt;token&gt;</code></li>
+      <li>The token is valid for 24 hours by default (configurable with <code>JWT_TTL_HOURS</code>).</li>
+    </ol>
+
+    <h3>Available endpoints</h3>
+    <table class="field-table">
+      <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td>GET</td><td><code>/api/v1/lotes</code></td><td>List of batches with optional filters (phase, style, date).</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/lotes/{id}</code></td><td>Detail of a batch by ID.</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/lotes/{id}/lecturas</code></td><td>Add a density/temperature reading to a batch.</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/inventario</code></td><td>Full list of inventory ingredients.</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/ventas</code></td><td>Paginated sales (shipment number, customer, date, total).</td></tr>
+        <tr><td>GET</td><td><code>/api/v1/equipos</code></td><td>List of equipment with type, status and capacity.</td></tr>
+        <tr><td>POST</td><td><code>/api/v1/token</code></td><td>Generates a JWT token with username and password.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout info">
+      <div class="callout-icon">ℹ️</div>
+      <div class="callout-body">The full interactive API documentation is at <code>/swagger-ui.html</code> (requires authentication). The API enforces <strong>rate limiting</strong>: maximum 100 requests per minute per IP (configurable with <code>API_RATE_LIMIT</code>). When exceeded, it returns HTTP 429.</div>
+    </div>
+
+    <!-- Webhooks -->
+    <h2 id="webhooks">Outbound webhooks</h2>
+    <p>Configure webhooks so ZYMOS notifies external systems when key events occur in your brewery. Access from <strong>Admin → Webhooks</strong>.</p>
+
+    <h3>Available events</h3>
+    <table class="field-table">
+      <thead><tr><th>Event</th><th>When it fires</th></tr></thead>
+      <tbody>
+        <tr><td><code>lote.fase_cambiada</code></td><td>When a batch advances to the next phase (e.g. Brew day → Fermentation).</td></tr>
+        <tr><td><code>lote.completado</code></td><td>When a batch is marked as Completed.</td></tr>
+        <tr><td><code>inventario.bajo_stock</code></td><td>Daily review: when an ingredient is below minimum stock.</td></tr>
+        <tr><td><code>tarea.asignada</code></td><td>When a task is created or edited with an assigned user.</td></tr>
+        <tr><td><code>lectura.agregada</code></td><td>When a new density or temperature reading is recorded.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Configure a webhook</h3>
+    <ol class="steps">
+      <li>Go to Admin → <strong>Webhooks</strong> → <strong>"+ New webhook"</strong>.</li>
+      <li>Define the name, your endpoint URL and the <strong>secret</strong> (key for verifying request signatures).</li>
+      <li>Select the events you want to receive (you can subscribe to one or more).</li>
+      <li>Save and use the <strong>"Test"</strong> button to send a <code>ping</code> event and verify connectivity.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">
+        <strong>HMAC-SHA256 signature verification</strong>
+        Each HTTP POST request includes the <code>X-Zymos-Signature-256</code> header with the HMAC-SHA256 signature of the payload using your secret. Verify this signature on your server to confirm the request comes from ZYMOS and has not been tampered with.
+      </div>
     </div>
 
   </div>

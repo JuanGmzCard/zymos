@@ -429,11 +429,11 @@ El selector de la navbar muestra **ES · EN · PT** (sección `.rd-lang` con cla
 
 ### Manuales de usuario — docs estáticos con `_en.html`
 
-Los archivos en `src/main/resources/static/docs/` son HTML estático (no Thymeleaf) — no pueden usar `#{}`. Solución: archivos `_en.html` separados (`index_en.html`, `manual_admin_en.html`, etc.). El selector de idioma en `navbar.html` apunta al archivo correcto según `${#locale.language}`:
+Los archivos en `src/main/resources/static/docs/` son HTML estático (no Thymeleaf) — no pueden usar `#{}`. Solución: archivos `_en.html` y `_pt.html` separados. El selector de idioma en `navbar.html` apunta al archivo correcto según `${#locale.language}`:
 ```html
-th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : '/docs/index.html'"
+th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : (${#locale.language == 'pt'} ? '/docs/index_pt.html' : '/docs/index.html')"
 ```
-**No existen versiones `_pt.html`** — PT-BR cae al manual en español. Para crear manuales en PT habría que agregar `_pt.html` files y actualizar la condición a `'pt'`.
+**Existen versiones `_pt.html`** para todos los módulos (2026-11-16): `index_pt.html`, `manual_trazabilidad_pt.html`, `manual_inventario_pt.html`, `manual_recetas_pt.html`, `manual_bpm_pt.html`, `manual_comercial_pt.html`, `manual_reportes_pt.html`, `manual_tareas_pt.html`, `manual_admin_pt.html`. El navbar ya enruta PT a la versión `_pt.html` correspondiente.
 
 ### Landing page y páginas públicas — toggle ES/EN/PT inline
 
@@ -459,9 +459,9 @@ Al agregar un cuarto idioma (ej: FR):
 
 ### Cobertura i18n — 100% (2026-11-15)
 
-3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys. Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados. PT-BR agregado en 2026-11-15 con cobertura total de los mismos templates.
+3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN+PT), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys. Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados. PT-BR agregado en 2026-11-15 con cobertura total de los mismos templates.
 
-**Manuales de usuario:** solo ES y EN (`static/docs/*_en.html`). PT-BR cae al español como fallback.
+**Manuales de usuario:** ES + EN + PT-BR (`static/docs/*_en.html` + `*_pt.html`). Los 9 módulos tienen versión en los 3 idiomas. El navbar enruta automáticamente al archivo correcto según el idioma activo.
 
 ---
 

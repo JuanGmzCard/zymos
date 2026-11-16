@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zymos — Resumo Executivo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+
+  :root {
+    --azul-oscuro: #1e293b;
+    --azul:        #2563eb;
+    --azul-cl:     #0ea5e9;
+    --azul-suave:  #38bdf8;
+    --crema:       #f8fafc;
+    --fondo:       #f1f5f9;
+    --gris:        #6b7280;
+    --gris-cl:     #e2e8f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Roboto', sans-serif;
+    background: #fff;
+    color: #1a1a1a;
+    font-size: 10.5pt;
+    line-height: 1.65;
+  }
+
+  /* ── BOTÃO EXPORTAR (solo pantalla) ─────────────────────────── */
+  .export-btn {
+    position: fixed;
+    top: 1.25rem; right: 1.25rem;
+    background: var(--azul);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: .5rem 1.2rem;
+    font-family: 'Inter', sans-serif;
+    font-size: .8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: .4rem;
+    box-shadow: 0 4px 16px rgba(37,99,235,.35);
+    z-index: 1000;
+    transition: background .2s, transform .15s;
+    letter-spacing: .02em;
+  }
+  .export-btn:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+  /* ── PORTADA ─────────────────────────────────────────────────── */
+  .cover {
+    background: linear-gradient(160deg, var(--azul-oscuro) 0%, var(--azul) 60%, #1e40af 100%);
+    color: var(--crema);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    page-break-after: always;
+    position: relative;
+    overflow: hidden;
+  }
+  .cover::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 420px; height: 420px;
+    border-radius: 50%;
+    background: rgba(14,165,233,0.1);
+  }
+  .cover::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: -60px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    background: rgba(14,165,233,0.07);
+  }
+  .cover-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 64pt;
+    font-weight: 700;
+    color: var(--azul-suave);
+    letter-spacing: 6px;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-drop {
+    font-size: 28pt;
+    margin-bottom: 24px;
+    opacity: 0.85;
+  }
+  .cover-tagline {
+    font-family: 'Roboto', sans-serif;
+    font-size: 15pt;
+    font-weight: 300;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--crema);
+    opacity: 0.85;
+    margin-bottom: 48px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-divider {
+    width: 80px;
+    height: 3px;
+    background: var(--azul-cl);
+    margin: 0 auto 40px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-doc-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 16pt;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--crema);
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .cover-subtitle {
+    font-size: 11pt;
+    color: rgba(248,250,252,0.7);
+    position: relative;
+    z-index: 1;
+  }
+  .cover-footer {
+    position: absolute;
+    bottom: 32px;
+    font-size: 9pt;
+    color: rgba(248,250,252,0.4);
+    letter-spacing: 1px;
+    z-index: 1;
+  }
+
+  /* ── PÁGINAS INTERIORES ──────────────────────────────────────── */
+  .page {
+    padding: 52px 56px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .page-break { page-break-before: always; }
+
+  /* ── ENCABEZADO DE SECCIÓN ───────────────────────────────────── */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 28px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--azul-cl);
+  }
+  .section-icon {
+    width: 40px; height: 40px;
+    background: var(--azul);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 16pt;
+    font-weight: 600;
+    color: var(--azul);
+    letter-spacing: 1px;
+  }
+
+  /* ── TEXTO ───────────────────────────────────────────────────── */
+  p { margin-bottom: 14px; }
+  .lead {
+    font-size: 12pt;
+    font-weight: 500;
+    color: var(--azul);
+    margin-bottom: 18px;
+    line-height: 1.7;
+  }
+
+  /* ── MÓDULOS — 2 columnas ────────────────────────────────────── */
+  .modules-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .module-card {
+    border: 1px solid var(--gris-cl);
+    border-radius: 12px;
+    padding: 18px 20px;
+    background: var(--fondo);
+    border-left: 4px solid var(--azul-cl);
+  }
+  .module-card h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .module-card ul {
+    list-style: none;
+    padding: 0;
+  }
+  .module-card ul li {
+    font-size: 9.5pt;
+    color: #374151;
+    padding: 3px 0;
+    padding-left: 14px;
+    position: relative;
+  }
+  .module-card ul li::before {
+    content: '▸';
+    color: var(--azul-cl);
+    position: absolute;
+    left: 0;
+    font-size: 9pt;
+  }
+
+  /* ── BENEFICIOS ──────────────────────────────────────────────── */
+  .benefits-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 24px;
+  }
+  .benefits-list li {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+  }
+  .benefit-icon {
+    width: 34px; height: 34px;
+    background: var(--azul);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .benefit-text strong {
+    display: block;
+    font-weight: 600;
+    color: var(--azul);
+    font-size: 10.5pt;
+    margin-bottom: 2px;
+  }
+  .benefit-text span {
+    font-size: 9.5pt;
+    color: #4b5563;
+  }
+
+  /* ── SEGURIDAD — 2 columnas ──────────────────────────────────── */
+  .seg-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .seg-card {
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--fondo);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .seg-badge {
+    width: 30px; height: 30px;
+    background: #dbeafe;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .seg-card strong { display: block; font-size: 9.5pt; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .seg-card span { font-size: 8.5pt; color: #4b5563; line-height: 1.4; }
+
+  /* ── ARQUITECTURA ────────────────────────────────────────────── */
+  .arch-boxes {
+    display: flex;
+    gap: 0;
+    margin: 24px 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--gris-cl);
+  }
+  .arch-box {
+    flex: 1;
+    padding: 20px 16px;
+    text-align: center;
+    border-right: 1px solid var(--gris-cl);
+  }
+  .arch-box:last-child { border-right: none; }
+  .arch-box .arch-icon { font-size: 22px; margin-bottom: 8px; }
+  .arch-box h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt;
+    font-weight: 600;
+    color: var(--azul);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .arch-box p { font-size: 8.5pt; color: #6b7280; margin: 0; }
+  .arch-box.highlight { background: var(--fondo); }
+
+  /* ── TABLA TECH ──────────────────────────────────────────────── */
+  .tech-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 9.5pt;
+  }
+  .tech-table thead tr {
+    background: var(--azul);
+    color: var(--crema);
+  }
+  .tech-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 9pt;
+    letter-spacing: 0.5px;
+  }
+  .tech-table tbody tr:nth-child(even) { background: var(--fondo); }
+  .tech-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gris-cl);
+    vertical-align: top;
+  }
+  .tech-table tbody td:first-child {
+    font-weight: 600;
+    color: var(--azul);
+    white-space: nowrap;
+  }
+
+  /* ── ESTADO ──────────────────────────────────────────────────── */
+  .estado-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+    margin-bottom: 24px;
+  }
+  .estado-table thead tr {
+    background: var(--azul);
+    color: var(--crema);
+  }
+  .estado-table thead th {
+    padding: 10px 14px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 9pt;
+  }
+  .estado-table tbody tr:nth-child(even) { background: var(--fondo); }
+  .estado-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--gris-cl);
+    vertical-align: middle;
+  }
+  .estado-table tbody td:first-child { font-weight: 600; color: #111827; }
+  .badge-ok {
+    background: #d1fae5; color: #065f46;
+    border-radius: 50px; padding: 2px 10px;
+    font-size: 8.5pt; font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── CALLOUT ─────────────────────────────────────────────────── */
+  .callout {
+    background: linear-gradient(135deg, var(--azul-oscuro), var(--azul));
+    color: var(--crema);
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin: 28px 0;
+    text-align: center;
+  }
+  .callout h3 {
+    font-family: 'Inter', sans-serif;
+    font-size: 14pt;
+    color: var(--azul-suave);
+    margin-bottom: 10px;
+  }
+  .callout p { font-size: 10pt; opacity: 0.9; margin: 0; }
+
+  /* ── STAT PILLS ──────────────────────────────────────────────── */
+  .stats-row {
+    display: flex;
+    gap: 16px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .stat-pill {
+    flex: 1;
+    min-width: 120px;
+    background: var(--azul);
+    color: var(--crema);
+    border-radius: 10px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-pill .stat-num {
+    font-family: 'Inter', sans-serif;
+    font-size: 22pt;
+    color: var(--azul-suave);
+    display: block;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-pill .stat-lbl {
+    font-size: 8.5pt;
+    opacity: 0.85;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── FLUJO ───────────────────────────────────────────────────── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+  .flow-step {
+    flex: 1;
+    min-width: 90px;
+    text-align: center;
+    padding: 14px 8px;
+    background: var(--fondo);
+    border: 1px solid var(--gris-cl);
+    border-radius: 8px;
+    position: relative;
+  }
+  .flow-step .flow-num {
+    display: inline-block;
+    width: 24px; height: 24px;
+    background: var(--azul-cl);
+    color: #fff;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 9pt;
+    line-height: 24px;
+    margin-bottom: 6px;
+  }
+  .flow-step p { font-size: 8.5pt; color: #374151; margin: 0; line-height: 1.4; }
+  .flow-arrow { color: var(--azul-cl); font-size: 16pt; padding: 0 4px; flex-shrink: 0; }
+
+  /* ── DIFERENCIADORES ─────────────────────────────────────────── */
+  .dif-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+  .dif-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    padding: 16px 18px;
+    background: var(--fondo);
+  }
+  .dif-num {
+    width: 30px; height: 30px; flex-shrink: 0;
+    background: var(--azul);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 9pt; font-weight: 700; color: #fff;
+    margin-top: 1px;
+  }
+  .dif-text strong { display: block; font-size: 10.5pt; font-weight: 600; color: var(--azul); margin-bottom: 3px; }
+  .dif-text span { font-size: 9pt; color: #4b5563; }
+
+  /* ── PROBLEMA — lista con icono ─────────────────────────────── */
+  .problema-list { list-style: none; padding: 0; margin: 20px 0; }
+  .problema-list li {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 14px 16px;
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    background: var(--fondo);
+    margin-bottom: 12px;
+  }
+  .prob-icon {
+    font-size: 20px; flex-shrink: 0; margin-top: 1px;
+  }
+  .prob-text strong { display: block; font-size: 10pt; font-weight: 600; color: #111827; margin-bottom: 3px; }
+  .prob-text span { font-size: 9pt; color: #4b5563; }
+
+  /* ── ROADMAP ─────────────────────────────────────────────────── */
+  .roadmap-section { margin-bottom: 28px; }
+  .roadmap-horizon {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--azul);
+    color: var(--crema);
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 10pt;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+  .roadmap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9pt;
+    margin-bottom: 6px;
+  }
+  .roadmap-table thead tr { background: var(--fondo); }
+  .roadmap-table thead th {
+    padding: 8px 12px;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 8.5pt;
+    color: var(--azul);
+    border-bottom: 2px solid var(--azul-cl);
+    letter-spacing: 0.3px;
+  }
+  .roadmap-table tbody tr:nth-child(even) { background: #fafafa; }
+  .roadmap-table tbody td {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--gris-cl);
+    vertical-align: top;
+    line-height: 1.45;
+  }
+  .roadmap-table tbody td:first-child { font-weight: 600; color: #1e293b; }
+  .roadmap-table tbody td:last-child { color: var(--azul); font-weight: 500; font-size: 8.5pt; }
+
+  /* ── INVERSIÓN — activos y escenarios ──────────────────────── */
+  .inv-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin: 18px 0;
+  }
+  .inv-card {
+    border: 1px solid var(--gris-cl);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--fondo);
+  }
+  .inv-card h4 {
+    font-family: 'Inter', sans-serif;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--azul);
+    margin-bottom: 6px;
+  }
+  .inv-card p { font-size: 8.5pt; color: #4b5563; margin: 0; line-height: 1.5; }
+
+  /* ── PIE DE PÁGINA ───────────────────────────────────────────── */
+  .page-footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--gris-cl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 8pt;
+    color: var(--gris);
+  }
+  .page-footer .footer-brand {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    color: var(--azul);
+    letter-spacing: 2px;
+  }
+
+  /* ── CIERRE ──────────────────────────────────────────────────── */
+  .cierre-box {
+    text-align: center;
+    margin-top: 40px;
+    padding: 28px;
+    border: 1px solid var(--gris-cl);
+    border-radius: 12px;
+    background: var(--fondo);
+  }
+  .cierre-box .cierre-logo {
+    font-family: 'Inter', sans-serif;
+    font-size: 22pt; font-weight: 700;
+    color: var(--azul); letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+  .cierre-box .cierre-tag {
+    font-size: 9pt; color: var(--gris);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .cierre-box .cierre-div { width: 50px; height: 2px; background: var(--azul-cl); margin: 0 auto 16px; }
+  .cierre-box .cierre-cta { font-size: 9.5pt; color: #374151; }
+
+  /* ── PRINT ───────────────────────────────────────────────────── */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  @media print {
+    body { font-size: 10pt; }
+    .export-btn { display: none !important; }
+    .cover { min-height: 100vh; }
+    .page { padding: 40px 48px; }
+    .page-break { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+    a { color: inherit; text-decoration: none; }
+    @page { size: A4; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Botão exportar -->
+<button class="export-btn" onclick="window.print()">
+  ⬇ Exportar PDF
+</button>
+
+<!-- ═══════════════════════════════════════════════════════ CAPA -->
+<div class="cover">
+  <div class="cover-logo">ZYMOS</div>
+  <div class="cover-drop">🍺</div>
+  <div class="cover-tagline">Gestão e Rastreabilidade para Cervejaria Artesanal</div>
+  <div class="cover-divider"></div>
+  <div class="cover-doc-title">Resumo Executivo</div>
+  <div class="cover-subtitle">Plataforma SaaS Multi-tenant · 2026</div>
+  <div class="cover-footer" id="cover-date">Confidencial · 2026</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 1: O QUE É O ZYMOS -->
+<div class="page">
+  <div class="section-header">
+    <div class="section-icon">💡</div>
+    <h2 class="section-title">O que é o Zymos?</h2>
+  </div>
+
+  <p class="lead">Zymos é uma plataforma de gestão integrada projetada exclusivamente para cervejarias artesanais. Centraliza em um único lugar todos os processos do negócio: produção, inventário, equipamentos, segurança alimentar, vendas, faturamento e análise.</p>
+
+  <p>As cervejarias artesanais gerenciam simultaneamente receitas técnicas, lotes em distintas fases de fermentação, insumos perecíveis, equipamentos com manutenção, clientes e fornecedores — frequentemente com planilhas e ferramentas dispersas que não se comunicam entre si. Zymos resolve esse problema com uma plataforma unificada, acessível de qualquer navegador sem instalação de software.</p>
+
+  <p>Como plataforma <strong>SaaS multi-tenant</strong>, cada cervejaria opera em seu próprio ambiente isolado com sua marca, cores e dados privados — enquanto compartilha a mesma infraestrutura robusta atualizada automaticamente.</p>
+
+  <div class="stats-row">
+    <div class="stat-pill">
+      <span class="stat-num">16</span>
+      <span class="stat-lbl">Módulos integrados</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">1025</span>
+      <span class="stat-lbl">Testes automatizados</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">96</span>
+      <span class="stat-lbl">Migrações Flyway</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-num">9</span>
+      <span class="stat-lbl">Serviços de IA</span>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h3>Um só sistema. Todo o negócio.</h3>
+    <p>Produção · Receitas · Inventário · Equipamentos · BPM · Comercial · Vendas · Barris · Planejamento · Relatórios · Tarefas · Notificações WhatsApp · Push Notifications · API REST + Webhooks · Inteligência Artificial · IA Preditiva · Chat IA · Checkout Self-Service · Landing Page · Funil de Conversão · ES / EN / PT</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>1</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 2: PROBLEMA E OPORTUNIDADE -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🎯</div>
+    <h2 class="section-title">Problema e Oportunidade de Mercado</h2>
+  </div>
+
+  <p class="lead">O setor de cerveja artesanal cresce de forma sustentada na América Latina e no mundo, mas seus operadores carecem de ferramentas digitais especializadas para gerenciar seus negócios de forma profissional.</p>
+
+  <p>As cervejarias artesanais operam majoritariamente com planilhas, cadernos físicos ou ferramentas genéricas que não refletem as particularidades do processo cervejeiro nem atendem às exigências sanitárias vigentes.</p>
+
+  <ul class="problema-list">
+    <li class="no-break">
+      <span class="prob-icon">📋</span>
+      <div class="prob-text">
+        <strong>Rastreabilidade dispersa</strong>
+        <span>Cada fase do processo (mosturação, fervura, fermentação, maturação, carbonatação) é registrada em sistemas desconectados ou em papel, impossibilitando a análise de qualidade e a rastreabilidade sanitária em uma auditoria.</span>
+      </div>
+    </li>
+    <li class="no-break">
+      <span class="prob-icon">💸</span>
+      <div class="prob-text">
+        <strong>Ausência de controle de custos</strong>
+        <span>Sem integração entre faturas de fornecedores, ingredientes e lotes produzidos, as cervejarias não conhecem seu custo real por litro nem conseguem identificar quais receitas ou estilos são mais rentáveis.</span>
+      </div>
+    </li>
+    <li class="no-break">
+      <span class="prob-icon">🛡️</span>
+      <div class="prob-text">
+        <strong>Conformidade normativa manual</strong>
+        <span>As boas práticas de fabricação (BPF) exigidas pelas regulamentações alimentares — estado de saúde, controle de pragas, limpeza — são documentadas em papel, gerando risco jurídico e perda de tempo em auditorias.</span>
+      </div>
+    </li>
+    <li class="no-break">
+      <span class="prob-icon">🔀</span>
+      <div class="prob-text">
+        <strong>Gestão comercial fragmentada</strong>
+        <span>Cotações, vendas, ordens de compra e controle de fornecedores operam em sistemas separados sem visibilidade unificada sobre o real estado financeiro do negócio.</span>
+      </div>
+    </li>
+  </ul>
+
+  <div class="callout">
+    <h3>A oportunidade</h3>
+    <p>
+      <strong>Colômbia:</strong> ~400 cervejarias artesanais registradas &nbsp;·&nbsp;
+      <strong>América Latina:</strong> ~3.000 cervejarias &nbsp;·&nbsp;
+      <strong>Mercado global de software para craft brewing:</strong> &gt;USD 300M/ano · crescendo 8–12% ao ano<br><br>
+      Zymos entra nesse mercado com um produto especializado, em espanhol, inglês e português, adaptado às normas e preferências locais, com um modelo SaaS de baixo custo de entrada para o cliente final.
+    </p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>2</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 3: MÓDULOS A -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🧩</div>
+    <h2 class="section-title">Módulos do Sistema (1/2)</h2>
+  </div>
+
+  <div class="modules-grid">
+
+    <div class="module-card no-break">
+      <h3>🍻 Rastreabilidade de Lotes</h3>
+      <ul>
+        <li>Ciclo de vida completo: cozimento (1–4 sessões), fermentação, condicionamento, maturação e carbonatação</li>
+        <li>Quadro Kanban com drag &amp; drop por fase</li>
+        <li>Notas de processo por fase (fermentação, condicionamento, maturação)</li>
+        <li>Gráfico de fermentação densidade/temperatura</li>
+        <li>Cálculo automático de ABV, atenuação e eficiência</li>
+        <li>Avaliações sensoriais BJCP</li>
+        <li>Etiqueta QR PDF (80×100mm) por lote</li>
+        <li>E-mail automático ao mudar de fase (se SMTP configurado)</li>
+        <li>Diagnóstico IA, descrição comercial IA e BJCP scorer IA</li>
+        <li>Exportação para PDF e Excel (6 planilhas)</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📋 Receitas</h3>
+      <ul>
+        <li>Biblioteca com ingredientes, etapas de mosturação e adições de fervura</li>
+        <li>Metas OG/FG/ABV e indicadores Brix (método Sean Terrill)</li>
+        <li>Perfil de água completo (Ca²⁺, Mg²⁺, Na⁺, SO₄²⁻, Cl⁻, HCO₃⁻ em ppm)</li>
+        <li>Calculadora de escala de volume com criação de receita escalada</li>
+        <li>Export/import BeerXML 1.0 padrão</li>
+        <li>Assistente IA: gera receita completa a partir de descrição em texto</li>
+        <li>Exportação para PDF</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📦 Inventário de Insumos</h3>
+      <ul>
+        <li>Controle de estoque com alertas de baixo inventário</li>
+        <li>Alertas de vencimento próximo</li>
+        <li>Baixa automática ao criar ou atualizar lotes</li>
+        <li>9 tipos de insumo (maltes, lúpulos, leveduras, químicos, embalagens…)</li>
+        <li>Normalização de unidades (kg↔g, L↔mL)</li>
+        <li>Exportação para Excel</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🔧 Equipamentos e Manutenção</h3>
+      <ul>
+        <li>Inventário de equipamentos com estado em tempo real</li>
+        <li>Histórico de manutenções preventivas, corretivas, calibrações e limpeza</li>
+        <li>Alertas de próxima manutenção no dashboard</li>
+        <li>Disponibilidade de fermentadores no formulário de lote</li>
+        <li>Histórico de custos por equipamento</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🛡️ BPF — Inocuidade Alimentar</h3>
+      <ul>
+        <li>Registro diário de estado de saúde com assinatura digital</li>
+        <li>Bloqueio automático de operários com sintomas não autorizados</li>
+        <li>Controle de soluções desinfetantes, pragas, limpeza e resíduos</li>
+        <li>Autorização do administrador com SignaturePad</li>
+        <li>Notificação automática à equipe ao detectar sintomas</li>
+        <li>Geração de PDF por registro</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📅 Planejamento</h3>
+      <ul>
+        <li>Calendário visual com FullCalendar</li>
+        <li>Elaborações planejadas vinculadas a receitas</li>
+        <li>Estados: Planejada → Em Processo → Concluída</li>
+        <li>Início direto do calendário para o formulário de lote</li>
+        <li>Visualização mensal e semanal</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>3</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 4: MÓDULOS B -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🧩</div>
+    <h2 class="section-title">Módulos do Sistema (2/2)</h2>
+  </div>
+
+  <div class="modules-grid">
+
+    <div class="module-card no-break">
+      <h3>🧾 Comercial — Fornecedores e Faturas</h3>
+      <ul>
+        <li>Registro e acompanhamento de faturas de compra</li>
+        <li>Estados: Recebida → Verificada → Paga</li>
+        <li>IVA por item e imposto de consumo independentes</li>
+        <li>Anexos de arquivo por fatura (PDF, imagens)</li>
+        <li>Analisador IA: Claude Vision preenche a fatura a partir de foto ou PDF</li>
+        <li>Atribuição de custos de fatura diretamente a lotes</li>
+        <li>Ordens de compra com otimização IA</li>
+        <li>Exportação para Excel com detalhe de itens</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>💰 Vendas e Clientes</h3>
+      <ul>
+        <li>Cotações, pedidos e despachos</li>
+        <li>Itens por lote com descontos por linha</li>
+        <li>Ficha de clientes com dados fiscais e lista de preços</li>
+        <li>Exportação para PDF e Excel</li>
+        <li>Acompanhamento de estado de cada venda</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🛢️ Barris</h3>
+      <ul>
+        <li>Rastreabilidade por código de barril</li>
+        <li>Associação a lotes de produção e clientes</li>
+        <li>Estados: Disponível, Cheio, Despachado, Limpeza, Baixa</li>
+        <li>Histórico de movimentos por barril</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📊 Relatórios e Dashboard</h3>
+      <ul>
+        <li>Dashboard empresarial com saudação personalizada e data em tempo real</li>
+        <li>12 métricas em tempo real: lotes, litros em processo, fases vencidas, inventário, equipamentos, vendas do mês, receitas do mês, clientes do mês, gastos do mês</li>
+        <li>Estado "Tudo em ordem" quando não há alertas ativos</li>
+        <li>Gráficos com estado vazio explícito para período sem dados</li>
+        <li>Personalizável: visibilidade e ordem drag &amp; drop por seção (localStorage)</li>
+        <li>Relatório de produção com gráficos por estilo e período</li>
+        <li>Relatório de vendas e rentabilidade por lote</li>
+        <li>Análise IA de rentabilidade: insights, estilos top, tendências e alertas</li>
+        <li>Alertas diários e resumo mensal por e-mail</li>
+        <li>Exportação para PDF e Excel em todos os relatórios</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>☁️ Migração de Dados</h3>
+      <ul>
+        <li>11 módulos importáveis a partir de modelos XLSX</li>
+        <li>Almoxarifado, Equipamentos, Comercial, Produção, Clientes, Vendas, Barris, OC, Acompanhamento, Catálogos, Manutenções</li>
+        <li>Log de auditoria por importação com estado e erros</li>
+        <li>Onboarding completo a partir de planilhas em minutos</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>✅ Tarefas Operacionais</h3>
+      <ul>
+        <li>Atribuição de tarefas com checklist de itens</li>
+        <li>Referências múltiplas a qualquer entidade do sistema</li>
+        <li>Notificações automáticas ao responsável atribuído</li>
+        <li>Estado automático conforme progresso do checklist</li>
+        <li>Alerta de vencimento diário</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>📱 Notificações WhatsApp</h3>
+      <ul>
+        <li>Multi-contato: cada contato se inscreve apenas nos tipos de alerta do seu papel</li>
+        <li>8 tipos: baixo estoque, vencimentos, mudança de fase do lote, manutenção, BPF saúde, tarefa atribuída, plano a vencer e resumo mensal</li>
+        <li>Integração Twilio WhatsApp Business API (sem SDK — HTTP direto)</li>
+        <li>Modo simulado quando não há credenciais Twilio configuradas</li>
+        <li>Administração em <em>Admin → WhatsApp</em> com toggle ativo/inativo por contato</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🤖 Inteligência Artificial (Claude API)</h3>
+      <ul>
+        <li>Assistente de receitas: gera receita completa a partir de descrição livre</li>
+        <li>Analisador de faturas: Claude Vision preenche formulário a partir de imagem/PDF</li>
+        <li>Diagnóstico de fermentação: detecta anomalias na curva densidade/temperatura</li>
+        <li>IA preditiva: prevê DG final, dias restantes e data estimada com histórico</li>
+        <li>Descrição comercial: 4 variantes de texto de marketing por lote</li>
+        <li>BJCP Scorer: sugere pontuações e detecta defeitos em notas sensoriais</li>
+        <li>Otimizador de ordens de compra e análise de rentabilidade</li>
+        <li>Chat IA conversacional sobre os dados do tenant</li>
+        <li>Modo mock completo sem API key — funciona para demo sem custo</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>🔔 Push Notifications + API REST</h3>
+      <ul>
+        <li>Notificações push no navegador via Web Push / VAPID (RFC 8030)</li>
+        <li>Inscrição por usuário — toggle na navbar, modo mock sem VAPID keys</li>
+        <li>API REST JWT com 8 endpoints (lotes, receitas, inventário, vendas, equipamentos, leituras)</li>
+        <li>Webhooks de saída: 5 eventos com assinatura HMAC-SHA256 — integração com n8n, Zapier, etc.</li>
+        <li>Rate limiting 100 req/min por IP · SpringDoc OpenAPI · admin UI de webhooks</li>
+      </ul>
+    </div>
+
+    <div class="module-card no-break">
+      <h3>💳 Planos, Checkout e Funil de Vendas</h3>
+      <ul>
+        <li>Landing page pública de marketing com 9 seções e branding configurável (ES/EN/PT)</li>
+        <li>Demo auto-login: acesso instantâneo com um clique ao tenant de demonstração realista</li>
+        <li>3 planos escalonados: Mosturação, Fervura e Fermentação</li>
+        <li>Alta de novos tenants sem intervenção manual — pagamento e provisionamento automático</li>
+        <li>Dual-gateway: MercadoPago (COP/ARS) + Stripe (USD) — modo mock para desenvolvimento</li>
+        <li>Trial gratuito 14 dias — sem cartão necessário</li>
+        <li>E-mails de onboarding nos dias 1/3/7 e lembretes 4 e 1 dia antes do vencimento do trial</li>
+        <li>Restrição de módulos conforme nível do plano contratado</li>
+        <li>Bloqueio com carência de 7 dias + página de renovação</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>4</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 5: SEGURANÇA + RBAC -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🔒</div>
+    <h2 class="section-title">Segurança e Controle de Acesso</h2>
+  </div>
+
+  <p>Zymos implementa um modelo de segurança em camadas que cobre autenticação, autorização granular, isolamento de dados e conformidade com as normas de inocuidade alimentar:</p>
+
+  <div class="seg-grid">
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏷️</div>
+      <div>
+        <strong>RBAC dinâmico por tenant</strong>
+        <span>Cada cervejaria define seus próprios papéis com permissões granulares por módulo (Ver / Criar / Editar / Excluir). 5 papéis de sistema + papéis custom ilimitados.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🔑</div>
+      <div>
+        <strong>Autenticação robusta</strong>
+        <span>Senhas BCrypt, bloqueio automático por tentativas falhas configurável (tentativas e duração em minutos).</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🛡️</div>
+      <div>
+        <strong>CSP enforced</strong>
+        <span>Content Security Policy ativa. Sem scripts inline. Nonces dinâmicos em todos os blocos de código de cada página.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🍪</div>
+      <div>
+        <strong>Sessões seguras e persistentes</strong>
+        <span>Sessões armazenadas em PostgreSQL (sobrevivem a reinicializações). Cookies HttpOnly + Secure + SameSite=Strict em produção. Limite de sessões simultâneas por usuário.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏢</div>
+      <div>
+        <strong>Isolamento multi-tenant</strong>
+        <span>Filtro @TenantId do Hibernate em todas as entidades. Impossível acessar dados de outro tenant mesmo com queries diretas ou tokens válidos.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">🏥</div>
+      <div>
+        <strong>Controle de saúde BPF</strong>
+        <span>O sistema verifica o registro diário de saúde de cada operário e bloqueia o acesso se houver sintomas pendentes de autorização por um administrador.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">⚡</div>
+      <div>
+        <strong>API JWT + Rate Limiting</strong>
+        <span>Tokens HS256 com TTL configurável. Limite de 100 req/min por IP com resposta HTTP 429. SpringDoc OpenAPI para documentação automática.</span>
+      </div>
+    </div>
+    <div class="seg-card no-break">
+      <div class="seg-badge">📝</div>
+      <div>
+        <strong>Auditoria de acessos</strong>
+        <span>Cada login registrado em banco de dados em transação independente — persiste mesmo que a sessão falhe ou seja revertida. Error tracking multi-tenant com Sentry.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout">
+    <h3>Plano com limites e renovação automática</h3>
+    <p>Alertas a 90% e 100% de uso de lotes e usuários · Bloqueio com 7 dias de carência pós-vencimento<br>Administração de tenants e planos a partir do painel de super-administrador</p>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>5</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 6: FLUXO + ARQUITETURA -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🔄</div>
+    <h2 class="section-title">Fluxo de Operação</h2>
+  </div>
+
+  <p>O fluxo natural de trabalho no Zymos segue o ciclo completo da produção artesanal:</p>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-num">1</div>
+      <p><strong>Planejar</strong><br>Elaboração no calendário</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">2</div>
+      <p><strong>Produzir</strong><br>Lote a partir de receita</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">3</div>
+      <p><strong>Fermentar</strong><br>Leituras e fases</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">4</div>
+      <p><strong>Carbonatar</strong><br>Embalar e calcular</p>
+    </div>
+    <div class="flow-arrow">›</div>
+    <div class="flow-step">
+      <div class="flow-num">5</div>
+      <p><strong>Vender</strong><br>Cotação → Despacho</p>
+    </div>
+  </div>
+
+  <p>Em cada etapa o sistema atualiza automaticamente o inventário, registra o histórico e calcula os custos associados ao lote.</p>
+
+  <div style="margin-top: 36px;">
+    <div class="section-header">
+      <div class="section-icon">🏗️</div>
+      <h2 class="section-title">Arquitetura SaaS Multi-Tenant</h2>
+    </div>
+  </div>
+
+  <p>Zymos opera como uma plataforma compartilhada onde cada cervejaria é um <em>tenant</em> independente com total isolamento de dados:</p>
+
+  <div class="arch-boxes">
+    <div class="arch-box highlight">
+      <div class="arch-icon">🌐</div>
+      <h4>Subdomínio próprio</h4>
+      <p>Cada cliente acessa por<br><em>minhacervejaria.zymos.app</em></p>
+    </div>
+    <div class="arch-box">
+      <div class="arch-icon">🔒</div>
+      <h4>Dados isolados</h4>
+      <p>Filtro @TenantId em todas as entidades — sem mistura possível</p>
+    </div>
+    <div class="arch-box highlight">
+      <div class="arch-icon">🎨</div>
+      <h4>Branding próprio</h4>
+      <p>Logo, cores e tipografias configuráveis por cliente</p>
+    </div>
+    <div class="arch-box">
+      <div class="arch-icon">⚡</div>
+      <h4>Atualizações</h4>
+      <p>Melhorias implantadas para todos os clientes simultaneamente</p>
+    </div>
+  </div>
+
+  <p>Essa arquitetura permite escalar o número de clientes sem aumento proporcional de custos operacionais, mantendo a segurança e o desempenho para todos.</p>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>6</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 7: TECH + STATUS -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">⚙️</div>
+    <h2 class="section-title">Stack Tecnológico</h2>
+  </div>
+
+  <table class="tech-table">
+    <thead>
+      <tr>
+        <th>Camada</th>
+        <th>Tecnologia</th>
+        <th>Finalidade</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Backend</td><td>Spring Boot 3.4.4 + Java 21</td><td>Motor principal — LTS até 2031, Jakarta EE 10</td></tr>
+      <tr><td>Banco de dados</td><td>PostgreSQL + Flyway (96 migrações)</td><td>Armazenamento relacional com controle de versões do schema</td></tr>
+      <tr><td>ORM</td><td>Hibernate 6 + Spring Data JPA</td><td>Filtro @TenantId, auditoria, Spring Session JDBC</td></tr>
+      <tr><td>Frontend</td><td>Thymeleaf 3.1 + Bootstrap 5.3</td><td>SSR responsivo, dark mode, i18n ES/EN/PT-BR</td></tr>
+      <tr><td>Gráficos / Calendário</td><td>Chart.js + FullCalendar</td><td>Visualizações interativas e planejamento</td></tr>
+      <tr><td>Segurança</td><td>Spring Security + JJWT</td><td>Autenticação, RBAC, CSP, JWT HS256, rate limiting</td></tr>
+      <tr><td>Documentos</td><td>OpenPDF + Apache POI + ZXing</td><td>PDFs, Excel (.xlsx) e etiquetas QR por lote</td></tr>
+      <tr><td>Inteligência Artificial</td><td>Anthropic Claude API SDK 2.34.0</td><td>7 serviços de IA (receitas, faturas, fermentação, BJCP, chat…). Modo mock sem API key</td></tr>
+      <tr><td>WhatsApp</td><td>Twilio WhatsApp Business API (HTTP)</td><td>Notificações multi-contato por inscrição em 8 tipos de alerta. Modo mock sem credenciais</td></tr>
+      <tr><td>Pagamentos</td><td>MercadoPago SDK 2.1.24 + Stripe</td><td>Checkout self-service de planos SaaS com dual-gateway. Modo mock para desenvolvimento</td></tr>
+      <tr><td>Cache</td><td>Caffeine + Spring Cache</td><td>Cache em memória com TTL configurável, branding por tenant</td></tr>
+      <tr><td>Métricas</td><td>Micrometer + Prometheus + Grafana</td><td>Monitoramento de produção, 12 painéis auto-provisionados</td></tr>
+      <tr><td>Error tracking</td><td>Sentry 7.14 multi-tenant</td><td>Cada evento marcado com tenant e usuário ativo</td></tr>
+      <tr><td>Deploy</td><td>Docker + Docker Compose</td><td>Containerização reproduzível em qualquer provedor de nuvem</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions + Dependabot</td><td>Build + Testes + SpotBugs em paralelo, dependências semanais</td></tr>
+      <tr><td>Push / Web Push</td><td>VAPID (nl.martijndwars:web-push 5.1.1)</td><td>Notificações push no navegador — inscrição por usuário, modo mock sem VAPID keys</td></tr>
+      <tr><td>Testes</td><td>JUnit 5 + Mockito + Testcontainers</td><td>1025 testes — unitários e integração com PostgreSQL real</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-header" style="margin-top:32px;">
+    <div class="section-icon">✅</div>
+    <h2 class="section-title">Status do Desenvolvimento</h2>
+  </div>
+
+  <table class="estado-table">
+    <thead><tr><th>Área</th><th>Status</th><th>Detalhe principal</th></tr></thead>
+    <tbody>
+      <tr><td>Rastreabilidade + Receitas</td><td><span class="badge-ok">Completo</span></td><td>Multi-cozimento (1–4 sessões), Brix/Terrill, BJCP, PDF + Excel</td></tr>
+      <tr><td>Inventário + Equipamentos</td><td><span class="badge-ok">Completo</span></td><td>Alertas, vencimentos, manutenções, custo unitário</td></tr>
+      <tr><td>Comercial + Vendas + Barris + OC</td><td><span class="badge-ok">Completo</span></td><td>Ciclos de vida, IVA por item, anexos, PDFs e Excel</td></tr>
+      <tr><td>BPF — Inocuidade</td><td><span class="badge-ok">Completo</span></td><td>Assinatura digital, bloqueio por saúde, 6 submódulos</td></tr>
+      <tr><td>RBAC dinâmico</td><td><span class="badge-ok">Completo</span></td><td>Papéis custom por tenant, 5 papéis de sistema</td></tr>
+      <tr><td>i18n ES / EN / PT-BR</td><td><span class="badge-ok">100%</span></td><td>Templates, PDFs, controllers + manuais ES/EN/PT + landing, planos, checkout — 3 bundles exatamente sincronizados</td></tr>
+      <tr><td>Dark mode</td><td><span class="badge-ok">Completo</span></td><td>Auditoria completa em todos os templates</td></tr>
+      <tr><td>API REST + JWT</td><td><span class="badge-ok">Completo</span></td><td>HS256, rate limiting, SpringDoc OpenAPI</td></tr>
+      <tr><td>Migração de dados (11 módulos)</td><td><span class="badge-ok">Completo</span></td><td>Modelos XLSX + perfil de água V93 + log de auditoria</td></tr>
+      <tr><td>Inteligência Artificial (7 serviços)</td><td><span class="badge-ok">Completo</span></td><td>Claude API SDK 2.34.0 · modo mock sem API key · 7 serviços integrados</td></tr>
+      <tr><td>Planos e Checkout Self-Service</td><td><span class="badge-ok">Completo</span></td><td>MercadoPago + Stripe dual-gateway · 3 planos · provisionamento automático de tenant</td></tr>
+      <tr><td>Push Notifications (VAPID)</td><td><span class="badge-ok">Completo</span></td><td>Web Push RFC 8030 · inscrição por usuário · handlers no service worker · modo mock sem keys (V95)</td></tr>
+      <tr><td>API REST + Webhooks de saída</td><td><span class="badge-ok">Completo</span></td><td>8 endpoints JWT · 5 eventos HMAC-SHA256 · admin UI · integração async em serviços (V96)</td></tr>
+      <tr><td>IA Preditiva de Fermentação</td><td><span class="badge-ok">Completo</span></td><td>FermentacionPredictivaService · histórico 5 lotes · DG/dias/confiança/tendência · modo mock</td></tr>
+      <tr><td>BeerXML 1.0 + Perfil de água</td><td><span class="badge-ok">Completo</span></td><td>Export/import padrão · 7 minerais em ppm (V93)</td></tr>
+      <tr><td>Notificações WhatsApp</td><td><span class="badge-ok">Completo</span></td><td>Twilio API · 8 tipos de alerta · multi-contato com inscrições independentes (V94)</td></tr>
+      <tr><td>Landing Page + Funil de vendas</td><td><span class="badge-ok">Completo</span></td><td>Landing 9 seções i18n ES/EN/PT · demo auto-login · e-mails de onboarding dias 1/3/7 · lembrete trial 4/1 dias</td></tr>
+      <tr><td>Dashboard empresarial</td><td><span class="badge-ok">Completo</span></td><td>12 métricas em tempo real · saudação personalizada · gráficos com estado vazio · seções personalizáveis drag &amp; drop</td></tr>
+      <tr><td>Suite de testes</td><td><span class="badge-ok">1025 testes</span></td><td>Unitários + integração com Testcontainers (PostgreSQL real)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>7</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 8: DIFERENCIAIS -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">⚡</div>
+    <h2 class="section-title">Diferenciais-Chave</h2>
+  </div>
+
+  <div class="dif-list">
+    <div class="dif-item no-break">
+      <div class="dif-num">1</div>
+      <div class="dif-text">
+        <strong>Multi-tenant real — sem silos de instâncias</strong>
+        <span>Um único deploy atende N cervejarias com isolamento completo de dados, branding próprio e papéis independentes por cliente. Sem multiplicar infraestrutura a cada novo cliente.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">2</div>
+      <div class="dif-text">
+        <strong>BPF integrado ao fluxo operacional diário</strong>
+        <span>O módulo de inocuidade alimentar não é um add-on externo. O sistema bloqueia ativamente o acesso de operários com sintomas de saúde pendentes — com assinatura digital do administrador para autorizar a exceção.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">3</div>
+      <div class="dif-text">
+        <strong>RBAC granular configurado pela cervejaria</strong>
+        <span>Os papéis não são fixos do sistema. Cada cliente os cria, nomeia e configura com permissões por módulo (Ver / Criar / Editar / Excluir). Um operário vê exatamente o que precisa.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">4</div>
+      <div class="dif-text">
+        <strong>Onboarding acelerado a partir dos dados existentes</strong>
+        <span>O migrador XLSX permite importar o histórico completo — receitas, lotes, fornecedores, faturas, clientes, equipamentos — em minutos a partir das planilhas atuais da cervejaria.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">5</div>
+      <div class="dif-text">
+        <strong>Rastreabilidade financeira completa do lote</strong>
+        <span>Da fatura do fornecedor ao custo por litro produzido. Inclui custo estimado automático com base nos preços do inventário quando não há faturas atribuídas.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">6</div>
+      <div class="dif-text">
+        <strong>Qualidade de código enterprise com 1025 testes</strong>
+        <span>Análise estática SpotBugs em CI, 96 migrações sem regressão, documentação técnica exaustiva. O código é mantível, extensível e auditado continuamente.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">7</div>
+      <div class="dif-text">
+        <strong>Inteligência Artificial integrada ao fluxo operacional</strong>
+        <span>7 serviços de IA com Claude API: gera receitas, preenche faturas a partir de fotos (Vision), diagnostica fermentações, produz textos comerciais, pontua cervejas com BJCP e analisa rentabilidade. Funciona em modo mock sem API key — ideal para demo sem custo.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">8</div>
+      <div class="dif-text">
+        <strong>Funil de conversão completo — do visitante ao cliente operando</strong>
+        <span>Landing page pública → demo com um clique (auto-login sem senha) → self-checkout com MercadoPago ou Stripe → tenant provisionado automaticamente → e-mails de onboarding dias 1/3/7 → lembrete antes do vencimento do trial. Tudo sem intervenção da equipe operacional.</span>
+      </div>
+    </div>
+    <div class="dif-item no-break">
+      <div class="dif-num">9</div>
+      <div class="dif-text">
+        <strong>Multi-idioma real — ES, EN e PT-BR desde o início</strong>
+        <span>Três bundles i18n exatamente sincronizados. Templates, PDFs, e-mails, landing, checkout e manuais disponíveis em espanhol, inglês e português. Seletor de idioma em cada página, persiste em cookie por usuário.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>8</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 9: ROADMAP -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">🗺️</div>
+    <h2 class="section-title">Roadmap de Próximas Funcionalidades</h2>
+  </div>
+
+  <p>Todos os itens de alta e média prioridade foram implementados. As iniciativas a seguir representam a expansão de longo prazo do produto.</p>
+
+  <div class="roadmap-section">
+    <div class="roadmap-horizon" style="background:linear-gradient(135deg,#064e3b,#065f46)">✅ Concluído — 7 de 7 itens de alto/médio valor implementados</div>
+    <table class="roadmap-table">
+      <thead>
+        <tr><th style="width:28%">Funcionalidade</th><th>Descrição</th><th style="width:22%">Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Trial gratuito (14 dias)</td><td>POST /checkout/trial · TenantFilter · lembretes 4/1 dia antes do vencimento</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>Stripe como gateway alternativo</td><td>StripeGateway · dual-gateway checkout · POST /webhook/stripe · cobranças em USD</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>Português (Brasil)</td><td>messages_pt.properties · ~600 chaves · botão PT em navbar/landing/planos</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>App móvel (PWA)</td><td>Service worker · manifest · cache offline · instalável pelo navegador</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>Notificações push (VAPID)</td><td>Web Push RFC 8030 · toggle na navbar · handlers no service worker · modo mock (V95)</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>API pública + Webhooks de saída</td><td>8 endpoints JWT · 5 eventos HMAC-SHA256 · admin UI webhooks (V96)</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+        <tr><td>IA preditiva de fermentação</td><td>FermentacionPredictivaService · histórico 5 lotes · DG/dias/confiança · modo mock</td><td><span class="badge-ok">✓ Pronto</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="roadmap-section">
+    <div class="roadmap-horizon">🌐 Próximas iniciativas — Plataforma e inteligência do setor</div>
+    <table class="roadmap-table">
+      <thead>
+        <tr><th style="width:28%">Funcionalidade</th><th>Descrição</th><th style="width:22%">Valor</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Integração contábil</td><td>Exportação de faturas para Siigo, Alegra ou sistemas contábeis locais</td><td>Elimina dupla entrada</td></tr>
+        <tr><td>Controle de temperatura IoT</td><td>Integração com sensores de fermentação (Tilt, Inkbird) via API</td><td>Diferenciação premium</td></tr>
+        <tr><td>Módulo de distribuição</td><td>Gestão de rotas de entrega, despachos e confirmação de recebimento</td><td>Expansão do ciclo de venda</td></tr>
+        <tr><td>Marketplace de receitas</td><td>Comunidade onde cervejarias compartilham e vendem receitas dentro da plataforma</td><td>Efeito de rede</td></tr>
+        <tr><td>Certificações digitais</td><td>Documentos automáticos para INVIMA, ANVISA e equivalentes regionais</td><td>Valor normativo</td></tr>
+        <tr><td>Zymos Analytics</td><td>Benchmarking anônimo do setor: eficiência, custos e tendências entre tenants</td><td>Monetização de dados agregados</td></tr>
+        <tr><td>Voz a texto em registros BPF</td><td>Ditado de observações na planta sem teclado — integração Speech-to-Text</td><td>Usabilidade em produção</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>9</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ PÁG 10: OPORTUNIDADE + ENCERRAMENTO -->
+<div class="page page-break">
+  <div class="section-header">
+    <div class="section-icon">💼</div>
+    <h2 class="section-title">Oportunidade de Investimento ou Aquisição</h2>
+  </div>
+
+  <p class="lead">Zymos representa a oportunidade de adquirir ou apoiar um produto de software concluído, com diferenciação clara em um mercado não atendido e barreiras de entrada técnicas significativas.</p>
+
+  <p><strong>Por que agora?</strong> O produto está terminado e pronto para receber clientes reais. O mercado artesanal latino-americano não tem um líder de software regional consolidado. As regulamentações BPF/HACCP são cada vez mais exigidas na Colômbia, México, Argentina e Chile — Zymos já as cobre com um módulo especializado.</p>
+
+  <div class="inv-grid">
+    <div class="inv-card no-break">
+      <h4>📦 Código-fonte completo</h4>
+      <p>Spring Boot + Thymeleaf + PostgreSQL. Arquitetura limpa, documentada com 400+ regras de negócio em CLAUDE.md.</p>
+    </div>
+    <div class="inv-card no-break">
+      <h4>🧪 Suite de 1025 testes</h4>
+      <p>Prontos para regressão contínua. CI/CD com GitHub Actions ativo em cada push. SpotBugs em cada build.</p>
+    </div>
+    <div class="inv-card no-break">
+      <h4>🗄️ Schema de BD maduro</h4>
+      <p>96 migrações Flyway sem dívida técnica. Testcontainers valida integridade com PostgreSQL real.</p>
+    </div>
+    <div class="inv-card no-break">
+      <h4>🤖 IA pronta para produção</h4>
+      <p>7 serviços Claude API integrados com modo mock. Ativação imediata com uma única variável de ambiente.</p>
+    </div>
+    <div class="inv-card no-break">
+      <h4>🚀 Onboarding e monetização prontos</h4>
+      <p>Checkout MercadoPago self-service + 11 modelos XLSX para migração. O primeiro cliente operando em horas.</p>
+    </div>
+    <div class="inv-card no-break">
+      <h4>🌎 Multi-mercado desde o dia 1</h4>
+      <p>Espanhol + inglês + português (Brasil). Multi-moeda. Temperatura °C/°F. Branding 100% personalizável. BeerXML padrão. Pagamentos com MercadoPago e Stripe.</p>
+    </div>
+  </div>
+
+  <p><strong>Cenários possíveis:</strong></p>
+  <ul style="margin: 0 0 20px 20px; font-size: 9.5pt; line-height: 1.9;">
+    <li><strong>Aquisição total</strong> — compra do código, marca e ativos para integração em um portfólio SaaS agrícola/alimentar</li>
+    <li><strong>Investimento de crescimento</strong> — financiamento para go-to-market, equipe comercial e primeiros clientes pagantes</li>
+    <li><strong>Joint venture / licenciamento</strong> — uso da plataforma sob marca branca para distribuidores em mercados específicos</li>
+    <li><strong>Apoio institucional</strong> — aceleradora, fundo ou entidade pública que impulsione a digitalização do setor cervejeiro artesanal</li>
+  </ul>
+
+  <div class="cierre-box">
+    <div class="cierre-logo">ZYMOS</div>
+    <div class="cierre-tag">Gestão e Rastreabilidade para Cervejaria Artesanal</div>
+    <div class="cierre-div"></div>
+    <div class="cierre-cta">
+      Para mais informações sobre planos, preços e implementação,<br>
+      entre em contato para agendar uma demonstração personalizada.<br><br>
+      <strong>juandavid.gomez@kane-group.com</strong>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span class="footer-brand">ZYMOS</span>
+    <span>Resumo Executivo · 2026</span>
+    <span>10</span>
+  </div>
+</div>
+
+<script>
+  const d = new Date();
+  const m = d.toLocaleDateString('pt-BR', { year:'numeric', month:'long' });
+  document.getElementById('cover-date').textContent = 'Confidencial · ' + m;
+</script>
+</body>
+</html>

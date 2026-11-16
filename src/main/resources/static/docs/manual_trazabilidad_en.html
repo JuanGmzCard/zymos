@@ -159,8 +159,10 @@
 
   <div class="sb-section">Artificial Intelligence</div>
   <a class="sb-link" href="#ia-diagnostico">AI Diagnosis</a>
+  <a class="sb-link" href="#ia-prediccion">AI Prediction</a>
   <a class="sb-link" href="#ia-descripcion">AI Commercial description</a>
   <a class="sb-link" href="#ia-bjcp">AI BJCP Scorer</a>
+  <a class="sb-link" href="#qr-etiqueta">QR Label</a>
   <a class="sb-link" href="#email-fase">Phase change email</a>
 </nav>
 
@@ -794,9 +796,67 @@
   </div>
 </section>
 
+<!-- ══════════ IA PREDICCIÓN ══════════ -->
+<section id="ia-prediccion">
+  <h2><span class="section-num">22</span>AI Fermentation Prediction 🔮</h2>
+  <p>AI fermentation prediction estimates when fermentation will finish and what the final gravity (FG) will be, based on current batch readings <strong>and the history of previous batches of the same style</strong>.</p>
+  <div class="callout info">
+    <p><strong>Difference from AI Diagnosis:</strong> Diagnosis answers "what is happening now?". Prediction answers "when does it finish and at what FG?"</p>
+  </div>
+  <h3><span class="icon">🔮</span>How to use the prediction</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Open the batch detail</strong><p>The batch must be in Fermentation phase with at least one density reading registered.</p></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Click "AI Prediction"</strong><p>Button next to "AI Diagnosis" in the Fermentation Curve section.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Interpret the results</strong><p>The modal shows: fermentation trend (Normal / Slow / Fast / Stuck), predicted FG range, estimated remaining days, estimated finish date, confidence level (%), historical comparison, and personalised insights and recommendations.</p></div>
+    </div>
+  </div>
+  <h3><span class="icon">📊</span>Trend indicators</h3>
+  <div class="data-table">
+    <table>
+      <thead><tr><th>Trend</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Normal</strong></td><td>Fermentation is progressing as expected for the style</td></tr>
+        <tr><td><strong>Slow</strong></td><td>Fermentation is progressing slower than normal</td></tr>
+        <tr><td><strong>Fast</strong></td><td>Fermentation is progressing faster than normal</td></tr>
+        <tr><td><strong>Stuck</strong></td><td>Gravity is not dropping; possible stalled fermentation</td></tr>
+        <tr><td><strong>Insufficient Data</strong></td><td>More readings needed to make a confident prediction</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout tip">
+    <p>Confidence level increases with more registered readings and more historical batches of the same style available. With at least 3 readings and 2 historical batches, the model reaches high confidence (&gt;80%).</p>
+  </div>
+</section>
+
+<!-- ══════════ QR ETIQUETA ══════════ -->
+<section id="qr-etiqueta">
+  <h2><span class="section-num">23</span>QR Label</h2>
+  <p>Generates an 80×100 mm PDF label with a QR code that links directly to the batch detail in Zymos. Useful for identifying barrels, tanks or boxes during production and storage.</p>
+  <h3><span class="icon">🏷️</span>How to generate the label</h3>
+  <div class="steps">
+    <div class="step"><div class="step-num">1</div>
+      <div class="step-body"><strong>Open the batch detail</strong></div>
+    </div>
+    <div class="step"><div class="step-num">2</div>
+      <div class="step-body"><strong>Click "QR Label"</strong><p>Button in the batch detail header, next to PDF, Duplicate and Commercial Description.</p></div>
+    </div>
+    <div class="step"><div class="step-num">3</div>
+      <div class="step-body"><strong>Print or save the PDF</strong><p>The browser downloads an 80×100 mm PDF with the QR code, batch name and code. Print on adhesive labels to stick on containers.</p></div>
+    </div>
+  </div>
+  <div class="callout tip">
+    <p>Scanning the QR with a phone opens the batch detail directly in Zymos. Requires the device to have access to the application's configured base URL.</p>
+  </div>
+</section>
+
 <!-- ══════════ EMAIL CAMBIO DE FASE ══════════ -->
 <section id="email-fase">
-  <h2><span class="section-num">22</span>Email notification on phase change</h2>
+  <h2><span class="section-num">24</span>Email notification on phase change</h2>
   <p>ZYMOS can automatically send an email every time a batch advances to a new production phase (from Mashing to Fermentation, from Fermentation to Conditioning, etc.).</p>
   <div class="callout info">
     <p><strong>Requirement:</strong> the system must have an SMTP server configured (SMTP_HOST environment variable). If no SMTP is configured, this feature is not available. The email is sent to the tenant's email address configured in the account.</p>
@@ -818,7 +878,7 @@
 
 <!-- ══════════ FAQ ══════════ -->
 <section id="faq">
-  <h2><span class="section-num">23</span>Frequently asked questions</h2>
+  <h2><span class="section-num">25</span>Frequently asked questions</h2>
 
   <h3>Why doesn't the "New Batch" button appear?</h3>
   <p>You need at least one <strong>active recipe</strong>. Go to <strong>Recipes → New Recipe</strong> and create one first.</p>
@@ -839,7 +899,7 @@
   <p>Yes. When you register the volume of each session (S1, S2, etc.), Zymos automatically sums them in the "Final Litres" field.</p>
 
   <h3>Can I change the application language?</h3>
-  <p>Yes. In the user menu (top-right corner of the navbar) there is a language selector: Español / English.</p>
+  <p>Yes. The navbar has a language selector: <strong>ES · EN · PT</strong> (Spanish, English, Brazilian Portuguese). The selected language persists in a cookie.</p>
 
   <h3>Where do "archived" batches go?</h3>
   <p>When a batch is archived, it is removed from the main list. The batch history remains in the system. Kegs and invoices linked to that batch are not affected.</p>
@@ -848,7 +908,7 @@
 </div><!-- /.content -->
 
 <div class="footer">
-  Zymos — User Manual · Traceability Module · Last updated: October 2026
+  Zymos — User Manual · Traceability Module · Last updated: November 2026
 </div>
 
 <script>

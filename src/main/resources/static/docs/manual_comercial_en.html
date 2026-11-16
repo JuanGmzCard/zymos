@@ -110,6 +110,7 @@
       <a href="#adjuntos">Attachments</a>
       <a href="#analizador-ia">AI Analyzer 🤖</a>
       <a href="#ordenes">Purchase orders</a>
+      <a href="#optimizador-oc-ia">PO AI Optimizer 🤖</a>
     </div>
     <div class="nav-group">
       <div class="nav-group-title">Sales</div>
@@ -264,6 +265,28 @@
       <div class="callout-body">
         Purchase orders <strong>do not update the inventory automatically</strong>. You must manually adjust the ingredient stock when goods arrive (by editing the ingredient in Inventory).
       </div>
+    </div>
+
+    <!-- PO AI Optimizer -->
+    <h2 id="optimizador-oc-ia">Purchase order AI optimizer 🤖</h2>
+    <p>The PO optimizer automatically analyzes planned production batches, current inventory and your suppliers' pricing history to generate an optimal PO suggestion with the recommended supplier per item.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requires AI configuration.</strong> The "Optimize with AI" button only appears when the administrator has configured the Anthropic API key (ANTHROPIC_API_KEY).</div>
+    </div>
+
+    <ol class="steps">
+      <li>Go to Commercial → <strong>Purchase orders</strong>.</li>
+      <li>Click the <strong>"Optimize with AI"</strong> button at the top of the list.</li>
+      <li>The AI analyzes the batches scheduled in the production calendar, the current stock of each ingredient and the historical prices from your suppliers.</li>
+      <li>A PO suggestion is displayed with: recommended ingredients to purchase, estimated quantities, suggested supplier per item (based on price history) and optimization insights.</li>
+      <li>Review the suggestion, adjust quantities or suppliers as needed, and create the PO based on the suggested data.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">The optimizer works best when there are planned brews in the production calendar and historical supplier invoices registered in the system. With more history, the suggestions will be more accurate.</div>
     </div>
 
     <!-- Clientes -->

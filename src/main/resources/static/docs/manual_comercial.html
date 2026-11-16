@@ -110,6 +110,7 @@
       <a href="#adjuntos">Adjuntos</a>
       <a href="#analizador-ia">Analizador IA 🤖</a>
       <a href="#ordenes">Órdenes de compra</a>
+      <a href="#optimizador-oc-ia">Optimizador OC IA 🤖</a>
     </div>
     <div class="nav-group">
       <div class="nav-group-title">Ventas</div>
@@ -264,6 +265,28 @@
       <div class="callout-body">
         Las órdenes de compra <strong>no actualizan el inventario automáticamente</strong>. Debes ajustar el stock del insumo manualmente cuando llegue la mercancía (editando el insumo en Inventario).
       </div>
+    </div>
+
+    <!-- Optimizador OC IA -->
+    <h2 id="optimizador-oc-ia">Optimizador de órdenes de compra con IA 🤖</h2>
+    <p>El optimizador de OC analiza automáticamente los lotes de producción planificados, el inventario actual y el historial de precios de tus proveedores para generar una sugerencia de OC óptima con el proveedor recomendado por ítem.</p>
+
+    <div class="callout warning">
+      <div class="callout-icon">⚠️</div>
+      <div class="callout-body"><strong>Requiere configuración de IA.</strong> El botón "Optimizar con IA" solo aparece cuando el administrador ha configurado la clave de API de Anthropic (ANTHROPIC_API_KEY).</div>
+    </div>
+
+    <ol class="steps">
+      <li>Ve a Comercial → <strong>Órdenes de compra</strong>.</li>
+      <li>Haz clic en el botón <strong>"Optimizar con IA"</strong> en la parte superior de la lista.</li>
+      <li>La IA analiza los lotes planificados en el calendario de producción, el stock actual de cada insumo y los precios históricos de tus proveedores.</li>
+      <li>Se muestra una sugerencia de OC con: insumos recomendados a comprar, cantidades estimadas, proveedor sugerido por ítem (basado en historial de precios) e insights de optimización.</li>
+      <li>Revisa la sugerencia, ajusta cantidades o proveedores si lo necesitas y crea la OC basándote en los datos sugeridos.</li>
+    </ol>
+
+    <div class="callout tip">
+      <div class="callout-icon">💡</div>
+      <div class="callout-body">El optimizador funciona mejor cuando hay elaboraciones planificadas en el calendario de producción y facturas históricas de proveedores registradas en el sistema. Con más historial, las sugerencias serán más precisas.</div>
     </div>
 
     <!-- Clientes -->

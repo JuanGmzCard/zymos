@@ -512,7 +512,7 @@
 
         <!-- Manuales de usuario -->
         <a class="zymos-rail-item"
-           th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : '/docs/index.html'"
+           th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : (${#locale.language == 'pt'} ? '/docs/index_pt.html' : '/docs/index.html')"
            target="_blank"
            data-bs-toggle="tooltip" data-bs-placement="right" th:title="#{nav.docs}">
             <i class="bi bi-book"></i>
