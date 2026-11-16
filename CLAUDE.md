@@ -338,11 +338,12 @@ El CSP enforced (activo desde 2026-07-03, Fase D) bloquea **todos** los event ha
 
 ## INTERNACIONALIZACIÓN (i18n)
 
-**Estado (2026-07-07): cobertura completa** — todos los templates, servicios PDF y controllers están internacionalizados.
+**Estado (2026-11-15): 3 idiomas — ES, EN, PT-BR.** Todos los templates, servicios PDF y controllers están internacionalizados. El sistema soporta español (default), inglés y portugués de Brasil.
 
 ### Archivos de mensajes
 - `src/main/resources/messages.properties` — idioma por defecto (español)
 - `src/main/resources/messages_en.properties` — inglés
+- `src/main/resources/messages_pt.properties` — Português do Brasil (agregado 2026-11-15, ~600+ keys)
 
 ### Convención de keys
 | Módulo | Prefijo |
@@ -419,6 +420,8 @@ Spring MVC inyecta `Locale locale` automáticamente como parámetro de método �
 
 El selector en `navbar.html` usa `th:href="${currentUri + '?lang=es'}"` — `currentUri` es un `@ModelAttribute` de `GlobalControllerAdvice` que expone `request.getRequestURI()`. El navegador navega via GET normal, `LocaleChangeInterceptor` procesa el param `lang`, guarda la cookie y la página se recarga en el nuevo idioma de forma inmediata. No requiere JS.
 
+El selector de la navbar muestra **ES · EN · PT** (sección `.rd-lang` con clase `lang-active` en el idioma activo).
+
 **CRÍTICO — Thymeleaf 3.1**: `#request` ya NO está disponible en expresiones `${}` (`IllegalArgumentException: The 'request'... expression utility objects are no longer available by default`). Para acceder a datos del request en templates, siempre exponer via `@ModelAttribute` en `GlobalControllerAdvice`.
 
 **NO usar** `th:href="@{''(lang='es')}"`: genera solo `?lang=es` sin ruta (puede no recargar). **NO usar** `href="#" + listener JS delegado en document`: Bootstrap puede interceptar el click dentro del dropdown antes de que el evento burbujee al listener.
@@ -429,18 +432,35 @@ Los archivos en `src/main/resources/static/docs/` son HTML estático (no Thymele
 ```html
 th:href="${#locale.language == 'en'} ? '/docs/index_en.html' : '/docs/index.html'"
 ```
+**No existen versiones `_pt.html`** — PT-BR cae al manual en español. Para crear manuales en PT habría que agregar `_pt.html` files y actualizar la condición a `'pt'`.
 
-### Landing page y páginas públicas — toggle ES/EN inline
+### Landing page y páginas públicas — toggle ES/EN/PT inline
 
-`landing.html` y `plan/planes.html` son páginas standalone (sin fragment navbar de la app). Incluyen su propio toggle ES/EN usando el mismo patrón `${currentUri + '?lang=XX'}`. CSS class `.lp-lang-active` para el idioma activo, `.lp-lang-btn` para el estilo. Patrón:
+`landing.html` y `plan/planes.html` son páginas standalone (sin fragment navbar de la app). Incluyen su propio toggle ES/EN/PT usando el mismo patrón `${currentUri + '?lang=XX'}`. CSS class `.lp-lang-active` para el idioma activo, `.lp-lang-btn` para el estilo. Patrón:
 ```html
 <a th:href="${currentUri + '?lang=es'}" th:classappend="${#locale.language == 'es'} ? ' lp-lang-active' : ''" class="lp-lang-btn">ES</a>
 <a th:href="${currentUri + '?lang=en'}" th:classappend="${#locale.language == 'en'} ? ' lp-lang-active' : ''" class="lp-lang-btn">EN</a>
+<span style="color:rgba(255,255,255,.2);font-size:.7rem">|</span>
+<a th:href="${currentUri + '?lang=pt'}" th:classappend="${#locale.language == 'pt'} ? ' lp-lang-active' : ''" class="lp-lang-btn">PT</a>
 ```
+(`planes.html` usa `.pl-lang-btn` / `.pl-lang-active` en lugar de `.lp-*`)
 
-### Cobertura i18n — 100% (2026-11-08)
+### Agregar un nuevo idioma — checklist
 
-Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN), landing, planes y checkout están internacionalizados. `messages.properties` (ES) y `messages_en.properties` (EN) tienen exactamente las mismas keys — diff vacío. Gaps menores resueltos: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados.
+Al agregar un cuarto idioma (ej: FR):
+1. Crear `messages_fr.properties` con todas las keys — verificar que coincidan con el template usando `Select-String -Pattern '#\{([^}]+)\}'` antes de commitear.
+2. `messages.properties`: agregar `lang.fr=Francés` + `admin.tform.idioma.fr=🇫🇷 Français`.
+3. `messages_en.properties`: agregar `lang.fr=French` + `admin.tform.idioma.fr=🇫🇷 Français`.
+4. `messages_pt.properties`: agregar `lang.fr=Francês` + `admin.tform.idioma.fr=🇫🇷 Français`.
+5. `navbar.html` `.rd-lang`: agregar botón FR.
+6. `landing.html` y `plan/planes.html`: agregar botón FR en toggles inline.
+7. `admin/tenant-formulario.html`: el `<select th:field="*{idioma}">` se puebla desde keys `admin.tform.idioma.*` — disponible automáticamente.
+
+### Cobertura i18n — 100% (2026-11-15)
+
+3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys. Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados. PT-BR agregado en 2026-11-15 con cobertura total de los mismos templates.
+
+**Manuales de usuario:** solo ES y EN (`static/docs/*_en.html`). PT-BR cae al español como fallback.
 
 ---
 
