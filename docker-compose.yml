@@ -56,6 +56,22 @@ services:
       APP_BRAND_COLOR_ACCENT_HOVER: ${APP_BRAND_COLOR_ACCENT_HOVER:-#E0B840}
       APP_BRAND_COLOR_CREAM:   ${APP_BRAND_COLOR_CREAM:-#F5EDD0}
       APP_BRAND_COLOR_BODY_BG: ${APP_BRAND_COLOR_BODY_BG:-#F0EDE2}
+      # ── WhatsApp / Twilio (opcional) ─────────────────────────────
+      TWILIO_ACCOUNT_SID:   ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN:    ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}
+      # ── IA / Anthropic (opcional) ────────────────────────────────
+      ANTHROPIC_API_KEY:    ${ANTHROPIC_API_KEY:-}
+      # ── MercadoPago (opcional) ───────────────────────────────────
+      MP_ACCESS_TOKEN:      ${MP_ACCESS_TOKEN:-}
+      # ── Stripe (opcional) ────────────────────────────────────────
+      STRIPE_SECRET_KEY:    ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # ── VAPID / Push Notifications (opcional) ────────────────────
+      VAPID_PUBLIC_KEY:     ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY:    ${VAPID_PRIVATE_KEY:-}
+      # ── Sentry (opcional) ────────────────────────────────────────
+      SENTRY_DSN:           ${SENTRY_DSN:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q '\"status\":\"UP\"' || exit 1"]
       interval: 30s
