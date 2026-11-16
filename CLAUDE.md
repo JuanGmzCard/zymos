@@ -60,6 +60,7 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 - **MercadoPago pagos** (opcional): `MP_ACCESS_TOKEN` — token de producción de MP. Sin definir, el checkout funciona en **modo mock** (pago siempre aprobado para testing). `app.mp.access-token=${MP_ACCESS_TOKEN:}`, `app.mp.success-url`, `app.mp.failure-url`, `app.mp.pending-url`. Ver sección MÓDULO PLANES Y PAGOS.
 - **Sentry — error tracking** (opcional): `SENTRY_DSN` (vacío → Sentry deshabilitado; en prod definir con el DSN del proyecto en sentry.io), `SENTRY_RELEASE` (def: `1.0.0` — pasar git SHA en CI para rastrear qué versión causó el error). Configurado en `SentryConfig.java` con dos beans: `EventProcessor` (agrega tag `tenant` desde `TenantContext` a cada evento) y `SentryUserProvider` (adjunta `username` del usuario autenticado vía `SecurityContextHolder`). `GlobalExceptionHandler` llama `Sentry.captureException(ex)` tanto en el handler de 500 (`Exception`) como en el de 400 (`RuntimeException`). `sentry.environment` es `dev` por defecto y `prod` en `application-prod.properties`.
 - **WhatsApp notificaciones** (opcional): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` — credenciales de Twilio para enviar mensajes WhatsApp. Sin definir, `WhatsAppService` funciona en **modo mock** (mensajes solo logueados, no enviados). `TWILIO_WHATSAPP_FROM` (def: `whatsapp:+14155238886` — número sandbox de Twilio). Configurado en `app.twilio.account-sid/auth-token/whatsapp-from`. Ver sección MÓDULO WHATSAPP.
+- **Push Notifications — VAPID** (opcional): `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` — par de claves EC VAPID para Web Push (prime256v1, base64url sin padding). `VAPID_SUBJECT` (def: `mailto:noreply@zymos.app`). Sin definir, `PushNotificationService` funciona en **modo mock** (push solo logueado, no enviado). Generar keys iniciales vía `GET /admin/push/generate-keys`. Configurado en `app.vapid.public-key/private-key/subject`. Ver sección MÓDULO PUSH NOTIFICATIONS.
 
 ---
 
@@ -956,6 +957,88 @@ WHERE cwa.tenant_id = :tenantId AND cwas.tipo = :tipo AND cwa.activo = TRUE
 ### Tests
 
 `WhatsAppAdminControllerTest` — 7 tests `@WebMvcTest`: 401 sin auth, 200 con ADMIN, 200 formulario nuevo, redirect en guardar válido, re-render en teléfono inválido, redirect en eliminar, redirect en toggle. **CLAUDE.md regla #38 aplica**: el test `403 sin ADMIN` fue eliminado por el comportamiento del `ZymosAccessDeniedHandler` mock. `@MockBean WhatsAppService whatsAppService` requerido además de `@MockBean ContactoWhatsAppService`. Los tests de `AlertaScheduler`, `TrazabilidadService`, `BpmService` y `TareaService` requieren `@Mock WhatsAppService whatsAppService`.
+
+---
+
+## MÓDULO PUSH NOTIFICATIONS
+
+Notificaciones push en el navegador vía Web Push API (RFC 8030) + VAPID (RFC 8292). Implementado en V95.
+
+### Dependencias
+
+- `nl.martijndwars:web-push:5.1.1` — envío VAPID/Web Push HTTP.
+- `org.bouncycastle:bcprov-jdk15on:1.70` — cripto EC (web-push lo declara `provided`, se agrega explícitamente en pom.xml).
+
+### Entidad
+
+- **`PushSubscription`** (tabla `push_subscriptions`): `tenantId` (VARCHAR 100), `username` (VARCHAR 100), `endpoint` (TEXT), `p256dh` (TEXT), `auth_key` (TEXT), `createdAt` (`@CreatedDate`). **Sin `@TenantId`** — queries usan `tenantId` explícito para evitar conflictos con el filtro Hibernate en schedulers y jobs. Constraint `UNIQUE(endpoint)` — una suscripción por dispositivo/navegador.
+
+### `PushNotificationService`
+
+- **Mock mode** cuando `app.vapid.public-key` o `app.vapid.private-key` están en blanco → `log.info("[Push MOCK]")`.
+- **`init()` `@PostConstruct`**: registra BouncyCastleProvider si aún no está, crea `PushService` con las tres propiedades VAPID.
+- **`generateVapidKeys()`**: genera par EC prime256v1 con `KeyPairGenerator.getInstance("EC","BC")`. Public key: `BCECPublicKey.getQ().getEncoded(false)` (punto no comprimido, 65 bytes) → Base64URL sin padding. Private key: `BCECPrivateKey.getD().toByteArray()` → strip del byte 0x00 líder si length==33 → Base64URL sin padding. **NUNCA** usar `Utils.generateVAPIDKeyPair()` / `Utils.savePublicKey()` / `Utils.savePrivateKey()` — esos métodos no existen en web-push 5.1.1.
+- **`enviarAUsuario(username, tenantId, title, body, url)`** — push al usuario específico (usado por `NotificacionService.crearAlertaTareaAsignada`). Asíncrono via `CompletableFuture.runAsync()`.
+- **`enviarATenant(tenantId, title, body, url)`** — push a todos los suscriptores del tenant.
+- **`enviarRaw(sub, title, body, url)`** — construye `Subscription(endpoint, Keys(p256dh, auth))`, serializa payload JSON `{title, body, icon, badge, url}`, llama `pushService.send(Notification)`. Si respuesta HTTP 410/404 → elimina la suscripción (expirada/inválida).
+
+### `PushSubscriptionController`
+
+Rutas REST bajo `/push/`:
+
+| Endpoint | Descripción |
+|---|---|
+| `GET /push/vapid-public-key` | Devuelve `{publicKey, isConfigured}` — `permitAll()` para que el JS del navbar pueda leerlo sin auth |
+| `POST /push/subscribe` | Body: `{endpoint, p256dh, auth}` — llama `upsertSubscription` |
+| `POST /push/unsubscribe` | Body: `{endpoint}` — llama `removeSubscription` |
+| `GET /push/status` | Devuelve `{subscribed: bool}` para el usuario autenticado |
+
+### Service Worker (`sw.js`)
+
+Handlers agregados al service worker existente (antes de `networkFirstWithOffline`):
+
+- **`push`** — `event.data.json()`, llama `self.registration.showNotification(title, options)`.
+- **`notificationclick`** — cierra la notificación, foca una ventana existente o abre `data.url` con `clients.openWindow()`.
+
+### Navbar — botón toggle
+
+Botón `#pushToggleBtn` en el icon rail (posición: entre campana de notificaciones y dark-mode toggle):
+- Se muestra solo si `'serviceWorker' in navigator && 'PushManager' in window`.
+- Ícono: `bi-bell-plus` gris (no suscrito) → `bi-bell-check-fill` dorado (suscrito).
+- En subscribe: fetch `/push/vapid-public-key`, `urlBase64ToUint8Array(publicKey)` para convertir la clave VAPID a `Uint8Array`, `pushManager.subscribe({userVisibleOnly:true, applicationServerKey})`, POST a `/push/subscribe` con el objeto serializado.
+- `urlBase64ToUint8Array(b64)`: añade padding, decodifica base64, retorna `Uint8Array`.
+
+### `AdminController` — generador de keys
+
+`GET /admin/push/generate-keys` → `@ResponseBody Map<String,String>` con `publicKey`, `privateKey`, `instrucciones`. Protegido por `adminOnly()` (ya cubre `/admin/**`). Requiere `@MockBean PushNotificationService` en `AdminControllerTest`.
+
+### Integración con `NotificacionService`
+
+Constructor recibe `PushNotificationService pushService`. En `crearAlertaTareaAsignada(tarea)`: si `pushService != null && tarea.getAsignadoA() != null` → `pushService.enviarAUsuario(asignadoA, tenantId, titulo, mensaje, url)`. El null-check es necesario porque `@InjectMocks` en `NotificacionServiceTest` puede pasar `null` para parámetros no mocked.
+
+### Seguridad
+
+- `SecurityConfig`: `GET /push/vapid-public-key` → `permitAll()`; resto `/push/**` → `authenticated()`.
+- `BpmSaludFilter.shouldSkip()`: agrega `path.startsWith("/push/")`.
+- CSRF: endpoints POST usan el token estándar del meta tag `_csrf` del HTML (mismo patrón AJAX del proyecto).
+
+### Variables de entorno
+
+```properties
+app.vapid.public-key=${VAPID_PUBLIC_KEY:}
+app.vapid.private-key=${VAPID_PRIVATE_KEY:}
+app.vapid.subject=${VAPID_SUBJECT:mailto:noreply@zymos.app}
+```
+
+### Tests
+
+`PushSubscriptionControllerTest` — 5 tests `@WebMvcTest`: GET vapid-public-key → 200, POST subscribe → 200, POST unsubscribe → 200, GET status → 200, POST sin auth → 401. **1011 tests totales**.
+
+### Activar en producción
+
+1. `GET /admin/push/generate-keys` (autenticado como ADMIN) → copiar `publicKey` y `privateKey`
+2. Agregar `VAPID_PUBLIC_KEY=<valor>` y `VAPID_PRIVATE_KEY=<valor>` a variables de entorno
+3. Reiniciar la app — el service worker existente ya tiene los handlers listos
 
 ---
 
