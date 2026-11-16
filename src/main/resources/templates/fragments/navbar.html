@@ -1239,7 +1239,26 @@
                 if (!icon) return;
                 icon.className = subscribed ? 'bi bi-bell-check-fill' : 'bi bi-bell-plus';
                 btn.style.color = subscribed ? 'var(--dorado)' : '#64748b';
-                btn.title = subscribed ? '[[#{nav.push.desactivar}]]' : '[[#{nav.push.activar}]]';
+                btn.setAttribute('title', subscribed ? '[[#{nav.push.desactivar}]]' : '[[#{nav.push.activar}]]');
+            }
+
+            function showPushToast(msg, type) {
+                var container = document.createElement('div');
+                container.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:1095;';
+                var colors = { success: 'bg-success text-white', warning: 'bg-warning text-dark', danger: 'bg-danger text-white' };
+                container.innerHTML = '<div class="toast border-0 shadow show" role="alert" aria-atomic="true" data-bs-autohide="true" data-bs-delay="5000">' +
+                    '<div class="toast-header border-0 ' + (colors[type] || colors.warning) + '">' +
+                    '<strong class="me-auto">[[#{nav.push.toggle}]]</strong>' +
+                    '<button type="button" class="btn-close ' + (type !== 'warning' ? 'btn-close-white' : '') + '" data-bs-dismiss="toast"></button>' +
+                    '</div><div class="toast-body">' + msg + '</div></div>';
+                document.body.appendChild(container);
+                if (typeof bootstrap !== 'undefined') {
+                    var t = bootstrap.Toast.getOrCreateInstance(container.querySelector('.toast'));
+                    t.show();
+                    container.querySelector('.toast').addEventListener('hidden.bs.toast', function() { container.remove(); });
+                } else {
+                    setTimeout(function() { container.remove(); }, 5000);
+                }
             }
 
             navigator.serviceWorker.ready.then(function (reg) {
@@ -1258,10 +1277,14 @@
                                     body: JSON.stringify({ endpoint: existing.endpoint })
                                 });
                                 setSubscribedState(false);
+                                showPushToast('[[#{nav.push.desactivado}]]', 'warning');
                             });
                         } else {
                             fetch('/push/vapid-public-key').then(function (r) { return r.json(); }).then(function (data) {
-                                if (!data.publicKey) return;
+                                if (!data.publicKey) {
+                                    showPushToast('[[#{nav.push.sin.vapid}]]', 'warning');
+                                    return;
+                                }
                                 reg.pushManager.subscribe({
                                     userVisibleOnly: true,
                                     applicationServerKey: urlBase64ToUint8Array(data.publicKey)
@@ -1278,8 +1301,12 @@
                                         body: JSON.stringify(payload)
                                     });
                                     setSubscribedState(true);
+                                    showPushToast('[[#{nav.push.activado}]]', 'success');
                                 }).catch(function (err) {
                                     console.warn('[Push] Suscripción rechazada:', err);
+                                    if (err.name === 'NotAllowedError') {
+                                        showPushToast('[[#{nav.push.permiso.denegado}]]', 'danger');
+                                    }
                                 });
                             });
                         }
