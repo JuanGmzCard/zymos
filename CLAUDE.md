@@ -238,6 +238,8 @@ Sistema de gestión integral para cervecerías artesanales. **Nota**: "Alera" es
 
 72. **`TipoCerveza` cross-tenant provisioning**: `TipoCervezaRepository.existsByNombreIgnoreCaseAndTenantId(nombre, tenantId)` usa `nativeQuery=true` para bypassear el filtro `@TenantId` de Hibernate durante el aprovisionamiento. `TenantProvisioningService` llama este método (no el JPQL `existsByNombreIgnoreCase`) para evitar falsos positivos cuando el `TenantContext` no está correctamente configurado durante la creación del tenant.
 
+73. **Webhook handlers — HTTP 500 en fallo de provisioning**: los endpoints `POST /webhook/mp` y `POST /webhook/stripe` **NUNCA deben retornar HTTP 200 cuando el provisioning falla**. Los gateways de pago (MercadoPago, Stripe) reintentan el webhook automáticamente ante cualquier respuesta 5xx — esto garantiza que ningún pago quede sin procesar silenciosamente. Patrón obligatorio: usar un check `Optional` explícito (NO `ifPresent()`) para capturar el valor de retorno de `provisionar()`: `Optional.ofNullable(...).ifPresent()` descarta el retorno. Si `provisionar()` retorna `"plan/fallo"` → `return ResponseEntity.status(500).build()`. Si ocurre una excepción en el `catch` → idem. HTTP 200 solo cuando el checkout quedó marcado como procesado. Este mismo principio aplica a cualquier otro webhook de pago que se agregue en el futuro. **`WebhookAdminController` — error paths**: tanto `guardar()` como `actualizar()` deben incluir `model.addAttribute("secretGenerado", WebhookService.generarSecret())` en el bloque `if (result.hasErrors())` — de lo contrario el campo `secret` aparece vacío en el re-render del formulario de error.
+
 51. **Notificaciones — filtrado por rol**: `NotificacionService` filtra las notificaciones según las authorities del usuario. `TIPO_AUTHORITY` (Map estático) define qué authority requiere cada `TipoNotificacion`: `BAJO_STOCK`/`VENCIMIENTO` → `MODULO_INVENTARIO_VER`, `MANTENIMIENTO` → `MODULO_EQUIPOS_VER`, `SISTEMA` → `MODULO_FACTURACION_VER`, `BPM_SALUD` → `MODULO_BPM_VER`, `LOTE_FASE_VENCIDA` → `MODULO_TRAZABILIDAD_VER`, `TAREA_ASIGNADA`/`TAREA_VENCIMIENTO` → `MODULO_TAREAS_VER`. Tipos sin entrada en el mapa (`PLAN_VENCIMIENTO`, `PLAN_LIMITE`) solo los ven ADMIN/SUPERADMIN. `tiposVisibles(Collection<String> authorities)` calcula la lista filtrada. Los métodos `listarRecientes`, `contarNoLeidas` y `listarTodas` reciben `Collection<String> authorities` como parámetro — obtenerlas en el controller con `auth.getAuthorities().stream().map(a -> a.getAuthority()).collect(Collectors.toSet())`. **Al agregar un nuevo `TipoNotificacion`**: añadir entrada en `TIPO_AUTHORITY` si no es admin-only; si es admin-only, simplemente no agregar entrada. `TipoNotificacion.BPM_SALUD` se genera en `BpmService.guardarSintoma()` cuando `r.tieneSintomas()` es true, con deduplicación de 1 por día via `existeEnPeriodo()`. `TipoNotificacion.LOTE_FASE_VENCIDA` se genera en `AlertaScheduler` diariamente para lotes con inicio de fase anterior al `fechaIdeal` calculado.
 
 ---
@@ -457,11 +459,13 @@ Al agregar un cuarto idioma (ej: FR):
 6. `landing.html` y `plan/planes.html`: agregar botón FR en toggles inline.
 7. `admin/tenant-formulario.html`: el `<select th:field="*{idioma}">` se puebla desde keys `admin.tform.idioma.*` — disponible automáticamente.
 
-### Cobertura i18n — 100% (2026-11-15)
+### Cobertura i18n — 100% (2026-11-16)
 
-3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN+PT), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys. Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados en EN eliminados. PT-BR agregado en 2026-11-15 con cobertura total de los mismos templates.
+3 idiomas activos: **ES + EN + PT-BR**. Todos los templates Thymeleaf, PDFs, controllers, emails activos, manuales de usuario (ES+EN+PT), landing, planes y checkout están internacionalizados. Los tres bundles tienen exactamente las mismas keys (3441 cada uno). Gaps menores resueltos en 2026-11-08: `demo.html`, `usuarios.html` (JS typeahead), `stock/index.html` (modal de ajuste), duplicados EN eliminados. PT-BR completado en 2026-11-15 (591 keys faltantes + limpieza de 3140 keys huérfanas con nombres incorrectos).
 
-**Manuales de usuario:** ES + EN + PT-BR (`static/docs/*_en.html` + `*_pt.html`). Los 9 módulos tienen versión en los 3 idiomas. El navbar enruta automáticamente al archivo correcto según el idioma activo.
+**Manuales de usuario:** ES + EN + PT-BR (`static/docs/*_en.html` + `*_pt.html`). Los 9 módulos tienen versión real en los 3 idiomas. El navbar enruta automáticamente al archivo correcto según el idioma activo.
+
+**Resúmenes ejecutivos:** `docs/resumen-ejecutivo.html` (ES) + `resumen-ejecutivo_en.html` (EN) + `resumen-ejecutivo_pt.html` (PT-BR) — 10 páginas c/u con traducción completa del cuerpo (no solo títulos). Accesibles desde `/docs/resumen-ejecutivo.html` directamente (HTML estático con botón "Exportar PDF" vía `window.print()`).
 
 ---
 
@@ -843,7 +847,8 @@ Permite a nuevos clientes auto-provisionarse pagando desde la web, sin intervenc
   - `GET /planes` — página de selección de plan con 3 cards
   - `POST /checkout/iniciar` — crea `CheckoutPendiente` + preferencia MP → redirect a URL de MP
   - `GET /checkout/exito|fallo|pendiente` — páginas de resultado
-  - `POST /webhook/mp` — recibe notificación MP, verifica pago, llama `TenantProvisioningService`. CSRF ignorado para `/webhook/**`.
+  - `POST /webhook/mp` — recibe notificación MP, verifica pago, llama `TenantProvisioningService`. CSRF ignorado para `/webhook/**`. Retorna HTTP 500 cuando `provisionar()` falla (retorna `"plan/fallo"`) o cuando ocurre una excepción — los gateways de pago reintentan ante cualquier 5xx. **NUNCA** retornar 200 si el provisioning falló.
+  - `POST /webhook/stripe` — recibe notificación Stripe, verifica firma via `stripe.webhooks.constructEvent()`. Mismo comportamiento: HTTP 500 en error de provisioning o firma inválida. HTTP 200 solo si el checkout quedó procesado exitosamente.
 - **Templates**: `plan/planes.html`, `plan/exito.html`, `plan/fallo.html`, `plan/pendiente.html`.
 - **CSP en páginas públicas**: igual que el resto — NUNCA `onclick=` / `oninput=` inline. Usar event delegation con `document.addEventListener` en `<script th:attr="nonce=${cspNonce}">`.
 - **Subdominio**: solo letras y números (`^[a-z0-9]{3,30}$`). JS `limpiarSubdominio()` normaliza acentos con `normalize('NFD')`. Auto-sugerencia desde nombre de cervecería; para cuando el usuario edita manualmente (`dataset.editadoManual`).
