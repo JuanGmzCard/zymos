@@ -1,6 +1,7 @@
 package com.alera.controller;
 
 import com.alera.config.*;
+import com.alera.model.ContactoWhatsApp;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.UsuarioRepository;
 import com.alera.service.*;
@@ -123,5 +124,21 @@ class WhatsAppAdminControllerTest {
         mockMvc.perform(post("/admin/whatsapp/toggle/1").with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/whatsapp"));
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("POST /admin/whatsapp/test/{id} → redirect con flash success")
+    void test_envioExitoso_redirige() throws Exception {
+        ContactoWhatsApp c = new ContactoWhatsApp();
+        c.setTelefono("+573001234567");
+        when(service.buscarPorId(1L)).thenReturn(c);
+        doNothing().when(whatsAppService).enviarMensajePrueba(any());
+
+        mockMvc.perform(post("/admin/whatsapp/test/1").with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/whatsapp"));
+
+        verify(whatsAppService).enviarMensajePrueba("+573001234567");
     }
 }

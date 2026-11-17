@@ -68,6 +68,13 @@ public class WhatsAppService {
         }
     }
 
+    public void enviarMensajePrueba(String telefono) {
+        String msg = "🧪 *Mensaje de prueba — Zymos*\n" +
+                "Si recibiste este mensaje, las notificaciones WhatsApp están configuradas correctamente. ✅\n\n" +
+                "👉 Podés cerrar esta ventana.";
+        enviar(telefono, msg);
+    }
+
     private void enviarATipo(String tenantId, TipoAlertaWhatsApp tipo, String mensaje) {
         List<ContactoWhatsApp> contactos = contactoRepo.findActivosByTenantIdAndTipo(tenantId, tipo.name());
         if (contactos.isEmpty()) return;
