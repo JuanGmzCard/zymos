@@ -17,7 +17,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class WhatsAppService {
@@ -25,10 +27,17 @@ public class WhatsAppService {
     private static final Logger log = LoggerFactory.getLogger(WhatsAppService.class);
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
+    // ── Twilio ────────────────────────────────────────────────────────────────
     @Value("${app.twilio.account-sid:}") private String accountSid;
     @Value("${app.twilio.auth-token:}")  private String authToken;
-    @Value("${app.twilio.whatsapp-from:whatsapp:+14155238886}") private String from;
+    @Value("${app.twilio.whatsapp-from:whatsapp:+14155238886}") private String twilioFrom;
     @Value("${app.twilio.content-sid:}") private String contentSid;
+
+    // ── Meta WhatsApp Cloud API ───────────────────────────────────────────────
+    @Value("${app.meta.wa.token:}")           private String metaToken;
+    @Value("${app.meta.wa.phone-id:}")        private String metaPhoneId;
+    @Value("${app.meta.wa.template-name:}")   private String metaTemplateName;
+    @Value("${app.meta.wa.template-lang:es}") private String metaTemplateLang;
 
     private final ContactoWhatsAppRepository contactoRepo;
     private final RestTemplate restTemplate;
@@ -38,22 +47,32 @@ public class WhatsAppService {
         this.restTemplate = new RestTemplate();
     }
 
-    public boolean isConfigured() {
-        return !accountSid.isBlank() && !authToken.isBlank();
-    }
+    public boolean isConfigured()      { return isMetaConfigured() || isTwilioConfigured(); }
+    public boolean isMetaConfigured()  { return !metaToken.isBlank() && !metaPhoneId.isBlank(); }
+    public boolean isTwilioConfigured(){ return !accountSid.isBlank() && !authToken.isBlank(); }
 
-    public boolean isProductionMode() {
-        return isConfigured() && !contentSid.isBlank();
+    /** "meta" | "twilio" | "twilio-sandbox" | "mock" */
+    public String getProvider() {
+        if (isMetaConfigured())    return "meta";
+        if (isTwilioConfigured())  return contentSid.isBlank() ? "twilio-sandbox" : "twilio";
+        return "mock";
     }
 
     // ── Core send ─────────────────────────────────────────────────────────────
 
     private void enviar(String telefono, String mensaje) {
-        String toNumber = telefono.startsWith("whatsapp:") ? telefono : "whatsapp:" + telefono;
-        if (!isConfigured()) {
-            log.info("[WhatsApp MOCK] → {} : {}", toNumber, mensaje.replace("\n", " "));
-            return;
+        if (isMetaConfigured()) {
+            enviarViaMeta(telefono, mensaje);
+        } else if (isTwilioConfigured()) {
+            enviarViaTwilio(telefono, mensaje);
+        } else {
+            String to = telefono.startsWith("whatsapp:") ? telefono : "whatsapp:" + telefono;
+            log.info("[WhatsApp MOCK] → {} : {}", to, mensaje.replace("\n", " "));
         }
+    }
+
+    private void enviarViaTwilio(String telefono, String mensaje) {
+        String toNumber = telefono.startsWith("whatsapp:") ? telefono : "whatsapp:" + telefono;
         try {
             String url = "https://api.twilio.com/2010-04-01/Accounts/" + accountSid + "/Messages.json";
 
@@ -62,7 +81,7 @@ public class WhatsAppService {
             headers.setBasicAuth(accountSid, authToken);
 
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("From", from);
+            body.add("From", twilioFrom);
             body.add("To", toNumber);
             if (!contentSid.isBlank()) {
                 body.add("ContentSid", contentSid);
@@ -71,9 +90,44 @@ public class WhatsAppService {
             }
 
             restTemplate.postForObject(url, new HttpEntity<>(body, headers), String.class);
-            log.info("[WhatsApp] Enviado a {}", toNumber);
+            log.info("[WhatsApp/Twilio] Enviado a {}", toNumber);
         } catch (Exception e) {
-            log.error("[WhatsApp] Error enviando a {}: {}", toNumber, e.getMessage());
+            log.error("[WhatsApp/Twilio] Error enviando a {}: {}", toNumber, e.getMessage());
+        }
+    }
+
+    private void enviarViaMeta(String telefono, String mensaje) {
+        String to = telefono.replace("whatsapp:", "").replace("+", "");
+        try {
+            String url = "https://graph.facebook.com/v18.0/" + metaPhoneId + "/messages";
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(metaToken);
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("messaging_product", "whatsapp");
+            payload.put("to", to);
+
+            if (!metaTemplateName.isBlank()) {
+                Map<String, Object> language = new LinkedHashMap<>();
+                language.put("code", metaTemplateLang);
+                Map<String, Object> template = new LinkedHashMap<>();
+                template.put("name", metaTemplateName);
+                template.put("language", language);
+                payload.put("type", "template");
+                payload.put("template", template);
+            } else {
+                Map<String, Object> text = new LinkedHashMap<>();
+                text.put("body", mensaje);
+                payload.put("type", "text");
+                payload.put("text", text);
+            }
+
+            restTemplate.postForObject(url, new HttpEntity<>(payload, headers), String.class);
+            log.info("[WhatsApp/Meta] Enviado a {}", to);
+        } catch (Exception e) {
+            log.error("[WhatsApp/Meta] Error enviando a {}: {}", to, e.getMessage());
         }
     }
 

@@ -61,6 +61,11 @@ services:
       TWILIO_AUTH_TOKEN:    ${TWILIO_AUTH_TOKEN:-}
       TWILIO_WHATSAPP_FROM: ${TWILIO_WHATSAPP_FROM:-whatsapp:+14155238886}
       TWILIO_CONTENT_SID:   ${TWILIO_CONTENT_SID:-}
+      # ── Meta WhatsApp Cloud API (alternativa a Twilio, gratis) ───
+      META_WA_TOKEN:        ${META_WA_TOKEN:-}
+      META_WA_PHONE_ID:     ${META_WA_PHONE_ID:-}
+      META_WA_TEMPLATE_NAME: ${META_WA_TEMPLATE_NAME:-}
+      META_WA_TEMPLATE_LANG: ${META_WA_TEMPLATE_LANG:-es}
       # ── IA / Anthropic (opcional) ────────────────────────────────
       ANTHROPIC_API_KEY:    ${ANTHROPIC_API_KEY:-}
       # ── MercadoPago (opcional) ───────────────────────────────────
