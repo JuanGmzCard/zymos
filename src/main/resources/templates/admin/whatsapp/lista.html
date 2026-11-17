@@ -132,6 +132,14 @@
                                         <i th:class="${c.activo ? 'bi bi-toggle-on' : 'bi bi-toggle-off'}"></i>
                                     </button>
                                 </form>
+                                <form th:action="@{/admin/whatsapp/test/{id}(id=${c.id})}"
+                                      method="post" style="display:contents">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                                    <button type="submit" class="btn btn-outline-success btn-sm"
+                                            th:title="#{wa.test.btn}">
+                                        <i class="bi bi-send"></i>
+                                    </button>
+                                </form>
                                 <form th:action="@{/admin/whatsapp/eliminar/{id}(id=${c.id})}"
                                       method="post" style="display:contents"
                                       th:attr="data-confirm=#{wa.confirm.eliminar}">

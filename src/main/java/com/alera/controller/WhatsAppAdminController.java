@@ -1,6 +1,7 @@
 package com.alera.controller;
 
 import com.alera.dto.ContactoWhatsAppFormDto;
+import com.alera.model.ContactoWhatsApp;
 import com.alera.model.enums.TipoAlertaWhatsApp;
 import com.alera.service.ContactoWhatsAppService;
 import com.alera.service.WhatsAppService;
@@ -85,6 +86,20 @@ public class WhatsAppAdminController {
         service.toggleActivo(id);
         flash.addFlashAttribute("mensaje", "Estado actualizado.");
         flash.addFlashAttribute("tipoMensaje", "success");
+        return "redirect:/admin/whatsapp";
+    }
+
+    @PostMapping("/test/{id}")
+    public String test(@PathVariable Long id, RedirectAttributes flash) {
+        try {
+            ContactoWhatsApp c = service.buscarPorId(id);
+            whatsAppService.enviarMensajePrueba(c.getTelefono());
+            flash.addFlashAttribute("mensaje", "Mensaje de prueba enviado a " + c.getTelefono() + ".");
+            flash.addFlashAttribute("tipoMensaje", "success");
+        } catch (Exception e) {
+            flash.addFlashAttribute("mensaje", "Error al enviar el mensaje de prueba.");
+            flash.addFlashAttribute("tipoMensaje", "danger");
+        }
         return "redirect:/admin/whatsapp";
     }
 }
