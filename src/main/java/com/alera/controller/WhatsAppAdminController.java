@@ -29,7 +29,7 @@ public class WhatsAppAdminController {
         model.addAttribute("contactos", service.listarTodos());
         model.addAttribute("tiposAlerta", TipoAlertaWhatsApp.values());
         model.addAttribute("waConfigurado", whatsAppService.isConfigured());
-        model.addAttribute("waProductionMode", whatsAppService.isProductionMode());
+        model.addAttribute("waProvider", whatsAppService.getProvider());
         return "admin/whatsapp/lista";
     }
 

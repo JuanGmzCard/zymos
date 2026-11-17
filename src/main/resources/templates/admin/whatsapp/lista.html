@@ -52,16 +52,24 @@
 <div class="container-fluid px-4 pb-4">
 
     <!-- Banner modo simulado -->
-    <div th:if="${!waConfigurado}" class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
+    <div th:if="${waProvider == 'mock'}" class="alert alert-warning d-flex align-items-center gap-2 mb-3" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i>
         <span th:text="#{wa.modo.simulado}">Modo simulado activo — los mensajes se registran en el log pero no se envían.</span>
     </div>
-    <!-- Banner producción sin ContentSid -->
-    <div th:if="${waConfigurado and !waProductionMode}" class="alert alert-info d-flex align-items-start gap-2 mb-3" role="alert">
+    <!-- Banner Twilio sandbox -->
+    <div th:if="${waProvider == 'twilio-sandbox'}" class="alert alert-info d-flex align-items-start gap-2 mb-3" role="alert">
         <i class="bi bi-info-circle-fill mt-1"></i>
         <div>
             <strong th:text="#{wa.sandbox.title}">Modo sandbox de Twilio</strong><br>
             <span th:text="#{wa.sandbox.desc}">Usando número sandbox (+14155238886). Los destinatarios deben unirse primero enviando el código de tu sandbox a ese número. Para producción con un número propio, configura <code>TWILIO_CONTENT_SID</code> con el SID de tu plantilla aprobada.</span>
+        </div>
+    </div>
+    <!-- Banner Meta Cloud API -->
+    <div th:if="${waProvider == 'meta'}" class="alert alert-success d-flex align-items-start gap-2 mb-3" role="alert">
+        <i class="bi bi-check-circle-fill mt-1"></i>
+        <div>
+            <strong th:text="#{wa.meta.banner.title}">Meta WhatsApp Cloud API activa</strong><br>
+            <span th:utext="#{wa.meta.banner.desc}">Usando la API oficial de Meta. Hasta 1.000 conversaciones gratuitas por mes.</span>
         </div>
     </div>
 
@@ -78,10 +86,16 @@
                 <span th:text="${#lists.size(contactos)}">0</span>
                 contacto(s) registrado(s)
             </span>
-            <span th:if="${waConfigurado}" class="badge bg-success">
+            <span th:if="${waProvider == 'meta'}" class="badge bg-success">
+                <i class="bi bi-whatsapp me-1"></i>Meta Cloud API
+            </span>
+            <span th:if="${waProvider == 'twilio'}" class="badge bg-success">
                 <i class="bi bi-whatsapp me-1"></i>Twilio activo
             </span>
-            <span th:if="${!waConfigurado}" class="badge bg-secondary">
+            <span th:if="${waProvider == 'twilio-sandbox'}" class="badge bg-info text-dark">
+                <i class="bi bi-whatsapp me-1"></i>Twilio sandbox
+            </span>
+            <span th:if="${waProvider == 'mock'}" class="badge bg-secondary">
                 <i class="bi bi-whatsapp me-1"></i>Modo simulado
             </span>
         </div>

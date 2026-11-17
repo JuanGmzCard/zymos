@@ -50,6 +50,7 @@ class WhatsAppAdminControllerTest {
         WebMvcTestHelper.configureTenantMock(tenantRepo);
         when(service.listarTodos()).thenReturn(List.of());
         when(whatsAppService.isConfigured()).thenReturn(false);
+        when(whatsAppService.getProvider()).thenReturn("mock");
     }
 
     @Test
