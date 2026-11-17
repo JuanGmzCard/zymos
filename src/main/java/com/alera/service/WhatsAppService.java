@@ -28,6 +28,7 @@ public class WhatsAppService {
     @Value("${app.twilio.account-sid:}") private String accountSid;
     @Value("${app.twilio.auth-token:}")  private String authToken;
     @Value("${app.twilio.whatsapp-from:whatsapp:+14155238886}") private String from;
+    @Value("${app.twilio.content-sid:}") private String contentSid;
 
     private final ContactoWhatsAppRepository contactoRepo;
     private final RestTemplate restTemplate;
@@ -39,6 +40,10 @@ public class WhatsAppService {
 
     public boolean isConfigured() {
         return !accountSid.isBlank() && !authToken.isBlank();
+    }
+
+    public boolean isProductionMode() {
+        return isConfigured() && !contentSid.isBlank();
     }
 
     // ── Core send ─────────────────────────────────────────────────────────────
@@ -59,7 +64,11 @@ public class WhatsAppService {
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("From", from);
             body.add("To", toNumber);
-            body.add("Body", mensaje);
+            if (!contentSid.isBlank()) {
+                body.add("ContentSid", contentSid);
+            } else {
+                body.add("Body", mensaje);
+            }
 
             restTemplate.postForObject(url, new HttpEntity<>(body, headers), String.class);
             log.info("[WhatsApp] Enviado a {}", toNumber);
