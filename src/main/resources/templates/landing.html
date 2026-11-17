@@ -272,6 +272,41 @@
         .btn-cta-submit:hover { background: var(--lp-gold-h); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
         .cta-trust { text-align: center; color: #64748b; font-size: .8rem; margin-top: .75rem; }
 
+        /* ── LOGIN MODAL ── */
+        #loginModal .modal-content {
+            background: var(--lp-dark2); border: 1px solid rgba(255,255,255,.1); border-radius: 14px;
+        }
+        #loginModal .modal-header { border-bottom: 1px solid rgba(255,255,255,.08); padding: 1.25rem 1.5rem; }
+        #loginModal .modal-title { color: #fff; font-family: 'Cinzel', serif; font-size: 1.1rem; }
+        #loginModal .btn-close { filter: invert(1) opacity(.6); }
+        #loginModal .modal-body { padding: 1.5rem; }
+        #loginModal .modal-footer { border-top: 1px solid rgba(255,255,255,.08); padding: .75rem 1.5rem; }
+        .login-modal-sub { color: #94a3b8; font-size: .88rem; margin-bottom: 1.25rem; }
+        .login-modal-label { color: #cbd5e1; font-size: .84rem; font-weight: 600; margin-bottom: .4rem; display: block; }
+        .login-modal-input {
+            background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
+            color: #fff; border-radius: 8px; padding: .6rem .9rem; width: 100%; font-size: .95rem;
+            outline: none; transition: border-color .2s, box-shadow .2s;
+        }
+        .login-modal-input::placeholder { color: rgba(255,255,255,.3); }
+        .login-modal-input:focus { border-color: var(--lp-gold); box-shadow: 0 0 0 3px rgba(201,160,40,.2); }
+        .login-subdom-preview {
+            background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); border-radius: 7px;
+            padding: .4rem .75rem; font-family: monospace; font-size: .88rem; color: #64748b; margin-top: .4rem;
+        }
+        .login-subdom-preview .login-subdom-val { color: var(--lp-gold); }
+        .login-modal-err { color: #f87171; font-size: .82rem; margin-top: .35rem; display: none; }
+        .btn-login-modal {
+            width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none;
+            border-radius: 10px; padding: .75rem; font-weight: 700; font-size: .95rem;
+            cursor: pointer; transition: all .18s; margin-top: 1rem;
+            display: flex; align-items: center; justify-content: center; gap: .4rem;
+        }
+        .btn-login-modal:hover { background: var(--lp-gold-h); transform: translateY(-1px); }
+        .login-modal-trial-link { color: rgba(255,255,255,.45); font-size: .82rem; text-align: center; }
+        .login-modal-trial-link a { color: var(--lp-gold); text-decoration: none; }
+        .login-modal-trial-link a:hover { text-decoration: underline; }
+
         /* ── LANG TOGGLE ── */
         .lp-lang-btn { color:rgba(255,255,255,.5); font-size:.78rem; font-weight:600; padding:.2rem .5rem; border-radius:4px; text-decoration:none; transition:color .15s; }
         .lp-lang-btn:hover { color:#fff; }
@@ -324,7 +359,7 @@
                 <li class="nav-item"><a class="nav-link" href="#features" th:text="#{landing.nav.modulos}">Módulos</a></li>
                 <li class="nav-item"><a class="nav-link" href="#como-funciona" th:text="#{landing.nav.como}">Cómo funciona</a></li>
                 <li class="nav-item"><a class="nav-link" href="#planes-section" th:text="#{landing.nav.planes}">Planes</a></li>
-                <li class="nav-item"><a class="nav-link" th:href="@{/login}" th:text="#{landing.nav.login}">Iniciar sesión</a></li>
+                <li class="nav-item"><a class="nav-link" href="#" data-action="open-login-modal" th:text="#{landing.nav.login}">Iniciar sesión</a></li>
             </ul>
             <div class="d-flex gap-2 mt-2 mt-lg-0">
                 <div class="d-flex align-items-center gap-1 me-1">
@@ -722,7 +757,7 @@
                 <a th:href="@{/landing}" class="footer-link" th:text="#{landing.footer.inicio}">Inicio</a>
                 <a href="#features" class="footer-link" th:text="#{landing.footer.modulos}">Módulos</a>
                 <a th:href="@{/planes}" class="footer-link" th:text="#{landing.footer.planes}">Planes</a>
-                <a th:href="@{/login}" class="footer-link" th:text="#{landing.footer.login}">Iniciar sesión</a>
+                <a href="#" class="footer-link" data-action="open-login-modal" th:text="#{landing.footer.login}">Iniciar sesión</a>
             </div>
             <div class="footer-copy">
                 © 2026 <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span> · <span th:text="#{landing.footer.copy}">Todos los derechos reservados</span>
@@ -731,14 +766,117 @@
     </div>
 </footer>
 
+<!-- ══════════════════════════════════════════════════════
+     MODAL — INICIAR SESIÓN (subdominio)
+     ══════════════════════════════════════════════════════ -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">
+                    <i class="bi bi-box-arrow-in-right me-2" style="color:var(--lp-gold)"></i>
+                    <span th:text="#{landing.login.modal.title}">Iniciar sesión</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="login-modal-sub" th:text="#{landing.login.modal.sub}">
+                    Ingresá el subdominio de tu cervecería
+                </p>
+                <label class="login-modal-label" for="loginSubdomInput" th:text="#{landing.login.modal.label}">Tu subdominio</label>
+                <input type="text" id="loginSubdomInput" class="login-modal-input"
+                       th:placeholder="#{landing.login.modal.placeholder}"
+                       placeholder="micerveceria" maxlength="30" autocomplete="off" autocapitalize="none">
+                <div class="login-subdom-preview">
+                    <span class="login-subdom-val" id="loginSubdomVal">micerveceria</span><span style="color:#475569">.zymos.app</span>
+                </div>
+                <div class="login-modal-err" id="loginSubdomErr"></div>
+                <button type="button" class="btn-login-modal" id="btnLoginModalGo">
+                    <i class="bi bi-arrow-right-circle-fill"></i>
+                    <span th:text="#{landing.login.modal.btn}">Continuar</span>
+                </button>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <span class="login-modal-trial-link">
+                    <span th:text="#{landing.login.modal.no.cuenta}">¿No tenés cuenta?</span>
+                    <a th:href="@{/planes}" th:text="#{landing.login.modal.trial}">Probá gratis 14 días</a>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script th:attr="nonce=${cspNonce}" th:inline="javascript">
 /*<![CDATA[*/
-var MSG_SUBDOM_MIN   = /*[[#{landing.js.subdom.min}]]*/ 'El subdominio debe tener al menos 3 caracteres.';
-var MSG_SUBDOM_CHECK = /*[[#{landing.js.subdom.check}]]*/ 'Verificá la disponibilidad del subdominio antes de continuar.';
-var MSG_SPINNER      = /*[[#{landing.js.spinner}]]*/ 'Creando tu cuenta…';
+var MSG_SUBDOM_MIN        = /*[[#{landing.js.subdom.min}]]*/ 'El subdominio debe tener al menos 3 caracteres.';
+var MSG_SUBDOM_CHECK      = /*[[#{landing.js.subdom.check}]]*/ 'Verificá la disponibilidad del subdominio antes de continuar.';
+var MSG_SPINNER           = /*[[#{landing.js.spinner}]]*/ 'Creando tu cuenta…';
+var MSG_LOGIN_ERR_EMPTY   = /*[[#{landing.login.modal.err.empty}]]*/ 'Ingresá tu subdominio para continuar';
+var MSG_LOGIN_ERR_INVALID = /*[[#{landing.login.modal.err.invalid}]]*/ 'Solo letras minúsculas y números (3–30 caracteres)';
 /*]]>*/
 document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Login modal — subdominio ─────────────────────────────────────────────
+    (function () {
+        var loginModal   = new bootstrap.Modal(document.getElementById('loginModal'));
+        var subInput     = document.getElementById('loginSubdomInput');
+        var subVal       = document.getElementById('loginSubdomVal');
+        var subErr       = document.getElementById('loginSubdomErr');
+        var btnGo        = document.getElementById('btnLoginModalGo');
+        var RE_SUBDOM    = /^[a-z0-9]{3,30}$/;
+
+        function getBaseDomain() {
+            var host  = window.location.hostname;
+            var port  = window.location.port ? ':' + window.location.port : '';
+            var parts = host.split('.');
+            var base  = parts.length <= 2 ? host : parts.slice(1).join('.');
+            return base + port;
+        }
+
+        function showErr(msg) {
+            subErr.textContent = msg;
+            subErr.style.display = 'block';
+            subInput.style.borderColor = '#f87171';
+        }
+        function clearErr() {
+            subErr.style.display = 'none';
+            subInput.style.borderColor = '';
+        }
+
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('[data-action="open-login-modal"]')) {
+                e.preventDefault();
+                clearErr();
+                subInput.value = '';
+                subVal.textContent = subInput.placeholder;
+                loginModal.show();
+                setTimeout(function () { subInput.focus(); }, 300);
+            }
+        });
+
+        if (subInput) {
+            subInput.addEventListener('input', function () {
+                var clean = this.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+                this.value = clean;
+                subVal.textContent = clean || this.placeholder;
+                clearErr();
+            });
+            subInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); btnGo.click(); }
+            });
+        }
+
+        if (btnGo) {
+            btnGo.addEventListener('click', function () {
+                var sub = subInput.value.trim();
+                if (!sub) { showErr(MSG_LOGIN_ERR_EMPTY); return; }
+                if (!RE_SUBDOM.test(sub)) { showErr(MSG_LOGIN_ERR_INVALID); return; }
+                var url = window.location.protocol + '//' + sub + '.' + getBaseDomain() + '/login';
+                window.location.href = url;
+            });
+        }
+    })();
 
     // ── Demo login buttons ────────────────────────────────────────────────────
     var demoForm = document.getElementById('demoLoginForm');
