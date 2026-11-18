@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.model.ContactoWhatsApp;
 import com.alera.model.ElaboracionPlanificada;
+import com.alera.model.EscalonTemperatura;
 import com.alera.model.Equipo;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
@@ -223,6 +224,17 @@ public class WhatsAppService {
                 "Fase: *" + nombreFase + "*\n" +
                 "Hoy es la fecha ideal de finalización. Verificar estado.\n\n" +
                 "👉 Revisar en Trazabilidad";
+        enviarATipo(tenantId, TipoAlertaWhatsApp.LOTE_FASE, msg);
+    }
+
+    public void notificarEscalonPendiente(String tenantId, EscalonTemperatura escal) {
+        LoteCerveza lote = escal.getLote();
+        String msg = "🌡️ *Escalón de temperatura pendiente*\n" +
+                "Lote: *" + lote.getCodigoLote() + "* — " + lote.getEstilo() + "\n" +
+                "Fase: " + escal.getFase() + " · Paso " + (escal.getOrden() + 1) + "\n" +
+                "Temperatura objetivo: *" + escal.getTemperaturaObjetivo().stripTrailingZeros().toPlainString() + " °C*\n" +
+                "Fecha objetivo: " + escal.getFechaObjetivo().format(FMT) + "\n\n" +
+                "👉 Revisar en Trazabilidad → detalle del lote";
         enviarATipo(tenantId, TipoAlertaWhatsApp.LOTE_FASE, msg);
     }
 

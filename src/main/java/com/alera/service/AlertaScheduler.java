@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.config.TenantContext;
 import com.alera.model.ElaboracionPlanificada;
+import com.alera.model.EscalonTemperatura;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
@@ -9,6 +10,7 @@ import com.alera.model.LoteCerveza;
 import com.alera.model.Tarea;
 import com.alera.model.Tenant;
 import com.alera.repository.ElaboracionPlanificadaRepository;
+import com.alera.repository.EscalonTemperaturaRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.UsuarioRepository;
@@ -44,6 +46,7 @@ public class AlertaScheduler {
     private final WhatsAppService                   whatsAppService;
     private final WebhookService                    webhookService;
     private final ElaboracionPlanificadaRepository  elaboracionRepo;
+    private final EscalonTemperaturaRepository      escalonRepo;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -64,7 +67,8 @@ public class AlertaScheduler {
                             TareaService tareaService,
                             WhatsAppService whatsAppService,
                             WebhookService webhookService,
-                            ElaboracionPlanificadaRepository elaboracionRepo) {
+                            ElaboracionPlanificadaRepository elaboracionRepo,
+                            EscalonTemperaturaRepository escalonRepo) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -79,6 +83,7 @@ public class AlertaScheduler {
         this.whatsAppService     = whatsAppService;
         this.webhookService      = webhookService;
         this.elaboracionRepo     = elaboracionRepo;
+        this.escalonRepo         = escalonRepo;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -169,6 +174,12 @@ public class AlertaScheduler {
                         elaboracionRepo.findPendientesHoy(LocalDate.now());
                 for (ElaboracionPlanificada elab : elaboracionesHoy) {
                     whatsAppService.notificarElaboracionPendiente(tenant.getSubdomain(), elab);
+                }
+
+                // WhatsApp — escalones de temperatura cuya fechaObjetivo es hoy, aún no logrados
+                List<EscalonTemperatura> escalonesHoy = escalonRepo.findPendientesHoy(LocalDate.now());
+                for (EscalonTemperatura escal : escalonesHoy) {
+                    whatsAppService.notificarEscalonPendiente(tenant.getSubdomain(), escal);
                 }
 
                 // Webhooks — bajo stock
