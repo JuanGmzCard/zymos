@@ -1,6 +1,7 @@
 package com.alera.service;
 
 import com.alera.model.ContactoWhatsApp;
+import com.alera.model.ElaboracionPlanificada;
 import com.alera.model.Equipo;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
@@ -214,6 +215,24 @@ public class WhatsAppService {
                 "El plan de tu cervecería vence el *" + fecha + "*.\n\n" +
                 "👉 Renovar en Planes";
         enviarATipo(tenantId, TipoAlertaWhatsApp.PLAN_VENCIMIENTO, msg);
+    }
+
+    public void notificarFaseIdealHoy(String tenantId, LoteCerveza lote, String nombreFase) {
+        String msg = "⏱️ *Fecha ideal de fase alcanzada*\n" +
+                "Lote: *" + lote.getCodigoLote() + "* — " + lote.getEstilo() + "\n" +
+                "Fase: *" + nombreFase + "*\n" +
+                "Hoy es la fecha ideal de finalización. Verificar estado.\n\n" +
+                "👉 Revisar en Trazabilidad";
+        enviarATipo(tenantId, TipoAlertaWhatsApp.LOTE_FASE, msg);
+    }
+
+    public void notificarElaboracionPendiente(String tenantId, ElaboracionPlanificada elab) {
+        String receta = elab.getReceta() != null ? " (" + elab.getReceta().getNombre() + ")" : "";
+        String msg = "🗓️ *Elaboración planificada para hoy*\n" +
+                "*" + elab.getNombreElaboracion() + "*" + receta + "\n" +
+                "Fecha: " + elab.getFechaPlaneada().format(FMT) + "\n\n" +
+                "👉 Ver en Planificación";
+        enviarATipo(tenantId, TipoAlertaWhatsApp.LOTE_FASE, msg);
     }
 
     public void enviarResumenMensual(String tenantId, String nombreTenant,

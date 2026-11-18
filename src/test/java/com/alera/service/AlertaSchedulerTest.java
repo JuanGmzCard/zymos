@@ -2,6 +2,7 @@ package com.alera.service;
 
 import com.alera.config.TenantContext;
 import com.alera.model.Tenant;
+import com.alera.repository.ElaboracionPlanificadaRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.UsuarioRepository;
@@ -32,9 +33,10 @@ class AlertaSchedulerTest {
     @Mock VentaService             ventaService;
     @Mock LoteCervezaRepository    loteCervezaRepo;
     @Mock UsuarioRepository        usuarioRepo;
-    @Mock TareaService             tareaService;
-    @Mock WhatsAppService          whatsAppService;
-    @Mock WebhookService           webhookService;
+    @Mock TareaService                      tareaService;
+    @Mock WhatsAppService                   whatsAppService;
+    @Mock WebhookService                    webhookService;
+    @Mock ElaboracionPlanificadaRepository  elaboracionRepo;
 
     @InjectMocks AlertaScheduler scheduler;
 
@@ -54,6 +56,8 @@ class AlertaSchedulerTest {
         lenient().when(usuarioRepo.countByTenantId(any())).thenReturn(0L);
         lenient().when(tareaService.listarProximasAVencer(any())).thenReturn(List.of());
         lenient().when(loteCervezaRepo.findFasesVencidas(any())).thenReturn(List.of());
+        lenient().when(loteCervezaRepo.findConFaseIdealHoy(any())).thenReturn(List.of());
+        lenient().when(elaboracionRepo.findPendientesHoy(any())).thenReturn(List.of());
         lenient().when(whatsAppService.isConfigured()).thenReturn(false);
     }
 
