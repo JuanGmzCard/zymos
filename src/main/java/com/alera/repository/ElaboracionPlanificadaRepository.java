@@ -33,4 +33,9 @@ public interface ElaboracionPlanificadaRepository
            "WHERE e.fechaPlaneada BETWEEN :desde AND :hasta ORDER BY e.fechaPlaneada ASC")
     List<ElaboracionPlanificada> findByRangoFecha(@Param("desde") LocalDate desde,
                                                    @Param("hasta") LocalDate hasta);
+
+    @Query("SELECT e FROM ElaboracionPlanificada e LEFT JOIN FETCH e.receta " +
+           "WHERE e.fechaPlaneada = :hoy AND e.estado = com.alera.model.enums.EstadoPlanificacion.PLANIFICADA " +
+           "ORDER BY e.nombreElaboracion ASC")
+    List<ElaboracionPlanificada> findPendientesHoy(@Param("hoy") LocalDate hoy);
 }

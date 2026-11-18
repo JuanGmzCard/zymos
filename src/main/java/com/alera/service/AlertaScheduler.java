@@ -1,12 +1,14 @@
 package com.alera.service;
 
 import com.alera.config.TenantContext;
+import com.alera.model.ElaboracionPlanificada;
 import com.alera.model.Equipo;
 import com.alera.model.FacturaProveedor;
 import com.alera.model.InsumoInventario;
 import com.alera.model.LoteCerveza;
 import com.alera.model.Tarea;
 import com.alera.model.Tenant;
+import com.alera.repository.ElaboracionPlanificadaRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.TenantRepository;
 import com.alera.repository.UsuarioRepository;
@@ -28,19 +30,20 @@ public class AlertaScheduler {
     private static final Logger log = LoggerFactory.getLogger(AlertaScheduler.class);
     private static final int UMBRAL_WARN = 3;
 
-    private final TenantRepository        tenantRepo;
-    private final InsumoInventarioService  insumoService;
-    private final EquipoService            equipoService;
-    private final EmailService             emailService;
-    private final TenantService            tenantService;
-    private final NotificacionService      notificacionService;
-    private final FacturaProveedorService  facturaService;
-    private final VentaService             ventaService;
-    private final LoteCervezaRepository    loteCervezaRepo;
-    private final UsuarioRepository        usuarioRepo;
-    private final TareaService             tareaService;
-    private final WhatsAppService          whatsAppService;
-    private final WebhookService           webhookService;
+    private final TenantRepository                 tenantRepo;
+    private final InsumoInventarioService           insumoService;
+    private final EquipoService                     equipoService;
+    private final EmailService                      emailService;
+    private final TenantService                     tenantService;
+    private final NotificacionService               notificacionService;
+    private final FacturaProveedorService           facturaService;
+    private final VentaService                      ventaService;
+    private final LoteCervezaRepository             loteCervezaRepo;
+    private final UsuarioRepository                 usuarioRepo;
+    private final TareaService                      tareaService;
+    private final WhatsAppService                   whatsAppService;
+    private final WebhookService                    webhookService;
+    private final ElaboracionPlanificadaRepository  elaboracionRepo;
 
     @Value("${app.alert.vencimiento-dias:30}")
     private int vencimientoDias;
@@ -60,7 +63,8 @@ public class AlertaScheduler {
                             UsuarioRepository usuarioRepo,
                             TareaService tareaService,
                             WhatsAppService whatsAppService,
-                            WebhookService webhookService) {
+                            WebhookService webhookService,
+                            ElaboracionPlanificadaRepository elaboracionRepo) {
         this.tenantRepo          = tenantRepo;
         this.insumoService       = insumoService;
         this.equipoService       = equipoService;
@@ -74,6 +78,7 @@ public class AlertaScheduler {
         this.tareaService        = tareaService;
         this.whatsAppService     = whatsAppService;
         this.webhookService      = webhookService;
+        this.elaboracionRepo     = elaboracionRepo;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -132,6 +137,38 @@ public class AlertaScheduler {
                 whatsAppService.notificarMantenimiento(tenant.getSubdomain(), mantenimiento);
                 if (tenant.isPlanPorVencer() || tenant.isPlanVencido()) {
                     whatsAppService.notificarPlanVencimiento(tenant.getSubdomain(), tenant.getPlanFin());
+                }
+
+                // WhatsApp — fases con fecha ideal hoy (aún no finalizadas)
+                List<LoteCerveza> fasesHoy = loteCervezaRepo.findConFaseIdealHoy(LocalDate.now());
+                for (LoteCerveza lote : fasesHoy) {
+                    if (lote.getFermFechaFinalIdeal() != null
+                            && lote.getFermFechaFinalIdeal().equals(LocalDate.now())
+                            && lote.getFermFechaFinal() == null) {
+                        whatsAppService.notificarFaseIdealHoy(tenant.getSubdomain(), lote, "Fermentación");
+                    }
+                    if (lote.getAcondFechaFinalIdeal() != null
+                            && lote.getAcondFechaFinalIdeal().equals(LocalDate.now())
+                            && lote.getAcondFechaFinal() == null) {
+                        whatsAppService.notificarFaseIdealHoy(tenant.getSubdomain(), lote, "Acondicionamiento");
+                    }
+                    if (lote.getMadurFechaFinalIdeal() != null
+                            && lote.getMadurFechaFinalIdeal().equals(LocalDate.now())
+                            && lote.getMadurFechaFinal() == null) {
+                        whatsAppService.notificarFaseIdealHoy(tenant.getSubdomain(), lote, "Maduración");
+                    }
+                    if (lote.getCarbFechaFinalIdeal() != null
+                            && lote.getCarbFechaFinalIdeal().equals(LocalDate.now())
+                            && lote.getCarbFechaFinal() == null) {
+                        whatsAppService.notificarFaseIdealHoy(tenant.getSubdomain(), lote, "Carbonatación");
+                    }
+                }
+
+                // WhatsApp — elaboraciones planificadas para hoy con estado PENDIENTE
+                List<ElaboracionPlanificada> elaboracionesHoy =
+                        elaboracionRepo.findPendientesHoy(LocalDate.now());
+                for (ElaboracionPlanificada elab : elaboracionesHoy) {
+                    whatsAppService.notificarElaboracionPendiente(tenant.getSubdomain(), elab);
                 }
 
                 // Webhooks — bajo stock
