@@ -886,6 +886,9 @@
                th:classappend="${currentUri != null and currentUri.contains('/admin/logs')} ? ' panel-active' : ''">
                 <i class="bi bi-journal-text"></i><span th:text="#{nav.admin.logs}">Log de Accesos</span>
             </a>
+            <a class="zymos-panel-item" href="/landing" target="_blank" rel="noopener">
+                <i class="bi bi-box-arrow-up-right"></i><span th:text="#{nav.admin.landing}">Página pública</span>
+            </a>
             <th:block sec:authorize="hasRole('SUPERADMIN')">
                 <div class="zymos-panel-section" th:text="#{nav.admin.plataforma}">Plataforma</div>
                 <a class="zymos-panel-item" th:href="@{/admin/tenants}"

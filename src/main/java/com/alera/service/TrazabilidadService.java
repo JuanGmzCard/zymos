@@ -48,6 +48,7 @@ public class TrazabilidadService {
     private final EmailService emailService;
     private final WhatsAppService whatsAppService;
     private final WebhookService webhookService;
+    private final com.alera.repository.CarbSplitRepository carbSplitRepo;
 
     public TrazabilidadService(LoteCervezaRepository loteRepo,
                                 EquipoRepository equipoRepo,
@@ -61,7 +62,8 @@ public class TrazabilidadService {
                                 LecturaFermentacionRepository lecturaRepo,
                                 EmailService emailService,
                                 WhatsAppService whatsAppService,
-                                WebhookService webhookService) {
+                                WebhookService webhookService,
+                                com.alera.repository.CarbSplitRepository carbSplitRepo) {
         this.loteRepo = loteRepo;
         this.equipoRepo = equipoRepo;
         this.recetaRepo = recetaRepo;
@@ -75,6 +77,7 @@ public class TrazabilidadService {
         this.emailService = emailService;
         this.whatsAppService = whatsAppService;
         this.webhookService = webhookService;
+        this.carbSplitRepo = carbSplitRepo;
     }
 
     public List<HistorialLote> obtenerHistorial(Long loteId) {
@@ -519,14 +522,6 @@ public class TrazabilidadService {
         lote.setCarbFechaFinalIdeal(dto.getCarbFechaFinalIdeal());
         lote.setCarbTemperatura(TempUtils.toStorage(dto.getCarbTemperatura(), unit));
         lote.setCarbFechaFinal(dto.getCarbFechaFinal());
-        lote.setCarbMetodo(dto.getCarbMetodo());
-        lote.setCarbCo2Objetivo(dto.getCarbCo2Objetivo());
-        lote.setCarbCo2Real(dto.getCarbCo2Real());
-        lote.setCarbAzucarTipo(dto.getCarbAzucarTipo());
-        lote.setCarbAzucarGramos(dto.getCarbAzucarGramos());
-        lote.setCarbPresionPsi(dto.getCarbPresionPsi());
-        lote.setCarbTiempoHoras(dto.getCarbTiempoHoras());
-        lote.setCarbTecnica(dto.getCarbTecnica());
         lote.setCarbValidacion(dto.getCarbValidacion());
         lote.setCarbDestino(dto.getCarbDestino());
         lote.setObservaciones(dto.getObservaciones());
@@ -534,9 +529,11 @@ public class TrazabilidadService {
 
         lote.getItemsFactura().clear();
         lote.getEscalones().clear();
+        lote.getCarbSplits().clear();
         if (lote.getId() != null) {
             em.flush(); // fuerza los DELETE de orphans antes de los INSERT nuevos (solo en actualizar)
         }
+        processCarbSplits(lote, dto);
         processEscalones(lote, "ACONDICIONAMIENTO",
                 dto.getAcondEscalonTemperaturas(), dto.getAcondEscalonFechasObj(),
                 dto.getAcondEscalonFechasReal(),   dto.getAcondEscalonLogrados(),
@@ -840,6 +837,101 @@ public class TrazabilidadService {
 
     private static String get(List<String> list, int i) {
         return (list != null && i < list.size()) ? list.get(i) : null;
+    }
+
+    private void processCarbSplits(LoteCerveza lote, LoteFormDto dto) {
+        List<String> metodos = dto.getSplitMetodos();
+        if (metodos == null || metodos.isEmpty()) {
+            // No hay splits — mantener campos escalares legacy tal como venían en el DTO
+            lote.setCarbMetodo(dto.getCarbMetodo());
+            lote.setCarbCo2Objetivo(dto.getCarbCo2Objetivo());
+            lote.setCarbCo2Real(dto.getCarbCo2Real());
+            lote.setCarbAzucarTipo(dto.getCarbAzucarTipo());
+            lote.setCarbAzucarGramos(dto.getCarbAzucarGramos());
+            lote.setCarbPresionPsi(dto.getCarbPresionPsi());
+            lote.setCarbTiempoHoras(dto.getCarbTiempoHoras());
+            lote.setCarbTecnica(dto.getCarbTecnica());
+            return;
+        }
+        for (int i = 0; i < metodos.size(); i++) {
+            String metodo = get(metodos, i);
+            if (metodo == null || metodo.isBlank()) continue;
+            com.alera.model.CarbSplit split = new com.alera.model.CarbSplit();
+            split.setLote(lote);
+            split.setOrden(i);
+            split.setMetodo(metodo);
+            split.setVolumen(parseBD(get(dto.getSplitVolumenes(), i)));
+            split.setAzucarTipo(nullIfBlank(get(dto.getSplitAzucarTipos(), i)));
+            split.setAzucarGramos(parseBD(get(dto.getSplitAzucarGramos(), i)));
+            split.setPresionPsi(parseBD(get(dto.getSplitPresionPsis(), i)));
+            String horasStr = get(dto.getSplitTiempoHoras(), i);
+            if (horasStr != null && !horasStr.isBlank()) {
+                try { split.setTiempoHoras(Integer.parseInt(horasStr)); } catch (NumberFormatException ignored) {}
+            }
+            split.setTecnica(nullIfBlank(get(dto.getSplitTecnicas(), i)));
+            split.setCo2Objetivo(parseBD(get(dto.getSplitCo2Objetivos(), i)));
+            split.setCo2Real(parseBD(get(dto.getSplitCo2Reales(), i)));
+            split.setNotas(nullIfBlank(get(dto.getSplitNotas(), i)));
+            lote.getCarbSplits().add(split);
+        }
+        // Actualizar campos escalares legacy con los valores del primer split (backward compat)
+        if (!lote.getCarbSplits().isEmpty()) {
+            com.alera.model.CarbSplit first = lote.getCarbSplits().get(0);
+            lote.setCarbMetodo(first.getMetodo());
+            lote.setCarbCo2Objetivo(first.getCo2Objetivo());
+            lote.setCarbCo2Real(first.getCo2Real());
+            lote.setCarbAzucarTipo(first.getAzucarTipo());
+            lote.setCarbAzucarGramos(first.getAzucarGramos());
+            lote.setCarbPresionPsi(first.getPresionPsi());
+            lote.setCarbTiempoHoras(first.getTiempoHoras());
+            lote.setCarbTecnica(first.getTecnica());
+        }
+    }
+
+    private static java.math.BigDecimal parseBD(String s) {
+        if (s == null || s.isBlank()) return null;
+        try { return new java.math.BigDecimal(s.replace(',', '.')); }
+        catch (NumberFormatException ignored) { return null; }
+    }
+
+    private static String nullIfBlank(String s) {
+        return (s == null || s.isBlank()) ? null : s;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> buildCarbSplitInit(LoteCerveza lote) {
+        List<Map<String, Object>> result = new ArrayList<>();
+        if (!lote.getCarbSplits().isEmpty()) {
+            for (com.alera.model.CarbSplit s : lote.getCarbSplits()) {
+                Map<String, Object> m = new LinkedHashMap<>();
+                m.put("volumen",   s.getVolumen()      != null ? s.getVolumen().toPlainString()      : "");
+                m.put("metodo",    s.getMetodo()       != null ? s.getMetodo()                       : "");
+                m.put("azucarTipo",   s.getAzucarTipo()  != null ? s.getAzucarTipo()                   : "");
+                m.put("azucarGramos", s.getAzucarGramos()!= null ? s.getAzucarGramos().toPlainString() : "");
+                m.put("presionPsi",   s.getPresionPsi()  != null ? s.getPresionPsi().toPlainString()   : "");
+                m.put("tiempoHoras",  s.getTiempoHoras() != null ? s.getTiempoHoras().toString()       : "");
+                m.put("tecnica",      s.getTecnica()     != null ? s.getTecnica()                      : "");
+                m.put("co2Objetivo",  s.getCo2Objetivo() != null ? s.getCo2Objetivo().toPlainString()  : "");
+                m.put("co2Real",      s.getCo2Real()     != null ? s.getCo2Real().toPlainString()      : "");
+                m.put("notas",        s.getNotas()       != null ? s.getNotas()                        : "");
+                result.add(m);
+            }
+        } else if (lote.getCarbMetodo() != null && !lote.getCarbMetodo().isBlank()) {
+            // Backward compat — un único split sintetizado desde los campos escalares
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("volumen",   "");
+            m.put("metodo",    lote.getCarbMetodo());
+            m.put("azucarTipo",   lote.getCarbAzucarTipo()   != null ? lote.getCarbAzucarTipo()                    : "");
+            m.put("azucarGramos", lote.getCarbAzucarGramos() != null ? lote.getCarbAzucarGramos().toPlainString()  : "");
+            m.put("presionPsi",   lote.getCarbPresionPsi()   != null ? lote.getCarbPresionPsi().toPlainString()    : "");
+            m.put("tiempoHoras",  lote.getCarbTiempoHoras()  != null ? lote.getCarbTiempoHoras().toString()        : "");
+            m.put("tecnica",      lote.getCarbTecnica()      != null ? lote.getCarbTecnica()                       : "");
+            m.put("co2Objetivo",  lote.getCarbCo2Objetivo()  != null ? lote.getCarbCo2Objetivo().toPlainString()   : "");
+            m.put("co2Real",      lote.getCarbCo2Real()      != null ? lote.getCarbCo2Real().toPlainString()       : "");
+            m.put("notas",        "");
+            result.add(m);
+        }
+        return result;
     }
 
     private static LocalDate parseDate(String s) {
