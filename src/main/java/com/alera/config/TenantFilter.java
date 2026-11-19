@@ -133,14 +133,14 @@ public class TenantFilter extends OncePerRequestFilter {
 
     private boolean esRutaPermitidaConPlanVencido(String path) {
         return path.equals("/plan-vencido") || path.equals("/planes") || path.equals("/landing")
-                || path.equals("/demo") || path.equals("/plan-upgrade")
+                || path.equals("/calculadoras") || path.equals("/demo") || path.equals("/plan-upgrade")
                 || path.equals("/logout") || path.startsWith("/login")
                 || path.equals("/manifest.webmanifest") || path.equals("/offline.html");
     }
 
     /** Rutas permitidas directamente desde el dominio raíz (sin redirigir al landing). */
     private boolean esRutaApex(String path) {
-        return path.equals("/landing") || path.startsWith("/planes")
+        return path.equals("/landing") || path.equals("/calculadoras") || path.startsWith("/planes")
                 || path.startsWith("/checkout") || path.startsWith("/webhook")
                 || path.startsWith("/login") || path.equals("/logout")
                 || path.startsWith("/actuator") || path.equals("/manifest.webmanifest")

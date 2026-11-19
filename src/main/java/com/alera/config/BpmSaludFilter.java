@@ -86,6 +86,7 @@ public class BpmSaludFilter extends OncePerRequestFilter {
             || path.equals("/plan-vencido")
             || path.equals("/planes")
             || path.equals("/landing")
+            || path.equals("/calculadoras")
             || path.equals("/demo")
             || path.startsWith("/checkout/")
             || path.equals("/favicon.ico")
