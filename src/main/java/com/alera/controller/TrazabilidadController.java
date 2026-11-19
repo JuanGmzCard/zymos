@@ -271,6 +271,7 @@ public class TrazabilidadController {
         model.addAttribute("loteForm", dto);
         model.addAttribute("initEscalonesAcond", Collections.emptyList());
         model.addAttribute("initEscalonesMadur", Collections.emptyList());
+        model.addAttribute("initCarbSplits", Collections.emptyList());
         agregarInventarioAlModelo(model);
         return "trazabilidad/formulario";
     }
@@ -291,6 +292,7 @@ public class TrazabilidadController {
         if (result.hasErrors()) {
             model.addAttribute("initEscalonesAcond", Collections.emptyList());
             model.addAttribute("initEscalonesMadur", Collections.emptyList());
+            model.addAttribute("initCarbSplits", Collections.emptyList());
             agregarInventarioAlModelo(model);
             return "trazabilidad/formulario";
         }
@@ -299,6 +301,7 @@ public class TrazabilidadController {
                     "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
             model.addAttribute("initEscalonesAcond", Collections.emptyList());
             model.addAttribute("initEscalonesMadur", Collections.emptyList());
+            model.addAttribute("initCarbSplits", Collections.emptyList());
             agregarInventarioAlModelo(model);
             return "trazabilidad/formulario";
         }
@@ -342,6 +345,7 @@ public class TrazabilidadController {
         model.addAttribute("codigoLote", lote.getCodigoLote());
         model.addAttribute("initEscalonesAcond", buildEscalonInit(lote, "ACONDICIONAMIENTO", tempUnit));
         model.addAttribute("initEscalonesMadur", buildEscalonInit(lote, "MADURACION", tempUnit));
+        model.addAttribute("initCarbSplits", service.buildCarbSplitInit(lote));
         agregarInventarioAlModelo(model);
         // Si el lote tiene fermentador asignado y no está en la lista (en uso por este lote),
         // lo agregamos para que aparezca seleccionado en el formulario
@@ -364,6 +368,7 @@ public class TrazabilidadController {
         if (result.hasErrors()) {
             model.addAttribute("initEscalonesAcond", Collections.emptyList());
             model.addAttribute("initEscalonesMadur", Collections.emptyList());
+            model.addAttribute("initCarbSplits", Collections.emptyList());
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
             model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());
@@ -374,6 +379,7 @@ public class TrazabilidadController {
                     "Seleccione un fermentador para registrar la fecha de inicio de fermentación.");
             model.addAttribute("initEscalonesAcond", Collections.emptyList());
             model.addAttribute("initEscalonesMadur", Collections.emptyList());
+            model.addAttribute("initCarbSplits", Collections.emptyList());
             agregarInventarioAlModelo(model);
             model.addAttribute("loteId", id);
             model.addAttribute("codigoLote", service.buscarPorId(id).getCodigoLote());

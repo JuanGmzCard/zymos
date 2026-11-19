@@ -860,7 +860,7 @@
 
     <!-- Detalle de Carbonatación Avanzada -->
     <div class="section-box mb-4"
-         th:if="${lote.carbMetodo != null or lote.carbCo2Objetivo != null or lote.carbDestino != null}">
+         th:if="${not #lists.isEmpty(lote.carbSplits) or lote.carbMetodo != null or lote.carbCo2Objetivo != null or lote.carbDestino != null}">
         <div class="sh"><i class="bi bi-wind me-2"></i><span th:text="#{traz.det.sec.carb}">Carbonatación — Detalle</span></div>
         <div class="sb">
 
@@ -931,9 +931,88 @@
                 </div>
             </div>
 
-            <!-- Fila 2: parámetros según método -->
+            <!-- Splits de Carbonatación (tabla cuando hay múltiples divisiones) -->
+            <div class="row g-3 mt-1" th:if="${not #lists.isEmpty(lote.carbSplits)}">
+                <div class="col-12">
+                    <div class="phase-card">
+                        <div class="phase-card-header" style="background:rgba(99,102,241,0.08);color:#3730a3;">
+                            <i class="bi bi-layout-split me-1"></i>
+                            <span th:text="#{traz.det.carb.splits.titulo}">Divisiones de Carbonatación</span>
+                            <span class="ms-2 opacity-75 small"
+                                  th:text="'(' + ${#lists.size(lote.carbSplits)} + ')'"></span>
+                        </div>
+                        <div class="p-0">
+                            <table class="table table-sm mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width:60px">#</th>
+                                        <th th:text="#{traz.det.carb.splits.vol}">Volumen</th>
+                                        <th th:text="#{traz.det.carb.splits.metodo}">Método</th>
+                                        <th>CO₂ obj / real</th>
+                                        <th th:text="#{traz.det.carb.splits.detalles}">Detalles</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="sp, stat : ${lote.carbSplits}">
+                                        <td th:text="${stat.index + 1}" class="text-muted"></td>
+                                        <td>
+                                            <span th:if="${sp.volumen != null}"
+                                                  th:text="${sp.volumen.stripTrailingZeros().toPlainString()} + ' L'">—</span>
+                                            <span th:unless="${sp.volumen != null}" class="text-muted">—</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${sp.metodo == 'NATURAL'}"
+                                                  class="badge rounded-pill"
+                                                  style="background:rgba(39,174,96,0.15);color:#1a6e3e;font-size:0.8rem;">
+                                                <i class="bi bi-flower1 me-1"></i><span th:text="#{traz.det.carb.splits.natural}">Natural</span>
+                                            </span>
+                                            <span th:if="${sp.metodo == 'FORZADA'}"
+                                                  class="badge rounded-pill"
+                                                  style="background:rgba(52,152,219,0.15);color:#1a4a7a;font-size:0.8rem;">
+                                                <i class="bi bi-gear me-1"></i><span th:text="#{traz.det.carb.splits.forzada}">Forzada</span>
+                                            </span>
+                                            <span th:unless="${sp.metodo != null}" class="text-muted small">—</span>
+                                        </td>
+                                        <td>
+                                            <span th:if="${sp.co2Objetivo != null}"
+                                                  th:text="${sp.co2Objetivo.stripTrailingZeros().toPlainString()} + ' vol'"></span>
+                                            <span th:if="${sp.co2Objetivo != null and sp.co2Real != null}"
+                                                  class="text-muted"> / </span>
+                                            <span th:if="${sp.co2Real != null}"
+                                                  style="color:var(--verde-alera)"
+                                                  th:text="${sp.co2Real.stripTrailingZeros().toPlainString()} + ' vol'"></span>
+                                            <span th:unless="${sp.co2Objetivo != null or sp.co2Real != null}"
+                                                  class="text-muted">—</span>
+                                        </td>
+                                        <td>
+                                            <!-- NATURAL details -->
+                                            <span th:if="${sp.metodo == 'NATURAL' and sp.azucarTipo != null}"
+                                                  th:text="${sp.azucarTipo}"></span>
+                                            <span th:if="${sp.metodo == 'NATURAL' and sp.azucarGramos != null}"
+                                                  class="text-muted small"
+                                                  th:text="' · ' + ${sp.azucarGramos.stripTrailingZeros().toPlainString()} + ' g'"></span>
+                                            <!-- FORZADA details -->
+                                            <span th:if="${sp.metodo == 'FORZADA' and sp.presionPsi != null}"
+                                                  th:text="${sp.presionPsi.stripTrailingZeros().toPlainString()} + ' PSI'"></span>
+                                            <span th:if="${sp.metodo == 'FORZADA' and sp.tiempoHoras != null}"
+                                                  class="text-muted small"
+                                                  th:text="' · ' + ${sp.tiempoHoras} + 'h'"></span>
+                                            <!-- Notas -->
+                                            <span th:if="${sp.notas != null and !sp.notas.isEmpty()}"
+                                                  class="text-muted small d-block"
+                                                  th:text="${sp.notas}"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fila 2 legacy: parámetros según método (solo cuando no hay splits) -->
             <div class="row g-3"
-                 th:if="${lote.carbMetodo == 'NATURAL' and (lote.carbAzucarTipo != null or lote.carbAzucarGramos != null)}">
+                 th:if="${#lists.isEmpty(lote.carbSplits) and lote.carbMetodo == 'NATURAL' and (lote.carbAzucarTipo != null or lote.carbAzucarGramos != null)}">
                 <div class="col-12">
                     <div class="phase-card">
                         <div class="phase-card-header" style="background:rgba(39,174,96,0.08);color:#1a6e3e;">
@@ -954,7 +1033,7 @@
             </div>
 
             <div class="row g-3 mt-0"
-                 th:if="${lote.carbMetodo == 'FORZADA' and (lote.carbPresionPsi != null or lote.carbTiempoHoras != null or lote.carbTecnica != null)}">
+                 th:if="${#lists.isEmpty(lote.carbSplits) and lote.carbMetodo == 'FORZADA' and (lote.carbPresionPsi != null or lote.carbTiempoHoras != null or lote.carbTecnica != null)}">
                 <div class="col-12">
                     <div class="phase-card">
                         <div class="phase-card-header" style="background:rgba(52,152,219,0.08);color:#1a4a7a;">
