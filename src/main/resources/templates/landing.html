@@ -25,207 +25,248 @@
         body { font-family: 'Raleway', sans-serif; background: #fff; color: var(--lp-text); margin: 0; }
 
         /* ── NAVBAR ── */
-        .lp-nav {
-            background: var(--lp-dark);
-            padding: .75rem 0;
-            position: sticky; top: 0; z-index: 1050;
-            border-bottom: 1px solid rgba(255,255,255,.07);
-        }
-        .lp-nav .navbar-brand {
-            font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.25rem;
-            color: var(--lp-gold) !important; text-decoration: none;
-            display: flex; align-items: center; gap: .5rem;
-        }
-        .lp-nav .nav-link {
-            color: rgba(255,255,255,.75) !important; font-size: .88rem; font-weight: 500;
-            padding: .4rem .9rem !important; border-radius: 6px; transition: color .15s, background .15s;
-        }
+        .lp-nav { background: var(--lp-dark); padding: .75rem 0; position: sticky; top: 0; z-index: 1050; border-bottom: 1px solid rgba(255,255,255,.07); }
+        .lp-nav .navbar-brand { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.25rem; color: var(--lp-gold) !important; text-decoration: none; display: flex; align-items: center; gap: .5rem; }
+        .lp-nav .nav-link { color: rgba(255,255,255,.75) !important; font-size: .88rem; font-weight: 500; padding: .4rem .9rem !important; border-radius: 6px; transition: color .15s, background .15s; }
         .lp-nav .nav-link:hover { color: #fff !important; background: rgba(255,255,255,.07); }
-        .btn-nav-demo {
-            background: rgba(201,160,40,.15); border: 1px solid rgba(201,160,40,.35);
-            color: var(--lp-gold); border-radius: 20px; padding: .35rem 1rem;
-            font-size: .84rem; font-weight: 600; text-decoration: none; transition: background .2s;
-            white-space: nowrap;
-        }
+        .btn-nav-demo { background: rgba(201,160,40,.15); border: 1px solid rgba(201,160,40,.35); color: var(--lp-gold); border-radius: 20px; padding: .35rem 1rem; font-size: .84rem; font-weight: 600; text-decoration: none; transition: background .2s; white-space: nowrap; }
         .btn-nav-demo:hover { background: rgba(201,160,40,.28); color: var(--lp-gold); }
-        .btn-nav-primary {
-            background: var(--lp-blue); color: #fff; border: none; border-radius: 20px;
-            padding: .4rem 1.1rem; font-size: .84rem; font-weight: 600; text-decoration: none;
-            transition: opacity .18s; white-space: nowrap;
-        }
+        .btn-nav-primary { background: var(--lp-blue); color: #fff; border: none; border-radius: 20px; padding: .4rem 1.1rem; font-size: .84rem; font-weight: 600; text-decoration: none; transition: opacity .18s; white-space: nowrap; }
         .btn-nav-primary:hover { opacity: .88; color: #fff; }
         .navbar-toggler { border-color: rgba(255,255,255,.25) !important; }
         .navbar-toggler-icon { filter: invert(1); }
 
         /* ── HERO ── */
-        .lp-hero {
-            background: linear-gradient(135deg, var(--lp-dark) 0%, var(--lp-dark2) 100%);
-            padding: 5rem 1rem 4rem; text-align: center;
-            position: relative; overflow: hidden;
+        .lp-hero { background: linear-gradient(135deg, var(--lp-dark) 0%, var(--lp-dark2) 100%); padding: 5rem 1rem 4rem; position: relative; overflow: hidden; }
+        .lp-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 80% 60% at 30% 0%, rgba(201,160,40,.08) 0%, transparent 70%); pointer-events: none; }
+        .hero-split { display: flex; align-items: center; gap: 3rem; position: relative; z-index: 1; }
+        .hero-split-text { flex: 0 0 50%; max-width: 50%; }
+        .hero-split-visual { flex: 1; }
+        @media (max-width: 991px) {
+          .hero-split { flex-direction: column; text-align: center; }
+          .hero-split-text { max-width: 100%; flex: none; }
+          .hero-split .hero-ctas { justify-content: center; }
+          .hero-split .hero-trust { justify-content: center; }
+          .hero-split-visual { width: 100%; }
         }
-        .lp-hero::before {
-            content: ''; position: absolute; inset: 0;
-            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,160,40,.08) 0%, transparent 70%);
-            pointer-events: none;
-        }
-        .hero-badge {
-            display: inline-block; background: rgba(201,160,40,.13); border: 1px solid rgba(201,160,40,.3);
-            color: var(--lp-gold); border-radius: 20px; padding: .3rem 1rem; font-size: .82rem;
-            font-weight: 600; margin-bottom: 1.5rem; letter-spacing: .03em;
-        }
-        .hero-title {
-            font-family: 'Cinzel', serif; font-size: clamp(1.6rem, 5vw, 3rem);
-            font-weight: 700; color: #fff; margin-bottom: 1.25rem; line-height: 1.2;
-        }
+        .hero-badge { display: inline-block; background: rgba(201,160,40,.13); border: 1px solid rgba(201,160,40,.3); color: var(--lp-gold); border-radius: 20px; padding: .3rem 1rem; font-size: .82rem; font-weight: 600; margin-bottom: 1.5rem; letter-spacing: .03em; }
+        .hero-title { font-family: 'Cinzel', serif; font-size: clamp(1.6rem, 4vw, 2.6rem); font-weight: 700; color: #fff; margin-bottom: 1.25rem; line-height: 1.2; }
         .hero-title span { color: var(--lp-gold); }
-        .hero-sub {
-            color: #94a3b8; font-size: clamp(.95rem, 2vw, 1.1rem); max-width: 640px;
-            margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 400;
-        }
-        .hero-ctas { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-bottom: 2rem; }
-        .btn-hero-primary {
-            background: var(--lp-gold); color: var(--lp-dark); font-weight: 700; font-size: 1rem;
-            border: none; border-radius: 10px; padding: .8rem 2rem; text-decoration: none;
-            transition: all .18s; display: inline-flex; align-items: center; gap: .4rem;
-        }
+        .hero-sub { color: #94a3b8; font-size: clamp(.9rem, 1.8vw, 1rem); margin: 0 0 2rem; line-height: 1.7; font-weight: 400; }
+        .hero-ctas { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 2rem; }
+        .btn-hero-primary { background: var(--lp-gold); color: var(--lp-dark); font-weight: 700; font-size: 1rem; border: none; border-radius: 10px; padding: .8rem 2rem; text-decoration: none; transition: all .18s; display: inline-flex; align-items: center; gap: .4rem; }
         .btn-hero-primary:hover { background: var(--lp-gold-h); transform: translateY(-2px); color: var(--lp-dark); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
-        .btn-hero-outline {
-            background: transparent; color: #fff; font-weight: 600; font-size: 1rem;
-            border: 2px solid rgba(255,255,255,.3); border-radius: 10px; padding: .8rem 2rem;
-            text-decoration: none; transition: all .18s; display: inline-flex; align-items: center; gap: .4rem;
-        }
+        .btn-hero-outline { background: transparent; color: #fff; font-weight: 600; font-size: 1rem; border: 2px solid rgba(255,255,255,.3); border-radius: 10px; padding: .8rem 2rem; text-decoration: none; transition: all .18s; display: inline-flex; align-items: center; gap: .4rem; }
         .btn-hero-outline:hover { border-color: rgba(255,255,255,.7); color: #fff; transform: translateY(-2px); }
-        .hero-trust { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; }
+        .hero-trust { display: flex; gap: 1.25rem; flex-wrap: wrap; }
         .hero-trust span { color: #64748b; font-size: .84rem; display: flex; align-items: center; gap: .4rem; }
         .hero-trust .bi-check-circle-fill { color: #22c55e; }
 
+        /* ── HERO DASHBOARD MOCKUP ── */
+        .hero-mock-window { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 32px 80px rgba(0,0,0,.25); overflow: hidden; transform: perspective(1200px) rotateY(-8deg) rotateX(3deg); transition: transform .3s; }
+        .hero-mock-window:hover { transform: perspective(1200px) rotateY(-4deg) rotateX(1deg); }
+        @media (max-width: 991px) { .hero-mock-window { transform: none !important; } }
+        .hero-mock-topbar { background: var(--lp-dark); padding: .5rem .9rem; display: flex; align-items: center; justify-content: space-between; }
+        .hero-mock-topbar-title { color: rgba(255,255,255,.75); font-size: .72rem; display: flex; align-items: center; gap: .4rem; }
+        .mock-dots { display: flex; gap: 4px; }
+        .mock-dots span { width: 8px; height: 8px; border-radius: 50%; display: block; }
+        .mock-dots .dr { background: #ef4444; } .mock-dots .dy { background: #f59e0b; } .mock-dots .dg { background: #22c55e; }
+        .hero-mock-body { display: flex; min-height: 190px; }
+        .hero-mock-side { background: #1e293b; width: 108px; flex-shrink: 0; padding: .6rem 0; }
+        .hero-mock-nav { padding: .38rem .7rem; font-size: .66rem; color: #94a3b8; display: flex; align-items: center; gap: .4rem; }
+        .hero-mock-nav.active { background: rgba(201,160,40,.12); color: var(--lp-gold); border-right: 2px solid var(--lp-gold); }
+        .hero-mock-main { flex: 1; padding: .75rem .9rem; }
+        .hero-mock-row { display: flex; gap: .5rem; margin-bottom: .65rem; }
+        .hero-mock-sc { background: var(--lp-bg); border: 1px solid #e2e8f0; border-radius: 6px; padding: .4rem .6rem; flex: 1; }
+        .hero-mock-num { font-size: 1rem; font-weight: 800; color: #1e293b; line-height: 1; }
+        .hero-mock-lbl { font-size: .58rem; color: #94a3b8; margin-top: 1px; }
+        .hero-mock-bars { display: flex; align-items: flex-end; gap: 3px; height: 44px; padding: 0 2px; }
+        .hero-mock-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--lp-blue); opacity: .6; }
+        .hero-mock-bar:nth-child(3) { opacity: 1; }
+        .hero-mock-bar:nth-child(5) { background: var(--lp-gold); opacity: .9; }
+        .hero-mock-bar:nth-child(7) { opacity: .75; }
+        .hero-mock-lbl-row { font-size: .58rem; color: #94a3b8; margin-top: 2px; display: flex; gap: 3px; }
+        .hero-mock-lbl-row span { flex: 1; text-align: center; }
+        .hero-mock-ai-badge { background: rgba(6,182,212,.1); color: #0891b2; font-size: .62rem; font-weight: 700; border-radius: 20px; padding: .18rem .6rem; display: inline-flex; align-items: center; gap: .3rem; margin-top: .4rem; }
+
         /* ── STATS STRIP ── */
-        .lp-stats {
-            background: var(--lp-dark2); padding: 1.25rem 0;
-            border-top: 1px solid rgba(255,255,255,.06);
-        }
+        .lp-stats { background: var(--lp-dark2); padding: 1.25rem 0; border-top: 1px solid rgba(255,255,255,.06); }
         .stat-pill { text-align: center; color: rgba(255,255,255,.8); font-size: .88rem; }
         .stat-pill strong { color: var(--lp-gold); font-size: 1.3rem; font-weight: 700; display: block; }
 
-        /* ── FEATURES ── */
-        .lp-features { background: #fff; padding: 5rem 0; }
-        .section-label {
-            font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
-            color: var(--lp-blue); margin-bottom: .6rem;
+        /* ── SHOWCASE SECTIONS ── */
+        .lp-showcase { padding: 5.5rem 0; }
+        .lp-showcase.bg-white { background: #fff; }
+        .lp-showcase.bg-gray  { background: var(--lp-bg); }
+        .lp-showcase.bg-dark  { background: var(--lp-dark); }
+        .showcase-row { display: flex; align-items: center; gap: 4rem; }
+        .showcase-row.rev { flex-direction: row-reverse; }
+        .showcase-text { flex: 0 0 42%; max-width: 42%; }
+        .showcase-visual { flex: 1; }
+        @media (max-width: 991px) {
+          .showcase-row, .showcase-row.rev { flex-direction: column; gap: 2.5rem; }
+          .showcase-text { max-width: 100%; flex: none; }
         }
-        .section-title {
-            font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 3vw, 2rem);
-            font-weight: 700; color: var(--lp-text); margin-bottom: .6rem;
-        }
-        .section-sub { color: var(--lp-muted); font-size: 1rem; max-width: 580px; margin: 0 auto 3rem; }
-        .feat-card {
-            background: #fff; border: 1px solid var(--lp-border); border-radius: 14px;
-            padding: 1.75rem; height: 100%; transition: transform .18s, box-shadow .18s, border-color .18s;
-        }
-        .feat-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); border-color: var(--lp-blue); }
-        .feat-icon {
-            width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center;
-            justify-content: center; font-size: 1.3rem; margin-bottom: 1rem;
-        }
-        .feat-icon.trazabilidad { background: rgba(37,99,235,.1); color: #2563eb; }
-        .feat-icon.recetas      { background: rgba(234,88,12,.1);  color: #ea580c; }
-        .feat-icon.inventario   { background: rgba(22,163,74,.1);  color: #16a34a; }
-        .feat-icon.bpm          { background: rgba(126,34,206,.1); color: #7e22ce; }
-        .feat-icon.comercial    { background: rgba(201,160,40,.13);color: #b45309; }
-        .feat-icon.ia           { background: rgba(6,182,212,.1);  color: #0891b2; }
-        .feat-title { font-weight: 700; color: var(--lp-text); margin-bottom: .5rem; font-size: .97rem; }
-        .feat-desc  { color: var(--lp-muted); font-size: .86rem; line-height: 1.6; margin: 0; }
+        .showcase-label { display: inline-flex; align-items: center; gap: .4rem; font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; border-radius: 20px; padding: .3rem .9rem; margin-bottom: 1rem; }
+        .showcase-label.c-blue   { background: rgba(37,99,235,.1);   color: #2563eb; }
+        .showcase-label.c-orange { background: rgba(234,88,12,.1);   color: #ea580c; }
+        .showcase-label.c-purple { background: rgba(126,34,206,.1);  color: #7e22ce; }
+        .showcase-label.c-gold   { background: rgba(201,160,40,.13); color: #b45309; }
+        .showcase-label.c-teal   { background: rgba(6,182,212,.1);   color: #0891b2; }
+        .showcase-label.c-white  { background: rgba(255,255,255,.1); color: rgba(255,255,255,.8); }
+        .showcase-title { font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 2.5vw, 1.9rem); font-weight: 700; line-height: 1.25; margin-bottom: 1rem; color: var(--lp-text); }
+        .showcase-title.on-dark { color: #fff; }
+        .showcase-desc { font-size: .97rem; line-height: 1.7; color: var(--lp-muted); margin-bottom: 1.25rem; }
+        .showcase-desc.on-dark { color: #94a3b8; }
+        .showcase-bullets { list-style: none; padding: 0; margin: 0 0 1.75rem; }
+        .showcase-bullets li { font-size: .9rem; color: #334155; padding: .4rem 0; display: flex; align-items: flex-start; gap: .6rem; border-bottom: 1px solid #f1f5f9; }
+        .showcase-bullets li:last-child { border-bottom: none; }
+        .showcase-bullets.on-dark li { color: #cbd5e1; border-color: rgba(255,255,255,.07); }
+        .sb-icon { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .72rem; flex-shrink: 0; margin-top: 1px; }
+        .sb-blue   { background: rgba(37,99,235,.12); color: #2563eb; }
+        .sb-orange { background: rgba(234,88,12,.1);  color: #ea580c; }
+        .sb-purple { background: rgba(126,34,206,.1); color: #7e22ce; }
+        .sb-gold   { background: rgba(201,160,40,.13);color: #b45309; }
+        .sb-teal   { background: rgba(6,182,212,.1);  color: #0891b2; }
+        .btn-sc { display: inline-flex; align-items: center; gap: .4rem; font-size: .88rem; font-weight: 700; text-decoration: none; border-radius: 8px; padding: .55rem 1.25rem; transition: all .18s; cursor: pointer; border: none; }
+        .btn-sc-blue   { background: var(--lp-blue); color: #fff; }
+        .btn-sc-blue:hover   { opacity: .88; color: #fff; transform: translateY(-2px); }
+        .btn-sc-orange { background: #ea580c; color: #fff; }
+        .btn-sc-orange:hover { opacity: .88; color: #fff; transform: translateY(-2px); }
+        .btn-sc-purple { background: #7e22ce; color: #fff; }
+        .btn-sc-purple:hover { opacity: .88; color: #fff; transform: translateY(-2px); }
+        .btn-sc-gold   { background: var(--lp-gold); color: var(--lp-dark); }
+        .btn-sc-gold:hover   { background: var(--lp-gold-h); color: var(--lp-dark); transform: translateY(-2px); }
+        .btn-sc-teal   { background: #0891b2; color: #fff; }
+        .btn-sc-teal:hover   { opacity: .88; color: #fff; transform: translateY(-2px); }
 
-        /* ── APP PREVIEW ── */
-        .lp-preview { background: var(--lp-bg); padding: 5rem 0; }
-        .preview-window {
-            background: #fff; border-radius: 16px; border: 1px solid var(--lp-border);
-            overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.1);
-            max-width: 820px; margin: 0 auto;
-        }
-        .preview-topbar {
-            background: var(--lp-dark); padding: .6rem 1rem; display: flex;
-            align-items: center; justify-content: space-between;
-        }
-        .preview-topbar-title { color: rgba(255,255,255,.8); font-size: .82rem; display: flex; align-items: center; gap: .5rem; }
-        .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-        .dot-r { background: #ef4444; }
-        .dot-y { background: #f59e0b; }
-        .dot-g { background: #22c55e; }
-        .preview-body { display: flex; min-height: 240px; }
-        .preview-sidebar {
-            background: #1e293b; width: 140px; flex-shrink: 0; padding: .75rem 0;
-        }
-        .preview-nav-item {
-            padding: .45rem .9rem; font-size: .78rem; color: #94a3b8; display: flex;
-            align-items: center; gap: .5rem;
-        }
-        .preview-nav-item.active { background: rgba(201,160,40,.12); color: var(--lp-gold); border-right: 2px solid var(--lp-gold); }
-        .preview-main { flex: 1; padding: 1rem 1.25rem; }
-        .preview-stats { display: flex; gap: .75rem; margin-bottom: 1rem; flex-wrap: wrap; }
-        .preview-stat-card {
-            background: var(--lp-bg); border: 1px solid var(--lp-border); border-radius: 8px;
-            padding: .6rem .9rem; min-width: 100px;
-        }
-        .preview-stat-num { font-size: 1.3rem; font-weight: 800; color: var(--lp-text); line-height: 1; }
-        .preview-stat-lbl { font-size: .7rem; color: var(--lp-muted); margin-top: 2px; }
-        .preview-table-mini { width: 100%; border-collapse: collapse; }
-        .preview-table-mini thead th { background: var(--lp-bg); font-size: .7rem; color: var(--lp-muted); text-transform: uppercase; font-weight: 700; padding: .35rem .5rem; border-bottom: 1px solid var(--lp-border); }
-        .preview-table-mini tbody td { font-size: .78rem; color: #334155; padding: .4rem .5rem; border-bottom: 1px solid #f1f5f9; }
-        .phase-mini { font-size: .7rem; font-weight: 600; border-radius: 20px; padding: .15rem .6rem; }
-        .phase-ferm { background: #dbeafe; color: #1d4ed8; }
-        .phase-carb { background: #f0fdf4; color: #15803d; }
-        .phase-mace { background: #fef3c7; color: #92400e; }
+        /* ── MOCK WINDOW (shared) ── */
+        .mock-wrap { position: relative; }
+        .mock-wrap.tilt-r { transform: perspective(1400px) rotateY(-6deg) rotateX(2deg); transition: transform .3s; }
+        .mock-wrap.tilt-l { transform: perspective(1400px) rotateY(6deg) rotateX(2deg); transition: transform .3s; }
+        .mock-wrap.tilt-r:hover { transform: perspective(1400px) rotateY(-2deg) rotateX(0deg); }
+        .mock-wrap.tilt-l:hover { transform: perspective(1400px) rotateY(2deg) rotateX(0deg); }
+        @media (max-width: 991px) { .mock-wrap.tilt-r, .mock-wrap.tilt-l { transform: none; } }
+        .mock-window { background: #fff; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 24px 64px rgba(0,0,0,.12); overflow: hidden; }
+        .mock-topbar { background: var(--lp-dark); padding: .5rem .9rem; display: flex; align-items: center; justify-content: space-between; }
+        .mock-topbar-title { color: rgba(255,255,255,.75); font-size: .72rem; display: flex; align-items: center; gap: .4rem; }
+        .mock-notif { position: absolute; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: .4rem .7rem; display: flex; align-items: center; gap: .4rem; font-size: .7rem; font-weight: 600; box-shadow: 0 8px 24px rgba(0,0,0,.12); white-space: nowrap; z-index: 5; color: #334155; }
+        .mock-notif.pos-tr { top: -10px; right: -12px; }
+        .mock-notif.pos-bl { bottom: -10px; left: -12px; }
+
+        /* ── MOCK 1 — KANBAN ── */
+        .mock-kanban { display: flex; }
+        .mock-kb-col { flex: 1; border-right: 1px solid #f1f5f9; min-width: 0; }
+        .mock-kb-col:last-child { border-right: none; }
+        .mock-kb-hdr { padding: .45rem .5rem; font-size: .6rem; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; border-bottom: 1px solid #f1f5f9; }
+        .mock-kb-hdr.mace  { color: #92400e; background: #fef3c7; }
+        .mock-kb-hdr.ferm  { color: #1d4ed8; background: #dbeafe; }
+        .mock-kb-hdr.acond { color: #166534; background: #dcfce7; }
+        .mock-kb-hdr.carb  { color: #075985; background: #e0f2fe; }
+        .mock-kb-body { padding: .35rem; }
+        .mock-kb-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 5px; padding: .35rem .4rem; margin-bottom: .3rem; }
+        .mock-kb-code  { font-weight: 800; color: #1e293b; font-size: .62rem; }
+        .mock-kb-style { color: #64748b; font-size: .6rem; }
+        .mock-kb-meta  { color: #94a3b8; font-size: .56rem; margin-top: 2px; }
+
+        /* ── MOCK 2 — RECIPE ── */
+        .mock-recipe { padding: .7rem; }
+        .mock-rcp-name  { font-weight: 800; font-size: .8rem; color: #1e293b; }
+        .mock-rcp-style { font-size: .62rem; color: #64748b; margin-bottom: .55rem; }
+        .mock-rcp-stats { display: flex; gap: .35rem; margin-bottom: .6rem; }
+        .mock-rcp-stat  { background: var(--lp-bg); border: 1px solid #e2e8f0; border-radius: 5px; padding: .28rem .4rem; text-align: center; flex: 1; }
+        .mock-rcp-val   { font-size: .72rem; font-weight: 800; color: #1e293b; }
+        .mock-rcp-lbl   { font-size: .52rem; color: #94a3b8; text-transform: uppercase; }
+        .mock-rcp-tabs  { display: flex; border-bottom: 2px solid #e2e8f0; margin-bottom: .5rem; }
+        .mock-rcp-tab   { padding: .28rem .55rem; font-size: .62rem; font-weight: 600; color: #94a3b8; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .mock-rcp-tab.active { color: var(--lp-blue); border-color: var(--lp-blue); }
+        .mock-rcp-row   { display: flex; justify-content: space-between; padding: .28rem 0; border-bottom: 1px solid #f8fafc; font-size: .62rem; }
+        .mock-rcp-ing   { color: #334155; }
+        .mock-rcp-amt   { color: #64748b; font-family: monospace; font-size: .6rem; }
+
+        /* ── MOCK 3 — BPM ── */
+        .mock-bpm { padding: .7rem; }
+        .mock-bpm-hdr  { display: flex; justify-content: space-between; align-items: center; margin-bottom: .6rem; padding-bottom: .45rem; border-bottom: 1px solid #f1f5f9; }
+        .mock-bpm-date { font-size: .65rem; color: #64748b; }
+        .mock-bpm-ok   { background: #dcfce7; color: #15803d; font-size: .58rem; font-weight: 700; border-radius: 20px; padding: .12rem .5rem; }
+        .mock-bpm-row  { display: flex; align-items: center; gap: .5rem; padding: .3rem 0; border-bottom: 1px solid #f8fafc; }
+        .mock-bpm-row:last-of-type { border-bottom: none; margin-bottom: .4rem; }
+        .mock-bpm-chk  { width: 15px; height: 15px; border-radius: 50%; background: #22c55e; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .mock-bpm-chk .bi { font-size: .5rem; color: #fff; }
+        .mock-bpm-lbl  { font-size: .65rem; color: #334155; flex: 1; }
+        .mock-firma-area { margin-top: .5rem; }
+        .mock-firma-lbl  { font-size: .58rem; color: #94a3b8; margin-bottom: .2rem; }
+        .mock-firma-box  { height: 28px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden; position: relative; }
+        .mock-bpm-btn    { margin-top: .5rem; background: #22c55e; color: #fff; font-size: .62rem; font-weight: 700; border-radius: 5px; padding: .3rem .7rem; display: block; width: 100%; text-align: center; }
+
+        /* ── MOCK 4 — RENTABILIDAD ── */
+        .mock-rent { padding: .7rem; }
+        .mock-rent-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: .5rem; padding-bottom: .45rem; border-bottom: 1px solid #f1f5f9; }
+        .mock-rent-title { font-weight: 800; font-size: .72rem; color: #1e293b; }
+        .mock-rent-period { font-size: .6rem; color: #94a3b8; }
+        .mock-rent-row { display: grid; grid-template-columns: 1fr 55px; align-items: center; gap: .35rem; padding: .28rem 0; border-bottom: 1px solid #f8fafc; }
+        .mock-rent-row:last-child { border-bottom: none; }
+        .mock-rent-style { font-size: .62rem; font-weight: 600; color: #334155; }
+        .mock-rent-pct { font-size: .62rem; font-weight: 700; text-align: right; }
+        .mock-rent-pct.up { color: #16a34a; } .mock-rent-pct.dn { color: #dc2626; }
+        .mock-rent-bar  { height: 4px; background: #f1f5f9; border-radius: 2px; margin-top: 3px; overflow: hidden; }
+        .mock-rent-fill { height: 100%; border-radius: 2px; }
+        .bar-ipa { background: #2563eb; width: 88%; }
+        .bar-sto { background: #16a34a; width: 72%; }
+        .bar-apa { background: #f59e0b; width: 55%; }
+        .bar-sai { background: #ef4444; width: 28%; }
+
+        /* ── MOCK 5 — AI CHAT ── */
+        .mock-ai { padding: .7rem; }
+        .mock-ai-top { font-size: .65rem; font-weight: 700; color: #0891b2; display: flex; align-items: center; gap: .3rem; margin-bottom: .5rem; padding-bottom: .45rem; border-bottom: 1px solid #f1f5f9; }
+        .mock-ai-msg { margin-bottom: .35rem; overflow: hidden; }
+        .mock-ai-user { background: var(--lp-blue); color: #fff; border-radius: 10px 10px 2px 10px; padding: .4rem .6rem; font-size: .62rem; line-height: 1.5; display: inline-block; max-width: 88%; float: right; }
+        .mock-ai-bot  { background: #f1f5f9; color: #334155; border-radius: 10px 10px 10px 2px; padding: .4rem .6rem; font-size: .62rem; line-height: 1.5; display: inline-block; max-width: 94%; float: left; }
+        .mock-ai-badges { display: flex; gap: .25rem; flex-wrap: wrap; margin-top: .35rem; clear: both; padding-top: .2rem; }
+        .mock-ai-badge { font-size: .55rem; font-weight: 700; border-radius: 4px; padding: .1rem .35rem; }
+        .mock-ai-bd-blue  { background: #dbeafe; color: #1d4ed8; }
+        .mock-ai-bd-green { background: #dcfce7; color: #166534; }
+        .mock-ai-bd-gold  { background: #fef3c7; color: #92400e; }
+
+        /* ── DIFFERENTIATORS ── */
+        .lp-diff { background: var(--lp-bg); padding: 5rem 0; }
+        .section-label { font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--lp-blue); margin-bottom: .6rem; }
+        .section-title { font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 700; color: var(--lp-text); margin-bottom: .6rem; }
+        .section-sub { color: var(--lp-muted); font-size: 1rem; max-width: 580px; margin: 0 auto 3rem; }
+        .diff-card { background: #fff; border: 1px solid var(--lp-border); border-radius: 14px; padding: 1.75rem; height: 100%; display: flex; flex-direction: column; transition: transform .18s, box-shadow .18s; }
+        .diff-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
+        .diff-icon { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin-bottom: 1rem; flex-shrink: 0; }
+        .diff-icon.c1 { background: rgba(126,34,206,.1); color: #7e22ce; }
+        .diff-icon.c2 { background: rgba(201,160,40,.13); color: #b45309; }
+        .diff-icon.c3 { background: rgba(37,99,235,.1); color: #2563eb; }
+        .diff-icon.c4 { background: rgba(22,163,74,.1); color: #15803d; }
+        .diff-title { font-weight: 700; font-size: .97rem; color: var(--lp-text); margin-bottom: .4rem; }
+        .diff-desc { color: var(--lp-muted); font-size: .86rem; line-height: 1.6; margin: 0 0 .75rem; flex: 1; }
+        .diff-vs-badge { display: inline-block; background: rgba(239,68,68,.07); border: 1px solid rgba(239,68,68,.2); color: #dc2626; border-radius: 6px; padding: .15rem .6rem; font-size: .72rem; font-weight: 600; align-self: flex-start; }
 
         /* ── HOW IT WORKS ── */
         .lp-steps { background: var(--lp-dark); padding: 5rem 0; }
-        .step-num {
-            width: 48px; height: 48px; border-radius: 50%; background: rgba(201,160,40,.15);
-            border: 2px solid var(--lp-gold); color: var(--lp-gold); font-weight: 800; font-size: 1.1rem;
-            display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; flex-shrink: 0;
-        }
+        .step-num { width: 48px; height: 48px; border-radius: 50%; background: rgba(201,160,40,.15); border: 2px solid var(--lp-gold); color: var(--lp-gold); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; flex-shrink: 0; }
         .step-title { font-weight: 700; color: #fff; font-size: .97rem; margin-bottom: .4rem; }
         .step-desc  { color: #94a3b8; font-size: .86rem; line-height: 1.6; }
-        .step-connector {
-            display: none; width: 60px; height: 2px; background: rgba(201,160,40,.2);
-            align-self: flex-start; margin-top: 24px;
-        }
+        .step-connector { display: none; width: 60px; height: 2px; background: rgba(201,160,40,.2); align-self: flex-start; margin-top: 24px; }
         @media (min-width: 768px) { .step-connector { display: block; } }
 
         /* ── DEMO CALLOUT ── */
-        .lp-demo-callout {
-            background: linear-gradient(135deg, #0f172a 0%, var(--lp-dark2) 100%);
-            border: 1px solid rgba(201,160,40,.2); border-radius: 16px;
-            padding: 2.5rem; text-align: center; max-width: 680px; margin: 0 auto;
-        }
-        .demo-cred-box {
-            display: inline-flex; gap: 2rem; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1);
-            border-radius: 10px; padding: .75rem 2rem; margin: 1.25rem 0 1.5rem; flex-wrap: wrap; justify-content: center;
-        }
+        .lp-demo-callout { background: linear-gradient(135deg, #0f172a 0%, var(--lp-dark2) 100%); border: 1px solid rgba(201,160,40,.2); border-radius: 16px; padding: 2.5rem; text-align: center; max-width: 680px; margin: 0 auto; }
+        .demo-cred-box { display: inline-flex; gap: 2rem; background: rgba(0,0,0,.3); border: 1px solid rgba(255,255,255,.1); border-radius: 10px; padding: .75rem 2rem; margin: 1.25rem 0 1.5rem; flex-wrap: wrap; justify-content: center; }
         .demo-cred { text-align: left; }
         .demo-cred small { color: #64748b; font-size: .75rem; display: block; }
         .demo-cred strong { color: #e2e8f0; font-size: 1rem; font-family: monospace; }
-        .btn-demo-enter {
-            background: var(--lp-gold); color: var(--lp-dark); border: none; border-radius: 10px;
-            padding: .75rem 2rem; font-weight: 700; font-size: .95rem; cursor: pointer;
-            transition: all .18s; display: inline-flex; align-items: center; gap: .5rem;
-        }
+        .btn-demo-enter { background: var(--lp-gold); color: var(--lp-dark); border: none; border-radius: 10px; padding: .75rem 2rem; font-weight: 700; font-size: .95rem; cursor: pointer; transition: all .18s; display: inline-flex; align-items: center; gap: .5rem; }
         .btn-demo-enter:hover { background: var(--lp-gold-h); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
 
-        /* ── PLANES STRIP ── */
+        /* ── PLANES ── */
         .lp-plans { background: #fff; padding: 5rem 0; }
-        .plan-strip-card {
-            background: #fff; border: 2px solid var(--lp-border); border-radius: 14px;
-            padding: 1.75rem; height: 100%; display: flex; flex-direction: column;
-            transition: transform .18s, box-shadow .18s, border-color .18s;
-        }
+        .plan-strip-card { background: #fff; border: 2px solid var(--lp-border); border-radius: 14px; padding: 1.75rem; height: 100%; display: flex; flex-direction: column; transition: transform .18s, box-shadow .18s, border-color .18s; }
         .plan-strip-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,.08); }
         .plan-strip-card.featured { border-color: var(--lp-blue); }
-        .plan-featured-badge {
-            background: var(--lp-blue); color: #fff; font-size: .72rem; font-weight: 700;
-            border-radius: 20px; padding: .2rem .8rem; text-transform: uppercase; letter-spacing: .04em;
-            display: inline-block; margin-bottom: .6rem;
-        }
+        .plan-featured-badge { background: var(--lp-blue); color: #fff; font-size: .72rem; font-weight: 700; border-radius: 20px; padding: .2rem .8rem; text-transform: uppercase; letter-spacing: .04em; display: inline-block; margin-bottom: .6rem; }
         .plan-strip-name { font-family: 'Cinzel', serif; font-weight: 700; font-size: 1.1rem; color: var(--lp-text); margin-bottom: .2rem; }
         .plan-strip-price { font-size: 1.75rem; font-weight: 800; color: var(--lp-text); }
         .plan-strip-price span { font-size: .88rem; font-weight: 400; color: var(--lp-muted); }
@@ -235,23 +276,15 @@
         .plan-strip-features li:last-child { border-bottom: none; }
         .plan-strip-features .bi-check-circle-fill { color: #16a34a; flex-shrink: 0; }
         .plan-strip-features .bi-dash-circle       { color: #cbd5e1; flex-shrink: 0; }
-        .btn-plan-strip {
-            width: 100%; padding: .7rem; border-radius: 10px; font-weight: 600; font-size: .9rem;
-            text-decoration: none; text-align: center; display: block; transition: all .18s;
-        }
+        .btn-plan-strip { width: 100%; padding: .7rem; border-radius: 10px; font-weight: 600; font-size: .9rem; text-decoration: none; text-align: center; display: block; transition: all .18s; }
         .btn-plan-strip-primary { background: var(--lp-blue); color: #fff; border: none; }
         .btn-plan-strip-primary:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
         .btn-plan-strip-outline { background: transparent; color: var(--lp-blue); border: 2px solid var(--lp-blue); }
         .btn-plan-strip-outline:hover { background: var(--lp-blue); color: #fff; }
 
         /* ── CTA FINAL ── */
-        .lp-cta-final {
-            background: linear-gradient(135deg, var(--lp-dark) 0%, #1e3a5f 100%);
-            padding: 5rem 0;
-        }
-        .cta-box {
-            max-width: 680px; margin: 0 auto; text-align: center;
-        }
+        .lp-cta-final { background: linear-gradient(135deg, var(--lp-dark) 0%, #1e3a5f 100%); padding: 5rem 0; }
+        .cta-box { max-width: 680px; margin: 0 auto; text-align: center; }
         .cta-title { font-family: 'Cinzel', serif; font-size: clamp(1.3rem, 3vw, 2rem); color: #fff; margin-bottom: .75rem; }
         .cta-sub   { color: #94a3b8; font-size: .95rem; margin-bottom: 2rem; }
         .cta-form  { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 14px; padding: 1.75rem; text-align: left; }
@@ -264,18 +297,12 @@
         .avail-cta { font-size: .8rem; margin-top: .3rem; display: none; }
         .avail-cta.ok  { color: #22c55e; }
         .avail-cta.err { color: #f87171; }
-        .btn-cta-submit {
-            width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none;
-            border-radius: 10px; padding: .85rem; font-weight: 700; font-size: 1rem;
-            cursor: pointer; transition: all .18s; margin-top: .5rem;
-        }
+        .btn-cta-submit { width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none; border-radius: 10px; padding: .85rem; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all .18s; margin-top: .5rem; }
         .btn-cta-submit:hover { background: var(--lp-gold-h); transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,160,40,.3); }
         .cta-trust { text-align: center; color: #64748b; font-size: .8rem; margin-top: .75rem; }
 
         /* ── LOGIN MODAL ── */
-        #loginModal .modal-content {
-            background: var(--lp-dark2); border: 1px solid rgba(255,255,255,.1); border-radius: 14px;
-        }
+        #loginModal .modal-content { background: var(--lp-dark2); border: 1px solid rgba(255,255,255,.1); border-radius: 14px; }
         #loginModal .modal-header { border-bottom: 1px solid rgba(255,255,255,.08); padding: 1.25rem 1.5rem; }
         #loginModal .modal-title { color: #fff; font-family: 'Cinzel', serif; font-size: 1.1rem; }
         #loginModal .btn-close { filter: invert(1) opacity(.6); }
@@ -283,34 +310,22 @@
         #loginModal .modal-footer { border-top: 1px solid rgba(255,255,255,.08); padding: .75rem 1.5rem; }
         .login-modal-sub { color: #94a3b8; font-size: .88rem; margin-bottom: 1.25rem; }
         .login-modal-label { color: #cbd5e1; font-size: .84rem; font-weight: 600; margin-bottom: .4rem; display: block; }
-        .login-modal-input {
-            background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15);
-            color: #fff; border-radius: 8px; padding: .6rem .9rem; width: 100%; font-size: .95rem;
-            outline: none; transition: border-color .2s, box-shadow .2s;
-        }
+        .login-modal-input { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.15); color: #fff; border-radius: 8px; padding: .6rem .9rem; width: 100%; font-size: .95rem; outline: none; transition: border-color .2s, box-shadow .2s; }
         .login-modal-input::placeholder { color: rgba(255,255,255,.3); }
         .login-modal-input:focus { border-color: var(--lp-gold); box-shadow: 0 0 0 3px rgba(201,160,40,.2); }
-        .login-subdom-preview {
-            background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); border-radius: 7px;
-            padding: .4rem .75rem; font-family: monospace; font-size: .88rem; color: #64748b; margin-top: .4rem;
-        }
+        .login-subdom-preview { background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); border-radius: 7px; padding: .4rem .75rem; font-family: monospace; font-size: .88rem; color: #64748b; margin-top: .4rem; }
         .login-subdom-preview .login-subdom-val { color: var(--lp-gold); }
         .login-modal-err { color: #f87171; font-size: .82rem; margin-top: .35rem; display: none; }
-        .btn-login-modal {
-            width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none;
-            border-radius: 10px; padding: .75rem; font-weight: 700; font-size: .95rem;
-            cursor: pointer; transition: all .18s; margin-top: 1rem;
-            display: flex; align-items: center; justify-content: center; gap: .4rem;
-        }
+        .btn-login-modal { width: 100%; background: var(--lp-gold); color: var(--lp-dark); border: none; border-radius: 10px; padding: .75rem; font-weight: 700; font-size: .95rem; cursor: pointer; transition: all .18s; margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: .4rem; }
         .btn-login-modal:hover { background: var(--lp-gold-h); transform: translateY(-1px); }
         .login-modal-trial-link { color: rgba(255,255,255,.45); font-size: .82rem; text-align: center; }
         .login-modal-trial-link a { color: var(--lp-gold); text-decoration: none; }
         .login-modal-trial-link a:hover { text-decoration: underline; }
 
         /* ── LANG TOGGLE ── */
-        .lp-lang-btn { color:rgba(255,255,255,.5); font-size:.78rem; font-weight:600; padding:.2rem .5rem; border-radius:4px; text-decoration:none; transition:color .15s; }
-        .lp-lang-btn:hover { color:#fff; }
-        .lp-lang-active { color:var(--lp-gold) !important; }
+        .lp-lang-btn { color: rgba(255,255,255,.5); font-size: .78rem; font-weight: 600; padding: .2rem .5rem; border-radius: 4px; text-decoration: none; transition: color .15s; }
+        .lp-lang-btn:hover { color: #fff; }
+        .lp-lang-active { color: var(--lp-gold) !important; }
 
         /* ── FOOTER ── */
         .lp-footer { background: var(--lp-dark); border-top: 1px solid rgba(255,255,255,.07); padding: 2rem 0; }
@@ -320,16 +335,27 @@
         .footer-copy { color: #475569; font-size: .8rem; }
 
         /* ── DARK MODE ── */
-        html.dark-mode .feat-card { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
-        html.dark-mode .feat-title { color: var(--dm-text, #e2e8f0); }
-        html.dark-mode .plan-strip-card { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .lp-showcase.bg-white  { background: var(--dm-bg, #0f172a); }
+        html.dark-mode .lp-showcase.bg-gray   { background: var(--dm-bg-deep, #080d1a); }
+        html.dark-mode .showcase-title        { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .showcase-bullets li   { color: var(--dm-text-soft, #cbd5e1); border-color: var(--dm-border-faint, rgba(100,116,139,.1)); }
+        html.dark-mode .mock-window           { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .mock-notif            { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .hero-mock-window      { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .hero-mock-sc          { background: var(--dm-bg, #0f172a); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .hero-mock-num         { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .mock-kb-card          { background: var(--dm-bg, #0f172a); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .mock-kb-code          { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .mock-rcp-stat         { background: var(--dm-bg, #0f172a); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .mock-rcp-val          { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .mock-rent-title       { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .diff-card             { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
+        html.dark-mode .diff-title            { color: var(--dm-text, #e2e8f0); }
+        html.dark-mode .diff-desc             { color: var(--dm-text-soft, #cbd5e1); }
+        html.dark-mode .plan-strip-card       { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
         html.dark-mode .plan-strip-name, html.dark-mode .plan-strip-price { color: var(--dm-text, #e2e8f0); }
         html.dark-mode .plan-strip-features li { color: var(--dm-text-soft, #cbd5e1); border-color: var(--dm-border-faint, rgba(100,116,139,.1)); }
-        html.dark-mode .preview-window { background: var(--dm-card, #1e293b); border-color: var(--dm-border, rgba(100,116,139,.2)); }
-        html.dark-mode .preview-stat-card { background: var(--dm-bg, #0f172a); border-color: var(--dm-border, rgba(100,116,139,.2)); }
-        html.dark-mode .preview-stat-num { color: var(--dm-text, #e2e8f0); }
-        html.dark-mode .lp-features, html.dark-mode .lp-plans { background: var(--dm-bg, #0f172a); }
-        html.dark-mode .lp-preview { background: var(--dm-bg-deep, #080d1a); }
+        html.dark-mode .lp-plans, html.dark-mode .lp-diff { background: var(--dm-bg, #0f172a); }
     </style>
 </head>
 <body>
@@ -350,13 +376,12 @@
             <i class="bi bi-droplet-fill"></i>
             <span th:text="${branding != null ? branding.name : 'Zymos'}">Zymos</span>
         </a>
-        <button class="navbar-toggler" type="button"
-                data-bs-toggle="collapse" data-bs-target="#navMenu">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navMenu">
             <ul class="navbar-nav mx-auto gap-1">
-                <li class="nav-item"><a class="nav-link" href="#features" th:text="#{landing.nav.modulos}">Módulos</a></li>
+                <li class="nav-item"><a class="nav-link" href="#showcase-features" th:text="#{landing.nav.modulos}">Módulos</a></li>
                 <li class="nav-item"><a class="nav-link" href="#como-funciona" th:text="#{landing.nav.como}">Cómo funciona</a></li>
                 <li class="nav-item"><a class="nav-link" href="#planes-section" th:text="#{landing.nav.planes}">Planes</a></li>
                 <li class="nav-item"><a class="nav-link" href="#" data-action="open-login-modal" th:text="#{landing.nav.login}">Iniciar sesión</a></li>
@@ -381,34 +406,91 @@
 </nav>
 
 <!-- ══════════════════════════════════════════════════════
-     HERO
+     HERO — SPLIT LAYOUT
      ══════════════════════════════════════════════════════ -->
 <section class="lp-hero">
     <div class="container">
-        <div class="hero-badge">
-            <i class="bi bi-award-fill me-1"></i><span th:text="#{landing.hero.badge}">Sistema SaaS para cervecerías artesanales</span>
-        </div>
-        <h1 class="hero-title">
-            <span th:text="#{landing.hero.title1}">De la maceración a la venta —</span><br>
-            <span th:text="#{landing.hero.title2}">todo en un solo sistema</span>
-        </h1>
-        <p class="hero-sub" th:text="#{landing.hero.sub}">
-            Trazabilidad completa de lotes, gestión de recetas, inventario inteligente, BPM,
-            ventas e inteligencia artificial integrada.
-        </p>
-        <div class="hero-ctas">
-            <button type="button" class="btn-hero-primary" id="btnHeroDemo">
-                <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.hero.cta1}">Ver demo en vivo</span>
-            </button>
-            <a th:href="@{/planes}" class="btn-hero-outline">
-                <span th:text="#{landing.hero.cta2}">Prueba gratis 14 días</span> <i class="bi bi-arrow-right"></i>
-            </a>
-        </div>
-        <div class="hero-trust">
-            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust1}">Sin tarjeta de crédito</span></span>
-            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust2}">14 días gratis</span></span>
-            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust3}">Cancela cuando quieras</span></span>
-            <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust4}">Configuración en minutos</span></span>
+        <div class="hero-split">
+            <!-- Text side -->
+            <div class="hero-split-text">
+                <div class="hero-badge">
+                    <i class="bi bi-award-fill me-1"></i><span th:text="#{landing.hero.badge}">Sistema SaaS para cervecerías artesanales</span>
+                </div>
+                <h1 class="hero-title">
+                    <span th:text="#{landing.hero.title1}">De la maceración a la venta —</span><br>
+                    <span th:text="#{landing.hero.title2}">todo en un solo sistema</span>
+                </h1>
+                <p class="hero-sub" th:text="#{landing.hero.sub}">
+                    Trazabilidad completa de lotes, gestión de recetas, inventario inteligente, BPM y ventas.
+                </p>
+                <div class="hero-ctas">
+                    <button type="button" class="btn-hero-primary" id="btnHeroDemo">
+                        <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.hero.cta1}">Ver demo en vivo</span>
+                    </button>
+                    <a th:href="@{/planes}" class="btn-hero-outline">
+                        <span th:text="#{landing.hero.cta2}">Prueba gratis 14 días</span> <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+                <div class="hero-trust">
+                    <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust1}">Sin tarjeta</span></span>
+                    <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust2}">14 días gratis</span></span>
+                    <span><i class="bi bi-check-circle-fill"></i><span th:text="#{landing.hero.trust3}">Cancela cuando quieras</span></span>
+                </div>
+            </div>
+            <!-- Dashboard mockup side -->
+            <div class="hero-split-visual">
+                <div class="hero-mock-window">
+                    <div class="hero-mock-topbar">
+                        <span class="hero-mock-topbar-title">
+                            <i class="bi bi-droplet-fill" style="color:#c9a028"></i>
+                            <span th:text="${branding != null ? branding.name : 'Zymos'} + ' — Dashboard'">Zymos — Dashboard</span>
+                        </span>
+                        <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
+                    </div>
+                    <div class="hero-mock-body">
+                        <div class="hero-mock-side">
+                            <div class="hero-mock-nav active"><i class="bi bi-grid-fill"></i> Dashboard</div>
+                            <div class="hero-mock-nav"><i class="bi bi-layers"></i> Lotes</div>
+                            <div class="hero-mock-nav"><i class="bi bi-journal-text"></i> Recetas</div>
+                            <div class="hero-mock-nav"><i class="bi bi-box-seam"></i> Inventario</div>
+                            <div class="hero-mock-nav"><i class="bi bi-shield-check"></i> BPM</div>
+                            <div class="hero-mock-nav"><i class="bi bi-graph-up"></i> Reportes</div>
+                            <div class="hero-mock-nav"><i class="bi bi-robot"></i> Chat IA</div>
+                        </div>
+                        <div class="hero-mock-main">
+                            <div class="hero-mock-row">
+                                <div class="hero-mock-sc">
+                                    <div class="hero-mock-num">12</div>
+                                    <div class="hero-mock-lbl" th:text="#{landing.preview.stat1.lbl}">Lotes activos</div>
+                                </div>
+                                <div class="hero-mock-sc">
+                                    <div class="hero-mock-num">4</div>
+                                    <div class="hero-mock-lbl" th:text="#{landing.preview.stat2.lbl}">Fermentando</div>
+                                </div>
+                                <div class="hero-mock-sc">
+                                    <div class="hero-mock-num" style="color:#16a34a">87%</div>
+                                    <div class="hero-mock-lbl" th:text="#{landing.preview.stat3.lbl}">Capacidad</div>
+                                </div>
+                            </div>
+                            <div class="hero-mock-bars">
+                                <div class="hero-mock-bar" style="height:55%"></div>
+                                <div class="hero-mock-bar" style="height:68%"></div>
+                                <div class="hero-mock-bar" style="height:82%"></div>
+                                <div class="hero-mock-bar" style="height:71%"></div>
+                                <div class="hero-mock-bar" style="height:90%"></div>
+                                <div class="hero-mock-bar" style="height:76%"></div>
+                                <div class="hero-mock-bar" style="height:84%"></div>
+                            </div>
+                            <div class="hero-mock-lbl-row">
+                                <span>May</span><span>Jun</span><span>Jul</span><span>Ago</span><span>Sep</span><span>Oct</span><span>Nov</span>
+                            </div>
+                            <div class="hero-mock-ai-badge">
+                                <i class="bi bi-robot"></i><span th:text="#{landing.hero.app.lbl}">Dashboard en tiempo real</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -423,164 +505,372 @@
                 <strong th:text="#{landing.stats.1.val}">15+</strong><span th:text="#{landing.stats.1.lbl}">Módulos integrados</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong th:text="#{landing.stats.2.val}">Multi-tenant</strong><span th:text="#{landing.stats.2.lbl}">Cada cervecería aislada</span>
+                <strong th:text="#{landing.stats.2.val}">7</strong><span th:text="#{landing.stats.2.lbl}">Herramientas de IA</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong th:text="#{landing.stats.3.val}">IA</strong><span th:text="#{landing.stats.3.lbl}">Claude AI integrado</span>
+                <strong th:text="#{landing.stats.3.val}">BeerXML</strong><span th:text="#{landing.stats.3.lbl}">Recetas compatibles</span>
             </div>
             <div class="col-6 col-sm-3 stat-pill">
-                <strong th:text="#{landing.stats.4.val}">99%+</strong><span th:text="#{landing.stats.4.lbl}">Cobertura de tests</span>
+                <strong th:text="#{landing.stats.4.val}">BPM+HACCP</strong><span th:text="#{landing.stats.4.lbl}">Inocuidad incluida</span>
             </div>
         </div>
     </div>
 </div>
 
 <!-- ══════════════════════════════════════════════════════
-     FEATURES / MÓDULOS
+     SHOWCASE 1 — TRAZABILIDAD (blanco, texto izq, Kanban der)
      ══════════════════════════════════════════════════════ -->
-<section id="features" class="lp-features">
+<section id="showcase-features" class="lp-showcase bg-white">
     <div class="container">
-        <div class="text-center">
-            <div class="section-label" th:text="#{landing.feat.label}">Módulos</div>
-            <h2 class="section-title" th:text="#{landing.feat.title}">Todo lo que necesita tu cervecería</h2>
-            <p class="section-sub" th:text="#{landing.feat.sub}">Un sistema completo desde la primera maceración hasta el análisis de rentabilidad.</p>
-        </div>
-        <div class="row g-4">
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon trazabilidad"><i class="bi bi-layers-fill"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat1.title}">Trazabilidad de lotes</div>
-                    <p class="feat-desc" th:text="#{landing.feat1.desc}">Seguimiento completo desde macerado hasta carbonatación.</p>
+        <div class="showcase-row">
+            <div class="showcase-text">
+                <div class="showcase-label c-blue"><i class="bi bi-layers-fill"></i> <span th:text="#{landing.showcase.1.label}">Producción</span></div>
+                <h2 class="showcase-title" th:text="#{landing.showcase.1.title}">Seguimiento visual de cada lote</h2>
+                <p class="showcase-desc" th:text="#{landing.showcase.1.desc}">Mueve lotes entre fases con un tablero Kanban.</p>
+                <ul class="showcase-bullets">
+                    <li><span class="sb-icon sb-blue"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat1.bullet1}">OG/FG/ABV calculado automáticamente</span></li>
+                    <li><span class="sb-icon sb-blue"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat1.bullet2}">Kanban visual de fases de producción</span></li>
+                    <li><span class="sb-icon sb-blue"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat1.bullet3}">Etiqueta con código QR en PDF</span></li>
+                </ul>
+                <button type="button" class="btn-sc btn-sc-blue" id="btnShowcase1Demo">
+                    <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.showcase.cta}">Ver demo →</span>
+                </button>
+            </div>
+            <div class="showcase-visual">
+                <div class="mock-wrap tilt-r">
+                    <div class="mock-notif pos-tr"><i class="bi bi-whatsapp" style="color:#22c55e"></i> Fermentación completada</div>
+                    <div class="mock-window">
+                        <div class="mock-topbar">
+                            <span class="mock-topbar-title"><i class="bi bi-columns-gap"></i> Kanban — Producción</span>
+                            <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
+                        </div>
+                        <div class="mock-kanban">
+                            <div class="mock-kb-col">
+                                <div class="mock-kb-hdr mace">Macerado <strong>1</strong></div>
+                                <div class="mock-kb-body">
+                                    <div class="mock-kb-card">
+                                        <div class="mock-kb-code">APA-031</div>
+                                        <div class="mock-kb-style">APA Tropical</div>
+                                        <div class="mock-kb-meta">OG 1.056 · 80 L</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mock-kb-col">
+                                <div class="mock-kb-hdr ferm">Fermentación <strong>2</strong></div>
+                                <div class="mock-kb-body">
+                                    <div class="mock-kb-card">
+                                        <div class="mock-kb-code">IPA-024</div>
+                                        <div class="mock-kb-style">IPA Americana</div>
+                                        <div class="mock-kb-meta">1.048 → 1.012</div>
+                                    </div>
+                                    <div class="mock-kb-card">
+                                        <div class="mock-kb-code">STO-012</div>
+                                        <div class="mock-kb-style">Stout Imperial</div>
+                                        <div class="mock-kb-meta">1.080 · día 7</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mock-kb-col">
+                                <div class="mock-kb-hdr acond">Acondic. <strong>1</strong></div>
+                                <div class="mock-kb-body">
+                                    <div class="mock-kb-card">
+                                        <div class="mock-kb-code">BEL-009</div>
+                                        <div class="mock-kb-style">Belgian Tripel</div>
+                                        <div class="mock-kb-meta">ABV 9.2%</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mock-kb-col">
+                                <div class="mock-kb-hdr carb">Carbonatación <strong>1</strong></div>
+                                <div class="mock-kb-body">
+                                    <div class="mock-kb-card">
+                                        <div class="mock-kb-code">STO-011</div>
+                                        <div class="mock-kb-style">Oatmeal Stout</div>
+                                        <div class="mock-kb-meta">CO₂ 2.4 vol</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon recetas"><i class="bi bi-journal-text"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat2.title}">Recetas y brewsheet</div>
-                    <p class="feat-desc" th:text="#{landing.feat2.desc}">Gestión completa con escalones de macerado, hervor y adjuntos.</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon inventario"><i class="bi bi-box-seam-fill"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat3.title}">Inventario inteligente</div>
-                    <p class="feat-desc" th:text="#{landing.feat3.desc}">Control de stock con descuento automático al crear lotes.</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon bpm"><i class="bi bi-shield-fill-check"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat4.title}">BPM e inocuidad</div>
-                    <p class="feat-desc" th:text="#{landing.feat4.desc}">Control de salud diario con firma digital.</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon comercial"><i class="bi bi-briefcase-fill"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat5.title}">Comercial completo</div>
-                    <p class="feat-desc" th:text="#{landing.feat5.desc}">Facturas de proveedores con análisis por IA.</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-4">
-                <div class="feat-card">
-                    <div class="feat-icon ia"><i class="bi bi-robot"></i></div>
-                    <div class="feat-title" th:text="#{landing.feat6.title}">Inteligencia artificial</div>
-                    <p class="feat-desc" th:text="#{landing.feat6.desc}">Diagnóstico automático de fermentación, generación de recetas desde texto.</p>
-                </div>
-            </div>
-
         </div>
     </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════════
-     APP PREVIEW
+     SHOWCASE 2 — RECETAS (gris, Brewsheet izq, texto der)
      ══════════════════════════════════════════════════════ -->
-<section class="lp-preview">
+<section class="lp-showcase bg-gray">
     <div class="container">
-        <div class="text-center mb-4">
-            <div class="section-label" th:text="#{landing.preview.label}">Vista previa</div>
-            <h2 class="section-title" th:text="#{landing.preview.title}">Así se ve por dentro</h2>
-            <p class="section-sub" style="margin-bottom:2.5rem" th:text="#{landing.preview.sub}">Una interfaz limpia y eficiente, diseñada para el flujo diario de una cervecería.</p>
-        </div>
-        <div class="preview-window">
-            <div class="preview-topbar">
-                <div class="preview-topbar-title">
-                    <i class="bi bi-droplet-fill" style="color:#c9a028"></i>
-                    <span th:text="${branding != null ? branding.name : 'Zymos'} + ' — Dashboard'">Zymos — Dashboard</span>
-                </div>
-                <div class="d-flex gap-1">
-                    <span class="dot dot-r"></span>
-                    <span class="dot dot-y"></span>
-                    <span class="dot dot-g"></span>
-                </div>
-            </div>
-            <div class="preview-body">
-                <!-- Sidebar -->
-                <div class="preview-sidebar">
-                    <div class="preview-nav-item active"><i class="bi bi-grid-fill"></i> Dashboard</div>
-                    <div class="preview-nav-item"><i class="bi bi-layers"></i> Lotes</div>
-                    <div class="preview-nav-item"><i class="bi bi-journal-text"></i> Recetas</div>
-                    <div class="preview-nav-item"><i class="bi bi-box-seam"></i> Inventario</div>
-                    <div class="preview-nav-item"><i class="bi bi-bar-chart"></i> Reportes</div>
-                    <div class="preview-nav-item"><i class="bi bi-robot"></i> Chat IA</div>
-                </div>
-                <!-- Main content -->
-                <div class="preview-main">
-                    <div class="preview-stats">
-                        <div class="preview-stat-card">
-                            <div class="preview-stat-num">12</div>
-                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat1.lbl}">Lotes activos</div>
+        <div class="showcase-row rev">
+            <div class="showcase-visual">
+                <div class="mock-wrap tilt-l">
+                    <div class="mock-window">
+                        <div class="mock-topbar">
+                            <span class="mock-topbar-title"><i class="bi bi-journal-text"></i> IPA Americana — Brewsheet</span>
+                            <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
                         </div>
-                        <div class="preview-stat-card">
-                            <div class="preview-stat-num">4</div>
-                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat2.lbl}">Fermentando</div>
-                        </div>
-                        <div class="preview-stat-card">
-                            <div class="preview-stat-num" style="color:#16a34a">87%</div>
-                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat3.lbl}">Capacidad</div>
-                        </div>
-                        <div class="preview-stat-card">
-                            <div class="preview-stat-num" style="color:#2563eb">$4.2M</div>
-                            <div class="preview-stat-lbl" th:text="#{landing.preview.stat4.lbl}">Ventas mes</div>
+                        <div class="mock-recipe">
+                            <div class="mock-rcp-name">IPA Americana Clásica</div>
+                            <div class="mock-rcp-style">American IPA · 80 L · 3 escalones</div>
+                            <div class="mock-rcp-stats">
+                                <div class="mock-rcp-stat"><div class="mock-rcp-val">1.056</div><div class="mock-rcp-lbl">OG</div></div>
+                                <div class="mock-rcp-stat"><div class="mock-rcp-val">1.012</div><div class="mock-rcp-lbl">FG</div></div>
+                                <div class="mock-rcp-stat"><div class="mock-rcp-val">5.8%</div><div class="mock-rcp-lbl">ABV</div></div>
+                                <div class="mock-rcp-stat"><div class="mock-rcp-val">62</div><div class="mock-rcp-lbl">IBU</div></div>
+                            </div>
+                            <div class="mock-rcp-tabs">
+                                <div class="mock-rcp-tab active">Maltas</div>
+                                <div class="mock-rcp-tab">Lúpulos</div>
+                                <div class="mock-rcp-tab">Escalones</div>
+                                <div class="mock-rcp-tab">Levadura</div>
+                            </div>
+                            <div class="mock-rcp-row"><span class="mock-rcp-ing">Malta Pale Ale 2-Row</span><span class="mock-rcp-amt">9.0 kg</span></div>
+                            <div class="mock-rcp-row"><span class="mock-rcp-ing">Malta Crystal 20L</span><span class="mock-rcp-amt">0.8 kg</span></div>
+                            <div class="mock-rcp-row"><span class="mock-rcp-ing">Malta Cara 60L</span><span class="mock-rcp-amt">0.4 kg</span></div>
+                            <div class="mock-rcp-row"><span class="mock-rcp-ing">Malta de Trigo</span><span class="mock-rcp-amt">0.3 kg</span></div>
                         </div>
                     </div>
-                    <table class="preview-table-mini">
-                        <thead>
-                            <tr>
-                                <th th:text="#{landing.preview.th.codigo}">Código</th>
-                                <th th:text="#{landing.preview.th.estilo}">Estilo</th>
-                                <th th:text="#{landing.preview.th.densidad}">Densidad</th>
-                                <th th:text="#{landing.preview.th.fase}">Fase</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>IPA-024</strong></td>
-                                <td>IPA Americana</td>
-                                <td>1.048</td>
-                                <td><span class="phase-mini phase-ferm" th:text="#{landing.preview.phase.ferm}">Fermentación</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>STO-012</strong></td>
-                                <td>Stout Imperial</td>
-                                <td>1.018</td>
-                                <td><span class="phase-mini phase-carb" th:text="#{landing.preview.phase.carb}">Carbonatación</span></td>
-                            </tr>
-                            <tr>
-                                <td><strong>APA-031</strong></td>
-                                <td>APA Tropical</td>
-                                <td>1.056</td>
-                                <td><span class="phase-mini phase-mace" th:text="#{landing.preview.phase.mace}">Macerado</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                </div>
+            </div>
+            <div class="showcase-text">
+                <div class="showcase-label c-orange"><i class="bi bi-journal-text"></i> <span th:text="#{landing.showcase.2.label}">Formulación</span></div>
+                <h2 class="showcase-title" th:text="#{landing.showcase.2.title}">Recetas que se diseñan solas</h2>
+                <p class="showcase-desc" th:text="#{landing.showcase.2.desc}">Calculadora completa con OG/FG/ABV/IBU en tiempo real.</p>
+                <ul class="showcase-bullets">
+                    <li><span class="sb-icon sb-orange"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat2.bullet1}">Escalones BJCP y múltiples fórmulas IBU</span></li>
+                    <li><span class="sb-icon sb-orange"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat2.bullet2}">Escala automática de volumen con un clic</span></li>
+                    <li><span class="sb-icon sb-orange"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat2.bullet3}">Import/Export BeerXML 1.0 estándar</span></li>
+                </ul>
+                <button type="button" class="btn-sc btn-sc-orange" id="btnShowcase2Demo">
+                    <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.showcase.cta}">Ver demo →</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     SHOWCASE 3 — BPM (blanco, texto izq, BPM mockup der)
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-showcase bg-white">
+    <div class="container">
+        <div class="showcase-row">
+            <div class="showcase-text">
+                <div class="showcase-label c-purple"><i class="bi bi-shield-fill-check"></i> <span th:text="#{landing.showcase.3.label}">Inocuidad</span></div>
+                <h2 class="showcase-title" th:text="#{landing.showcase.3.title}">BPM e inocuidad sin papel</h2>
+                <p class="showcase-desc" th:text="#{landing.showcase.3.desc}">Registros de salud diarios con firma digital.</p>
+                <ul class="showcase-bullets">
+                    <li><span class="sb-icon sb-purple"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat4.bullet1}">Control de salud diario con firma digital</span></li>
+                    <li><span class="sb-icon sb-purple"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat4.bullet2}">Bloqueo automático si hay síntomas</span></li>
+                    <li><span class="sb-icon sb-purple"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat4.bullet3}">PDFs de registros oficiales por operario</span></li>
+                </ul>
+                <button type="button" class="btn-sc btn-sc-purple" id="btnShowcase3Demo">
+                    <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.showcase.cta}">Ver demo →</span>
+                </button>
+            </div>
+            <div class="showcase-visual">
+                <div class="mock-wrap tilt-r">
+                    <div class="mock-window">
+                        <div class="mock-topbar">
+                            <span class="mock-topbar-title"><i class="bi bi-shield-check"></i> BPM — Estado de Salud Diario</span>
+                            <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
+                        </div>
+                        <div class="mock-bpm">
+                            <div class="mock-bpm-hdr">
+                                <span class="mock-bpm-date">Miércoles 19 Nov 2026</span>
+                                <span class="mock-bpm-ok">✓ Autorizado</span>
+                            </div>
+                            <div class="mock-bpm-row">
+                                <div class="mock-bpm-chk"><i class="bi bi-check"></i></div>
+                                <span class="mock-bpm-lbl">Sin síntomas gastrointestinales</span>
+                            </div>
+                            <div class="mock-bpm-row">
+                                <div class="mock-bpm-chk"><i class="bi bi-check"></i></div>
+                                <span class="mock-bpm-lbl">Sin heridas en manos o brazos</span>
+                            </div>
+                            <div class="mock-bpm-row">
+                                <div class="mock-bpm-chk"><i class="bi bi-check"></i></div>
+                                <span class="mock-bpm-lbl">Sin enfermedades respiratorias activas</span>
+                            </div>
+                            <div class="mock-bpm-row">
+                                <div class="mock-bpm-chk"><i class="bi bi-check"></i></div>
+                                <span class="mock-bpm-lbl">Uniforme y EPP completo en buen estado</span>
+                            </div>
+                            <div class="mock-firma-area">
+                                <div class="mock-firma-lbl">Firma del operario</div>
+                                <div class="mock-firma-box">
+                                    <svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 200 28" fill="none">
+                                        <path d="M10 20 Q30 5 50 15 Q70 25 90 10 Q110 -2 130 12 Q150 22 170 10 Q185 2 195 15" stroke="#2563eb" stroke-width="2" stroke-linecap="round" fill="none"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="mock-bpm-btn">Registrar y autorizar entrada</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     SHOWCASE 4 — COMERCIAL (gris, Rentabilidad izq, texto der)
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-showcase bg-gray">
+    <div class="container">
+        <div class="showcase-row rev">
+            <div class="showcase-visual">
+                <div class="mock-wrap tilt-l">
+                    <div class="mock-window">
+                        <div class="mock-topbar">
+                            <span class="mock-topbar-title"><i class="bi bi-graph-up"></i> Reportes — Rentabilidad</span>
+                            <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
+                        </div>
+                        <div class="mock-rent">
+                            <div class="mock-rent-hdr">
+                                <span class="mock-rent-title">Rentabilidad por estilo</span>
+                                <span class="mock-rent-period">Ene–Nov 2026</span>
+                            </div>
+                            <div class="mock-rent-row">
+                                <div>
+                                    <div class="mock-rent-style">IPA Americana</div>
+                                    <div class="mock-rent-bar"><div class="mock-rent-fill bar-ipa"></div></div>
+                                </div>
+                                <div class="mock-rent-pct up">+38%</div>
+                            </div>
+                            <div class="mock-rent-row">
+                                <div>
+                                    <div class="mock-rent-style">Stout Imperial</div>
+                                    <div class="mock-rent-bar"><div class="mock-rent-fill bar-sto"></div></div>
+                                </div>
+                                <div class="mock-rent-pct up">+22%</div>
+                            </div>
+                            <div class="mock-rent-row">
+                                <div>
+                                    <div class="mock-rent-style">APA Tropical</div>
+                                    <div class="mock-rent-bar"><div class="mock-rent-fill bar-apa"></div></div>
+                                </div>
+                                <div class="mock-rent-pct up">+14%</div>
+                            </div>
+                            <div class="mock-rent-row">
+                                <div>
+                                    <div class="mock-rent-style">Saison Especiada</div>
+                                    <div class="mock-rent-bar"><div class="mock-rent-fill bar-sai"></div></div>
+                                </div>
+                                <div class="mock-rent-pct dn">−4%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="showcase-text">
+                <div class="showcase-label c-gold"><i class="bi bi-briefcase-fill"></i> <span th:text="#{landing.showcase.4.label}">Gestión Comercial</span></div>
+                <h2 class="showcase-title" th:text="#{landing.showcase.4.title}">Rentabilidad por cada estilo</h2>
+                <p class="showcase-desc" th:text="#{landing.showcase.4.desc}">Facturas, órdenes, ventas y análisis en un lugar.</p>
+                <ul class="showcase-bullets">
+                    <li><span class="sb-icon sb-gold"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat5.bullet1}">Análisis de facturas con IA (foto → datos)</span></li>
+                    <li><span class="sb-icon sb-gold"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat5.bullet2}">Clientes, cotizaciones y ventas por formato</span></li>
+                    <li><span class="sb-icon sb-gold"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat5.bullet3}">Reportes de rentabilidad por estilo</span></li>
+                </ul>
+                <button type="button" class="btn-sc btn-sc-gold" id="btnShowcase4Demo">
+                    <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.showcase.cta}">Ver demo →</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     SHOWCASE 5 — IA (oscuro, texto izq, Chat IA der)
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-showcase bg-dark">
+    <div class="container">
+        <div class="showcase-row">
+            <div class="showcase-text">
+                <div class="showcase-label c-white"><i class="bi bi-robot"></i> <span th:text="#{landing.showcase.5.label}">Inteligencia Artificial</span></div>
+                <h2 class="showcase-title on-dark" th:text="#{landing.showcase.5.title}">Siete formas de usar IA</h2>
+                <p class="showcase-desc on-dark" th:text="#{landing.showcase.5.desc}">Genera recetas, diagnostica fermentaciones y analiza rentabilidad.</p>
+                <ul class="showcase-bullets on-dark">
+                    <li><span class="sb-icon sb-teal"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat6.bullet1}">Genera recetas desde descripción de texto</span></li>
+                    <li><span class="sb-icon sb-teal"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat6.bullet2}">Diagnóstico de fermentación y score BJCP</span></li>
+                    <li><span class="sb-icon sb-teal"><i class="bi bi-check-lg"></i></span><span th:text="#{landing.feat6.bullet3}">Descripciones comerciales para etiquetas</span></li>
+                </ul>
+                <button type="button" class="btn-sc btn-sc-teal" id="btnShowcase5Demo">
+                    <i class="bi bi-play-circle-fill"></i><span th:text="#{landing.showcase.cta}">Ver demo →</span>
+                </button>
+            </div>
+            <div class="showcase-visual">
+                <div class="mock-wrap tilt-r">
+                    <div class="mock-notif pos-bl" style="color:#0891b2"><i class="bi bi-robot"></i> Análisis completado</div>
+                    <div class="mock-window">
+                        <div class="mock-topbar">
+                            <span class="mock-topbar-title"><i class="bi bi-robot"></i> Chat IA — Claude</span>
+                            <div class="mock-dots"><span class="dr"></span><span class="dy"></span><span class="dg"></span></div>
+                        </div>
+                        <div class="mock-ai">
+                            <div class="mock-ai-top"><i class="bi bi-stars"></i> Asistente IA — Zymos</div>
+                            <div class="mock-ai-msg">
+                                <div class="mock-ai-user">¿Cómo va mi IPA-024?</div>
+                            </div>
+                            <div class="mock-ai-msg">
+                                <div class="mock-ai-bot">Tu IPA-024 lleva 7 días fermentando. La densidad bajó de 1.056 a 1.014 — estás al 93% de atenuación. Temperatura estable en 19°C. Proyección: listo para carbonatación en ~2 días.</div>
+                            </div>
+                            <div class="mock-ai-badges">
+                                <span class="mock-ai-badge mock-ai-bd-blue">ABV 5.6%</span>
+                                <span class="mock-ai-badge mock-ai-bd-green">Atenuación 93%</span>
+                                <span class="mock-ai-badge mock-ai-bd-gold">19°C estable</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════
+     DIFERENCIADORES
+     ══════════════════════════════════════════════════════ -->
+<section class="lp-diff">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-label" th:text="#{landing.diff.label}">Pensado para el negocio</div>
+            <h2 class="section-title" th:text="#{landing.diff.title}">Lo que el software de homebrewing no tiene</h2>
+            <p class="section-sub" th:text="#{landing.diff.sub}">Zymos va más allá del diseño de recetas.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3">
+                <div class="diff-card">
+                    <div class="diff-icon c1"><i class="bi bi-shield-fill-check"></i></div>
+                    <div class="diff-title" th:text="#{landing.diff.1.title}">BPM / HACCP incluido</div>
+                    <p class="diff-desc" th:text="#{landing.diff.1.desc}">Control sanitario diario con firma digital, registro de desinfectantes, control de plagas y documentación para inspecciones regulatorias.</p>
+                    <span class="diff-vs-badge" th:text="#{landing.diff.vs}">Apps de recetas no tienen esto</span>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="diff-card">
+                    <div class="diff-icon c2"><i class="bi bi-briefcase-fill"></i></div>
+                    <div class="diff-title" th:text="#{landing.diff.2.title}">Gestión comercial completa</div>
+                    <p class="diff-desc" th:text="#{landing.diff.2.desc}">Facturas de proveedores, órdenes de compra, gestión de clientes, ventas por formato y análisis financiero en un solo lugar.</p>
+                    <span class="diff-vs-badge" th:text="#{landing.diff.vs}">Apps de recetas no tienen esto</span>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="diff-card">
+                    <div class="diff-icon c3"><i class="bi bi-people-fill"></i></div>
+                    <div class="diff-title" th:text="#{landing.diff.3.title}">Equipo con roles granulares</div>
+                    <p class="diff-desc" th:text="#{landing.diff.3.desc}">Administrador, Producción, Inventario, Facturación — crea roles personalizados y controla qué ve cada miembro de tu equipo.</p>
+                    <span class="diff-vs-badge" th:text="#{landing.diff.vs}">Apps de recetas no tienen esto</span>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-3">
+                <div class="diff-card">
+                    <div class="diff-icon c4"><i class="bi bi-chat-dots-fill"></i></div>
+                    <div class="diff-title" th:text="#{landing.diff.4.title}">Alertas por WhatsApp y Push</div>
+                    <p class="diff-desc" th:text="#{landing.diff.4.desc}">Notificaciones automáticas de bajo stock, vencimientos, cambios de fase y tareas directamente en tu teléfono.</p>
+                    <span class="diff-vs-badge" th:text="#{landing.diff.vs}">Apps de recetas no tienen esto</span>
                 </div>
             </div>
         </div>
@@ -755,7 +1045,7 @@
             </div>
             <div class="d-flex gap-4 flex-wrap justify-content-center">
                 <a th:href="@{/landing}" class="footer-link" th:text="#{landing.footer.inicio}">Inicio</a>
-                <a href="#features" class="footer-link" th:text="#{landing.footer.modulos}">Módulos</a>
+                <a href="#showcase-features" class="footer-link" th:text="#{landing.footer.modulos}">Módulos</a>
                 <a th:href="@{/planes}" class="footer-link" th:text="#{landing.footer.planes}">Planes</a>
                 <a href="#" class="footer-link" data-action="open-login-modal" th:text="#{landing.footer.login}">Iniciar sesión</a>
             </div>
@@ -767,7 +1057,7 @@
 </footer>
 
 <!-- ══════════════════════════════════════════════════════
-     MODAL — INICIAR SESIÓN (subdominio)
+     MODAL — INICIAR SESIÓN
      ══════════════════════════════════════════════════════ -->
 <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
@@ -780,9 +1070,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="login-modal-sub" th:text="#{landing.login.modal.sub}">
-                    Ingresá el subdominio de tu cervecería
-                </p>
+                <p class="login-modal-sub" th:text="#{landing.login.modal.sub}">Ingresá el subdominio de tu cervecería</p>
                 <label class="login-modal-label" for="loginSubdomInput" th:text="#{landing.login.modal.label}">Tu subdominio</label>
                 <input type="text" id="loginSubdomInput" class="login-modal-input"
                        th:placeholder="#{landing.login.modal.placeholder}"
@@ -817,14 +1105,14 @@ var MSG_LOGIN_ERR_INVALID = /*[[#{landing.login.modal.err.invalid}]]*/ 'Solo let
 /*]]>*/
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Login modal — subdominio ─────────────────────────────────────────────
+    // ── Login modal ──────────────────────────────────────────────────────────
     (function () {
-        var loginModal   = new bootstrap.Modal(document.getElementById('loginModal'));
-        var subInput     = document.getElementById('loginSubdomInput');
-        var subVal       = document.getElementById('loginSubdomVal');
-        var subErr       = document.getElementById('loginSubdomErr');
-        var btnGo        = document.getElementById('btnLoginModalGo');
-        var RE_SUBDOM    = /^[a-z0-9]{3,30}$/;
+        var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+        var subInput   = document.getElementById('loginSubdomInput');
+        var subVal     = document.getElementById('loginSubdomVal');
+        var subErr     = document.getElementById('loginSubdomErr');
+        var btnGo      = document.getElementById('btnLoginModalGo');
+        var RE_SUBDOM  = /^[a-z0-9]{3,30}$/;
 
         function getBaseDomain() {
             var host  = window.location.hostname;
@@ -833,78 +1121,54 @@ document.addEventListener('DOMContentLoaded', function () {
             var base  = parts.length <= 2 ? host : parts.slice(1).join('.');
             return base + port;
         }
-
-        function showErr(msg) {
-            subErr.textContent = msg;
-            subErr.style.display = 'block';
-            subInput.style.borderColor = '#f87171';
-        }
-        function clearErr() {
-            subErr.style.display = 'none';
-            subInput.style.borderColor = '';
-        }
+        function showErr(msg) { subErr.textContent = msg; subErr.style.display = 'block'; subInput.style.borderColor = '#f87171'; }
+        function clearErr()   { subErr.style.display = 'none'; subInput.style.borderColor = ''; }
 
         document.addEventListener('click', function (e) {
             if (e.target.closest('[data-action="open-login-modal"]')) {
-                e.preventDefault();
-                clearErr();
-                subInput.value = '';
-                subVal.textContent = subInput.placeholder;
-                loginModal.show();
-                setTimeout(function () { subInput.focus(); }, 300);
+                e.preventDefault(); clearErr(); subInput.value = ''; subVal.textContent = subInput.placeholder;
+                loginModal.show(); setTimeout(function () { subInput.focus(); }, 300);
             }
         });
-
         if (subInput) {
             subInput.addEventListener('input', function () {
                 var clean = this.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-                this.value = clean;
-                subVal.textContent = clean || this.placeholder;
-                clearErr();
+                this.value = clean; subVal.textContent = clean || this.placeholder; clearErr();
             });
-            subInput.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') { e.preventDefault(); btnGo.click(); }
-            });
+            subInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); btnGo.click(); } });
         }
-
         if (btnGo) {
             btnGo.addEventListener('click', function () {
                 var sub = subInput.value.trim();
                 if (!sub) { showErr(MSG_LOGIN_ERR_EMPTY); return; }
                 if (!RE_SUBDOM.test(sub)) { showErr(MSG_LOGIN_ERR_INVALID); return; }
-                var url = window.location.protocol + '//' + sub + '.' + getBaseDomain() + '/login';
-                window.location.href = url;
+                window.location.href = window.location.protocol + '//' + sub + '.' + getBaseDomain() + '/login';
             });
         }
     })();
 
-    // ── Demo login buttons ────────────────────────────────────────────────────
+    // ── Demo login buttons ───────────────────────────────────────────────────
     var demoForm = document.getElementById('demoLoginForm');
-    ['btnNavDemo', 'btnHeroDemo', 'btnDemoEnter'].forEach(function (id) {
+    ['btnNavDemo','btnHeroDemo','btnDemoEnter','btnShowcase1Demo','btnShowcase2Demo','btnShowcase3Demo','btnShowcase4Demo','btnShowcase5Demo'].forEach(function (id) {
         var btn = document.getElementById(id);
         if (btn) btn.addEventListener('click', function () { demoForm.submit(); });
     });
 
-    // ── Smooth scroll for anchor links ───────────────────────────────────────
+    // ── Smooth scroll ────────────────────────────────────────────────────────
     document.querySelectorAll('a[href^="#"]').forEach(function (a) {
         a.addEventListener('click', function (e) {
             var target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                e.preventDefault();
-                target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
+            if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
         });
     });
 
-    // ── CTA Trial form — subdomain logic ─────────────────────────────────────
+    // ── CTA Trial form ───────────────────────────────────────────────────────
     var ctaTimer = null;
     var ctaAvail = false;
 
     function limpiar(val) {
-        return val.normalize('NFD').replace(/[̀-ͯ]/g, '')
-                  .toLowerCase().replace(/[^a-z0-9]/g, '');
+        return val.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
     }
-
     function verificarCta(sub) {
         fetch('/checkout/verificar-subdominio?s=' + encodeURIComponent(sub))
             .then(function (r) { return r.json(); })
@@ -916,48 +1180,27 @@ document.addEventListener('DOMContentLoaded', function () {
                 ctaAvail = data.disponible;
             });
     }
-
     function actualizarCtaSub(raw) {
         var clean = limpiar(raw);
         document.getElementById('ctaSub').value = clean;
         document.getElementById('ctaSubVal').textContent = clean || 'tucerveceria';
         clearTimeout(ctaTimer);
         var badge = document.getElementById('ctaAvail');
-        badge.style.display = 'none';
-        ctaAvail = false;
-        if (clean.length >= 3) {
-            ctaTimer = setTimeout(function () { verificarCta(clean); }, 500);
-        }
+        badge.style.display = 'none'; ctaAvail = false;
+        if (clean.length >= 3) { ctaTimer = setTimeout(function () { verificarCta(clean); }, 500); }
     }
 
     var ctaNombre = document.getElementById('ctaNombre');
     var ctaSub    = document.getElementById('ctaSub');
-    if (ctaNombre) {
-        ctaNombre.addEventListener('input', function () {
-            if (!ctaSub.dataset.editadoManual) actualizarCtaSub(this.value);
-        });
-    }
-    if (ctaSub) {
-        ctaSub.addEventListener('input', function () {
-            this.dataset.editadoManual = '1';
-            actualizarCtaSub(this.value);
-        });
-    }
+    if (ctaNombre) { ctaNombre.addEventListener('input', function () { if (!ctaSub.dataset.editadoManual) actualizarCtaSub(this.value); }); }
+    if (ctaSub)    { ctaSub.addEventListener('input', function () { this.dataset.editadoManual = '1'; actualizarCtaSub(this.value); }); }
 
     var ctaForm = document.getElementById('ctaTrialForm');
     if (ctaForm) {
         ctaForm.addEventListener('submit', function (e) {
             var sub = document.getElementById('ctaSub').value;
-            if (sub.length < 3) {
-                e.preventDefault();
-                alert(MSG_SUBDOM_MIN);
-                return;
-            }
-            if (!ctaAvail && sub.length >= 3) {
-                e.preventDefault();
-                alert(MSG_SUBDOM_CHECK);
-                return;
-            }
+            if (sub.length < 3) { e.preventDefault(); alert(MSG_SUBDOM_MIN); return; }
+            if (!ctaAvail && sub.length >= 3) { e.preventDefault(); alert(MSG_SUBDOM_CHECK); return; }
             var btn = document.getElementById('btnCtaSubmit');
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + MSG_SPINNER;
