@@ -141,12 +141,22 @@ public class DataInitializer implements CommandLineRunner {
 
     private void crearTenantDemo() {
         if (tenantRepo.existsById("demo")) {
-            // Asegura que el plan esté definido si el tenant ya existía antes de V91
             tenantRepo.findById("demo").ifPresent(t -> {
-                if (t.getPlanNivel() == null) {
-                    t.setPlanNivel(PlanNivel.FERMENTACION);
+                boolean changed = false;
+                // Sincronizar colores y fuentes con el branding activo
+                if (!branding.getColorNavbar().equals(t.getColorNavbar()))       { t.setColorNavbar(branding.getColorNavbar());           changed = true; }
+                if (!branding.getColorPrimary().equals(t.getColorPrimary()))     { t.setColorPrimary(branding.getColorPrimary());         changed = true; }
+                if (!branding.getColorAccent().equals(t.getColorAccent()))       { t.setColorAccent(branding.getColorAccent());           changed = true; }
+                if (!branding.getColorAccentHover().equals(t.getColorAccentHover())) { t.setColorAccentHover(branding.getColorAccentHover()); changed = true; }
+                if (!branding.getColorCream().equals(t.getColorCream()))         { t.setColorCream(branding.getColorCream());             changed = true; }
+                if (!branding.getColorBodyBg().equals(t.getColorBodyBg()))       { t.setColorBodyBg(branding.getColorBodyBg());           changed = true; }
+                if (!branding.getFontHeadings().equals(t.getFontHeadings()))     { t.setFontHeadings(branding.getFontHeadings());         changed = true; }
+                if (!branding.getFontBody().equals(t.getFontBody()))             { t.setFontBody(branding.getFontBody());                 changed = true; }
+                // Asegura que el plan esté definido si el tenant ya existía antes de V91
+                if (t.getPlanNivel() == null) { t.setPlanNivel(PlanNivel.FERMENTACION); changed = true; }
+                if (changed) {
                     tenantRepo.save(t);
-                    log.info("Tenant demo actualizado a plan FERMENTACION");
+                    log.info("Tenant demo sincronizado con branding activo");
                 }
             });
             return;
