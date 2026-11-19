@@ -32,7 +32,7 @@ class TenantFilterTest {
 
     @BeforeEach
     void setup() {
-        filter = new TenantFilter(tenantRepo, "default", 5, DIAS_GRACIA);
+        filter = new TenantFilter(tenantRepo, "default", "", 5, DIAS_GRACIA);
         lenient().when(request.getServerName()).thenReturn("localhost");
         lenient().when(request.getRequestURI()).thenReturn("/dashboard");
     }

@@ -74,9 +74,10 @@ public class SecurityConfig {
     @Bean
     public TenantFilter tenantFilter(TenantRepository tenantRepo,
                                       @Value("${app.default-subdomain:default}") String defaultSubdomain,
+                                      @Value("${app.base-domain:}") String baseDomain,
                                       @Value("${app.tenant-cache-ttl-minutes:5}") long ttlMinutes,
                                       @Value("${app.plan.dias-gracia:7}") int diasGracia) {
-        return new TenantFilter(tenantRepo, defaultSubdomain, ttlMinutes, diasGracia);
+        return new TenantFilter(tenantRepo, defaultSubdomain, baseDomain, ttlMinutes, diasGracia);
     }
 
     @Bean

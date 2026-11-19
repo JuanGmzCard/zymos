@@ -33,14 +33,16 @@ public class TenantFilter extends OncePerRequestFilter {
 
     private final TenantRepository tenantRepo;
     private final String defaultSubdomain;
+    private final String baseDomain;
     private final int diasGracia;
 
     // Cache con TTL — expira automáticamente; evictCache/evictAll para invalidación manual
     private final Cache<String, Tenant> cache;
 
-    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain, long ttlMinutes, int diasGracia) {
+    public TenantFilter(TenantRepository tenantRepo, String defaultSubdomain, String baseDomain, long ttlMinutes, int diasGracia) {
         this.tenantRepo = tenantRepo;
         this.defaultSubdomain = defaultSubdomain;
+        this.baseDomain = baseDomain != null ? baseDomain.trim().toLowerCase() : "";
         this.diasGracia = diasGracia;
         this.cache = Caffeine.newBuilder()
                 .expireAfterWrite(ttlMinutes, TimeUnit.MINUTES)
@@ -64,7 +66,10 @@ public class TenantFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain chain) throws ServletException, IOException {
-        String subdomain = extractSubdomain(request.getServerName());
+        boolean isApexDomain = !baseDomain.isBlank()
+                && request.getServerName().split(":")[0].equalsIgnoreCase(baseDomain);
+
+        String subdomain = isApexDomain ? defaultSubdomain : extractSubdomain(request.getServerName());
         Tenant tenant = resolveTenant(subdomain);
 
         if (tenant == null) {
@@ -77,6 +82,12 @@ public class TenantFilter extends OncePerRequestFilter {
         TenantContext.setCurrentTenant(tenant.getSubdomain());
         try {
             String path = request.getRequestURI();
+
+            // Dominio raíz (zymos.cloud sin subdominio): redirigir al landing
+            if (isApexDomain && !esRutaApex(path)) {
+                response.sendRedirect("/landing");
+                return;
+            }
 
             if (planBloqueado(tenant) && !esRutaPermitidaConPlanVencido(path)) {
                 response.sendRedirect("/plan-vencido");
@@ -125,6 +136,17 @@ public class TenantFilter extends OncePerRequestFilter {
                 || path.equals("/demo") || path.equals("/plan-upgrade")
                 || path.equals("/logout") || path.startsWith("/login")
                 || path.equals("/manifest.webmanifest") || path.equals("/offline.html");
+    }
+
+    /** Rutas permitidas directamente desde el dominio raíz (sin redirigir al landing). */
+    private boolean esRutaApex(String path) {
+        return path.equals("/landing") || path.startsWith("/planes")
+                || path.startsWith("/checkout") || path.startsWith("/webhook")
+                || path.startsWith("/login") || path.equals("/logout")
+                || path.startsWith("/actuator") || path.equals("/manifest.webmanifest")
+                || path.equals("/offline.html") || path.equals("/sw.js")
+                || path.startsWith("/css/") || path.startsWith("/js/")
+                || path.startsWith("/img/") || path.startsWith("/docs/");
     }
 
     private Tenant resolveTenant(String subdomain) {
