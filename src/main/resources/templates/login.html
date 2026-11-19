@@ -261,6 +261,25 @@
         color: #1e293b; margin-top: 28px;
     }
 
+    /* Link al landing */
+    .la-landing-link { text-align: center; }
+    .la-landing-btn {
+        display: inline-flex; align-items: center; gap: 6px;
+        font-size: 12px; font-weight: 500;
+        color: color-mix(in srgb, var(--dorado, #f97316) 75%, transparent);
+        text-decoration: none;
+        padding: 8px 18px;
+        border-radius: 20px;
+        border: 1px solid color-mix(in srgb, var(--dorado, #f97316) 22%, transparent);
+        transition: color .15s, border-color .15s, background .15s;
+    }
+    .la-landing-btn:hover {
+        color: var(--dorado, #f97316);
+        border-color: color-mix(in srgb, var(--dorado, #f97316) 48%, transparent);
+        background: color-mix(in srgb, var(--dorado, #f97316) 8%, transparent);
+    }
+    .la-landing-btn i { font-size: 13px; }
+
     /* ── Responsive: móvil oculta panel izquierdo ── */
     @media (max-width: 768px) {
         .la-left  { display: none; }
@@ -310,6 +329,13 @@
                         <p  th:text="#{login.feat3.desc}">Control sanitario y buenas prácticas integradas</p>
                     </div>
                 </div>
+            </div>
+
+            <div class="la-landing-link">
+                <a href="/landing" class="la-landing-btn">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                    <span th:text="#{login.landing.link}">Conocer la plataforma</span>
+                </a>
             </div>
 
         </div>

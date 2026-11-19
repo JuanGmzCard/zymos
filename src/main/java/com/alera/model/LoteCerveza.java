@@ -149,6 +149,10 @@ public class LoteCerveza extends AuditableEntity {
     private String carbValidacion;       // ADECUADA / RETENCION_CORRECTA / SOBRECARBONATADA / BAJA_CARBONATACION
     private String carbDestino;
 
+    @OneToMany(mappedBy = "lote", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("orden ASC")
+    private List<CarbSplit> carbSplits = new ArrayList<>();
+
     @Column(columnDefinition = "TEXT")
     private String observaciones;
 
@@ -476,4 +480,6 @@ public class LoteCerveza extends AuditableEntity {
     public void setNotasMaduracion(String v) { this.notasMaduracion = v; }
     public List<EscalonTemperatura> getEscalones() { return escalones; }
     public void setEscalones(List<EscalonTemperatura> escalones) { this.escalones = escalones; }
+    public List<CarbSplit> getCarbSplits() { return carbSplits; }
+    public void setCarbSplits(List<CarbSplit> carbSplits) { this.carbSplits = carbSplits; }
 }

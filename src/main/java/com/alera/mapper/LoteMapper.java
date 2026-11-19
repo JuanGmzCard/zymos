@@ -26,6 +26,16 @@ public interface LoteMapper {
     @Mapping(source = "receta4.id",           target = "receta4Id")
     @Mapping(target = "itemsIds",             ignore = true)
     @Mapping(target = "itemsCantidades",      ignore = true)
+    @Mapping(target = "splitVolumenes",       ignore = true)
+    @Mapping(target = "splitMetodos",         ignore = true)
+    @Mapping(target = "splitAzucarTipos",     ignore = true)
+    @Mapping(target = "splitAzucarGramos",    ignore = true)
+    @Mapping(target = "splitPresionPsis",     ignore = true)
+    @Mapping(target = "splitTiempoHoras",     ignore = true)
+    @Mapping(target = "splitTecnicas",        ignore = true)
+    @Mapping(target = "splitCo2Objetivos",    ignore = true)
+    @Mapping(target = "splitCo2Reales",       ignore = true)
+    @Mapping(target = "splitNotas",           ignore = true)
     @Mapping(source = "maltas",      target = "maltas",        qualifiedByName = "ingredientesAInsumos")
     @Mapping(source = "lupulos",     target = "lupulos",       qualifiedByName = "ingredientesAInsumos")
     @Mapping(source = "levaduras",   target = "levaduras",     qualifiedByName = "ingredientesAInsumos")
@@ -35,6 +45,64 @@ public interface LoteMapper {
     @AfterMapping
     default void mapInstrumentoMedicion(LoteCerveza lote, @MappingTarget LoteFormDto dto) {
         dto.setInstrumentoMedicion(lote.getOgBrix() != null ? "BRIX" : "SG");
+    }
+
+    @AfterMapping
+    default void mapCarbSplits(LoteCerveza lote, @MappingTarget LoteFormDto dto) {
+        List<com.alera.model.CarbSplit> splits = lote.getCarbSplits();
+        if (splits != null && !splits.isEmpty()) {
+            List<String> vols   = new ArrayList<>();
+            List<String> mets   = new ArrayList<>();
+            List<String> azTip  = new ArrayList<>();
+            List<String> azGr   = new ArrayList<>();
+            List<String> psi    = new ArrayList<>();
+            List<String> horas  = new ArrayList<>();
+            List<String> tec    = new ArrayList<>();
+            List<String> co2Obj = new ArrayList<>();
+            List<String> co2Re  = new ArrayList<>();
+            List<String> notas  = new ArrayList<>();
+            for (com.alera.model.CarbSplit s : splits) {
+                vols.add(s.getVolumen()      != null ? s.getVolumen().toPlainString()      : "");
+                mets.add(s.getMetodo()       != null ? s.getMetodo()                       : "");
+                azTip.add(s.getAzucarTipo()  != null ? s.getAzucarTipo()                   : "");
+                azGr.add(s.getAzucarGramos() != null ? s.getAzucarGramos().toPlainString() : "");
+                psi.add(s.getPresionPsi()    != null ? s.getPresionPsi().toPlainString()   : "");
+                horas.add(s.getTiempoHoras() != null ? s.getTiempoHoras().toString()       : "");
+                tec.add(s.getTecnica()       != null ? s.getTecnica()                      : "");
+                co2Obj.add(s.getCo2Objetivo()!= null ? s.getCo2Objetivo().toPlainString()  : "");
+                co2Re.add(s.getCo2Real()     != null ? s.getCo2Real().toPlainString()      : "");
+                notas.add(s.getNotas()       != null ? s.getNotas()                        : "");
+            }
+            dto.setSplitVolumenes(vols);
+            dto.setSplitMetodos(mets);
+            dto.setSplitAzucarTipos(azTip);
+            dto.setSplitAzucarGramos(azGr);
+            dto.setSplitPresionPsis(psi);
+            dto.setSplitTiempoHoras(horas);
+            dto.setSplitTecnicas(tec);
+            dto.setSplitCo2Objetivos(co2Obj);
+            dto.setSplitCo2Reales(co2Re);
+            dto.setSplitNotas(notas);
+        } else if (lote.getCarbMetodo() != null && !lote.getCarbMetodo().isBlank()) {
+            // Backward compat: sintetizar un split único desde los campos escalares legacy
+            dto.setSplitMetodos(new ArrayList<>(java.util.List.of(lote.getCarbMetodo())));
+            dto.setSplitVolumenes(new ArrayList<>(java.util.List.of("")));
+            dto.setSplitAzucarTipos(new ArrayList<>(java.util.List.of(
+                    lote.getCarbAzucarTipo() != null ? lote.getCarbAzucarTipo() : "")));
+            dto.setSplitAzucarGramos(new ArrayList<>(java.util.List.of(
+                    lote.getCarbAzucarGramos() != null ? lote.getCarbAzucarGramos().toPlainString() : "")));
+            dto.setSplitPresionPsis(new ArrayList<>(java.util.List.of(
+                    lote.getCarbPresionPsi() != null ? lote.getCarbPresionPsi().toPlainString() : "")));
+            dto.setSplitTiempoHoras(new ArrayList<>(java.util.List.of(
+                    lote.getCarbTiempoHoras() != null ? lote.getCarbTiempoHoras().toString() : "")));
+            dto.setSplitTecnicas(new ArrayList<>(java.util.List.of(
+                    lote.getCarbTecnica() != null ? lote.getCarbTecnica() : "")));
+            dto.setSplitCo2Objetivos(new ArrayList<>(java.util.List.of(
+                    lote.getCarbCo2Objetivo() != null ? lote.getCarbCo2Objetivo().toPlainString() : "")));
+            dto.setSplitCo2Reales(new ArrayList<>(java.util.List.of(
+                    lote.getCarbCo2Real() != null ? lote.getCarbCo2Real().toPlainString() : "")));
+            dto.setSplitNotas(new ArrayList<>(java.util.List.of("")));
+        }
     }
 
     @AfterMapping

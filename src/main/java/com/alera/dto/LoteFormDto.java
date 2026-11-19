@@ -213,6 +213,18 @@ public class LoteFormDto {
     private String carbValidacion;
     private String carbDestino;
 
+    // Splits de carbonatación (listas paralelas — una posición por división)
+    private List<String> splitVolumenes    = new ArrayList<>();
+    private List<String> splitMetodos      = new ArrayList<>();
+    private List<String> splitAzucarTipos  = new ArrayList<>();
+    private List<String> splitAzucarGramos = new ArrayList<>();
+    private List<String> splitPresionPsis  = new ArrayList<>();
+    private List<String> splitTiempoHoras  = new ArrayList<>();
+    private List<String> splitTecnicas     = new ArrayList<>();
+    private List<String> splitCo2Objetivos = new ArrayList<>();
+    private List<String> splitCo2Reales    = new ArrayList<>();
+    private List<String> splitNotas        = new ArrayList<>();
+
     private String observaciones;
     private String notasCata;
     private Long recetaId;
@@ -417,4 +429,24 @@ public class LoteFormDto {
     public void setMadurEscalonLogrados(List<String> v) { this.madurEscalonLogrados = v; }
     public List<String> getMadurEscalonNotasArr() { return madurEscalonNotasArr; }
     public void setMadurEscalonNotasArr(List<String> v) { this.madurEscalonNotasArr = v; }
+    public List<String> getSplitVolumenes()    { return splitVolumenes; }
+    public void setSplitVolumenes(List<String> v)    { this.splitVolumenes = v; }
+    public List<String> getSplitMetodos()      { return splitMetodos; }
+    public void setSplitMetodos(List<String> v)      { this.splitMetodos = v; }
+    public List<String> getSplitAzucarTipos()  { return splitAzucarTipos; }
+    public void setSplitAzucarTipos(List<String> v)  { this.splitAzucarTipos = v; }
+    public List<String> getSplitAzucarGramos() { return splitAzucarGramos; }
+    public void setSplitAzucarGramos(List<String> v) { this.splitAzucarGramos = v; }
+    public List<String> getSplitPresionPsis()  { return splitPresionPsis; }
+    public void setSplitPresionPsis(List<String> v)  { this.splitPresionPsis = v; }
+    public List<String> getSplitTiempoHoras()  { return splitTiempoHoras; }
+    public void setSplitTiempoHoras(List<String> v)  { this.splitTiempoHoras = v; }
+    public List<String> getSplitTecnicas()     { return splitTecnicas; }
+    public void setSplitTecnicas(List<String> v)     { this.splitTecnicas = v; }
+    public List<String> getSplitCo2Objetivos() { return splitCo2Objetivos; }
+    public void setSplitCo2Objetivos(List<String> v) { this.splitCo2Objetivos = v; }
+    public List<String> getSplitCo2Reales()    { return splitCo2Reales; }
+    public void setSplitCo2Reales(List<String> v)    { this.splitCo2Reales = v; }
+    public List<String> getSplitNotas()        { return splitNotas; }
+    public void setSplitNotas(List<String> v)        { this.splitNotas = v; }
 }
