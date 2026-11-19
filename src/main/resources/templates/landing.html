@@ -334,13 +334,6 @@
 </head>
 <body>
 
-<!-- Hidden demo login form (CSP-compliant auto-submit) -->
-<form id="demoLoginForm" action="/login" method="post" style="display:none">
-    <input type="hidden" name="username" value="demo">
-    <input type="hidden" name="password" value="demo">
-    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
-</form>
-
 <!-- ══════════════════════════════════════════════════════
      NAVBAR
      ══════════════════════════════════════════════════════ -->
@@ -814,6 +807,7 @@ var MSG_SUBDOM_CHECK      = /*[[#{landing.js.subdom.check}]]*/ 'Verificá la dis
 var MSG_SPINNER           = /*[[#{landing.js.spinner}]]*/ 'Creando tu cuenta…';
 var MSG_LOGIN_ERR_EMPTY   = /*[[#{landing.login.modal.err.empty}]]*/ 'Ingresá tu subdominio para continuar';
 var MSG_LOGIN_ERR_INVALID = /*[[#{landing.login.modal.err.invalid}]]*/ 'Solo letras minúsculas y números (3–30 caracteres)';
+var DEMO_URL              = /*[[${demoUrl}]]*/ '/demo';
 /*]]>*/
 document.addEventListener('DOMContentLoaded', function () {
 
@@ -878,11 +872,10 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     })();
 
-    // ── Demo login buttons ────────────────────────────────────────────────────
-    var demoForm = document.getElementById('demoLoginForm');
+    // ── Demo buttons — redirigen a demo.<dominio>/demo ───────────────────────
     ['btnNavDemo', 'btnHeroDemo', 'btnDemoEnter'].forEach(function (id) {
         var btn = document.getElementById(id);
-        if (btn) btn.addEventListener('click', function () { demoForm.submit(); });
+        if (btn) btn.addEventListener('click', function () { window.location.href = DEMO_URL; });
     });
 
     // ── Smooth scroll for anchor links ───────────────────────────────────────
