@@ -282,14 +282,25 @@ public class IaProviderService {
 
     private String extraerModeloSugerido(String errorBody) {
         if (errorBody == null) return null;
-        // Busca patrón "models/gemini-X.Y-flash" en el mensaje de error de Google
-        int idx = errorBody.indexOf("models/gemini-");
-        if (idx < 0) return null;
-        int start = idx + 7; // saltar "models/"
+        // Busca "use models/gemini-X.Y-flash" — la sugerencia, no el modelo deprecado
+        String patronUse = "use models/";
+        int idx = errorBody.indexOf(patronUse);
+        int start;
+        if (idx >= 0) {
+            start = idx + patronUse.length();
+        } else {
+            // Fallback: segunda ocurrencia de "models/gemini-"
+            int first = errorBody.indexOf("models/gemini-");
+            if (first < 0) return null;
+            int second = errorBody.indexOf("models/gemini-", first + 1);
+            if (second < 0) return null;
+            start = second + 7; // saltar "models/"
+        }
+        // Avanza hasta delimitador — NO incluir '.' porque los nombres tienen puntos (gemini-3.8-flash)
         int end = start;
         while (end < errorBody.length()) {
             char c = errorBody.charAt(end);
-            if (c == ' ' || c == '"' || c == '.' || c == ')' || c == '\n') break;
+            if (c == ' ' || c == '"' || c == ',' || c == '\n' || c == ')') break;
             end++;
         }
         String nombre = errorBody.substring(start, end);
