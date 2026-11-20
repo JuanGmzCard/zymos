@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -214,9 +215,13 @@ public class IaProviderService {
         if (e instanceof HttpClientErrorException httpEx) {
             return httpEx.getStatusCode().value() == 429;
         }
+        if (e instanceof HttpServerErrorException httpEx) {
+            return httpEx.getStatusCode().value() == 503;
+        }
         String msg = e.getMessage();
         if (msg == null) return false;
-        return msg.contains("429") || msg.contains("RESOURCE_EXHAUSTED")
+        return msg.contains("429") || msg.contains("503")
+                || msg.contains("RESOURCE_EXHAUSTED") || msg.contains("UNAVAILABLE")
                 || msg.contains("rate_limit") || msg.contains("quota");
     }
 }
