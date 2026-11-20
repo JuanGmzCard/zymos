@@ -309,7 +309,9 @@ public class FacturaProveedorController {
             return ResponseEntity.notFound().build();
         }
         try {
-            Path archivo = Paths.get(uploadDir).resolve(factura.getArchivoAdjunto());
+            Path base   = Paths.get(uploadDir).toRealPath();
+            Path archivo = base.resolve(factura.getArchivoAdjunto()).normalize();
+            if (!archivo.startsWith(base)) return ResponseEntity.badRequest().build();
             if (!Files.exists(archivo)) return ResponseEntity.notFound().build();
             byte[] bytes = Files.readAllBytes(archivo);
             String contentType = Files.probeContentType(archivo);
@@ -387,13 +389,19 @@ public class FacturaProveedorController {
 
     // ── Helpers de adjuntos ──────────────────────────────────────────────────
 
+    private static final java.util.Set<String> EXTS_PERMITIDAS =
+            java.util.Set.of(".pdf", ".png", ".jpg", ".jpeg", ".xlsx", ".xls", ".docx", ".doc", ".xml", ".csv");
+
     private String[] guardarArchivo(MultipartFile file, Long facturaId) throws IOException {
         String tenant = TenantContext.getCurrentTenant();
         if (tenant == null || tenant.isBlank()) tenant = "default";
         Path dir = Paths.get(uploadDir).resolve("facturas").resolve(tenant);
         Files.createDirectories(dir);
         String original = file.getOriginalFilename() != null ? file.getOriginalFilename() : "adjunto";
-        String ext = original.contains(".") ? original.substring(original.lastIndexOf('.')) : "";
+        String ext = original.contains(".") ? original.substring(original.lastIndexOf('.')).toLowerCase() : "";
+        if (!ext.isEmpty() && !EXTS_PERMITIDAS.contains(ext)) {
+            throw new IllegalArgumentException("Tipo de archivo no permitido: " + ext);
+        }
         String nombre = facturaId + "_" + UUID.randomUUID() + ext;
         Files.copy(file.getInputStream(), dir.resolve(nombre));
         String ruta = "facturas/" + tenant + "/" + nombre;

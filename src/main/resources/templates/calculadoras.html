@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="#{calc.page.title}">Calculadoras | Zymos</title>
+  <meta name="description" content="Calculadoras gratuitas para cervecerías artesanales: ABV, IBU (Tinseth), color SRM/EBC, refractómetro, carbonatación y dilución de lote. Sin registro.">
+  <meta name="keywords" content="calculadora ABV cerveza, calculadora IBU tinseth, calculadora color SRM EBC, refractómetro corrección, priming sugar carbonatación, calculadora dilución lote cerveza artesanal">
+  <meta property="og:title" th:content="#{calc.page.title}">
+  <meta property="og:description" content="Herramientas gratuitas para cerveceros: ABV, IBU, color, refractómetro, carbonatación y dilución.">
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Branding CSS vars -->
+  <style th:attr="nonce=${cspNonce}" th:inline="text">
+    :root {
+      --lp-primary: [[${branding.colorPrimary}]];
+      --lp-accent:  [[${branding.colorAccent}]];
+      --lp-navbar:  [[${branding.colorNavbar}]];
+    }
+  </style>
+
+  <style th:attr="nonce=${cspNonce}">
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: 'Raleway', sans-serif; background: #f1f5f9; color: #1e293b; }
+
+    /* ── Navbar ── */
+    .cn-bar {
+      background: var(--lp-navbar, #0f172a);
+      padding: .6rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .cn-logo { display: flex; align-items: center; gap: .5rem; text-decoration: none; color: #fff; }
+    .cn-logo-name { font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 700; letter-spacing: .04em; }
+    .cn-sep { width: 1px; height: 18px; background: rgba(255,255,255,.18); margin: 0 .25rem; }
+    .cn-tools { color: rgba(255,255,255,.75); font-size: .82rem; font-weight: 500; }
+    .cn-spacer { flex: 1; }
+    .cn-actions { display: flex; align-items: center; gap: .5rem; }
+    .cn-lang-btn {
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.55); font-size: .72rem; font-weight: 600; padding: .15rem .3rem;
+      text-decoration: none; letter-spacing: .03em;
+    }
+    .cn-lang-btn.active { color: rgba(255,255,255,.95); }
+    .cn-lang-sep { color: rgba(255,255,255,.2); font-size: .7rem; }
+    .cn-dm { background: none; border: none; cursor: pointer; color: rgba(255,255,255,.55); font-size: 1rem; padding: .2rem .4rem; line-height: 1; }
+    .cn-login { color: rgba(255,255,255,.75); font-size: .78rem; font-weight: 500; text-decoration: none; padding: .3rem .7rem; border: 1px solid rgba(255,255,255,.2); border-radius: 6px; }
+    .cn-login:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .cn-trial { background: var(--lp-accent, #0ea5e9); color: #fff; font-size: .78rem; font-weight: 600; text-decoration: none; padding: .3rem .85rem; border-radius: 6px; }
+    .cn-trial:hover { opacity: .88; color: #fff; }
+
+    /* ── Hero ── */
+    .calc-hero {
+      background: var(--lp-navbar, #0f172a);
+      padding: 3rem 1.25rem 2.5rem;
+      text-align: center;
+    }
+    .calc-hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: .6rem;
+    }
+    .calc-hero p {
+      color: rgba(255,255,255,.65);
+      font-size: .95rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    .calc-hero-badges { display: flex; justify-content: center; gap: .75rem; flex-wrap: wrap; margin-top: 1.1rem; }
+    .calc-badge {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.7);
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .25rem .65rem;
+      border-radius: 20px;
+    }
+
+    /* ── Calculator card ── */
+    .calc-card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.05);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .calc-card-hd {
+      display: flex;
+      align-items: flex-start;
+      gap: .8rem;
+      padding: 1.1rem 1.25rem .8rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .calc-icon-wrap {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+    .calc-card-hd h3 { font-size: .9rem; font-weight: 700; color: #1e293b; margin: 0 0 .15rem; }
+    .calc-card-hd p  { font-size: .75rem; color: #94a3b8; margin: 0; line-height: 1.4; }
+    .calc-card-bd { padding: 1.1rem 1.25rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+
+    .calc-label { font-size: .7rem; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: .3rem; }
+    .calc-input { font-size: .88rem; }
+    .calc-hint  { font-size: .7rem; color: #94a3b8; margin-top: .3rem; }
+
+    .calc-result-area { margin-top: auto; padding-top: .9rem; }
+    .calc-result-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: .65rem .85rem; border-radius: 8px;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      margin-top: .45rem;
+    }
+    .calc-result-lbl { font-size: .75rem; color: #64748b; font-weight: 500; }
+    .calc-result-val { font-size: 1.3rem; font-weight: 700; color: #0f172a; letter-spacing: -.01em; }
+    .calc-result-val.empty { color: #cbd5e1; }
+
+    /* Color swatch */
+    .color-swatch {
+      width: 100%; height: 32px; border-radius: 6px; margin-top: .5rem;
+      background: #e2e8f0; transition: background .3s;
+      border: 1px solid rgba(0,0,0,.06);
+    }
+
+    /* ── CTA ── */
+    .calc-cta-section {
+      background: var(--lp-navbar, #0f172a);
+      padding: 3.5rem 1.25rem;
+      text-align: center;
+      margin-top: 3rem;
+    }
+    .calc-cta-section h2 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.3rem, 3vw, 1.8rem);
+      color: #fff; font-weight: 700; margin-bottom: .7rem;
+    }
+    .calc-cta-section p { color: rgba(255,255,255,.65); font-size: .92rem; max-width: 540px; margin: 0 auto 1.75rem; }
+    .btn-cta-trial {
+      background: var(--lp-accent, #0ea5e9); color: #fff;
+      border: none; padding: .75rem 1.75rem; font-size: .95rem; font-weight: 700;
+      border-radius: 8px; text-decoration: none; display: inline-block;
+    }
+    .btn-cta-trial:hover { opacity: .88; color: #fff; }
+    .cta-login-line { margin-top: 1rem; color: rgba(255,255,255,.5); font-size: .82rem; }
+    .cta-login-line a { color: rgba(255,255,255,.75); }
+
+    /* ── Footer ── */
+    .calc-footer {
+      background: #0f172a;
+      border-top: 1px solid rgba(255,255,255,.06);
+      padding: 1.25rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+    }
+    .calc-footer-brand { font-family: 'Cinzel', serif; color: rgba(255,255,255,.5); font-size: .78rem; }
+    .calc-footer-links { display: flex; gap: 1rem; }
+    .calc-footer-links a { color: rgba(255,255,255,.4); font-size: .75rem; text-decoration: none; }
+    .calc-footer-links a:hover { color: rgba(255,255,255,.75); }
+
+    /* ── Color calc rows ── */
+    .color-row-hdr { font-size: .68rem; font-weight: 600; text-transform: uppercase; color: #94a3b8; letter-spacing: .04em; margin-bottom: .35rem; }
+
+    /* ── Dark mode ── */
+    html.dark-mode body { background: #0f172a; color: #e2e8f0; }
+    html.dark-mode .calc-card { background: #1e293b; border-color: rgba(148,163,184,.15); }
+    html.dark-mode .calc-card-hd { border-color: rgba(148,163,184,.1); }
+    html.dark-mode .calc-card-hd h3 { color: #f1f5f9; }
+    html.dark-mode .calc-card-hd p  { color: #64748b; }
+    html.dark-mode .calc-label      { color: #94a3b8; }
+    html.dark-mode .calc-input      { background: #334155 !important; border-color: rgba(148,163,184,.2) !important; color: #e2e8f0 !important; }
+    html.dark-mode .calc-input:focus { border-color: var(--lp-accent, #0ea5e9) !important; box-shadow: 0 0 0 .2rem rgba(14,165,233,.15) !important; }
+    html.dark-mode .calc-result-row { background: #0f172a; border-color: rgba(148,163,184,.12); }
+    html.dark-mode .calc-result-lbl { color: #94a3b8; }
+    html.dark-mode .calc-result-val { color: #f1f5f9; }
+    html.dark-mode .calc-hint { color: #64748b; }
+    html.dark-mode .color-row-hdr { color: #64748b; }
+    html.dark-mode .btn-outline-secondary { border-color: rgba(148,163,184,.3); color: #94a3b8; }
+    html.dark-mode .btn-outline-secondary:hover { background: rgba(148,163,184,.1); }
+    html.dark-mode .btn-outline-danger { border-color: rgba(239,68,68,.3); color: #f87171; }
+  </style>
+</head>
+
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="cn-bar">
+  <a th:href="@{/landing}" class="cn-logo">
+    <i class="bi bi-droplet-fill" style="color: var(--lp-accent, #0ea5e9); font-size: 1.1rem;"></i>
+    <span class="cn-logo-name" th:text="${branding.name}">Zymos</span>
+  </a>
+  <span class="cn-sep"></span>
+  <span class="cn-tools" th:text="#{calc.nav.tools}">Calculadoras</span>
+  <span class="cn-spacer"></span>
+  <div class="cn-actions">
+    <!-- Lang toggle -->
+    <a th:href="${currentUri + '?lang=es'}"
+       th:classappend="${#locale.language == 'es'} ? ' active' : ''"
+       class="cn-lang-btn">ES</a>
+    <span class="cn-lang-sep">·</span>
+    <a th:href="${currentUri + '?lang=en'}"
+       th:classappend="${#locale.language == 'en'} ? ' active' : ''"
+       class="cn-lang-btn">EN</a>
+    <span class="cn-lang-sep">·</span>
+    <a th:href="${currentUri + '?lang=pt'}"
+       th:classappend="${#locale.language == 'pt'} ? ' active' : ''"
+       class="cn-lang-btn">PT</a>
+    <!-- Dark mode -->
+    <button class="cn-dm" id="dmToggle" aria-label="Toggle dark mode">
+      <i class="bi bi-moon-fill" id="dmIcon"></i>
+    </button>
+    <a th:href="@{/login}" class="cn-login" th:text="#{calc.nav.login}">Iniciar sesión</a>
+    <a th:href="@{/planes}" class="cn-trial" th:text="#{calc.nav.trial}">Prueba gratis</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="calc-hero">
+  <h1 th:text="#{calc.hero.title}">Calculadoras de Cerveza Artesanal</h1>
+  <p th:text="#{calc.hero.subtitle}">Herramientas gratuitas para cerveceros y cervecerías</p>
+  <div class="calc-hero-badges">
+    <span class="calc-badge">ABV</span>
+    <span class="calc-badge">IBU · Tinseth</span>
+    <span class="calc-badge">SRM / EBC · Morey</span>
+    <span class="calc-badge">Refractómetro · Sean Terrill</span>
+    <span class="calc-badge">Carbonatación</span>
+    <span class="calc-badge">Dilución</span>
+  </div>
+</section>
+
+<!-- ── Calculator Grid ── -->
+<main class="container-lg py-4 px-3 px-lg-4">
+  <div class="row g-3 g-lg-4">
+
+    <!-- ① ABV -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(37,99,235,.1);">
+            <i class="bi bi-percent" style="color: #2563eb;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.abv.title}">ABV — Alcohol por Volumen</h3>
+            <p th:text="#{calc.abv.desc}">Calcula el porcentaje de alcohol</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="calc-label" for="abv-og" th:text="#{calc.abv.og}">OG</label>
+              <input type="number" id="abv-og" class="form-control calc-input" min="1000" max="1150" step="1" placeholder="1052">
+            </div>
+            <div class="col-6">
+              <label class="calc-label" for="abv-fg" th:text="#{calc.abv.fg}">FG</label>
+              <input type="number" id="abv-fg" class="form-control calc-input" min="990" max="1060" step="1" placeholder="1012">
+            </div>
+          </div>
+          <p class="calc-hint" th:text="#{calc.abv.hint}">Formato 4 dígitos: ej. 1052</p>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.abv.result}">Alcohol estimado</span>
+              <span class="calc-result-val empty" id="abv-result">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ② Refractómetro -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(124,58,237,.1);">
+            <i class="bi bi-eyedropper" style="color: #7c3aed;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.refract.title}">Corrección de Refractómetro</h3>
+            <p th:text="#{calc.refract.desc}">Corrige la lectura Brix post-fermentación</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="calc-label" for="rfr-og" th:text="#{calc.refract.og.brix}">OG Brix</label>
+              <input type="number" id="rfr-og" class="form-control calc-input" min="0" max="40" step="0.1" placeholder="13.0">
+            </div>
+            <div class="col-6">
+              <label class="calc-label" for="rfr-fg" th:text="#{calc.refract.fg.brix}">FG Brix aparente</label>
+              <input type="number" id="rfr-fg" class="form-control calc-input" min="0" max="40" step="0.1" placeholder="4.0">
+            </div>
+          </div>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.refract.fg.corr}">FG corregida</span>
+              <span class="calc-result-val empty" id="rfr-fg-corr">—</span>
+            </div>
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.refract.abv}">ABV estimado</span>
+              <span class="calc-result-val empty" id="rfr-abv">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ IBU -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(22,163,74,.1);">
+            <i class="bi bi-cone" style="color: #16a34a;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.ibu.title}">IBU — Amargor (Tinseth)</h3>
+            <p th:text="#{calc.ibu.desc}">Unidades de amargor por adición</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <div class="row g-2">
+            <div class="col-6 col-sm-4">
+              <label class="calc-label" for="ibu-weight" th:text="#{calc.ibu.weight}">Lúpulo (g)</label>
+              <input type="number" id="ibu-weight" class="form-control calc-input" min="0" max="500" step="0.5" placeholder="28">
+            </div>
+            <div class="col-6 col-sm-4">
+              <label class="calc-label" for="ibu-alpha" th:text="#{calc.ibu.alpha}">Alpha %</label>
+              <input type="number" id="ibu-alpha" class="form-control calc-input" min="0" max="30" step="0.1" placeholder="5.5">
+            </div>
+            <div class="col-6 col-sm-4">
+              <label class="calc-label" for="ibu-time" th:text="#{calc.ibu.time}">Tiempo (min)</label>
+              <input type="number" id="ibu-time" class="form-control calc-input" min="0" max="120" step="1" placeholder="60">
+            </div>
+            <div class="col-6 col-sm-6">
+              <label class="calc-label" for="ibu-volume" th:text="#{calc.ibu.volume}">Volumen (L)</label>
+              <input type="number" id="ibu-volume" class="form-control calc-input" min="0" max="10000" step="0.5" placeholder="20">
+            </div>
+            <div class="col-6 col-sm-6">
+              <label class="calc-label" for="ibu-og" th:text="#{calc.ibu.og}">OG mosto</label>
+              <input type="number" id="ibu-og" class="form-control calc-input" min="1000" max="1150" step="1" placeholder="1050">
+            </div>
+          </div>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.ibu.result}">IBU estimado</span>
+              <span class="calc-result-val empty" id="ibu-result">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ Color SRM/EBC -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(217,119,6,.1);">
+            <i class="bi bi-palette" style="color: #d97706;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.color.title}">Color — SRM / EBC</h3>
+            <p th:text="#{calc.color.desc}">Fórmula Morey</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <!-- Column headers -->
+          <div class="row g-2 color-row-hdr">
+            <div class="col-5" th:text="#{calc.color.grain}">Malta</div>
+            <div class="col-3" th:text="#{calc.color.weight}">Peso (g)</div>
+            <div class="col-3" th:text="#{calc.color.ebc}">EBC</div>
+            <div class="col-1"></div>
+          </div>
+          <!-- Dynamic grain rows -->
+          <div id="color-grains">
+            <div class="color-row row g-2 mb-1 align-items-center">
+              <div class="col-5">
+                <input type="text" class="form-control form-control-sm calc-input color-name" th:placeholder="#{calc.color.grain}">
+              </div>
+              <div class="col-3">
+                <input type="number" class="form-control form-control-sm calc-input color-w" min="0" step="1" placeholder="4000">
+              </div>
+              <div class="col-3">
+                <input type="number" class="form-control form-control-sm calc-input color-c" min="0" max="600" step="0.5" placeholder="4">
+              </div>
+              <div class="col-1 text-center">
+                <button type="button" class="btn btn-sm btn-outline-danger color-remove p-0" style="width:22px;line-height:1.5">×</button>
+              </div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 mt-1 mb-2">
+            <button type="button" id="color-add-row" class="btn btn-sm btn-outline-secondary py-0">
+              <i class="bi bi-plus-circle me-1"></i><span th:text="#{calc.color.add}">Agregar grano</span>
+            </button>
+          </div>
+          <div class="row g-2">
+            <div class="col-12">
+              <label class="calc-label" for="color-volume" th:text="#{calc.color.volume}">Volumen final (L)</label>
+              <input type="number" id="color-volume" class="form-control calc-input" min="0" step="0.5" placeholder="20">
+            </div>
+          </div>
+          <p class="calc-hint" th:text="#{calc.color.hint}">Lovibond ≈ EBC ÷ 1.97</p>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.color.result.srm}">Color (SRM)</span>
+              <span class="calc-result-val empty" id="color-srm">—</span>
+            </div>
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.color.result.ebc}">Color (EBC)</span>
+              <span class="calc-result-val empty" id="color-ebc">—</span>
+            </div>
+            <div class="color-swatch" id="color-swatch"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ Carbonatación -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(8,145,178,.1);">
+            <i class="bi bi-balloon" style="color: #0891b2;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.carb.title}">Carbonatación — Azúcar de Primareo</h3>
+            <p th:text="#{calc.carb.desc}">Azúcar para carbonatar en botella</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <div class="row g-2">
+            <div class="col-12 col-sm-4">
+              <label class="calc-label" for="carb-target" th:text="#{calc.carb.target}">CO₂ objetivo</label>
+              <input type="number" id="carb-target" class="form-control calc-input" min="0" max="5" step="0.1" placeholder="2.4">
+              <p class="calc-hint" th:text="#{calc.carb.target.hint}">Lager: 2.4 · Ale: 2.2</p>
+            </div>
+            <div class="col-6 col-sm-4">
+              <label class="calc-label" for="carb-temp" th:text="#{calc.carb.temp}">Temperatura (°C)</label>
+              <input type="number" id="carb-temp" class="form-control calc-input" min="-5" max="50" step="0.5" placeholder="20">
+            </div>
+            <div class="col-6 col-sm-4">
+              <label class="calc-label" for="carb-volume" th:text="#{calc.carb.volume}">Volumen (L)</label>
+              <input type="number" id="carb-volume" class="form-control calc-input" min="0" max="10000" step="0.5" placeholder="20">
+            </div>
+          </div>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.carb.sucrose}">Sacarosa</span>
+              <span class="calc-result-val empty" id="carb-sucrose">—</span>
+            </div>
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.carb.dextrose}">Dextrosa</span>
+              <span class="calc-result-val empty" id="carb-dextrose">—</span>
+            </div>
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.carb.honey}">Miel</span>
+              <span class="calc-result-val empty" id="carb-honey">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑥ Dilución -->
+    <div class="col-12 col-md-6">
+      <div class="calc-card">
+        <div class="calc-card-hd">
+          <div class="calc-icon-wrap" style="background: rgba(67,56,202,.1);">
+            <i class="bi bi-droplet-half" style="color: #4338ca;"></i>
+          </div>
+          <div>
+            <h3 th:text="#{calc.dilut.title}">Dilución de Lote</h3>
+            <p th:text="#{calc.dilut.desc}">Agua a agregar para ajustar densidad</p>
+          </div>
+        </div>
+        <div class="calc-card-bd">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="calc-label" for="dil-og" th:text="#{calc.dilut.og.current}">OG actual</label>
+              <input type="number" id="dil-og" class="form-control calc-input" min="1001" max="1150" step="1" placeholder="1065">
+            </div>
+            <div class="col-6">
+              <label class="calc-label" for="dil-vol" th:text="#{calc.dilut.volume.current}">Volumen actual (L)</label>
+              <input type="number" id="dil-vol" class="form-control calc-input" min="0" step="0.5" placeholder="20">
+            </div>
+            <div class="col-12">
+              <label class="calc-label" for="dil-target" th:text="#{calc.dilut.og.target}">OG objetivo</label>
+              <input type="number" id="dil-target" class="form-control calc-input" min="1001" max="1150" step="1" placeholder="1055">
+            </div>
+          </div>
+          <div class="calc-result-area">
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.dilut.water}">Agua a agregar</span>
+              <span class="calc-result-val empty" id="dil-water">—</span>
+            </div>
+            <div class="calc-result-row">
+              <span class="calc-result-lbl" th:text="#{calc.dilut.volume.final}">Volumen final</span>
+              <span class="calc-result-val empty" id="dil-vol-final">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row -->
+</main>
+
+<!-- ── CTA ── -->
+<section class="calc-cta-section">
+  <h2 th:text="#{calc.cta.title}">¿Listo para ir más allá?</h2>
+  <p th:text="#{calc.cta.subtitle}">Todo lo que calculaste aquí, Zymos lo gestiona en automático.</p>
+  <a th:href="@{/planes}" class="btn-cta-trial" th:text="#{calc.cta.btn}">Comenzar prueba gratis →</a>
+  <div class="cta-login-line">
+    <span th:text="#{calc.cta.login}">¿Ya tenés cuenta?</span>
+    <a th:href="@{/login}" th:text="#{calc.cta.login.link}">Iniciar sesión</a>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer class="calc-footer">
+  <span class="calc-footer-brand" th:text="${branding.name} + ' · Calculadoras'">Zymos · Calculadoras</span>
+  <div class="calc-footer-links">
+    <a th:href="@{/landing}">Landing</a>
+    <a th:href="@{/planes}">Planes</a>
+    <a th:href="@{/login}">Login</a>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:attr="nonce=${cspNonce}">
+(function () {
+  'use strict';
+
+  // ── Helpers ───────────────────────────────────────────────────
+  function id(s) { return document.getElementById(s); }
+  function val(elId) { return id(elId).value; }
+
+  function setResult(elId, text) {
+    const el = id(elId);
+    if (!el) return;
+    el.textContent = text;
+    el.classList.toggle('empty', text === '—');
+  }
+
+  function srmToColor(srm) {
+    const R = Math.min(255, Math.round(240 * Math.exp(-srm * 0.03)));
+    const G = Math.min(255, Math.round(190 * Math.exp(-srm * 0.07)));
+    const B = Math.round(Math.max(0,  50 * Math.exp(-srm * 0.10)));
+    return 'rgb(' + R + ',' + G + ',' + B + ')';
+  }
+
+  // ── ABV ───────────────────────────────────────────────────────
+  function calcAbv() {
+    const og = parseInt(val('abv-og'));
+    const fg = parseInt(val('abv-fg'));
+    if (isNaN(og) || isNaN(fg) || og < 1000 || fg < 990 || fg >= og) {
+      setResult('abv-result', '—'); return;
+    }
+    setResult('abv-result', ((og - fg) * 0.13125).toFixed(1) + ' %');
+  }
+  id('abv-og').addEventListener('input', calcAbv);
+  id('abv-fg').addEventListener('input', calcAbv);
+
+  // ── Refractómetro (Sean Terrill) ─────────────────────────────
+  function calcRefract() {
+    const ob = parseFloat(val('rfr-og'));
+    const fb = parseFloat(val('rfr-fg'));
+    if (isNaN(ob) || isNaN(fb) || ob <= 0 || fb <= 0) {
+      setResult('rfr-fg-corr', '—'); setResult('rfr-abv', '—'); return;
+    }
+    const fg = 1.0000 - 0.0044993 * ob + 0.011774 * fb
+             + 0.00027581 * ob * ob - 0.0012717 * fb * fb
+             - 0.0000072800 * Math.pow(ob, 3) + 0.000063293 * Math.pow(fb, 3);
+    const ogSg = 1 + ob / (258.6 - 0.72 * ob);
+    const abv  = (ogSg - fg) * 131.25;
+    setResult('rfr-fg-corr', fg.toFixed(4));
+    setResult('rfr-abv', abv.toFixed(1) + ' %');
+  }
+  id('rfr-og').addEventListener('input', calcRefract);
+  id('rfr-fg').addEventListener('input', calcRefract);
+
+  // ── IBU (Tinseth) ─────────────────────────────────────────────
+  function calcIbu() {
+    const w  = parseFloat(val('ibu-weight'));
+    const a  = parseFloat(val('ibu-alpha'));
+    const t  = parseFloat(val('ibu-time'));
+    const v  = parseFloat(val('ibu-volume'));
+    const og = parseInt(val('ibu-og')) || 1050;
+    if (isNaN(w) || isNaN(a) || isNaN(v) || w <= 0 || a <= 0 || v <= 0) {
+      setResult('ibu-result', '—'); return;
+    }
+    const time      = isNaN(t) ? 0 : t;
+    const ogDec     = og / 1000;
+    const bigness   = 1.65 * Math.pow(0.000125, ogDec - 1);
+    const btf       = (1 - Math.exp(-0.04 * time)) / 4.15;
+    const util      = bigness * btf;
+    const ibu       = (a / 100) * util * w * 1000 / v;
+    setResult('ibu-result', ibu.toFixed(1));
+  }
+  ['ibu-weight','ibu-alpha','ibu-time','ibu-volume','ibu-og'].forEach(function(i) {
+    id(i).addEventListener('input', calcIbu);
+  });
+
+  // ── Color (Morey) ─────────────────────────────────────────────
+  function calcColor() {
+    const vol = parseFloat(val('color-volume'));
+    if (isNaN(vol) || vol <= 0) {
+      setResult('color-srm', '—'); setResult('color-ebc', '—');
+      id('color-swatch').style.backgroundColor = '';
+      return;
+    }
+    const volGal = vol / 3.78541;
+    let sumMCU = 0;
+    document.querySelectorAll('.color-row').forEach(function(row) {
+      const w = parseFloat(row.querySelector('.color-w').value) || 0;
+      const c = parseFloat(row.querySelector('.color-c').value) || 0;
+      if (w > 0 && c > 0) {
+        const lov = c / 1.97;
+        const wLb = w / 453.592;
+        sumMCU += (wLb * lov) / volGal;
+      }
+    });
+    if (sumMCU <= 0) {
+      setResult('color-srm', '—'); setResult('color-ebc', '—');
+      id('color-swatch').style.backgroundColor = '';
+      return;
+    }
+    const srm = 1.4922 * Math.pow(sumMCU, 0.6859);
+    const ebc = srm * 1.97;
+    setResult('color-srm', srm.toFixed(1));
+    setResult('color-ebc', ebc.toFixed(1));
+    id('color-swatch').style.backgroundColor = srmToColor(srm);
+  }
+  id('color-volume').addEventListener('input', calcColor);
+  id('color-grains').addEventListener('input', calcColor);
+
+  // Add/remove grain rows
+  id('color-add-row').addEventListener('click', function () {
+    const existing = document.querySelector('#color-grains .color-row');
+    const clone = existing.cloneNode(true);
+    clone.querySelectorAll('input').forEach(function(inp) { inp.value = ''; });
+    id('color-grains').appendChild(clone);
+    calcColor();
+  });
+  id('color-grains').addEventListener('click', function (e) {
+    const btn = e.target.closest('.color-remove');
+    if (!btn) return;
+    const rows = document.querySelectorAll('.color-row');
+    if (rows.length > 1) {
+      btn.closest('.color-row').remove();
+      calcColor();
+    }
+  });
+
+  // ── Carbonatación ─────────────────────────────────────────────
+  function calcCarb() {
+    const target = parseFloat(val('carb-target'));
+    const temp   = parseFloat(val('carb-temp'));
+    const vol    = parseFloat(val('carb-volume'));
+    if (isNaN(target) || isNaN(temp) || isNaN(vol) || target <= 0 || vol <= 0) {
+      setResult('carb-sucrose', '—'); setResult('carb-dextrose', '—'); setResult('carb-honey', '—');
+      return;
+    }
+    // Residual CO2 dissolved (volumes) at temperature T °C
+    const residual = 3.0378 - 0.050062 * temp + 0.00026555 * temp * temp;
+    const toAdd    = Math.max(0, target - residual);
+    setResult('carb-sucrose',  (toAdd * vol * 2.09).toFixed(1) + ' g');
+    setResult('carb-dextrose', (toAdd * vol * 2.32).toFixed(1) + ' g');
+    setResult('carb-honey',    (toAdd * vol * 4.18).toFixed(1) + ' g');
+  }
+  ['carb-target','carb-temp','carb-volume'].forEach(function(i) {
+    id(i).addEventListener('input', calcCarb);
+  });
+
+  // ── Dilución ──────────────────────────────────────────────────
+  function calcDilut() {
+    const og1 = parseInt(val('dil-og'));
+    const v1  = parseFloat(val('dil-vol'));
+    const og2 = parseInt(val('dil-target'));
+    if (isNaN(og1) || isNaN(v1) || isNaN(og2) || og1 < 1001 || v1 <= 0 || og2 < 1001 || og2 >= og1) {
+      setResult('dil-water', '—'); setResult('dil-vol-final', '—'); return;
+    }
+    const v2    = v1 * (og1 - 1000) / (og2 - 1000);
+    const water = v2 - v1;
+    setResult('dil-water',    water.toFixed(2) + ' L');
+    setResult('dil-vol-final', v2.toFixed(2) + ' L');
+  }
+  ['dil-og','dil-vol','dil-target'].forEach(function(i) {
+    id(i).addEventListener('input', calcDilut);
+  });
+
+  // ── Dark mode ─────────────────────────────────────────────────
+  function applyDm(dark) {
+    document.documentElement.classList.toggle('dark-mode', dark);
+    id('dmIcon').className = dark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  }
+  applyDm(localStorage.getItem('darkMode') === '1');
+  id('dmToggle').addEventListener('click', function () {
+    const isDark = document.documentElement.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', isDark ? '1' : '0');
+    id('dmIcon').className = isDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+  });
+
+})();
+</script>
+
+</body>
+</html>

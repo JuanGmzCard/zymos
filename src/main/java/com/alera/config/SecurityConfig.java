@@ -221,7 +221,7 @@ public class SecurityConfig {
                 .requestMatchers("/push/**").authenticated()
                 .requestMatchers("/error", "/error/**").permitAll()
                 .requestMatchers("/plan-vencido", "/plan-upgrade").permitAll()
-                .requestMatchers("/planes", "/landing", "/demo", "/checkout/**", "/webhook/**").permitAll()
+                .requestMatchers("/planes", "/landing", "/demo", "/calculadoras", "/checkout/**", "/webhook/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
                 .requestMatchers("/actuator/**").hasAnyRole("ADMIN", "SUPERADMIN")
                 .requestMatchers("/api/auth/**").permitAll()
