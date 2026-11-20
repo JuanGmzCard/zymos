@@ -597,8 +597,8 @@ var RECETA_MSG = {
         hide('iaStep1'); show('iaStep2'); hide('iaStep3');
         hide('iaBtnGenerar');
 
-        var csrf       = document.querySelector('meta[name="_csrf"]')?.content;
-        var csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        var csrf       = _csrfToken();
+        var csrfHeader = _csrfHeader();
 
         var params = new URLSearchParams({ descripcion: desc });
         if (volumen) params.append('volumen', volumen);
