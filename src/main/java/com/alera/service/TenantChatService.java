@@ -286,6 +286,8 @@ public class TenantChatService {
             respuesta = "Entiendo tu pregunta sobre \"" + pregunta + "\". Para obtener una respuesta más precisa y personalizada con tus datos reales, configura una API key de IA (Anthropic o Gemini). Con ella, puedo analizar en detalle los datos de " + tenantName + " y darte recomendaciones específicas.";
         }
 
-        return new MensajeChatDto("assistant", respuesta, true);
+        // modoMock=true solo cuando NO hay key configurada (muestra badge "Modo de prueba")
+        // Si la key existe pero la API está caída, no mostrar el badge — el usuario ya sabe que tiene key
+        return new MensajeChatDto("assistant", respuesta, !iaProvider.isConfigured());
     }
 }
