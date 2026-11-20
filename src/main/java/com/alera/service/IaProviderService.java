@@ -32,40 +32,65 @@ public class IaProviderService {
     @Value("${app.gemini.api-key:}")
     private String geminiKey;
 
-    @Value("${app.gemini.model:gemini-1.5-flash}")
+    @Value("${app.gemini.model:auto}")
     private String geminiModel;
+
+    private volatile String geminiActiveModel;
 
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
 
     @PostConstruct
-    public void diagnosticarGemini() {
+    public void inicializarGemini() {
         if (geminiKey.isBlank()) return;
-        log.info("[IA:GEMINI] Key configurada. Modelo configurado: '{}'", geminiModel);
+        if (!"auto".equalsIgnoreCase(geminiModel)) {
+            geminiActiveModel = geminiModel;
+            log.info("[IA:GEMINI] Modelo fijo configurado: '{}'", geminiActiveModel);
+            return;
+        }
+        // Auto-discovery: busca el primer modelo flash con generateContent
+        geminiActiveModel = descubrirModeloGemini();
+        log.info("[IA:GEMINI] Modelo auto-seleccionado: '{}'", geminiActiveModel);
+    }
+
+    private String descubrirModeloGemini() {
+        // Preferencia: flash (más rápido y barato), luego cualquier generateContent
+        List<String> preferidos = List.of("flash", "flash-lite", "pro");
         try {
             String listUrl = GEMINI_BASE + "/v1beta/models?key=" + geminiKey;
             ResponseEntity<String> resp = restTemplate.getForEntity(listUrl, String.class);
             JsonNode root = mapper.readTree(resp.getBody());
             JsonNode models = root.get("models");
             if (models == null || !models.isArray()) {
-                log.warn("[IA:GEMINI] ListModels retornó respuesta inesperada: {}", resp.getBody());
-                return;
+                log.warn("[IA:GEMINI] ListModels retornó respuesta inesperada");
+                return "gemini-1.5-flash";
             }
-            List<String> disponibles = new ArrayList<>();
+            List<String> candidatos = new ArrayList<>();
             for (JsonNode m : models) {
                 JsonNode methods = m.get("supportedGenerationMethods");
                 if (methods == null) continue;
                 for (JsonNode method : methods) {
                     if ("generateContent".equals(method.asText())) {
-                        disponibles.add(m.path("name").asText("?"));
+                        String name = m.path("name").asText("");
+                        // name viene como "models/gemini-xxx", extraer el ID
+                        String id = name.startsWith("models/") ? name.substring(7) : name;
+                        if (!id.isBlank()) candidatos.add(id);
                         break;
                     }
                 }
             }
-            log.info("[IA:GEMINI] Modelos disponibles para esta key ({} total con generateContent): {}",
-                    disponibles.size(), disponibles);
+            log.info("[IA:GEMINI] Modelos disponibles ({}): {}", candidatos.size(), candidatos);
+            if (candidatos.isEmpty()) return "gemini-1.5-flash";
+            // Elegir el primero que contenga alguna preferencia, en orden
+            for (String pref : preferidos) {
+                for (String c : candidatos) {
+                    if (c.contains(pref)) return c;
+                }
+            }
+            return candidatos.get(0);
         } catch (Exception e) {
-            log.warn("[IA:GEMINI] No se pudo llamar ListModels: {}", e.getMessage());
+            log.warn("[IA:GEMINI] ListModels falló: {} — usando gemini-1.5-flash como fallback", e.getMessage());
+            return "gemini-1.5-flash";
         }
     }
 
@@ -227,7 +252,8 @@ public class IaProviderService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        String geminiUrl = GEMINI_BASE + "/v1beta/models/" + geminiModel + ":generateContent";
+        String activeModel = geminiActiveModel != null ? geminiActiveModel : geminiModel;
+        String geminiUrl = GEMINI_BASE + "/v1beta/models/" + activeModel + ":generateContent";
         String url = geminiUrl + "?key=" + geminiKey;
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
