@@ -20,7 +20,7 @@ public class IaProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(IaProviderService.class);
     private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
     private static final String ANTHROPIC_MODEL = "claude-haiku-4-5";
 
     @Value("${app.ia.provider:auto}")
