@@ -1,21 +1,10 @@
 package com.alera.service;
 
 import com.alera.dto.FacturaAnalizadaDto;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.Base64ImageSource;
-import com.anthropic.models.messages.Base64PdfSource;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.DocumentBlockParam;
-import com.anthropic.models.messages.ImageBlockParam;
-import com.anthropic.models.messages.Message;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -62,80 +51,35 @@ public class FacturaAnalizadorService {
             - Si algún dato no está en la factura, usa null para strings y 0.0 para números
             """;
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public FacturaAnalizadorService(IaProviderService iaProvider) {
+        this.iaProvider = iaProvider;
+    }
+
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public FacturaAnalizadaDto analizar(MultipartFile archivo) {
-        if (!isConfigured()) {
-            log.info("ANTHROPIC_API_KEY no configurada — devolviendo datos de ejemplo");
-            return mockResponse();
-        }
-
         try {
             String base64 = Base64.getEncoder().encodeToString(archivo.getBytes());
             String contentType = archivo.getContentType();
 
-            ContentBlockParam documentoBlock;
-            if ("application/pdf".equals(contentType)) {
-                DocumentBlockParam docParam = DocumentBlockParam.builder()
-                        .source(Base64PdfSource.builder().data(base64).build())
-                        .build();
-                documentoBlock = ContentBlockParam.ofDocument(docParam);
-            } else {
-                Base64ImageSource.MediaType mediaType = resolverMediaType(contentType);
-                ImageBlockParam imageParam = ImageBlockParam.builder()
-                        .source(Base64ImageSource.builder()
-                                .data(base64)
-                                .mediaType(mediaType)
-                                .build())
-                        .build();
-                documentoBlock = ContentBlockParam.ofImage(imageParam);
+            String jsonText = iaProvider.completarConArchivo(PROMPT, base64, contentType, 2048L);
+            if (jsonText == null) {
+                log.info("IA no configurada o no disponible — devolviendo datos de ejemplo");
+                return mockResponse();
             }
-
-            TextBlockParam textoParam = TextBlockParam.builder().text(PROMPT).build();
-            ContentBlockParam textoBlock = ContentBlockParam.ofText(textoParam);
-
-            AnthropicClient client = AnthropicOkHttpClient.builder()
-                    .apiKey(apiKey)
-                    .build();
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(2048L)
-                            .addUserMessageOfBlockParams(List.of(documentoBlock, textoBlock))
-                            .build());
-
-            String jsonText = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst()
-                    .orElse("{}");
-
             return parsearRespuesta(jsonText);
 
         } catch (Exception e) {
-            log.error("Error al analizar factura con Claude", e);
+            log.error("Error al analizar factura con IA", e);
             FacturaAnalizadaDto err = new FacturaAnalizadaDto();
             err.setError("Error al procesar el documento: " + e.getMessage());
             return err;
         }
-    }
-
-    private Base64ImageSource.MediaType resolverMediaType(String contentType) {
-        if (contentType == null) return Base64ImageSource.MediaType.IMAGE_JPEG;
-        return switch (contentType.toLowerCase()) {
-            case "image/png"  -> Base64ImageSource.MediaType.IMAGE_PNG;
-            case "image/gif"  -> Base64ImageSource.MediaType.IMAGE_GIF;
-            case "image/webp" -> Base64ImageSource.MediaType.IMAGE_WEBP;
-            default           -> Base64ImageSource.MediaType.IMAGE_JPEG;
-        };
     }
 
     private FacturaAnalizadaDto parsearRespuesta(String json) throws Exception {

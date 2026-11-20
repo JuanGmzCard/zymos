@@ -16,6 +16,9 @@ public class GlobalControllerAdvice {
     @Value("${app.anthropic.api-key:}")
     private String anthropicApiKey;
 
+    @Value("${app.gemini.api-key:}")
+    private String geminiApiKey;
+
     public GlobalControllerAdvice(BrandingProperties defaultBranding) {
         this.defaultBranding = defaultBranding;
     }
@@ -73,10 +76,11 @@ public class GlobalControllerAdvice {
                 .orElse(null);
     }
 
-    /** true cuando ANTHROPIC_API_KEY está configurada — oculta botones IA cuando es false. */
+    /** true cuando hay un proveedor de IA configurado (Anthropic o Gemini) — oculta botones IA cuando es false. */
     @ModelAttribute("iaConfigurada")
     public boolean iaConfigurada() {
-        return anthropicApiKey != null && !anthropicApiKey.isBlank();
+        return (anthropicApiKey != null && !anthropicApiKey.isBlank())
+                || (geminiApiKey != null && !geminiApiKey.isBlank());
     }
 
     /** true cuando el tenant activo es el demo — el navbar muestra un banner para convertir. */

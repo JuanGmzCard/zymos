@@ -7,14 +7,9 @@ import com.alera.model.FacturaItem;
 import com.alera.model.InsumoInventario;
 import com.alera.model.enums.EstadoPlanificacion;
 import com.alera.repository.FacturaItemRepository;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -28,27 +23,26 @@ public class OptimizacionOcService {
     private static final Logger log = LoggerFactory.getLogger(OptimizacionOcService.class);
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final PlanificacionService planificacionService;
     private final InsumoInventarioService insumoService;
     private final FacturaItemRepository facturaItemRepo;
 
-    public OptimizacionOcService(PlanificacionService planificacionService,
+    public OptimizacionOcService(IaProviderService iaProvider,
+                                  PlanificacionService planificacionService,
                                   InsumoInventarioService insumoService,
                                   FacturaItemRepository facturaItemRepo) {
+        this.iaProvider          = iaProvider;
         this.planificacionService = planificacionService;
-        this.insumoService = insumoService;
-        this.facturaItemRepo = facturaItemRepo;
+        this.insumoService       = insumoService;
+        this.facturaItemRepo     = facturaItemRepo;
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public OptimizacionOcDto analizar(int semanas) {
-        // Recopilar datos necesarios antes de llamar a la IA
         DatosAnalisis datos = recopilarDatos(semanas);
         if (datos.elaboraciones.isEmpty()) {
             var dto = new OptimizacionOcDto();
@@ -58,32 +52,19 @@ public class OptimizacionOcService {
             dto.setElaboracionesAnalizadas(0);
             return dto;
         }
-        if (!isConfigured()) {
+
+        String prompt = construirPrompt(datos, semanas);
+        String texto = iaProvider.completar(prompt, 2048L);
+        if (texto == null) {
             return mockResponse(datos);
         }
         try {
-            var client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-            String prompt = construirPrompt(datos, semanas);
-            ContentBlockParam bloque = ContentBlockParam.ofText(
-                    TextBlockParam.builder().text(prompt).build());
-            var response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(2048L)
-                            .addUserMessageOfBlockParams(List.of(bloque))
-                            .build());
-            String texto = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst().orElse("{}");
             var dto = parsearRespuesta(texto, datos);
             dto.setElaboracionesAnalizadas(datos.elaboraciones.size());
             return dto;
         } catch (Exception ex) {
-            log.error("Error al optimizar OC con IA", ex);
-            var dto = new OptimizacionOcDto();
-            dto.setError(ex.getMessage());
-            return dto;
+            log.error("Error al parsear respuesta de optimización OC", ex);
+            return mockResponse(datos);
         }
     }
 
@@ -93,14 +74,12 @@ public class OptimizacionOcService {
         var datos = new DatosAnalisis();
         LocalDate hasta = LocalDate.now().plusWeeks(semanas);
 
-        // Elaboraciones planificadas en el rango
         datos.elaboraciones = planificacionService.listarProximas().stream()
                 .filter(e -> e.getEstado() == EstadoPlanificacion.PLANIFICADA)
                 .filter(e -> e.getFechaPlaneada() == null || !e.getFechaPlaneada().isAfter(hasta))
                 .filter(e -> e.getReceta() != null)
                 .collect(Collectors.toList());
 
-        // Agregar requerimientos de ingredientes (nombre → cantidad en unidad base)
         for (ElaboracionPlanificada elab : datos.elaboraciones) {
             var receta = elab.getReceta();
             if (receta == null || receta.getIngredientes() == null) continue;
@@ -118,14 +97,12 @@ public class OptimizacionOcService {
             }
         }
 
-        // Stock actual
         for (InsumoInventario inv : insumoService.listarTodos()) {
             if (inv.getNombre() != null) {
                 datos.stockActual.put(inv.getNombre().trim(), inv);
             }
         }
 
-        // Historial de precios
         if (!datos.requerimientos.isEmpty()) {
             List<String> nombres = datos.requerimientos.keySet().stream()
                     .map(String::toLowerCase).collect(Collectors.toList());
@@ -229,57 +206,51 @@ public class OptimizacionOcService {
 
     // ── Parseo de respuesta ────────────────────────────────────────────────
 
-    private OptimizacionOcDto parsearRespuesta(String texto, DatosAnalisis datos) {
-        try {
-            String limpio = texto.trim();
-            int inicio = limpio.indexOf('{');
-            int fin = limpio.lastIndexOf('}');
-            if (inicio >= 0 && fin > inicio) limpio = limpio.substring(inicio, fin + 1);
+    private OptimizacionOcDto parsearRespuesta(String texto, DatosAnalisis datos) throws Exception {
+        String limpio = texto.trim();
+        int inicio = limpio.indexOf('{');
+        int fin = limpio.lastIndexOf('}');
+        if (inicio >= 0 && fin > inicio) limpio = limpio.substring(inicio, fin + 1);
 
-            var node = mapper.readTree(limpio);
-            var dto = new OptimizacionOcDto();
+        var node = mapper.readTree(limpio);
+        var dto = new OptimizacionOcDto();
 
-            if (node.has("resumen")) dto.setResumen(node.get("resumen").asText());
+        if (node.has("resumen")) dto.setResumen(node.get("resumen").asText());
 
-            var alertasList = new ArrayList<String>();
-            if (node.has("alertas")) node.get("alertas").forEach(a -> alertasList.add(a.asText()));
-            dto.setAlertas(alertasList);
+        var alertasList = new ArrayList<String>();
+        if (node.has("alertas")) node.get("alertas").forEach(a -> alertasList.add(a.asText()));
+        dto.setAlertas(alertasList);
 
-            var items = new ArrayList<ItemCompraDto>();
-            if (node.has("itemsSugeridos")) {
-                for (var itemNode : node.get("itemsSugeridos")) {
-                    var item = new ItemCompraDto();
-                    if (itemNode.has("nombre"))                   item.setNombre(itemNode.get("nombre").asText());
-                    if (itemNode.has("tipo"))                     item.setTipo(itemNode.get("tipo").asText());
-                    if (itemNode.has("cantidadAComprar"))         item.setCantidadAComprar(itemNode.get("cantidadAComprar").asDouble());
-                    if (itemNode.has("unidad"))                   item.setUnidad(itemNode.get("unidad").asText());
-                    if (itemNode.has("precioUnitarioReferencia")) item.setPrecioUnitarioReferencia(itemNode.get("precioUnitarioReferencia").asText());
-                    if (itemNode.has("costoEstimado"))            item.setCostoEstimado(itemNode.get("costoEstimado").asText());
-                    if (itemNode.has("proveedorSugerido") && !itemNode.get("proveedorSugerido").isNull())
-                        item.setProveedorSugerido(itemNode.get("proveedorSugerido").asText());
+        var items = new ArrayList<ItemCompraDto>();
+        if (node.has("itemsSugeridos")) {
+            for (var itemNode : node.get("itemsSugeridos")) {
+                var item = new ItemCompraDto();
+                if (itemNode.has("nombre"))                   item.setNombre(itemNode.get("nombre").asText());
+                if (itemNode.has("tipo"))                     item.setTipo(itemNode.get("tipo").asText());
+                if (itemNode.has("cantidadAComprar"))         item.setCantidadAComprar(itemNode.get("cantidadAComprar").asDouble());
+                if (itemNode.has("unidad"))                   item.setUnidad(itemNode.get("unidad").asText());
+                if (itemNode.has("precioUnitarioReferencia")) item.setPrecioUnitarioReferencia(itemNode.get("precioUnitarioReferencia").asText());
+                if (itemNode.has("costoEstimado"))            item.setCostoEstimado(itemNode.get("costoEstimado").asText());
+                if (itemNode.has("proveedorSugerido") && !itemNode.get("proveedorSugerido").isNull())
+                    item.setProveedorSugerido(itemNode.get("proveedorSugerido").asText());
 
-                    // Enriquecer con datos locales (stock actual y elaboraciones)
-                    if (item.getNombre() != null) {
-                        InsumoInventario inv = datos.stockActual.get(item.getNombre());
-                        item.setCantidadEnStock(inv != null && inv.getCantidad() != null
-                                ? inv.getCantidad().doubleValue() : 0);
-                        item.setCantidadNecesaria(datos.requerimientos.getOrDefault(item.getNombre(), 0.0));
-                    }
-
-                    var elabs = new ArrayList<String>();
-                    if (itemNode.has("elaboraciones")) itemNode.get("elaboraciones").forEach(e -> elabs.add(e.asText()));
-                    if (elabs.isEmpty() && item.getNombre() != null)
-                        elabs.addAll(datos.elaboracionesPorIngrediente.getOrDefault(item.getNombre(), List.of()));
-                    item.setElaboraciones(elabs);
-                    items.add(item);
+                if (item.getNombre() != null) {
+                    InsumoInventario inv = datos.stockActual.get(item.getNombre());
+                    item.setCantidadEnStock(inv != null && inv.getCantidad() != null
+                            ? inv.getCantidad().doubleValue() : 0);
+                    item.setCantidadNecesaria(datos.requerimientos.getOrDefault(item.getNombre(), 0.0));
                 }
+
+                var elabs = new ArrayList<String>();
+                if (itemNode.has("elaboraciones")) itemNode.get("elaboraciones").forEach(e -> elabs.add(e.asText()));
+                if (elabs.isEmpty() && item.getNombre() != null)
+                    elabs.addAll(datos.elaboracionesPorIngrediente.getOrDefault(item.getNombre(), List.of()));
+                item.setElaboraciones(elabs);
+                items.add(item);
             }
-            dto.setItemsSugeridos(items);
-            return dto;
-        } catch (Exception ex) {
-            log.warn("No se pudo parsear respuesta de optimización OC", ex);
-            return mockResponse(datos);
         }
+        dto.setItemsSugeridos(items);
+        return dto;
     }
 
     // ── Mock ───────────────────────────────────────────────────────────────
@@ -305,7 +276,7 @@ public class OptimizacionOcService {
             item.setTipo(datos.tipoIngrediente.getOrDefault(nombre, ""));
             item.setCantidadNecesaria(necesario);
             item.setCantidadEnStock(stock);
-            double aComprar = deficit * 1.12; // 12% margen seguridad
+            double aComprar = deficit * 1.12;
             item.setCantidadAComprar(Math.round(aComprar * 10.0) / 10.0);
             item.setUnidad(inv != null && inv.getUnidad() != null ? inv.getUnidad() : "?");
             item.setElaboraciones(datos.elaboracionesPorIngrediente.getOrDefault(nombre, List.of()));
@@ -328,7 +299,6 @@ public class OptimizacionOcService {
             items.add(item);
         }
 
-        // Ordenar por déficit desc
         items.sort((a, b) -> Double.compare(b.getCantidadAComprar() - b.getCantidadEnStock(),
                 a.getCantidadAComprar() - a.getCantidadEnStock()));
 

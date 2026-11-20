@@ -3,17 +3,10 @@ package com.alera.service;
 import com.alera.dto.FermentacionDiagnosticoDto;
 import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.Message;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,48 +19,28 @@ public class FermentacionDiagnosticoService {
 
     private static final Logger log = LoggerFactory.getLogger(FermentacionDiagnosticoService.class);
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    public FermentacionDiagnosticoService(IaProviderService iaProvider) {
+        this.iaProvider = iaProvider;
+    }
+
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public FermentacionDiagnosticoDto diagnosticar(LoteCerveza lote, List<LecturaFermentacion> lecturas) {
-        if (!isConfigured()) {
-            log.info("ANTHROPIC_API_KEY no configurada — devolviendo diagnóstico de ejemplo");
+        String prompt = construirPrompt(lote, lecturas);
+        String jsonText = iaProvider.completar(prompt, 2048L);
+        if (jsonText == null) {
+            log.info("IA no configurada o no disponible — devolviendo diagnóstico de ejemplo");
             return mockResponse(lote, lecturas);
         }
-
         try {
-            String prompt = construirPrompt(lote, lecturas);
-
-            TextBlockParam textoParam = TextBlockParam.builder().text(prompt).build();
-            ContentBlockParam textoBlock = ContentBlockParam.ofText(textoParam);
-
-            AnthropicClient client = AnthropicOkHttpClient.builder()
-                    .apiKey(apiKey)
-                    .build();
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(2048L)
-                            .addUserMessageOfBlockParams(List.of(textoBlock))
-                            .build());
-
-            String jsonText = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst()
-                    .orElse("{}");
-
             return parsearRespuesta(jsonText);
-
         } catch (Exception e) {
-            log.error("Error al diagnosticar fermentación con Claude", e);
+            log.error("Error al parsear respuesta de diagnóstico de fermentación", e);
             FermentacionDiagnosticoDto err = new FermentacionDiagnosticoDto();
             err.setError("Error al generar el diagnóstico: " + e.getMessage());
             return err;

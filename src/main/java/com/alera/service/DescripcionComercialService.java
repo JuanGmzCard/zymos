@@ -4,14 +4,9 @@ import com.alera.dto.DescripcionComercialDto;
 import com.alera.model.EvaluacionSensorial;
 import com.alera.model.Ingrediente;
 import com.alera.model.LoteCerveza;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,39 +18,23 @@ public class DescripcionComercialService {
     private static final Logger log = LoggerFactory.getLogger(DescripcionComercialService.class);
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
+    private final IaProviderService iaProvider;
+
+    public DescripcionComercialService(IaProviderService iaProvider) {
+        this.iaProvider = iaProvider;
+    }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public DescripcionComercialDto generar(LoteCerveza lote, List<EvaluacionSensorial> evaluaciones) {
-        if (!isConfigured()) {
+        String prompt = construirPrompt(lote, evaluaciones);
+        String texto = iaProvider.completar(prompt, 1024L);
+        if (texto == null) {
             return mockResponse(lote);
         }
-        try {
-            var client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-            String prompt = construirPrompt(lote, evaluaciones);
-            ContentBlockParam bloque = ContentBlockParam.ofText(
-                    TextBlockParam.builder().text(prompt).build());
-            var response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(1024L)
-                            .addUserMessageOfBlockParams(List.of(bloque))
-                            .build());
-            String texto = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst().orElse("{}");
-            return parsearRespuesta(texto);
-        } catch (Exception ex) {
-            log.error("Error al generar descripción comercial", ex);
-            var dto = new DescripcionComercialDto();
-            dto.setError(ex.getMessage());
-            return dto;
-        }
+        return parsearRespuesta(texto);
     }
 
     private String construirPrompt(LoteCerveza lote, List<EvaluacionSensorial> evaluaciones) {

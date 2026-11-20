@@ -5,17 +5,10 @@ import com.alera.model.LecturaFermentacion;
 import com.alera.model.LoteCerveza;
 import com.alera.repository.LecturaFermentacionRepository;
 import com.alera.repository.LoteCervezaRepository;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.Message;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -30,30 +23,28 @@ public class FermentacionPredictivaService {
     private static final Logger log = LoggerFactory.getLogger(FermentacionPredictivaService.class);
     private static final int MAX_HISTORICOS = 5;
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
-    private final LoteCervezaRepository      loteRepo;
+    private final IaProviderService iaProvider;
+    private final LoteCervezaRepository loteRepo;
     private final LecturaFermentacionRepository lecturaRepo;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public FermentacionPredictivaService(LoteCervezaRepository loteRepo,
+    public FermentacionPredictivaService(IaProviderService iaProvider,
+                                         LoteCervezaRepository loteRepo,
                                          LecturaFermentacionRepository lecturaRepo) {
+        this.iaProvider  = iaProvider;
         this.loteRepo    = loteRepo;
         this.lecturaRepo = lecturaRepo;
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public PrediccionFermentacionDto predecir(LoteCerveza lote, List<LecturaFermentacion> lecturas) {
-        // Cargar lotes históricos del mismo estilo
         List<LoteCerveza> historicos = loteRepo.findCompletadosPorEstilo(
                 lote.getEstilo(), lote.getId() != null ? lote.getId() : -1L,
                 PageRequest.of(0, MAX_HISTORICOS));
 
-        // Cargar lecturas de los históricos
         Map<Long, List<LecturaFermentacion>> lecturasHistoricas = new HashMap<>();
         if (!historicos.isEmpty()) {
             var ids = historicos.stream().map(LoteCerveza::getId).collect(Collectors.toList());
@@ -61,39 +52,20 @@ public class FermentacionPredictivaService {
                 lecturasHistoricas.computeIfAbsent(lec.getLote().getId(), k -> new ArrayList<>()).add(lec));
         }
 
-        if (!isConfigured()) {
-            log.info("ANTHROPIC_API_KEY no configurada — devolviendo predicción de ejemplo");
+        String prompt = construirPrompt(lote, lecturas, historicos, lecturasHistoricas);
+        String jsonText = iaProvider.completar(prompt, 2048L);
+        if (jsonText == null) {
+            log.info("IA no configurada o no disponible — devolviendo predicción de ejemplo");
             return mockResponse(lote, lecturas, historicos);
         }
 
         try {
-            String prompt = construirPrompt(lote, lecturas, historicos, lecturasHistoricas);
-
-            TextBlockParam textoParam = TextBlockParam.builder().text(prompt).build();
-            ContentBlockParam textoBlock = ContentBlockParam.ofText(textoParam);
-
-            AnthropicClient client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(2048L)
-                            .addUserMessageOfBlockParams(List.of(textoBlock))
-                            .build());
-
-            String jsonText = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst()
-                    .orElse("{}");
-
             var dto = parsearRespuesta(jsonText);
             dto.setLotesHistoricosUsados(historicos.size());
             dto.setSinHistorial(historicos.isEmpty());
             return dto;
-
         } catch (Exception e) {
-            log.error("Error al generar predicción con Claude", e);
+            log.error("Error al parsear predicción de fermentación", e);
             var err = new PrediccionFermentacionDto();
             err.setError("Error al generar la predicción: " + e.getMessage());
             return err;
@@ -261,7 +233,6 @@ public class FermentacionPredictivaService {
             return dto;
         }
 
-        // Calcular atenuación actual
         var ultima = lecturas.get(lecturas.size() - 1);
         boolean hayAtenuacion = ultima.getDensidad() != null
                 && lote.getDensidadInicial() != null
@@ -270,7 +241,6 @@ public class FermentacionPredictivaService {
         int fgEst = lote.getDensidadInicial() != null ? (int)(lote.getDensidadInicial() * 0.74) : 1012;
         int ogActual = lote.getDensidadInicial() != null ? lote.getDensidadInicial() : 1050;
 
-        // Verificar estancamiento (últimas 2 lecturas sin cambio)
         boolean estancada = lecturas.size() >= 2
                 && Objects.equals(lecturas.get(lecturas.size() - 1).getDensidad(),
                                   lecturas.get(lecturas.size() - 2).getDensidad());

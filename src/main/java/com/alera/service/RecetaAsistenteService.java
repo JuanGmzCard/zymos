@@ -2,17 +2,10 @@ package com.alera.service;
 
 import com.alera.dto.RecetaAsistidaDto;
 import com.alera.model.InsumoInventario;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.Message;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,53 +17,30 @@ public class RecetaAsistenteService {
 
     private static final Logger log = LoggerFactory.getLogger(RecetaAsistenteService.class);
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final InsumoInventarioService insumoService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public RecetaAsistenteService(InsumoInventarioService insumoService) {
+    public RecetaAsistenteService(IaProviderService iaProvider, InsumoInventarioService insumoService) {
+        this.iaProvider    = iaProvider;
         this.insumoService = insumoService;
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public RecetaAsistidaDto generar(String descripcion, Double volumen) {
-        if (!isConfigured()) {
-            log.info("ANTHROPIC_API_KEY no configurada — devolviendo receta de ejemplo");
+        String prompt = construirPrompt(descripcion, volumen);
+        String jsonText = iaProvider.completar(prompt, 3000L);
+        if (jsonText == null) {
+            log.info("IA no configurada o no disponible — devolviendo receta de ejemplo");
             return mockResponse(descripcion, volumen);
         }
-
         try {
-            String prompt = construirPrompt(descripcion, volumen);
-
-            TextBlockParam textoParam = TextBlockParam.builder().text(prompt).build();
-            ContentBlockParam textoBlock = ContentBlockParam.ofText(textoParam);
-
-            AnthropicClient client = AnthropicOkHttpClient.builder()
-                    .apiKey(apiKey)
-                    .build();
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(3000L)
-                            .addUserMessageOfBlockParams(List.of(textoBlock))
-                            .build());
-
-            String jsonText = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst()
-                    .orElse("{}");
-
             return parsearRespuesta(jsonText);
-
         } catch (Exception e) {
-            log.error("Error al generar receta con Claude", e);
+            log.error("Error al parsear respuesta de asistente de recetas", e);
             RecetaAsistidaDto err = new RecetaAsistidaDto();
             err.setError("Error al generar la receta: " + e.getMessage());
             return err;

@@ -2,14 +2,10 @@ package com.alera.service;
 
 import com.alera.dto.RentabilidadAnalisisDto;
 import com.alera.dto.RentabilidadLoteDto;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -22,13 +18,15 @@ public class RentabilidadAnalisisService {
 
     private static final Logger log = LoggerFactory.getLogger(RentabilidadAnalisisService.class);
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    public RentabilidadAnalisisService(IaProviderService iaProvider) {
+        this.iaProvider = iaProvider;
+    }
+
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public RentabilidadAnalisisDto analizar(List<RentabilidadLoteDto> filas,
@@ -41,37 +39,12 @@ public class RentabilidadAnalisisService {
             return err;
         }
 
-        if (!isConfigured()) {
+        String prompt = buildPrompt(filas, totalIngresos, totalCosto, totalMargenPct);
+        String texto = iaProvider.completar(prompt, 1500L);
+        if (texto == null) {
             return mockAnalisis(filas, totalIngresos, totalCosto, totalMargenPct);
         }
-
-        try {
-            String prompt = buildPrompt(filas, totalIngresos, totalCosto, totalMargenPct);
-            AnthropicClient client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-
-            ContentBlockParam bloque = ContentBlockParam.ofText(
-                    TextBlockParam.builder().text(prompt).build());
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(1500L)
-                            .addUserMessageOfBlockParams(List.of(bloque))
-                            .build());
-
-            String texto = response.content().stream()
-                    .filter(ContentBlock::isText)
-                    .map(b -> b.asText().text())
-                    .findFirst().orElse("{}");
-
-            return parseRespuesta(texto);
-
-        } catch (Exception e) {
-            log.error("Error en RentabilidadAnalisisService", e);
-            RentabilidadAnalisisDto err = new RentabilidadAnalisisDto();
-            err.setError("Error al conectar con la IA: " + e.getMessage());
-            return err;
-        }
+        return parseRespuesta(texto);
     }
 
     private String buildPrompt(List<RentabilidadLoteDto> filas,
@@ -79,7 +52,6 @@ public class RentabilidadAnalisisService {
                                 BigDecimal totalCosto,
                                 BigDecimal totalMargenPct) {
 
-        // Agrupación por estilo
         Map<String, List<RentabilidadLoteDto>> porEstilo = filas.stream()
                 .filter(r -> r.estilo() != null)
                 .collect(Collectors.groupingBy(RentabilidadLoteDto::estilo));
@@ -100,7 +72,6 @@ public class RentabilidadAnalisisService {
                     rentables));
         });
 
-        // Top 3 y bottom 3 por margen
         List<RentabilidadLoteDto> conMargen = filas.stream()
                 .filter(r -> r.margen() != null && !r.sinCosto() && !r.sinVentas())
                 .sorted(Comparator.comparing(RentabilidadLoteDto::margen, Comparator.reverseOrder()))
@@ -239,7 +210,6 @@ Los insights deben ser concretos y específicos para estos datos. Las alertas so
             alertas.add(sinCosto + " lotes sin costos asignados — los datos de rentabilidad son incompletos.");
         }
         dto.setAlertas(alertas);
-
         return dto;
     }
 

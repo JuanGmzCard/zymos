@@ -7,14 +7,10 @@ import com.alera.model.Venta;
 import com.alera.repository.InsumoInventarioRepository;
 import com.alera.repository.LoteCervezaRepository;
 import com.alera.repository.VentaRepository;
-import com.anthropic.client.AnthropicClient;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,29 +28,25 @@ public class TenantChatService {
     private final Cache<String, String> contextoCache =
             Caffeine.newBuilder().expireAfterWrite(2, TimeUnit.MINUTES).maximumSize(50).build();
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
-
+    private final IaProviderService iaProvider;
     private final LoteCervezaRepository      loteRepo;
     private final InsumoInventarioRepository insumoRepo;
     private final VentaRepository            ventaRepo;
 
-    public TenantChatService(LoteCervezaRepository loteRepo,
+    public TenantChatService(IaProviderService iaProvider,
+                              LoteCervezaRepository loteRepo,
                               InsumoInventarioRepository insumoRepo,
                               VentaRepository ventaRepo) {
+        this.iaProvider = iaProvider;
         this.loteRepo   = loteRepo;
         this.insumoRepo = insumoRepo;
         this.ventaRepo  = ventaRepo;
     }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
-    /**
-     * Genera 3-4 sugerencias de preguntas contextuales basadas en el estado actual del tenant.
-     * Nunca lanza excepción — retorna preguntas genéricas si falla la consulta.
-     */
     public List<String> getSugerencias(String tenantName) {
         List<String> sugs = new ArrayList<>();
         try {
@@ -85,7 +77,6 @@ public class TenantChatService {
             log.warn("Error generando sugerencias para '{}': {}", tenantName, e.getMessage());
         }
 
-        // Fallbacks hasta alcanzar 4 sugerencias
         for (String f : List.of(
                 "¿Cuántos lotes activos tengo?",
                 "¿Cuál es mi lote más reciente?",
@@ -104,44 +95,18 @@ public class TenantChatService {
 
         String contexto = contextoCache.get(tenantName, this::buildContexto);
 
-        if (!isConfigured()) {
+        String promptCompleto = buildPrompt(contexto, historial, pregunta);
+        String respuesta = iaProvider.completar(promptCompleto, 800L);
+        if (respuesta == null) {
             return mockChat(pregunta, contexto, tenantName);
         }
-
-        try {
-            String promptCompleto = buildPrompt(contexto, historial, pregunta);
-
-            AnthropicClient client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-            ContentBlockParam bloque = ContentBlockParam.ofText(
-                    TextBlockParam.builder().text(promptCompleto).build());
-
-            Message response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(800L)
-                            .addUserMessageOfBlockParams(List.of(bloque))
-                            .build());
-
-            String respuesta = response.content().stream()
-                    .filter(ContentBlock::isText)
-                    .map(b -> b.asText().text())
-                    .findFirst()
-                    .orElse("No pude generar una respuesta.");
-
-            return new MensajeChatDto("assistant", respuesta.trim(), false);
-
-        } catch (Exception e) {
-            log.error("Error en TenantChatService", e);
-            return new MensajeChatDto("assistant",
-                    "Error al conectar con la IA: " + e.getMessage(), false);
-        }
+        return new MensajeChatDto("assistant", respuesta.trim(), false);
     }
 
     private String buildContexto(String tenantName) {
         StringBuilder sb = new StringBuilder();
         sb.append("CERVECERÍA: ").append(tenantName).append("\n\n");
 
-        // ── Lotes ────────────────────────────────────────────────────────────
         try {
             List<LoteCerveza> lotes = loteRepo.findByPeriodo(null, null);
             long total       = lotes.size();
@@ -177,7 +142,6 @@ public class TenantChatService {
                 sb.append("\n");
             }
 
-            // 5 lotes más recientes (activos primero)
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             List<LoteCerveza> recientes = lotes.stream()
                     .filter(l -> l.getFechaElaboracion() != null)
@@ -198,7 +162,6 @@ public class TenantChatService {
             sb.append("- [Error al cargar datos de lotes]\n");
         }
 
-        // ── Inventario ───────────────────────────────────────────────────────
         try {
             List<InsumoInventario> insumos = insumoRepo.findAllByOrderByNombreAsc();
             long totalInsumos = insumos.size();
@@ -234,7 +197,6 @@ public class TenantChatService {
             sb.append("- [Error al cargar datos de inventario]\n");
         }
 
-        // ── Ventas (mes actual) ──────────────────────────────────────────────
         try {
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             LocalDate inicioMes = LocalDate.now().withDayOfMonth(1);
@@ -268,7 +230,6 @@ public class TenantChatService {
         sb.append(contexto).append("\n");
         sb.append("---\n\n");
 
-        // Historial (últimas N mensajes)
         List<MensajeChatDto> hist = historial != null ? historial : List.of();
         if (hist.size() > MAX_HISTORY) {
             hist = hist.subList(hist.size() - MAX_HISTORY, hist.size());
@@ -320,7 +281,7 @@ public class TenantChatService {
             respuesta = "¡Hola! Soy el asistente IA de " + tenantName + ". Puedo ayudarte con preguntas sobre tus lotes de producción, inventario, recetas y más. ¿Qué necesitas saber?";
 
         } else {
-            respuesta = "Entiendo tu pregunta sobre \"" + pregunta + "\". Para obtener una respuesta más precisa y personalizada con tus datos reales, configura la API key de Claude en la variable de entorno ANTHROPIC_API_KEY. Con ella, puedo analizar en detalle los datos de " + tenantName + " y darte recomendaciones específicas.";
+            respuesta = "Entiendo tu pregunta sobre \"" + pregunta + "\". Para obtener una respuesta más precisa y personalizada con tus datos reales, configura una API key de IA (Anthropic o Gemini). Con ella, puedo analizar en detalle los datos de " + tenantName + " y darte recomendaciones específicas.";
         }
 
         return new MensajeChatDto("assistant", respuesta, true);

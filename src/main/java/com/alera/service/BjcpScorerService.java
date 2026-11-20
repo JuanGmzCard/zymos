@@ -1,14 +1,9 @@
 package com.alera.service;
 
 import com.alera.dto.BjcpScorerDto;
-import com.anthropic.client.okhttp.AnthropicOkHttpClient;
-import com.anthropic.models.messages.ContentBlockParam;
-import com.anthropic.models.messages.MessageCreateParams;
-import com.anthropic.models.messages.TextBlockParam;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,11 +14,14 @@ public class BjcpScorerService {
     private static final Logger log = LoggerFactory.getLogger(BjcpScorerService.class);
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Value("${app.anthropic.api-key:}")
-    private String apiKey;
+    private final IaProviderService iaProvider;
+
+    public BjcpScorerService(IaProviderService iaProvider) {
+        this.iaProvider = iaProvider;
+    }
 
     public boolean isConfigured() {
-        return apiKey != null && !apiKey.isBlank();
+        return iaProvider.isConfigured();
     }
 
     public BjcpScorerDto analizar(String notas, String estilo) {
@@ -32,31 +30,12 @@ public class BjcpScorerService {
             dto.setError("Las notas de cata no pueden estar vacías.");
             return dto;
         }
-        if (!isConfigured()) {
+        String prompt = construirPrompt(notas, estilo);
+        String texto = iaProvider.completar(prompt, 1024L);
+        if (texto == null) {
             return mockResponse(notas, estilo);
         }
-        try {
-            var client = AnthropicOkHttpClient.builder().apiKey(apiKey).build();
-            String prompt = construirPrompt(notas, estilo);
-            ContentBlockParam bloque = ContentBlockParam.ofText(
-                    TextBlockParam.builder().text(prompt).build());
-            var response = client.messages().create(
-                    MessageCreateParams.builder()
-                            .model("claude-haiku-4-5")
-                            .maxTokens(1024L)
-                            .addUserMessageOfBlockParams(List.of(bloque))
-                            .build());
-            String texto = response.content().stream()
-                    .filter(b -> b.isText())
-                    .map(b -> b.asText().text())
-                    .findFirst().orElse("{}");
-            return parsearRespuesta(texto);
-        } catch (Exception ex) {
-            log.error("Error al analizar evaluación BJCP", ex);
-            var dto = new BjcpScorerDto();
-            dto.setError(ex.getMessage());
-            return dto;
-        }
+        return parsearRespuesta(texto);
     }
 
     private String construirPrompt(String notas, String estilo) {
