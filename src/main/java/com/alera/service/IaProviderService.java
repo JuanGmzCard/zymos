@@ -237,6 +237,12 @@ public class IaProviderService {
     }
 
     private String llamarGemini(List<Map<String, Object>> parts, long maxTokens) throws Exception {
+        String activeModel = geminiActiveModel != null ? geminiActiveModel : "gemini-3.8-flash";
+        return llamarGeminiConModelo(parts, maxTokens, activeModel, true);
+    }
+
+    private String llamarGeminiConModelo(List<Map<String, Object>> parts, long maxTokens,
+                                          String modelo, boolean reintentar) throws Exception {
         Map<String, Object> content = new LinkedHashMap<>();
         content.put("role", "user");
         content.put("parts", parts);
@@ -252,13 +258,42 @@ public class IaProviderService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        String activeModel = geminiActiveModel != null ? geminiActiveModel : geminiModel;
-        String geminiUrl = GEMINI_BASE + "/v1beta/models/" + activeModel + ":generateContent";
-        String url = geminiUrl + "?key=" + geminiKey;
-        ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+        String url = GEMINI_BASE + "/v1beta/models/" + modelo + ":generateContent?key=" + geminiKey;
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+            if (!modelo.equals(geminiActiveModel)) {
+                log.info("[IA:GEMINI] Modelo actualizado a: '{}'", modelo);
+                geminiActiveModel = modelo;
+            }
+            JsonNode root = mapper.readTree(response.getBody());
+            return root.at("/candidates/0/content/parts/0/text").asText("{}");
+        } catch (HttpClientErrorException.NotFound e) {
+            // Google puede sugerir el modelo correcto en el mensaje de error
+            String sugerido = extraerModeloSugerido(e.getResponseBodyAsString());
+            if (sugerido != null && !sugerido.equals(modelo) && reintentar) {
+                log.warn("[IA:GEMINI] '{}' no disponible, reintentando con modelo sugerido: '{}'",
+                        modelo, sugerido);
+                geminiActiveModel = sugerido;
+                return llamarGeminiConModelo(parts, maxTokens, sugerido, false);
+            }
+            throw e;
+        }
+    }
 
-        JsonNode root = mapper.readTree(response.getBody());
-        return root.at("/candidates/0/content/parts/0/text").asText("{}");
+    private String extraerModeloSugerido(String errorBody) {
+        if (errorBody == null) return null;
+        // Busca patrón "models/gemini-X.Y-flash" en el mensaje de error de Google
+        int idx = errorBody.indexOf("models/gemini-");
+        if (idx < 0) return null;
+        int start = idx + 7; // saltar "models/"
+        int end = start;
+        while (end < errorBody.length()) {
+            char c = errorBody.charAt(end);
+            if (c == ' ' || c == '"' || c == '.' || c == ')' || c == '\n') break;
+            end++;
+        }
+        String nombre = errorBody.substring(start, end);
+        return nombre.startsWith("gemini-") ? nombre : null;
     }
 
     // ── Utilitarios ───────────────────────────────────────────────────────────────
