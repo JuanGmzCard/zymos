@@ -4,6 +4,7 @@ import com.anthropic.client.okhttp.AnthropicOkHttpClient;
 import com.anthropic.models.messages.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,8 +20,7 @@ import java.util.*;
 public class IaProviderService {
 
     private static final Logger log = LoggerFactory.getLogger(IaProviderService.class);
-    private static final String GEMINI_URL =
-            "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent";
+    private static final String GEMINI_BASE = "https://generativelanguage.googleapis.com";
     private static final String ANTHROPIC_MODEL = "claude-haiku-4-5";
 
     @Value("${app.ia.provider:auto}")
@@ -32,8 +32,42 @@ public class IaProviderService {
     @Value("${app.gemini.api-key:}")
     private String geminiKey;
 
+    @Value("${app.gemini.model:gemini-1.5-flash}")
+    private String geminiModel;
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper mapper = new ObjectMapper();
+
+    @PostConstruct
+    public void diagnosticarGemini() {
+        if (geminiKey.isBlank()) return;
+        log.info("[IA:GEMINI] Key configurada. Modelo configurado: '{}'", geminiModel);
+        try {
+            String listUrl = GEMINI_BASE + "/v1beta/models?key=" + geminiKey;
+            ResponseEntity<String> resp = restTemplate.getForEntity(listUrl, String.class);
+            JsonNode root = mapper.readTree(resp.getBody());
+            JsonNode models = root.get("models");
+            if (models == null || !models.isArray()) {
+                log.warn("[IA:GEMINI] ListModels retornó respuesta inesperada: {}", resp.getBody());
+                return;
+            }
+            List<String> disponibles = new ArrayList<>();
+            for (JsonNode m : models) {
+                JsonNode methods = m.get("supportedGenerationMethods");
+                if (methods == null) continue;
+                for (JsonNode method : methods) {
+                    if ("generateContent".equals(method.asText())) {
+                        disponibles.add(m.path("name").asText("?"));
+                        break;
+                    }
+                }
+            }
+            log.info("[IA:GEMINI] Modelos disponibles para esta key ({} total con generateContent): {}",
+                    disponibles.size(), disponibles);
+        } catch (Exception e) {
+            log.warn("[IA:GEMINI] No se pudo llamar ListModels: {}", e.getMessage());
+        }
+    }
 
     public enum Proveedor { ANTHROPIC, GEMINI, MOCK }
 
@@ -193,7 +227,8 @@ public class IaProviderService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(body, headers);
 
-        String url = GEMINI_URL + "?key=" + geminiKey;
+        String geminiUrl = GEMINI_BASE + "/v1beta/models/" + geminiModel + ":generateContent";
+        String url = geminiUrl + "?key=" + geminiKey;
         ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
 
         JsonNode root = mapper.readTree(response.getBody());
