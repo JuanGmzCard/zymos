@@ -1,5 +1,6 @@
 package com.alera.controller;
 
+import com.alera.config.BrandingProperties;
 import com.alera.config.DemoDataSeeder;
 import com.alera.config.PasswordPolicy;
 import com.alera.model.Tenant;
@@ -41,12 +42,14 @@ public class TenantAdminController {
     private final ObjectMapper objectMapper;
     private final TenantMetricsService metricsService;
     private final DemoDataSeeder demoDataSeeder;
+    private final BrandingProperties branding;
 
     public TenantAdminController(TenantService tenantService,
                                   UsuarioRepository usuarioRepo, PasswordEncoder passwordEncoder,
                                   EmailService emailService, ObjectMapper objectMapper,
                                   TenantMetricsService metricsService,
-                                  DemoDataSeeder demoDataSeeder) {
+                                  DemoDataSeeder demoDataSeeder,
+                                  BrandingProperties branding) {
         this.tenantService   = tenantService;
         this.usuarioRepo     = usuarioRepo;
         this.passwordEncoder = passwordEncoder;
@@ -54,6 +57,7 @@ public class TenantAdminController {
         this.objectMapper    = objectMapper;
         this.metricsService  = metricsService;
         this.demoDataSeeder  = demoDataSeeder;
+        this.branding        = branding;
     }
 
     @GetMapping
@@ -114,6 +118,16 @@ public class TenantAdminController {
                           @RequestParam(defaultValue = "false") boolean esNuevo,
                           RedirectAttributes ra) {
         calcularPlanFin(tenant);
+        if ("demo".equals(tenant.getSubdomain())) {
+            tenant.setColorNavbar(branding.getColorNavbar());
+            tenant.setColorPrimary(branding.getColorPrimary());
+            tenant.setColorAccent(branding.getColorAccent());
+            tenant.setColorAccentHover(branding.getColorAccentHover());
+            tenant.setColorCream(branding.getColorCream());
+            tenant.setColorBodyBg(branding.getColorBodyBg());
+            tenant.setFontHeadings(branding.getFontHeadings());
+            tenant.setFontBody(branding.getFontBody());
+        }
         tenantService.guardar(tenant);
         if (esNuevo) {
             return "redirect:/admin/tenants/" + tenant.getSubdomain() + "/onboarding";
