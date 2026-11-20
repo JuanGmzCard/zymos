@@ -280,6 +280,8 @@ public class TenantChatService {
         } else if (lower.contains("hola") || lower.contains("buenas") || lower.contains("hey")) {
             respuesta = "¡Hola! Soy el asistente IA de " + tenantName + ". Puedo ayudarte con preguntas sobre tus lotes de producción, inventario, recetas y más. ¿Qué necesitas saber?";
 
+        } else if (iaProvider.isConfigured()) {
+            respuesta = "El servicio de IA está temporalmente no disponible. Por favor intenta de nuevo en unos minutos.";
         } else {
             respuesta = "Entiendo tu pregunta sobre \"" + pregunta + "\". Para obtener una respuesta más precisa y personalizada con tus datos reales, configura una API key de IA (Anthropic o Gemini). Con ella, puedo analizar en detalle los datos de " + tenantName + " y darte recomendaciones específicas.";
         }
